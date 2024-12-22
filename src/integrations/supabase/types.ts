@@ -69,6 +69,7 @@ export type Database = {
           name: string
           notes: string | null
           phase: string
+          phone_number: string | null
           platform: string
           products_services: string | null
           social_media_username: string | null
@@ -88,6 +89,7 @@ export type Database = {
           name: string
           notes?: string | null
           phase?: string
+          phone_number?: string | null
           platform: string
           products_services?: string | null
           social_media_username?: string | null
@@ -107,6 +109,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phase?: string
+          phone_number?: string | null
           platform?: string
           products_services?: string | null
           social_media_username?: string | null
@@ -179,6 +182,42 @@ export type Database = {
           },
         ]
       }
+      platform_auth_status: {
+        Row: {
+          auth_token: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_connected: boolean | null
+          platform: string
+          refresh_token: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auth_token?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_connected?: boolean | null
+          platform: string
+          refresh_token?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auth_token?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_connected?: boolean | null
+          platform?: string
+          refresh_token?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           about_me: string | null
@@ -186,15 +225,25 @@ export type Database = {
           company_name: string | null
           created_at: string | null
           default_message_template: string | null
+          facebook_auth_token: string | null
+          facebook_connected: boolean | null
           id: string
+          instagram_auth_token: string | null
+          instagram_connected: boolean | null
           language: string | null
+          linkedin_auth_token: string | null
+          linkedin_connected: boolean | null
           openai_api_key: string | null
           products_services: string | null
           superchat_api_key: string | null
           target_audience: string | null
+          tiktok_auth_token: string | null
+          tiktok_connected: boolean | null
           updated_at: string | null
           user_id: string
           usp: string | null
+          whatsapp_number: string | null
+          whatsapp_verified: boolean | null
         }
         Insert: {
           about_me?: string | null
@@ -202,15 +251,25 @@ export type Database = {
           company_name?: string | null
           created_at?: string | null
           default_message_template?: string | null
+          facebook_auth_token?: string | null
+          facebook_connected?: boolean | null
           id?: string
+          instagram_auth_token?: string | null
+          instagram_connected?: boolean | null
           language?: string | null
+          linkedin_auth_token?: string | null
+          linkedin_connected?: boolean | null
           openai_api_key?: string | null
           products_services?: string | null
           superchat_api_key?: string | null
           target_audience?: string | null
+          tiktok_auth_token?: string | null
+          tiktok_connected?: boolean | null
           updated_at?: string | null
           user_id: string
           usp?: string | null
+          whatsapp_number?: string | null
+          whatsapp_verified?: boolean | null
         }
         Update: {
           about_me?: string | null
@@ -218,15 +277,25 @@ export type Database = {
           company_name?: string | null
           created_at?: string | null
           default_message_template?: string | null
+          facebook_auth_token?: string | null
+          facebook_connected?: boolean | null
           id?: string
+          instagram_auth_token?: string | null
+          instagram_connected?: boolean | null
           language?: string | null
+          linkedin_auth_token?: string | null
+          linkedin_connected?: boolean | null
           openai_api_key?: string | null
           products_services?: string | null
           superchat_api_key?: string | null
           target_audience?: string | null
+          tiktok_auth_token?: string | null
+          tiktok_connected?: boolean | null
           updated_at?: string | null
           user_id?: string
           usp?: string | null
+          whatsapp_number?: string | null
+          whatsapp_verified?: boolean | null
         }
         Relationships: []
       }
