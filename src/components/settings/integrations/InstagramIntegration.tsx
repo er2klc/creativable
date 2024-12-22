@@ -46,11 +46,22 @@ export function InstagramIntegration() {
       await updateSettings("instagram_app_id", appId);
       await updateSettings("instagram_app_secret", appSecret);
 
-      const scope = "instagram_basic,instagram_content_publish,instagram_manage_comments,instagram_manage_insights,instagram_manage_messages";
+      // Definiere die benötigten Berechtigungen
+      const scope = [
+        'instagram_basic',
+        'instagram_content_publish',
+        'instagram_manage_comments',
+        'instagram_manage_insights',
+        'pages_show_list',
+        'pages_read_engagement',
+        'business_management'
+      ].join(',');
+
+      // Generiere einen zufälligen State-Parameter für die Sicherheit
       const state = crypto.randomUUID();
-      
       localStorage.setItem('instagram_oauth_state', state);
-      
+
+      // Erstelle die OAuth URL mit URLSearchParams
       const params = new URLSearchParams({
         client_id: appId,
         redirect_uri: redirectUri,
@@ -58,8 +69,9 @@ export function InstagramIntegration() {
         response_type: 'code',
         state: state
       });
-      
-      window.location.href = `https://api.instagram.com/oauth/authorize?${params.toString()}`;
+
+      // Leite zur Instagram-Autorisierungsseite weiter
+      window.location.href = `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`;
     } catch (error) {
       console.error('Error connecting to Instagram:', error);
       toast({
@@ -106,12 +118,12 @@ export function InstagramIntegration() {
 
             <div>
               <a 
-                href="https://developers.facebook.com/docs/instagram-api/getting-started" 
+                href="https://developers.facebook.com/apps/" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-primary flex items-center hover:underline"
               >
-                Zur Meta Developers Dokumentation
+                Zur Meta Developers Console
                 <ExternalLink className="ml-1 h-4 w-4" />
               </a>
             </div>
