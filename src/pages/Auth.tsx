@@ -3,7 +3,8 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { AuthChangeEvent } from "@supabase/supabase-js";
 
 const AuthPage = () => {
   const supabase = useSupabaseClient();
@@ -21,14 +22,14 @@ const AuthPage = () => {
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "USER_DELETED") {
+    } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session) => {
+      if (event === AuthChangeEvent.USER_DELETED) {
         toast({
           variant: "destructive",
           title: "Fehler",
           description: "Benutzer wurde gelöscht.",
         });
-      } else if (event === "PASSWORD_RECOVERY") {
+      } else if (event === AuthChangeEvent.PASSWORD_RECOVERY) {
         toast({
           title: "Passwort zurücksetzen",
           description: "Bitte überprüfen Sie Ihre E-Mails.",
