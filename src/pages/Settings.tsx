@@ -53,7 +53,7 @@ export default function Settings() {
         </TabsList>
 
         <TabsContent value="general" className="space-y-4">
-          <GeneralSettings settings={settings} />
+          <GeneralSettings />
         </TabsContent>
 
         <TabsContent value="mlm" className="space-y-4">
@@ -61,7 +61,7 @@ export default function Settings() {
         </TabsContent>
 
         <TabsContent value="about" className="space-y-4">
-          <AboutSettings settings={settings} />
+          <AboutSettings />
         </TabsContent>
 
         <TabsContent value="integrations" className="space-y-4">

@@ -1,3 +1,4 @@
+import React from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
