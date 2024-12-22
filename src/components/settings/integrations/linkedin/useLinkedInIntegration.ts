@@ -100,7 +100,8 @@ export function useLinkedInIntegration() {
         redirectUri 
       });
 
-      const scope = "r_liteprofile r_emailaddress w_member_social";
+      // Verwenden Sie nur die grundlegenden Scopes
+      const scope = "r_liteprofile w_member_social";
       const state = Math.random().toString(36).substring(7);
       
       localStorage.setItem("linkedin_oauth_state", state);
