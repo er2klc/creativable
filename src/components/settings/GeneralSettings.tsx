@@ -16,6 +16,14 @@ const formSchema = z.object({
   language: z.string(),
 });
 
+const languages = [
+  { value: "Deutsch", label: "🇩🇪 Deutsch" },
+  { value: "English", label: "🇬🇧 English" },
+  { value: "Français", label: "🇫🇷 Français" },
+  { value: "Español", label: "🇪🇸 Español" },
+  { value: "Italiano", label: "🇮🇹 Italiano" },
+];
+
 export function GeneralSettings() {
   const session = useSession();
   const { toast } = useToast();
@@ -41,7 +49,7 @@ export function GeneralSettings() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      language: settings?.language || "de",
+      language: settings?.language || "Deutsch",
     },
   });
 
@@ -106,9 +114,11 @@ export function GeneralSettings() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="de">Deutsch</SelectItem>
-                      <SelectItem value="en">Englisch</SelectItem>
-                      <SelectItem value="fr">Französisch</SelectItem>
+                      {languages.map((language) => (
+                        <SelectItem key={language.value} value={language.value}>
+                          {language.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
