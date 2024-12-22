@@ -48,50 +48,7 @@ serve(async (req) => {
       throw new Error(`Please connect your ${platform} account in the settings first`);
     }
 
-    // Check if token is expired
-    if (authStatus.expires_at && new Date(authStatus.expires_at) <= new Date()) {
-      console.log('Access token expired, attempting refresh...');
-      
-      try {
-        const refreshResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            grant_type: 'refresh_token',
-            refresh_token: authStatus.refresh_token,
-            client_id: authStatus.auth_token,
-            client_secret: authStatus.refresh_token,
-          }),
-        });
-
-        if (!refreshResponse.ok) {
-          throw new Error('Failed to refresh token');
-        }
-
-        const refreshData = await refreshResponse.json();
-        
-        // Update token in database
-        const { error: updateError } = await supabaseClient
-          .from('platform_auth_status')
-          .update({
-            access_token: refreshData.access_token,
-            expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('user_id', user.id)
-          .eq('platform', platform.toLowerCase());
-
-        if (updateError) throw updateError;
-        
-        // Use new token
-        authStatus.access_token = refreshData.access_token;
-      } catch (refreshError) {
-        console.error('Error refreshing token:', refreshError);
-        throw new Error('Failed to refresh LinkedIn access token. Please reconnect your account.');
-      }
-    }
+    console.log('Found valid auth status with access token');
 
     // Get lead information
     const { data: lead, error: leadError } = await supabaseClient
@@ -122,81 +79,42 @@ serve(async (req) => {
       }
 
       console.log('Extracted LinkedIn profile ID:', profileId);
+      console.log('Using access token:', authStatus.access_token);
 
       try {
-        console.log('Attempting to send LinkedIn message...');
-        
-        // First, get the recipient's member ID using the /me endpoint
+        // First, verify the access token with /me endpoint
         const meResponse = await fetch('https://api.linkedin.com/v2/me', {
           headers: {
             'Authorization': `Bearer ${authStatus.access_token}`,
             'X-Restli-Protocol-Version': '2.0.0',
+            'LinkedIn-Version': '202304',
           },
         });
 
         if (!meResponse.ok) {
           const errorData = await meResponse.text();
           console.error('LinkedIn /me endpoint error:', errorData);
-          if (meResponse.status === 401 || meResponse.status === 403) {
-            throw new Error('LinkedIn access token is invalid or has insufficient permissions. Please reconnect your account.');
-          }
-          throw new Error(`Failed to fetch user profile: ${errorData}`);
+          throw new Error('LinkedIn access token validation failed. Please check your connection in settings.');
         }
 
         const meData = await meResponse.json();
-        console.log('LinkedIn user profile:', meData);
+        console.log('LinkedIn user profile verified:', meData);
 
-        // Get connections to verify the recipient is a 1st-degree connection
-        const connectionsResponse = await fetch(`https://api.linkedin.com/v2/connections?q=viewer&start=0&count=1000`, {
-          headers: {
-            'Authorization': `Bearer ${authStatus.access_token}`,
-            'X-Restli-Protocol-Version': '2.0.0',
-          },
-        });
-
-        if (!connectionsResponse.ok) {
-          const errorData = await connectionsResponse.text();
-          console.error('LinkedIn connections error:', errorData);
-          throw new Error(`Failed to fetch connections: ${errorData}`);
-        }
-
-        const connectionsData = await connectionsResponse.json();
-        console.log('LinkedIn connections:', connectionsData);
-
-        // Verify the recipient is in the connections list
-        const isConnected = connectionsData.elements.some(
-          (connection) => connection.miniProfile.publicIdentifier === profileId
-        );
-
-        if (!isConnected) {
-          throw new Error('Recipient is not a 1st-degree connection. You can only send messages to direct connections.');
-        }
-
-        // Get the member ID from the connections data
-        const connection = connectionsData.elements.find(
-          (conn) => conn.miniProfile.publicIdentifier === profileId
-        );
-
-        if (!connection) {
-          throw new Error('Could not find recipient in connections list');
-        }
-
-        const memberId = connection.miniProfile.id;
-        const recipientUrn = `urn:li:member:${memberId}`;
-        console.log('Using recipient URN:', recipientUrn);
-
-        // Send the message using the messaging API
+        // Send message using the messaging API
         const messageResponse = await fetch('https://api.linkedin.com/v2/messages', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${authStatus.access_token}`,
             'Content-Type': 'application/json',
             'X-Restli-Protocol-Version': '2.0.0',
+            'LinkedIn-Version': '202304',
           },
           body: JSON.stringify({
-            recipients: [recipientUrn],
-            messageText: message,
-            messageSubject: 'New Message',
+            recipients: [`urn:li:person:${profileId}`],
+            message: {
+              subject: "New Message",
+              body: message
+            }
           }),
         });
 
@@ -222,7 +140,6 @@ serve(async (req) => {
 
         if (insertError) {
           console.error('Error saving message:', insertError);
-          // Don't throw here as the message was already sent
         }
 
         // Update lead's last action
@@ -236,7 +153,6 @@ serve(async (req) => {
 
         if (updateError) {
           console.error('Error updating lead:', updateError);
-          // Don't throw here as the message was already sent
         }
       } catch (error) {
         console.error('Error sending LinkedIn message:', error);
