@@ -33,10 +33,11 @@ export function IntegrationSettings({ settings }: IntegrationSettingsProps) {
         .from("settings")
         .select("*")
         .eq("user_id", session?.user?.id)
-        .single();
+        .limit(1)
+        .maybeSingle();
 
       if (error) throw error;
-      return data as Settings;
+      return data as Settings | null;
     },
     enabled: !!session?.user?.id,
   });
