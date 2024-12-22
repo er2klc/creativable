@@ -7,40 +7,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import type { Settings } from "@/integrations/supabase/types/settings";
-import { useQuery } from "@tanstack/react-query";
+import { useSettings } from "@/hooks/use-settings";
 
 const formSchema = z.object({
   openai_api_key: z.string().min(1, "OpenAI API-Key ist erforderlich"),
   superchat_api_key: z.string().min(1, "Superchat API-Key ist erforderlich"),
 });
 
-interface IntegrationSettingsProps {
-  settings: Settings | null;
-}
-
-export function IntegrationSettings({ settings }: IntegrationSettingsProps) {
+export function IntegrationSettings() {
   const session = useSession();
-  const { toast } = useToast();
-
-  // Fetch current settings
-  const { data: currentSettings, refetch } = useQuery({
-    queryKey: ["settings", session?.user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("settings")
-        .select("*")
-        .eq("user_id", session?.user?.id)
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data as Settings | null;
-    },
-    enabled: !!session?.user?.id,
-  });
+  const { settings, updateSettings } = useSettings();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,46 +37,11 @@ export function IntegrationSettings({ settings }: IntegrationSettingsProps) {
   }, [settings, form]);
 
   const saveApiKey = async (key: string, value: string) => {
-    try {
-      if (!settings?.id) {
-        console.error("No settings record found");
-        return;
-      }
+    await updateSettings(key, value);
 
-      // Prepare update data while preserving existing fields
-      const updateData = {
-        ...settings,
-        [key]: value,
-        updated_at: new Date().toISOString()
-      };
-
-      const { error } = await supabase
-        .from("settings")
-        .update(updateData)
-        .eq('id', settings.id)
-        .eq('user_id', session?.user?.id);
-
-      if (error) throw error;
-
-      // Refetch settings to update the form
-      await refetch();
-
-      toast({
-        title: "Erfolg ✨",
-        description: `${key === 'openai_api_key' ? 'OpenAI' : 'Superchat'} API-Key wurde gespeichert`,
-      });
-
-      // Update OpenAI context if OpenAI API key was saved
-      if (key === 'openai_api_key') {
-        await updateOpenAIContext();
-      }
-    } catch (error) {
-      console.error(`Error saving ${key}:`, error);
-      toast({
-        title: "Fehler ❌",
-        description: `API-Key konnte nicht gespeichert werden`,
-        variant: "destructive",
-      });
+    // Update OpenAI context if OpenAI API key was saved
+    if (key === 'openai_api_key') {
+      await updateOpenAIContext();
     }
   };
 

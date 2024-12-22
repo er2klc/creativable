@@ -12,49 +12,42 @@ export function useSettings() {
   const { data: settings, isLoading } = useQuery({
     queryKey: ["settings", session?.user?.id],
     queryFn: async () => {
-      console.log("Fetching settings for user:", session?.user?.id);
+      if (!session?.user?.id) {
+        throw new Error("No user session found");
+      }
+
+      console.log("Fetching settings for user:", session.user.id);
       
-      // First, try to get existing settings
       const { data: existingSettings, error: fetchError } = await supabase
         .from("settings")
         .select("*")
-        .eq("user_id", session?.user?.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .eq("user_id", session.user.id)
+        .single();
 
       if (fetchError) {
-        console.error("Error fetching settings:", fetchError);
+        if (fetchError.code === 'PGRST116') {
+          // No settings found, create new settings
+          const { data: newSettings, error: createError } = await supabase
+            .from("settings")
+            .insert({
+              user_id: session.user.id,
+              language: 'de'
+            })
+            .select()
+            .single();
+
+          if (createError) throw createError;
+          return newSettings as Settings;
+        }
         throw fetchError;
       }
 
-      if (existingSettings) {
-        console.log("Found existing settings:", existingSettings);
-        return existingSettings as Settings;
-      }
-
-      // If no settings exist, create a new settings record
-      const { data: newSettings, error: createError } = await supabase
-        .from("settings")
-        .insert({
-          user_id: session?.user?.id,
-          language: 'de'
-        })
-        .select()
-        .single();
-
-      if (createError) {
-        console.error("Error creating settings:", createError);
-        throw createError;
-      }
-
-      console.log("Created new settings:", newSettings);
-      return newSettings as Settings;
+      return existingSettings as Settings;
     },
     enabled: !!session?.user?.id,
   });
 
-  const updateSettings = async (field: string, value: string) => {
+  const updateSettings = async (field: string, value: string | null) => {
     if (!session?.user?.id) {
       console.error("No user session found");
       return false;
@@ -67,19 +60,21 @@ export function useSettings() {
 
     try {
       console.log("Updating settings:", { field, value });
+      
+      // Prepare update data while preserving existing fields
+      const updateData = {
+        ...settings,
+        [field]: value,
+        updated_at: new Date().toISOString()
+      };
+
       const { error } = await supabase
         .from("settings")
-        .update({
-          [field]: value,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', settings.id)
         .eq('user_id', session.user.id);
 
-      if (error) {
-        console.error("Error updating settings:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       // Invalidate and refetch settings
       await queryClient.invalidateQueries({ queryKey: ["settings", session.user.id] });
