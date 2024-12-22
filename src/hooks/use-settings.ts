@@ -30,7 +30,7 @@ export function useSettings() {
         // Create new settings if none exist
         const { data: newSettings, error: createError } = await supabase
           .from("settings")
-          .insert({
+          .upsert({
             user_id: session.user.id,
             language: 'de'
           })
@@ -57,11 +57,13 @@ export function useSettings() {
       
       const { error } = await supabase
         .from("settings")
-        .update({
+        .upsert({
+          user_id: session.user.id,
           [field]: value,
           updated_at: new Date().toISOString()
-        })
-        .eq('user_id', session.user.id);
+        }, {
+          onConflict: 'user_id'
+        });
 
       if (error) throw error;
 
