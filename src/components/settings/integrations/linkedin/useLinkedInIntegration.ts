@@ -12,7 +12,7 @@ export function useLinkedInIntegration() {
   const [clientSecret, setClientSecret] = useState("");
   const [error, setError] = useState<string>();
   const redirectUri = `${window.location.origin}/auth/callback/linkedin`;
-  const isConnected = settings?.linkedin_connected === true || settings?.linkedin_connected === 'true';
+  const isConnected = settings?.linkedin_connected === true;
 
   useEffect(() => {
     const loadSavedCredentials = async () => {
