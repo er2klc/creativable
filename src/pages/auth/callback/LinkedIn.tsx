@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { exchangeCodeForToken } from "@/components/settings/integrations/linkedin/api/linkedInApi";
+import { updatePlatformAuthStatus } from "@/components/settings/integrations/linkedin/db/linkedInDb";
 
 export default function LinkedInCallback() {
   const navigate = useNavigate();
@@ -16,73 +18,66 @@ export default function LinkedInCallback() {
       const errorDescription = params.get("error_description");
       const storedState = localStorage.getItem("linkedin_oauth_state");
 
-      // Handle LinkedIn OAuth errors
-      if (error || errorDescription) {
-        console.error("LinkedIn OAuth error:", error, errorDescription);
-        toast({
-          title: "LinkedIn Fehler",
-          description: errorDescription || "Die Authentifizierung konnte nicht abgeschlossen werden.",
-          variant: "destructive",
-        });
-        navigate("/settings");
-        return;
-      }
-
-      // Verify state to prevent CSRF attacks
-      if (state !== storedState) {
-        console.error("State mismatch:", { state, storedState });
-        toast({
-          title: "Sicherheitsfehler",
-          description: "Die Authentifizierung konnte nicht abgeschlossen werden.",
-          variant: "destructive",
-        });
-        navigate("/settings");
-        return;
-      }
-
-      if (code) {
-        try {
-          console.log("Processing LinkedIn callback with code:", code);
-          
-          // Get the session token for authorization
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session) {
-            throw new Error("No active session found");
-          }
-
-          // Call Supabase Edge Function to handle OAuth token exchange
-          const { data, error } = await supabase.functions.invoke("linkedin-auth-callback", {
-            body: { 
-              code, 
-              redirect_uri: `${window.location.origin}/auth/callback/linkedin` 
-            },
-            headers: {
-              Authorization: `Bearer ${session.access_token}`
-            }
-          });
-
-          if (error) {
-            console.error("LinkedIn callback error:", error);
-            throw error;
-          }
-
-          toast({
-            title: "Erfolg!",
-            description: "LinkedIn wurde erfolgreich verbunden.",
-          });
-        } catch (error) {
-          console.error("LinkedIn callback error:", error);
-          toast({
-            title: "Fehler",
-            description: "Die LinkedIn-Verbindung konnte nicht hergestellt werden. Bitte überprüfen Sie die App-Einstellungen in der LinkedIn Developer Console.",
-            variant: "destructive",
-          });
+      try {
+        // Handle LinkedIn OAuth errors
+        if (error || errorDescription) {
+          console.error("LinkedIn OAuth error:", error, errorDescription);
+          throw new Error(errorDescription || "Die Authentifizierung konnte nicht abgeschlossen werden.");
         }
-      }
 
-      // Clean up
-      localStorage.removeItem("linkedin_oauth_state");
-      navigate("/settings");
+        // Verify state to prevent CSRF attacks
+        if (!state || state !== storedState) {
+          console.error("State mismatch:", { state, storedState });
+          throw new Error("Sicherheitsfehler: Die Authentifizierung konnte nicht abgeschlossen werden.");
+        }
+
+        if (!code) {
+          throw new Error("Kein Autorisierungscode erhalten");
+        }
+
+        // Get the session token for authorization
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error("Keine aktive Sitzung gefunden");
+        }
+
+        const tokenData = await exchangeCodeForToken(code, `${window.location.origin}/auth/callback/linkedin`);
+
+        // Update platform auth status
+        await updatePlatformAuthStatus(session.user.id, {
+          is_connected: true,
+          access_token: tokenData.access_token,
+          expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+        });
+
+        // Update settings
+        const { error: settingsError } = await supabase
+          .from('settings')
+          .update({ 
+            linkedin_connected: 'true',
+            linkedin_auth_token: tokenData.access_token,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', session.user.id);
+
+        if (settingsError) throw settingsError;
+
+        toast({
+          title: "Erfolg!",
+          description: "LinkedIn wurde erfolgreich verbunden.",
+        });
+      } catch (error) {
+        console.error("LinkedIn callback error:", error);
+        toast({
+          title: "Fehler",
+          description: error instanceof Error ? error.message : "Die LinkedIn-Verbindung konnte nicht hergestellt werden.",
+          variant: "destructive",
+        });
+      } finally {
+        // Clean up
+        localStorage.removeItem("linkedin_oauth_state");
+        navigate("/settings");
+      }
     };
 
     handleCallback();

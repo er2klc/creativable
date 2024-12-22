@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { useToast } from "@/hooks/use-toast";
+import { loadLinkedInCredentials, updatePlatformAuthStatus } from "./db/linkedInDb";
+import { exchangeCodeForToken, revokeLinkedInToken } from "./api/linkedInApi";
 import { supabase } from "@/integrations/supabase/client";
 
 export function useLinkedInIntegration() {
@@ -10,35 +12,14 @@ export function useLinkedInIntegration() {
   const [clientSecret, setClientSecret] = useState("");
   const [error, setError] = useState<string>();
   const redirectUri = `${window.location.origin}/auth/callback/linkedin`;
-  const isConnected = settings?.linkedin_connected || false;
+  const isConnected = settings?.linkedin_connected === 'true';
 
   useEffect(() => {
     const loadSavedCredentials = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
-
-        const { data: platformAuth, error } = await supabase
-          .from('platform_auth_status')
-          .select('auth_token, refresh_token')
-          .eq('platform', 'linkedin')
-          .single();
-
-        if (error) {
-          console.error('Error loading LinkedIn credentials:', error);
-          return;
-        }
-
-        if (platformAuth) {
-          console.log("Loaded LinkedIn credentials:", { 
-            hasAuthToken: !!platformAuth.auth_token,
-            hasRefreshToken: !!platformAuth.refresh_token 
-          });
-          setClientId(platformAuth.auth_token || '');
-          setClientSecret(platformAuth.refresh_token || '');
-        }
-      } catch (error) {
-        console.error('Error in loadSavedCredentials:', error);
+      const platformAuth = await loadLinkedInCredentials();
+      if (platformAuth) {
+        setClientId(platformAuth.auth_token || '');
+        setClientSecret(platformAuth.refresh_token || '');
       }
     };
 
@@ -60,7 +41,6 @@ export function useLinkedInIntegration() {
     }
 
     try {
-      console.log("Saving LinkedIn credentials...");
       const { error: secretError } = await supabase
         .from('platform_auth_status')
         .upsert({
@@ -105,11 +85,6 @@ export function useLinkedInIntegration() {
         return;
       }
 
-      console.log("Starting LinkedIn OAuth flow with:", { 
-        clientId,
-        redirectUri 
-      });
-
       const scope = [
         "openid",
         "profile",
@@ -136,47 +111,25 @@ export function useLinkedInIntegration() {
 
   const disconnectLinkedIn = async () => {
     try {
-      console.log("Disconnecting LinkedIn...");
-      
-      // Get the current auth status to revoke the token
-      const { data: authStatus } = await supabase
-        .from('platform_auth_status')
-        .select('access_token')
-        .eq('platform', 'linkedin')
-        .single();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
 
-      if (authStatus?.access_token) {
-        // Revoke the access token
-        try {
-          await fetch('https://www.linkedin.com/oauth/v2/revoke', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-              token: authStatus.access_token,
-              client_id: clientId,
-              client_secret: clientSecret,
-            }),
-          });
-        } catch (revokeError) {
-          console.error('Error revoking LinkedIn token:', revokeError);
-        }
+      const platformAuth = await loadLinkedInCredentials();
+      
+      if (platformAuth?.access_token) {
+        await revokeLinkedInToken(
+          platformAuth.access_token,
+          clientId,
+          clientSecret
+        );
       }
 
-      // Clear the platform auth status
-      const { error: statusError } = await supabase
-        .from('platform_auth_status')
-        .update({
-          is_connected: false,
-          access_token: null,
-          refresh_token: null,
-          expires_at: null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('platform', 'linkedin');
-
-      if (statusError) throw statusError;
+      await updatePlatformAuthStatus(user.id, {
+        is_connected: false,
+        access_token: null,
+        refresh_token: null,
+        expires_at: null
+      });
 
       // Update settings - Convert boolean to string
       await updateSettings('linkedin_connected', 'false');
