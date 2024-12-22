@@ -12,32 +12,45 @@ export function useSettings() {
   const { data: settings, isLoading } = useQuery({
     queryKey: ["settings", session?.user?.id],
     queryFn: async () => {
+      console.log("Fetching settings for user:", session?.user?.id);
       const { data, error } = await supabase
         .from("settings")
         .select("*")
         .eq("user_id", session?.user?.id)
-        .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching settings:", error);
+        throw error;
+      }
+      console.log("Fetched settings:", data);
       return data as Settings | null;
     },
     enabled: !!session?.user?.id,
   });
 
   const updateSettings = async (field: string, value: string) => {
+    if (!session?.user?.id) {
+      console.error("No user session found");
+      return false;
+    }
+
     try {
+      console.log("Updating settings:", { field, value });
       const { error } = await supabase
         .from("settings")
         .upsert({
-          user_id: session?.user?.id,
+          user_id: session.user.id,
           [field]: value,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating settings:", error);
+        throw error;
+      }
 
       // Invalidate and refetch settings
-      await queryClient.invalidateQueries({ queryKey: ["settings", session?.user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ["settings", session.user.id] });
 
       toast({
         title: "Erfolg ✨",
@@ -46,7 +59,7 @@ export function useSettings() {
 
       return true;
     } catch (error) {
-      console.error("Error updating settings:", error);
+      console.error("Error in updateSettings:", error);
       toast({
         title: "Fehler ❌",
         description: "Einstellung konnte nicht gespeichert werden",
