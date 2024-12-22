@@ -110,14 +110,12 @@ export function useLinkedInIntegration() {
         redirectUri 
       });
 
-      // Basic scopes that are definitely supported by LinkedIn
+      // Using only the officially approved scopes
       const scope = [
         "openid",
         "profile",
-        "email",
-        "r_liteprofile",
-        "r_basicprofile",
-        "w_member_social"
+        "w_member_social",
+        "email"
       ].join(" ");
       
       const state = Math.random().toString(36).substring(7);
