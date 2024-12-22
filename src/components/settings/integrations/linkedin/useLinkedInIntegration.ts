@@ -12,19 +12,28 @@ export function useLinkedInIntegration() {
   const [clientSecret, setClientSecret] = useState("");
   const [error, setError] = useState<string>();
   const redirectUri = `${window.location.origin}/auth/callback/linkedin`;
-  const isConnected = settings?.linkedin_connected === true || settings?.linkedin_connected === 'true';
+  const isConnected = Boolean(settings?.linkedin_connected);
 
   useEffect(() => {
     const loadSavedCredentials = async () => {
-      const platformAuth = await loadLinkedInCredentials();
-      if (platformAuth) {
-        setClientId(platformAuth.auth_token || '');
-        setClientSecret(platformAuth.refresh_token || '');
+      try {
+        const platformAuth = await loadLinkedInCredentials();
+        if (platformAuth) {
+          setClientId(platformAuth.auth_token || '');
+          setClientSecret(platformAuth.refresh_token || '');
+        }
+      } catch (err) {
+        console.error('Error loading LinkedIn credentials:', err);
+        toast({
+          title: "Fehler",
+          description: "LinkedIn Zugangsdaten konnten nicht geladen werden",
+          variant: "destructive",
+        });
       }
     };
 
     loadSavedCredentials();
-  }, []);
+  }, [toast]);
 
   const handleUpdateCredentials = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -131,7 +140,6 @@ export function useLinkedInIntegration() {
         expires_at: null
       });
 
-      // Update settings
       await updateSettings('linkedin_connected', 'false');
       await updateSettings('linkedin_auth_token', null);
 

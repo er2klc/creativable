@@ -19,13 +19,11 @@ export default function LinkedInCallback() {
       const storedState = localStorage.getItem("linkedin_oauth_state");
 
       try {
-        // Handle LinkedIn OAuth errors
         if (error || errorDescription) {
           console.error("LinkedIn OAuth error:", error, errorDescription);
           throw new Error(errorDescription || "Die Authentifizierung konnte nicht abgeschlossen werden.");
         }
 
-        // Verify state to prevent CSRF attacks
         if (!state || state !== storedState) {
           console.error("State mismatch:", { state, storedState });
           throw new Error("Sicherheitsfehler: Die Authentifizierung konnte nicht abgeschlossen werden.");
@@ -35,22 +33,22 @@ export default function LinkedInCallback() {
           throw new Error("Kein Autorisierungscode erhalten");
         }
 
-        // Get the session token for authorization
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           throw new Error("Keine aktive Sitzung gefunden");
         }
 
         const tokenData = await exchangeCodeForToken(code, `${window.location.origin}/auth/callback/linkedin`);
+        if (!tokenData || !tokenData.access_token) {
+          throw new Error("Keine gültigen Zugangsdaten von LinkedIn erhalten");
+        }
 
-        // Update platform auth status
         await updatePlatformAuthStatus(session.user.id, {
           is_connected: true,
           access_token: tokenData.access_token,
           expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
         });
 
-        // Update settings
         const { error: settingsError } = await supabase
           .from('settings')
           .update({ 
@@ -74,7 +72,6 @@ export default function LinkedInCallback() {
           variant: "destructive",
         });
       } finally {
-        // Clean up
         localStorage.removeItem("linkedin_oauth_state");
         navigate("/settings");
       }
