@@ -8,7 +8,8 @@ import { LeadFilters } from "@/components/leads/LeadFilters";
 import { LeadTableView } from "@/components/leads/LeadTableView";
 import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
 import { LeadDetailView } from "@/components/leads/LeadDetailView";
-import { LayoutList, Kanban, Plus } from "lucide-react";
+import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
+import { LayoutList, Kanban } from "lucide-react";
 
 const Leads = () => {
   const [view, setView] = useState<"table" | "kanban">("table");
@@ -74,10 +75,7 @@ const Leads = () => {
           >
             <Kanban className="h-4 w-4" />
           </Button>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Neuer Lead
-          </Button>
+          <AddLeadDialog />
         </div>
       </div>
 
