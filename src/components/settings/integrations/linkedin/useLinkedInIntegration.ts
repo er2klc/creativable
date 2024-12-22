@@ -110,8 +110,8 @@ export function useLinkedInIntegration() {
         redirectUri 
       });
 
-      // Updated scopes to match LinkedIn App configuration
-      const scope = "openid profile email w_member_social";
+      // Updated scopes to include messaging permissions
+      const scope = "openid profile email w_member_social r_emailaddress w_member_social rw_organization_admin r_organization_social w_organization_social r_1st_connections_size r_ads r_ads_reporting r_basicprofile r_compliance w_compliance r_contentmetadata r_elementapps r_ext_organization_social r_liteprofile r_member_social r_memberprofile r_network r_organization r_organization_admin rw_ads rw_dmp_segments rw_organization rw_organization_admin w_activitypost w_member w_organization";
       const state = Math.random().toString(36).substring(7);
       
       localStorage.setItem("linkedin_oauth_state", state);

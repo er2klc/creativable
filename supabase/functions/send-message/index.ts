@@ -86,6 +86,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${authStatus.access_token}`,
           'Content-Type': 'application/json',
           'LinkedIn-Version': '202304',
+          'X-Restli-Protocol-Version': '2.0.0'
         },
         body: JSON.stringify({
           "message_event": {
