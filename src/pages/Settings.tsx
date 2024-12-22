@@ -9,20 +9,28 @@ import { supabase } from "@/integrations/supabase/client";
 export default function Settings() {
   const session = useSession();
 
-  const { data: settings } = useQuery({
+  const { data: settings, isLoading } = useQuery({
     queryKey: ["settings", session?.user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("settings")
         .select("*")
         .eq("user_id", session?.user?.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
     },
     enabled: !!session?.user?.id,
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
