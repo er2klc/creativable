@@ -79,8 +79,8 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // Use LinkedIn's Marketing API for messaging
-      const conversationResponse = await fetch('https://api.linkedin.com/v2/conversations', {
+      // Using LinkedIn's Posts API since we have w_member_social scope
+      const postResponse = await fetch('https://api.linkedin.com/v2/ugcPosts', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
@@ -89,22 +89,29 @@ serve(async (req) => {
           'LinkedIn-Version': '202304'
         },
         body: JSON.stringify({
-          recipients: [{
-            recipientUrn: `urn:li:person:${profileId}`,
-            recipientType: "PERSON"
-          }],
-          body: message,
-          messageType: "INMAIL"
+          author: `urn:li:person:${profileId}`,
+          lifecycleState: "PUBLISHED",
+          specificContent: {
+            "com.linkedin.ugc.ShareContent": {
+              shareCommentary: {
+                text: message
+              },
+              shareMediaCategory: "NONE"
+            }
+          },
+          visibility: {
+            "com.linkedin.ugc.MemberNetworkVisibility": "CONNECTIONS"
+          }
         }),
       });
 
-      if (!conversationResponse.ok) {
-        const errorData = await conversationResponse.text();
-        console.error('LinkedIn conversation API error:', errorData);
-        throw new Error(`Failed to create LinkedIn conversation: ${errorData}`);
+      if (!postResponse.ok) {
+        const errorData = await postResponse.text();
+        console.error('LinkedIn API error:', errorData);
+        throw new Error(`Failed to create LinkedIn post: ${errorData}`);
       }
 
-      console.log('LinkedIn message sent successfully');
+      console.log('LinkedIn post created successfully');
     }
 
     // Save message to database
