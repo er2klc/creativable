@@ -4,9 +4,10 @@ import { Star } from "lucide-react";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
+  onLeadClick: (id: string) => void;
 }
 
-export const LeadKanbanView = ({ leads }: LeadKanbanViewProps) => {
+export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
   return (
     <div className="grid grid-cols-3 gap-4">
       {["initial_contact", "follow_up", "closed"].map((phase) => (
@@ -24,11 +25,17 @@ export const LeadKanbanView = ({ leads }: LeadKanbanViewProps) => {
               .map((lead) => (
                 <div
                   key={lead.id}
-                  className="bg-background p-4 rounded-lg shadow-sm"
+                  className="bg-background p-4 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => onLeadClick(lead.id)}
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{lead.name}</span>
-                    <Button variant="ghost" size="icon" className="h-4 w-4">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-4 w-4"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Star className="h-4 w-4" />
                     </Button>
                   </div>

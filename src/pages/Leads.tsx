@@ -7,6 +7,7 @@ import { LeadSearch } from "@/components/leads/LeadSearch";
 import { LeadFilters } from "@/components/leads/LeadFilters";
 import { LeadTableView } from "@/components/leads/LeadTableView";
 import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
+import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { LayoutList, Kanban, Plus } from "lucide-react";
 
 const Leads = () => {
@@ -14,8 +15,9 @@ const Leads = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
 
-  const { data: leads = [], isLoading } = useQuery<Tables<"leads">[]>({
+  const { data: leads = [], isLoading } = useQuery({
     queryKey: ["leads", searchQuery, selectedPhase, selectedPlatform],
     queryFn: async () => {
       let query = supabase
@@ -90,10 +92,15 @@ const Leads = () => {
       </div>
 
       {view === "table" ? (
-        <LeadTableView leads={leads} />
+        <LeadTableView leads={leads} onLeadClick={(id) => setSelectedLeadId(id)} />
       ) : (
-        <LeadKanbanView leads={leads} />
+        <LeadKanbanView leads={leads} onLeadClick={(id) => setSelectedLeadId(id)} />
       )}
+
+      <LeadDetailView
+        leadId={selectedLeadId}
+        onClose={() => setSelectedLeadId(null)}
+      />
     </div>
   );
 };

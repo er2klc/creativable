@@ -18,9 +18,10 @@ import { Tables } from "@/integrations/supabase/types";
 
 interface LeadTableViewProps {
   leads: Tables<"leads">[];
+  onLeadClick: (id: string) => void;
 }
 
-export const LeadTableView = ({ leads }: LeadTableViewProps) => {
+export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
   return (
     <Table>
       <TableHeader>
@@ -36,8 +37,12 @@ export const LeadTableView = ({ leads }: LeadTableViewProps) => {
       </TableHeader>
       <TableBody>
         {leads.map((lead) => (
-          <TableRow key={lead.id}>
-            <TableCell>
+          <TableRow
+            key={lead.id}
+            className="cursor-pointer"
+            onClick={() => onLeadClick(lead.id)}
+          >
+            <TableCell onClick={(e) => e.stopPropagation()}>
               <Button variant="ghost" size="icon" className="h-4 w-4">
                 <Star className="h-4 w-4" />
               </Button>
@@ -67,7 +72,7 @@ export const LeadTableView = ({ leads }: LeadTableViewProps) => {
                 : "-"}
             </TableCell>
             <TableCell>{lead.industry}</TableCell>
-            <TableCell>
+            <TableCell onClick={(e) => e.stopPropagation()}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon">
@@ -75,7 +80,9 @@ export const LeadTableView = ({ leads }: LeadTableViewProps) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Details anzeigen</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onLeadClick(lead.id)}>
+                    Details anzeigen
+                  </DropdownMenuItem>
                   <DropdownMenuItem>Nachricht senden</DropdownMenuItem>
                   <DropdownMenuItem>Phase ändern</DropdownMenuItem>
                   <DropdownMenuItem className="text-destructive">
