@@ -20,20 +20,50 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get platform auth status
-    const { data: authStatus } = await supabase
-      .from('platform_auth_status')
+    // Get user's settings with platform credentials
+    const { data: settings } = await supabase
+      .from('settings')
       .select('*')
-      .eq('platform', platform)
       .single();
 
-    if (!authStatus?.is_connected) {
-      throw new Error(`${platform} is not connected`);
+    if (!settings) {
+      throw new Error('Settings not found');
     }
 
-    // Here we would implement the actual platform-specific sending logic
-    // For now, we'll just simulate successful sending
-    console.log(`Sending message via ${platform} to ${socialMediaUsername}: ${message}`);
+    if (platform === 'instagram') {
+      if (!settings.instagram_auth_token || !settings.instagram_connected) {
+        throw new Error('Instagram is not connected');
+      }
+
+      // Send message via Instagram Graph API
+      const response = await fetch(`https://graph.instagram.com/v12.0/me/messages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${settings.instagram_auth_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipient: { username: socialMediaUsername },
+          message: { text: message },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send Instagram message');
+      }
+    }
+    // ... Weitere Plattformen hier hinzufügen
+
+    // Save message in database
+    const { error: dbError } = await supabase
+      .from('messages')
+      .insert({
+        lead_id: leadId,
+        platform,
+        content: message,
+      });
+
+    if (dbError) throw dbError;
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
