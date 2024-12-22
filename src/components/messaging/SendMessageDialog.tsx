@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
+import { Instagram, Linkedin, Facebook, Video } from "lucide-react";
 
 interface SendMessageDialogProps {
   lead?: Tables<"leads">;
@@ -36,6 +37,21 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
   const [message, setMessage] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const getPlatformIcon = (platform: string) => {
+    switch (platform?.toLowerCase()) {
+      case "instagram":
+        return <Instagram className="h-4 w-4 mr-2" />;
+      case "linkedin":
+        return <Linkedin className="h-4 w-4 mr-2" />;
+      case "facebook":
+        return <Facebook className="h-4 w-4 mr-2" />;
+      case "tiktok":
+        return <Video className="h-4 w-4 mr-2" />;
+      default:
+        return null;
+    }
+  };
+
   const generateMessage = async () => {
     if (!lead) return;
     
@@ -50,7 +66,7 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
           productsServices: settings?.products_services,
           targetAudience: settings?.target_audience,
           usp: settings?.usp,
-          language: settings?.language || "Deutsch" // Sprache aus den Einstellungen
+          language: settings?.language || "de"
         },
       });
 
@@ -59,8 +75,8 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
     } catch (error) {
       console.error("Error generating message:", error);
       toast({
-        title: "Fehler",
-        description: "Nachricht konnte nicht generiert werden",
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description: settings?.language === "en" ? "Could not generate message" : "Nachricht konnte nicht generiert werden",
         variant: "destructive",
       });
     } finally {
@@ -71,8 +87,8 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
   const sendMessage = async () => {
     if (!message || !platform || !lead || !session?.user?.id) {
       toast({
-        title: "Fehler",
-        description: "Bitte füllen Sie alle Felder aus",
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description: settings?.language === "en" ? "Please fill in all fields" : "Bitte füllen Sie alle Felder aus",
         variant: "destructive",
       });
       return;
@@ -98,21 +114,22 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
           lead_id: lead.id,
           platform,
           content: message,
-          user_id: session.user.id
+          user_id: session.user.id,
+          sent_at: new Date().toISOString()
         });
 
       if (dbError) throw dbError;
 
       toast({
-        title: "Erfolg",
-        description: "Nachricht wurde erfolgreich gesendet",
+        title: settings?.language === "en" ? "Success" : "Erfolg",
+        description: settings?.language === "en" ? "Message sent successfully" : "Nachricht wurde erfolgreich gesendet",
       });
       setOpen(false);
     } catch (error) {
       console.error("Error sending message:", error);
       toast({
-        title: "Fehler",
-        description: "Nachricht konnte nicht gesendet werden",
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description: settings?.language === "en" ? "Could not send message" : "Nachricht konnte nicht gesendet werden",
         variant: "destructive",
       });
     } finally {
@@ -125,38 +142,36 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" className="flex items-center gap-2">
-            Nachricht senden
+            {settings?.language === "en" ? "Send Message" : "Nachricht senden"}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {lead ? `Nachricht an ${lead.name} senden` : "Nachricht senden"}
+            {lead ? (
+              settings?.language === "en" 
+                ? `Send message to ${lead.name}` 
+                : `Nachricht an ${lead.name} senden`
+            ) : (
+              settings?.language === "en" ? "Send message" : "Nachricht senden"
+            )}
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="platform">Plattform</Label>
-            <Select
-              value={platform}
-              onValueChange={setPlatform}
-              disabled={!!lead?.platform}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Wählen Sie eine Plattform" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="linkedin">LinkedIn</SelectItem>
-                <SelectItem value="instagram">Instagram</SelectItem>
-                <SelectItem value="facebook">Facebook</SelectItem>
-                <SelectItem value="tiktok">TikTok</SelectItem>
-                <SelectItem value="whatsapp">WhatsApp</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="platform">
+              {settings?.language === "en" ? "Platform" : "Plattform"}
+            </Label>
+            <div className="flex items-center gap-2 p-2 border rounded-md bg-muted">
+              {getPlatformIcon(platform)}
+              {platform}
+            </div>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="message">Nachricht</Label>
+            <Label htmlFor="message">
+              {settings?.language === "en" ? "Message" : "Nachricht"}
+            </Label>
             <Textarea
               id="message"
               value={message}
@@ -168,14 +183,16 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
               onClick={generateMessage}
               disabled={isLoading || !lead}
             >
-              Nachricht generieren
+              {settings?.language === "en" ? "Generate Message" : "Nachricht generieren"}
             </Button>
           </div>
           <Button 
             onClick={sendMessage} 
             disabled={isLoading || !message || !platform || !lead}
           >
-            {isLoading ? "Wird gesendet..." : "Senden"}
+            {isLoading 
+              ? (settings?.language === "en" ? "Sending..." : "Wird gesendet...") 
+              : (settings?.language === "en" ? "Send" : "Senden")}
           </Button>
         </div>
       </DialogContent>
