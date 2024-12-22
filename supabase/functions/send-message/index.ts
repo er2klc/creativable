@@ -83,7 +83,7 @@ serve(async (req) => {
 
       try {
         // First, verify the access token with /me endpoint
-        const meResponse = await fetch('https://api.linkedin.com/v2/me', {
+        const meResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
           headers: {
             'Authorization': `Bearer ${authStatus.access_token}`,
             'X-Restli-Protocol-Version': '2.0.0',
@@ -93,7 +93,7 @@ serve(async (req) => {
 
         if (!meResponse.ok) {
           const errorData = await meResponse.text();
-          console.error('LinkedIn /me endpoint error:', errorData);
+          console.error('LinkedIn /userinfo endpoint error:', errorData);
           throw new Error('LinkedIn access token validation failed. Please check your connection in settings.');
         }
 
@@ -112,7 +112,7 @@ serve(async (req) => {
           body: JSON.stringify({
             recipients: [`urn:li:person:${profileId}`],
             message: {
-              subject: "New Message",
+              subject: "",
               body: message
             }
           }),
