@@ -5,10 +5,11 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const formSchema = z.object({
   instagram_app_id: z.string().min(1, "Instagram App ID ist erforderlich"),
@@ -46,7 +47,6 @@ export function InstagramIntegration() {
       await updateSettings("instagram_app_id", appId);
       await updateSettings("instagram_app_secret", appSecret);
 
-      // Definiere die benötigten Berechtigungen
       const scope = [
         'instagram_basic',
         'instagram_content_publish',
@@ -57,11 +57,9 @@ export function InstagramIntegration() {
         'business_management'
       ].join(',');
 
-      // Generiere einen zufälligen State-Parameter für die Sicherheit
       const state = crypto.randomUUID();
       localStorage.setItem('instagram_oauth_state', state);
 
-      // Erstelle die OAuth URL mit URLSearchParams
       const params = new URLSearchParams({
         client_id: appId,
         redirect_uri: redirectUri,
@@ -70,7 +68,6 @@ export function InstagramIntegration() {
         state: state
       });
 
-      // Leite zur Instagram-Autorisierungsseite weiter
       window.location.href = `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`;
     } catch (error) {
       console.error('Error connecting to Instagram:', error);
@@ -87,46 +84,93 @@ export function InstagramIntegration() {
       <h3 className="text-lg font-medium">Instagram Integration 📸</h3>
       
       <Alert>
+        <AlertTitle>Einrichtungsanleitung</AlertTitle>
         <AlertDescription>
-          <div className="space-y-4">
-            <div>
-              Für die Instagram-Integration benötigen Sie:
-              <ul className="list-disc pl-4 mt-2">
-                <li>Einen Meta Business Account</li>
-                <li>Einen Instagram Professional Account</li>
-                <li>Eine Meta Developer App mit den richtigen Berechtigungen</li>
-              </ul>
-            </div>
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="step1">
+              <AccordionTrigger>1. Meta Business Account einrichten</AccordionTrigger>
+              <AccordionContent>
+                <ol className="list-decimal pl-4 space-y-2">
+                  <li>Gehen Sie zu <a href="https://business.facebook.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">business.facebook.com</a></li>
+                  <li>Erstellen Sie einen Business Account falls noch nicht vorhanden</li>
+                  <li>Fügen Sie Ihre Instagram Professional Account hinzu</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
 
-            <div className="space-y-2">
-              <p className="font-medium">Wichtige URIs für die Meta App-Einstellungen:</p>
-              <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
-                <div>
-                  <p className="font-medium">OAuth Redirect URI:</p>
-                  <code className="block mt-1">{redirectUri}</code>
-                </div>
-                <div>
-                  <p className="font-medium">Deauthorize Callback URL:</p>
-                  <code className="block mt-1">{`${window.location.origin}/auth/deauthorize/instagram`}</code>
-                </div>
-                <div>
-                  <p className="font-medium">Data Deletion Request URL:</p>
-                  <code className="block mt-1">{`${window.location.origin}/auth/data-deletion/instagram`}</code>
-                </div>
-              </div>
-            </div>
+            <AccordionItem value="step2">
+              <AccordionTrigger>2. Meta Developer App erstellen</AccordionTrigger>
+              <AccordionContent>
+                <ol className="list-decimal pl-4 space-y-2">
+                  <li>Gehen Sie zu <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">developers.facebook.com/apps</a></li>
+                  <li>Klicken Sie auf "App erstellen"</li>
+                  <li>Wählen Sie "Business" als App-Typ</li>
+                  <li>Füllen Sie die erforderlichen Details aus</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
 
-            <div>
-              <a 
-                href="https://developers.facebook.com/apps/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary flex items-center hover:underline"
-              >
-                Zur Meta Developers Console
-                <ExternalLink className="ml-1 h-4 w-4" />
-              </a>
-            </div>
+            <AccordionItem value="step3">
+              <AccordionTrigger>3. App konfigurieren</AccordionTrigger>
+              <AccordionContent>
+                <ol className="list-decimal pl-4 space-y-2">
+                  <li>Fügen Sie das Produkt "Facebook Login" hinzu</li>
+                  <li>Unter "Facebook Login" > "Einstellungen":</li>
+                  <li className="ml-4">Aktivieren Sie "Client OAuth Login"</li>
+                  <li className="ml-4">Aktivieren Sie "Web OAuth Login"</li>
+                  <li className="ml-4">Fügen Sie diese URIs hinzu:</li>
+                  <div className="bg-muted p-3 rounded-md space-y-2 text-sm mt-2">
+                    <div>
+                      <p className="font-medium">OAuth Redirect URI:</p>
+                      <code className="block mt-1">{redirectUri}</code>
+                    </div>
+                    <div>
+                      <p className="font-medium">Deauthorize Callback URL:</p>
+                      <code className="block mt-1">{`${window.location.origin}/auth/deauthorize/instagram`}</code>
+                    </div>
+                    <div>
+                      <p className="font-medium">Data Deletion Request URL:</p>
+                      <code className="block mt-1">{`${window.location.origin}/auth/data-deletion/instagram`}</code>
+                    </div>
+                  </div>
+                  <li>Unter "App-Einstellungen" > "Grundlegendes":</li>
+                  <li className="ml-4">App-ID und App-Geheimnis kopieren</li>
+                  <li className="ml-4">App-Domäne hinzufügen: <code>{window.location.host}</code></li>
+                  <li className="ml-4">Website-URL hinzufügen: <code>{window.location.origin}</code></li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="step4">
+              <AccordionTrigger>4. Berechtigungen konfigurieren</AccordionTrigger>
+              <AccordionContent>
+                <ol className="list-decimal pl-4 space-y-2">
+                  <li>Unter "App-Überprüfung" > "Berechtigungen und Funktionen":</li>
+                  <li>Folgende Berechtigungen hinzufügen:</li>
+                  <ul className="list-disc ml-4 mt-2">
+                    <li>instagram_basic</li>
+                    <li>instagram_content_publish</li>
+                    <li>instagram_manage_comments</li>
+                    <li>instagram_manage_insights</li>
+                    <li>pages_show_list</li>
+                    <li>pages_read_engagement</li>
+                    <li>business_management</li>
+                  </ul>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
+          <div className="mt-4">
+            <a 
+              href="https://developers.facebook.com/apps/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-primary flex items-center hover:underline"
+            >
+              Zur Meta Developers Console
+              <ExternalLink className="ml-1 h-4 w-4" />
+            </a>
           </div>
         </AlertDescription>
       </Alert>
