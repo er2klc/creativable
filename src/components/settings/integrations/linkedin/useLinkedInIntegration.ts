@@ -119,7 +119,7 @@ export function useLinkedInIntegration() {
         "r_emailaddress",
         "r_liteprofile",
         "r_basicprofile",
-        "w_member",
+        "w_member_social",
         "rw_organization_admin"
       ].join(" ");
       
