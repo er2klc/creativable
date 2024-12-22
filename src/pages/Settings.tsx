@@ -46,7 +46,7 @@ export default function Settings() {
         </TabsContent>
 
         <TabsContent value="integrations" className="space-y-4">
-          <IntegrationSettings settings={settings} />
+          <IntegrationSettings />
         </TabsContent>
       </Tabs>
     </div>

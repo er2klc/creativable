@@ -1,5 +1,4 @@
 import React from "react";
-import { useSession } from "@supabase/auth-helpers-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -8,6 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/use-settings";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   openai_api_key: z.string().min(1, "OpenAI API-Key ist erforderlich"),
@@ -15,7 +15,6 @@ const formSchema = z.object({
 });
 
 export function IntegrationSettings() {
-  const session = useSession();
   const { settings, updateSettings } = useSettings();
 
   const form = useForm<z.infer<typeof formSchema>>({

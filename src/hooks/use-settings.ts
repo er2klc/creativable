@@ -22,24 +22,23 @@ export function useSettings() {
         .from("settings")
         .select("*")
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle();
 
-      if (fetchError) {
-        if (fetchError.code === 'PGRST116') {
-          // No settings found, create new settings
-          const { data: newSettings, error: createError } = await supabase
-            .from("settings")
-            .insert({
-              user_id: session.user.id,
-              language: 'de'
-            })
-            .select()
-            .single();
+      if (fetchError) throw fetchError;
 
-          if (createError) throw createError;
-          return newSettings as Settings;
-        }
-        throw fetchError;
+      if (!existingSettings) {
+        // Create new settings if none exist
+        const { data: newSettings, error: createError } = await supabase
+          .from("settings")
+          .insert({
+            user_id: session.user.id,
+            language: 'de'
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        return newSettings as Settings;
       }
 
       return existingSettings as Settings;
@@ -53,25 +52,15 @@ export function useSettings() {
       return false;
     }
 
-    if (!settings?.id) {
-      console.error("No settings record found");
-      return false;
-    }
-
     try {
       console.log("Updating settings:", { field, value });
       
-      // Prepare update data while preserving existing fields
-      const updateData = {
-        ...settings,
-        [field]: value,
-        updated_at: new Date().toISOString()
-      };
-
       const { error } = await supabase
         .from("settings")
-        .update(updateData)
-        .eq('id', settings.id)
+        .update({
+          [field]: value,
+          updated_at: new Date().toISOString()
+        })
         .eq('user_id', session.user.id);
 
       if (error) throw error;
