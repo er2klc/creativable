@@ -12,6 +12,7 @@ import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { LayoutList, Kanban } from "lucide-react";
+import { useSettings } from "@/hooks/use-settings";
 
 const Leads = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -21,6 +22,7 @@ const Leads = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [showSendMessage, setShowSendMessage] = useState(false);
+  const { settings } = useSettings();
 
   useEffect(() => {
     if (searchParams.get("action") === "send-message") {
