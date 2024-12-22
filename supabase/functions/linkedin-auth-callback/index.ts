@@ -13,11 +13,44 @@ serve(async (req) => {
 
   try {
     const { code, redirect_uri } = await req.json();
-    const clientId = Deno.env.get('LINKEDIN_CLIENT_ID');
-    const clientSecret = Deno.env.get('LINKEDIN_CLIENT_SECRET');
+    
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Get user ID from authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (authError || !user) {
+      throw new Error('Invalid authorization token');
+    }
+
+    // Get LinkedIn credentials from platform_auth_status
+    const { data: platformAuth, error: credentialsError } = await supabaseClient
+      .from('platform_auth_status')
+      .select('auth_token, refresh_token')
+      .eq('platform', 'linkedin')
+      .eq('user_id', user.id)
+      .single();
+
+    if (credentialsError || !platformAuth) {
+      throw new Error('LinkedIn credentials not found. Please save your LinkedIn Client ID and Secret first.');
+    }
+
+    const clientId = platformAuth.auth_token;
+    const clientSecret = platformAuth.refresh_token;
 
     if (!clientId || !clientSecret) {
-      throw new Error('LinkedIn credentials not configured');
+      throw new Error('LinkedIn credentials not configured. Please check your LinkedIn integration settings.');
     }
 
     console.log('Exchanging code for access token...');
@@ -41,7 +74,7 @@ serve(async (req) => {
 
     if (!tokenResponse.ok) {
       console.error('Token exchange failed:', tokenData);
-      throw new Error('Failed to exchange code for token');
+      throw new Error('Failed to exchange code for token: ' + tokenData.error_description || 'Unknown error');
     }
 
     console.log('Successfully obtained access token');
@@ -62,34 +95,15 @@ serve(async (req) => {
 
     console.log('Successfully fetched user profile');
 
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Get user ID from authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
-
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-
-    if (authError || !user) {
-      throw new Error('Invalid authorization token');
-    }
-
     // Update platform_auth_status
     const { error: updateError } = await supabaseClient
       .from('platform_auth_status')
       .upsert({
         user_id: user.id,
         platform: 'linkedin',
-        auth_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token,
+        auth_token: clientId, // Keep the client ID
+        refresh_token: clientSecret, // Keep the client secret
+        access_token: tokenData.access_token, // Store the OAuth access token
         expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
         is_connected: true,
         updated_at: new Date().toISOString()
@@ -132,7 +146,12 @@ serve(async (req) => {
   } catch (error) {
     console.error('LinkedIn callback error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.message.includes('LinkedIn credentials') ? 
+          'Bitte speichern Sie zuerst Ihre LinkedIn Client ID und Client Secret in den Integrationseinstellungen.' : 
+          'Ein unerwarteter Fehler ist aufgetreten.'
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
