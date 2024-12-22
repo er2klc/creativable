@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Key, Copy, AlertCircle } from "lucide-react";
+import { Key, Copy, AlertCircle, Unlink } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LinkedInCredentialsFormProps {
@@ -13,8 +13,10 @@ interface LinkedInCredentialsFormProps {
   onClientSecretChange: (value: string) => void;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onConnect: () => void;
+  onDisconnect: () => void;
   onCopyRedirectUri: () => void;
   error?: string;
+  isConnected: boolean;
 }
 
 export function LinkedInCredentialsForm({
@@ -25,8 +27,10 @@ export function LinkedInCredentialsForm({
   onClientSecretChange,
   onSubmit,
   onConnect,
+  onDisconnect,
   onCopyRedirectUri,
   error,
+  isConnected,
 }: LinkedInCredentialsFormProps) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -91,14 +95,26 @@ export function LinkedInCredentialsForm({
         <Button type="submit" className="flex-1">
           Zugangsdaten Speichern
         </Button>
-        <Button 
-          type="button" 
-          onClick={onConnect} 
-          className="flex-1"
-          disabled={!clientId || !clientSecret}
-        >
-          Mit LinkedIn verbinden
-        </Button>
+        {isConnected ? (
+          <Button 
+            type="button"
+            variant="destructive"
+            onClick={onDisconnect}
+            className="flex items-center gap-2"
+          >
+            <Unlink className="h-4 w-4" />
+            Verbindung trennen
+          </Button>
+        ) : (
+          <Button 
+            type="button" 
+            onClick={onConnect} 
+            className="flex-1"
+            disabled={!clientId || !clientSecret}
+          >
+            Mit LinkedIn verbinden
+          </Button>
+        )}
       </div>
     </form>
   );

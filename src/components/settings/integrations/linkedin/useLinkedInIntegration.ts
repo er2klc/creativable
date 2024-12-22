@@ -130,6 +130,40 @@ export function useLinkedInIntegration() {
     }
   };
 
+  const disconnectLinkedIn = async () => {
+    try {
+      console.log("Disconnecting LinkedIn...");
+      
+      // Update platform_auth_status
+      const { error: statusError } = await supabase
+        .from('platform_auth_status')
+        .update({
+          is_connected: false,
+          access_token: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('platform', 'linkedin');
+
+      if (statusError) throw statusError;
+
+      // Update settings
+      await updateSettings('linkedin_connected', 'false');
+      await updateSettings('linkedin_auth_token', null);
+
+      toast({
+        title: "Erfolg",
+        description: "LinkedIn wurde erfolgreich getrennt",
+      });
+    } catch (error) {
+      console.error("Error disconnecting LinkedIn:", error);
+      toast({
+        title: "Fehler",
+        description: "LinkedIn konnte nicht getrennt werden",
+        variant: "destructive",
+      });
+    }
+  };
+
   const copyRedirectUri = () => {
     navigator.clipboard.writeText(redirectUri);
     toast({
@@ -148,6 +182,7 @@ export function useLinkedInIntegration() {
     error,
     handleUpdateCredentials,
     connectLinkedIn,
+    disconnectLinkedIn,
     copyRedirectUri,
   };
 }

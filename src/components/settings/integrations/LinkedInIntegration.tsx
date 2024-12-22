@@ -24,6 +24,7 @@ export function LinkedInIntegration() {
     error,
     handleUpdateCredentials,
     connectLinkedIn,
+    disconnectLinkedIn,
     copyRedirectUri,
   } = useLinkedInIntegration();
 
@@ -60,8 +61,10 @@ export function LinkedInIntegration() {
               onClientSecretChange={setClientSecret}
               onSubmit={handleUpdateCredentials}
               onConnect={connectLinkedIn}
+              onDisconnect={disconnectLinkedIn}
               onCopyRedirectUri={copyRedirectUri}
               error={error}
+              isConnected={isConnected}
             />
           </DialogContent>
         </Dialog>
