@@ -18,20 +18,41 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { platform, message, leadId, userId } = await req.json();
-    console.log('Received request:', { platform, leadId, userId });
+    // Get auth header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    // Get user from auth header
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (userError || !user) {
+      console.error('User auth error:', userError);
+      throw new Error('Invalid authorization token');
+    }
+
+    const { platform, message, leadId } = await req.json();
+    console.log('Received request:', { platform, leadId, userId: user.id });
 
     // Get auth status for the platform
     const { data: authStatus, error: authError } = await supabaseClient
       .from('platform_auth_status')
       .select('*')
-      .eq('user_id', userId)
-      .eq('platform', platform)
+      .eq('user_id', user.id)
+      .eq('platform', platform.toLowerCase())
       .single();
 
-    if (authError || !authStatus?.access_token) {
+    if (authError) {
       console.error('Auth status error:', authError);
-      throw new Error(`No valid authentication found for ${platform}`);
+      throw new Error(`Error fetching authentication for ${platform}`);
+    }
+
+    if (!authStatus?.access_token) {
+      console.error('No access token found for platform:', platform);
+      throw new Error(`Please connect your ${platform} account in the settings first`);
     }
 
     // Get lead details
@@ -46,38 +67,29 @@ serve(async (req) => {
       throw new Error('Lead not found or missing social media username');
     }
 
-    if (platform === 'LinkedIn') {
-      // Extract member ID from username or profile URL
-      const memberId = lead.social_media_username.split('/').pop()?.split('?')[0];
-      if (!memberId) {
+    if (platform.toLowerCase() === 'linkedin') {
+      // Extract member URN from username or profile URL
+      const profilePath = lead.social_media_username.split('/').pop()?.split('?')[0];
+      if (!profilePath) {
         throw new Error('Invalid LinkedIn profile URL or username');
       }
 
-      console.log('Sending LinkedIn message to member:', memberId);
+      console.log('Sending LinkedIn message to profile:', profilePath);
       
-      // Use LinkedIn's Messaging API v2
-      const messageResponse = await fetch(`https://api.linkedin.com/v2/conversations`, {
+      // Use LinkedIn's REST API for messaging
+      const messageResponse = await fetch('https://api.linkedin.com/rest/conversations', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
           'Content-Type': 'application/json',
-          'X-Restli-Protocol-Version': '2.0.0',
           'LinkedIn-Version': '202304',
+          'X-Restli-Protocol-Version': '2.0.0',
         },
         body: JSON.stringify({
-          recipients: [`urn:li:person:${memberId}`],
-          messageEvent: {
-            eventCreate: {
-              value: {
-                'com.linkedin.voyager.messaging.create.MessageCreate': {
-                  attributedBody: {
-                    text: message,
-                    attributes: []
-                  },
-                  attachments: []
-                }
-              }
-            }
+          recipients: [`urn:li:person:${profilePath}`],
+          message: {
+            subject: "",
+            body: message,
           }
         }),
       });
@@ -88,8 +100,7 @@ serve(async (req) => {
         throw new Error(`Failed to send LinkedIn message: ${errorData}`);
       }
 
-      const responseData = await messageResponse.json();
-      console.log('LinkedIn API response:', responseData);
+      console.log('LinkedIn message sent successfully');
     }
 
     // Save message to database
@@ -97,7 +108,7 @@ serve(async (req) => {
       .from('messages')
       .insert({
         lead_id: leadId,
-        user_id: userId,
+        user_id: user.id,
         platform,
         content: message,
       });
