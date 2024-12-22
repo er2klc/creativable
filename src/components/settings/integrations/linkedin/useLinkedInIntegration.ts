@@ -110,17 +110,14 @@ export function useLinkedInIntegration() {
         redirectUri 
       });
 
-      // Updated scopes to only include currently supported LinkedIn API permissions
+      // Basic scopes that are definitely supported by LinkedIn
       const scope = [
         "openid",
         "profile",
         "email",
-        "w_member_social",
-        "r_emailaddress",
         "r_liteprofile",
         "r_basicprofile",
-        "w_member_social",
-        "rw_organization_admin"
+        "w_member_social"
       ].join(" ");
       
       const state = Math.random().toString(36).substring(7);
