@@ -66,6 +66,7 @@ serve(async (req) => {
       const profileUrl = lead.social_media_username;
       console.log('Processing LinkedIn profile URL:', profileUrl);
 
+      // Extract profile ID from URL
       let profileId;
       if (profileUrl.includes('linkedin.com/in/')) {
         profileId = profileUrl.split('linkedin.com/in/')[1].split('/')[0].split('?')[0];
@@ -79,39 +80,83 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // Using LinkedIn's Posts API since we have w_member_social scope
-      const postResponse = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+      // First get the member URN using the /me endpoint
+      const meResponse = await fetch('https://api.linkedin.com/v2/me', {
+        headers: {
+          'Authorization': `Bearer ${authStatus.access_token}`,
+          'LinkedIn-Version': '202304'
+        }
+      });
+
+      if (!meResponse.ok) {
+        const errorData = await meResponse.text();
+        console.error('LinkedIn /me API error:', errorData);
+        throw new Error(`Failed to get LinkedIn profile: ${errorData}`);
+      }
+
+      const meData = await meResponse.json();
+      console.log('LinkedIn profile data:', meData);
+
+      // Create a message using the Messaging API
+      const messageResponse = await fetch('https://api.linkedin.com/v2/messages', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
           'Content-Type': 'application/json',
-          'X-Restli-Protocol-Version': '2.0.0',
           'LinkedIn-Version': '202304'
         },
         body: JSON.stringify({
-          author: `urn:li:person:${profileId}`,
-          lifecycleState: "PUBLISHED",
-          specificContent: {
-            "com.linkedin.ugc.ShareContent": {
-              shareCommentary: {
-                text: message
-              },
-              shareMediaCategory: "NONE"
-            }
-          },
-          visibility: {
-            "com.linkedin.ugc.MemberNetworkVisibility": "CONNECTIONS"
-          }
+          recipients: [{
+            recipientUrn: `urn:li:person:${profileId}`,
+            recipientType: "PERSON"
+          }],
+          messageText: message,
+          messageSubject: "Neue Nachricht",
+          messageType: "MEMBER_TO_MEMBER"
         }),
       });
 
-      if (!postResponse.ok) {
-        const errorData = await postResponse.text();
-        console.error('LinkedIn API error:', errorData);
-        throw new Error(`Failed to create LinkedIn post: ${errorData}`);
-      }
+      if (!messageResponse.ok) {
+        const errorData = await messageResponse.text();
+        console.error('LinkedIn messaging API error:', errorData);
+        
+        // If messaging fails, try to create a post instead
+        console.log('Attempting to create a post instead...');
+        
+        const postResponse = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authStatus.access_token}`,
+            'Content-Type': 'application/json',
+            'LinkedIn-Version': '202304'
+          },
+          body: JSON.stringify({
+            author: `urn:li:person:${meData.id}`,
+            lifecycleState: "PUBLISHED",
+            specificContent: {
+              "com.linkedin.ugc.ShareContent": {
+                shareCommentary: {
+                  text: message
+                },
+                shareMediaCategory: "NONE"
+              }
+            },
+            visibility: {
+              "com.linkedin.ugc.MemberNetworkVisibility": "CONNECTIONS"
+            }
+          }),
+        });
 
-      console.log('LinkedIn post created successfully');
+        if (!postResponse.ok) {
+          const postErrorData = await postResponse.text();
+          console.error('LinkedIn post API error:', postErrorData);
+          throw new Error(`Failed to send LinkedIn message and create post: ${errorData}`);
+        }
+
+        console.log('LinkedIn post created successfully as fallback');
+      } else {
+        console.log('LinkedIn message sent successfully');
+      }
     }
 
     // Save message to database
