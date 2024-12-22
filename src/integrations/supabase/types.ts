@@ -17,6 +17,7 @@ export type Database = {
           last_action: string | null
           last_action_date: string | null
           name: string
+          notes: string | null
           phase: string
           platform: string
           updated_at: string | null
@@ -29,6 +30,7 @@ export type Database = {
           last_action?: string | null
           last_action_date?: string | null
           name: string
+          notes?: string | null
           phase?: string
           platform: string
           updated_at?: string | null
@@ -41,6 +43,7 @@ export type Database = {
           last_action?: string | null
           last_action_date?: string | null
           name?: string
+          notes?: string | null
           phase?: string
           platform?: string
           updated_at?: string | null
