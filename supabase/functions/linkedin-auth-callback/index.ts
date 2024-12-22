@@ -12,22 +12,12 @@ serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url);
-    const code = url.searchParams.get('code');
-    const state = url.searchParams.get('state');
-    const error = url.searchParams.get('error');
-    const error_description = url.searchParams.get('error_description');
+    const { code, redirectUri, action, accessToken, clientId: providedClientId, clientSecret: providedClientSecret } = await req.json();
 
-    console.log('Received callback with params:', { code, state, error, error_description });
-
-    if (error || error_description) {
-      console.error('LinkedIn OAuth error:', { error, error_description });
-      throw new Error(`LinkedIn OAuth error: ${error_description || error}`);
-    }
-
-    if (!code) {
-      console.error('No code parameter received');
-      throw new Error('No authorization code received');
+    // Get the user's authorization
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
     }
 
     const supabaseClient = createClient(
@@ -35,23 +25,36 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Validate authorization
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      console.error('No authorization header present');
-      throw new Error('No authorization header');
-    }
-
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
       authHeader.replace('Bearer ', '')
     );
 
     if (authError || !user) {
-      console.error('User auth error:', authError);
-      throw new Error('Invalid authorization token');
+      throw new Error('Invalid authorization');
     }
 
-    console.log('Getting LinkedIn credentials...');
+    // If this is a token revocation request
+    if (action === 'revoke') {
+      const response = await fetch('https://www.linkedin.com/oauth/v2/revoke', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          token: accessToken,
+          client_id: providedClientId,
+          client_secret: providedClientSecret,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to revoke token');
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Get LinkedIn credentials from platform_auth_status
     const { data: platformAuth, error: credentialsError } = await supabaseClient
@@ -62,15 +65,8 @@ serve(async (req) => {
       .single();
 
     if (credentialsError || !platformAuth) {
-      console.error('LinkedIn credentials error:', credentialsError);
-      throw new Error('LinkedIn credentials not found. Please save your LinkedIn Client ID and Secret first.');
+      throw new Error('LinkedIn credentials not found');
     }
-
-    const clientId = platformAuth.auth_token;
-    const clientSecret = platformAuth.refresh_token;
-    const redirectUri = `${url.origin}/auth/callback/linkedin`;
-
-    console.log('Exchanging code for token...');
 
     // Exchange code for token
     const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
@@ -81,92 +77,44 @@ serve(async (req) => {
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        client_id: clientId,
-        client_secret: clientSecret,
         redirect_uri: redirectUri,
+        client_id: platformAuth.auth_token,
+        client_secret: platformAuth.refresh_token,
       }),
     });
 
     if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
-      console.error('Token exchange failed. Status:', tokenResponse.status, 'Response:', errorText);
-      let errorData;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = { error_description: errorText };
-      }
-      throw new Error(`Failed to exchange code for token: ${errorData.error_description || 'Unknown error'}`);
+      const errorData = await tokenResponse.json();
+      throw new Error(errorData.error_description || 'Failed to exchange code for token');
     }
 
     const tokenData = await tokenResponse.json();
-    console.log('Successfully obtained access token');
 
-    // Get user profile using OpenID Connect userinfo endpoint
-    const profileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
-      headers: {
-        'Authorization': `Bearer ${tokenData.access_token}`,
-      },
-    });
-
-    if (!profileResponse.ok) {
-      const errorText = await profileResponse.text();
-      console.error('Profile fetch failed. Status:', profileResponse.status, 'Response:', errorText);
-      let errorData;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = { error: errorText };
-      }
-      throw new Error(`Failed to fetch profile: ${errorData.error || 'Unknown error'}`);
-    }
-
-    const profileData = await profileResponse.json();
-    console.log('Successfully fetched user profile');
-
-    // Update platform_auth_status
+    // Update platform_auth_status with the new access token
     const { error: updateError } = await supabaseClient
       .from('platform_auth_status')
-      .upsert({
-        user_id: user.id,
-        platform: 'linkedin',
-        auth_token: clientId,
-        refresh_token: clientSecret,
+      .update({
         access_token: tokenData.access_token,
-        expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
         is_connected: true,
-        updated_at: new Date().toISOString()
-      });
+        expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', user.id)
+      .eq('platform', 'linkedin');
 
     if (updateError) {
-      console.error('Error updating platform auth status:', updateError);
-      throw new Error('Failed to update connection status');
+      throw updateError;
     }
 
-    // Update settings table
-    const { error: settingsError } = await supabaseClient
-      .from('settings')
-      .update({ linkedin_connected: true })
-      .eq('user_id', user.id);
-
-    if (settingsError) {
-      console.error('Error updating settings:', settingsError);
-      // Don't throw here as the main connection is already established
-    }
-
-    return new Response(
-      JSON.stringify({ success: true }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
-    );
+    return new Response(JSON.stringify(tokenData), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
   } catch (error) {
     console.error('Error in LinkedIn callback:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: error.message || 'Internal server error',
         details: error.stack
       }),
       { 

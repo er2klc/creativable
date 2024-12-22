@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { exchangeCodeForToken } from "@/components/settings/integrations/linkedin/api/linkedInApi";
-import { updatePlatformAuthStatus } from "@/components/settings/integrations/linkedin/db/linkedInDb";
 
 export default function LinkedInCallback() {
   const navigate = useNavigate();
@@ -38,17 +37,16 @@ export default function LinkedInCallback() {
           throw new Error("Keine aktive Sitzung gefunden");
         }
 
+        console.log("Exchanging code for token...");
         const tokenData = await exchangeCodeForToken(code, `${window.location.origin}/auth/callback/linkedin`);
+        
         if (!tokenData || !tokenData.access_token) {
           throw new Error("Keine gültigen Zugangsdaten von LinkedIn erhalten");
         }
 
-        await updatePlatformAuthStatus(session.user.id, {
-          is_connected: true,
-          access_token: tokenData.access_token,
-          expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
-        });
+        console.log("Successfully received token data");
 
+        // Update settings
         const { error: settingsError } = await supabase
           .from('settings')
           .update({ 
@@ -58,7 +56,10 @@ export default function LinkedInCallback() {
           })
           .eq('user_id', session.user.id);
 
-        if (settingsError) throw settingsError;
+        if (settingsError) {
+          console.error("Error updating settings:", settingsError);
+          throw settingsError;
+        }
 
         toast({
           title: "Erfolg!",
