@@ -9,7 +9,118 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      leads: {
+        Row: {
+          created_at: string | null
+          id: string
+          industry: string
+          last_action: string | null
+          last_action_date: string | null
+          name: string
+          phase: string
+          platform: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          industry: string
+          last_action?: string | null
+          last_action_date?: string | null
+          name: string
+          phase?: string
+          platform: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          industry?: string
+          last_action?: string | null
+          last_action_date?: string | null
+          name?: string
+          phase?: string
+          platform?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          id: string
+          lead_id: string | null
+          platform: string
+          sent_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          id?: string
+          lead_id?: string | null
+          platform: string
+          sent_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          id?: string
+          lead_id?: string | null
+          platform?: string
+          sent_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          due_date: string | null
+          id: string
+          lead_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          lead_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          lead_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
