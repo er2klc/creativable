@@ -18,22 +18,28 @@ export function useSettings() {
 
       console.log("Fetching settings for user:", session.user.id);
       
-      const { data: existingSettings, error: fetchError } = await supabase
+      const { data: settings, error } = await supabase
         .from("settings")
         .select("*")
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      if (fetchError) throw fetchError;
+      if (error) throw error;
 
-      if (!existingSettings) {
-        // Create new settings if none exist
+      if (!settings) {
+        // Create initial settings using upsert to handle potential race conditions
         const { data: newSettings, error: createError } = await supabase
           .from("settings")
-          .upsert({
-            user_id: session.user.id,
-            language: 'de'
-          })
+          .upsert(
+            {
+              user_id: session.user.id,
+              language: 'de'
+            },
+            { 
+              onConflict: 'user_id',
+              ignoreDuplicates: false 
+            }
+          )
           .select()
           .single();
 
@@ -41,7 +47,7 @@ export function useSettings() {
         return newSettings as Settings;
       }
 
-      return existingSettings as Settings;
+      return settings as Settings;
     },
     enabled: !!session?.user?.id,
   });
@@ -57,13 +63,17 @@ export function useSettings() {
       
       const { error } = await supabase
         .from("settings")
-        .upsert({
-          user_id: session.user.id,
-          [field]: value,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        });
+        .upsert(
+          {
+            user_id: session.user.id,
+            [field]: value,
+            updated_at: new Date().toISOString()
+          },
+          { 
+            onConflict: 'user_id',
+            ignoreDuplicates: false 
+          }
+        );
 
       if (error) throw error;
 
