@@ -110,11 +110,14 @@ export function useLinkedInIntegration() {
         redirectUri 
       });
 
-      // Using the new required scopes
+      // Updated scopes to include all required permissions
       const scope = [
         "openid",
         "profile",
         "email",
+        "w_member_social",
+        "r_emailaddress",
+        "r_liteprofile",
         "w_member_social"
       ].join(" ");
       
