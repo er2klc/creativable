@@ -54,7 +54,7 @@ export default function LinkedInCallback() {
         const { error: settingsError } = await supabase
           .from('settings')
           .update({ 
-            linkedin_connected: 'true',
+            linkedin_connected: true,
             linkedin_auth_token: tokenData.access_token,
             updated_at: new Date().toISOString()
           })
