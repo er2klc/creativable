@@ -122,7 +122,7 @@ serve(async (req) => {
               },
               attachments: [],
             },
-            com.linkedin.voyager.messaging.create.MessageCreate: {
+            "com.linkedin.voyager.messaging.create.MessageCreate": {
               attributedBody: {
                 text: message,
                 attributes: [],
