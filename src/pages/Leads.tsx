@@ -53,8 +53,8 @@ const LeadsPage = () => {
   });
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Leads</h1>
         <div className="flex items-center gap-4">
           <Button
@@ -78,7 +78,7 @@ const LeadsPage = () => {
         </div>
       </div>
 
-      <div className="flex gap-4 mb-8">
+      <div className="flex gap-4">
         <LeadSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
         <LeadFilters
           selectedPhase={selectedPhase}
