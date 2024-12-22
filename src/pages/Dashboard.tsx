@@ -8,10 +8,15 @@ import {
   Calendar, 
   BarChart, 
   Settings,
-  Menu
+  Menu,
+  Plus,
+  Send,
+  Search,
+  MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import {
   Sidebar,
@@ -58,6 +63,71 @@ const DashboardSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
+  );
+};
+
+const QuickActions = () => {
+  return (
+    <div className="flex gap-4 mb-8">
+      <Button className="flex items-center gap-2">
+        <Plus className="h-4 w-4" />
+        Neuer Lead
+      </Button>
+      <Button variant="outline" className="flex items-center gap-2">
+        <Send className="h-4 w-4" />
+        Nachricht senden
+      </Button>
+      <Button variant="outline" className="flex items-center gap-2">
+        <Calendar className="h-4 w-4" />
+        Kalender öffnen
+      </Button>
+    </div>
+  );
+};
+
+const PhaseProgress = () => {
+  return (
+    <Card className="mb-8">
+      <CardHeader>
+        <CardTitle className="text-lg font-medium">Lead-Phasen</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <div className="flex justify-between mb-1 text-sm">
+            <span>Erstkontakt</span>
+            <span>45%</span>
+          </div>
+          <Progress value={45} className="h-2" />
+        </div>
+        <div>
+          <div className="flex justify-between mb-1 text-sm">
+            <span>Follow-up</span>
+            <span>35%</span>
+          </div>
+          <Progress value={35} className="h-2" />
+        </div>
+        <div>
+          <div className="flex justify-between mb-1 text-sm">
+            <span>Abschluss</span>
+            <span>20%</span>
+          </div>
+          <Progress value={20} className="h-2" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const SearchBar = () => {
+  return (
+    <div className="relative mb-8">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <input
+        type="text"
+        placeholder="Lead suchen..."
+        className="w-full pl-10 pr-4 py-2 border rounded-md bg-background"
+      />
+    </div>
   );
 };
 
@@ -119,6 +189,10 @@ const Dashboard = () => {
               </div>
             </div>
 
+            <QuickActions />
+            <SearchBar />
+            <PhaseProgress />
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <Card>
                 <CardHeader className="pb-2">
@@ -176,6 +250,12 @@ const Dashboard = () => {
                   </p>
                 </CardContent>
               </Card>
+            </div>
+
+            <div className="fixed bottom-4 right-4">
+              <Button variant="outline" size="icon" className="rounded-full">
+                <MessageCircle className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </main>
