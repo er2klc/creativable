@@ -79,25 +79,7 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // First, get member URN using profile API
-      const profileResponse = await fetch(`https://api.linkedin.com/v2/people/(id:${profileId})`, {
-        headers: {
-          'Authorization': `Bearer ${authStatus.access_token}`,
-          'X-Restli-Protocol-Version': '2.0.0',
-        },
-      });
-
-      if (!profileResponse.ok) {
-        const errorData = await profileResponse.text();
-        console.error('LinkedIn profile API error:', errorData);
-        throw new Error(`Failed to fetch LinkedIn profile: ${errorData}`);
-      }
-
-      const profileData = await profileResponse.json();
-      const memberUrn = profileData.id;
-      console.log('Retrieved member URN:', memberUrn);
-
-      // Create a messaging conversation
+      // Create a messaging conversation directly with the profile ID
       const conversationResponse = await fetch('https://api.linkedin.com/v2/messaging/conversations', {
         method: 'POST',
         headers: {
@@ -106,7 +88,7 @@ serve(async (req) => {
           'X-Restli-Protocol-Version': '2.0.0',
         },
         body: JSON.stringify({
-          recipients: [memberUrn],
+          recipients: [`urn:li:person:${profileId}`],
           subject: "Let's connect",
         }),
       });
