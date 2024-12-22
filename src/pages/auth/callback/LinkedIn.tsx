@@ -27,6 +27,8 @@ export default function LinkedInCallback() {
 
       if (code) {
         try {
+          console.log("Processing LinkedIn callback with code:", code);
+          
           // Call Supabase Edge Function to handle OAuth token exchange
           const { data, error } = await supabase.functions.invoke("linkedin-auth-callback", {
             body: { code, redirect_uri: `${window.location.origin}/auth/callback/linkedin` }
