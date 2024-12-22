@@ -62,12 +62,23 @@ export function IntegrationSettings({ settings }: IntegrationSettingsProps) {
 
   const saveApiKey = async (key: string, value: string) => {
     try {
+      if (!settings?.id) {
+        console.error("No settings record found");
+        return;
+      }
+
+      // Prepare update data while preserving existing fields
+      const updateData = {
+        ...settings,
+        [key]: value,
+        updated_at: new Date().toISOString()
+      };
+
       const { error } = await supabase
         .from("settings")
-        .upsert({
-          user_id: session?.user?.id,
-          [key]: value,
-        });
+        .update(updateData)
+        .eq('id', settings.id)
+        .eq('user_id', session?.user?.id);
 
       if (error) throw error;
 
