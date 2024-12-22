@@ -9,7 +9,7 @@ export function useSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: settings, isLoading } = useQuery({
+  const { data: settings, isLoading, refetch: refetchSettings } = useQuery({
     queryKey: ["settings", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) {
@@ -101,5 +101,6 @@ export function useSettings() {
     settings,
     isLoading,
     updateSettings,
+    refetchSettings,
   };
 }
