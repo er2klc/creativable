@@ -8,6 +8,7 @@ export function useLinkedInIntegration() {
   const { toast } = useToast();
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
+  const [error, setError] = useState<string>();
   const redirectUri = `${window.location.origin}/auth/callback/linkedin`;
   const isConnected = settings?.linkedin_connected || false;
 
@@ -46,8 +47,10 @@ export function useLinkedInIntegration() {
 
   const handleUpdateCredentials = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(undefined);
     
     if (!clientId || !clientSecret) {
+      setError("Bitte füllen Sie alle Felder aus");
       toast({
         title: "Fehlende Eingaben",
         description: "Bitte füllen Sie alle Felder aus",
@@ -79,6 +82,7 @@ export function useLinkedInIntegration() {
       });
     } catch (error) {
       console.error('Error saving LinkedIn credentials:', error);
+      setError("LinkedIn Zugangsdaten konnten nicht gespeichert werden");
       toast({
         title: "Fehler",
         description: "LinkedIn Zugangsdaten konnten nicht gespeichert werden",
@@ -89,10 +93,13 @@ export function useLinkedInIntegration() {
 
   const connectLinkedIn = async () => {
     try {
-      if (!clientId) {
+      setError(undefined);
+      
+      if (!clientId || !clientSecret) {
+        setError("Bitte speichern Sie zuerst Ihre LinkedIn Zugangsdaten");
         toast({
           title: "Fehler",
-          description: "Bitte speichern Sie zuerst Ihre LinkedIn Client ID",
+          description: "Bitte speichern Sie zuerst Ihre LinkedIn Zugangsdaten",
           variant: "destructive",
         });
         return;
@@ -114,6 +121,7 @@ export function useLinkedInIntegration() {
       window.location.href = linkedInAuthUrl;
     } catch (error) {
       console.error("Error connecting to LinkedIn:", error);
+      setError("Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
       toast({
         title: "Fehler bei der LinkedIn-Verbindung",
         description: "Bitte versuchen Sie es später erneut",
@@ -137,6 +145,7 @@ export function useLinkedInIntegration() {
     setClientSecret,
     redirectUri,
     isConnected,
+    error,
     handleUpdateCredentials,
     connectLinkedIn,
     copyRedirectUri,

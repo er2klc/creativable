@@ -184,6 +184,7 @@ export type Database = {
       }
       platform_auth_status: {
         Row: {
+          access_token: string | null
           auth_token: string | null
           created_at: string | null
           expires_at: string | null
@@ -195,6 +196,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          access_token?: string | null
           auth_token?: string | null
           created_at?: string | null
           expires_at?: string | null
@@ -206,6 +208,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          access_token?: string | null
           auth_token?: string | null
           created_at?: string | null
           expires_at?: string | null

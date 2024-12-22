@@ -21,6 +21,7 @@ export function LinkedInIntegration() {
     setClientSecret,
     redirectUri,
     isConnected,
+    error,
     handleUpdateCredentials,
     connectLinkedIn,
     copyRedirectUri,
@@ -48,7 +49,7 @@ export function LinkedInIntegration() {
             <DialogHeader>
               <DialogTitle>LinkedIn Integration Einrichten</DialogTitle>
               <DialogDescription>
-                Geben Sie Ihre LinkedIn API Zugangsdaten ein:
+                Geben Sie Ihre LinkedIn API Zugangsdaten ein. Sie finden diese in Ihrer LinkedIn Developer Console unter "App Credentials".
               </DialogDescription>
             </DialogHeader>
             <LinkedInCredentialsForm
@@ -60,13 +61,14 @@ export function LinkedInIntegration() {
               onSubmit={handleUpdateCredentials}
               onConnect={connectLinkedIn}
               onCopyRedirectUri={copyRedirectUri}
+              error={error}
             />
           </DialogContent>
         </Dialog>
       </div>
       <p className="text-sm text-muted-foreground">
         Verbinden Sie Ihr LinkedIn-Konto um Leads automatisch zu kontaktieren und
-        Nachrichten zu versenden.
+        Nachrichten zu versenden. Sie benötigen eine LinkedIn Developer App mit OAuth 2.0 Konfiguration.
       </p>
     </Card>
   );

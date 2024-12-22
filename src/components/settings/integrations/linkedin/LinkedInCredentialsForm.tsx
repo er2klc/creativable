@@ -2,7 +2,8 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Key, Copy } from "lucide-react";
+import { Key, Copy, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LinkedInCredentialsFormProps {
   clientId: string;
@@ -13,6 +14,7 @@ interface LinkedInCredentialsFormProps {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onConnect: () => void;
   onCopyRedirectUri: () => void;
+  error?: string;
 }
 
 export function LinkedInCredentialsForm({
@@ -24,9 +26,17 @@ export function LinkedInCredentialsForm({
   onSubmit,
   onConnect,
   onCopyRedirectUri,
+  error,
 }: LinkedInCredentialsFormProps) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
       <div className="space-y-2">
         <Label htmlFor="linkedin_client_id">LinkedIn Client ID</Label>
         <div className="flex gap-2">
@@ -40,6 +50,7 @@ export function LinkedInCredentialsForm({
           />
         </div>
       </div>
+      
       <div className="space-y-2">
         <Label htmlFor="linkedin_client_secret">LinkedIn Client Secret</Label>
         <div className="flex gap-2">
@@ -54,6 +65,7 @@ export function LinkedInCredentialsForm({
           />
         </div>
       </div>
+      
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label>Redirect URI</Label>
@@ -74,11 +86,17 @@ export function LinkedInCredentialsForm({
           Wichtig: Fügen Sie diese exakte URI zu Ihrer LinkedIn App unter "OAuth 2.0 settings" → "Authorized redirect URLs" hinzu
         </p>
       </div>
+      
       <div className="flex gap-2">
         <Button type="submit" className="flex-1">
           Zugangsdaten Speichern
         </Button>
-        <Button type="button" onClick={onConnect} className="flex-1">
+        <Button 
+          type="button" 
+          onClick={onConnect} 
+          className="flex-1"
+          disabled={!clientId || !clientSecret}
+        >
           Mit LinkedIn verbinden
         </Button>
       </div>
