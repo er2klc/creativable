@@ -13,18 +13,43 @@ export function useSettings() {
     queryKey: ["settings", session?.user?.id],
     queryFn: async () => {
       console.log("Fetching settings for user:", session?.user?.id);
-      const { data, error } = await supabase
+      
+      // First, try to get existing settings
+      const { data: existingSettings, error: fetchError } = await supabase
         .from("settings")
         .select("*")
         .eq("user_id", session?.user?.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching settings:", error);
-        throw error;
+      if (fetchError) {
+        console.error("Error fetching settings:", fetchError);
+        throw fetchError;
       }
-      console.log("Fetched settings:", data);
-      return data as Settings | null;
+
+      if (existingSettings) {
+        console.log("Found existing settings:", existingSettings);
+        return existingSettings as Settings;
+      }
+
+      // If no settings exist, create a new settings record
+      const { data: newSettings, error: createError } = await supabase
+        .from("settings")
+        .insert({
+          user_id: session?.user?.id,
+          language: 'de'
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error("Error creating settings:", createError);
+        throw createError;
+      }
+
+      console.log("Created new settings:", newSettings);
+      return newSettings as Settings;
     },
     enabled: !!session?.user?.id,
   });
@@ -35,14 +60,21 @@ export function useSettings() {
       return false;
     }
 
+    if (!settings?.id) {
+      console.error("No settings record found");
+      return false;
+    }
+
     try {
       console.log("Updating settings:", { field, value });
       const { error } = await supabase
         .from("settings")
-        .upsert({
-          user_id: session.user.id,
+        .update({
           [field]: value,
-        });
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', settings.id)
+        .eq('user_id', session.user.id);
 
       if (error) {
         console.error("Error updating settings:", error);
