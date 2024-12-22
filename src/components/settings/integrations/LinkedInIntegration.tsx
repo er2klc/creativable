@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, Linkedin, Key } from "lucide-react";
+import { CheckCircle, XCircle, Linkedin, Key, Copy } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -125,6 +125,14 @@ export function LinkedInIntegration() {
     }
   };
 
+  const copyRedirectUri = () => {
+    navigator.clipboard.writeText(redirectUri);
+    toast({
+      title: "Kopiert!",
+      description: "Redirect URI wurde in die Zwischenablage kopiert",
+    });
+  };
+
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
@@ -179,12 +187,23 @@ export function LinkedInIntegration() {
                 </div>
               </div>
               <div className="space-y-2">
-                <h4 className="font-medium">Redirect URI</h4>
-                <code className="block p-2 bg-muted rounded-md text-sm">
+                <div className="flex items-center justify-between">
+                  <Label>Redirect URI</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={copyRedirectUri}
+                    className="h-8"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <code className="block p-2 bg-muted rounded-md text-sm break-all">
                   {redirectUri}
                 </code>
-                <p className="text-sm text-muted-foreground">
-                  Fügen Sie diese URI zu Ihrer LinkedIn App hinzu
+                <p className="text-sm text-muted-foreground mt-2">
+                  Wichtig: Fügen Sie diese exakte URI zu Ihrer LinkedIn App unter "OAuth 2.0 settings" → "Authorized redirect URLs" hinzu
                 </p>
               </div>
               <div className="flex gap-2">
