@@ -39,31 +39,45 @@ serve(async (req) => {
 
       console.log('Sending LinkedIn message to:', socialMediaUsername);
 
-      // Extract LinkedIn member ID from profile URL or handle
-      const memberId = socialMediaUsername.replace('https://www.linkedin.com/in/', '')
-        .replace(/\/$/, '')
-        .split('?')[0]; // Remove any query parameters
+      // Clean and format the LinkedIn member URN
+      let memberId = socialMediaUsername;
+      if (memberId.includes('linkedin.com/in/')) {
+        memberId = memberId.split('linkedin.com/in/')[1];
+      }
+      memberId = memberId.replace(/\/$/, '').split('?')[0];
+      const memberUrn = `urn:li:person:${memberId}`;
       
-      console.log('Using LinkedIn member ID:', memberId);
+      console.log('Using LinkedIn member URN:', memberUrn);
+
+      // First, verify the member exists
+      const profileResponse = await fetch(`https://api.linkedin.com/v2/people/${memberUrn}`, {
+        headers: {
+          'Authorization': `Bearer ${authStatus.access_token}`,
+          'LinkedIn-Version': '202304',
+        },
+      });
+
+      if (!profileResponse.ok) {
+        const errorData = await profileResponse.text();
+        console.error('LinkedIn profile lookup error:', errorData);
+        throw new Error(`Could not find LinkedIn profile: ${errorData}`);
+      }
 
       // Send message via LinkedIn API v2
-      const messageResponse = await fetch(`https://api.linkedin.com/v2/conversations`, {
+      const messageResponse = await fetch(`https://api.linkedin.com/v2/messages`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
           'Content-Type': 'application/json',
-          'X-Restli-Protocol-Version': '2.0.0',
           'LinkedIn-Version': '202304',
         },
         body: JSON.stringify({
-          recipients: [{
-            recipientIdentities: [{
-              identityType: "MEMBER",
-              identityValue: memberId
-            }]
-          }],
-          messageText: message,
-          messageSubject: "Neue Nachricht"
+          recipients: [memberUrn],
+          message: {
+            subject: "Neue Nachricht",
+            body: message
+          },
+          messageType: "MEMBER_TO_MEMBER"
         }),
       });
 
