@@ -110,10 +110,11 @@ export function useLinkedInIntegration() {
         redirectUri 
       });
 
-      // Essential scopes for messaging functionality
+      // Updated scopes for LinkedIn API v2
       const scope = [
-        "r_liteprofile",
-        "r_emailaddress",
+        "openid",
+        "profile",
+        "email",
         "w_member_social"
       ].join(" ");
       
