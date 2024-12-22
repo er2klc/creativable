@@ -79,20 +79,22 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // Create a messaging conversation with initial message using the correct API version
-      const conversationResponse = await fetch('https://api.linkedin.com/rest/messages', {
+      // Use LinkedIn's Marketing API for messaging
+      const conversationResponse = await fetch('https://api.linkedin.com/v2/conversations', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
           'Content-Type': 'application/json',
-          'LinkedIn-Version': '202304',
-          'X-Restli-Protocol-Version': '2.0.0'
+          'X-Restli-Protocol-Version': '2.0.0',
+          'LinkedIn-Version': '202304'
         },
         body: JSON.stringify({
-          "recipients": [`urn:li:person:${profileId}`],
-          "subject": "LinkedIn Connection",
-          "body": message,
-          "messageType": "MEMBER_TO_MEMBER"
+          recipients: [{
+            recipientUrn: `urn:li:person:${profileId}`,
+            recipientType: "PERSON"
+          }],
+          body: message,
+          messageType: "INMAIL"
         }),
       });
 
