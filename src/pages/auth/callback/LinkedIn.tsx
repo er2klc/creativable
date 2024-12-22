@@ -29,20 +29,24 @@ export default function LinkedInCallback() {
         try {
           console.log("Processing LinkedIn callback with code:", code);
           
+          // Get the session token for authorization
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            throw new Error("No active session found");
+          }
+
           // Call Supabase Edge Function to handle OAuth token exchange
           const { data, error } = await supabase.functions.invoke("linkedin-auth-callback", {
-            body: { code, redirect_uri: `${window.location.origin}/auth/callback/linkedin` }
+            body: { 
+              code, 
+              redirect_uri: `${window.location.origin}/auth/callback/linkedin` 
+            },
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
           });
 
           if (error) throw error;
-
-          // Update settings to mark LinkedIn as connected
-          const { error: updateError } = await supabase
-            .from("settings")
-            .update({ linkedin_connected: true })
-            .eq("user_id", (await supabase.auth.getUser()).data.user?.id);
-
-          if (updateError) throw updateError;
 
           toast({
             title: "Erfolg!",

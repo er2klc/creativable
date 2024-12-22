@@ -14,6 +14,9 @@ export function useLinkedInIntegration() {
   useEffect(() => {
     const loadSavedCredentials = async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
         const { data: platformAuth, error } = await supabase
           .from('platform_auth_status')
           .select('auth_token, refresh_token')
