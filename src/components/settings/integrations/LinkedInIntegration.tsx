@@ -22,18 +22,20 @@ export function LinkedInIntegration() {
 
   const connectLinkedIn = async () => {
     try {
-      // LinkedIn OAuth configuration
-      const clientId = "YOUR_LINKEDIN_CLIENT_ID"; // This should come from Supabase secrets
+      // Get LinkedIn client ID from Supabase secrets
+      const { data: { LINKEDIN_CLIENT_ID }, error: secretError } = await supabase.functions.invoke('get-secret', {
+        body: { secretName: 'LINKEDIN_CLIENT_ID' }
+      });
+
+      if (secretError) throw new Error('Could not get LinkedIn client ID');
+
       const scope = "r_liteprofile r_emailaddress w_member_social";
       const state = Math.random().toString(36).substring(7);
       
-      // Store state in localStorage for validation when LinkedIn redirects back
       localStorage.setItem("linkedin_oauth_state", state);
       
-      // Construct LinkedIn OAuth URL
-      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scope)}`;
+      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${LINKEDIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scope)}`;
       
-      // Redirect to LinkedIn login
       window.location.href = linkedInAuthUrl;
     } catch (error) {
       console.error("Error connecting to LinkedIn:", error);

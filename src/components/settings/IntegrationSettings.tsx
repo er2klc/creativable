@@ -3,8 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { OpenAIIntegration } from "./integrations/OpenAIIntegration";
 import { InstagramIntegration } from "./integrations/InstagramIntegration";
 import { LinkedInIntegration } from "./integrations/LinkedInIntegration";
-import { FacebookIntegration } from "./integrations/FacebookIntegration";
 import { TikTokIntegration } from "./integrations/TikTokIntegration";
+import { WhatsAppIntegration } from "./integrations/WhatsAppIntegration";
 
 export function IntegrationSettings() {
   return (
@@ -26,8 +26,8 @@ export function IntegrationSettings() {
           <div className="space-y-4">
             <InstagramIntegration />
             <LinkedInIntegration />
-            <FacebookIntegration />
             <TikTokIntegration />
+            <WhatsAppIntegration />
           </div>
         </div>
       </CardContent>
