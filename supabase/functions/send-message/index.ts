@@ -136,10 +136,10 @@ serve(async (req) => {
 
         if (!meResponse.ok) {
           const errorData = await meResponse.text();
+          console.error('LinkedIn /me endpoint error:', errorData);
           if (meResponse.status === 401 || meResponse.status === 403) {
             throw new Error('LinkedIn access token is invalid or has insufficient permissions. Please reconnect your account.');
           }
-          console.error('LinkedIn /me endpoint error:', errorData);
           throw new Error(`Failed to fetch user profile: ${errorData}`);
         }
 
