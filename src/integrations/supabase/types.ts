@@ -9,8 +9,58 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      documents: {
+        Row: {
+          created_at: string | null
+          file_path: string
+          file_type: string
+          filename: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_path: string
+          file_type: string
+          filename: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_path?: string
+          file_type?: string
+          filename?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      keywords: {
+        Row: {
+          created_at: string | null
+          id: string
+          keyword: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          keyword: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          keyword?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
+          business_description: string | null
+          company_name: string | null
           created_at: string | null
           id: string
           industry: string
@@ -20,10 +70,16 @@ export type Database = {
           notes: string | null
           phase: string
           platform: string
+          products_services: string | null
+          social_media_username: string | null
+          target_audience: string | null
           updated_at: string | null
           user_id: string
+          usp: string | null
         }
         Insert: {
+          business_description?: string | null
+          company_name?: string | null
           created_at?: string | null
           id?: string
           industry: string
@@ -33,10 +89,16 @@ export type Database = {
           notes?: string | null
           phase?: string
           platform: string
+          products_services?: string | null
+          social_media_username?: string | null
+          target_audience?: string | null
           updated_at?: string | null
           user_id: string
+          usp?: string | null
         }
         Update: {
+          business_description?: string | null
+          company_name?: string | null
           created_at?: string | null
           id?: string
           industry?: string
@@ -46,6 +108,37 @@ export type Database = {
           notes?: string | null
           phase?: string
           platform?: string
+          products_services?: string | null
+          social_media_username?: string | null
+          target_audience?: string | null
+          updated_at?: string | null
+          user_id?: string
+          usp?: string | null
+        }
+        Relationships: []
+      }
+      message_templates: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          name?: string
           updated_at?: string | null
           user_id?: string
         }
@@ -85,6 +178,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      settings: {
+        Row: {
+          created_at: string | null
+          default_message_template: string | null
+          id: string
+          openai_api_key: string | null
+          superchat_api_key: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          default_message_template?: string | null
+          id?: string
+          openai_api_key?: string | null
+          superchat_api_key?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          default_message_template?: string | null
+          id?: string
+          openai_api_key?: string | null
+          superchat_api_key?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       tasks: {
         Row: {

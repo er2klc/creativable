@@ -32,10 +32,16 @@ export function AddLeadDialog() {
       name: "",
       platform: "LinkedIn",
       customPlatform: "",
+      socialMediaUsername: "",
       phase: "initial_contact",
       industry: "",
       lastAction: "",
       notes: "",
+      companyName: "",
+      productsServices: "",
+      targetAudience: "",
+      usp: "",
+      businessDescription: "",
     },
   });
 
@@ -54,10 +60,16 @@ export function AddLeadDialog() {
         user_id: session.user.id,
         name: values.name,
         platform: otherPlatform ? values.customPlatform : values.platform,
+        social_media_username: values.socialMediaUsername,
         phase: values.phase,
         industry: values.industry,
         last_action: values.lastAction || null,
         notes: values.notes || null,
+        company_name: values.companyName || null,
+        products_services: values.productsServices || null,
+        target_audience: values.targetAudience || null,
+        usp: values.usp || null,
+        business_description: values.businessDescription || null,
       });
 
       if (error) throw error;
@@ -88,7 +100,7 @@ export function AddLeadDialog() {
           Neuer Lead ✨
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Neuen Lead hinzufügen ✨</DialogTitle>
           <DialogDescription>

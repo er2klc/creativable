@@ -2,7 +2,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Instagram, Linkedin, Facebook, Video } from "lucide-react";
+import { Instagram, Linkedin, Facebook, Video, Building2, Users, Sparkles } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
 
@@ -34,10 +34,16 @@ export const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich 📝"),
   platform: z.enum([...platforms]),
   customPlatform: z.string().optional(),
+  socialMediaUsername: z.string().min(1, "Social Media Benutzername ist erforderlich 📱"),
   phase: z.enum(["initial_contact", "follow_up", "closing"]),
   industry: z.string().min(1, "Branche ist erforderlich 🏢"),
   lastAction: z.string().optional(),
   notes: z.string().optional(),
+  companyName: z.string().optional(),
+  productsServices: z.string().optional(),
+  targetAudience: z.string().optional(),
+  usp: z.string().optional(),
+  businessDescription: z.string().optional(),
 });
 
 export function AddLeadFormFields({ form, otherPlatform, setOtherPlatform }: AddLeadFormFieldsProps) {
@@ -109,6 +115,20 @@ export function AddLeadFormFields({ form, otherPlatform, setOtherPlatform }: Add
 
       <FormField
         control={form.control}
+        name="socialMediaUsername"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Social Media Benutzername 📱</FormLabel>
+            <FormControl>
+              <Input placeholder="@username oder Profil-Link" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
         name="phase"
         render={({ field }) => (
           <FormItem>
@@ -150,6 +170,92 @@ export function AddLeadFormFields({ form, otherPlatform, setOtherPlatform }: Add
                 ))}
               </SelectContent>
             </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="companyName"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Firmenname <Building2 className="h-4 w-4 inline" /></FormLabel>
+            <FormControl>
+              <Input placeholder="Name der MLM-Firma" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="productsServices"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Produkte/Dienstleistungen 🛍️</FormLabel>
+            <FormControl>
+              <Textarea 
+                placeholder="Beschreibung der Produkte/Dienstleistungen"
+                className="resize-none"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="targetAudience"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Zielgruppe <Users className="h-4 w-4 inline" /></FormLabel>
+            <FormControl>
+              <Textarea 
+                placeholder="Beschreibung der typischen Kunden"
+                className="resize-none"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="usp"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Alleinstellungsmerkmal (USP) <Sparkles className="h-4 w-4 inline" /></FormLabel>
+            <FormControl>
+              <Textarea 
+                placeholder="Was macht Ihr Angebot einzigartig?"
+                className="resize-none"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="businessDescription"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Business-Beschreibung 📋</FormLabel>
+            <FormControl>
+              <Textarea 
+                placeholder="Detaillierte Beschreibung des MLM-Business"
+                className="resize-none"
+                {...field}
+              />
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}
