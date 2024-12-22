@@ -1,40 +1,16 @@
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Instagram, Linkedin, Facebook, Video, Building2, Users, Sparkles } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
+import { BasicLeadFields } from "./form-fields/BasicLeadFields";
+import { SocialMediaFields } from "./form-fields/SocialMediaFields";
+import { BusinessFields } from "./form-fields/BusinessFields";
+import { NotesFields } from "./form-fields/NotesFields";
 
-const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "Andere"] as const;
-const industries = ["Gesundheit", "Marketing", "Technologie", "Bildung", "Finanzen", "Andere"] as const;
-
-const getPlatformIcon = (platform: string) => {
-  switch (platform) {
-    case "Instagram":
-      return <Instagram className="h-4 w-4 mr-2" />;
-    case "LinkedIn":
-      return <Linkedin className="h-4 w-4 mr-2" />;
-    case "Facebook":
-      return <Facebook className="h-4 w-4 mr-2" />;
-    case "TikTok":
-      return <Video className="h-4 w-4 mr-2" />;
-    default:
-      return null;
-  }
-};
-
-interface AddLeadFormFieldsProps {
-  form: UseFormReturn<z.infer<typeof formSchema>>;
-  otherPlatform: boolean;
-  setOtherPlatform: (value: boolean) => void;
-}
+const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok"] as const;
 
 export const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich 📝"),
   platform: z.enum([...platforms]),
-  customPlatform: z.string().optional(),
-  socialMediaUsername: z.string().min(1, "Social Media Benutzername ist erforderlich 📱"),
+  socialMediaUsername: z.string().min(1, "Benutzername ist erforderlich 📱"),
   phase: z.enum(["initial_contact", "follow_up", "closing"]),
   industry: z.string().min(1, "Branche ist erforderlich 🏢"),
   lastAction: z.string().optional(),
@@ -46,252 +22,19 @@ export const formSchema = z.object({
   businessDescription: z.string().optional(),
 });
 
-export function AddLeadFormFields({ form, otherPlatform, setOtherPlatform }: AddLeadFormFieldsProps) {
+interface AddLeadFormFieldsProps {
+  form: UseFormReturn<z.infer<typeof formSchema>>;
+}
+
+export function AddLeadFormFields({ form }: AddLeadFormFieldsProps) {
   return (
     <>
-      <FormField
-        control={form.control}
-        name="name"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Name 👤</FormLabel>
-            <FormControl>
-              <Input placeholder="John Doe" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="platform"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Plattform 🌐</FormLabel>
-            <Select
-              onValueChange={(value) => {
-                field.onChange(value);
-                setOtherPlatform(value === "Andere");
-              }}
-              defaultValue={field.value}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Wählen Sie eine Plattform" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {platforms.map((platform) => (
-                  <SelectItem key={platform} value={platform}>
-                    <div className="flex items-center">
-                      {getPlatformIcon(platform)}
-                      {platform}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {otherPlatform && (
-        <FormField
-          control={form.control}
-          name="customPlatform"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Andere Plattform 🔍</FormLabel>
-              <FormControl>
-                <Input placeholder="z.B. Twitter" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      )}
-
-      <FormField
-        control={form.control}
-        name="socialMediaUsername"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Social Media Benutzername 📱</FormLabel>
-            <FormControl>
-              <Input placeholder="@username oder Profil-Link" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="phase"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Phase 📊</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Wählen Sie eine Phase" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="initial_contact">✨ Erstkontakt</SelectItem>
-                <SelectItem value="follow_up">🔄 Follow-up</SelectItem>
-                <SelectItem value="closing">🎯 Abschluss</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="industry"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Branche 🏢</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Wählen Sie eine Branche" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {industries.map((industry) => (
-                  <SelectItem key={industry} value={industry}>
-                    {industry}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="companyName"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Firmenname <Building2 className="h-4 w-4 inline" /></FormLabel>
-            <FormControl>
-              <Input placeholder="Name der MLM-Firma" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="productsServices"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Produkte/Dienstleistungen 🛍️</FormLabel>
-            <FormControl>
-              <Textarea 
-                placeholder="Beschreibung der Produkte/Dienstleistungen"
-                className="resize-none"
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="targetAudience"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Zielgruppe <Users className="h-4 w-4 inline" /></FormLabel>
-            <FormControl>
-              <Textarea 
-                placeholder="Beschreibung der typischen Kunden"
-                className="resize-none"
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="usp"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Alleinstellungsmerkmal (USP) <Sparkles className="h-4 w-4 inline" /></FormLabel>
-            <FormControl>
-              <Textarea 
-                placeholder="Was macht Ihr Angebot einzigartig?"
-                className="resize-none"
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="businessDescription"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Business-Beschreibung 📋</FormLabel>
-            <FormControl>
-              <Textarea 
-                placeholder="Detaillierte Beschreibung des MLM-Business"
-                className="resize-none"
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="lastAction"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Letzte Aktion 📝</FormLabel>
-            <FormControl>
-              <Input placeholder="z.B. Nachricht gesendet" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="notes"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Notizen 📌</FormLabel>
-            <FormControl>
-              <Textarea
-                placeholder="Zusätzliche Informationen zum Lead..."
-                className="resize-none"
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className="space-y-4">
+        <BasicLeadFields form={form} />
+        <SocialMediaFields form={form} />
+        <BusinessFields form={form} />
+        <NotesFields form={form} />
+      </div>
     </>
   );
 }

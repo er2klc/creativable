@@ -17,11 +17,11 @@ import {
 import { Form } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { AddLeadFormFields, formSchema } from "./AddLeadFormFields";
+import { generateSocialMediaUrl } from "./form-fields/SocialMediaFields";
 import * as z from "zod";
 
 export function AddLeadDialog() {
   const [open, setOpen] = useState(false);
-  const [otherPlatform, setOtherPlatform] = useState(false);
   const { toast } = useToast();
   const session = useSession();
   const queryClient = useQueryClient();
@@ -31,7 +31,6 @@ export function AddLeadDialog() {
     defaultValues: {
       name: "",
       platform: "LinkedIn",
-      customPlatform: "",
       socialMediaUsername: "",
       phase: "initial_contact",
       industry: "",
@@ -56,11 +55,13 @@ export function AddLeadDialog() {
     }
 
     try {
+      const socialMediaUrl = generateSocialMediaUrl(values.platform, values.socialMediaUsername);
+
       const { error } = await supabase.from("leads").insert({
         user_id: session.user.id,
         name: values.name,
-        platform: otherPlatform ? values.customPlatform : values.platform,
-        social_media_username: values.socialMediaUsername,
+        platform: values.platform,
+        social_media_username: socialMediaUrl,
         phase: values.phase,
         industry: values.industry,
         last_action: values.lastAction || null,
@@ -109,11 +110,7 @@ export function AddLeadDialog() {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <AddLeadFormFields
-              form={form}
-              otherPlatform={otherPlatform}
-              setOtherPlatform={setOtherPlatform}
-            />
+            <AddLeadFormFields form={form} />
             <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"
