@@ -79,27 +79,7 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // Updated to use the correct API endpoint and version
-      const profileResponse = await fetch(
-        `https://api.linkedin.com/v2/people/(id:${profileId})`,
-        {
-          headers: {
-            'Authorization': `Bearer ${authStatus.access_token}`,
-            'LinkedIn-Version': '202304',
-            'X-Restli-Protocol-Version': '2.0.0',
-          },
-        }
-      );
-
-      if (!profileResponse.ok) {
-        const errorData = await profileResponse.text();
-        console.error('LinkedIn profile lookup failed:', errorData);
-        throw new Error(`Failed to find LinkedIn profile: ${errorData}`);
-      }
-
-      const profileData = await profileResponse.json();
-      console.log('Retrieved LinkedIn profile data:', profileData);
-
+      // Use the messaging API directly without profile lookup
       const messageResponse = await fetch('https://api.linkedin.com/v2/messages', {
         method: 'POST',
         headers: {
