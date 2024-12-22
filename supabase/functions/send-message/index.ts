@@ -39,14 +39,16 @@ serve(async (req) => {
 
       console.log('Sending LinkedIn message to:', socialMediaUsername);
 
-      // First, get the recipient's profile using the member ID
-      console.log('Looking up LinkedIn profile for ID:', socialMediaUsername);
+      // Format the LinkedIn member URN
+      const memberUrn = `urn:li:person:${socialMediaUsername.replace('https://www.linkedin.com/in/', '').replace(/\/$/, '')}`;
+      console.log('Looking up LinkedIn profile with URN:', memberUrn);
 
       const profileResponse = await fetch(
-        `https://api.linkedin.com/rest/people/${socialMediaUsername}`,
+        `https://api.linkedin.com/v2/people/${encodeURIComponent(memberUrn)}`,
         {
           headers: {
             'Authorization': `Bearer ${authStatus.access_token}`,
+            'X-Restli-Protocol-Version': '2.0.0',
             'LinkedIn-Version': '202304',
           },
         }
@@ -62,18 +64,21 @@ serve(async (req) => {
       console.log('LinkedIn profile found:', profileData);
 
       // Send message via LinkedIn API
-      const messageResponse = await fetch(`https://api.linkedin.com/rest/conversations`, {
+      const messageResponse = await fetch(`https://api.linkedin.com/v2/messages`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
           'Content-Type': 'application/json',
+          'X-Restli-Protocol-Version': '2.0.0',
           'LinkedIn-Version': '202304',
         },
         body: JSON.stringify({
-          recipients: [socialMediaUsername],
-          message: {
-            text: message
-          }
+          recipients: [{
+            person: memberUrn
+          }],
+          subject: "Neue Nachricht",
+          body: message,
+          messageType: "MEMBER_TO_MEMBER",
         }),
       });
 
