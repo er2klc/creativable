@@ -19,6 +19,12 @@ export interface Settings {
   instagram_app_secret: string | null;
   instagram_auth_token: string | null;
   instagram_connected: boolean | null;
+  facebook_connected: boolean | null;
+  linkedin_connected: boolean | null;
+  tiktok_connected: boolean | null;
+  facebook_auth_token: string | null;
+  linkedin_auth_token: string | null;
+  tiktok_auth_token: string | null;
 }
 
 export interface SettingsInsert extends Partial<Settings> {
