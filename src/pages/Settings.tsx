@@ -57,7 +57,7 @@ export default function Settings() {
         </TabsContent>
 
         <TabsContent value="mlm" className="space-y-4">
-          <MLMSettings settings={settings} />
+          <MLMSettings />
         </TabsContent>
 
         <TabsContent value="about" className="space-y-4">
