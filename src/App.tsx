@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
+import Settings from "./pages/Settings";
 import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,14 @@ const App = () => (
               element={
                 <AppLayout>
                   <Leads />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <AppLayout>
+                  <Settings />
                 </AppLayout>
               }
             />
