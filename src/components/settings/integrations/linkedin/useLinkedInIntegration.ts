@@ -110,7 +110,6 @@ export function useLinkedInIntegration() {
         redirectUri 
       });
 
-      // Updated scopes for LinkedIn API v2
       const scope = [
         "openid",
         "profile",
@@ -121,7 +120,7 @@ export function useLinkedInIntegration() {
       const state = Math.random().toString(36).substring(7);
       localStorage.setItem("linkedin_oauth_state", state);
       
-      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scope)}`;
+      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scope)}&prompt=consent`;
       
       window.location.href = linkedInAuthUrl;
     } catch (error) {
@@ -139,18 +138,48 @@ export function useLinkedInIntegration() {
     try {
       console.log("Disconnecting LinkedIn...");
       
+      // Get the current auth status to revoke the token
+      const { data: authStatus } = await supabase
+        .from('platform_auth_status')
+        .select('access_token')
+        .eq('platform', 'linkedin')
+        .single();
+
+      if (authStatus?.access_token) {
+        // Revoke the access token
+        try {
+          await fetch('https://www.linkedin.com/oauth/v2/revoke', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              token: authStatus.access_token,
+              client_id: clientId,
+              client_secret: clientSecret,
+            }),
+          });
+        } catch (revokeError) {
+          console.error('Error revoking LinkedIn token:', revokeError);
+        }
+      }
+
+      // Clear the platform auth status
       const { error: statusError } = await supabase
         .from('platform_auth_status')
         .update({
           is_connected: false,
           access_token: null,
+          refresh_token: null,
+          expires_at: null,
           updated_at: new Date().toISOString()
         })
         .eq('platform', 'linkedin');
 
       if (statusError) throw statusError;
 
-      await updateSettings('linkedin_connected', 'false');
+      // Update settings
+      await updateSettings('linkedin_connected', false);
       await updateSettings('linkedin_auth_token', null);
 
       toast({
