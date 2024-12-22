@@ -10,6 +10,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ExternalLink } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   openai_api_key: z.string().min(1, "OpenAI API-Key ist erforderlich"),
@@ -19,6 +20,7 @@ const formSchema = z.object({
 
 export function IntegrationSettings() {
   const { settings, updateSettings } = useSettings();
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,20 +71,41 @@ export function IntegrationSettings() {
   };
 
   const connectInstagram = async () => {
-    const appId = form.getValues("instagram_app_id");
-    const appSecret = form.getValues("instagram_app_secret");
-    
-    // Speichern der App-Credentials
-    await updateSettings("instagram_app_id", appId);
-    await updateSettings("instagram_app_secret", appSecret);
+    try {
+      const appId = form.getValues("instagram_app_id");
+      const appSecret = form.getValues("instagram_app_secret");
+      
+      // Speichern der App-Credentials
+      await updateSettings("instagram_app_id", appId);
+      await updateSettings("instagram_app_secret", appSecret);
 
-    // Redirect zur Instagram OAuth URL
-    const redirectUri = `${window.location.origin}/auth/callback/instagram`;
-    const scope = "instagram_basic,instagram_manage_messages";
-    const state = crypto.randomUUID(); // Add state parameter for security
-    const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=${state}`;
-    
-    window.location.href = instagramAuthUrl;
+      // Redirect zur Instagram OAuth URL
+      const redirectUri = `${window.location.origin}/auth/callback/instagram`;
+      const scope = "instagram_basic,instagram_content_publish,instagram_manage_comments,instagram_manage_insights,instagram_manage_messages";
+      const state = crypto.randomUUID();
+      
+      // Speichern des state für spätere Validierung
+      localStorage.setItem('instagram_oauth_state', state);
+      
+      const params = new URLSearchParams({
+        client_id: appId,
+        redirect_uri: redirectUri,
+        scope: scope,
+        response_type: 'code',
+        state: state
+      });
+      
+      const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?${params.toString()}`;
+      
+      window.location.href = instagramAuthUrl;
+    } catch (error) {
+      console.error('Error connecting to Instagram:', error);
+      toast({
+        title: "Fehler bei der Instagram-Verbindung",
+        description: "Bitte überprüfen Sie Ihre App-ID und App-Secret",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

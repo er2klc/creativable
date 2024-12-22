@@ -15,6 +15,10 @@ export interface Settings {
   about_me: string | null;
   created_at: string | null;
   updated_at: string | null;
+  instagram_app_id: string | null;
+  instagram_app_secret: string | null;
+  instagram_auth_token: string | null;
+  instagram_connected: boolean | null;
 }
 
 export interface SettingsInsert extends Partial<Settings> {
