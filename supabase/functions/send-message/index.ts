@@ -79,7 +79,7 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // Create a messaging conversation with initial message
+      // Create a messaging conversation with initial message using the correct syntax
       const conversationResponse = await fetch('https://api.linkedin.com/v2/messages', {
         method: 'POST',
         headers: {
@@ -88,20 +88,20 @@ serve(async (req) => {
           'LinkedIn-Version': '202304',
         },
         body: JSON.stringify({
-          message_event: {
-            eventCreate: {
-              value: {
-                com.linkedin.voyager.messaging.create.MessageCreate: {
-                  attributedBody: {
-                    text: message,
-                    attributes: [],
+          "message_event": {
+            "eventCreate": {
+              "value": {
+                "messageCreate": {
+                  "attributedBody": {
+                    "text": message,
+                    "attributes": []
                   },
-                  recipients: [`urn:li:person:${profileId}`],
-                  messageRequestContextUrn: null,
-                },
-              },
-            },
-          },
+                  "recipients": [`urn:li:person:${profileId}`],
+                  "messageRequestContextUrn": null
+                }
+              }
+            }
+          }
         }),
       });
 
