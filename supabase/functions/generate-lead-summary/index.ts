@@ -8,18 +8,26 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('Received request to generate lead summary');
     const { leadId, language = "de" } = await req.json();
+    console.log('Request parameters:', { leadId, language });
+
+    if (!leadId) {
+      throw new Error('Lead ID is required');
+    }
 
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    console.log('Fetching lead data from Supabase');
     // Fetch lead data with messages
     const { data: lead, error: leadError } = await supabase
       .from('leads')
@@ -34,17 +42,28 @@ serve(async (req) => {
       .eq('id', leadId)
       .single();
 
-    if (leadError) throw leadError;
+    if (leadError) {
+      console.error('Error fetching lead data:', leadError);
+      throw leadError;
+    }
 
+    console.log('Lead data fetched successfully');
+
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) {
+      throw new Error('OpenAI API key not configured');
+    }
+
+    console.log('Generating summary with OpenAI');
     // Generate summary with OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
@@ -75,11 +94,20 @@ serve(async (req) => {
             `
           }
         ],
+        temperature: 0.7,
+        max_tokens: 500,
       }),
     });
 
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('OpenAI API error:', error);
+      throw new Error(`OpenAI API error: ${error}`);
+    }
+
     const data = await response.json();
     const summary = data.choices[0].message.content;
+    console.log('Summary generated successfully');
 
     return new Response(JSON.stringify({ summary }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
