@@ -1,31 +1,12 @@
-import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { MLMSettings } from "@/components/settings/MLMSettings";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
 import { AboutSettings } from "@/components/settings/AboutSettings";
-import { supabase } from "@/integrations/supabase/client";
-import type { Settings } from "@/integrations/supabase/types/settings";
+import { useSettings } from "@/hooks/use-settings";
 
 export default function Settings() {
-  const session = useSession();
-
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ["settings", session?.user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("settings")
-        .select("*")
-        .eq("user_id", session?.user?.id)
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data as Settings | null;
-    },
-    enabled: !!session?.user?.id,
-  });
+  const { settings, isLoading } = useSettings();
 
   if (isLoading) {
     return (
