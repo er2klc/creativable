@@ -39,41 +39,46 @@ serve(async (req) => {
 
       console.log('Sending LinkedIn message to:', socialMediaUsername);
 
-      // First, get the recipient's profile to verify the URN
+      // First, get the recipient's profile using the member URN
+      const memberUrn = `urn:li:person:${socialMediaUsername}`;
+      console.log('Looking up LinkedIn profile with URN:', memberUrn);
+
       const profileResponse = await fetch(
-        `https://api.linkedin.com/v2/people/(id:${socialMediaUsername})`,
+        `https://api.linkedin.com/v2/people/${encodeURIComponent(memberUrn)}`,
         {
           headers: {
             'Authorization': `Bearer ${authStatus.access_token}`,
             'X-Restli-Protocol-Version': '2.0.0',
+            'LinkedIn-Version': '202304',
           },
         }
       );
 
       if (!profileResponse.ok) {
-        console.error('LinkedIn profile lookup failed:', await profileResponse.text());
-        throw new Error('Could not find LinkedIn profile');
+        const errorText = await profileResponse.text();
+        console.error('LinkedIn profile lookup failed:', errorText);
+        throw new Error(`Could not find LinkedIn profile: ${errorText}`);
       }
 
+      const profileData = await profileResponse.json();
+      console.log('LinkedIn profile found:', profileData);
+
       // Send message via LinkedIn API
-      const messageResponse = await fetch(`https://api.linkedin.com/v2/conversations`, {
+      const messageResponse = await fetch(`https://api.linkedin.com/v2/messages`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
           'Content-Type': 'application/json',
           'X-Restli-Protocol-Version': '2.0.0',
+          'LinkedIn-Version': '202304',
         },
         body: JSON.stringify({
           recipients: [{
-            person: {
-              "id": socialMediaUsername
-            }
+            person: memberUrn
           }],
-          messageRequest: {
-            body: message,
-            contentType: "TEXT",
-            attachments: []
-          }
+          subject: "Neue Nachricht",
+          body: message,
+          messageType: "MEMBER_TO_MEMBER",
         }),
       });
 
