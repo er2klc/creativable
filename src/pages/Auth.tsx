@@ -17,6 +17,28 @@ const AuthPage = () => {
     }
   }, [user, navigate]);
 
+  // Listen for auth state changes to show error messages
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "USER_DELETED") {
+        toast({
+          variant: "destructive",
+          title: "Fehler",
+          description: "Benutzer wurde gelöscht.",
+        });
+      } else if (event === "PASSWORD_RECOVERY") {
+        toast({
+          title: "Passwort zurücksetzen",
+          description: "Bitte überprüfen Sie Ihre E-Mails.",
+        });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth, toast]);
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-sm">
@@ -48,15 +70,6 @@ const AuthPage = () => {
           }}
           providers={[]}
           redirectTo={window.location.origin + "/dashboard"}
-          onError={(error) => {
-            toast({
-              variant: "destructive",
-              title: "Fehler bei der Anmeldung",
-              description: error.message === "Invalid login credentials" 
-                ? "Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort."
-                : error.message,
-            });
-          }}
           localization={{
             variables: {
               sign_in: {
