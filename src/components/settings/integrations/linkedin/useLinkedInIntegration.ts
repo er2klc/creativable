@@ -25,22 +25,53 @@ export function useLinkedInIntegration() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Kein Benutzer gefunden");
 
-      const { error: secretError } = await supabase
+      // First check if an entry already exists
+      const { data: existingAuth } = await supabase
         .from('platform_auth_status')
-        .upsert({
-          user_id: user.id,
-          platform: 'linkedin',
-          auth_token: clientId,
-          refresh_token: clientSecret,
-          is_connected: false,
-          updated_at: new Date().toISOString()
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('platform', 'linkedin')
+        .single();
 
-      if (secretError) throw secretError;
+      let result;
+      
+      if (existingAuth) {
+        // Update existing entry
+        result = await supabase
+          .from('platform_auth_status')
+          .update({
+            auth_token: clientId,
+            refresh_token: clientSecret,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+          .eq('platform', 'linkedin');
+      } else {
+        // Insert new entry
+        result = await supabase
+          .from('platform_auth_status')
+          .insert({
+            user_id: user.id,
+            platform: 'linkedin',
+            auth_token: clientId,
+            refresh_token: clientSecret,
+            is_connected: false,
+            updated_at: new Date().toISOString()
+          });
+      }
+
+      if (result.error) {
+        if (result.error.code === '23505') { // Duplicate key error code
+          throw new Error("LinkedIn Zugangsdaten existieren bereits. Die bestehenden Daten wurden aktualisiert.");
+        }
+        throw result.error;
+      }
 
       toast({
         title: "Erfolg ✨",
-        description: "LinkedIn Zugangsdaten erfolgreich gespeichert",
+        description: existingAuth 
+          ? "LinkedIn Zugangsdaten erfolgreich aktualisiert"
+          : "LinkedIn Zugangsdaten erfolgreich gespeichert",
       });
 
     } catch (error) {
@@ -48,7 +79,7 @@ export function useLinkedInIntegration() {
       setError(error.message);
       toast({
         title: "Fehler ❌",
-        description: "Fehler beim Speichern der LinkedIn Zugangsdaten",
+        description: error.message || "Fehler beim Speichern der LinkedIn Zugangsdaten",
         variant: "destructive",
       });
     }
