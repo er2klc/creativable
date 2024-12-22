@@ -12,10 +12,25 @@ export default function LinkedInCallback() {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
       const state = params.get("state");
+      const error = params.get("error");
+      const errorDescription = params.get("error_description");
       const storedState = localStorage.getItem("linkedin_oauth_state");
+
+      // Handle LinkedIn OAuth errors
+      if (error || errorDescription) {
+        console.error("LinkedIn OAuth error:", error, errorDescription);
+        toast({
+          title: "LinkedIn Fehler",
+          description: errorDescription || "Die Authentifizierung konnte nicht abgeschlossen werden.",
+          variant: "destructive",
+        });
+        navigate("/settings");
+        return;
+      }
 
       // Verify state to prevent CSRF attacks
       if (state !== storedState) {
+        console.error("State mismatch:", { state, storedState });
         toast({
           title: "Sicherheitsfehler",
           description: "Die Authentifizierung konnte nicht abgeschlossen werden.",
@@ -46,7 +61,10 @@ export default function LinkedInCallback() {
             }
           });
 
-          if (error) throw error;
+          if (error) {
+            console.error("LinkedIn callback error:", error);
+            throw error;
+          }
 
           toast({
             title: "Erfolg!",
@@ -56,7 +74,7 @@ export default function LinkedInCallback() {
           console.error("LinkedIn callback error:", error);
           toast({
             title: "Fehler",
-            description: "Die LinkedIn-Verbindung konnte nicht hergestellt werden.",
+            description: "Die LinkedIn-Verbindung konnte nicht hergestellt werden. Bitte überprüfen Sie die App-Einstellungen in der LinkedIn Developer Console.",
             variant: "destructive",
           });
         }
@@ -71,8 +89,11 @@ export default function LinkedInCallback() {
   }, [navigate, toast]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4" />
+      <p className="text-center text-gray-600">
+        Verbindung mit LinkedIn wird hergestellt...
+      </p>
     </div>
   );
 }
