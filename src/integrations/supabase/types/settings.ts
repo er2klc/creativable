@@ -1,31 +1,9 @@
-import { Json } from './auth';
+import { BaseSettings } from './settings/base';
+import { ApiKeySettings } from './settings/api-keys';
+import { BusinessSettings } from './settings/business';
+import { SocialMediaSettings } from './settings/social-media';
 
-export interface Settings {
-  id: string;
-  user_id: string;
-  language: string | null;
-  openai_api_key: string | null;
-  superchat_api_key: string | null;
-  default_message_template: string | null;
-  company_name: string | null;
-  products_services: string | null;
-  target_audience: string | null;
-  usp: string | null;
-  business_description: string | null;
-  about_me: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  instagram_app_id: string | null;
-  instagram_app_secret: string | null;
-  instagram_auth_token: string | null;
-  instagram_connected: boolean | null;
-  facebook_connected: boolean | null;
-  linkedin_connected: boolean | null;
-  tiktok_connected: boolean | null;
-  facebook_auth_token: string | null;
-  linkedin_auth_token: string | null;
-  tiktok_auth_token: string | null;
-}
+export interface Settings extends BaseSettings, ApiKeySettings, BusinessSettings, SocialMediaSettings {}
 
 export interface SettingsInsert extends Partial<Settings> {
   user_id: string;
