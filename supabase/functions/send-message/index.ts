@@ -79,17 +79,29 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // Create a messaging conversation directly with the profile ID
-      const conversationResponse = await fetch('https://api.linkedin.com/v2/messaging/conversations', {
+      // Create a messaging conversation with initial message
+      const conversationResponse = await fetch('https://api.linkedin.com/v2/messages', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
           'Content-Type': 'application/json',
-          'X-Restli-Protocol-Version': '2.0.0',
+          'LinkedIn-Version': '202304',
         },
         body: JSON.stringify({
-          recipients: [`urn:li:person:${profileId}`],
-          subject: "Let's connect",
+          message_event: {
+            eventCreate: {
+              value: {
+                com.linkedin.voyager.messaging.create.MessageCreate: {
+                  attributedBody: {
+                    text: message,
+                    attributes: [],
+                  },
+                  recipients: [`urn:li:person:${profileId}`],
+                  messageRequestContextUrn: null,
+                },
+              },
+            },
+          },
         }),
       });
 
@@ -97,38 +109,6 @@ serve(async (req) => {
         const errorData = await conversationResponse.text();
         console.error('LinkedIn conversation API error:', errorData);
         throw new Error(`Failed to create LinkedIn conversation: ${errorData}`);
-      }
-
-      const conversation = await conversationResponse.json();
-      console.log('Created conversation:', conversation);
-
-      // Send message in the conversation
-      const messageResponse = await fetch(`https://api.linkedin.com/v2/messaging/conversations/${conversation.id}/events`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authStatus.access_token}`,
-          'Content-Type': 'application/json',
-          'X-Restli-Protocol-Version': '2.0.0',
-        },
-        body: JSON.stringify({
-          eventCreate: {
-            value: {
-              com_linkedin_voyager_messaging_create_message: {
-                attributedBody: {
-                  text: message,
-                  attributes: [],
-                },
-                attachments: [],
-              },
-            },
-          },
-        }),
-      });
-
-      if (!messageResponse.ok) {
-        const errorData = await messageResponse.text();
-        console.error('LinkedIn message API error:', errorData);
-        throw new Error(`Failed to send LinkedIn message: ${errorData}`);
       }
 
       console.log('LinkedIn message sent successfully');
