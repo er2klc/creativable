@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
@@ -54,6 +53,10 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
+    const systemPrompt = language === "de" 
+      ? "Du bist ein hilfreicher Assistent, der Zusammenfassungen von Leads und deren Kommunikationsverläufen erstellt. Fasse die wichtigsten Informationen kurz und prägnant auf Deutsch zusammen."
+      : "You are a helpful assistant that creates summaries of leads and their communication history. Summarize the key information concisely in English.";
+
     console.log('Generating summary with OpenAI');
     // Generate summary with OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -67,30 +70,29 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: language === "de" 
-              ? "Du bist ein Experte für die Analyse von Verkaufsgesprächen und Leads. Erstelle eine kurze, prägnante Zusammenfassung der wichtigsten Informationen und Interaktionen."
-              : "You are an expert in analyzing sales conversations and leads. Create a brief, concise summary of the most important information and interactions."
+            content: systemPrompt
           },
           {
             role: 'user',
             content: `
-              ${language === "de" ? "Erstelle eine Zusammenfassung für diesen Lead:" : "Create a summary for this lead:"}
+              Erstelle eine Zusammenfassung für diesen Lead:
+              Name: ${lead.name}
+              Plattform: ${lead.platform}
+              Branche: ${lead.industry}
+              Phase: ${lead.phase}
+              Letzte Aktion: ${lead.last_action || 'Keine'}
+              Notizen: ${lead.notes || 'Keine'}
               
-              ${language === "de" ? "Lead-Informationen:" : "Lead Information:"}
-              - ${language === "de" ? "Name" : "Name"}: ${lead.name}
-              - ${language === "de" ? "Plattform" : "Platform"}: ${lead.platform}
-              - ${language === "de" ? "Branche" : "Industry"}: ${lead.industry}
-              - ${language === "de" ? "Phase" : "Phase"}: ${lead.phase}
-              
-              ${language === "de" ? "Nachrichtenverlauf:" : "Message History:"}
-              ${lead.messages.map((msg: any) => 
+              Nachrichten:
+              ${lead.messages?.map((msg: any) => 
                 `- ${new Date(msg.sent_at).toLocaleDateString()}: ${msg.content}`
-              ).join('\n')}
+              ).join('\n') || 'Keine Nachrichten'}
               
-              ${language === "de" ? "Zusätzliche Informationen:" : "Additional Information:"}
-              ${lead.notes ? `${language === "de" ? "Notizen" : "Notes"}: ${lead.notes}` : ""}
-              ${lead.company_name ? `${language === "de" ? "Firmenname" : "Company Name"}: ${lead.company_name}` : ""}
-              ${lead.products_services ? `${language === "de" ? "Produkte/Services" : "Products/Services"}: ${lead.products_services}` : ""}
+              Formatiere die Zusammenfassung mit folgenden Kategorien:
+              **Kontaktstatus**: [Phase und letzte Interaktion]
+              **Geschäftsprofil**: [Branche und wichtige Geschäftsinformationen]
+              **Kommunikationsverlauf**: [Zusammenfassung der Nachrichten]
+              **Nächste Schritte**: [Empfehlungen basierend auf dem aktuellen Status]
             `
           }
         ],
@@ -111,12 +113,17 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ summary }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
     });
+
   } catch (error) {
     console.error('Error in generate-lead-summary function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      },
+    );
   }
 });

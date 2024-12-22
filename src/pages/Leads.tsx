@@ -70,7 +70,7 @@ const Leads = () => {
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Leads</h1>
+        <h1 className="text-3xl font-bold">{settings?.language === "en" ? "Contacts" : "Kontakte"}</h1>
         <div className="flex items-center gap-4">
           <Button
             variant="outline"

@@ -62,7 +62,7 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
       <TableHeader>
         <TableRow>
           <TableHead className="w-[30px]"></TableHead>
-          <TableHead>{settings?.language === "en" ? "Name" : "Name"}</TableHead>
+          <TableHead>{settings?.language === "en" ? "Contact" : "Kontakt"}</TableHead>
           <TableHead>{settings?.language === "en" ? "Platform" : "Plattform"}</TableHead>
           <TableHead>{settings?.language === "en" ? "Phase" : "Phase"}</TableHead>
           <TableHead>{settings?.language === "en" ? "Last Action" : "Letzte Aktion"}</TableHead>
