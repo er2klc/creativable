@@ -44,6 +44,24 @@ const getPhaseTranslation = (phase: string, language: string = "de") => {
   return translations[language]?.[phase] || phase;
 };
 
+const formatAiSummary = (summary: string, language: string = "de") => {
+  if (!summary) return language === "de" ? "Keine Zusammenfassung verfügbar" : "No summary available";
+  
+  // Replace markdown-style formatting with styled elements
+  return summary.split('\n').map((line, index) => {
+    if (line.includes('**')) {
+      const [label, value] = line.split(':');
+      return (
+        <div key={index} className="mb-2">
+          <span className="font-semibold text-primary">{label.replace(/\*\*/g, '')}: </span>
+          <span>{value?.trim()}</span>
+        </div>
+      );
+    }
+    return <p key={index} className="mb-2">{line}</p>;
+  });
+};
+
 interface LeadDetailViewProps {
   leadId: string | null;
   onClose: () => void;
@@ -147,13 +165,17 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
             <Card>
               <CardHeader>
-                <CardTitle>{settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}</CardTitle>
+                <CardTitle>
+                  {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoadingAiSummary ? (
                   <div>{settings?.language === "en" ? "Generating summary..." : "Generiere Zusammenfassung..."}</div>
                 ) : (
-                  <p className="whitespace-pre-wrap">{aiSummary?.summary || (settings?.language === "en" ? "No summary available" : "Keine Zusammenfassung verfügbar")}</p>
+                  <div className="prose prose-sm max-w-none">
+                    {formatAiSummary(aiSummary?.summary || "", settings?.language)}
+                  </div>
                 )}
               </CardContent>
             </Card>
