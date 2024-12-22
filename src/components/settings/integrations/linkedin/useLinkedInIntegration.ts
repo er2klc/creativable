@@ -178,8 +178,8 @@ export function useLinkedInIntegration() {
 
       if (statusError) throw statusError;
 
-      // Update settings
-      await updateSettings('linkedin_connected', false);
+      // Update settings - Convert boolean to string
+      await updateSettings('linkedin_connected', 'false');
       await updateSettings('linkedin_auth_token', null);
 
       toast({
