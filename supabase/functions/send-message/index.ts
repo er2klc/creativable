@@ -79,7 +79,7 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // Create a conversation first
+      // Create a conversation first with updated format
       const conversationResponse = await fetch('https://api.linkedin.com/rest/conversations', {
         method: 'POST',
         headers: {
@@ -89,8 +89,10 @@ serve(async (req) => {
           'X-Restli-Protocol-Version': '2.0.0',
         },
         body: JSON.stringify({
-          recipients: [`urn:li:person:${profileId}`],
-          entityUrn: `urn:li:conversation:${crypto.randomUUID()}`,
+          participants: [`urn:li:person:${profileId}`],
+          messageCreate: {
+            body: message,
+          },
         }),
       });
 
@@ -103,7 +105,7 @@ serve(async (req) => {
       const conversation = await conversationResponse.json();
       console.log('Created conversation:', conversation);
 
-      // Send message in the conversation
+      // Send message in the conversation with updated format
       const messageResponse = await fetch('https://api.linkedin.com/rest/messages', {
         method: 'POST',
         headers: {
