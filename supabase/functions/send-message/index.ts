@@ -79,20 +79,35 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // Create a conversation first with updated format
-      const conversationResponse = await fetch('https://api.linkedin.com/rest/conversations', {
+      // First, get member URN using profile API
+      const profileResponse = await fetch(`https://api.linkedin.com/v2/people/(id:${profileId})`, {
+        headers: {
+          'Authorization': `Bearer ${authStatus.access_token}`,
+          'X-Restli-Protocol-Version': '2.0.0',
+        },
+      });
+
+      if (!profileResponse.ok) {
+        const errorData = await profileResponse.text();
+        console.error('LinkedIn profile API error:', errorData);
+        throw new Error(`Failed to fetch LinkedIn profile: ${errorData}`);
+      }
+
+      const profileData = await profileResponse.json();
+      const memberUrn = profileData.id;
+      console.log('Retrieved member URN:', memberUrn);
+
+      // Create a messaging conversation
+      const conversationResponse = await fetch('https://api.linkedin.com/v2/messaging/conversations', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
           'Content-Type': 'application/json',
-          'LinkedIn-Version': '202304',
           'X-Restli-Protocol-Version': '2.0.0',
         },
         body: JSON.stringify({
-          participants: [`urn:li:person:${profileId}`],
-          messageCreate: {
-            body: message,
-          },
+          recipients: [memberUrn],
+          subject: "Let's connect",
         }),
       });
 
@@ -105,31 +120,24 @@ serve(async (req) => {
       const conversation = await conversationResponse.json();
       console.log('Created conversation:', conversation);
 
-      // Send message in the conversation with updated format
-      const messageResponse = await fetch('https://api.linkedin.com/rest/messages', {
+      // Send message in the conversation
+      const messageResponse = await fetch(`https://api.linkedin.com/v2/messaging/conversations/${conversation.id}/events`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
           'Content-Type': 'application/json',
-          'LinkedIn-Version': '202304',
           'X-Restli-Protocol-Version': '2.0.0',
         },
         body: JSON.stringify({
-          conversationUrn: conversation.entityUrn,
           eventCreate: {
             value: {
-              attributedBody: {
-                text: message,
-                attributes: [],
+              com_linkedin_voyager_messaging_create_message: {
+                attributedBody: {
+                  text: message,
+                  attributes: [],
+                },
+                attachments: [],
               },
-              attachments: [],
-            },
-            "com.linkedin.voyager.messaging.create.MessageCreate": {
-              attributedBody: {
-                text: message,
-                attributes: [],
-              },
-              attachments: [],
             },
           },
         }),
