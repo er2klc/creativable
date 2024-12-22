@@ -7,7 +7,7 @@ import { LeadSearch } from "@/components/leads/LeadSearch";
 import { LeadFilters } from "@/components/leads/LeadFilters";
 import { LeadTableView } from "@/components/leads/LeadTableView";
 import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
-import { LayoutList, LayoutKanban, Plus } from "lucide-react";
+import { LayoutList, Kanban, Plus } from "lucide-react";
 
 const Leads = () => {
   const [view, setView] = useState<"table" | "kanban">("table");
@@ -70,7 +70,7 @@ const Leads = () => {
             onClick={() => setView("kanban")}
             className={view === "kanban" ? "bg-muted" : ""}
           >
-            <LayoutKanban className="h-4 w-4" />
+            <Kanban className="h-4 w-4" />
           </Button>
           <Button>
             <Plus className="h-4 w-4 mr-2" />
