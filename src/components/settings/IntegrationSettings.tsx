@@ -95,11 +95,7 @@ export function IntegrationSettings({ settings }: IntegrationSettingsProps) {
 
   const updateOpenAIContext = async () => {
     try {
-      const response = await fetch('/api/update-openai-context', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const { data, error } = await supabase.functions.invoke('update-openai-context', {
         body: JSON.stringify({
           company_name: settings?.company_name,
           products_services: settings?.products_services,
@@ -109,9 +105,8 @@ export function IntegrationSettings({ settings }: IntegrationSettingsProps) {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update OpenAI context');
-      }
+      if (error) throw error;
+      console.log('OpenAI context updated:', data);
     } catch (error) {
       console.error('Error updating OpenAI context:', error);
     }
