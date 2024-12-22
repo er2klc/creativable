@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -10,49 +9,15 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Form } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
-
-const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "Andere"] as const;
-const phases = ["initial_contact", "follow_up", "closing"] as const;
-const industries = [
-  "Gesundheit",
-  "Marketing",
-  "Technologie",
-  "Bildung",
-  "Finanzen",
-  "Andere",
-] as const;
-
-const formSchema = z.object({
-  name: z.string().min(1, "Name ist erforderlich"),
-  platform: z.enum([...platforms]),
-  customPlatform: z.string().optional(),
-  phase: z.enum([...phases]),
-  industry: z.string().min(1, "Branche ist erforderlich"),
-  lastAction: z.string().optional(),
-  notes: z.string().optional(),
-});
+import { AddLeadFormFields, formSchema } from "./AddLeadFormFields";
+import * as z from "zod";
 
 export function AddLeadDialog() {
   const [open, setOpen] = useState(false);
@@ -77,7 +42,7 @@ export function AddLeadDialog() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!session?.user?.id) {
       toast({
-        title: "Fehler",
+        title: "Fehler ❌",
         description: "Sie müssen eingeloggt sein, um einen Lead hinzuzufügen.",
         variant: "destructive",
       });
@@ -98,7 +63,7 @@ export function AddLeadDialog() {
       if (error) throw error;
 
       toast({
-        title: "Erfolg",
+        title: "Erfolg ✨",
         description: "Lead erfolgreich hinzugefügt",
       });
 
@@ -106,8 +71,9 @@ export function AddLeadDialog() {
       setOpen(false);
       form.reset();
     } catch (error) {
+      console.error("Error adding lead:", error);
       toast({
-        title: "Fehler",
+        title: "Fehler ❌",
         description: "Beim Hinzufügen des Leads ist ein Fehler aufgetreten.",
         variant: "destructive",
       });
@@ -119,165 +85,32 @@ export function AddLeadDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
-          Neuer Lead
+          Neuer Lead ✨
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Neuen Lead hinzufügen</DialogTitle>
+          <DialogTitle>Neuen Lead hinzufügen ✨</DialogTitle>
+          <DialogDescription>
+            Fügen Sie hier die Details Ihres neuen Leads hinzu. Füllen Sie alle erforderlichen Felder aus.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="John Doe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <AddLeadFormFields
+              form={form}
+              otherPlatform={otherPlatform}
+              setOtherPlatform={setOtherPlatform}
             />
-
-            <FormField
-              control={form.control}
-              name="platform"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Plattform</FormLabel>
-                  <Select
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      setOtherPlatform(value === "Andere");
-                    }}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Wählen Sie eine Plattform" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {platforms.map((platform) => (
-                        <SelectItem key={platform} value={platform}>
-                          {platform}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {otherPlatform && (
-              <FormField
-                control={form.control}
-                name="customPlatform"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Andere Plattform</FormLabel>
-                    <FormControl>
-                      <Input placeholder="z.B. Twitter" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <FormField
-              control={form.control}
-              name="phase"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phase</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Wählen Sie eine Phase" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="initial_contact">Erstkontakt</SelectItem>
-                      <SelectItem value="follow_up">Follow-up</SelectItem>
-                      <SelectItem value="closing">Abschluss</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="industry"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Branche</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Wählen Sie eine Branche" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {industries.map((industry) => (
-                        <SelectItem key={industry} value={industry}>
-                          {industry}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="lastAction"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Letzte Aktion</FormLabel>
-                  <FormControl>
-                    <Input placeholder="z.B. Nachricht gesendet" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notizen</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Zusätzliche Informationen zum Lead..."
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}
               >
-                Abbrechen
+                Abbrechen ❌
               </Button>
-              <Button type="submit">Speichern</Button>
+              <Button type="submit">Speichern ✅</Button>
             </div>
           </form>
         </Form>
