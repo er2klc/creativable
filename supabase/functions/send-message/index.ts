@@ -39,32 +39,15 @@ serve(async (req) => {
 
       console.log('Sending LinkedIn message to:', socialMediaUsername);
 
-      // Format the LinkedIn member URN
-      const memberUrn = `urn:li:person:${socialMediaUsername.replace('https://www.linkedin.com/in/', '').replace(/\/$/, '')}`;
-      console.log('Looking up LinkedIn profile with URN:', memberUrn);
+      // Extract LinkedIn member ID from profile URL or handle
+      const memberId = socialMediaUsername.replace('https://www.linkedin.com/in/', '')
+        .replace(/\/$/, '')
+        .split('?')[0]; // Remove any query parameters
+      
+      console.log('Using LinkedIn member ID:', memberId);
 
-      const profileResponse = await fetch(
-        `https://api.linkedin.com/v2/people/${encodeURIComponent(memberUrn)}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${authStatus.access_token}`,
-            'X-Restli-Protocol-Version': '2.0.0',
-            'LinkedIn-Version': '202304',
-          },
-        }
-      );
-
-      if (!profileResponse.ok) {
-        const errorText = await profileResponse.text();
-        console.error('LinkedIn profile lookup failed:', errorText);
-        throw new Error(`Could not find LinkedIn profile: ${errorText}`);
-      }
-
-      const profileData = await profileResponse.json();
-      console.log('LinkedIn profile found:', profileData);
-
-      // Send message via LinkedIn API
-      const messageResponse = await fetch(`https://api.linkedin.com/v2/messages`, {
+      // Send message via LinkedIn API v2
+      const messageResponse = await fetch(`https://api.linkedin.com/v2/conversations`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
@@ -74,11 +57,13 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           recipients: [{
-            person: memberUrn
+            recipientIdentities: [{
+              identityType: "MEMBER",
+              identityValue: memberId
+            }]
           }],
-          subject: "Neue Nachricht",
-          body: message,
-          messageType: "MEMBER_TO_MEMBER",
+          messageText: message,
+          messageSubject: "Neue Nachricht"
         }),
       });
 
