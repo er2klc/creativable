@@ -228,6 +228,8 @@ export type Database = {
           facebook_auth_token: string | null
           facebook_connected: boolean | null
           id: string
+          instagram_app_id: string | null
+          instagram_app_secret: string | null
           instagram_auth_token: string | null
           instagram_connected: boolean | null
           language: string | null
@@ -254,6 +256,8 @@ export type Database = {
           facebook_auth_token?: string | null
           facebook_connected?: boolean | null
           id?: string
+          instagram_app_id?: string | null
+          instagram_app_secret?: string | null
           instagram_auth_token?: string | null
           instagram_connected?: boolean | null
           language?: string | null
@@ -280,6 +284,8 @@ export type Database = {
           facebook_auth_token?: string | null
           facebook_connected?: boolean | null
           id?: string
+          instagram_app_id?: string | null
+          instagram_app_secret?: string | null
           instagram_auth_token?: string | null
           instagram_connected?: boolean | null
           language?: string | null

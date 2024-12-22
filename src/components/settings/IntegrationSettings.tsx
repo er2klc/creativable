@@ -24,8 +24,8 @@ export function IntegrationSettings() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       openai_api_key: settings?.openai_api_key || "",
-      instagram_app_id: "",
-      instagram_app_secret: "",
+      instagram_app_id: settings?.instagram_app_id || "",
+      instagram_app_secret: settings?.instagram_app_secret || "",
     },
   });
 
@@ -34,8 +34,8 @@ export function IntegrationSettings() {
     if (settings) {
       form.reset({
         openai_api_key: settings.openai_api_key || "",
-        instagram_app_id: "",
-        instagram_app_secret: "",
+        instagram_app_id: settings.instagram_app_id || "",
+        instagram_app_secret: settings.instagram_app_secret || "",
       });
     }
   }, [settings, form]);
@@ -79,7 +79,8 @@ export function IntegrationSettings() {
     // Redirect zur Instagram OAuth URL
     const redirectUri = `${window.location.origin}/auth/callback/instagram`;
     const scope = "instagram_basic,instagram_manage_messages";
-    const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
+    const state = crypto.randomUUID(); // Add state parameter for security
+    const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=${state}`;
     
     window.location.href = instagramAuthUrl;
   };
