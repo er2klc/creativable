@@ -12,6 +12,9 @@ serve(async (req) => {
   }
 
   try {
+    const { platform, message, leadId } = await req.json();
+    console.log('Processing message request:', { platform, leadId });
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -22,32 +25,24 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
       authHeader.replace('Bearer ', '')
     );
 
-    if (userError || !user) {
-      console.error('User auth error:', userError);
+    if (authError || !user) {
+      console.error('User auth error:', authError);
       throw new Error('Invalid authorization token');
     }
 
-    const { platform, message, leadId } = await req.json();
-    console.log('Processing message request:', { platform, leadId, userId: user.id });
-
-    const { data: authStatus, error: authError } = await supabaseClient
+    const { data: authStatus, error: authStatusError } = await supabaseClient
       .from('platform_auth_status')
       .select('*')
       .eq('user_id', user.id)
       .eq('platform', platform.toLowerCase())
       .single();
 
-    if (authError) {
-      console.error('Auth status error:', authError);
-      throw new Error(`Error fetching authentication for ${platform}`);
-    }
-
-    if (!authStatus?.access_token) {
-      console.error('No access token found for platform:', platform);
+    if (authStatusError || !authStatus?.access_token) {
+      console.error('Auth status error:', authStatusError);
       throw new Error(`Please connect your ${platform} account in the settings first`);
     }
 
@@ -79,7 +74,7 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // First get the member URN using the /me endpoint with proper API version
+      // First get the member URN using the /me endpoint
       const meResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
@@ -125,7 +120,7 @@ serve(async (req) => {
       } catch (conversationError) {
         console.error('Error creating conversation, trying message instead:', conversationError);
 
-        // If conversation fails, try to send a message
+        // If conversation fails, try to send a message using the messaging API
         const messageResponse = await fetch('https://api.linkedin.com/v2/messages', {
           method: 'POST',
           headers: {
@@ -153,35 +148,6 @@ serve(async (req) => {
 
         console.log('LinkedIn message sent successfully');
       }
-    }
-
-    // Save message to database
-    const { error: insertError } = await supabaseClient
-      .from('messages')
-      .insert({
-        lead_id: leadId,
-        user_id: user.id,
-        platform,
-        content: message,
-      });
-
-    if (insertError) {
-      console.error('Error saving message:', insertError);
-      throw new Error('Failed to save message to database');
-    }
-
-    // Update lead's last action
-    const { error: updateError } = await supabaseClient
-      .from('leads')
-      .update({
-        last_action: 'Message sent',
-        last_action_date: new Date().toISOString(),
-      })
-      .eq('id', leadId);
-
-    if (updateError) {
-      console.error('Error updating lead:', updateError);
-      // Don't throw here as the message was already sent
     }
 
     return new Response(

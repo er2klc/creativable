@@ -110,7 +110,7 @@ export function useLinkedInIntegration() {
         redirectUri 
       });
 
-      // Updated scopes to include all required permissions
+      // Updated scopes to include messaging permissions
       const scope = [
         "openid",
         "profile",
@@ -118,7 +118,15 @@ export function useLinkedInIntegration() {
         "w_member_social",
         "r_emailaddress",
         "r_liteprofile",
-        "w_member_social"
+        "w_member_social",
+        "rw_organization_admin",
+        "r_organization_social",
+        "w_organization_social",
+        "r_basicprofile",
+        "r_organization_admin",
+        "rw_organization_admin",
+        "w_organization",
+        "w_share"
       ].join(" ");
       
       const state = Math.random().toString(36).substring(7);
