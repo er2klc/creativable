@@ -79,8 +79,8 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // Use the messaging API directly without profile lookup
-      const messageResponse = await fetch('https://api.linkedin.com/v2/messages', {
+      // Updated LinkedIn messaging API endpoint and version
+      const messageResponse = await fetch('https://api.linkedin.com/rest/messages', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
@@ -90,8 +90,8 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           recipients: [`urn:li:person:${profileId}`],
-          subject: "",
-          body: message,
+          messageText: message,
+          messageSubject: "",
         }),
       });
 
