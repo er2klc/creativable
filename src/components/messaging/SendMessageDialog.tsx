@@ -68,7 +68,7 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
   };
 
   const sendMessage = async () => {
-    if (!message || !platform || !lead) {
+    if (!message || !platform || !lead || !session?.user?.id) {
       toast({
         title: "Fehler",
         description: "Bitte füllen Sie alle Felder aus",
@@ -97,6 +97,7 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
           lead_id: lead.id,
           platform,
           content: message,
+          user_id: session.user.id
         });
 
       if (dbError) throw dbError;

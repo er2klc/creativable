@@ -13,54 +13,31 @@ serve(async (req) => {
   }
 
   try {
-    const { leadId } = await req.json();
-    console.log('Generating summary for lead:', leadId);
+    const { leadId, language = "de" } = await req.json();
 
-    // Create a Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch lead data with messages and tasks
-    const { data: lead, error } = await supabaseClient
+    // Fetch lead data with messages
+    const { data: lead, error: leadError } = await supabase
       .from('leads')
       .select(`
         *,
-        messages (content, sent_at),
-        tasks (title, completed, due_date)
+        messages (
+          content,
+          sent_at,
+          platform
+        )
       `)
       .eq('id', leadId)
       .single();
 
-    if (error) {
-      console.error('Error fetching lead data:', error);
-      throw error;
-    }
+    if (leadError) throw leadError;
 
-    console.log('Lead data fetched successfully');
-
-    // Generate a prompt for the AI
-    const prompt = `Please provide a concise summary of this lead:
-    Name: ${lead.name}
-    Industry: ${lead.industry}
-    Platform: ${lead.platform}
-    Phase: ${lead.phase}
-    Last Action: ${lead.last_action || 'None'}
-    
-    Messages (${lead.messages.length}):
-    ${lead.messages.map((m: any) => `- ${m.content}`).join('\n')}
-    
-    Tasks (${lead.tasks.length}):
-    ${lead.tasks.map((t: any) => `- ${t.title} (${t.completed ? 'Completed' : 'Pending'})`).join('\n')}
-    
-    Please analyze this information and provide:
-    1. Current status summary
-    2. Key interactions
-    3. Next recommended actions`;
-
-    // Call OpenAI API
-    const openAiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Generate summary with OpenAI
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
@@ -71,18 +48,37 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that analyzes lead information and provides concise, actionable summaries.',
+            content: language === "de" 
+              ? "Du bist ein Experte für die Analyse von Verkaufsgesprächen und Leads. Erstelle eine kurze, prägnante Zusammenfassung der wichtigsten Informationen und Interaktionen."
+              : "You are an expert in analyzing sales conversations and leads. Create a brief, concise summary of the most important information and interactions."
           },
           {
             role: 'user',
-            content: prompt,
-          },
+            content: `
+              ${language === "de" ? "Erstelle eine Zusammenfassung für diesen Lead:" : "Create a summary for this lead:"}
+              
+              ${language === "de" ? "Lead-Informationen:" : "Lead Information:"}
+              - ${language === "de" ? "Name" : "Name"}: ${lead.name}
+              - ${language === "de" ? "Plattform" : "Platform"}: ${lead.platform}
+              - ${language === "de" ? "Branche" : "Industry"}: ${lead.industry}
+              - ${language === "de" ? "Phase" : "Phase"}: ${lead.phase}
+              
+              ${language === "de" ? "Nachrichtenverlauf:" : "Message History:"}
+              ${lead.messages.map((msg: any) => 
+                `- ${new Date(msg.sent_at).toLocaleDateString()}: ${msg.content}`
+              ).join('\n')}
+              
+              ${language === "de" ? "Zusätzliche Informationen:" : "Additional Information:"}
+              ${lead.notes ? `${language === "de" ? "Notizen" : "Notes"}: ${lead.notes}` : ""}
+              ${lead.company_name ? `${language === "de" ? "Firmenname" : "Company Name"}: ${lead.company_name}` : ""}
+              ${lead.products_services ? `${language === "de" ? "Produkte/Services" : "Products/Services"}: ${lead.products_services}` : ""}
+            `
+          }
         ],
       }),
     });
 
-    const data = await openAiResponse.json();
-    console.log('OpenAI response received');
+    const data = await response.json();
     const summary = data.choices[0].message.content;
 
     return new Response(JSON.stringify({ summary }), {

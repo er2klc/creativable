@@ -5,9 +5,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Send } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
+import { useSettings } from "@/hooks/use-settings";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -15,6 +19,7 @@ interface LeadDetailViewProps {
 }
 
 export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
+  const { settings } = useSettings();
   const { data: lead, isLoading } = useQuery({
     queryKey: ["lead", leadId],
     queryFn: async () => {
@@ -35,11 +40,14 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   });
 
   const { data: aiSummary, isLoading: isLoadingAiSummary } = useQuery({
-    queryKey: ["lead-summary", leadId],
+    queryKey: ["lead-summary", leadId, settings?.language],
     queryFn: async () => {
       if (!leadId) return null;
       const { data, error } = await supabase.functions.invoke("generate-lead-summary", {
-        body: { leadId },
+        body: { 
+          leadId,
+          language: settings?.language || "de"
+        },
       });
       if (error) throw error;
       return data;
@@ -50,8 +58,19 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>{lead?.name}</DialogTitle>
+          {lead && (
+            <SendMessageDialog
+              lead={lead}
+              trigger={
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Send className="h-4 w-4" />
+                  Nachricht senden
+                </Button>
+              }
+            />
+          )}
         </DialogHeader>
 
         {isLoading ? (

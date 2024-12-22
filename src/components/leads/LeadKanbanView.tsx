@@ -1,6 +1,7 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
-import { Star } from "lucide-react";
+import { Star, Send } from "lucide-react";
+import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -30,14 +31,29 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{lead.name}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-4 w-4"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Star className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <SendMessageDialog
+                        lead={lead}
+                        trigger={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        }
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Star className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div className="text-sm text-muted-foreground mt-2">
                     {lead.platform} · {lead.industry}
