@@ -48,6 +48,12 @@ serve(async (req) => {
       throw new Error(`Please connect your ${platform} account in the settings first`);
     }
 
+    // Check if access token has expired
+    if (authStatus.expires_at && new Date(authStatus.expires_at) <= new Date()) {
+      console.error('Access token expired:', authStatus.expires_at);
+      throw new Error('Access token expired. Please refresh or reconnect your account.');
+    }
+
     console.log('Found valid auth status with access token');
 
     // Get lead information
@@ -83,7 +89,7 @@ serve(async (req) => {
 
       try {
         // First, verify the access token with /me endpoint
-        const meResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
+        const meResponse = await fetch('https://api.linkedin.com/v2/me', {
           headers: {
             'Authorization': `Bearer ${authStatus.access_token}`,
             'X-Restli-Protocol-Version': '2.0.0',
@@ -93,7 +99,11 @@ serve(async (req) => {
 
         if (!meResponse.ok) {
           const errorData = await meResponse.text();
-          console.error('LinkedIn /userinfo endpoint error:', errorData);
+          console.error('LinkedIn /me endpoint error:', {
+            status: meResponse.status,
+            statusText: meResponse.statusText,
+            body: errorData
+          });
           throw new Error('LinkedIn access token validation failed. Please check your connection in settings.');
         }
 
@@ -110,17 +120,23 @@ serve(async (req) => {
             'LinkedIn-Version': '202304',
           },
           body: JSON.stringify({
-            recipients: [`urn:li:person:${profileId}`],
-            message: {
-              subject: "",
-              body: message
-            }
+            recipients: [`urn:li:member:${profileId}`],
+            messageText: message
           }),
         });
 
         if (!messageResponse.ok) {
           const errorData = await messageResponse.text();
-          console.error('LinkedIn messaging API error:', errorData);
+          console.error('LinkedIn messaging API error:', {
+            status: messageResponse.status,
+            statusText: messageResponse.statusText,
+            body: errorData
+          });
+
+          if (messageResponse.status === 403) {
+            throw new Error('Cannot send message. The recipient may not be a 1st-degree connection.');
+          }
+
           throw new Error(`Failed to send LinkedIn message: ${errorData}`);
         }
 
