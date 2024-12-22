@@ -79,8 +79,8 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // Updated LinkedIn messaging API endpoint and version
-      const messageResponse = await fetch('https://api.linkedin.com/rest/messages', {
+      // Create a conversation first
+      const conversationResponse = await fetch('https://api.linkedin.com/rest/conversations', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
@@ -90,8 +90,46 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           recipients: [`urn:li:person:${profileId}`],
-          messageText: message,
-          messageSubject: "",
+          entityUrn: `urn:li:conversation:${crypto.randomUUID()}`,
+        }),
+      });
+
+      if (!conversationResponse.ok) {
+        const errorData = await conversationResponse.text();
+        console.error('LinkedIn conversation API error:', errorData);
+        throw new Error(`Failed to create LinkedIn conversation: ${errorData}`);
+      }
+
+      const conversation = await conversationResponse.json();
+      console.log('Created conversation:', conversation);
+
+      // Send message in the conversation
+      const messageResponse = await fetch('https://api.linkedin.com/rest/messages', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authStatus.access_token}`,
+          'Content-Type': 'application/json',
+          'LinkedIn-Version': '202304',
+          'X-Restli-Protocol-Version': '2.0.0',
+        },
+        body: JSON.stringify({
+          conversationUrn: conversation.entityUrn,
+          eventCreate: {
+            value: {
+              attributedBody: {
+                text: message,
+                attributes: [],
+              },
+              attachments: [],
+            },
+            com.linkedin.voyager.messaging.create.MessageCreate: {
+              attributedBody: {
+                text: message,
+                attributes: [],
+              },
+              attachments: [],
+            },
+          },
         }),
       });
 
