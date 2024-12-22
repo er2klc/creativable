@@ -94,22 +94,15 @@ export function useLinkedInIntegration() {
       }
 
       if (result.error) {
-        if (result.error.code === '23505') { // Duplicate key error code
-          toast({
-            title: "Info",
-            description: "LinkedIn Zugangsdaten wurden aktualisiert",
-          });
-        } else {
-          throw result.error;
-        }
-      } else {
-        toast({
-          title: "Erfolg ✨",
-          description: existingAuth 
-            ? "LinkedIn Zugangsdaten erfolgreich aktualisiert"
-            : "LinkedIn Zugangsdaten erfolgreich gespeichert",
-        });
+        throw result.error;
       }
+
+      toast({
+        title: "Erfolg ✨",
+        description: existingAuth 
+          ? "LinkedIn Zugangsdaten erfolgreich aktualisiert"
+          : "LinkedIn Zugangsdaten erfolgreich gespeichert",
+      });
 
     } catch (error) {
       console.error("Error updating LinkedIn credentials:", error);
@@ -139,7 +132,8 @@ export function useLinkedInIntegration() {
         throw new Error("Bitte speichern Sie zuerst Ihre LinkedIn Client ID");
       }
 
-      const scope = "openid profile email w_member_social";
+      // Updated scope to include necessary permissions
+      const scope = "r_liteprofile r_emailaddress w_member_social rw_organization_admin";
       const state = Math.random().toString(36).substring(7);
       localStorage.setItem("linkedin_oauth_state", state);
       
