@@ -3,7 +3,9 @@ import { useSettings } from "@/hooks/use-settings";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CheckCircle, XCircle, Linkedin } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { CheckCircle, XCircle, Linkedin, Key } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +21,43 @@ export function LinkedInIntegration() {
   const { toast } = useToast();
   const redirectUri = `${window.location.origin}/auth/callback/linkedin`;
   const isConnected = settings?.linkedin_connected || false;
+
+  const handleUpdateCredentials = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const clientId = formData.get('linkedin_client_id') as string;
+    const clientSecret = formData.get('linkedin_client_secret') as string;
+
+    if (!clientId || !clientSecret) {
+      toast({
+        title: "Fehlende Eingaben",
+        description: "Bitte füllen Sie alle Felder aus",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Store credentials in Supabase Edge Function secrets
+      const { error: secretError } = await supabase.functions.invoke('update-linkedin-secrets', {
+        body: { clientId, clientSecret }
+      });
+
+      if (secretError) throw secretError;
+
+      toast({
+        title: "Erfolg",
+        description: "LinkedIn Zugangsdaten wurden gespeichert",
+      });
+    } catch (error) {
+      console.error('Error saving LinkedIn credentials:', error);
+      toast({
+        title: "Fehler",
+        description: "LinkedIn Zugangsdaten konnten nicht gespeichert werden",
+        variant: "destructive",
+      });
+    }
+  };
 
   const connectLinkedIn = async () => {
     try {
@@ -69,48 +108,51 @@ export function LinkedInIntegration() {
             <DialogHeader>
               <DialogTitle>LinkedIn Integration Einrichten</DialogTitle>
               <DialogDescription>
-                Folgen Sie diesen Schritten um LinkedIn zu verbinden:
+                Geben Sie Ihre LinkedIn API Zugangsdaten ein:
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <form onSubmit={handleUpdateCredentials} className="space-y-4">
               <div className="space-y-2">
-                <h4 className="font-medium">1. LinkedIn Developer Account</h4>
-                <p className="text-sm text-muted-foreground">
-                  Erstellen Sie einen LinkedIn Developer Account und eine neue App unter{" "}
-                  <a
-                    href="https://www.linkedin.com/developers/apps"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    LinkedIn Developers
-                  </a>
-                </p>
+                <Label htmlFor="linkedin_client_id">LinkedIn Client ID</Label>
+                <div className="flex gap-2">
+                  <Key className="h-4 w-4 mt-3 text-muted-foreground" />
+                  <Input
+                    id="linkedin_client_id"
+                    name="linkedin_client_id"
+                    placeholder="77xxxxxxxxxxxxx"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <h4 className="font-medium">2. OAuth 2.0 Einstellungen</h4>
-                <p className="text-sm text-muted-foreground">
-                  Fügen Sie diese Redirect URI zu Ihrer LinkedIn App hinzu:
-                </p>
+                <Label htmlFor="linkedin_client_secret">LinkedIn Client Secret</Label>
+                <div className="flex gap-2">
+                  <Key className="h-4 w-4 mt-3 text-muted-foreground" />
+                  <Input
+                    id="linkedin_client_secret"
+                    name="linkedin_client_secret"
+                    type="password"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-medium">Redirect URI</h4>
                 <code className="block p-2 bg-muted rounded-md text-sm">
                   {redirectUri}
                 </code>
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-medium">3. Berechtigungen</h4>
                 <p className="text-sm text-muted-foreground">
-                  Aktivieren Sie folgende OAuth 2.0 Berechtigungen:
+                  Fügen Sie diese URI zu Ihrer LinkedIn App hinzu
                 </p>
-                <ul className="list-disc list-inside text-sm text-muted-foreground">
-                  <li>r_liteprofile</li>
-                  <li>r_emailaddress</li>
-                  <li>w_member_social</li>
-                </ul>
               </div>
-              <Button onClick={connectLinkedIn} className="w-full">
-                Mit LinkedIn verbinden
-              </Button>
-            </div>
+              <div className="flex gap-2">
+                <Button type="submit" className="flex-1">
+                  Zugangsdaten Speichern
+                </Button>
+                <Button type="button" onClick={connectLinkedIn} className="flex-1">
+                  Mit LinkedIn verbinden
+                </Button>
+              </div>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
