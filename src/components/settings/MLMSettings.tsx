@@ -34,29 +34,32 @@ export function MLMSettings({ settings }: { settings: Settings | null }) {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const saveField = async (field: string, value: string) => {
     try {
       const { error } = await supabase
         .from("settings")
         .upsert({
           user_id: session?.user?.id,
-          ...values,
+          [field]: value,
         });
 
       if (error) throw error;
 
       toast({
         title: "Erfolg ✨",
-        description: "MLM-Informationen wurden gespeichert",
+        description: `${field} wurde gespeichert`,
       });
 
-      // Trigger OpenAI context update
-      await updateOpenAIContext(values);
+      // Update OpenAI context
+      await updateOpenAIContext({
+        ...form.getValues(),
+        [field]: value
+      });
     } catch (error) {
-      console.error("Error saving MLM settings:", error);
+      console.error(`Error saving ${field}:`, error);
       toast({
         title: "Fehler ❌",
-        description: "MLM-Informationen konnten nicht gespeichert werden",
+        description: `${field} konnte nicht gespeichert werden`,
         variant: "destructive",
       });
     }
@@ -64,20 +67,13 @@ export function MLMSettings({ settings }: { settings: Settings | null }) {
 
   const updateOpenAIContext = async (values: z.infer<typeof formSchema>) => {
     try {
-      const response = await fetch('/api/update-openai-context', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const { error } = await supabase.functions.invoke('update-openai-context', {
         body: JSON.stringify(values),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update OpenAI context');
-      }
+      if (error) throw error;
     } catch (error) {
       console.error('Error updating OpenAI context:', error);
-      // We don't show this error to the user since the data was saved successfully
     }
   };
 
@@ -91,16 +87,24 @@ export function MLMSettings({ settings }: { settings: Settings | null }) {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form className="space-y-4">
             <FormField
               control={form.control}
               name="company_name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Firmenname 🏢</FormLabel>
-                  <FormControl>
-                    <Input placeholder="z.B. Zinzino" {...field} />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input placeholder="z.B. Zinzino" {...field} />
+                    </FormControl>
+                    <Button 
+                      type="button"
+                      onClick={() => saveField('company_name', field.value)}
+                    >
+                      Speichern
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -112,13 +116,21 @@ export function MLMSettings({ settings }: { settings: Settings | null }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Produkte/Dienstleistungen 🛍️</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="z.B. Hochwertige Gesundheitsprodukte, Nahrungsergänzungsmittel"
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Textarea 
+                        placeholder="z.B. Hochwertige Gesundheitsprodukte, Nahrungsergänzungsmittel"
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <Button 
+                      type="button"
+                      onClick={() => saveField('products_services', field.value)}
+                    >
+                      Speichern
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -130,13 +142,21 @@ export function MLMSettings({ settings }: { settings: Settings | null }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Zielgruppe 👥</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="z.B. Menschen, die an Fitness und Gesundheit interessiert sind"
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Textarea 
+                        placeholder="z.B. Menschen, die an Fitness und Gesundheit interessiert sind"
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <Button 
+                      type="button"
+                      onClick={() => saveField('target_audience', field.value)}
+                    >
+                      Speichern
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -148,13 +168,21 @@ export function MLMSettings({ settings }: { settings: Settings | null }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Alleinstellungsmerkmal (USP) ✨</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="z.B. Hochwertige Qualität, wissenschaftlich fundiert"
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Textarea 
+                        placeholder="z.B. Hochwertige Qualität, wissenschaftlich fundiert"
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <Button 
+                      type="button"
+                      onClick={() => saveField('usp', field.value)}
+                    >
+                      Speichern
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -166,19 +194,25 @@ export function MLMSettings({ settings }: { settings: Settings | null }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Business-Beschreibung 📋</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="z.B. Wir unterstützen unsere Kunden durch erstklassige Gesundheitsprodukte und persönliches Coaching"
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Textarea 
+                        placeholder="z.B. Wir unterstützen unsere Kunden durch erstklassige Gesundheitsprodukte und persönliches Coaching"
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <Button 
+                      type="button"
+                      onClick={() => saveField('business_description', field.value)}
+                    >
+                      Speichern
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <Button type="submit">Alle Informationen Speichern</Button>
           </form>
         </Form>
       </CardContent>

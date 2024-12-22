@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { MLMSettings } from "@/components/settings/MLMSettings";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
+import { AboutSettings } from "@/components/settings/AboutSettings";
 import { supabase } from "@/integrations/supabase/client";
 import type { Settings } from "@/integrations/supabase/types/settings";
 
@@ -17,6 +18,7 @@ export default function Settings() {
         .from("settings")
         .select("*")
         .eq("user_id", session?.user?.id)
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
@@ -46,6 +48,7 @@ export default function Settings() {
         <TabsList>
           <TabsTrigger value="general">Allgemein</TabsTrigger>
           <TabsTrigger value="mlm">MLM-Informationen</TabsTrigger>
+          <TabsTrigger value="about">Über mich</TabsTrigger>
           <TabsTrigger value="integrations">Integrationen</TabsTrigger>
         </TabsList>
 
@@ -55,6 +58,10 @@ export default function Settings() {
 
         <TabsContent value="mlm" className="space-y-4">
           <MLMSettings settings={settings} />
+        </TabsContent>
+
+        <TabsContent value="about" className="space-y-4">
+          <AboutSettings settings={settings} />
         </TabsContent>
 
         <TabsContent value="integrations" className="space-y-4">
