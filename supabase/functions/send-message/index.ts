@@ -68,16 +68,48 @@ serve(async (req) => {
     }
 
     if (platform.toLowerCase() === 'linkedin') {
-      // Extract member URN from username or profile URL
-      const profilePath = lead.social_media_username.split('/').pop()?.split('?')[0];
-      if (!profilePath) {
-        throw new Error('Invalid LinkedIn profile URL or username');
+      // Extract LinkedIn profile ID from the URL
+      const profileUrl = lead.social_media_username;
+      console.log('Processing LinkedIn profile URL:', profileUrl);
+
+      let profileId;
+      if (profileUrl.includes('linkedin.com/in/')) {
+        // Extract ID from full URL
+        profileId = profileUrl.split('linkedin.com/in/')[1].split('/')[0].split('?')[0];
+      } else {
+        // Assume it's just the profile ID
+        profileId = profileUrl.split('/')[0].split('?')[0];
       }
 
-      console.log('Sending LinkedIn message to profile:', profilePath);
+      if (!profileId) {
+        throw new Error('Could not extract LinkedIn profile ID');
+      }
+
+      console.log('Extracted LinkedIn profile ID:', profileId);
+
+      // First, get the member URN using the /people API
+      const profileResponse = await fetch(
+        `https://api.linkedin.com/v2/people/(vanityName:${profileId})`,
+        {
+          headers: {
+            'Authorization': `Bearer ${authStatus.access_token}`,
+            'LinkedIn-Version': '202304',
+          },
+        }
+      );
+
+      if (!profileResponse.ok) {
+        const errorData = await profileResponse.text();
+        console.error('LinkedIn profile lookup failed:', errorData);
+        throw new Error(`Failed to find LinkedIn profile: ${errorData}`);
+      }
+
+      const profileData = await profileResponse.json();
+      const memberUrn = profileData.id;
+      console.log('Retrieved LinkedIn member URN:', memberUrn);
       
-      // Use LinkedIn's REST API for messaging
-      const messageResponse = await fetch('https://api.linkedin.com/rest/conversations', {
+      // Use LinkedIn's REST API for messaging with the correct member URN
+      const messageResponse = await fetch('https://api.linkedin.com/v2/messages', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
@@ -86,17 +118,15 @@ serve(async (req) => {
           'X-Restli-Protocol-Version': '2.0.0',
         },
         body: JSON.stringify({
-          recipients: [`urn:li:person:${profilePath}`],
-          message: {
-            subject: "",
-            body: message,
-          }
+          recipients: [`urn:li:person:${memberUrn}`],
+          subject: "",
+          body: message,
         }),
       });
 
       if (!messageResponse.ok) {
         const errorData = await messageResponse.text();
-        console.error('LinkedIn API error:', errorData);
+        console.error('LinkedIn message API error:', errorData);
         throw new Error(`Failed to send LinkedIn message: ${errorData}`);
       }
 
