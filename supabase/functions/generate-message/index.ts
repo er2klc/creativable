@@ -19,7 +19,8 @@ serve(async (req) => {
       companyName, 
       productsServices, 
       targetAudience, 
-      usp 
+      usp,
+      language = "Deutsch" // Standardsprache falls keine angegeben
     } = await req.json();
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -35,7 +36,8 @@ serve(async (req) => {
             role: 'system',
             content: `Du bist ein Experte für personalisierte Verkaufsnachrichten im MLM-Bereich. 
                      Erstelle eine freundliche, aber direkte Nachricht für ${leadPlatform}.
-                     Berücksichtige dabei die Branche ${leadIndustry} des Leads.`
+                     Berücksichtige dabei die Branche ${leadIndustry} des Leads.
+                     Die Nachricht soll in folgender Sprache sein: ${language}`
           },
           {
             role: 'user',
@@ -49,7 +51,7 @@ serve(async (req) => {
               - Kurz und prägnant sein (max. 2-3 Sätze)
               - Freundlich und persönlich klingen
               - Einen klaren Call-to-Action enthalten
-              - Auf Deutsch sein
+              - In ${language} sein
               - Für ${leadPlatform} optimiert sein`
           }
         ],

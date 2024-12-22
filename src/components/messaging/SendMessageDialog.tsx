@@ -50,6 +50,7 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
           productsServices: settings?.products_services,
           targetAudience: settings?.target_audience,
           usp: settings?.usp,
+          language: settings?.language || "Deutsch" // Sprache aus den Einstellungen
         },
       });
 
@@ -146,11 +147,11 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
                 <SelectValue placeholder="Wählen Sie eine Plattform" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                <SelectItem value="instagram">Instagram</SelectItem>
                 <SelectItem value="linkedin">LinkedIn</SelectItem>
+                <SelectItem value="instagram">Instagram</SelectItem>
                 <SelectItem value="facebook">Facebook</SelectItem>
                 <SelectItem value="tiktok">TikTok</SelectItem>
+                <SelectItem value="whatsapp">WhatsApp</SelectItem>
               </SelectContent>
             </Select>
           </div>

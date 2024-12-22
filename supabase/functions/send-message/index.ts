@@ -15,41 +15,46 @@ serve(async (req) => {
   try {
     const { platform, message, leadId, socialMediaUsername } = await req.json();
     
-    // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get user's settings with platform credentials
-    const { data: settings } = await supabase
-      .from('settings')
+    // Get platform auth status
+    const { data: authStatus, error: authError } = await supabase
+      .from('platform_auth_status')
       .select('*')
+      .eq('platform', platform.toLowerCase())
       .single();
 
-    if (!settings) {
-      throw new Error('Settings not found');
+    if (authError || !authStatus) {
+      throw new Error(`${platform} is not connected`);
     }
 
-    if (platform === 'instagram') {
-      if (!settings.instagram_auth_token || !settings.instagram_connected) {
-        throw new Error('Instagram is not connected');
+    if (platform.toLowerCase() === 'linkedin') {
+      if (!authStatus.access_token) {
+        throw new Error('LinkedIn access token not found');
       }
 
-      // Send message via Instagram Graph API
-      const response = await fetch(`https://graph.instagram.com/v12.0/me/messages`, {
+      // Send message via LinkedIn API
+      const response = await fetch(`https://api.linkedin.com/v2/messages`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${settings.instagram_auth_token}`,
+          'Authorization': `Bearer ${authStatus.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          recipient: { username: socialMediaUsername },
-          message: { text: message },
+          recipients: [{ person: { "urn": `urn:li:person:${socialMediaUsername}` } }],
+          message: {
+            subject: "Neue Nachricht",
+            body: message
+          }
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send Instagram message');
+        const errorData = await response.json();
+        console.error('LinkedIn API error:', errorData);
+        throw new Error('Failed to send LinkedIn message');
       }
     }
     // ... Weitere Plattformen hier hinzufügen
@@ -61,6 +66,7 @@ serve(async (req) => {
         lead_id: leadId,
         platform,
         content: message,
+        sent_at: new Date().toISOString()
       });
 
     if (dbError) throw dbError;
