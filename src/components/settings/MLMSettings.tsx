@@ -49,6 +49,9 @@ export function MLMSettings({ settings }: { settings: Settings | null }) {
         title: "Erfolg ✨",
         description: "MLM-Informationen wurden gespeichert",
       });
+
+      // Trigger OpenAI context update
+      await updateOpenAIContext(values);
     } catch (error) {
       console.error("Error saving MLM settings:", error);
       toast({
@@ -56,6 +59,25 @@ export function MLMSettings({ settings }: { settings: Settings | null }) {
         description: "MLM-Informationen konnten nicht gespeichert werden",
         variant: "destructive",
       });
+    }
+  };
+
+  const updateOpenAIContext = async (values: z.infer<typeof formSchema>) => {
+    try {
+      const response = await fetch('/api/update-openai-context', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update OpenAI context');
+      }
+    } catch (error) {
+      console.error('Error updating OpenAI context:', error);
+      // We don't show this error to the user since the data was saved successfully
     }
   };
 
@@ -156,7 +178,7 @@ export function MLMSettings({ settings }: { settings: Settings | null }) {
               )}
             />
 
-            <Button type="submit">Speichern</Button>
+            <Button type="submit">Alle Informationen Speichern</Button>
           </form>
         </Form>
       </CardContent>

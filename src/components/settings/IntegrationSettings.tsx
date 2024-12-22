@@ -27,27 +27,26 @@ export function IntegrationSettings({ settings }: { settings: Settings | null })
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const saveApiKey = async (key: string, value: string) => {
     try {
       const { error } = await supabase
         .from("settings")
         .upsert({
           user_id: session?.user?.id,
-          openai_api_key: values.openai_api_key,
-          superchat_api_key: values.superchat_api_key,
+          [key]: value,
         });
 
       if (error) throw error;
 
       toast({
         title: "Erfolg ✨",
-        description: "API-Keys wurden gespeichert",
+        description: `${key === 'openai_api_key' ? 'OpenAI' : 'Superchat'} API-Key wurde gespeichert`,
       });
     } catch (error) {
-      console.error("Error saving API keys:", error);
+      console.error(`Error saving ${key}:`, error);
       toast({
         title: "Fehler ❌",
-        description: "API-Keys konnten nicht gespeichert werden",
+        description: `API-Key konnte nicht gespeichert werden`,
         variant: "destructive",
       });
     }
@@ -63,16 +62,24 @@ export function IntegrationSettings({ settings }: { settings: Settings | null })
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form className="space-y-4">
             <FormField
               control={form.control}
               name="openai_api_key"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>OpenAI API-Key 🤖</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="sk-..." {...field} />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input type="password" placeholder="sk-..." {...field} />
+                    </FormControl>
+                    <Button 
+                      type="button"
+                      onClick={() => saveApiKey('openai_api_key', field.value)}
+                    >
+                      Speichern
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -84,15 +91,21 @@ export function IntegrationSettings({ settings }: { settings: Settings | null })
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Superchat API-Key 💬</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="sc-..." {...field} />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input type="password" placeholder="sc-..." {...field} />
+                    </FormControl>
+                    <Button 
+                      type="button"
+                      onClick={() => saveApiKey('superchat_api_key', field.value)}
+                    >
+                      Speichern
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <Button type="submit">Speichern</Button>
           </form>
         </Form>
       </CardContent>
