@@ -1,3 +1,4 @@
+import React from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,12 +17,16 @@ const formSchema = z.object({
   superchat_api_key: z.string().min(1, "Superchat API-Key ist erforderlich"),
 });
 
-export function IntegrationSettings() {
+interface IntegrationSettingsProps {
+  settings: Settings | null;
+}
+
+export function IntegrationSettings({ settings }: IntegrationSettingsProps) {
   const session = useSession();
   const { toast } = useToast();
 
   // Fetch current settings
-  const { data: settings, refetch } = useQuery({
+  const { data: currentSettings, refetch } = useQuery({
     queryKey: ["settings", session?.user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
