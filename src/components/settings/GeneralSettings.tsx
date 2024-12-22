@@ -22,6 +22,7 @@ const languages = [
   { value: "Français", label: "🇫🇷 Français" },
   { value: "Español", label: "🇪🇸 Español" },
   { value: "Italiano", label: "🇮🇹 Italiano" },
+  { value: "Türkçe", label: "🇹🇷 Türkçe" },
 ];
 
 export function GeneralSettings() {
@@ -64,17 +65,30 @@ export function GeneralSettings() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      console.log("Saving settings:", values);
+      
+      if (!session?.user?.id) {
+        throw new Error("No user session found");
+      }
+
       const { error } = await supabase
         .from("settings")
-        .upsert({
-          user_id: session?.user?.id,
-          language: values.language,
-        });
+        .upsert(
+          {
+            user_id: session.user.id,
+            language: values.language,
+            updated_at: new Date().toISOString(),
+          },
+          { 
+            onConflict: 'user_id',
+            ignoreDuplicates: false 
+          }
+        );
 
       if (error) throw error;
 
       // Invalidate and refetch settings
-      await queryClient.invalidateQueries({ queryKey: ["settings", session?.user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ["settings", session.user.id] });
 
       toast({
         title: "Erfolg ✨",
