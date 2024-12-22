@@ -81,8 +81,60 @@ serve(async (req) => {
       try {
         console.log('Attempting to send LinkedIn message...');
         
-        // Construct the recipient URN directly from the profile ID
-        const recipientUrn = `urn:li:person:${profileId}`;
+        // First, get the recipient's member ID using the /me endpoint
+        const meResponse = await fetch('https://api.linkedin.com/v2/me', {
+          headers: {
+            'Authorization': `Bearer ${authStatus.access_token}`,
+            'X-Restli-Protocol-Version': '2.0.0',
+          },
+        });
+
+        if (!meResponse.ok) {
+          const errorData = await meResponse.text();
+          console.error('LinkedIn /me endpoint error:', errorData);
+          throw new Error(`Failed to fetch user profile: ${errorData}`);
+        }
+
+        const meData = await meResponse.json();
+        console.log('LinkedIn user profile:', meData);
+
+        // Get connections to verify the recipient is a 1st-degree connection
+        const connectionsResponse = await fetch(`https://api.linkedin.com/v2/connections?q=viewer&start=0&count=1000`, {
+          headers: {
+            'Authorization': `Bearer ${authStatus.access_token}`,
+            'X-Restli-Protocol-Version': '2.0.0',
+          },
+        });
+
+        if (!connectionsResponse.ok) {
+          const errorData = await connectionsResponse.text();
+          console.error('LinkedIn connections error:', errorData);
+          throw new Error(`Failed to fetch connections: ${errorData}`);
+        }
+
+        const connectionsData = await connectionsResponse.json();
+        console.log('LinkedIn connections:', connectionsData);
+
+        // Verify the recipient is in the connections list
+        const isConnected = connectionsData.elements.some(
+          (connection) => connection.miniProfile.publicIdentifier === profileId
+        );
+
+        if (!isConnected) {
+          throw new Error('Recipient is not a 1st-degree connection. You can only send messages to direct connections.');
+        }
+
+        // Get the member ID from the connections data
+        const connection = connectionsData.elements.find(
+          (conn) => conn.miniProfile.publicIdentifier === profileId
+        );
+
+        if (!connection) {
+          throw new Error('Could not find recipient in connections list');
+        }
+
+        const memberId = connection.miniProfile.id;
+        const recipientUrn = `urn:li:member:${memberId}`;
         console.log('Using recipient URN:', recipientUrn);
 
         // Send the message using the messaging API
@@ -91,13 +143,12 @@ serve(async (req) => {
           headers: {
             'Authorization': `Bearer ${authStatus.access_token}`,
             'Content-Type': 'application/json',
-            'LinkedIn-Version': '202304',
-            'X-Restli-Protocol-Version': '2.0.0'
+            'X-Restli-Protocol-Version': '2.0.0',
           },
           body: JSON.stringify({
             recipients: [recipientUrn],
             messageText: message,
-            messageSubject: 'New Message'
+            messageSubject: 'New Message',
           }),
         });
 
