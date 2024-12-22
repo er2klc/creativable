@@ -38,7 +38,7 @@ export function LinkedInIntegration() {
     }
 
     try {
-      // Store credentials in Supabase Edge Function secrets
+      // Store credentials in platform_auth_status table
       const { error: secretError } = await supabase.functions.invoke('update-linkedin-secrets', {
         body: { clientId, clientSecret }
       });
@@ -61,19 +61,23 @@ export function LinkedInIntegration() {
 
   const connectLinkedIn = async () => {
     try {
-      // Get LinkedIn client ID from Supabase secrets
-      const { data: { LINKEDIN_CLIENT_ID }, error: secretError } = await supabase.functions.invoke('get-secret', {
-        body: { secretName: 'LINKEDIN_CLIENT_ID' }
-      });
+      // Get LinkedIn credentials from platform_auth_status
+      const { data: platformAuth, error: platformError } = await supabase
+        .from('platform_auth_status')
+        .select('auth_token')
+        .eq('platform', 'linkedin')
+        .single();
 
-      if (secretError) throw new Error('Could not get LinkedIn client ID');
+      if (platformError) throw new Error('Could not get LinkedIn credentials');
+      if (!platformAuth?.auth_token) throw new Error('LinkedIn Client ID not found');
 
+      const clientId = platformAuth.auth_token;
       const scope = "r_liteprofile r_emailaddress w_member_social";
       const state = Math.random().toString(36).substring(7);
       
       localStorage.setItem("linkedin_oauth_state", state);
       
-      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${LINKEDIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scope)}`;
+      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scope)}`;
       
       window.location.href = linkedInAuthUrl;
     } catch (error) {
