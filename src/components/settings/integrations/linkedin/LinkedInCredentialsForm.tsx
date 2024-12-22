@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Key, Copy, AlertCircle, Unlink } from "lucide-react";
+import { Key, Copy, AlertCircle, Unlink, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LinkedInCredentialsFormProps {
@@ -17,6 +17,7 @@ interface LinkedInCredentialsFormProps {
   onCopyRedirectUri: () => void;
   error?: string;
   isConnected: boolean;
+  isLoading?: boolean;
 }
 
 export function LinkedInCredentialsForm({
@@ -31,9 +32,10 @@ export function LinkedInCredentialsForm({
   onCopyRedirectUri,
   error,
   isConnected,
+  isLoading = false,
 }: LinkedInCredentialsFormProps) {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // Prevent form from submitting traditionally
+    e.preventDefault();
     onSubmit(e);
   };
 
@@ -56,6 +58,7 @@ export function LinkedInCredentialsForm({
             value={clientId}
             onChange={(e) => onClientIdChange(e.target.value)}
             placeholder="77xxxxxxxxxxxxx"
+            disabled={isLoading}
           />
         </div>
       </div>
@@ -71,6 +74,7 @@ export function LinkedInCredentialsForm({
             value={clientSecret}
             onChange={(e) => onClientSecretChange(e.target.value)}
             placeholder="••••••••"
+            disabled={isLoading}
           />
         </div>
       </div>
@@ -84,6 +88,7 @@ export function LinkedInCredentialsForm({
             size="sm"
             onClick={onCopyRedirectUri}
             className="h-8"
+            disabled={isLoading}
           >
             <Copy className="h-4 w-4" />
           </Button>
@@ -97,8 +102,15 @@ export function LinkedInCredentialsForm({
       </div>
       
       <div className="flex gap-2">
-        <Button type="submit" className="flex-1">
-          Zugangsdaten Speichern
+        <Button type="submit" className="flex-1" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Wird gespeichert...
+            </>
+          ) : (
+            'Zugangsdaten Speichern'
+          )}
         </Button>
         {isConnected ? (
           <Button 
@@ -106,8 +118,13 @@ export function LinkedInCredentialsForm({
             variant="destructive"
             onClick={onDisconnect}
             className="flex items-center gap-2"
+            disabled={isLoading}
           >
-            <Unlink className="h-4 w-4" />
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Unlink className="h-4 w-4" />
+            )}
             Verbindung trennen
           </Button>
         ) : (
@@ -115,9 +132,16 @@ export function LinkedInCredentialsForm({
             type="button" 
             onClick={onConnect} 
             className="flex-1"
-            disabled={!clientId || !clientSecret}
+            disabled={!clientId || !clientSecret || isLoading}
           >
-            Mit LinkedIn verbinden
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Verbinde...
+              </>
+            ) : (
+              'Mit LinkedIn verbinden'
+            )}
           </Button>
         )}
       </div>

@@ -7,6 +7,7 @@ export function useLinkedInIntegration() {
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { settings, refetchSettings } = useSettings();
   const redirectUri = `${window.location.origin}/auth/callback/linkedin`;
@@ -47,13 +48,13 @@ export function useLinkedInIntegration() {
   const handleUpdateCredentials = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-
-    if (!clientId || !clientSecret) {
-      setError("Bitte füllen Sie alle Felder aus");
-      return;
-    }
+    setIsLoading(true);
 
     try {
+      if (!clientId || !clientSecret) {
+        throw new Error("Bitte füllen Sie alle Felder aus");
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Kein Benutzer gefunden");
 
@@ -94,17 +95,21 @@ export function useLinkedInIntegration() {
 
       if (result.error) {
         if (result.error.code === '23505') { // Duplicate key error code
-          throw new Error("LinkedIn Zugangsdaten existieren bereits. Die bestehenden Daten wurden aktualisiert.");
+          toast({
+            title: "Info",
+            description: "LinkedIn Zugangsdaten wurden aktualisiert",
+          });
+        } else {
+          throw result.error;
         }
-        throw result.error;
+      } else {
+        toast({
+          title: "Erfolg ✨",
+          description: existingAuth 
+            ? "LinkedIn Zugangsdaten erfolgreich aktualisiert"
+            : "LinkedIn Zugangsdaten erfolgreich gespeichert",
+        });
       }
-
-      toast({
-        title: "Erfolg ✨",
-        description: existingAuth 
-          ? "LinkedIn Zugangsdaten erfolgreich aktualisiert"
-          : "LinkedIn Zugangsdaten erfolgreich gespeichert",
-      });
 
     } catch (error) {
       console.error("Error updating LinkedIn credentials:", error);
@@ -114,11 +119,14 @@ export function useLinkedInIntegration() {
         description: error.message || "Fehler beim Speichern der LinkedIn Zugangsdaten",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const connectLinkedIn = useCallback(async () => {
     setError(null);
+    setIsLoading(true);
 
     try {
       const { data: credentials } = await supabase
@@ -148,11 +156,14 @@ export function useLinkedInIntegration() {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   }, [redirectUri, toast]);
 
   const disconnectLinkedIn = async () => {
     setError(null);
+    setIsLoading(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -193,6 +204,8 @@ export function useLinkedInIntegration() {
         description: "Fehler beim Trennen der LinkedIn Verbindung",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -211,6 +224,7 @@ export function useLinkedInIntegration() {
     setClientSecret,
     redirectUri,
     isConnected,
+    isLoading,
     error,
     handleUpdateCredentials,
     connectLinkedIn,
