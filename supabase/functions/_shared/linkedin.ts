@@ -33,7 +33,7 @@ export const linkedInApi = {
   async validateToken(accessToken: string) {
     console.log('Validating LinkedIn access token...');
     
-    // First check basic profile access
+    // Check basic profile access (now includes profile and email by default)
     const meResponse = await fetch('https://api.linkedin.com/v2/me', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -55,7 +55,7 @@ export const linkedInApi = {
       throw new Error('LinkedIn access token validation failed. Please check your connection in settings.');
     }
 
-    // Then verify messaging permissions
+    // Verify messaging permissions
     const permissionsResponse = await fetch('https://api.linkedin.com/v2/userPermissions', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -69,7 +69,7 @@ export const linkedInApi = {
         status: permissionsResponse.status,
         body: await permissionsResponse.text()
       });
-      throw new Error('LinkedIn access token lacks required permissions. Please reconnect your account with all required permissions.');
+      throw new Error('LinkedIn access token lacks required permissions. Please reconnect your account.');
     }
 
     const permissions = await permissionsResponse.json();
