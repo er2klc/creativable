@@ -50,10 +50,13 @@ export function useLinkedInIntegration() {
     }
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Kein Benutzer gefunden");
+
       const { error: secretError } = await supabase
         .from('platform_auth_status')
         .upsert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: user.id,
           platform: 'linkedin',
           auth_token: clientId,
           refresh_token: clientSecret,
@@ -104,7 +107,10 @@ export function useLinkedInIntegration() {
       const state = Math.random().toString(36).substring(7);
       localStorage.setItem("linkedin_oauth_state", state);
       
-      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scope)}&prompt=consent`;
+      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scope)}`;
+      
+      // Log the redirect URL for debugging
+      console.log("Redirecting to:", linkedInAuthUrl);
       
       window.location.href = linkedInAuthUrl;
     } catch (error) {

@@ -34,6 +34,8 @@ serve(async (req) => {
       throw new Error('Invalid authorization token');
     }
 
+    console.log('Getting LinkedIn credentials...');
+
     // Get LinkedIn credentials from platform_auth_status
     const { data: platformAuth, error: credentialsError } = await supabaseClient
       .from('platform_auth_status')
@@ -43,6 +45,7 @@ serve(async (req) => {
       .single();
 
     if (credentialsError || !platformAuth) {
+      console.error('LinkedIn credentials error:', credentialsError);
       throw new Error('LinkedIn credentials not found. Please save your LinkedIn Client ID and Secret first.');
     }
 
@@ -70,13 +73,13 @@ serve(async (req) => {
       }),
     });
 
-    const tokenData = await tokenResponse.json();
-
     if (!tokenResponse.ok) {
-      console.error('Token exchange failed:', tokenData);
-      throw new Error('Failed to exchange code for token: ' + tokenData.error_description || 'Unknown error');
+      const errorData = await tokenResponse.json();
+      console.error('Token exchange failed:', errorData);
+      throw new Error(`Failed to exchange code for token: ${errorData.error_description || 'Unknown error'}`);
     }
 
+    const tokenData = await tokenResponse.json();
     console.log('Successfully obtained access token');
 
     // Get user profile using OpenID Connect userinfo endpoint
@@ -86,13 +89,13 @@ serve(async (req) => {
       },
     });
 
-    const profileData = await profileResponse.json();
-
     if (!profileResponse.ok) {
-      console.error('Profile fetch failed:', profileData);
+      const errorData = await profileResponse.json();
+      console.error('Profile fetch failed:', errorData);
       throw new Error('Failed to fetch profile');
     }
 
+    const profileData = await profileResponse.json();
     console.log('Successfully fetched user profile');
 
     // Update platform_auth_status
@@ -101,9 +104,9 @@ serve(async (req) => {
       .upsert({
         user_id: user.id,
         platform: 'linkedin',
-        auth_token: clientId, // Keep the client ID
-        refresh_token: clientSecret, // Keep the client secret
-        access_token: tokenData.access_token, // Store the OAuth access token
+        auth_token: clientId,
+        refresh_token: clientSecret,
+        access_token: tokenData.access_token,
         expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
         is_connected: true,
         updated_at: new Date().toISOString()
