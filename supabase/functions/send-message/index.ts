@@ -80,18 +80,39 @@ serve(async (req) => {
 
       try {
         console.log('Attempting to send LinkedIn message...');
+        
+        // First, get the recipient's URN using the /me endpoint
+        const recipientResponse = await fetch(`https://api.linkedin.com/v2/people/(id:${profileId})`, {
+          headers: {
+            'Authorization': `Bearer ${authStatus.access_token}`,
+            'LinkedIn-Version': '202304'
+          },
+        });
+
+        if (!recipientResponse.ok) {
+          const errorData = await recipientResponse.text();
+          console.error('LinkedIn profile fetch error:', errorData);
+          throw new Error(`Failed to fetch recipient profile: ${errorData}`);
+        }
+
+        const recipientData = await recipientResponse.json();
+        const recipientUrn = recipientData.id ? `urn:li:person:${recipientData.id}` : null;
+
+        if (!recipientUrn) {
+          throw new Error('Could not determine recipient URN');
+        }
+
+        // Send the message using the messaging API
         const messageResponse = await fetch('https://api.linkedin.com/v2/messages', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${authStatus.access_token}`,
             'Content-Type': 'application/json',
-            'X-Restli-Protocol-Version': '2.0.0',
             'LinkedIn-Version': '202304'
           },
           body: JSON.stringify({
-            recipients: [`urn:li:person:${profileId}`],
-            subject: "Neue Nachricht",
-            messageText: message
+            recipients: [recipientUrn],
+            messageText: message,
           }),
         });
 
