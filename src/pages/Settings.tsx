@@ -5,6 +5,7 @@ import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { MLMSettings } from "@/components/settings/MLMSettings";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
 import { supabase } from "@/integrations/supabase/client";
+import type { Settings } from "@/integrations/supabase/types/settings";
 
 export default function Settings() {
   const session = useSession();
@@ -19,7 +20,7 @@ export default function Settings() {
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      return data as Settings | null;
     },
     enabled: !!session?.user?.id,
   });

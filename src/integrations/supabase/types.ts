@@ -181,34 +181,49 @@ export type Database = {
       }
       settings: {
         Row: {
+          business_description: string | null
+          company_name: string | null
           created_at: string | null
           default_message_template: string | null
           id: string
           language: string | null
           openai_api_key: string | null
+          products_services: string | null
           superchat_api_key: string | null
+          target_audience: string | null
           updated_at: string | null
           user_id: string
+          usp: string | null
         }
         Insert: {
+          business_description?: string | null
+          company_name?: string | null
           created_at?: string | null
           default_message_template?: string | null
           id?: string
           language?: string | null
           openai_api_key?: string | null
+          products_services?: string | null
           superchat_api_key?: string | null
+          target_audience?: string | null
           updated_at?: string | null
           user_id: string
+          usp?: string | null
         }
         Update: {
+          business_description?: string | null
+          company_name?: string | null
           created_at?: string | null
           default_message_template?: string | null
           id?: string
           language?: string | null
           openai_api_key?: string | null
+          products_services?: string | null
           superchat_api_key?: string | null
+          target_audience?: string | null
           updated_at?: string | null
           user_id?: string
+          usp?: string | null
         }
         Relationships: []
       }
