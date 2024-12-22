@@ -140,7 +140,7 @@ export function useLinkedInIntegration() {
         expires_at: null
       });
 
-      await updateSettings('linkedin_connected', false);
+      await updateSettings('linkedin_connected', "false");
       await updateSettings('linkedin_auth_token', null);
 
       toast({
