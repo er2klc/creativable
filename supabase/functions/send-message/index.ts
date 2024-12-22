@@ -81,8 +81,8 @@ serve(async (req) => {
       try {
         console.log('Attempting to send LinkedIn message...');
         
-        // First, get the recipient's URN using the /me endpoint
-        const recipientResponse = await fetch(`https://api.linkedin.com/v2/people/(id:${profileId})`, {
+        // First, get the recipient's URN using the userinfo endpoint
+        const recipientResponse = await fetch(`https://api.linkedin.com/v2/userinfo`, {
           headers: {
             'Authorization': `Bearer ${authStatus.access_token}`,
             'LinkedIn-Version': '202304'
@@ -96,7 +96,7 @@ serve(async (req) => {
         }
 
         const recipientData = await recipientResponse.json();
-        const recipientUrn = recipientData.id ? `urn:li:person:${recipientData.id}` : null;
+        const recipientUrn = recipientData.sub ? `urn:li:person:${recipientData.sub}` : null;
 
         if (!recipientUrn) {
           throw new Error('Could not determine recipient URN');
