@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/use-settings";
 import { supabase } from "@/integrations/supabase/client";
+import { Bot } from "lucide-react"; // Adding OpenAI logo
 
 const formSchema = z.object({
   openai_api_key: z.string().min(1, "OpenAI API-Key ist erforderlich"),
@@ -57,7 +58,10 @@ export function OpenAIIntegration() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">OpenAI Integration 🤖</h3>
+      <div className="flex items-center gap-2">
+        <Bot className="h-6 w-6" />
+        <h3 className="text-lg font-medium">OpenAI Integration 🤖</h3>
+      </div>
       <Form {...form}>
         <form className="space-y-4">
           <FormField
