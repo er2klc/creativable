@@ -39,15 +39,15 @@ serve(async (req) => {
 
       console.log('Sending LinkedIn message to:', socialMediaUsername);
 
-      // Clean and format the LinkedIn member URN
+      // Clean and format the LinkedIn member ID
       let memberId = socialMediaUsername;
       if (memberId.includes('linkedin.com/in/')) {
         memberId = memberId.split('linkedin.com/in/')[1];
       }
       memberId = memberId.replace(/\/$/, '').split('?')[0];
-      
-      // Send message via LinkedIn API v2
-      const messageResponse = await fetch('https://api.linkedin.com/v2/conversations', {
+
+      // Use the messaging API v2 endpoint
+      const messageResponse = await fetch('https://api.linkedin.com/v2/messaging/conversations', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
@@ -56,14 +56,10 @@ serve(async (req) => {
           'LinkedIn-Version': '202304',
         },
         body: JSON.stringify({
-          recipients: [{
-            recipientIdentities: [{
-              identityType: "MEMBER",
-              identityValue: memberId
-            }]
-          }],
-          messageText: message,
-          messageSubject: "Neue Nachricht"
+          recipients: [memberId],
+          body: message,
+          messageType: "MEMBER_TO_MEMBER",
+          subject: "Neue Nachricht"
         }),
       });
 
