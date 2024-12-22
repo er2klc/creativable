@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Settings } from "@/integrations/supabase/types/settings";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const formSchema = z.object({
   company_name: z.string().min(1, "Firmenname ist erforderlich"),
@@ -19,9 +20,27 @@ const formSchema = z.object({
   business_description: z.string().min(1, "Geschäftsbeschreibung ist erforderlich"),
 });
 
-export function MLMSettings({ settings }: { settings: Settings | null }) {
+export function MLMSettings() {
   const session = useSession();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch current settings
+  const { data: settings } = useQuery({
+    queryKey: ["settings", session?.user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("settings")
+        .select("*")
+        .eq("user_id", session?.user?.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data as Settings | null;
+    },
+    enabled: !!session?.user?.id,
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -34,6 +53,19 @@ export function MLMSettings({ settings }: { settings: Settings | null }) {
     },
   });
 
+  // Update form when settings are loaded
+  React.useEffect(() => {
+    if (settings) {
+      form.reset({
+        company_name: settings.company_name || "",
+        products_services: settings.products_services || "",
+        target_audience: settings.target_audience || "",
+        usp: settings.usp || "",
+        business_description: settings.business_description || "",
+      });
+    }
+  }, [settings, form]);
+
   const saveField = async (field: string, value: string) => {
     try {
       const { error } = await supabase
@@ -44,6 +76,9 @@ export function MLMSettings({ settings }: { settings: Settings | null }) {
         });
 
       if (error) throw error;
+
+      // Invalidate and refetch settings
+      await queryClient.invalidateQueries({ queryKey: ["settings", session?.user?.id] });
 
       toast({
         title: "Erfolg ✨",
