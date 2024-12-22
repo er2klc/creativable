@@ -14,6 +14,7 @@ serve(async (req) => {
 
   try {
     const { platform, message, leadId, socialMediaUsername } = await req.json();
+    console.log('Sending message:', { platform, leadId, socialMediaUsername });
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -27,6 +28,7 @@ serve(async (req) => {
       .single();
 
     if (authError || !authStatus) {
+      console.error('Auth status error:', authError);
       throw new Error(`${platform} is not connected`);
     }
 
@@ -35,27 +37,53 @@ serve(async (req) => {
         throw new Error('LinkedIn access token not found');
       }
 
+      console.log('Sending LinkedIn message to:', socialMediaUsername);
+
+      // First, get the recipient's profile to verify the URN
+      const profileResponse = await fetch(
+        `https://api.linkedin.com/v2/people/(id:${socialMediaUsername})`,
+        {
+          headers: {
+            'Authorization': `Bearer ${authStatus.access_token}`,
+            'X-Restli-Protocol-Version': '2.0.0',
+          },
+        }
+      );
+
+      if (!profileResponse.ok) {
+        console.error('LinkedIn profile lookup failed:', await profileResponse.text());
+        throw new Error('Could not find LinkedIn profile');
+      }
+
       // Send message via LinkedIn API
-      const response = await fetch(`https://api.linkedin.com/v2/messages`, {
+      const messageResponse = await fetch(`https://api.linkedin.com/v2/conversations`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
           'Content-Type': 'application/json',
+          'X-Restli-Protocol-Version': '2.0.0',
         },
         body: JSON.stringify({
-          recipients: [{ person: { "urn": `urn:li:person:${socialMediaUsername}` } }],
-          message: {
-            subject: "Neue Nachricht",
-            body: message
+          recipients: [{
+            person: {
+              "id": socialMediaUsername
+            }
+          }],
+          messageRequest: {
+            body: message,
+            contentType: "TEXT",
+            attachments: []
           }
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!messageResponse.ok) {
+        const errorData = await messageResponse.text();
         console.error('LinkedIn API error:', errorData);
-        throw new Error('Failed to send LinkedIn message');
+        throw new Error(`Failed to send LinkedIn message: ${errorData}`);
       }
+
+      console.log('LinkedIn message sent successfully');
     }
     // ... Weitere Plattformen hier hinzufügen
 
