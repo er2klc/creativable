@@ -1,51 +1,23 @@
-import { useState, useEffect } from "react";
-import { useSettings } from "@/hooks/use-settings";
+import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { loadLinkedInCredentials, updatePlatformAuthStatus } from "./db/linkedInDb";
-import { exchangeCodeForToken, revokeLinkedInToken } from "./api/linkedInApi";
 import { supabase } from "@/integrations/supabase/client";
+import { useSettings } from "@/hooks/use-settings";
 
 export function useLinkedInIntegration() {
-  const { settings, updateSettings } = useSettings();
-  const { toast } = useToast();
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+  const { settings, refetchSettings } = useSettings();
   const redirectUri = `${window.location.origin}/auth/callback/linkedin`;
+
   const isConnected = settings?.linkedin_connected === true;
 
-  useEffect(() => {
-    const loadSavedCredentials = async () => {
-      try {
-        const platformAuth = await loadLinkedInCredentials();
-        if (platformAuth) {
-          setClientId(platformAuth.auth_token || '');
-          setClientSecret(platformAuth.refresh_token || '');
-        }
-      } catch (err) {
-        console.error('Error loading LinkedIn credentials:', err);
-        toast({
-          title: "Fehler",
-          description: "LinkedIn Zugangsdaten konnten nicht geladen werden",
-          variant: "destructive",
-        });
-      }
-    };
+  const handleUpdateCredentials = async () => {
+    setError(null);
 
-    loadSavedCredentials();
-  }, [toast]);
-
-  const handleUpdateCredentials = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(undefined);
-    
     if (!clientId || !clientSecret) {
       setError("Bitte füllen Sie alle Felder aus");
-      toast({
-        title: "Fehlende Eingaben",
-        description: "Bitte füllen Sie alle Felder aus",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -62,102 +34,100 @@ export function useLinkedInIntegration() {
           refresh_token: clientSecret,
           is_connected: false,
           updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,platform'
         });
 
       if (secretError) throw secretError;
 
       toast({
-        title: "Erfolg",
-        description: "LinkedIn Zugangsdaten wurden gespeichert",
+        title: "Erfolg ✨",
+        description: "LinkedIn Zugangsdaten erfolgreich gespeichert",
       });
+
     } catch (error) {
-      console.error('Error saving LinkedIn credentials:', error);
-      setError("LinkedIn Zugangsdaten konnten nicht gespeichert werden");
+      console.error("Error updating LinkedIn credentials:", error);
+      setError(error.message);
       toast({
-        title: "Fehler",
-        description: "LinkedIn Zugangsdaten konnten nicht gespeichert werden",
+        title: "Fehler ❌",
+        description: "Fehler beim Speichern der LinkedIn Zugangsdaten",
         variant: "destructive",
       });
     }
   };
 
-  const connectLinkedIn = async () => {
+  const connectLinkedIn = useCallback(async () => {
+    setError(null);
+
     try {
-      setError(undefined);
-      
-      if (!clientId || !clientSecret) {
-        setError("Bitte speichern Sie zuerst Ihre LinkedIn Zugangsdaten");
-        toast({
-          title: "Fehler",
-          description: "Bitte speichern Sie zuerst Ihre LinkedIn Zugangsdaten",
-          variant: "destructive",
-        });
-        return;
+      const { data: credentials } = await supabase
+        .from('platform_auth_status')
+        .select('auth_token')
+        .eq('platform', 'linkedin')
+        .single();
+
+      if (!credentials?.auth_token) {
+        throw new Error("Bitte speichern Sie zuerst Ihre LinkedIn Client ID");
       }
 
-      const scope = [
-        "openid",
-        "profile",
-        "email",
-        "w_member_social"
-      ].join(" ");
-      
+      const scope = "openid profile email w_member_social";
       const state = Math.random().toString(36).substring(7);
       localStorage.setItem("linkedin_oauth_state", state);
       
-      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scope)}`;
+      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${credentials.auth_token}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scope)}`;
       
-      // Log the redirect URL for debugging
       console.log("Redirecting to:", linkedInAuthUrl);
       
       window.location.href = linkedInAuthUrl;
     } catch (error) {
-      console.error("Error connecting to LinkedIn:", error);
-      setError("Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
+      console.error("Error initiating LinkedIn connection:", error);
+      setError(error.message);
       toast({
-        title: "Fehler bei der LinkedIn-Verbindung",
-        description: "Bitte versuchen Sie es später erneut",
+        title: "Fehler ❌",
+        description: error.message,
         variant: "destructive",
       });
     }
-  };
+  }, [redirectUri, toast]);
 
   const disconnectLinkedIn = async () => {
+    setError(null);
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      if (!user) throw new Error("Kein Benutzer gefunden");
 
-      const platformAuth = await loadLinkedInCredentials();
-      
-      if (platformAuth?.access_token) {
-        await revokeLinkedInToken(
-          platformAuth.access_token,
-          clientId,
-          clientSecret
-        );
-      }
+      const { error: disconnectError } = await supabase
+        .from('platform_auth_status')
+        .update({
+          is_connected: false,
+          access_token: null,
+          expires_at: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id)
+        .eq('platform', 'linkedin');
 
-      await updatePlatformAuthStatus(user.id, {
-        is_connected: false,
-        access_token: null,
-        refresh_token: null,
-        expires_at: null
-      });
+      if (disconnectError) throw disconnectError;
 
-      await updateSettings('linkedin_connected', "false");
-      await updateSettings('linkedin_auth_token', null);
+      const { error: settingsError } = await supabase
+        .from('settings')
+        .update({ linkedin_connected: false })
+        .eq('user_id', user.id);
+
+      if (settingsError) throw settingsError;
+
+      await refetchSettings();
 
       toast({
-        title: "Erfolg",
-        description: "LinkedIn wurde erfolgreich getrennt",
+        title: "Erfolg ✨",
+        description: "LinkedIn Verbindung erfolgreich getrennt",
       });
+
     } catch (error) {
       console.error("Error disconnecting LinkedIn:", error);
+      setError(error.message);
       toast({
-        title: "Fehler",
-        description: "LinkedIn konnte nicht getrennt werden",
+        title: "Fehler ❌",
+        description: "Fehler beim Trennen der LinkedIn Verbindung",
         variant: "destructive",
       });
     }
@@ -166,8 +136,8 @@ export function useLinkedInIntegration() {
   const copyRedirectUri = () => {
     navigator.clipboard.writeText(redirectUri);
     toast({
-      title: "Kopiert!",
-      description: "Redirect URI wurde in die Zwischenablage kopiert",
+      title: "Erfolg ✨",
+      description: "Redirect URI in die Zwischenablage kopiert",
     });
   };
 

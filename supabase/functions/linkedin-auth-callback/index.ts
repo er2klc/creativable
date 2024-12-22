@@ -8,21 +8,37 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { code, redirect_uri } = await req.json();
-    
-    // Initialize Supabase client
+    const url = new URL(req.url);
+    const code = url.searchParams.get('code');
+    const state = url.searchParams.get('state');
+    const error = url.searchParams.get('error');
+    const error_description = url.searchParams.get('error_description');
+
+    console.log('Received callback with params:', { code, state, error, error_description });
+
+    if (error || error_description) {
+      console.error('LinkedIn OAuth error:', { error, error_description });
+      throw new Error(`LinkedIn OAuth error: ${error_description || error}`);
+    }
+
+    if (!code) {
+      console.error('No code parameter received');
+      throw new Error('No authorization code received');
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get user ID from authorization header
+    // Validate authorization
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('No authorization header present');
       throw new Error('No authorization header');
     }
 
@@ -31,6 +47,7 @@ serve(async (req) => {
     );
 
     if (authError || !user) {
+      console.error('User auth error:', authError);
       throw new Error('Invalid authorization token');
     }
 
@@ -40,8 +57,8 @@ serve(async (req) => {
     const { data: platformAuth, error: credentialsError } = await supabaseClient
       .from('platform_auth_status')
       .select('auth_token, refresh_token')
-      .eq('platform', 'linkedin')
       .eq('user_id', user.id)
+      .eq('platform', 'linkedin')
       .single();
 
     if (credentialsError || !platformAuth) {
@@ -51,14 +68,11 @@ serve(async (req) => {
 
     const clientId = platformAuth.auth_token;
     const clientSecret = platformAuth.refresh_token;
+    const redirectUri = `${url.origin}/auth/callback/linkedin`;
 
-    if (!clientId || !clientSecret) {
-      throw new Error('LinkedIn credentials not configured. Please check your LinkedIn integration settings.');
-    }
+    console.log('Exchanging code for token...');
 
-    console.log('Exchanging code for access token...');
-
-    // Exchange code for access token
+    // Exchange code for token
     const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
       method: 'POST',
       headers: {
@@ -67,15 +81,21 @@ serve(async (req) => {
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri,
         client_id: clientId,
         client_secret: clientSecret,
+        redirect_uri: redirectUri,
       }),
     });
 
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.json();
-      console.error('Token exchange failed:', errorData);
+      const errorText = await tokenResponse.text();
+      console.error('Token exchange failed. Status:', tokenResponse.status, 'Response:', errorText);
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error_description: errorText };
+      }
       throw new Error(`Failed to exchange code for token: ${errorData.error_description || 'Unknown error'}`);
     }
 
@@ -90,9 +110,15 @@ serve(async (req) => {
     });
 
     if (!profileResponse.ok) {
-      const errorData = await profileResponse.json();
-      console.error('Profile fetch failed:', errorData);
-      throw new Error('Failed to fetch profile');
+      const errorText = await profileResponse.text();
+      console.error('Profile fetch failed. Status:', profileResponse.status, 'Response:', errorText);
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error: errorText };
+      }
+      throw new Error(`Failed to fetch profile: ${errorData.error || 'Unknown error'}`);
     }
 
     const profileData = await profileResponse.json();
@@ -110,54 +136,42 @@ serve(async (req) => {
         expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
         is_connected: true,
         updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id,platform'
       });
 
     if (updateError) {
-      console.error('Error updating platform_auth_status:', updateError);
-      throw updateError;
+      console.error('Error updating platform auth status:', updateError);
+      throw new Error('Failed to update connection status');
     }
 
-    // Update settings to mark LinkedIn as connected
+    // Update settings table
     const { error: settingsError } = await supabaseClient
       .from('settings')
-      .update({ 
-        linkedin_connected: true,
-        linkedin_auth_token: tokenData.access_token,
-        updated_at: new Date().toISOString()
-      })
+      .update({ linkedin_connected: true })
       .eq('user_id', user.id);
 
     if (settingsError) {
       console.error('Error updating settings:', settingsError);
-      throw settingsError;
+      // Don't throw here as the main connection is already established
     }
 
-    console.log('Successfully updated database records');
-
     return new Response(
-      JSON.stringify({
-        success: true,
-        profile: profileData,
-      }),
-      {
+      JSON.stringify({ success: true }),
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       },
     );
+
   } catch (error) {
-    console.error('LinkedIn callback error:', error);
+    console.error('Error in LinkedIn callback:', error);
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: error.message.includes('LinkedIn credentials') ? 
-          'Bitte speichern Sie zuerst Ihre LinkedIn Client ID und Client Secret in den Integrationseinstellungen.' : 
-          'Ein unerwarteter Fehler ist aufgetreten.'
+        details: error.stack
       }),
-      {
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 500,
       },
     );
   }
