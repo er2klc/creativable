@@ -12,6 +12,7 @@ export interface Settings {
   target_audience: string | null;
   usp: string | null;
   business_description: string | null;
+  about_me: string | null;
   created_at: string | null;
   updated_at: string | null;
 }

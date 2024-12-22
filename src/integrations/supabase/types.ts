@@ -181,6 +181,7 @@ export type Database = {
       }
       settings: {
         Row: {
+          about_me: string | null
           business_description: string | null
           company_name: string | null
           created_at: string | null
@@ -196,6 +197,7 @@ export type Database = {
           usp: string | null
         }
         Insert: {
+          about_me?: string | null
           business_description?: string | null
           company_name?: string | null
           created_at?: string | null
@@ -211,6 +213,7 @@ export type Database = {
           usp?: string | null
         }
         Update: {
+          about_me?: string | null
           business_description?: string | null
           company_name?: string | null
           created_at?: string | null
