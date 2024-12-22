@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
@@ -8,50 +7,56 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { platform, message, leadId, socialMediaUsername } = await req.json();
-    console.log('Sending message:', { platform, leadId, socialMediaUsername });
-    
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    // Get platform auth status
-    const { data: authStatus, error: authError } = await supabase
+    const { platform, message, leadId, userId } = await req.json();
+    console.log('Received request:', { platform, leadId, userId });
+
+    // Get auth status for the platform
+    const { data: authStatus, error: authError } = await supabaseClient
       .from('platform_auth_status')
       .select('*')
-      .eq('platform', platform.toLowerCase())
+      .eq('user_id', userId)
+      .eq('platform', platform)
       .single();
 
-    if (authError || !authStatus) {
+    if (authError || !authStatus?.access_token) {
       console.error('Auth status error:', authError);
-      throw new Error(`${platform} is not connected`);
+      throw new Error(`No valid authentication found for ${platform}`);
     }
 
-    if (platform.toLowerCase() === 'linkedin') {
-      if (!authStatus.access_token) {
-        throw new Error('LinkedIn access token not found');
+    // Get lead details
+    const { data: lead, error: leadError } = await supabaseClient
+      .from('leads')
+      .select('social_media_username')
+      .eq('id', leadId)
+      .single();
+
+    if (leadError || !lead?.social_media_username) {
+      console.error('Lead error:', leadError);
+      throw new Error('Lead not found or missing social media username');
+    }
+
+    if (platform === 'LinkedIn') {
+      // Extract member ID from username or profile URL
+      const memberId = lead.social_media_username.split('/').pop()?.split('?')[0];
+      if (!memberId) {
+        throw new Error('Invalid LinkedIn profile URL or username');
       }
 
-      console.log('Sending LinkedIn message to:', socialMediaUsername);
-
-      // Clean and format the LinkedIn member URN
-      let memberId = socialMediaUsername;
-      if (memberId.includes('linkedin.com/in/')) {
-        memberId = memberId.split('linkedin.com/in/')[1];
-      }
-      memberId = memberId.replace(/\/$/, '').split('?')[0];
+      console.log('Sending LinkedIn message to member:', memberId);
       
-      // Format the URN for the recipient
-      const recipientUrn = `urn:li:person:${memberId}`;
-      console.log('Formatted recipient URN:', recipientUrn);
-
-      // First create a conversation
-      const conversationResponse = await fetch('https://api.linkedin.com/rest/conversations', {
+      // Use LinkedIn's Messaging API v2
+      const messageResponse = await fetch(`https://api.linkedin.com/v2/conversations`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
@@ -60,11 +65,11 @@ serve(async (req) => {
           'LinkedIn-Version': '202304',
         },
         body: JSON.stringify({
-          recipients: [recipientUrn],
+          recipients: [`urn:li:person:${memberId}`],
           messageEvent: {
             eventCreate: {
               value: {
-                com.linkedin.voyager.messaging.create.MessageCreate: {
+                'com.linkedin.voyager.messaging.create.MessageCreate': {
                   attributedBody: {
                     text: message,
                     attributes: []
@@ -77,35 +82,61 @@ serve(async (req) => {
         }),
       });
 
-      if (!conversationResponse.ok) {
-        const errorData = await conversationResponse.text();
+      if (!messageResponse.ok) {
+        const errorData = await messageResponse.text();
         console.error('LinkedIn API error:', errorData);
         throw new Error(`Failed to send LinkedIn message: ${errorData}`);
       }
 
-      console.log('LinkedIn message sent successfully');
+      const responseData = await messageResponse.json();
+      console.log('LinkedIn API response:', responseData);
     }
 
-    // Save message in database
-    const { error: dbError } = await supabase
+    // Save message to database
+    const { error: insertError } = await supabaseClient
       .from('messages')
       .insert({
         lead_id: leadId,
+        user_id: userId,
         platform,
         content: message,
-        sent_at: new Date().toISOString()
       });
 
-    if (dbError) throw dbError;
+    if (insertError) {
+      console.error('Error saving message:', insertError);
+      throw new Error('Failed to save message to database');
+    }
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    // Update lead's last action
+    const { error: updateError } = await supabaseClient
+      .from('leads')
+      .update({
+        last_action: 'Message sent',
+        last_action_date: new Date().toISOString(),
+      })
+      .eq('id', leadId);
+
+    if (updateError) {
+      console.error('Error updating lead:', updateError);
+      // Don't throw here as the message was already sent
+    }
+
+    return new Response(
+      JSON.stringify({ success: true }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      },
+    );
+
   } catch (error) {
     console.error('Error in send-message function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      },
+    );
   }
 });
