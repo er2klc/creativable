@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -19,15 +19,41 @@ import { supabase } from "@/integrations/supabase/client";
 export function LinkedInIntegration() {
   const { settings, updateSettings } = useSettings();
   const { toast } = useToast();
+  const [clientId, setClientId] = useState("");
+  const [clientSecret, setClientSecret] = useState("");
   const redirectUri = `${window.location.origin}/auth/callback/linkedin`;
   const isConnected = settings?.linkedin_connected || false;
 
+  // Lade gespeicherte Zugangsdaten beim Komponenten-Mount
+  useEffect(() => {
+    const loadSavedCredentials = async () => {
+      try {
+        const { data: platformAuth, error } = await supabase
+          .from('platform_auth_status')
+          .select('auth_token, refresh_token')
+          .eq('platform', 'linkedin')
+          .single();
+
+        if (error) {
+          console.error('Error loading LinkedIn credentials:', error);
+          return;
+        }
+
+        if (platformAuth) {
+          setClientId(platformAuth.auth_token || '');
+          setClientSecret(platformAuth.refresh_token || '');
+        }
+      } catch (error) {
+        console.error('Error in loadSavedCredentials:', error);
+      }
+    };
+
+    loadSavedCredentials();
+  }, []);
+
   const handleUpdateCredentials = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const clientId = formData.get('linkedin_client_id') as string;
-    const clientSecret = formData.get('linkedin_client_secret') as string;
-
+    
     if (!clientId || !clientSecret) {
       toast({
         title: "Fehlende Eingaben",
@@ -39,9 +65,18 @@ export function LinkedInIntegration() {
 
     try {
       // Store credentials in platform_auth_status table
-      const { error: secretError } = await supabase.functions.invoke('update-linkedin-secrets', {
-        body: { clientId, clientSecret }
-      });
+      const { error: secretError } = await supabase
+        .from('platform_auth_status')
+        .upsert({
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          platform: 'linkedin',
+          auth_token: clientId,
+          refresh_token: clientSecret,
+          is_connected: false,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,platform'
+        });
 
       if (secretError) throw secretError;
 
@@ -123,6 +158,8 @@ export function LinkedInIntegration() {
                   <Input
                     id="linkedin_client_id"
                     name="linkedin_client_id"
+                    value={clientId}
+                    onChange={(e) => setClientId(e.target.value)}
                     placeholder="77xxxxxxxxxxxxx"
                   />
                 </div>
@@ -135,6 +172,8 @@ export function LinkedInIntegration() {
                     id="linkedin_client_secret"
                     name="linkedin_client_secret"
                     type="password"
+                    value={clientSecret}
+                    onChange={(e) => setClientSecret(e.target.value)}
                     placeholder="••••••••"
                   />
                 </div>
