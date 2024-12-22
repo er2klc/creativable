@@ -48,10 +48,56 @@ serve(async (req) => {
       throw new Error(`Please connect your ${platform} account in the settings first`);
     }
 
-    // Check if access token has expired
+    // Check if access token has expired and try to refresh if needed
     if (authStatus.expires_at && new Date(authStatus.expires_at) <= new Date()) {
-      console.error('Access token expired:', authStatus.expires_at);
-      throw new Error('Access token expired. Please refresh or reconnect your account.');
+      console.log('Access token expired, attempting refresh...');
+      
+      try {
+        const refreshResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: authStatus.refresh_token,
+            client_id: authStatus.auth_token, // stored client_id
+            client_secret: authStatus.refresh_token, // stored client_secret
+          }),
+        });
+
+        if (!refreshResponse.ok) {
+          const errorData = await refreshResponse.text();
+          console.error('LinkedIn token refresh failed:', {
+            status: refreshResponse.status,
+            body: errorData
+          });
+          throw new Error('Failed to refresh LinkedIn access token. Please reconnect your account.');
+        }
+
+        const refreshData = await refreshResponse.json();
+        console.log('Successfully refreshed LinkedIn token');
+
+        // Update the stored token
+        const { error: updateError } = await supabaseClient
+          .from('platform_auth_status')
+          .update({
+            access_token: refreshData.access_token,
+            expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+          .eq('platform', platform.toLowerCase());
+
+        if (updateError) {
+          console.error('Error updating refreshed token:', updateError);
+          throw new Error('Failed to save refreshed token');
+        }
+
+        // Update the current authStatus with new token
+        authStatus.access_token = refreshData.access_token;
+      } catch (refreshError) {
+        console.error('Token refresh error:', refreshError);
+        throw new Error('Failed to refresh access token. Please reconnect your LinkedIn account.');
+      }
     }
 
     console.log('Found valid auth status with access token');
@@ -104,6 +150,14 @@ serve(async (req) => {
             statusText: meResponse.statusText,
             body: errorData
           });
+
+          // Check for specific error cases
+          if (meResponse.status === 401) {
+            throw new Error('LinkedIn access token is invalid. Please reconnect your account.');
+          } else if (meResponse.status === 403) {
+            throw new Error('LinkedIn access token lacks required permissions. Please reconnect your account with all required permissions.');
+          }
+
           throw new Error('LinkedIn access token validation failed. Please check your connection in settings.');
         }
 
