@@ -48,6 +48,51 @@ serve(async (req) => {
       throw new Error(`Please connect your ${platform} account in the settings first`);
     }
 
+    // Check if token is expired
+    if (authStatus.expires_at && new Date(authStatus.expires_at) <= new Date()) {
+      console.log('Access token expired, attempting refresh...');
+      
+      try {
+        const refreshResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: authStatus.refresh_token,
+            client_id: authStatus.auth_token,
+            client_secret: authStatus.refresh_token,
+          }),
+        });
+
+        if (!refreshResponse.ok) {
+          throw new Error('Failed to refresh token');
+        }
+
+        const refreshData = await refreshResponse.json();
+        
+        // Update token in database
+        const { error: updateError } = await supabaseClient
+          .from('platform_auth_status')
+          .update({
+            access_token: refreshData.access_token,
+            expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', user.id)
+          .eq('platform', platform.toLowerCase());
+
+        if (updateError) throw updateError;
+        
+        // Use new token
+        authStatus.access_token = refreshData.access_token;
+      } catch (refreshError) {
+        console.error('Error refreshing token:', refreshError);
+        throw new Error('Failed to refresh LinkedIn access token. Please reconnect your account.');
+      }
+    }
+
     // Get lead information
     const { data: lead, error: leadError } = await supabaseClient
       .from('leads')
@@ -91,6 +136,9 @@ serve(async (req) => {
 
         if (!meResponse.ok) {
           const errorData = await meResponse.text();
+          if (meResponse.status === 401 || meResponse.status === 403) {
+            throw new Error('LinkedIn access token is invalid or has insufficient permissions. Please reconnect your account.');
+          }
           console.error('LinkedIn /me endpoint error:', errorData);
           throw new Error(`Failed to fetch user profile: ${errorData}`);
         }
