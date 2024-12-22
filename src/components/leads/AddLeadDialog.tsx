@@ -36,11 +36,6 @@ export function AddLeadDialog() {
       industry: "",
       lastAction: "",
       notes: "",
-      companyName: "",
-      productsServices: "",
-      targetAudience: "",
-      usp: "",
-      businessDescription: "",
     },
   });
 
@@ -66,11 +61,6 @@ export function AddLeadDialog() {
         industry: values.industry,
         last_action: values.lastAction || null,
         notes: values.notes || null,
-        company_name: values.companyName || null,
-        products_services: values.productsServices || null,
-        target_audience: values.targetAudience || null,
-        usp: values.usp || null,
-        business_description: values.businessDescription || null,
       });
 
       if (error) throw error;

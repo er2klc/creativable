@@ -2,7 +2,6 @@ import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
 import { BasicLeadFields } from "./form-fields/BasicLeadFields";
 import { SocialMediaFields } from "./form-fields/SocialMediaFields";
-import { BusinessFields } from "./form-fields/BusinessFields";
 import { NotesFields } from "./form-fields/NotesFields";
 
 const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok"] as const;
@@ -15,11 +14,6 @@ export const formSchema = z.object({
   industry: z.string().min(1, "Branche ist erforderlich 🏢"),
   lastAction: z.string().optional(),
   notes: z.string().optional(),
-  companyName: z.string().optional(),
-  productsServices: z.string().optional(),
-  targetAudience: z.string().optional(),
-  usp: z.string().optional(),
-  businessDescription: z.string().optional(),
 });
 
 interface AddLeadFormFieldsProps {
@@ -32,7 +26,6 @@ export function AddLeadFormFields({ form }: AddLeadFormFieldsProps) {
       <div className="space-y-4">
         <BasicLeadFields form={form} />
         <SocialMediaFields form={form} />
-        <BusinessFields form={form} />
         <NotesFields form={form} />
       </div>
     </>
