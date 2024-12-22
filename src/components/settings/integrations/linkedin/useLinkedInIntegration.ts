@@ -110,8 +110,8 @@ export function useLinkedInIntegration() {
         redirectUri 
       });
 
-      // OpenID Connect Scopes verwenden
-      const scope = "openid profile email w_member_social";
+      // Updated scopes to include r_basicprofile
+      const scope = "openid profile email w_member_social r_basicprofile r_liteprofile";
       const state = Math.random().toString(36).substring(7);
       
       localStorage.setItem("linkedin_oauth_state", state);

@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -18,13 +17,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get auth header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
     }
 
-    // Get user from auth header
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(
       authHeader.replace('Bearer ', '')
     );
@@ -37,7 +34,6 @@ serve(async (req) => {
     const { platform, message, leadId } = await req.json();
     console.log('Received request:', { platform, leadId, userId: user.id });
 
-    // Get auth status for the platform
     const { data: authStatus, error: authError } = await supabaseClient
       .from('platform_auth_status')
       .select('*')
@@ -55,7 +51,6 @@ serve(async (req) => {
       throw new Error(`Please connect your ${platform} account in the settings first`);
     }
 
-    // Get lead details
     const { data: lead, error: leadError } = await supabaseClient
       .from('leads')
       .select('social_media_username')
@@ -68,16 +63,13 @@ serve(async (req) => {
     }
 
     if (platform.toLowerCase() === 'linkedin') {
-      // Extract LinkedIn profile ID from the URL
       const profileUrl = lead.social_media_username;
       console.log('Processing LinkedIn profile URL:', profileUrl);
 
       let profileId;
       if (profileUrl.includes('linkedin.com/in/')) {
-        // Extract ID from full URL
         profileId = profileUrl.split('linkedin.com/in/')[1].split('/')[0].split('?')[0];
       } else {
-        // Assume it's just the profile ID
         profileId = profileUrl.split('/')[0].split('?')[0];
       }
 
@@ -87,13 +79,14 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // First, get the member URN using the /people API
+      // Updated to use the correct API endpoint and version
       const profileResponse = await fetch(
-        `https://api.linkedin.com/v2/people/(vanityName:${profileId})`,
+        `https://api.linkedin.com/v2/people/(id:${profileId})`,
         {
           headers: {
             'Authorization': `Bearer ${authStatus.access_token}`,
             'LinkedIn-Version': '202304',
+            'X-Restli-Protocol-Version': '2.0.0',
           },
         }
       );
@@ -105,10 +98,8 @@ serve(async (req) => {
       }
 
       const profileData = await profileResponse.json();
-      const memberUrn = profileData.id;
-      console.log('Retrieved LinkedIn member URN:', memberUrn);
-      
-      // Use LinkedIn's REST API for messaging with the correct member URN
+      console.log('Retrieved LinkedIn profile data:', profileData);
+
       const messageResponse = await fetch('https://api.linkedin.com/v2/messages', {
         method: 'POST',
         headers: {
@@ -118,7 +109,7 @@ serve(async (req) => {
           'X-Restli-Protocol-Version': '2.0.0',
         },
         body: JSON.stringify({
-          recipients: [`urn:li:person:${memberUrn}`],
+          recipients: [`urn:li:person:${profileId}`],
           subject: "",
           body: message,
         }),
