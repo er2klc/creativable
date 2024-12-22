@@ -50,8 +50,8 @@ serve(async (req) => {
       const recipientUrn = `urn:li:person:${memberId}`;
       console.log('Formatted recipient URN:', recipientUrn);
 
-      // Send message via LinkedIn API v2
-      const messageResponse = await fetch('https://api.linkedin.com/v2/messages', {
+      // First create a conversation
+      const conversationResponse = await fetch('https://api.linkedin.com/rest/conversations', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
@@ -61,14 +61,24 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           recipients: [recipientUrn],
-          subject: "Neue Nachricht",
-          body: message,
-          messageType: "MEMBER_TO_MEMBER"
+          messageEvent: {
+            eventCreate: {
+              value: {
+                com.linkedin.voyager.messaging.create.MessageCreate: {
+                  attributedBody: {
+                    text: message,
+                    attributes: []
+                  },
+                  attachments: []
+                }
+              }
+            }
+          }
         }),
       });
 
-      if (!messageResponse.ok) {
-        const errorData = await messageResponse.text();
+      if (!conversationResponse.ok) {
+        const errorData = await conversationResponse.text();
         console.error('LinkedIn API error:', errorData);
         throw new Error(`Failed to send LinkedIn message: ${errorData}`);
       }
