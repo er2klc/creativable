@@ -20,21 +20,32 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
 
-export function SendMessageDialog() {
+interface SendMessageDialogProps {
+  lead?: Tables<"leads">;
+  trigger?: React.ReactNode;
+}
+
+export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
   const { toast } = useToast();
   const session = useSession();
   const { settings } = useSettings();
   const [open, setOpen] = useState(false);
-  const [platform, setPlatform] = useState<string>("");
+  const [platform, setPlatform] = useState<string>(lead?.platform || "");
   const [message, setMessage] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
   const generateMessage = async () => {
+    if (!lead) return;
+    
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-message", {
         body: {
+          leadName: lead.name,
+          leadPlatform: lead.platform,
+          leadIndustry: lead.industry,
           companyName: settings?.company_name,
           productsServices: settings?.products_services,
           targetAudience: settings?.target_audience,
@@ -57,7 +68,7 @@ export function SendMessageDialog() {
   };
 
   const sendMessage = async () => {
-    if (!message || !platform) {
+    if (!message || !platform || !lead) {
       toast({
         title: "Fehler",
         description: "Bitte füllen Sie alle Felder aus",
@@ -72,10 +83,23 @@ export function SendMessageDialog() {
         body: {
           platform,
           message,
+          leadId: lead.id,
+          socialMediaUsername: lead.social_media_username,
         },
       });
 
       if (error) throw error;
+
+      // Save the message in our database
+      const { error: dbError } = await supabase
+        .from("messages")
+        .insert({
+          lead_id: lead.id,
+          platform,
+          content: message,
+        });
+
+      if (dbError) throw dbError;
 
       toast({
         title: "Erfolg",
@@ -97,13 +121,17 @@ export function SendMessageDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
-          Nachricht senden
-        </Button>
+        {trigger || (
+          <Button variant="outline" className="flex items-center gap-2">
+            Nachricht senden
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Nachricht senden</DialogTitle>
+          <DialogTitle>
+            {lead ? `Nachricht an ${lead.name} senden` : "Nachricht senden"}
+          </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
@@ -111,6 +139,7 @@ export function SendMessageDialog() {
             <Select
               value={platform}
               onValueChange={setPlatform}
+              disabled={!!lead?.platform}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Wählen Sie eine Plattform" />
@@ -135,14 +164,14 @@ export function SendMessageDialog() {
             <Button 
               variant="outline" 
               onClick={generateMessage}
-              disabled={isLoading}
+              disabled={isLoading || !lead}
             >
               Nachricht generieren
             </Button>
           </div>
           <Button 
             onClick={sendMessage} 
-            disabled={isLoading || !message || !platform}
+            disabled={isLoading || !message || !platform || !lead}
           >
             {isLoading ? "Wird gesendet..." : "Senden"}
           </Button>

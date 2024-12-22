@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Star } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
+import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 
 interface LeadTableViewProps {
   leads: Tables<"leads">[];
@@ -83,7 +84,14 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
                   <DropdownMenuItem onClick={() => onLeadClick(lead.id)}>
                     Details anzeigen
                   </DropdownMenuItem>
-                  <DropdownMenuItem>Nachricht senden</DropdownMenuItem>
+                  <SendMessageDialog 
+                    lead={lead}
+                    trigger={
+                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                        Nachricht senden
+                      </DropdownMenuItem>
+                    }
+                  />
                   <DropdownMenuItem>Phase ändern</DropdownMenuItem>
                   <DropdownMenuItem className="text-destructive">
                     Löschen

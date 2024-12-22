@@ -12,7 +12,15 @@ serve(async (req) => {
   }
 
   try {
-    const { companyName, productsServices, targetAudience, usp } = await req.json();
+    const { 
+      leadName, 
+      leadPlatform, 
+      leadIndustry,
+      companyName, 
+      productsServices, 
+      targetAudience, 
+      usp 
+    } = await req.json();
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -25,11 +33,13 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'Du bist ein Experte für personalisierte Verkaufsnachrichten im MLM-Bereich. Erstelle eine freundliche, aber direkte Nachricht.'
+            content: `Du bist ein Experte für personalisierte Verkaufsnachrichten im MLM-Bereich. 
+                     Erstelle eine freundliche, aber direkte Nachricht für ${leadPlatform}.
+                     Berücksichtige dabei die Branche ${leadIndustry} des Leads.`
           },
           {
             role: 'user',
-            content: `Erstelle eine kurze Verkaufsnachricht mit folgenden Informationen:
+            content: `Erstelle eine kurze Verkaufsnachricht für ${leadName} mit folgenden Informationen:
               Firma: ${companyName}
               Produkte/Services: ${productsServices}
               Zielgruppe: ${targetAudience}
@@ -39,7 +49,8 @@ serve(async (req) => {
               - Kurz und prägnant sein (max. 2-3 Sätze)
               - Freundlich und persönlich klingen
               - Einen klaren Call-to-Action enthalten
-              - Auf Deutsch sein`
+              - Auf Deutsch sein
+              - Für ${leadPlatform} optimiert sein`
           }
         ],
       }),

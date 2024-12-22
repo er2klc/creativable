@@ -13,11 +13,27 @@ serve(async (req) => {
   }
 
   try {
-    const { platform, message } = await req.json();
+    const { platform, message, leadId, socialMediaUsername } = await req.json();
     
-    // Hier würde die tatsächliche Integration mit den verschiedenen Plattform-APIs erfolgen
-    // Für den Moment simulieren wir einen erfolgreichen Versand
-    console.log(`Sending message via ${platform}: ${message}`);
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get platform auth status
+    const { data: authStatus } = await supabase
+      .from('platform_auth_status')
+      .select('*')
+      .eq('platform', platform)
+      .single();
+
+    if (!authStatus?.is_connected) {
+      throw new Error(`${platform} is not connected`);
+    }
+
+    // Here we would implement the actual platform-specific sending logic
+    // For now, we'll just simulate successful sending
+    console.log(`Sending message via ${platform} to ${socialMediaUsername}: ${message}`);
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
