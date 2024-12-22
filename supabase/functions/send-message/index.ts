@@ -79,8 +79,8 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // Create a messaging conversation with initial message using the correct syntax
-      const conversationResponse = await fetch('https://api.linkedin.com/v2/messages', {
+      // Create a messaging conversation with initial message using the correct API version
+      const conversationResponse = await fetch('https://api.linkedin.com/rest/messages', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authStatus.access_token}`,
@@ -89,20 +89,10 @@ serve(async (req) => {
           'X-Restli-Protocol-Version': '2.0.0'
         },
         body: JSON.stringify({
-          "message_event": {
-            "eventCreate": {
-              "value": {
-                "messageCreate": {
-                  "attributedBody": {
-                    "text": message,
-                    "attributes": []
-                  },
-                  "recipients": [`urn:li:person:${profileId}`],
-                  "messageRequestContextUrn": null
-                }
-              }
-            }
-          }
+          "recipients": [`urn:li:person:${profileId}`],
+          "subject": "LinkedIn Connection",
+          "body": message,
+          "messageType": "MEMBER_TO_MEMBER"
         }),
       });
 
