@@ -8,15 +8,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Settings } from "@/integrations/supabase/types/settings";
 
 const formSchema = z.object({
   language: z.string(),
 });
 
-export function GeneralSettings({ settings }: { settings: Settings | null }) {
+export function GeneralSettings() {
   const session = useSession();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch current settings
+  const { data: settings } = useQuery({
+    queryKey: ["settings", session?.user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("settings")
+        .select("*")
+        .eq("user_id", session?.user?.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data as Settings | null;
+    },
+    enabled: !!session?.user?.id,
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -24,6 +43,15 @@ export function GeneralSettings({ settings }: { settings: Settings | null }) {
       language: settings?.language || "de",
     },
   });
+
+  // Update form when settings are loaded
+  React.useEffect(() => {
+    if (settings?.language) {
+      form.reset({
+        language: settings.language,
+      });
+    }
+  }, [settings, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -35,6 +63,9 @@ export function GeneralSettings({ settings }: { settings: Settings | null }) {
         });
 
       if (error) throw error;
+
+      // Invalidate and refetch settings
+      await queryClient.invalidateQueries({ queryKey: ["settings", session?.user?.id] });
 
       toast({
         title: "Erfolg ✨",

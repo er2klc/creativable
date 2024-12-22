@@ -9,14 +9,33 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Settings } from "@/integrations/supabase/types/settings";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const formSchema = z.object({
   about_me: z.string().min(1, "Über mich Text ist erforderlich"),
 });
 
-export function AboutSettings({ settings }: { settings: Settings | null }) {
+export function AboutSettings() {
   const session = useSession();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch current settings
+  const { data: settings } = useQuery({
+    queryKey: ["settings", session?.user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("settings")
+        .select("*")
+        .eq("user_id", session?.user?.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data as Settings | null;
+    },
+    enabled: !!session?.user?.id,
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -24,6 +43,15 @@ export function AboutSettings({ settings }: { settings: Settings | null }) {
       about_me: settings?.about_me || "",
     },
   });
+
+  // Update form when settings are loaded
+  React.useEffect(() => {
+    if (settings?.about_me) {
+      form.reset({
+        about_me: settings.about_me,
+      });
+    }
+  }, [settings, form]);
 
   const saveAboutMe = async (value: string) => {
     try {
@@ -35,6 +63,9 @@ export function AboutSettings({ settings }: { settings: Settings | null }) {
         });
 
       if (error) throw error;
+
+      // Invalidate and refetch settings
+      await queryClient.invalidateQueries({ queryKey: ["settings", session?.user?.id] });
 
       toast({
         title: "Erfolg ✨",
