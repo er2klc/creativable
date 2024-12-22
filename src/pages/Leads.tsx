@@ -1,27 +1,22 @@
 import { useState } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
+import { Tables } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Grid, List, Plus } from "lucide-react";
 import { LeadSearch } from "@/components/leads/LeadSearch";
 import { LeadFilters } from "@/components/leads/LeadFilters";
 import { LeadTableView } from "@/components/leads/LeadTableView";
 import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
-import type { Tables } from "@/integrations/supabase/types";
+import { LayoutList, LayoutKanban, Plus } from "lucide-react";
 
-type ViewMode = "table" | "kanban";
-type Lead = Tables<"leads">;
-
-const LeadsPage = () => {
-  const session = useSession();
-  const [viewMode, setViewMode] = useState<ViewMode>("table");
+const Leads = () => {
+  const [view, setView] = useState<"table" | "kanban">("table");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
 
-  const { data: leads = [], isLoading } = useQuery({
-    queryKey: ["leads", session?.user.id, searchQuery, selectedPhase, selectedPlatform],
+  const { data: leads = [], isLoading } = useQuery<Tables<"leads">[]>({
+    queryKey: ["leads", searchQuery, selectedPhase, selectedPlatform],
     queryFn: async () => {
       let query = supabase
         .from("leads")
@@ -29,7 +24,9 @@ const LeadsPage = () => {
         .order("created_at", { ascending: false });
 
       if (searchQuery) {
-        query = query.ilike("name", `%${searchQuery}%`);
+        query = query.or(
+          `name.ilike.%${searchQuery}%,platform.ilike.%${searchQuery}%,industry.ilike.%${searchQuery}%`
+        );
       }
 
       if (selectedPhase) {
@@ -43,14 +40,16 @@ const LeadsPage = () => {
       const { data, error } = await query;
 
       if (error) {
-        console.error("Error fetching leads:", error);
-        return [];
+        throw error;
       }
 
-      return data as Lead[];
+      return data;
     },
-    enabled: !!session?.user.id,
   });
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -58,18 +57,20 @@ const LeadsPage = () => {
         <h1 className="text-3xl font-bold">Leads</h1>
         <div className="flex items-center gap-4">
           <Button
-            variant={viewMode === "table" ? "default" : "outline"}
+            variant="outline"
             size="icon"
-            onClick={() => setViewMode("table")}
+            onClick={() => setView("table")}
+            className={view === "table" ? "bg-muted" : ""}
           >
-            <List className="h-4 w-4" />
+            <LayoutList className="h-4 w-4" />
           </Button>
           <Button
-            variant={viewMode === "kanban" ? "default" : "outline"}
+            variant="outline"
             size="icon"
-            onClick={() => setViewMode("kanban")}
+            onClick={() => setView("kanban")}
+            className={view === "kanban" ? "bg-muted" : ""}
           >
-            <Grid className="h-4 w-4" />
+            <LayoutKanban className="h-4 w-4" />
           </Button>
           <Button>
             <Plus className="h-4 w-4 mr-2" />
@@ -88,11 +89,7 @@ const LeadsPage = () => {
         />
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : viewMode === "table" ? (
+      {view === "table" ? (
         <LeadTableView leads={leads} />
       ) : (
         <LeadKanbanView leads={leads} />
@@ -101,4 +98,4 @@ const LeadsPage = () => {
   );
 };
 
-export default LeadsPage;
+export default Leads;
