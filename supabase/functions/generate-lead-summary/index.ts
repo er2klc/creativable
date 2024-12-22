@@ -14,6 +14,7 @@ serve(async (req) => {
 
   try {
     const { leadId } = await req.json();
+    console.log('Generating summary for lead:', leadId);
 
     // Create a Supabase client
     const supabaseClient = createClient(
@@ -32,7 +33,12 @@ serve(async (req) => {
       .eq('id', leadId)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching lead data:', error);
+      throw error;
+    }
+
+    console.log('Lead data fetched successfully');
 
     // Generate a prompt for the AI
     const prompt = `Please provide a concise summary of this lead:
@@ -75,18 +81,18 @@ serve(async (req) => {
       }),
     });
 
-    const aiData = await openAiResponse.json();
-    const summary = aiData.choices[0].message.content;
+    const data = await openAiResponse.json();
+    console.log('OpenAI response received');
+    const summary = data.choices[0].message.content;
 
-    return new Response(
-      JSON.stringify({ summary }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ summary }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
-    console.error('Error:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    console.error('Error in generate-lead-summary function:', error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });

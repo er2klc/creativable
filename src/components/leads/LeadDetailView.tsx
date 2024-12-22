@@ -38,13 +38,11 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     queryKey: ["lead-summary", leadId],
     queryFn: async () => {
       if (!leadId) return null;
-      const response = await fetch("/api/generate-lead-summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadId }),
+      const { data, error } = await supabase.functions.invoke("generate-lead-summary", {
+        body: { leadId },
       });
-      if (!response.ok) throw new Error("Failed to generate summary");
-      return response.json();
+      if (error) throw error;
+      return data;
     },
     enabled: !!leadId,
   });
@@ -94,7 +92,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
                 {isLoadingAiSummary ? (
                   <div>Generating summary...</div>
                 ) : (
-                  <p>{aiSummary?.summary || "No summary available"}</p>
+                  <p className="whitespace-pre-wrap">{aiSummary?.summary || "No summary available"}</p>
                 )}
               </CardContent>
             </Card>
