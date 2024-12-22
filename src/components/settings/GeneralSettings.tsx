@@ -8,12 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { Settings } from "@/integrations/supabase/types/settings";
 
 const formSchema = z.object({
   language: z.string(),
 });
 
-export function GeneralSettings({ settings }: { settings: any }) {
+export function GeneralSettings({ settings }: { settings: Settings | null }) {
   const session = useSession();
   const { toast } = useToast();
 

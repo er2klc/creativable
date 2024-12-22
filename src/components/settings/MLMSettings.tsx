@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { Settings } from "@/integrations/supabase/types/settings";
 
 const formSchema = z.object({
   company_name: z.string().min(1, "Firmenname ist erforderlich"),
@@ -18,7 +19,7 @@ const formSchema = z.object({
   business_description: z.string().min(1, "Geschäftsbeschreibung ist erforderlich"),
 });
 
-export function MLMSettings({ settings }: { settings: any }) {
+export function MLMSettings({ settings }: { settings: Settings | null }) {
   const session = useSession();
   const { toast } = useToast();
 

@@ -184,6 +184,7 @@ export type Database = {
           created_at: string | null
           default_message_template: string | null
           id: string
+          language: string | null
           openai_api_key: string | null
           superchat_api_key: string | null
           updated_at: string | null
@@ -193,6 +194,7 @@ export type Database = {
           created_at?: string | null
           default_message_template?: string | null
           id?: string
+          language?: string | null
           openai_api_key?: string | null
           superchat_api_key?: string | null
           updated_at?: string | null
@@ -202,6 +204,7 @@ export type Database = {
           created_at?: string | null
           default_message_template?: string | null
           id?: string
+          language?: string | null
           openai_api_key?: string | null
           superchat_api_key?: string | null
           updated_at?: string | null

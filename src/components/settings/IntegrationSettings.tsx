@@ -8,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { Settings } from "@/integrations/supabase/types/settings";
 
 const formSchema = z.object({
   openai_api_key: z.string().min(1, "OpenAI API-Key ist erforderlich"),
   superchat_api_key: z.string().min(1, "Superchat API-Key ist erforderlich"),
 });
 
-export function IntegrationSettings({ settings }: { settings: any }) {
+export function IntegrationSettings({ settings }: { settings: Settings | null }) {
   const session = useSession();
   const { toast } = useToast();
 
