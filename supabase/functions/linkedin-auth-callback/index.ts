@@ -15,6 +15,10 @@ serve(async (req) => {
     const clientId = Deno.env.get('LINKEDIN_CLIENT_ID');
     const clientSecret = Deno.env.get('LINKEDIN_CLIENT_SECRET');
 
+    if (!clientId || !clientSecret) {
+      throw new Error('LinkedIn credentials not configured');
+    }
+
     // Exchange code for access token
     const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
       method: 'POST',
@@ -25,8 +29,8 @@ serve(async (req) => {
         grant_type: 'authorization_code',
         code,
         redirect_uri,
-        client_id: clientId!,
-        client_secret: clientSecret!,
+        client_id: clientId,
+        client_secret: clientSecret,
       }),
     });
 
