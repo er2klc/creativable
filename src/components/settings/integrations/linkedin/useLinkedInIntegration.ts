@@ -110,23 +110,11 @@ export function useLinkedInIntegration() {
         redirectUri 
       });
 
-      // Updated scopes to include messaging permissions
+      // Essential scopes for messaging functionality
       const scope = [
-        "openid",
-        "profile",
-        "email",
-        "w_member_social",
-        "r_emailaddress",
         "r_liteprofile",
-        "w_member_social",
-        "rw_organization_admin",
-        "r_organization_social",
-        "w_organization_social",
-        "r_basicprofile",
-        "r_organization_admin",
-        "rw_organization_admin",
-        "w_organization",
-        "w_share"
+        "r_emailaddress",
+        "w_member_social"
       ].join(" ");
       
       const state = Math.random().toString(36).substring(7);

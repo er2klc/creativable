@@ -20,6 +20,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Validate authorization
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
@@ -34,6 +35,7 @@ serve(async (req) => {
       throw new Error('Invalid authorization token');
     }
 
+    // Get platform authentication status
     const { data: authStatus, error: authStatusError } = await supabaseClient
       .from('platform_auth_status')
       .select('*')
@@ -46,6 +48,7 @@ serve(async (req) => {
       throw new Error(`Please connect your ${platform} account in the settings first`);
     }
 
+    // Get lead information
     const { data: lead, error: leadError } = await supabaseClient
       .from('leads')
       .select('social_media_username')
@@ -61,6 +64,7 @@ serve(async (req) => {
       const profileUrl = lead.social_media_username;
       console.log('Processing LinkedIn profile URL:', profileUrl);
 
+      // Extract profile ID from URL
       let profileId;
       if (profileUrl.includes('linkedin.com/in/')) {
         profileId = profileUrl.split('linkedin.com/in/')[1].split('/')[0].split('?')[0];
@@ -74,79 +78,64 @@ serve(async (req) => {
 
       console.log('Extracted LinkedIn profile ID:', profileId);
 
-      // First get the member URN using the /me endpoint
-      const meResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
-        headers: {
-          'Authorization': `Bearer ${authStatus.access_token}`,
-          'LinkedIn-Version': '202304',
-          'X-Restli-Protocol-Version': '2.0.0'
-        }
-      });
-
-      if (!meResponse.ok) {
-        const errorData = await meResponse.text();
-        console.error('LinkedIn /me API error:', errorData);
-        throw new Error(`Failed to get LinkedIn profile: ${errorData}`);
-      }
-
-      const meData = await meResponse.json();
-      console.log('LinkedIn profile data:', meData);
-
-      // Try to create a conversation first
       try {
-        console.log('Attempting to create LinkedIn conversation...');
-        const conversationResponse = await fetch('https://api.linkedin.com/rest/conversations', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authStatus.access_token}`,
-            'Content-Type': 'application/json',
-            'LinkedIn-Version': '202304',
-            'X-Restli-Protocol-Version': '2.0.0'
-          },
-          body: JSON.stringify({
-            recipients: [`urn:li:person:${profileId}`],
-            messageText: message
-          }),
-        });
-
-        if (!conversationResponse.ok) {
-          const conversationError = await conversationResponse.text();
-          console.error('LinkedIn conversation API error:', conversationError);
-          throw new Error(`Failed to create LinkedIn conversation: ${conversationError}`);
-        }
-
-        const conversationData = await conversationResponse.json();
-        console.log('LinkedIn conversation created successfully:', conversationData);
-      } catch (conversationError) {
-        console.error('Error creating conversation, trying message instead:', conversationError);
-
-        // If conversation fails, try to send a message using the messaging API
+        console.log('Attempting to send LinkedIn message...');
         const messageResponse = await fetch('https://api.linkedin.com/v2/messages', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${authStatus.access_token}`,
             'Content-Type': 'application/json',
-            'LinkedIn-Version': '202304',
-            'X-Restli-Protocol-Version': '2.0.0'
+            'X-Restli-Protocol-Version': '2.0.0',
+            'LinkedIn-Version': '202304'
           },
           body: JSON.stringify({
-            recipients: [{
-              recipientUrn: `urn:li:person:${profileId}`,
-              recipientType: "PERSON"
-            }],
-            messageText: message,
-            messageSubject: "Neue Nachricht",
-            messageType: "MEMBER_TO_MEMBER"
+            recipients: [`urn:li:person:${profileId}`],
+            subject: "Neue Nachricht",
+            messageText: message
           }),
         });
 
         if (!messageResponse.ok) {
-          const messageErrorData = await messageResponse.text();
-          console.error('LinkedIn messaging API error:', messageErrorData);
-          throw new Error(`Failed to send LinkedIn message: ${messageErrorData}`);
+          const errorData = await messageResponse.text();
+          console.error('LinkedIn messaging API error:', errorData);
+          throw new Error(`Failed to send LinkedIn message: ${errorData}`);
         }
 
-        console.log('LinkedIn message sent successfully');
+        const messageData = await messageResponse.json();
+        console.log('LinkedIn message sent successfully:', messageData);
+
+        // Save message to database
+        const { error: insertError } = await supabaseClient
+          .from('messages')
+          .insert({
+            lead_id: leadId,
+            user_id: user.id,
+            platform,
+            content: message,
+            sent_at: new Date().toISOString()
+          });
+
+        if (insertError) {
+          console.error('Error saving message:', insertError);
+          // Don't throw here as the message was already sent
+        }
+
+        // Update lead's last action
+        const { error: updateError } = await supabaseClient
+          .from('leads')
+          .update({
+            last_action: 'Message sent',
+            last_action_date: new Date().toISOString(),
+          })
+          .eq('id', leadId);
+
+        if (updateError) {
+          console.error('Error updating lead:', updateError);
+          // Don't throw here as the message was already sent
+        }
+      } catch (error) {
+        console.error('Error sending LinkedIn message:', error);
+        throw error;
       }
     }
 
