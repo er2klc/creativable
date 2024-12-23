@@ -49,9 +49,16 @@ export const LeadPhaseManager = () => {
 
   const updatePhaseOrder = useMutation({
     mutationFn: async (updatedPhases: typeof phases) => {
+      const user = await supabase.auth.getUser();
+      const userId = user.data.user?.id;
+      
+      if (!userId) throw new Error("No user ID found");
+
       const updates = updatedPhases.map((phase, index) => ({
         id: phase.id,
+        name: phase.name,
         order_index: index,
+        user_id: userId,
       }));
 
       const { error } = await supabase
@@ -67,10 +74,15 @@ export const LeadPhaseManager = () => {
 
   const addPhase = useMutation({
     mutationFn: async (name: string) => {
+      const user = await supabase.auth.getUser();
+      const userId = user.data.user?.id;
+      
+      if (!userId) throw new Error("No user ID found");
+
       const { error } = await supabase.from("lead_phases").insert({
         name,
         order_index: phases.length,
-        user_id: (await supabase.auth.getUser()).data.user?.id,
+        user_id: userId,
       });
       if (error) throw error;
     },
