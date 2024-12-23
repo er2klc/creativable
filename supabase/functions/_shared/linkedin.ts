@@ -118,8 +118,12 @@ export const linkedInApi = {
           'LinkedIn-Version': '202304',
         },
         body: JSON.stringify({
-          recipients: [`urn:li:member:${profileId}`],
-          messageText: message
+          recipients: {
+            values: [{
+              person: `urn:li:person:${profileId}`
+            }]
+          },
+          body: message
         }),
       });
 
