@@ -12,6 +12,8 @@ import {
 } from "@dnd-kit/sortable";
 import { useToast } from "@/hooks/use-toast";
 import { CSS } from "@dnd-kit/utilities";
+import { useEffect } from "react";
+import { useSettings } from "@/hooks/use-settings";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -80,6 +82,7 @@ const SortableLeadItem = ({
 export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { settings } = useSettings();
 
   const { data: phases = [] } = useQuery({
     queryKey: ["lead-phases"],
@@ -104,11 +107,36 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast({
-        title: "Phase aktualisiert",
-        description: "Die Phase wurde erfolgreich aktualisiert.",
+        title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
+        description: settings?.language === "en" 
+          ? "The phase has been successfully updated."
+          : "Die Phase wurde erfolgreich aktualisiert.",
       });
     },
   });
+
+  // Subscribe to real-time updates for leads
+  useEffect(() => {
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'leads'
+        },
+        () => {
+          // Refresh the leads data
+          queryClient.invalidateQueries({ queryKey: ["leads"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
