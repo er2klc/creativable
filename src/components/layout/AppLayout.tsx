@@ -8,6 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { 
   LayoutGrid, 
@@ -21,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 
 const navigationItems = [
   { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
-  { title: "Kontakte", icon: Users, url: "/contacts" },
+  { title: "Kontakt", icon: Users, url: "/contacts" },
   { title: "Nachrichten", icon: MessageSquare, url: "/messages" },
   { title: "Kalender", icon: Calendar, url: "/calendar" },
   { title: "Berichte", icon: BarChart, url: "/reports" },
@@ -65,6 +66,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
         <DashboardSidebar />
         <main className="flex-1 p-8 lg:ml-64">
           <div className="max-w-7xl mx-auto">
+            <div className="flex items-center gap-4 mb-8">
+              <SidebarTrigger />
+            </div>
             {children}
           </div>
         </main>
