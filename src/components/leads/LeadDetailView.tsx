@@ -65,8 +65,8 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         ) : lead ? (
           <div className="grid gap-6">
             <LeadBasicInfo lead={lead} />
-            <LeadNotes lead={lead} />
             <LeadMessages messages={lead.messages} />
+            <LeadNotes lead={lead} />
             <LeadTasks tasks={lead.tasks} />
           </div>
         ) : null}

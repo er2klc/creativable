@@ -37,7 +37,7 @@ export function Sidebar({ className, children }: React.HTMLAttributes<HTMLDivEle
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen w-64 -translate-x-full border-r border-border bg-background transition-transform lg:translate-x-0",
+        "fixed left-0 top-0 z-40 h-screen w-64 -translate-x-full border-r border-border bg-background transition-transform duration-300 lg:translate-x-0",
         isOpen && "translate-x-0",
         className
       )}

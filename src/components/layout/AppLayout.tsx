@@ -17,10 +17,11 @@ import {
   BarChart, 
   Settings 
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const navigationItems = [
   { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
-  { title: "Leads", icon: Users, url: "/leads" },
+  { title: "Kontakte", icon: Users, url: "/contacts" },
   { title: "Nachrichten", icon: MessageSquare, url: "/messages" },
   { title: "Kalender", icon: Calendar, url: "/calendar" },
   { title: "Berichte", icon: BarChart, url: "/reports" },
@@ -28,6 +29,8 @@ const navigationItems = [
 ];
 
 const DashboardSidebar = () => {
+  const navigate = useNavigate();
+  
   return (
     <Sidebar>
       <SidebarContent>
@@ -37,11 +40,9 @@ const DashboardSidebar = () => {
             <SidebarMenu>
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url} className="flex items-center gap-3">
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.title}</span>
-                    </a>
+                  <SidebarMenuButton onClick={() => navigate(item.url)}>
+                    <item.icon className="h-5 w-5" />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -62,7 +63,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <DashboardSidebar />
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-8 lg:ml-64">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
