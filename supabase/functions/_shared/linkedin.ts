@@ -34,7 +34,7 @@ export const linkedInApi = {
     console.log('Starting LinkedIn token validation process...');
     
     try {
-      // Check basic profile access (now includes profile and email by default)
+      // Check basic profile access
       console.log('Checking basic profile access...');
       const meResponse = await fetch('https://api.linkedin.com/v2/me', {
         headers: {
@@ -50,13 +50,14 @@ export const linkedInApi = {
         console.error('LinkedIn /me endpoint error:', {
           status: meResponse.status,
           statusText: meResponse.statusText,
-          body: errorText
+          body: errorText,
+          headers: Object.fromEntries(meResponse.headers.entries())
         });
 
         if (meResponse.status === 401) {
           throw new Error('LinkedIn access token is invalid or expired. Please reconnect your account.');
         }
-        throw new Error('LinkedIn access token validation failed. Please check your connection in settings.');
+        throw new Error(`LinkedIn profile access failed: ${errorText}`);
       }
 
       const profileData = await meResponse.json();
@@ -77,22 +78,22 @@ export const linkedInApi = {
         const errorText = await permissionsResponse.text();
         console.error('LinkedIn permissions check failed:', {
           status: permissionsResponse.status,
+          headers: Object.fromEntries(permissionsResponse.headers.entries()),
           body: errorText
         });
-        throw new Error('Failed to verify LinkedIn permissions. Please reconnect your account.');
+        throw new Error(`Failed to verify LinkedIn permissions: ${errorText}`);
       }
 
       const permissions = await permissionsResponse.json();
       console.log('Retrieved LinkedIn permissions:', permissions);
 
-      // Verify w_member_social permission is present and approved
       const hasMessagingPermission = permissions.elements?.some(
         (p: any) => p.permission?.name === 'w_member_social' && p.status === 'APPROVED'
       );
 
       if (!hasMessagingPermission) {
         console.error('Missing required w_member_social permission');
-        throw new Error('LinkedIn access token lacks messaging permissions. Please reconnect your account.');
+        throw new Error('LinkedIn access token lacks messaging permissions. Please reconnect your account with all required permissions.');
       }
 
       console.log('Successfully validated all required permissions');
@@ -107,37 +108,43 @@ export const linkedInApi = {
   async sendMessage(accessToken: string, profileId: string, message: string) {
     console.log('Attempting to send LinkedIn message to profile:', profileId);
     
-    const response = await fetch('https://api.linkedin.com/v2/messages', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'X-Restli-Protocol-Version': '2.0.0',
-        'LinkedIn-Version': '202304',
-      },
-      body: JSON.stringify({
-        recipients: [`urn:li:member:${profileId}`],
-        messageText: message
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('LinkedIn messaging API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorData
+    try {
+      const response = await fetch('https://api.linkedin.com/v2/messages', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'X-Restli-Protocol-Version': '2.0.0',
+          'LinkedIn-Version': '202304',
+        },
+        body: JSON.stringify({
+          recipients: [`urn:li:member:${profileId}`],
+          messageText: message
+        }),
       });
 
-      if (response.status === 403) {
-        throw new Error('Cannot send message. The recipient may not be a 1st-degree connection or your LinkedIn token lacks required permissions.');
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('LinkedIn messaging API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          headers: Object.fromEntries(response.headers.entries()),
+          body: errorData
+        });
+
+        if (response.status === 403) {
+          throw new Error('Cannot send message. The recipient may not be a 1st-degree connection or your LinkedIn token lacks required permissions.');
+        }
+
+        throw new Error(`Failed to send LinkedIn message: ${errorData}`);
       }
 
-      throw new Error(`Failed to send LinkedIn message: ${errorData}`);
+      const result = await response.json();
+      console.log('Successfully sent LinkedIn message:', result);
+      return result;
+    } catch (error) {
+      console.error('Error sending LinkedIn message:', error);
+      throw error;
     }
-
-    const result = await response.json();
-    console.log('Successfully sent LinkedIn message:', result);
-    return result;
   }
 };
