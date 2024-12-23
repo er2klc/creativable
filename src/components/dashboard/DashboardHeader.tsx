@@ -42,11 +42,7 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
         </p>
       </div>
       <div className="flex items-center gap-4">
-        <SidebarTrigger>
-          <Button variant="outline" size="icon">
-            <Menu className="h-4 w-4" />
-          </Button>
-        </SidebarTrigger>
+        <SidebarTrigger />
         <Button onClick={handleSignOut} variant="outline">
           Abmelden
         </Button>
