@@ -44,15 +44,9 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
 
   const updateLeadPhase = useMutation({
     mutationFn: async ({ leadId, newPhase }: { leadId: string; newPhase: string }) => {
-      // Find the phase object by name
-      const phase = phases.find(p => p.name === newPhase);
-      if (!phase) {
-        throw new Error("Phase not found");
-      }
-
       const { error } = await supabase
         .from("leads")
-        .update({ phase: phase.name })
+        .update({ phase: newPhase })
         .eq("id", leadId);
       if (error) throw error;
     },
@@ -109,7 +103,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     },
   });
 
-  // Subscribe to real-time updates for leads and phases
+  // Subscribe to real-time updates
   useEffect(() => {
     const leadsChannel = supabase
       .channel('leads-changes')
@@ -173,7 +167,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
         <div className="bg-muted/50 p-4 rounded-lg flex items-center justify-center">
           <Button
             variant="ghost"
-            className="h-full w-full flex flex-col gap-2 items-center justify-center"
+            className="h-full w-full flex flex-col gap-2 items-center justify-center hover:bg-primary/10"
             onClick={() => addPhase.mutate()}
           >
             <Plus className="h-6 w-6" />

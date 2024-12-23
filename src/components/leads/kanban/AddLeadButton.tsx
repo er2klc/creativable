@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddLeadDialog } from "../AddLeadDialog";
 
@@ -11,8 +11,8 @@ export function AddLeadButton({ phase, variant = "ghost" }: AddLeadButtonProps) 
   return (
     <AddLeadDialog
       trigger={
-        <Button variant={variant} className="w-full">
-          <Plus className="h-4 w-4 mr-2" />
+        <Button variant="outline" size="sm" className="w-full text-muted-foreground hover:text-foreground">
+          <UserPlus className="h-4 w-4 mr-2" />
           Neuer Kontakt
         </Button>
       }

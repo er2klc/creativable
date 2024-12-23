@@ -11,13 +11,15 @@ interface SortableLeadItemProps {
 }
 
 export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: lead.id,
   });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: 'grab',
   };
 
   return (
@@ -26,7 +28,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-background p-4 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+      className="bg-background p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow"
       onClick={() => onLeadClick(lead.id)}
     >
       <div className="flex items-center justify-between">
