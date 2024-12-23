@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, StickyNote } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -83,7 +83,8 @@ export function NoteList({ leadId }: NoteListProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <StickyNote className="h-5 w-5" />
           {settings?.language === "en" ? "Notes" : "Notizen"} ({notes.length})
         </CardTitle>
       </CardHeader>
@@ -104,7 +105,7 @@ export function NoteList({ leadId }: NoteListProps) {
             />
             <Button type="submit" className="ml-auto">
               <Plus className="h-4 w-4 mr-2" />
-              {settings?.language === "en" ? "Add Note" : "Notiz hinzufügen"}
+              {settings?.language === "en" ? "+ Add Note" : "+ Notiz hinzufügen"}
             </Button>
           </div>
         </form>

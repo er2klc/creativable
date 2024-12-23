@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Calendar, Clock, Video, Phone, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSettings } from "@/hooks/use-settings";
@@ -43,12 +43,12 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
   };
 
   const MEETING_TYPES = [
-    { value: "phone_call", label: settings?.language === "en" ? "Phone Call" : "Telefongespräch" },
-    { value: "on_site", label: settings?.language === "en" ? "On-site Meeting" : "Vor-Ort-Termin" },
-    { value: "zoom", label: settings?.language === "en" ? "Zoom Meeting" : "Zoom Meeting" },
-    { value: "initial_meeting", label: settings?.language === "en" ? "Initial Meeting" : "Erstgespräch" },
-    { value: "presentation", label: settings?.language === "en" ? "Presentation" : "Präsentation" },
-    { value: "follow_up", label: settings?.language === "en" ? "Follow-up" : "Folgetermin" }
+    { value: "phone_call", label: settings?.language === "en" ? "Phone Call 📞" : "Telefongespräch 📞", icon: <Phone className="h-4 w-4" /> },
+    { value: "on_site", label: settings?.language === "en" ? "On-site Meeting 🏢" : "Vor-Ort-Termin 🏢", icon: <MapPin className="h-4 w-4" /> },
+    { value: "zoom", label: settings?.language === "en" ? "Zoom Meeting 💻" : "Zoom Meeting 💻", icon: <Video className="h-4 w-4" /> },
+    { value: "initial_meeting", label: settings?.language === "en" ? "Initial Meeting 👋" : "Erstgespräch 👋", icon: <Users className="h-4 w-4" /> },
+    { value: "presentation", label: settings?.language === "en" ? "Presentation 📊" : "Präsentation 📊", icon: <BarChart className="h-4 w-4" /> },
+    { value: "follow_up", label: settings?.language === "en" ? "Follow-up 🔄" : "Folgetermin 🔄", icon: <RefreshCw className="h-4 w-4" /> }
   ];
 
   return (
@@ -59,18 +59,24 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
         placeholder={settings?.language === "en" ? "New task..." : "Neue Aufgabe..."}
       />
       <div className="flex gap-2 items-center">
-        <Input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          className="w-40"
-        />
-        <Input
-          type="time"
-          value={selectedTime}
-          onChange={(e) => setSelectedTime(e.target.value)}
-          className="w-32"
-        />
+        <div className="flex items-center gap-1">
+          <Calendar className="h-4 w-4" />
+          <Input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="w-40"
+          />
+        </div>
+        <div className="flex items-center gap-1">
+          <Clock className="h-4 w-4" />
+          <Input
+            type="time"
+            value={selectedTime}
+            onChange={(e) => setSelectedTime(e.target.value)}
+            className="w-32"
+          />
+        </div>
         <Select value={selectedType} onValueChange={setSelectedType}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder={settings?.language === "en" ? "Meeting type" : "Terminart"} />
@@ -78,7 +84,10 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
           <SelectContent>
             {MEETING_TYPES.map((type) => (
               <SelectItem key={type.value} value={type.value}>
-                {type.label}
+                <div className="flex items-center gap-2">
+                  {type.icon}
+                  {type.label}
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
@@ -91,7 +100,7 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
         />
         <Button type="submit" className="ml-auto">
           <Plus className="h-4 w-4 mr-2" />
-          {settings?.language === "en" ? "Add Task" : "+ Aufgabe hinzufügen"}
+          {settings?.language === "en" ? "+ Add Task" : "+ Aufgabe hinzufügen"}
         </Button>
       </div>
     </form>
