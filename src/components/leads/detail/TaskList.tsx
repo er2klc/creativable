@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Check } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ export function TaskList({ leadId, tasks }: TaskListProps) {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [selectedColor, setSelectedColor] = useState("#FEF7CD");
   const queryClient = useQueryClient();
+
+  const incompleteTasks = tasks.filter(task => !task.completed);
 
   const addTaskMutation = useMutation({
     mutationFn: async (title: string) => {
@@ -57,6 +59,11 @@ export function TaskList({ leadId, tasks }: TaskListProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      toast.success(
+        settings?.language === "en"
+          ? "Task status updated"
+          : "Aufgabenstatus aktualisiert"
+      );
     },
   });
 
@@ -71,7 +78,7 @@ export function TaskList({ leadId, tasks }: TaskListProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>
-          {settings?.language === "en" ? "Tasks" : "Aufgaben"} ({tasks.length})
+          {settings?.language === "en" ? "Tasks" : "Aufgaben"} ({incompleteTasks.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -95,16 +102,20 @@ export function TaskList({ leadId, tasks }: TaskListProps) {
           {tasks.map((task) => (
             <div
               key={task.id}
-              className="flex items-center gap-2 p-2 rounded"
+              className="flex items-center gap-2 p-2 rounded transition-colors"
               style={{ backgroundColor: task.color || "#FEF7CD" }}
             >
-              <input
-                type="checkbox"
-                checked={task.completed || false}
-                onChange={() => toggleTaskMutation.mutate(task)}
-                className="h-4 w-4"
-              />
-              <span className={task.completed ? "line-through" : ""}>
+              <button
+                onClick={() => toggleTaskMutation.mutate(task)}
+                className={`flex items-center justify-center w-5 h-5 rounded border ${
+                  task.completed
+                    ? "bg-green-500 border-green-600 text-white"
+                    : "bg-white border-gray-300"
+                }`}
+              >
+                {task.completed && <Check className="h-4 w-4" />}
+              </button>
+              <span className={task.completed ? "line-through text-gray-500" : ""}>
                 {task.title}
               </span>
             </div>

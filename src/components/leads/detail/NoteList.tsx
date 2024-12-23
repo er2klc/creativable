@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,23 @@ export function NoteList({ leadId }: NoteListProps) {
     },
   });
 
+  const deleteNoteMutation = useMutation({
+    mutationFn: async (noteId: string) => {
+      const { error } = await supabase
+        .from("notes")
+        .delete()
+        .eq("id", noteId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead-notes", leadId] });
+      toast.success(
+        settings?.language === "en" ? "Note deleted" : "Notiz gelöscht"
+      );
+    },
+  });
+
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
     if (newNoteContent.trim()) {
@@ -95,9 +112,17 @@ export function NoteList({ leadId }: NoteListProps) {
           {notes.map((note) => (
             <div
               key={note.id}
-              className="p-4 rounded-lg shadow transform rotate-1 transition-transform hover:rotate-0"
+              className="p-4 rounded-lg shadow transform rotate-1 transition-transform hover:rotate-0 relative group"
               style={{ backgroundColor: note.color || "#FEF7CD" }}
             >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => deleteNoteMutation.mutate(note.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
               <p className="whitespace-pre-wrap">{note.content}</p>
               <div className="text-xs text-gray-500 mt-2">
                 {new Date(note.created_at || "").toLocaleString(
