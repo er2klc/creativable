@@ -5,13 +5,77 @@ import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
-import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
 import { useToast } from "@/hooks/use-toast";
+import { CSS } from "@dnd-kit/utilities";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
   onLeadClick: (id: string) => void;
 }
+
+// Create a SortableItem component for the draggable lead cards
+const SortableLeadItem = ({
+  lead,
+  onLeadClick,
+}: {
+  lead: Tables<"leads">;
+  onLeadClick: (id: string) => void;
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: lead.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="bg-background p-4 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => onLeadClick(lead.id)}
+    >
+      <div className="flex items-center justify-between">
+        <span className="font-medium">{lead.name}</span>
+        <div className="flex items-center gap-2">
+          <SendMessageDialog
+            lead={lead}
+            trigger={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            }
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Star className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      <div className="text-sm text-muted-foreground mt-2">
+        {lead.platform} · {lead.industry}
+      </div>
+    </div>
+  );
+};
 
 export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
   const { toast } = useToast();
@@ -61,48 +125,22 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {phases.map((phase) => (
-          <div key={phase.name} className="bg-muted/50 p-4 rounded-lg">
+          <div
+            key={phase.name}
+            id={phase.name}
+            className="bg-muted/50 p-4 rounded-lg"
+          >
             <h3 className="font-medium mb-4">{phase.name}</h3>
-            <SortableContext items={leads.map(l => l.id)} strategy={rectSortingStrategy}>
+            <SortableContext items={leads.map((l) => l.id)} strategy={rectSortingStrategy}>
               <div className="space-y-2">
                 {leads
                   .filter((lead) => lead.phase === phase.name)
                   .map((lead) => (
-                    <div
+                    <SortableLeadItem
                       key={lead.id}
-                      className="bg-background p-4 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => onLeadClick(lead.id)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{lead.name}</span>
-                        <div className="flex items-center gap-2">
-                          <SendMessageDialog
-                            lead={lead}
-                            trigger={
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Send className="h-4 w-4" />
-                              </Button>
-                            }
-                          />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Star className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-2">
-                        {lead.platform} · {lead.industry}
-                      </div>
-                    </div>
+                      lead={lead}
+                      onLeadClick={onLeadClick}
+                    />
                   ))}
               </div>
             </SortableContext>
