@@ -28,7 +28,7 @@ export const linkedInApi = {
       throw new Error('Invalid LinkedIn profile URL');
     }
     const profileId = url.split('linkedin.com/in/')[1].split('/')[0].split('?')[0];
-    return `urn:li:person:${profileId}`;
+    return profileId;
   },
 
   async validateToken(accessToken: string) {
@@ -113,7 +113,7 @@ export const linkedInApi = {
       const messagePayload = {
         recipients: {
           values: [{
-            person: recipientUrn
+            person: `urn:li:person:${recipientUrn}`
           }]
         },
         body: message
