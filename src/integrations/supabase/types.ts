@@ -381,6 +381,7 @@ export type Database = {
           due_date: string | null
           id: string
           lead_id: string | null
+          meeting_type: string | null
           title: string
           user_id: string
         }
@@ -391,6 +392,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           lead_id?: string | null
+          meeting_type?: string | null
           title: string
           user_id: string
         }
@@ -401,6 +403,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           lead_id?: string | null
+          meeting_type?: string | null
           title?: string
           user_id?: string
         }
