@@ -44,11 +44,21 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
 
   const updateLeadPhase = useMutation({
     mutationFn: async ({ leadId, newPhase }: { leadId: string; newPhase: string }) => {
+      if (!session?.user?.id) {
+        throw new Error("No authenticated user found");
+      }
+
+      // Find the phase name from the phase ID
+      const phase = phases.find(p => p.id === newPhase);
+      if (!phase) {
+        throw new Error("Phase not found");
+      }
+
       const { error } = await supabase
         .from("leads")
         .update({ 
-          phase: newPhase,
-          last_action: "Phase geändert",
+          phase: phase.name,
+          last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
           last_action_date: new Date().toISOString(),
         })
         .eq("id", leadId);
@@ -67,12 +77,16 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
 
   const addPhase = useMutation({
     mutationFn: async () => {
+      if (!session?.user?.id) {
+        throw new Error("No authenticated user found");
+      }
+
       const { error } = await supabase
         .from("lead_phases")
         .insert({
           name: settings?.language === "en" ? "New Phase" : "Neue Phase",
           order_index: phases.length,
-          user_id: session?.user?.id,
+          user_id: session.user.id,
         });
       if (error) throw error;
     },
