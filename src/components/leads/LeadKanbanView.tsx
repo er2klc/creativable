@@ -2,6 +2,8 @@ import { Tables } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Star, Send } from "lucide-react";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -9,20 +11,26 @@ interface LeadKanbanViewProps {
 }
 
 export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
+  const { data: phases = [] } = useQuery({
+    queryKey: ["lead-phases"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lead_phases")
+        .select("*")
+        .order("order_index");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
-    <div className="grid grid-cols-3 gap-4">
-      {["initial_contact", "follow_up", "closed"].map((phase) => (
-        <div key={phase} className="bg-muted/50 p-4 rounded-lg">
-          <h3 className="font-medium mb-4">
-            {phase === "initial_contact"
-              ? "Erstkontakt"
-              : phase === "follow_up"
-              ? "Follow-up"
-              : "Abschluss"}
-          </h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {phases.map((phase) => (
+        <div key={phase.id} className="bg-muted/50 p-4 rounded-lg">
+          <h3 className="font-medium mb-4">{phase.name}</h3>
           <div className="space-y-2">
             {leads
-              .filter((lead) => lead.phase === phase)
+              .filter((lead) => lead.phase === phase.name)
               .map((lead) => (
                 <div
                   key={lead.id}

@@ -11,12 +11,21 @@ import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
 import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
-import { LayoutList, Kanban } from "lucide-react";
+import { LeadPhaseManager } from "@/components/leads/LeadPhaseManager";
+import { LayoutList, Kanban, Settings2 } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const Leads = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [view, setView] = useState<"table" | "kanban">("table");
+  const [view, setView] = useState<"table" | "kanban">("kanban");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
@@ -27,7 +36,6 @@ const Leads = () => {
   useEffect(() => {
     if (searchParams.get("action") === "send-message") {
       setShowSendMessage(true);
-      // Remove the action parameter from URL
       searchParams.delete("action");
       setSearchParams(searchParams);
     }
@@ -72,8 +80,32 @@ const Leads = () => {
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">{settings?.language === "en" ? "Contacts" : "Kontakte"}</h1>
+        <h1 className="text-3xl font-bold">
+          {settings?.language === "en" ? "Contacts" : "Kontakte"}
+        </h1>
         <div className="flex items-center gap-4">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Settings2 className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>
+                  {settings?.language === "en" ? "Manage Phases" : "Phasen verwalten"}
+                </SheetTitle>
+                <SheetDescription>
+                  {settings?.language === "en"
+                    ? "Drag and drop to reorder phases. Add or remove phases as needed."
+                    : "Ziehen und ablegen zum Neuordnen der Phasen. Fügen Sie neue Phasen hinzu oder entfernen Sie sie nach Bedarf."}
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-4">
+                <LeadPhaseManager />
+              </div>
+            </SheetContent>
+          </Sheet>
           <Button
             variant="outline"
             size="icon"
