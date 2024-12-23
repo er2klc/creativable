@@ -35,7 +35,7 @@ const App = () => (
               }
             />
             <Route
-              path="/leads"
+              path="/contacts"
               element={
                 <AppLayout>
                   <Leads />
