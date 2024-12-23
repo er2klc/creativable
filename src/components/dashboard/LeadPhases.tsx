@@ -53,15 +53,27 @@ export const LeadPhases = () => {
 
         if (phasesToAdd.length === 0) return;
 
-        const { error } = await supabase.from("lead_phases").insert(
-          phasesToAdd.map((phase) => ({
-            name: phase.name,
-            order_index: phase.order_index,
-            user_id: session.user.id,
-          }))
-        );
+        // Insert phases one by one to better handle potential errors
+        for (const phase of phasesToAdd) {
+          const { error: insertError } = await supabase
+            .from("lead_phases")
+            .insert({
+              name: phase.name,
+              order_index: phase.order_index,
+              user_id: session.user.id,
+            })
+            .select()
+            .single();
 
-        if (error) throw error;
+          if (insertError && insertError.code !== "23505") { // Ignore duplicate key errors
+            console.error("Error inserting phase:", insertError);
+            toast({
+              title: "Fehler",
+              description: `Fehler beim Hinzufügen der Phase "${phase.name}"`,
+              variant: "destructive",
+            });
+          }
+        }
         
         // Refresh the phases list
         refetch();
