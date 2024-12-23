@@ -1,10 +1,7 @@
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
 import { Input } from "@/components/ui/input";
@@ -16,8 +13,9 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { PhaseColumn } from "./kanban/PhaseColumn";
-import { useSession } from "@supabase/auth-helpers-react";
 import { useKanbanSubscription } from "./kanban/useKanbanSubscription";
+import { usePhaseQuery } from "./kanban/usePhaseQuery";
+import { usePhaseMutations } from "./kanban/usePhaseMutations";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -25,117 +23,13 @@ interface LeadKanbanViewProps {
 }
 
 export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { settings } = useSettings();
-  const session = useSession();
   const [editingPhase, setEditingPhase] = useState<Tables<"lead_phases"> | null>(null);
-
-  const { data: phases = [] } = useQuery({
-    queryKey: ["lead-phases"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lead_phases")
-        .select("*")
-        .order("order_index");
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: phases = [] } = usePhaseQuery();
+  const { updateLeadPhase, addPhase, updatePhaseName } = usePhaseMutations();
 
   // Use the subscription hook
   useKanbanSubscription();
-
-  const updateLeadPhase = useMutation({
-    mutationFn: async ({ leadId, newPhaseId }: { leadId: string; newPhaseId: string }) => {
-      if (!session?.user?.id) {
-        throw new Error("No authenticated user found");
-      }
-
-      // Find the phase name from the phase ID
-      const phase = phases.find(p => p.id === newPhaseId);
-      if (!phase) {
-        throw new Error("Phase not found");
-      }
-
-      const { error } = await supabase
-        .from("leads")
-        .update({ 
-          phase: phase.name,
-          last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
-          last_action_date: new Date().toISOString(),
-        })
-        .eq("id", leadId);
-      if (error) throw error;
-
-      // Invalidate and refetch leads after successful update
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-    },
-    onSuccess: () => {
-      toast({
-        title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
-        description: settings?.language === "en" 
-          ? "The phase has been successfully updated."
-          : "Die Phase wurde erfolgreich aktualisiert.",
-      });
-    },
-    onError: (error) => {
-      console.error("Error updating phase:", error);
-      toast({
-        title: settings?.language === "en" ? "Error" : "Fehler",
-        description: settings?.language === "en"
-          ? "Failed to update phase"
-          : "Phase konnte nicht aktualisiert werden",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const addPhase = useMutation({
-    mutationFn: async () => {
-      if (!session?.user?.id) {
-        throw new Error("No authenticated user found");
-      }
-
-      const { error } = await supabase
-        .from("lead_phases")
-        .insert({
-          name: settings?.language === "en" ? "New Phase" : "Neue Phase",
-          order_index: phases.length,
-          user_id: session.user.id,
-        });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
-      toast({
-        title: settings?.language === "en" ? "Phase added" : "Phase hinzugefügt",
-        description: settings?.language === "en"
-          ? "New phase has been added successfully"
-          : "Neue Phase wurde erfolgreich hinzugefügt",
-      });
-    },
-  });
-
-  const updatePhaseName = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const { error } = await supabase
-        .from("lead_phases")
-        .update({ name })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
-      setEditingPhase(null);
-      toast({
-        title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
-        description: settings?.language === "en"
-          ? "Phase name has been updated successfully"
-          : "Phasenname wurde erfolgreich aktualisiert",
-      });
-    },
-  });
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
