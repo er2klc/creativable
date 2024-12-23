@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Calendar, Clock, Video, Phone, MapPin } from "lucide-react";
+import { Plus, Calendar, Clock, Video, Phone, MapPin, Users, BarChart, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSettings } from "@/hooks/use-settings";
