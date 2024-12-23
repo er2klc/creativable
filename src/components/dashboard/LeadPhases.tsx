@@ -1,8 +1,69 @@
+import { useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Users, UserPlus, CheckCircle } from "lucide-react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+
+const DEFAULT_PHASES = [
+  { name: "Erstkontakt", order_index: 0 },
+  { name: "Follow-up", order_index: 1 },
+  { name: "Abschluss", order_index: 2 },
+];
 
 export const LeadPhases = () => {
+  const session = useSession();
+  const { toast } = useToast();
+
+  const { data: phases = [], isLoading } = useQuery({
+    queryKey: ["lead-phases"],
+    queryFn: async () => {
+      if (!session?.user?.id) return [];
+      
+      const { data: existingPhases, error } = await supabase
+        .from("lead_phases")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("order_index");
+
+      if (error) throw error;
+      return existingPhases;
+    },
+  });
+
+  useEffect(() => {
+    const initializeDefaultPhases = async () => {
+      if (!session?.user?.id || phases.length > 0) return;
+
+      try {
+        const { error } = await supabase.from("lead_phases").insert(
+          DEFAULT_PHASES.map((phase) => ({
+            name: phase.name,
+            order_index: phase.order_index,
+            user_id: session.user.id,
+          }))
+        );
+
+        if (error) throw error;
+      } catch (error) {
+        console.error("Error initializing default phases:", error);
+        toast({
+          title: "Fehler",
+          description: "Fehler beim Initialisieren der Phasen",
+          variant: "destructive",
+        });
+      }
+    };
+
+    initializeDefaultPhases();
+  }, [session?.user?.id, phases.length, toast]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <Card className="mb-8">
       <CardHeader>
