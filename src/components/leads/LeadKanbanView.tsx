@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { PhaseColumn } from "./kanban/PhaseColumn";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -43,9 +44,15 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
 
   const updateLeadPhase = useMutation({
     mutationFn: async ({ leadId, newPhase }: { leadId: string; newPhase: string }) => {
+      // Find the phase object by name
+      const phase = phases.find(p => p.name === newPhase);
+      if (!phase) {
+        throw new Error("Phase not found");
+      }
+
       const { error } = await supabase
         .from("leads")
-        .update({ phase: newPhase })
+        .update({ phase: phase.name })
         .eq("id", leadId);
       if (error) throw error;
     },
@@ -158,7 +165,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
           <PhaseColumn
             key={phase.id}
             phase={phase}
-            leads={leads}
+            leads={leads.filter(lead => lead.phase === phase.name)}
             onLeadClick={onLeadClick}
             onEditPhase={setEditingPhase}
           />
@@ -181,6 +188,11 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
             <DialogTitle>
               {settings?.language === "en" ? "Edit Phase" : "Phase bearbeiten"}
             </DialogTitle>
+            <DialogDescription>
+              {settings?.language === "en" 
+                ? "Enter a new name for this phase"
+                : "Geben Sie einen neuen Namen für diese Phase ein"}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input

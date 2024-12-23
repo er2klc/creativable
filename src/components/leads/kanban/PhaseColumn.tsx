@@ -13,7 +13,7 @@ interface PhaseColumnProps {
 
 export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseColumnProps) => {
   return (
-    <div key={phase.name} id={phase.name} className="bg-muted/50 p-4 rounded-lg">
+    <div id={phase.name} className="bg-muted/50 p-4 rounded-lg">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-medium">{phase.name}</h3>
         <Button
@@ -27,15 +27,13 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
       </div>
       <SortableContext items={leads.map((l) => l.id)} strategy={rectSortingStrategy}>
         <div className="space-y-2">
-          {leads
-            .filter((lead) => lead.phase === phase.name)
-            .map((lead) => (
-              <SortableLeadItem
-                key={lead.id}
-                lead={lead}
-                onLeadClick={onLeadClick}
-              />
-            ))}
+          {leads.map((lead) => (
+            <SortableLeadItem
+              key={lead.id}
+              lead={lead}
+              onLeadClick={onLeadClick}
+            />
+          ))}
         </div>
       </SortableContext>
     </div>
