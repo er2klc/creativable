@@ -20,6 +20,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     transition,
     opacity: isDragging ? 0.5 : 1,
     cursor: 'grab',
+    touchAction: 'none',
   };
 
   return (

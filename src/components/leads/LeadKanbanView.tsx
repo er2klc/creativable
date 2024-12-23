@@ -46,7 +46,11 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     mutationFn: async ({ leadId, newPhase }: { leadId: string; newPhase: string }) => {
       const { error } = await supabase
         .from("leads")
-        .update({ phase: newPhase })
+        .update({ 
+          phase: newPhase,
+          last_action: "Phase geändert",
+          last_action_date: new Date().toISOString(),
+        })
         .eq("id", leadId);
       if (error) throw error;
     },
