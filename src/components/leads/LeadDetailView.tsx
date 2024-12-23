@@ -17,6 +17,7 @@ import { NoteList } from "./detail/NoteList";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { LeadSummary } from "./detail/LeadSummary";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -125,6 +126,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           <div>{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
         ) : lead ? (
           <div className="grid gap-6">
+            <LeadSummary lead={lead} />
             <LeadInfoCard lead={lead} />
             <TaskList leadId={lead.id} tasks={lead.tasks} />
             <NoteList leadId={lead.id} />
