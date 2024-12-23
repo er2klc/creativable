@@ -29,7 +29,7 @@ export function NoteList({ leadId }: NoteListProps) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as Tables<"notes">[];
     },
   });
 
@@ -41,6 +41,7 @@ export function NoteList({ leadId }: NoteListProps) {
           lead_id: leadId,
           content,
           color: selectedColor,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
         })
         .select()
         .single();

@@ -206,6 +206,44 @@ export type Database = {
           },
         ]
       }
+      notes: {
+        Row: {
+          color: string | null
+          content: string
+          created_at: string | null
+          id: string
+          lead_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_auth_status: {
         Row: {
           access_token: string | null
@@ -334,6 +372,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          color: string | null
           completed: boolean | null
           created_at: string | null
           due_date: string | null
@@ -343,6 +382,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          color?: string | null
           completed?: boolean | null
           created_at?: string | null
           due_date?: string | null
@@ -352,6 +392,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          color?: string | null
           completed?: boolean | null
           created_at?: string | null
           due_date?: string | null

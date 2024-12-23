@@ -28,6 +28,7 @@ export function TaskList({ leadId, tasks }: TaskListProps) {
           lead_id: leadId,
           title,
           color: selectedColor,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
         })
         .select()
         .single();
