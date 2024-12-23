@@ -12,7 +12,7 @@ import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { LeadPhaseManager } from "@/components/leads/LeadPhaseManager";
-import { Settings2, LayoutList, LayoutKanban } from "lucide-react";
+import { Settings2, LayoutList, LayoutDashboard } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import {
   Sheet,
@@ -90,7 +90,7 @@ const Leads = () => {
               size="icon"
               onClick={() => setViewMode("kanban")}
             >
-              <LayoutKanban className="h-4 w-4" />
+              <LayoutDashboard className="h-4 w-4" />
             </Button>
             <Button
               variant={viewMode === "list" ? "default" : "outline"}
