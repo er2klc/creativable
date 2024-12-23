@@ -43,7 +43,7 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
       email: "",
       company_name: "",
       notes: "",
-      industry: "", // Added industry field with empty string default
+      industry: "", // Keep industry for OpenAI
     },
   });
 
@@ -59,6 +59,9 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
 
     try {
       const socialMediaUrl = generateSocialMediaUrl(values.platform, values.socialMediaUsername);
+      
+      // Convert contact_type array to string by joining with comma
+      const contactTypeString = values.contact_type ? values.contact_type.join(", ") : null;
 
       const { error } = await supabase.from("leads").insert({
         user_id: session.user.id,
@@ -66,12 +69,12 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
         platform: values.platform,
         social_media_username: socialMediaUrl,
         phase: values.phase,
-        contact_type: values.contact_type,
+        contact_type: contactTypeString,
         phone_number: values.phone_number,
         email: values.email,
         company_name: values.company_name,
         notes: values.notes,
-        industry: values.industry, // Added industry field to the insert operation
+        industry: values.industry, // Keep industry for OpenAI
       });
 
       if (error) throw error;
