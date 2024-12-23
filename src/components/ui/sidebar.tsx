@@ -88,14 +88,20 @@ export function SidebarMenuItem({ className, children }: React.HTMLAttributes<HT
   return <div className={cn("flex", className)}>{children}</div>;
 }
 
-interface SidebarMenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  asChild?: boolean;
-}
+type SidebarMenuButtonAsButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  asChild?: false;
+};
+
+type SidebarMenuButtonAsAnchorProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+  asChild: true;
+};
+
+type SidebarMenuButtonProps = SidebarMenuButtonAsButtonProps | SidebarMenuButtonAsAnchorProps;
 
 export function SidebarMenuButton({
   className,
   children,
-  asChild,
+  asChild = false,
   ...props
 }: SidebarMenuButtonProps) {
   const Comp = asChild ? "a" : "button";
