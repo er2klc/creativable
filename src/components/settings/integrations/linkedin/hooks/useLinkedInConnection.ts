@@ -15,13 +15,18 @@ export function useLinkedInConnection() {
         throw new Error("Bitte speichern Sie zuerst Ihre LinkedIn Client ID");
       }
 
-      // Using the current LinkedIn OAuth scopes
-      // profile and email scopes are now included by default
-      const scope = "w_member_social";
+      // Updated scopes to include all required permissions
+      const scopes = [
+        'openid',
+        'profile',
+        'email',
+        'w_member_social'
+      ].join(' ');
+
       const state = Math.random().toString(36).substring(7);
       localStorage.setItem("linkedin_oauth_state", state);
       
-      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scope)}`;
+      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scopes)}`;
       
       console.log("Redirecting to LinkedIn auth URL:", linkedInAuthUrl);
       

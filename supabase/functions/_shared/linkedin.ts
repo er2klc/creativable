@@ -34,9 +34,9 @@ export const linkedInApi = {
     console.log('Starting LinkedIn token validation process...');
     
     try {
-      // Check basic profile access
+      // Check basic profile access with correct version
       console.log('Checking basic profile access...');
-      const meResponse = await fetch('https://api.linkedin.com/v2/me', {
+      const meResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'X-Restli-Protocol-Version': '2.0.0',
@@ -47,7 +47,7 @@ export const linkedInApi = {
 
       if (!meResponse.ok) {
         const errorText = await meResponse.text();
-        console.error('LinkedIn /me endpoint error:', {
+        console.error('LinkedIn /userinfo endpoint error:', {
           status: meResponse.status,
           statusText: meResponse.statusText,
           body: errorText,
@@ -63,7 +63,7 @@ export const linkedInApi = {
       const profileData = await meResponse.json();
       console.log('Successfully validated basic profile access:', profileData);
 
-      // Verify messaging permissions
+      // Verify messaging permissions with correct version
       console.log('Checking messaging permissions...');
       const permissionsResponse = await fetch('https://api.linkedin.com/v2/userPermissions', {
         headers: {
