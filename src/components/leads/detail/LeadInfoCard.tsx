@@ -98,6 +98,32 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           </div>
           <div>
             <dt className="text-sm font-medium text-muted-foreground">
+              {settings?.language === "en" ? "Phone Number" : "Telefonnummer"}
+            </dt>
+            <dd>
+              <Input
+                value={lead.phone_number || ""}
+                onChange={(e) => updateLeadMutation.mutate({ phone_number: e.target.value })}
+                placeholder={settings?.language === "en" ? "Enter phone number" : "Telefonnummer eingeben"}
+                type="tel"
+              />
+            </dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-muted-foreground">
+              {settings?.language === "en" ? "Email" : "E-Mail"}
+            </dt>
+            <dd>
+              <Input
+                value={lead.email || ""}
+                onChange={(e) => updateLeadMutation.mutate({ email: e.target.value })}
+                placeholder={settings?.language === "en" ? "Enter email" : "E-Mail eingeben"}
+                type="email"
+              />
+            </dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-muted-foreground">
               {settings?.language === "en" ? "Company" : "Firma"}
             </dt>
             <dd>
