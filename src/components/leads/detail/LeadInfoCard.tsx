@@ -1,27 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tables } from "@/integrations/supabase/types";
-import { Instagram, Linkedin, Facebook, Video } from "lucide-react";
+import { Globe, Building2, Phone, Mail, Briefcase } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-const getPlatformIcon = (platform: string) => {
-  switch (platform?.toLowerCase()) {
-    case "instagram":
-      return <Instagram className="h-4 w-4 mr-2" />;
-    case "linkedin":
-      return <Linkedin className="h-4 w-4 mr-2" />;
-    case "facebook":
-      return <Facebook className="h-4 w-4 mr-2" />;
-    case "tiktok":
-      return <Video className="h-4 w-4 mr-2" />;
-    default:
-      return null;
-  }
-};
 
 interface LeadInfoCardProps {
   lead: Tables<"leads">;
@@ -63,11 +48,11 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
       <CardContent>
         <dl className="grid grid-cols-2 gap-4">
           <div>
-            <dt className="text-sm font-medium text-muted-foreground">
+            <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Globe className="h-4 w-4" />
               {settings?.language === "en" ? "Platform" : "Plattform"}
             </dt>
-            <dd className="flex items-center">
-              {getPlatformIcon(lead.platform)}
+            <dd>
               <Select
                 value={lead.platform}
                 onValueChange={(value) => updateLeadMutation.mutate({ platform: value })}
@@ -86,7 +71,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
             </dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-muted-foreground">
+            <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Building2 className="h-4 w-4" />
               {settings?.language === "en" ? "Industry" : "Branche"}
             </dt>
             <dd>
@@ -97,7 +83,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
             </dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-muted-foreground">
+            <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Phone className="h-4 w-4" />
               {settings?.language === "en" ? "Phone Number" : "Telefonnummer"}
             </dt>
             <dd>
@@ -110,7 +97,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
             </dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-muted-foreground">
+            <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Mail className="h-4 w-4" />
               {settings?.language === "en" ? "Email" : "E-Mail"}
             </dt>
             <dd>
@@ -123,7 +111,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
             </dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-muted-foreground">
+            <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Briefcase className="h-4 w-4" />
               {settings?.language === "en" ? "Company" : "Firma"}
             </dt>
             <dd>
@@ -131,17 +120,6 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                 value={lead.company_name || ""}
                 onChange={(e) => updateLeadMutation.mutate({ company_name: e.target.value })}
                 placeholder={settings?.language === "en" ? "Enter company name" : "Firmennamen eingeben"}
-              />
-            </dd>
-          </div>
-          <div>
-            <dt className="text-sm font-medium text-muted-foreground">
-              {settings?.language === "en" ? "Last Action" : "Letzte Aktion"}
-            </dt>
-            <dd>
-              <Input
-                value={lead.last_action || ""}
-                onChange={(e) => updateLeadMutation.mutate({ last_action: e.target.value })}
               />
             </dd>
           </div>

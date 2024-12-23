@@ -10,9 +10,11 @@ export const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich 📝"),
   platform: z.enum([...platforms]),
   socialMediaUsername: z.string().min(1, "Benutzername ist erforderlich 📱"),
-  phase: z.enum(["initial_contact", "follow_up", "closing"]),
+  phase: z.string().min(1, "Phase ist erforderlich 📊"),
   industry: z.string().min(1, "Branche ist erforderlich 🏢"),
-  lastAction: z.string().optional(),
+  phone_number: z.string().optional(),
+  email: z.string().email("Ungültige E-Mail-Adresse").optional(),
+  company_name: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -25,7 +27,6 @@ export function AddLeadFormFields({ form }: AddLeadFormFieldsProps) {
     <>
       <div className="space-y-4">
         <BasicLeadFields form={form} />
-        <SocialMediaFields form={form} />
         <NotesFields form={form} />
       </div>
     </>

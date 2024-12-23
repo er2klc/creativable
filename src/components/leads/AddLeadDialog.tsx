@@ -36,9 +36,11 @@ export function AddLeadDialog({ trigger }: AddLeadDialogProps) {
       name: "",
       platform: "LinkedIn",
       socialMediaUsername: "",
-      phase: "initial_contact",
+      phase: "",
       industry: "",
-      lastAction: "",
+      phone_number: "",
+      email: "",
+      company_name: "",
       notes: "",
     },
   });
@@ -63,8 +65,10 @@ export function AddLeadDialog({ trigger }: AddLeadDialogProps) {
         social_media_username: socialMediaUrl,
         phase: values.phase,
         industry: values.industry,
-        last_action: values.lastAction || null,
-        notes: values.notes || null,
+        phone_number: values.phone_number,
+        email: values.email,
+        company_name: values.company_name,
+        notes: values.notes,
       });
 
       if (error) throw error;
