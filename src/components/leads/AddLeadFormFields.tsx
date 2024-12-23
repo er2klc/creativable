@@ -16,6 +16,7 @@ export const formSchema = z.object({
   email: z.string().email("Ungültige E-Mail-Adresse").optional(),
   company_name: z.string().optional(),
   notes: z.string().optional(),
+  industry: z.string().default(""), // Added industry field with default empty string
 });
 
 interface AddLeadFormFieldsProps {
