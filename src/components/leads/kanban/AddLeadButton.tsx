@@ -14,7 +14,7 @@ export function AddLeadButton({ phase, variant = "ghost" }: AddLeadButtonProps) 
         <Button 
           variant="ghost" 
           size="sm" 
-          className="w-full text-muted-foreground hover:text-foreground bg-transparent"
+          className="w-full text-muted-foreground hover:text-foreground bg-transparent hover:bg-transparent"
         >
           <UserPlus className="h-4 w-4 mr-2" />
           Neuer Kontakt

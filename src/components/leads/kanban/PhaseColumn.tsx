@@ -17,7 +17,7 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
   return (
     <div id={phase.id} className="bg-muted/50 p-4 rounded-lg">
       <div className="mb-4">
-        <div className="flex items-center justify-between border-b border-primary/20 pb-2">
+        <div className="flex items-center justify-between border-b border-primary/20 pb-2 w-full">
           <h3 className="font-medium text-lg tracking-tight">{phase.name}</h3>
           <Button
             variant="ghost"

@@ -85,6 +85,7 @@ export type Database = {
         Row: {
           business_description: string | null
           company_name: string | null
+          contact_type: string | null
           created_at: string | null
           email: string | null
           id: string
@@ -106,6 +107,7 @@ export type Database = {
         Insert: {
           business_description?: string | null
           company_name?: string | null
+          contact_type?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -127,6 +129,7 @@ export type Database = {
         Update: {
           business_description?: string | null
           company_name?: string | null
+          contact_type?: string | null
           created_at?: string | null
           email?: string | null
           id?: string

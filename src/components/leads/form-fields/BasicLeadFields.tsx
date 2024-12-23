@@ -2,7 +2,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { Globe, Building2, Phone, Mail, Briefcase } from "lucide-react";
+import { Globe, Building2, Phone, Mail, Briefcase, UserCircle2 } from "lucide-react";
 import * as z from "zod";
 import { formSchema } from "../AddLeadFormFields";
 import { useQuery } from "@tanstack/react-query";
@@ -112,16 +112,24 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
 
       <FormField
         control={form.control}
-        name="industry"
+        name="contact_type"
         render={({ field }) => (
           <FormItem>
             <FormLabel className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              Branche
+              <UserCircle2 className="h-4 w-4" />
+              Kontakttyp
             </FormLabel>
-            <FormControl>
-              <Input placeholder="Branche eingeben" {...field} />
-            </FormControl>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Partner oder Kunde?" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="Partner">Partner</SelectItem>
+                <SelectItem value="Kunde">Kunde</SelectItem>
+              </SelectContent>
+            </Select>
             <FormMessage />
           </FormItem>
         )}

@@ -11,7 +11,7 @@ export const formSchema = z.object({
   platform: z.enum([...platforms]),
   socialMediaUsername: z.string().min(1, "Benutzername ist erforderlich 📱"),
   phase: z.string().min(1, "Phase ist erforderlich 📊"),
-  contact_type: z.enum([...contactTypes]),
+  contact_type: z.enum([...contactTypes]).optional(),
   phone_number: z.string().optional(),
   email: z.string().email("Ungültige E-Mail-Adresse").optional(),
   company_name: z.string().optional(),
