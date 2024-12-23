@@ -17,21 +17,25 @@ export const usePhaseMutations = () => {
         throw new Error("No authenticated user found");
       }
 
-      // First get the phase name
-      const { data: phases, error: phaseError } = await supabase
+      // First get the phase name using maybeSingle() instead of single()
+      const { data: phase, error: phaseError } = await supabase
         .from("lead_phases")
         .select("name")
         .eq("id", newPhaseId)
-        .single();
+        .maybeSingle();
 
-      if (phaseError || !phases) {
+      if (phaseError) {
+        throw phaseError;
+      }
+
+      if (!phase) {
         throw new Error("Phase not found");
       }
 
       const { error } = await supabase
         .from("leads")
         .update({
-          phase: phases.name,
+          phase: phase.name,
           last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
           last_action_date: new Date().toISOString(),
         })
@@ -53,8 +57,8 @@ export const usePhaseMutations = () => {
       toast({
         title: settings?.language === "en" ? "Error" : "Fehler",
         description: settings?.language === "en"
-          ? "Failed to update phase"
-          : "Phase konnte nicht aktualisiert werden",
+          ? "Failed to update phase. Please try again."
+          : "Phase konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
         variant: "destructive",
       });
     }
