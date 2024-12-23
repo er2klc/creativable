@@ -31,63 +31,82 @@ export const linkedInApi = {
   },
 
   async validateToken(accessToken: string) {
-    console.log('Validating LinkedIn access token...');
+    console.log('Starting LinkedIn token validation process...');
     
-    // Check basic profile access (now includes profile and email by default)
-    const meResponse = await fetch('https://api.linkedin.com/v2/me', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'X-Restli-Protocol-Version': '2.0.0',
-        'LinkedIn-Version': '202304',
-      },
-    });
-
-    if (!meResponse.ok) {
-      console.error('LinkedIn /me endpoint error:', {
-        status: meResponse.status,
-        statusText: meResponse.statusText,
-        body: await meResponse.text()
+    try {
+      // Check basic profile access (now includes profile and email by default)
+      console.log('Checking basic profile access...');
+      const meResponse = await fetch('https://api.linkedin.com/v2/me', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'X-Restli-Protocol-Version': '2.0.0',
+          'LinkedIn-Version': '202304',
+          'Content-Type': 'application/json',
+        },
       });
 
-      if (meResponse.status === 401) {
-        throw new Error('LinkedIn access token is invalid. Please reconnect your account.');
+      if (!meResponse.ok) {
+        const errorText = await meResponse.text();
+        console.error('LinkedIn /me endpoint error:', {
+          status: meResponse.status,
+          statusText: meResponse.statusText,
+          body: errorText
+        });
+
+        if (meResponse.status === 401) {
+          throw new Error('LinkedIn access token is invalid or expired. Please reconnect your account.');
+        }
+        throw new Error('LinkedIn access token validation failed. Please check your connection in settings.');
       }
-      throw new Error('LinkedIn access token validation failed. Please check your connection in settings.');
-    }
 
-    // Verify messaging permissions
-    const permissionsResponse = await fetch('https://api.linkedin.com/v2/userPermissions', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'X-Restli-Protocol-Version': '2.0.0',
-        'LinkedIn-Version': '202304',
-      },
-    });
+      const profileData = await meResponse.json();
+      console.log('Successfully validated basic profile access:', profileData);
 
-    if (!permissionsResponse.ok) {
-      console.error('LinkedIn permissions check failed:', {
-        status: permissionsResponse.status,
-        body: await permissionsResponse.text()
+      // Verify messaging permissions
+      console.log('Checking messaging permissions...');
+      const permissionsResponse = await fetch('https://api.linkedin.com/v2/userPermissions', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'X-Restli-Protocol-Version': '2.0.0',
+          'LinkedIn-Version': '202304',
+          'Content-Type': 'application/json',
+        },
       });
-      throw new Error('LinkedIn access token lacks required permissions. Please reconnect your account.');
+
+      if (!permissionsResponse.ok) {
+        const errorText = await permissionsResponse.text();
+        console.error('LinkedIn permissions check failed:', {
+          status: permissionsResponse.status,
+          body: errorText
+        });
+        throw new Error('Failed to verify LinkedIn permissions. Please reconnect your account.');
+      }
+
+      const permissions = await permissionsResponse.json();
+      console.log('Retrieved LinkedIn permissions:', permissions);
+
+      // Verify w_member_social permission is present and approved
+      const hasMessagingPermission = permissions.elements?.some(
+        (p: any) => p.permission?.name === 'w_member_social' && p.status === 'APPROVED'
+      );
+
+      if (!hasMessagingPermission) {
+        console.error('Missing required w_member_social permission');
+        throw new Error('LinkedIn access token lacks messaging permissions. Please reconnect your account.');
+      }
+
+      console.log('Successfully validated all required permissions');
+      return profileData;
+
+    } catch (error) {
+      console.error('Error during LinkedIn token validation:', error);
+      throw error;
     }
-
-    const permissions = await permissionsResponse.json();
-    console.log('LinkedIn permissions:', permissions);
-
-    // Verify w_member_social permission is present
-    const hasMessagingPermission = permissions.elements?.some(
-      (p: any) => p.permission?.name === 'w_member_social' && p.status === 'APPROVED'
-    );
-
-    if (!hasMessagingPermission) {
-      throw new Error('LinkedIn access token lacks messaging permissions. Please reconnect your account.');
-    }
-
-    return await meResponse.json();
   },
 
   async sendMessage(accessToken: string, profileId: string, message: string) {
+    console.log('Attempting to send LinkedIn message to profile:', profileId);
+    
     const response = await fetch('https://api.linkedin.com/v2/messages', {
       method: 'POST',
       headers: {
@@ -117,6 +136,8 @@ export const linkedInApi = {
       throw new Error(`Failed to send LinkedIn message: ${errorData}`);
     }
 
-    return await response.json();
+    const result = await response.json();
+    console.log('Successfully sent LinkedIn message:', result);
+    return result;
   }
 };
