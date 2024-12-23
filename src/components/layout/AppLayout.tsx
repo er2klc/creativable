@@ -20,7 +20,7 @@ import {
 
 const navigationItems = [
   { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
-  { title: "Leads", icon: Users, url: "/leads" },
+  { title: "Kontakt", icon: Users, url: "/leads" },
   { title: "Nachrichten", icon: MessageSquare, url: "/messages" },
   { title: "Kalender", icon: Calendar, url: "/calendar" },
   { title: "Berichte", icon: BarChart, url: "/reports" },

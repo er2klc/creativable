@@ -20,7 +20,11 @@ import { AddLeadFormFields, formSchema } from "./AddLeadFormFields";
 import { generateSocialMediaUrl } from "./form-fields/SocialMediaFields";
 import * as z from "zod";
 
-export function AddLeadDialog() {
+interface AddLeadDialogProps {
+  trigger?: React.ReactNode;
+}
+
+export function AddLeadDialog({ trigger }: AddLeadDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const session = useSession();
@@ -43,7 +47,7 @@ export function AddLeadDialog() {
     if (!session?.user?.id) {
       toast({
         title: "Fehler ❌",
-        description: "Sie müssen eingeloggt sein, um einen Lead hinzuzufügen.",
+        description: "Sie müssen eingeloggt sein, um einen Kontakt hinzuzufügen.",
         variant: "destructive",
       });
       return;
@@ -67,17 +71,17 @@ export function AddLeadDialog() {
 
       toast({
         title: "Erfolg ✨",
-        description: "Lead erfolgreich hinzugefügt",
+        description: "Kontakt erfolgreich hinzugefügt",
       });
 
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       setOpen(false);
       form.reset();
     } catch (error) {
-      console.error("Error adding lead:", error);
+      console.error("Error adding contact:", error);
       toast({
         title: "Fehler ❌",
-        description: "Beim Hinzufügen des Leads ist ein Fehler aufgetreten.",
+        description: "Beim Hinzufügen des Kontakts ist ein Fehler aufgetreten.",
         variant: "destructive",
       });
     }
@@ -86,16 +90,18 @@ export function AddLeadDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Neuer Lead ✨
-        </Button>
+        {trigger || (
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Neuer Kontakt ✨
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Neuen Lead hinzufügen ✨</DialogTitle>
+          <DialogTitle>Neuen Kontakt hinzufügen ✨</DialogTitle>
           <DialogDescription>
-            Fügen Sie hier die Details Ihres neuen Leads hinzu. Füllen Sie alle erforderlichen Felder aus.
+            Fügen Sie hier die Details Ihres neuen Kontakts hinzu. Füllen Sie alle erforderlichen Felder aus.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
