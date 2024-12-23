@@ -15,22 +15,19 @@ interface PhaseColumnProps {
 
 export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseColumnProps) => {
   return (
-    <div id={phase.name} className="bg-muted/50 p-4 rounded-lg">
-      <div className="flex items-center justify-between mb-4">
-        <div className={cn(
-          "font-medium pb-2 border-b-2 border-primary/20",
-          "text-lg tracking-tight"
-        )}>
-          {phase.name}
+    <div id={phase.id} className="bg-muted/50 p-4 rounded-lg">
+      <div className="mb-4">
+        <div className="flex items-center justify-between border-b border-primary/20 pb-2">
+          <h3 className="font-medium text-lg tracking-tight">{phase.name}</h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onEditPhase(phase)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => onEditPhase(phase)}
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
       </div>
       <SortableContext items={leads.map((l) => l.id)} strategy={rectSortingStrategy}>
         <div className="space-y-2">

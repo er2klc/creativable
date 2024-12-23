@@ -11,7 +11,11 @@ export function AddLeadButton({ phase, variant = "ghost" }: AddLeadButtonProps) 
   return (
     <AddLeadDialog
       trigger={
-        <Button variant="outline" size="sm" className="w-full text-muted-foreground hover:text-foreground">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="w-full text-muted-foreground hover:text-foreground bg-transparent"
+        >
           <UserPlus className="h-4 w-4 mr-2" />
           Neuer Kontakt
         </Button>

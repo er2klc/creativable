@@ -94,18 +94,15 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
               className="text-xl font-semibold"
             />
             <Select
-              value={lead?.phase}
-              onValueChange={(value) => updateLeadMutation.mutate({ phase: value })}
+              value={lead?.contact_type}
+              onValueChange={(value) => updateLeadMutation.mutate({ contact_type: value })}
             >
               <SelectTrigger className="w-[180px]">
-                <SelectValue />
+                <SelectValue placeholder="Partner/Kunde" />
               </SelectTrigger>
               <SelectContent>
-                {phases.map((phase) => (
-                  <SelectItem key={phase.id} value={phase.name}>
-                    {phase.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="Partner">Partner</SelectItem>
+                <SelectItem value="Kunde">Kunde</SelectItem>
               </SelectContent>
             </Select>
           </div>

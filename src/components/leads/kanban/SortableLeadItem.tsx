@@ -1,9 +1,24 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
-import { Star, Send } from "lucide-react";
+import { Star, Send, Instagram, Linkedin, Facebook, Video } from "lucide-react";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { Tables } from "@/integrations/supabase/types";
+
+const getPlatformIcon = (platform: string) => {
+  switch (platform.toLowerCase()) {
+    case "instagram":
+      return <Instagram className="h-4 w-4" />;
+    case "linkedin":
+      return <Linkedin className="h-4 w-4" />;
+    case "facebook":
+      return <Facebook className="h-4 w-4" />;
+    case "tiktok":
+      return <Video className="h-4 w-4" />;
+    default:
+      return null;
+  }
+};
 
 interface SortableLeadItemProps {
   lead: Tables<"leads">;
@@ -33,7 +48,10 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
       onClick={() => onLeadClick(lead.id)}
     >
       <div className="flex items-center justify-between">
-        <span className="font-medium">{lead.name}</span>
+        <div className="flex items-center gap-2">
+          {getPlatformIcon(lead.platform)}
+          <span className="font-medium">{lead.name}</span>
+        </div>
         <div className="flex items-center gap-2">
           <SendMessageDialog
             lead={lead}
@@ -59,7 +77,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
         </div>
       </div>
       <div className="text-sm text-muted-foreground mt-2">
-        {lead.platform} · {lead.industry}
+        {lead.contact_type || "Nicht festgelegt"}
       </div>
     </div>
   );

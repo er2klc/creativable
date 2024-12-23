@@ -61,7 +61,7 @@ export interface Tables {
           company_name: string | null;
           created_at: string | null;
           id: string;
-          industry: string;
+          contact_type: "Partner" | "Kunde" | null;
           last_action: string | null;
           last_action_date: string | null;
           name: string;
@@ -80,7 +80,7 @@ export interface Tables {
           company_name?: string | null;
           created_at?: string | null;
           id?: string;
-          industry: string;
+          contact_type?: "Partner" | "Kunde" | null;
           last_action?: string | null;
           last_action_date?: string | null;
           name: string;
@@ -99,7 +99,7 @@ export interface Tables {
           company_name?: string | null;
           created_at?: string | null;
           id?: string;
-          industry?: string;
+          contact_type?: "Partner" | "Kunde" | null;
           last_action?: string | null;
           last_action_date?: string | null;
           name?: string;
