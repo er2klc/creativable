@@ -27,14 +27,15 @@ export const linkedInApi = {
     if (!url.includes('linkedin.com/in/')) {
       throw new Error('Invalid LinkedIn profile URL');
     }
-    return url.split('linkedin.com/in/')[1].split('/')[0].split('?')[0];
+    const profileId = url.split('linkedin.com/in/')[1].split('/')[0].split('?')[0];
+    return `urn:li:person:${profileId}`;
   },
 
   async validateToken(accessToken: string) {
     console.log('Starting LinkedIn token validation process...');
     
     try {
-      // Check basic profile access with correct version
+      // Check basic profile access with userinfo endpoint
       console.log('Checking basic profile access...');
       const meResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
         headers: {
@@ -63,7 +64,7 @@ export const linkedInApi = {
       const profileData = await meResponse.json();
       console.log('Successfully validated basic profile access:', profileData);
 
-      // Verify messaging permissions with correct version
+      // Verify messaging permissions
       console.log('Checking messaging permissions...');
       const permissionsResponse = await fetch('https://api.linkedin.com/v2/userPermissions', {
         headers: {
@@ -105,10 +106,23 @@ export const linkedInApi = {
     }
   },
 
-  async sendMessage(accessToken: string, profileId: string, message: string) {
-    console.log('Attempting to send LinkedIn message to profile:', profileId);
+  async sendMessage(accessToken: string, recipientUrn: string, message: string, subject?: string) {
+    console.log('Attempting to send LinkedIn message to:', recipientUrn);
     
     try {
+      const messagePayload = {
+        recipients: {
+          values: [{
+            person: recipientUrn
+          }]
+        },
+        body: message
+      };
+
+      if (subject) {
+        messagePayload['subject'] = subject;
+      }
+
       const response = await fetch('https://api.linkedin.com/v2/messages', {
         method: 'POST',
         headers: {
@@ -117,14 +131,7 @@ export const linkedInApi = {
           'X-Restli-Protocol-Version': '2.0.0',
           'LinkedIn-Version': '202304',
         },
-        body: JSON.stringify({
-          recipients: {
-            values: [{
-              person: `urn:li:person:${profileId}`
-            }]
-          },
-          body: message
-        }),
+        body: JSON.stringify(messagePayload),
       });
 
       if (!response.ok) {
