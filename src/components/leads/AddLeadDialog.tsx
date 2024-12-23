@@ -22,9 +22,10 @@ import * as z from "zod";
 
 interface AddLeadDialogProps {
   trigger?: React.ReactNode;
+  defaultPhase?: string;
 }
 
-export function AddLeadDialog({ trigger }: AddLeadDialogProps) {
+export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const session = useSession();
@@ -36,7 +37,7 @@ export function AddLeadDialog({ trigger }: AddLeadDialogProps) {
       name: "",
       platform: "LinkedIn",
       socialMediaUsername: "",
-      phase: "",
+      phase: defaultPhase || "",
       industry: "",
       phone_number: "",
       email: "",

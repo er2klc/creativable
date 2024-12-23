@@ -3,6 +3,7 @@ import { Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tables } from "@/integrations/supabase/types";
 import { SortableLeadItem } from "./SortableLeadItem";
+import { AddLeadButton } from "./AddLeadButton";
 
 interface PhaseColumnProps {
   phase: Tables<"lead_phases">;
@@ -36,6 +37,9 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
           ))}
         </div>
       </SortableContext>
+      <div className="mt-4">
+        <AddLeadButton phase={phase.name} />
+      </div>
     </div>
   );
 };
