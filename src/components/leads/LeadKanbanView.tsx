@@ -18,7 +18,6 @@ import {
 import { PhaseColumn } from "./kanban/PhaseColumn";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useKanbanSubscription } from "./kanban/useKanbanSubscription";
-import { useKanbanMutations } from "./kanban/useKanbanMutations";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -68,9 +67,11 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
         })
         .eq("id", leadId);
       if (error) throw error;
+
+      // Invalidate and refetch leads after successful update
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast({
         title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
         description: settings?.language === "en" 
@@ -78,6 +79,16 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
           : "Die Phase wurde erfolgreich aktualisiert.",
       });
     },
+    onError: (error) => {
+      console.error("Error updating phase:", error);
+      toast({
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description: settings?.language === "en"
+          ? "Failed to update phase"
+          : "Phase konnte nicht aktualisiert werden",
+        variant: "destructive",
+      });
+    }
   });
 
   const addPhase = useMutation({

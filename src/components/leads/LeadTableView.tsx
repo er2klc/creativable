@@ -17,8 +17,9 @@ import { MoreVertical, Star, Instagram, Linkedin, Facebook, Video } from "lucide
 import { Tables } from "@/integrations/supabase/types";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { useSettings } from "@/hooks/use-settings";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const getPlatformIcon = (platform: string) => {
   switch (platform?.toLowerCase()) {
@@ -42,6 +43,8 @@ interface LeadTableViewProps {
 
 export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
   const { settings } = useSettings();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: phases = [] } = useQuery({
     queryKey: ["lead-phases"],
@@ -54,6 +57,40 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
       return data;
     },
   });
+
+  const handlePhaseChange = async (leadId: string, newPhase: string) => {
+    try {
+      const { error } = await supabase
+        .from("leads")
+        .update({ 
+          phase: newPhase,
+          last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
+          last_action_date: new Date().toISOString(),
+        })
+        .eq("id", leadId);
+
+      if (error) throw error;
+
+      // Invalidate and refetch leads
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+
+      toast({
+        title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
+        description: settings?.language === "en" 
+          ? "The phase has been successfully updated."
+          : "Die Phase wurde erfolgreich aktualisiert.",
+      });
+    } catch (error) {
+      console.error("Error updating phase:", error);
+      toast({
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description: settings?.language === "en"
+          ? "Failed to update phase"
+          : "Phase konnte nicht aktualisiert werden",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getPhaseTranslation = (phase: string) => {
     const foundPhase = phases.find(p => p.name === phase);
@@ -91,17 +128,36 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
               {lead.platform}
             </TableCell>
             <TableCell>
-              <span
-                className={`px-2 py-1 rounded-full text-xs ${
-                  lead.phase === "initial_contact"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : lead.phase === "follow_up"
-                    ? "bg-blue-100 text-blue-800"
-                    : "bg-green-100 text-green-800"
-                }`}
-              >
-                {getPhaseTranslation(lead.phase)}
-              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <Button variant="ghost" className="h-8 px-2 py-1">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        lead.phase === "initial_contact"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : lead.phase === "follow_up"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-green-100 text-green-800"
+                      }`}
+                    >
+                      {getPhaseTranslation(lead.phase)}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {phases.map((phase) => (
+                    <DropdownMenuItem
+                      key={phase.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePhaseChange(lead.id, phase.name);
+                      }}
+                    >
+                      {phase.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </TableCell>
             <TableCell>
               {lead.last_action_date
@@ -130,9 +186,6 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
                       </DropdownMenuItem>
                     }
                   />
-                  <DropdownMenuItem>
-                    {settings?.language === "en" ? "Change Phase" : "Phase ändern"}
-                  </DropdownMenuItem>
                   <DropdownMenuItem className="text-destructive">
                     {settings?.language === "en" ? "Delete" : "Löschen"}
                   </DropdownMenuItem>
