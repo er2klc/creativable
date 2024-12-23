@@ -1,19 +1,19 @@
-import { Tables } from "@/integrations/supabase/types";
-import { Button } from "@/components/ui/button";
-import { Star, Send } from "lucide-react";
-import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import {
   SortableContext,
   useSortable,
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
+import { Button } from "@/components/ui/button";
+import { Star, Send } from "lucide-react";
+import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CSS } from "@dnd-kit/utilities";
 import { useEffect } from "react";
 import { useSettings } from "@/hooks/use-settings";
+import { Tables } from "@/integrations/supabase/types";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -122,12 +122,11 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'leads'
         },
         () => {
-          // Refresh the leads data
           queryClient.invalidateQueries({ queryKey: ["leads"] });
         }
       )

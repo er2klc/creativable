@@ -17,6 +17,8 @@ import { MoreVertical, Star, Instagram, Linkedin, Facebook, Video } from "lucide
 import { Tables } from "@/integrations/supabase/types";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { useSettings } from "@/hooks/use-settings";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const getPlatformIcon = (platform: string) => {
   switch (platform?.toLowerCase()) {
@@ -41,20 +43,21 @@ interface LeadTableViewProps {
 export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
   const { settings } = useSettings();
 
+  const { data: phases = [] } = useQuery({
+    queryKey: ["lead-phases"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lead_phases")
+        .select("*")
+        .order("order_index");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const getPhaseTranslation = (phase: string) => {
-    const translations: Record<string, Record<string, string>> = {
-      de: {
-        initial_contact: "Erstkontakt",
-        follow_up: "Follow-up",
-        closing: "Abschluss",
-      },
-      en: {
-        initial_contact: "Initial Contact",
-        follow_up: "Follow-up",
-        closing: "Closing",
-      },
-    };
-    return translations[settings?.language || "de"]?.[phase] || phase;
+    const foundPhase = phases.find(p => p.name === phase);
+    return foundPhase ? foundPhase.name : phase;
   };
 
   return (

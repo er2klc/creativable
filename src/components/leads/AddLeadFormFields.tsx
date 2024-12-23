@@ -3,6 +3,8 @@ import * as z from "zod";
 import { BasicLeadFields } from "./form-fields/BasicLeadFields";
 import { SocialMediaFields } from "./form-fields/SocialMediaFields";
 import { NotesFields } from "./form-fields/NotesFields";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok"] as const;
 
