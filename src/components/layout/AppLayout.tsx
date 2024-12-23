@@ -18,7 +18,8 @@ import {
   BarChart, 
   Settings 
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useSettings } from "@/hooks/use-settings";
 
 const navigationItems = [
   { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
@@ -31,17 +32,24 @@ const navigationItems = [
 
 const DashboardSidebar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { settings } = useSettings();
   
   return (
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            {settings?.language === "en" ? "Navigation" : "Navigation"}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton onClick={() => navigate(item.url)}>
+                  <SidebarMenuButton 
+                    onClick={() => navigate(item.url)}
+                    className={location.pathname === item.url ? "bg-accent" : ""}
+                  >
                     <item.icon className="h-5 w-5" />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
