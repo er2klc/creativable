@@ -70,6 +70,7 @@ export const LeadPhaseManager = () => {
       const { error } = await supabase.from("lead_phases").insert({
         name,
         order_index: phases.length,
+        user_id: (await supabase.auth.getUser()).data.user?.id,
       });
       if (error) throw error;
     },
