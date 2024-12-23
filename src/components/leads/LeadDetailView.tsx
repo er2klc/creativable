@@ -5,7 +5,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Send } from "lucide-react";
+import { Send, UserCircle2 } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { LeadSummary } from "./detail/LeadSummary";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -85,26 +86,59 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Input
-              value={lead?.name || ""}
-              onChange={(e) =>
-                updateLeadMutation.mutate({ name: e.target.value })
-              }
-              className="text-xl font-semibold"
-            />
-            <Select
-              value={lead?.contact_type}
-              onValueChange={(value) => updateLeadMutation.mutate({ contact_type: value })}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Partner/Kunde" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Partner">Partner</SelectItem>
-                <SelectItem value="Kunde">Kunde</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col gap-4 w-full">
+            <div className="flex items-center gap-4">
+              <Input
+                value={lead?.name || ""}
+                onChange={(e) =>
+                  updateLeadMutation.mutate({ name: e.target.value })
+                }
+                className="text-xl font-semibold"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <Select
+                value={lead?.phase}
+                onValueChange={(value) => updateLeadMutation.mutate({ phase: value })}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Phase auswählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {phases.map((phase) => (
+                    <SelectItem key={phase.id} value={phase.name}>
+                      {phase.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={lead?.contact_type?.includes("Partner")}
+                  onCheckedChange={(checked) => {
+                    const currentTypes = lead?.contact_type?.split(",").filter(Boolean) || [];
+                    const newTypes = checked
+                      ? [...currentTypes, "Partner"]
+                      : currentTypes.filter(t => t !== "Partner");
+                    updateLeadMutation.mutate({ contact_type: newTypes.join(",") });
+                  }}
+                  id="partner"
+                />
+                <label htmlFor="partner">Partner</label>
+                <Checkbox
+                  checked={lead?.contact_type?.includes("Kunde")}
+                  onCheckedChange={(checked) => {
+                    const currentTypes = lead?.contact_type?.split(",").filter(Boolean) || [];
+                    const newTypes = checked
+                      ? [...currentTypes, "Kunde"]
+                      : currentTypes.filter(t => t !== "Kunde");
+                    updateLeadMutation.mutate({ contact_type: newTypes.join(",") });
+                  }}
+                  id="kunde"
+                />
+                <label htmlFor="kunde">Kunde</label>
+              </div>
+            </div>
           </div>
           {lead && (
             <SendMessageDialog
@@ -123,6 +157,15 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           <div>{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
         ) : lead ? (
           <div className="grid gap-6">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+              }}
+              className="w-fit"
+            >
+              KI Zusammenfassung generieren
+            </Button>
             <LeadSummary lead={lead} />
             <LeadInfoCard lead={lead} />
             <TaskList leadId={lead.id} tasks={lead.tasks} />

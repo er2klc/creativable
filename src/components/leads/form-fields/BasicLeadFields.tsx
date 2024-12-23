@@ -2,11 +2,12 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { Globe, Building2, Phone, Mail, Briefcase, UserCircle2 } from "lucide-react";
+import { Globe, Building2, Phone, Mail, Briefcase, UserCircle2, User, ListTodo } from "lucide-react";
 import * as z from "zod";
 import { formSchema } from "../AddLeadFormFields";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface BasicLeadFieldsProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
@@ -32,7 +33,10 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Name 👤</FormLabel>
+            <FormLabel className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Name
+            </FormLabel>
             <FormControl>
               <Input placeholder="John Doe" {...field} />
             </FormControl>
@@ -46,7 +50,10 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         name="phase"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Phase 📊</FormLabel>
+            <FormLabel className="flex items-center gap-2">
+              <ListTodo className="h-4 w-4" />
+              Phase
+            </FormLabel>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
                 <SelectTrigger>
@@ -100,7 +107,10 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
           name="socialMediaUsername"
           render={({ field }) => (
             <FormItem className="flex-1">
-              <FormLabel>Benutzername 📱</FormLabel>
+              <FormLabel className="flex items-center gap-2">
+                <UserCircle2 className="h-4 w-4" />
+                Benutzername
+              </FormLabel>
               <FormControl>
                 <Input placeholder="Benutzername (ohne @ oder URL)" {...field} />
               </FormControl>
@@ -115,21 +125,37 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         name="contact_type"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="flex items-center gap-2">
-              <UserCircle2 className="h-4 w-4" />
-              Kontakttyp
-            </FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Partner oder Kunde?" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="Partner">Partner</SelectItem>
-                <SelectItem value="Kunde">Kunde</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormLabel className="flex items-center gap-2">Kontakttyp</FormLabel>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={field.value?.includes("Partner")}
+                  onCheckedChange={(checked) => {
+                    const currentValue = field.value || [];
+                    const newValue = checked
+                      ? [...currentValue, "Partner"]
+                      : currentValue.filter(v => v !== "Partner");
+                    field.onChange(newValue);
+                  }}
+                  id="partner"
+                />
+                <label htmlFor="partner">Partner</label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={field.value?.includes("Kunde")}
+                  onCheckedChange={(checked) => {
+                    const currentValue = field.value || [];
+                    const newValue = checked
+                      ? [...currentValue, "Kunde"]
+                      : currentValue.filter(v => v !== "Kunde");
+                    field.onChange(newValue);
+                  }}
+                  id="kunde"
+                />
+                <label htmlFor="kunde">Kunde</label>
+              </div>
+            </div>
             <FormMessage />
           </FormItem>
         )}
