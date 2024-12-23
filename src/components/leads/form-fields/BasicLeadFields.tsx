@@ -2,6 +2,8 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import * as z from "zod";
 import { formSchema } from "../AddLeadFormFields";
 
@@ -10,6 +12,18 @@ interface BasicLeadFieldsProps {
 }
 
 export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
+  const { data: phases = [] } = useQuery({
+    queryKey: ["lead-phases"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lead_phases")
+        .select("*")
+        .order("order_index");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <>
       <FormField
@@ -39,9 +53,11 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="initial_contact">✨ Erstkontakt</SelectItem>
-                <SelectItem value="follow_up">🔄 Follow-up</SelectItem>
-                <SelectItem value="closing">🎯 Abschluss</SelectItem>
+                {phases.map((phase) => (
+                  <SelectItem key={phase.id} value={phase.name}>
+                    {phase.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <FormMessage />

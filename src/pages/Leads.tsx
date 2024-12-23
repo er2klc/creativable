@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { LeadSearch } from "@/components/leads/LeadSearch";
 import { LeadFilters } from "@/components/leads/LeadFilters";
 import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
+import { LeadTableView } from "@/components/leads/LeadTableView";
 import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { LeadPhaseManager } from "@/components/leads/LeadPhaseManager";
-import { Settings2 } from "lucide-react";
+import { Settings2, LayoutList, LayoutKanban } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import {
   Sheet,
@@ -29,6 +30,7 @@ const Leads = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [showSendMessage, setShowSendMessage] = useState(false);
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const { settings } = useSettings();
 
   useEffect(() => {
@@ -82,6 +84,22 @@ const Leads = () => {
           {settings?.language === "en" ? "Contacts" : "Kontakte"}
         </h1>
         <div className="flex items-center gap-4">
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === "kanban" ? "default" : "outline"}
+              size="icon"
+              onClick={() => setViewMode("kanban")}
+            >
+              <LayoutKanban className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "outline"}
+              size="icon"
+              onClick={() => setViewMode("list")}
+            >
+              <LayoutList className="h-4 w-4" />
+            </Button>
+          </div>
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon">
@@ -118,7 +136,11 @@ const Leads = () => {
         />
       </div>
 
-      <LeadKanbanView leads={leads} onLeadClick={(id) => setSelectedLeadId(id)} />
+      {viewMode === "kanban" ? (
+        <LeadKanbanView leads={leads} onLeadClick={(id) => setSelectedLeadId(id)} />
+      ) : (
+        <LeadTableView leads={leads} onLeadClick={(id) => setSelectedLeadId(id)} />
+      )}
 
       <LeadDetailView
         leadId={selectedLeadId}
