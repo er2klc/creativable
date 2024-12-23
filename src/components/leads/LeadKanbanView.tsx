@@ -5,22 +5,24 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
-import { Star, Send } from "lucide-react";
+import { Star, Send, Plus, Edit } from "lucide-react";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CSS } from "@dnd-kit/utilities";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
-interface LeadKanbanViewProps {
-  leads: Tables<"leads">[];
-  onLeadClick: (id: string) => void;
-}
-
-// Create a SortableItem component for the draggable lead cards
 const SortableLeadItem = ({
   lead,
   onLeadClick,
@@ -83,6 +85,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { settings } = useSettings();
+  const [editingPhase, setEditingPhase] = useState<{ id: string; name: string } | null>(null);
 
   const { data: phases = [] } = useQuery({
     queryKey: ["lead-phases"],
@@ -111,6 +114,45 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
         description: settings?.language === "en" 
           ? "The phase has been successfully updated."
           : "Die Phase wurde erfolgreich aktualisiert.",
+      });
+    },
+  });
+
+  const addPhase = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("lead_phases").insert({
+        name: settings?.language === "en" ? "New Phase" : "Neue Phase",
+        order_index: phases.length,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
+      toast({
+        title: settings?.language === "en" ? "Phase added" : "Phase hinzugefügt",
+        description: settings?.language === "en"
+          ? "New phase has been added successfully"
+          : "Neue Phase wurde erfolgreich hinzugefügt",
+      });
+    },
+  });
+
+  const updatePhaseName = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase
+        .from("lead_phases")
+        .update({ name })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
+      setEditingPhase(null);
+      toast({
+        title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
+        description: settings?.language === "en"
+          ? "Phase name has been updated successfully"
+          : "Phasenname wurde erfolgreich aktualisiert",
       });
     },
   });
@@ -157,7 +199,17 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
             id={phase.name}
             className="bg-muted/50 p-4 rounded-lg"
           >
-            <h3 className="font-medium mb-4">{phase.name}</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium">{phase.name}</h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setEditingPhase(phase)}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            </div>
             <SortableContext items={leads.map((l) => l.id)} strategy={rectSortingStrategy}>
               <div className="space-y-2">
                 {leads
@@ -173,7 +225,50 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
             </SortableContext>
           </div>
         ))}
+        <div className="bg-muted/50 p-4 rounded-lg flex items-center justify-center">
+          <Button
+            variant="ghost"
+            className="h-full w-full flex flex-col gap-2 items-center justify-center"
+            onClick={() => addPhase.mutate()}
+          >
+            <Plus className="h-6 w-6" />
+            <span>{settings?.language === "en" ? "Add Phase" : "Phase hinzufügen"}</span>
+          </Button>
+        </div>
       </div>
+
+      <Dialog open={!!editingPhase} onOpenChange={() => setEditingPhase(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {settings?.language === "en" ? "Edit Phase" : "Phase bearbeiten"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              value={editingPhase?.name || ""}
+              onChange={(e) =>
+                setEditingPhase(prev =>
+                  prev ? { ...prev, name: e.target.value } : null
+                )
+              }
+              placeholder={settings?.language === "en" ? "Phase name" : "Phasenname"}
+            />
+            <Button
+              onClick={() => {
+                if (editingPhase) {
+                  updatePhaseName.mutate({
+                    id: editingPhase.id,
+                    name: editingPhase.name,
+                  });
+                }
+              }}
+            >
+              {settings?.language === "en" ? "Save" : "Speichern"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DndContext>
   );
 };
