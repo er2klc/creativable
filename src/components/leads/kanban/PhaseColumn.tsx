@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Tables } from "@/integrations/supabase/types";
 import { SortableLeadItem } from "./SortableLeadItem";
 import { AddLeadButton } from "./AddLeadButton";
-import { cn } from "@/lib/utils";
 
 interface PhaseColumnProps {
   phase: Tables<"lead_phases">;
@@ -17,7 +16,7 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
   return (
     <div id={phase.id} className="bg-muted/50 p-4 rounded-lg">
       <div className="mb-4">
-        <div className="flex items-center justify-between border-b border-primary/20 pb-2 w-full">
+        <div className="flex items-center justify-between border-b border-primary/20 pb-2">
           <h3 className="font-medium text-lg tracking-tight">{phase.name}</h3>
           <Button
             variant="ghost"

@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import { PhaseColumn } from "./kanban/PhaseColumn";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useKanbanSubscription } from "./kanban/useKanbanSubscription";
+import { useKanbanMutations } from "./kanban/useKanbanMutations";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -42,14 +44,17 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     },
   });
 
+  // Use the subscription hook
+  useKanbanSubscription();
+
   const updateLeadPhase = useMutation({
-    mutationFn: async ({ leadId, newPhase }: { leadId: string; newPhase: string }) => {
+    mutationFn: async ({ leadId, newPhaseId }: { leadId: string; newPhaseId: string }) => {
       if (!session?.user?.id) {
         throw new Error("No authenticated user found");
       }
 
       // Find the phase name from the phase ID
-      const phase = phases.find(p => p.id === newPhase);
+      const phase = phases.find(p => p.id === newPhaseId);
       if (!phase) {
         throw new Error("Phase not found");
       }
@@ -121,52 +126,14 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     },
   });
 
-  // Subscribe to real-time updates
-  useEffect(() => {
-    const leadsChannel = supabase
-      .channel('leads-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'leads'
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["leads"] });
-        }
-      )
-      .subscribe();
-
-    const phasesChannel = supabase
-      .channel('phases-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'lead_phases'
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(leadsChannel);
-      supabase.removeChannel(phasesChannel);
-    };
-  }, [queryClient]);
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
     if (over && active.id !== over.id) {
       const leadId = active.id as string;
-      const newPhase = over.id as string;
+      const newPhaseId = over.id as string;
       
-      updateLeadPhase.mutate({ leadId, newPhase });
+      updateLeadPhase.mutate({ leadId, newPhaseId });
     }
   };
 
