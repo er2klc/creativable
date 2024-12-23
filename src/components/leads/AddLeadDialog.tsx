@@ -88,14 +88,14 @@ export function AddLeadDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
-          Neuer Kontakt ✨
+          Neuer Lead ✨
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Neuen Kontakt hinzufügen ✨</DialogTitle>
+          <DialogTitle>Neuen Lead hinzufügen ✨</DialogTitle>
           <DialogDescription>
-            Fügen Sie hier die Details Ihres neuen Kontakts hinzu. Füllen Sie alle erforderlichen Felder aus.
+            Fügen Sie hier die Details Ihres neuen Leads hinzu. Füllen Sie alle erforderlichen Felder aus.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

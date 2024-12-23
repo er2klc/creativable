@@ -16,7 +16,7 @@ import { useSettings } from "@/hooks/use-settings";
 
 const Leads = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [view, setView] = useState<"table" | "kanban">("kanban"); // Changed default to kanban
+  const [view, setView] = useState<"table" | "kanban">("table");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
@@ -27,6 +27,7 @@ const Leads = () => {
   useEffect(() => {
     if (searchParams.get("action") === "send-message") {
       setShowSendMessage(true);
+      // Remove the action parameter from URL
       searchParams.delete("action");
       setSearchParams(searchParams);
     }
@@ -65,15 +66,13 @@ const Leads = () => {
   });
 
   if (isLoading) {
-    return <div>{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>;
+    return <div>Loading...</div>;
   }
 
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">
-          {settings?.language === "en" ? "Contacts" : "Kontakte"}
-        </h1>
+        <h1 className="text-3xl font-bold">{settings?.language === "en" ? "Contacts" : "Kontakte"}</h1>
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
