@@ -17,7 +17,7 @@ export const LeadPhases = () => {
   const session = useSession();
   const { toast } = useToast();
 
-  const { data: phases = [], isLoading } = useQuery({
+  const { data: phases = [], isLoading, refetch } = useQuery({
     queryKey: ["lead-phases"],
     queryFn: async () => {
       if (!session?.user?.id) return [];
@@ -38,8 +38,23 @@ export const LeadPhases = () => {
       if (!session?.user?.id || phases.length > 0) return;
 
       try {
+        // First, check which phases don't exist yet
+        const { data: existingPhases, error: checkError } = await supabase
+          .from("lead_phases")
+          .select("name")
+          .eq("user_id", session.user.id);
+
+        if (checkError) throw checkError;
+
+        const existingPhaseNames = new Set(existingPhases?.map(p => p.name) || []);
+        const phasesToAdd = DEFAULT_PHASES.filter(
+          phase => !existingPhaseNames.has(phase.name)
+        );
+
+        if (phasesToAdd.length === 0) return;
+
         const { error } = await supabase.from("lead_phases").insert(
-          DEFAULT_PHASES.map((phase) => ({
+          phasesToAdd.map((phase) => ({
             name: phase.name,
             order_index: phase.order_index,
             user_id: session.user.id,
@@ -47,6 +62,9 @@ export const LeadPhases = () => {
         );
 
         if (error) throw error;
+        
+        // Refresh the phases list
+        refetch();
       } catch (error) {
         console.error("Error initializing default phases:", error);
         toast({
@@ -58,7 +76,7 @@ export const LeadPhases = () => {
     };
 
     initializeDefaultPhases();
-  }, [session?.user?.id, phases.length, toast]);
+  }, [session?.user?.id, phases.length, toast, refetch]);
 
   if (isLoading) {
     return <div>Loading...</div>;
