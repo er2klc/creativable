@@ -40,11 +40,15 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.9 : 1,
     cursor: isDragging ? 'grabbing' : 'grab',
     touchAction: 'none',
     position: isDragging ? 'relative' as const : 'static' as const,
-    zIndex: isDragging ? 50 : 'auto',
+    zIndex: isDragging ? 9999 : 'auto',
+    pointerEvents: isDragging ? 'none' : undefined,
+    backgroundColor: isDragging ? 'var(--background)' : undefined,
+    boxShadow: isDragging ? '0 10px 25px -5px rgba(0, 0, 0, 0.1)' : undefined,
+    width: isDragging ? '100%' : undefined,
   };
 
   const handleClick = (e: React.MouseEvent) => {
