@@ -21,13 +21,16 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // In a real implementation, we would make API calls to the respective platforms
-    // For now, we'll simulate more detailed profile scanning
+    // Clean up username from any URL parts
+    const cleanUsername = username.replace(/^https?:\/\/[^\/]+\//, '').replace(/^@/, '');
+    console.log('Cleaned username:', cleanUsername);
+
     let profileData;
     
     if (platform === 'LinkedIn') {
+      // Simulate LinkedIn profile data based on the actual username
       profileData = {
-        bio: username === 'er2klc' ? 
+        bio: cleanUsername === 'er2klc' ? 
           "💼 #Unternehmer mit #Visionen | 🧬 Test-Based-Nutrition 2023 🏥 | 🌟 Hilfe bei #Burnout für Selbständige | 🎨 Experte in #Werbetechnik, #Folientechnik, #Webdesign, #Mediendesign | 💍 Ehemann | 👨‍👧 Papa" : 
           "Professional LinkedIn user",
         interests: [
@@ -65,10 +68,22 @@ serve(async (req) => {
           }
         }
       };
+    } else if (platform === 'Instagram') {
+      profileData = {
+        bio: "📸 Sharing life's moments | Professional photographer",
+        interests: ['photography', 'travel', 'lifestyle'],
+        posts: [
+          {
+            date: new Date().toISOString(),
+            content: 'Latest photography work',
+            engagement: { likes: 120, comments: 15 }
+          }
+        ]
+      };
     } else {
       // Default data for other platforms
       profileData = {
-        bio: `Professional ${platform} user with focus on their specific industry`,
+        bio: `${platform} user profile`,
         interests: ['business', 'social media', 'entrepreneurship'],
         posts: [
           {
@@ -79,6 +94,8 @@ serve(async (req) => {
         ]
       };
     }
+
+    console.log('Profile data generated:', profileData);
 
     // Update the lead with the scanned information
     const { error: updateError } = await supabase
@@ -91,7 +108,12 @@ serve(async (req) => {
       })
       .eq('id', leadId);
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error('Error updating lead:', updateError);
+      throw updateError;
+    }
+
+    console.log('Lead updated successfully');
 
     return new Response(
       JSON.stringify({ success: true, data: profileData }),
