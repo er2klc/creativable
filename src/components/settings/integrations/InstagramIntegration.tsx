@@ -32,13 +32,10 @@ export function InstagramIntegration() {
         return;
       }
 
-      // Grundlegende Facebook-Berechtigungen
+      // Nur die grundlegendsten Berechtigungen
       const scope = [
         'email',
-        'public_profile',
-        'pages_show_list',
-        'pages_read_engagement',
-        'business_management',
+        'public_profile'
       ].join(',');
 
       const state = crypto.randomUUID();
