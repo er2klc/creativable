@@ -2,6 +2,7 @@ import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
 import { BasicLeadFields } from "./form-fields/BasicLeadFields";
 import { NotesFields } from "./form-fields/NotesFields";
+import { ContactTypeField } from "./form-fields/ContactTypeField";
 
 const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok"] as const;
 
@@ -27,6 +28,7 @@ export function AddLeadFormFields({ form }: AddLeadFormFieldsProps) {
     <>
       <div className="space-y-4">
         <BasicLeadFields form={form} />
+        <ContactTypeField form={form} />
         <NotesFields form={form} />
       </div>
     </>
