@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tables } from "@/integrations/supabase/types";
-import { Globe, Building2, Phone, Mail, Briefcase, Contact2, ExternalLink, User2 } from "lucide-react";
+import { Globe, Building2, Phone, Mail, Briefcase, Contact2, ExternalLink } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { platformsConfig, generateSocialMediaUrl } from "@/config/platforms";
 
 interface LeadInfoCardProps {
   lead: Tables<"leads">;
@@ -39,21 +40,6 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     },
   });
 
-  const getSocialMediaUrl = (platform: string, username: string) => {
-    switch (platform) {
-      case "Instagram":
-        return `https://www.instagram.com/${username}`;
-      case "LinkedIn":
-        return `https://www.linkedin.com/in/${username}`;
-      case "Facebook":
-        return `https://www.facebook.com/${username}`;
-      case "TikTok":
-        return `https://www.tiktok.com/@${username}`;
-      default:
-        return username;
-    }
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -78,9 +64,12 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {["Instagram", "LinkedIn", "Facebook", "TikTok"].map((platform) => (
-                    <SelectItem key={platform} value={platform}>
-                      {platform}
+                  {platformsConfig.map((platform) => (
+                    <SelectItem key={platform.name} value={platform.name}>
+                      <div className="flex items-center gap-2">
+                        <platform.icon className="h-4 w-4" />
+                        {platform.name}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -89,7 +78,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           </div>
           <div>
             <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <User2 className="h-4 w-4" />
+              <Contact2 className="h-4 w-4" />
               {settings?.language === "en" ? "Social Media Username" : "Social Media Benutzername"}
             </dt>
             <dd className="flex items-center gap-2">
@@ -98,12 +87,12 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                 onChange={(e) => updateLeadMutation.mutate({ social_media_username: e.target.value })}
                 placeholder={settings?.language === "en" ? "Enter username" : "Benutzername eingeben"}
               />
-              {lead.social_media_username && (
+              {lead.social_media_username && lead.platform !== "Offline" && (
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => window.open(getSocialMediaUrl(lead.platform, lead.social_media_username || ''), '_blank')}
+                  onClick={() => window.open(generateSocialMediaUrl(lead.platform, lead.social_media_username || ''), '_blank')}
                 >
                   <ExternalLink className="h-4 w-4" />
                 </Button>
