@@ -7,7 +7,6 @@ import * as z from "zod";
 import { formSchema } from "../AddLeadFormFields";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ContactTypeField } from "./ContactTypeField";
 import { platforms, getPlatformIcon } from "@/config/platforms";
 
 interface BasicLeadFieldsProps {
@@ -26,8 +25,6 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
       return data;
     },
   });
-
-  const platform = form.watch("platform");
 
   return (
     <>
@@ -84,12 +81,12 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
             <FormItem className="flex-1">
               <FormLabel className="flex items-center gap-2">
                 <Globe className="h-4 w-4" />
-                Plattform
+                Kontaktquelle
               </FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Wählen Sie eine Plattform" />
+                    <SelectValue placeholder="Wo haben Sie den Kontakt kennengelernt?" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -108,24 +105,22 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
           )}
         />
 
-        {platform !== "Offline" && (
-          <FormField
-            control={form.control}
-            name="socialMediaUsername"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Benutzername
-                </FormLabel>
-                <FormControl>
-                  <Input placeholder="Benutzername (ohne @ oder URL)" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        <FormField
+          control={form.control}
+          name="socialMediaUsername"
+          render={({ field }) => (
+            <FormItem className="flex-1">
+              <FormLabel className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Social Media Benutzername
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="Benutzername (ohne @ oder URL)" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
 
       <FormField

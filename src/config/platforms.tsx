@@ -35,7 +35,7 @@ export const platformsConfig: PlatformConfig[] = [
   {
     name: "Offline",
     icon: Users,
-    generateUrl: (username) => username,
+    generateUrl: (_) => "",
   },
 ];
 
@@ -44,6 +44,7 @@ export const getPlatformConfig = (platform: Platform): PlatformConfig => {
 };
 
 export const generateSocialMediaUrl = (platform: Platform, username: string): string => {
+  if (!username) return "";
   const config = getPlatformConfig(platform);
   return config.generateUrl(username);
 };
