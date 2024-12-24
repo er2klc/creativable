@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
@@ -12,19 +13,15 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Received request to generate lead summary');
-    const { leadId, language = "de" } = await req.json();
-    console.log('Request parameters:', { leadId, language });
+    const { leadId, language } = await req.json();
+    console.log('Generating summary for lead:', leadId, 'in language:', language);
 
-    if (!leadId) {
-      throw new Error('Lead ID is required');
-    }
-
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Fetching lead data from Supabase');
+    // Fetch lead data with related information
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .select(`
@@ -48,26 +45,23 @@ serve(async (req) => {
       .single();
 
     if (leadError) {
-      console.error('Error fetching lead data:', leadError);
       throw leadError;
     }
 
-    console.log('Lead data fetched successfully');
+    // Format lead data for OpenAI
+    const systemPrompt = language === "en" 
+      ? "You are a helpful assistant that creates summaries of leads and their communication history. Summarize the key information concisely in English."
+      : "Du bist ein hilfreicher Assistent, der Zusammenfassungen von Leads und deren Kommunikationsverlauf erstellt. Fasse die wichtigsten Informationen kurz und prägnant auf Deutsch zusammen.";
 
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    const systemPrompt = language === "de" 
-      ? "Du bist ein hilfreicher Assistent, der Zusammenfassungen von Leads und deren Kommunikationsverläufen erstellt. Fasse die wichtigsten Informationen kurz und prägnant auf Deutsch zusammen."
-      : "You are a helpful assistant that creates summaries of leads and their communication history. Summarize the key information concisely in English.";
-
-    console.log('Generating summary with OpenAI');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -83,14 +77,10 @@ serve(async (req) => {
               Erstelle eine Zusammenfassung für diesen Lead:
               Name: ${lead.name}
               Plattform: ${lead.platform}
-              Branche: ${lead.industry || 'Nicht angegeben'}
-              Phase: ${lead.phase}
               Kontakttyp: ${lead.contact_type || 'Nicht festgelegt'}
               Firma: ${lead.company_name || 'Nicht angegeben'}
-              Telefon: ${lead.phone_number || 'Nicht angegeben'}
-              Email: ${lead.email || 'Nicht angegeben'}
+              Phase: ${lead.phase}
               Letzte Aktion: ${lead.last_action || 'Keine'}
-              Notizen: ${lead.notes || 'Keine'}
               
               Nachrichten:
               ${lead.messages?.map((msg: any) => 
@@ -109,7 +99,7 @@ serve(async (req) => {
               
               Formatiere die Zusammenfassung mit folgenden Kategorien:
               **Kontaktstatus**: [Phase und letzte Interaktion]
-              **Geschäftsprofil**: [Branche und wichtige Geschäftsinformationen]
+              **Geschäftsprofil**: [Wichtige Geschäftsinformationen]
               **Kommunikationsverlauf**: [Zusammenfassung der Nachrichten]
               **Nächste Schritte**: [Empfehlungen basierend auf dem aktuellen Status]
             `
@@ -128,11 +118,9 @@ serve(async (req) => {
 
     const data = await response.json();
     const summary = data.choices[0].message.content;
-    console.log('Summary generated successfully');
 
     return new Response(JSON.stringify({ summary }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
     });
 
   } catch (error) {

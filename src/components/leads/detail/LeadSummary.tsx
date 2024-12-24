@@ -5,6 +5,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LeadSummaryProps {
   lead: Tables<"leads"> & {
@@ -22,24 +23,17 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   const generateSummary = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/generate-lead-summary', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('generate-lead-summary', {
+        body: {
           leadId: lead.id,
           language: settings?.language || 'de'
-        }),
+        },
       });
 
-      if (!response.ok) {
-        throw new Error(settings?.language === "en" 
-          ? "Failed to generate summary" 
-          : "Fehler beim Generieren der Zusammenfassung");
+      if (error) {
+        throw error;
       }
 
-      const data = await response.json();
       setSummary(data.summary);
       setHasGenerated(true);
       toast.success(settings?.language === "en" 
