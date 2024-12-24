@@ -17,6 +17,14 @@ serve(async (req) => {
     const { leadId, platform, username } = await req.json();
     console.log(`Scanning profile for lead ${leadId} on ${platform}: ${username}`);
 
+    // If platform is OFFLINE, return early
+    if (platform === "OFFLINE") {
+      return new Response(
+        JSON.stringify({ success: true, data: { message: "Offline contact - no profile to scan" } }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
