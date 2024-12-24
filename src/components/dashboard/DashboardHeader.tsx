@@ -1,8 +1,6 @@
-import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 interface DashboardHeaderProps {
@@ -42,11 +40,6 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
         </p>
       </div>
       <div className="flex items-center gap-4">
-        <SidebarTrigger>
-          <Button variant="outline" size="icon">
-            <Menu className="h-4 w-4" />
-          </Button>
-        </SidebarTrigger>
         <Button onClick={handleSignOut} variant="outline">
           Abmelden
         </Button>

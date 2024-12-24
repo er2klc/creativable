@@ -43,7 +43,7 @@ const DashboardSidebar = () => {
           <div className="flex items-center justify-between px-4 py-2">
             <SidebarGroupLabel>Navigation</SidebarGroupLabel>
             <button
-              className="p-1 hover:bg-accent rounded-md transition-colors text-sidebar-foreground"
+              className="p-1 hover:bg-sidebar-accent rounded-md transition-colors text-sidebar-foreground group-data-[collapsible=icon]:bg-sidebar group-data-[collapsible=icon]:hover:bg-sidebar-accent"
               onClick={toggleSidebar}
             >
               <Icon className="h-4 w-4" />
