@@ -32,14 +32,13 @@ export function InstagramIntegration() {
         return;
       }
 
+      // Aktualisierte Meta API Berechtigungen
       const scope = [
+        'public_profile',
         'instagram_basic',
-        'instagram_content_publish',
-        'instagram_manage_comments',
-        'instagram_manage_insights',
         'pages_show_list',
         'pages_read_engagement',
-        'business_management'
+        'instagram_manage_insights'
       ].join(',');
 
       const state = crypto.randomUUID();
