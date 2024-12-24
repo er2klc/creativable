@@ -59,6 +59,8 @@ const InstagramCallback = () => {
             is_connected: true,
             access_token: response.access_token,
             updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,platform'
           });
 
         if (statusError) throw statusError;
