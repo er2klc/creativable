@@ -50,7 +50,7 @@ const InstagramCallback = () => {
 
         console.log('Instagram auth callback response:', response);
 
-        // Update platform_auth_status
+        // Update platform_auth_status with boolean
         const { error: statusError } = await supabase
           .from('platform_auth_status')
           .upsert({
@@ -65,7 +65,7 @@ const InstagramCallback = () => {
 
         if (statusError) throw statusError;
 
-        // Update settings
+        // Update settings with string 'true'
         const { error: settingsError } = await supabase
           .from('settings')
           .update({ 
@@ -81,10 +81,7 @@ const InstagramCallback = () => {
           description: "Ihre Instagram-Integration wurde erfolgreich eingerichtet.",
         });
 
-        // Clean up the state from localStorage
         localStorage.removeItem("instagram_oauth_state");
-
-        // Redirect back to settings
         navigate("/settings");
       } catch (error) {
         console.error("Instagram auth callback error:", error);
