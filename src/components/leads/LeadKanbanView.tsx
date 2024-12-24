@@ -36,9 +36,11 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     
     if (over && active.id !== over.id) {
       const leadId = active.id as string;
-      const newPhaseId = over.id as string;
+      const targetPhase = phases.find(phase => phase.id === over.id);
       
-      updateLeadPhase.mutate({ leadId, newPhaseId });
+      if (targetPhase) {
+        updateLeadPhase.mutate({ leadId, phaseName: targetPhase.name });
+      }
     }
   };
 
@@ -95,6 +97,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
                     id: editingPhase.id,
                     name: editingPhase.name,
                   });
+                  setEditingPhase(null);
                 }
               }}
             >

@@ -12,30 +12,15 @@ export const usePhaseMutations = () => {
   const session = useSession();
 
   const updateLeadPhase = useMutation({
-    mutationFn: async ({ leadId, newPhaseId }: { leadId: string; newPhaseId: string }) => {
+    mutationFn: async ({ leadId, phaseName }: { leadId: string; phaseName: string }) => {
       if (!session?.user?.id) {
         throw new Error("No authenticated user found");
-      }
-
-      // First get the phase name using maybeSingle() instead of single()
-      const { data: phase, error: phaseError } = await supabase
-        .from("lead_phases")
-        .select("name")
-        .eq("id", newPhaseId)
-        .maybeSingle();
-
-      if (phaseError) {
-        throw phaseError;
-      }
-
-      if (!phase) {
-        throw new Error("Phase not found");
       }
 
       const { error } = await supabase
         .from("leads")
         .update({
-          phase: phase.name,
+          phase: phaseName,
           last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
           last_action_date: new Date().toISOString(),
         })
