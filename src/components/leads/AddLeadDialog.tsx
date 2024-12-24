@@ -38,12 +38,12 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
       platform: "LinkedIn",
       socialMediaUsername: "",
       phase: defaultPhase || "",
-      contact_type: undefined,
+      contact_type: [],
       phone_number: "",
       email: "",
       company_name: "",
       notes: "",
-      industry: "", // Keep industry for OpenAI
+      industry: "",
     },
   });
 
@@ -60,8 +60,10 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
     try {
       const socialMediaUrl = generateSocialMediaUrl(values.platform, values.socialMediaUsername);
       
-      // Convert contact_type array to string by joining with comma
-      const contactTypeString = values.contact_type ? values.contact_type.join(", ") : null;
+      // Convert contact_type array to a valid single value or null
+      const contactType = values.contact_type && values.contact_type.length > 0 
+        ? values.contact_type[0] // Take only the first selected value
+        : null;
 
       const { error } = await supabase.from("leads").insert({
         user_id: session.user.id,
@@ -69,12 +71,12 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
         platform: values.platform,
         social_media_username: socialMediaUrl,
         phase: values.phase,
-        contact_type: contactTypeString,
+        contact_type: contactType, // Use the single value
         phone_number: values.phone_number,
         email: values.email,
         company_name: values.company_name,
         notes: values.notes,
-        industry: values.industry, // Keep industry for OpenAI
+        industry: values.industry,
       });
 
       if (error) throw error;
