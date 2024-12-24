@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
-import { Bot, Calendar, Building2, MessageSquare, ListTodo, User, Users, Image, Link } from "lucide-react";
+import { Bot, Calendar, Building2, MessageSquare, ListTodo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,73 +57,75 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   }, [lead.id]);
 
   const renderSocialMediaStats = () => {
-    if (!lead.social_media_posts) return null;
+    if (!lead.social_media_posts || Object.keys(lead.social_media_posts as any).length === 0) {
+      return null;
+    }
 
     const stats = lead.social_media_posts as any;
+    const hasAnyStats = stats.followers !== undefined || 
+                       stats.following !== undefined || 
+                       stats.posts !== undefined || 
+                       stats.connections !== undefined ||
+                       stats.headline;
+
+    if (!hasAnyStats) return null;
+
     return (
       <div className="space-y-4 mb-6">
-        <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="h-5 w-5 text-blue-500" />
-            <h3 className="font-semibold text-lg">
-              {settings?.language === "en" ? "Social Media Stats" : "Social Media Statistiken"}
-            </h3>
-          </div>
-          <div className="grid grid-cols-2 gap-4 ml-7">
-            {stats.followers !== undefined && (
-              <div>
-                <span className="text-sm text-gray-500">
-                  {settings?.language === "en" ? "Followers" : "Follower"}
-                </span>
-                <p className="font-medium">{stats.followers}</p>
-              </div>
-            )}
-            {stats.following !== undefined && (
-              <div>
-                <span className="text-sm text-gray-500">
-                  {settings?.language === "en" ? "Following" : "Folgt"}
-                </span>
-                <p className="font-medium">{stats.following}</p>
-              </div>
-            )}
-            {stats.posts !== undefined && (
-              <div>
-                <span className="text-sm text-gray-500">
-                  {settings?.language === "en" ? "Posts" : "Beiträge"}
-                </span>
-                <p className="font-medium">{stats.posts}</p>
-              </div>
-            )}
-            {stats.connections !== undefined && (
-              <div>
-                <span className="text-sm text-gray-500">
-                  {settings?.language === "en" ? "Connections" : "Verbindungen"}
-                </span>
-                <p className="font-medium">{stats.connections}</p>
-              </div>
-            )}
-            {stats.headline && (
-              <div className="col-span-2">
-                <span className="text-sm text-gray-500">
-                  {settings?.language === "en" ? "Headline" : "Headline"}
-                </span>
-                <p className="font-medium">{stats.headline}</p>
-              </div>
-            )}
-            {stats.isPrivate !== undefined && (
-              <div className="col-span-2">
-                <span className="text-sm text-gray-500">
-                  {settings?.language === "en" ? "Account Type" : "Konto-Typ"}
-                </span>
-                <p className="font-medium">
-                  {stats.isPrivate ? 
-                    (settings?.language === "en" ? "Private Account" : "Privates Konto") : 
-                    (settings?.language === "en" ? "Public Account" : "Öffentliches Konto")}
-                </p>
-              </div>
-            )}
-          </div>
+        <div className="grid grid-cols-2 gap-4">
+          {stats.followers !== undefined && (
+            <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
+              <span className="text-sm text-gray-500">
+                {settings?.language === "en" ? "Followers" : "Follower"}
+              </span>
+              <p className="font-medium">{stats.followers}</p>
+            </div>
+          )}
+          {stats.following !== undefined && (
+            <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
+              <span className="text-sm text-gray-500">
+                {settings?.language === "en" ? "Following" : "Folgt"}
+              </span>
+              <p className="font-medium">{stats.following}</p>
+            </div>
+          )}
+          {stats.posts !== undefined && (
+            <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
+              <span className="text-sm text-gray-500">
+                {settings?.language === "en" ? "Posts" : "Beiträge"}
+              </span>
+              <p className="font-medium">{stats.posts}</p>
+            </div>
+          )}
+          {stats.connections !== undefined && (
+            <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
+              <span className="text-sm text-gray-500">
+                {settings?.language === "en" ? "Connections" : "Verbindungen"}
+              </span>
+              <p className="font-medium">{stats.connections}</p>
+            </div>
+          )}
         </div>
+        {stats.headline && (
+          <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
+            <span className="text-sm text-gray-500">
+              {settings?.language === "en" ? "Headline" : "Headline"}
+            </span>
+            <p className="font-medium">{stats.headline}</p>
+          </div>
+        )}
+        {stats.isPrivate !== undefined && (
+          <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
+            <span className="text-sm text-gray-500">
+              {settings?.language === "en" ? "Account Type" : "Konto-Typ"}
+            </span>
+            <p className="font-medium">
+              {stats.isPrivate ? 
+                (settings?.language === "en" ? "Private Account" : "Privates Konto") : 
+                (settings?.language === "en" ? "Public Account" : "Öffentliches Konto")}
+            </p>
+          </div>
+        )}
       </div>
     );
   };

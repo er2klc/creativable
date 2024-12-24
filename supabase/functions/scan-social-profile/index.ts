@@ -23,7 +23,25 @@ async function scanInstagramProfile(username: string) {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch Instagram profile: ${response.statusText}`);
+      console.error('Instagram API response not ok:', response.status, response.statusText);
+      // Fallback to scraping the page directly
+      const htmlResponse = await fetch(`https://www.instagram.com/${username}/`);
+      const html = await htmlResponse.text();
+      
+      // Extract data using regex
+      const followersMatch = html.match(/"edge_followed_by":{"count":(\d+)}/);
+      const followingMatch = html.match(/"edge_follow":{"count":(\d+)}/);
+      const postsMatch = html.match(/"edge_owner_to_timeline_media":{"count":(\d+)}/);
+      const bioMatch = html.match(/"biography":"([^"]+)"/);
+      const isPrivateMatch = html.match(/"is_private":(\w+)/);
+      
+      return {
+        followers: followersMatch ? parseInt(followersMatch[1]) : 0,
+        following: followingMatch ? parseInt(followingMatch[1]) : 0,
+        posts: postsMatch ? parseInt(postsMatch[1]) : 0,
+        bio: bioMatch ? bioMatch[1].replace(/\\n/g, '\n') : '',
+        isPrivate: isPrivateMatch ? isPrivateMatch[1] === 'true' : false,
+      };
     }
 
     const data = await response.json();
@@ -32,8 +50,6 @@ async function scanInstagramProfile(username: string) {
       followers: data.graphql?.user?.edge_followed_by?.count || 0,
       following: data.graphql?.user?.edge_follow?.count || 0,
       posts: data.graphql?.user?.edge_owner_to_timeline_media?.count || 0,
-      interests: [], // Instagram doesn't provide interests directly
-      fullName: data.graphql?.user?.full_name || '',
       isPrivate: data.graphql?.user?.is_private || false,
     };
   } catch (error) {
@@ -45,8 +61,6 @@ async function scanInstagramProfile(username: string) {
 async function scanLinkedInProfile(username: string) {
   console.log('Scanning LinkedIn profile for:', username);
   try {
-    // Note: LinkedIn requires OAuth for API access
-    // This is a simplified example - in production, you'd use the LinkedIn API with proper authentication
     const response = await fetch(`https://www.linkedin.com/in/${username}/`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -59,33 +73,20 @@ async function scanLinkedInProfile(username: string) {
 
     const html = await response.text();
     
-    // Extract basic information from HTML
-    // Note: This is a simplified example. In production, you should use LinkedIn's API
+    // Extract data using regex patterns
+    const connectionsMatch = html.match(/(\d+)\s+connections?/i);
+    const headlineMatch = html.match(/<div class="text-body-medium break-words">(.*?)<\/div>/);
+    const postsMatch = html.match(/(\d+)\s+posts?/i);
+    
     return {
-      bio: extractFromHtml(html, 'description'),
-      connections: extractFromHtml(html, 'connections'),
-      posts: 0, // Requires API access
-      interests: [], // Requires API access
-      fullName: extractFromHtml(html, 'full-name'),
-      headline: extractFromHtml(html, 'headline'),
+      connections: connectionsMatch ? parseInt(connectionsMatch[1]) : 0,
+      headline: headlineMatch ? headlineMatch[1].trim() : '',
+      posts: postsMatch ? parseInt(postsMatch[1]) : 0,
     };
   } catch (error) {
     console.error('Error scanning LinkedIn profile:', error);
     throw error;
   }
-}
-
-function extractFromHtml(html: string, field: string): string {
-  // Simple HTML parsing - in production, use a proper HTML parser
-  const patterns: Record<string, RegExp> = {
-    'description': /<div class="description">(.*?)<\/div>/i,
-    'connections': /(\d+)\s+connections/i,
-    'full-name': /<h1[^>]*>(.*?)<\/h1>/i,
-    'headline': /<div class="headline">(.*?)<\/div>/i,
-  };
-  
-  const match = html.match(patterns[field]);
-  return match ? match[1].trim() : '';
 }
 
 serve(async (req) => {
@@ -131,17 +132,17 @@ serve(async (req) => {
         throw new Error(`Unsupported platform: ${platform}`);
     }
 
+    console.log('Scanned profile data:', profileData);
+
     // Update lead with scanned data
     const { error: updateError } = await supabase
       .from('leads')
       .update({
         social_media_bio: profileData.bio,
-        social_media_interests: profileData.interests,
         social_media_posts: {
           followers: profileData.followers,
           following: profileData.following,
           posts: profileData.posts,
-          fullName: profileData.fullName,
           isPrivate: profileData.isPrivate,
           headline: profileData.headline,
           connections: profileData.connections,
