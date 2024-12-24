@@ -30,20 +30,22 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         },
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       setSummary(data.summary);
       setHasGenerated(true);
-      toast.success(settings?.language === "en" 
-        ? "Summary generated successfully" 
-        : "Zusammenfassung erfolgreich generiert");
+      toast.success(
+        settings?.language === "en"
+          ? "Summary generated successfully"
+          : "Zusammenfassung erfolgreich generiert"
+      );
     } catch (error) {
       console.error('Error generating summary:', error);
-      toast.error(settings?.language === "en"
-        ? "Error generating summary"
-        : "Fehler beim Generieren der Zusammenfassung");
+      toast.error(
+        settings?.language === "en"
+          ? "Error generating summary"
+          : "Fehler beim Generieren der Zusammenfassung"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -83,19 +85,19 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       }
 
       return (
-        <div key={index} className="p-4 bg-white rounded-lg shadow-sm mb-4">
+        <div key={index} className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm mb-4 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
             {icon}
             <h3 className="font-semibold text-lg">{title}</h3>
           </div>
-          <p className="text-gray-700 ml-7">{content}</p>
+          <p className="text-gray-700 ml-7 leading-relaxed">{content}</p>
         </div>
       );
     });
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden bg-gradient-to-b from-white to-gray-50">
       <CardContent className="pt-6">
         {!hasGenerated && (
           <Button
@@ -114,10 +116,13 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
           </Button>
         )}
         {isLoading ? (
-          <div className="animate-pulse space-y-4">
-            <div className="h-20 bg-gray-200 rounded-lg"></div>
-            <div className="h-20 bg-gray-200 rounded-lg"></div>
-            <div className="h-20 bg-gray-200 rounded-lg"></div>
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-6 bg-gray-200 rounded-full w-1/4 mb-2"></div>
+                <div className="h-20 bg-gray-200 rounded-lg"></div>
+              </div>
+            ))}
           </div>
         ) : summary ? (
           <div className="space-y-4">

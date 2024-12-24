@@ -3,7 +3,6 @@ import {
   DialogContent,
   DialogHeader,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +14,7 @@ import { NoteList } from "./detail/NoteList";
 import { LeadSummary } from "./detail/LeadSummary";
 import { LeadDetailHeader } from "./detail/LeadDetailHeader";
 import { LeadMessages } from "./detail/LeadMessages";
+import { CompactPhaseSelector } from "./detail/CompactPhaseSelector";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -81,6 +81,24 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     },
   });
 
+  const updatePhaseOrderMutation = useMutation({
+    mutationFn: async (updatedPhases: Tables<"lead_phases">[]) => {
+      const updates = updatedPhases.map((phase, index) => ({
+        id: phase.id,
+        order_index: index,
+      }));
+
+      const { error } = await supabase
+        .from("lead_phases")
+        .upsert(updates);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
+    },
+  });
+
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -88,7 +106,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           {lead && (
             <LeadDetailHeader
               lead={lead}
-              phases={phases}
               onUpdateLead={updateLeadMutation.mutate}
             />
           )}
@@ -106,6 +123,12 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
                 </h3>
               </div>
               <LeadSummary lead={lead} />
+              <CompactPhaseSelector
+                lead={lead}
+                phases={phases}
+                onUpdateLead={updateLeadMutation.mutate}
+                onUpdatePhases={(phases) => updatePhaseOrderMutation.mutate(phases)}
+              />
             </div>
             
             <LeadInfoCard lead={lead} />
@@ -117,4 +140,4 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       </DialogContent>
     </Dialog>
   );
-};
+}
