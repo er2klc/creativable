@@ -4,14 +4,13 @@ import { BasicLeadFields } from "./form-fields/BasicLeadFields";
 import { NotesFields } from "./form-fields/NotesFields";
 
 const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok"] as const;
-const contactTypes = ["Partner", "Kunde"] as const;
 
 export const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich 📝"),
   platform: z.enum([...platforms]),
   socialMediaUsername: z.string().min(1, "Benutzername ist erforderlich 📱"),
   phase: z.string().min(1, "Phase ist erforderlich 📊"),
-  contact_type: z.enum([...contactTypes]).nullable(),
+  contact_type: z.string().nullable(),
   phone_number: z.string().optional().nullable(),
   email: z.string().email("Ungültige E-Mail-Adresse").optional().nullable(),
   company_name: z.string().optional().nullable(),
