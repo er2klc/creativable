@@ -4,7 +4,7 @@ import { BasicLeadFields } from "./form-fields/BasicLeadFields";
 import { NotesFields } from "./form-fields/NotesFields";
 import { ContactTypeField } from "./form-fields/ContactTypeField";
 
-const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok"] as const;
+const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLINE"] as const;
 
 export const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich 📝"),

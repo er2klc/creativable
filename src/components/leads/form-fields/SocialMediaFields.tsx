@@ -12,6 +12,8 @@ export const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLIN
 export type Platform = typeof platforms[number];
 
 export const generateSocialMediaUrl = (platform: Platform, username: string) => {
+  if (platform === "OFFLINE") return username;
+  
   // Clean the username first
   const cleanUsername = username.replace(/^https?:\/\/[^\/]+\//, '').replace(/^@/, '');
   
@@ -24,8 +26,6 @@ export const generateSocialMediaUrl = (platform: Platform, username: string) => 
       return `https://www.facebook.com/${cleanUsername}`;
     case "TikTok":
       return `https://www.tiktok.com/@${cleanUsername}`;
-    case "OFFLINE":
-      return username;
     default:
       return username;
   }
@@ -116,7 +116,7 @@ export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
                     }}
                   />
                 </FormControl>
-                {username && profileUrl && (
+                {username && profileUrl && platform !== "OFFLINE" && (
                   <Button
                     variant="ghost"
                     size="icon"

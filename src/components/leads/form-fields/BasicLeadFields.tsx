@@ -26,6 +26,8 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
     },
   });
 
+  const platform = form.watch("platform");
+
   return (
     <>
       <FormField
@@ -90,7 +92,7 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {["Instagram", "LinkedIn", "Facebook", "TikTok"].map((platform) => (
+                  {["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLINE"].map((platform) => (
                     <SelectItem key={platform} value={platform}>
                       {platform}
                     </SelectItem>
@@ -102,22 +104,24 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="socialMediaUsername"
-          render={({ field }) => (
-            <FormItem className="flex-1">
-              <FormLabel className="flex items-center gap-2">
-                <UserCircle2 className="h-4 w-4" />
-                Benutzername
-              </FormLabel>
-              <FormControl>
-                <Input placeholder="Benutzername (ohne @ oder URL)" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {platform !== "OFFLINE" && (
+          <FormField
+            control={form.control}
+            name="socialMediaUsername"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel className="flex items-center gap-2">
+                  <UserCircle2 className="h-4 w-4" />
+                  Benutzername
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="Benutzername (ohne @ oder URL)" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
       </div>
 
       <ContactTypeField form={form} />
@@ -162,7 +166,7 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel className="flex items-center gap-2">
-              <Briefcase className="h-4 w-4" />
+              <Building2 className="h-4 w-4" />
               Firma
             </FormLabel>
             <FormControl>
