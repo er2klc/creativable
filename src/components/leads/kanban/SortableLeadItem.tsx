@@ -55,6 +55,16 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     }
   };
 
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Remove the drag listeners when clicking buttons
+    if (listeners) {
+      Object.keys(listeners).forEach(key => {
+        delete (listeners as any)[key];
+      });
+    }
+  };
+
   return (
     <>
       <div
@@ -87,7 +97,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
                   variant="ghost"
                   size="sm"
                   className="w-full h-8 hover:bg-accent/50"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={handleButtonClick}
                 >
                   <Send className="h-4 w-4" />
                 </Button>
@@ -98,7 +108,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
               size="sm"
               className="w-full h-8 hover:bg-accent/50"
               onClick={(e) => {
-                e.stopPropagation();
+                handleButtonClick(e);
                 setIsEditDialogOpen(true);
               }}
             >
@@ -108,7 +118,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
               variant="ghost"
               size="sm"
               className="w-full h-8 hover:bg-accent/50"
-              onClick={(e) => e.stopPropagation()}
+              onClick={handleButtonClick}
             >
               <Star className="h-4 w-4" />
             </Button>
