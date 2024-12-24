@@ -1,27 +1,11 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
-import { Star, Send, Instagram, Linkedin, Facebook, Video, Pencil } from "lucide-react";
-import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
+import { User, Phone, MessageSquare, Share } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
 import { LeadDetailView } from "../LeadDetailView";
-
-const getPlatformIcon = (platform: string) => {
-  switch (platform.toLowerCase()) {
-    case "instagram":
-      return <Instagram className="h-4 w-4" />;
-    case "linkedin":
-      return <Linkedin className="h-4 w-4" />;
-    case "facebook":
-      return <Facebook className="h-4 w-4" />;
-    case "tiktok":
-      return <Video className="h-4 w-4" />;
-    default:
-      return null;
-  }
-};
 
 interface SortableLeadItemProps {
   lead: Tables<"leads">;
@@ -55,6 +39,30 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     setIsEditDialogOpen(true);
   };
 
+  // Separate click handlers for each action
+  const handleMessageClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Message functionality will be implemented later
+    console.log("Message clicked for lead:", lead.id);
+  };
+
+  const handleCallClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Call functionality will be implemented later
+    if (lead.phone_number) {
+      window.location.href = `tel:${lead.phone_number}`;
+    }
+  };
+
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Share functionality will be implemented later
+    console.log("Share clicked for lead:", lead.id);
+  };
+
   return (
     <>
       <div
@@ -69,7 +77,6 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {getPlatformIcon(lead.platform)}
               <span className="font-medium">{lead.name}</span>
             </div>
           </div>
@@ -84,12 +91,37 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
               size="sm"
               className="w-full h-8 hover:bg-accent/50"
               onClick={handleEditClick}
+              title="Kontakt bearbeiten"
             >
-              <Pencil className="h-4 w-4" />
+              <User className="h-4 w-4" />
             </Button>
-            <div className="w-full h-8 rounded-md border border-dashed border-muted-foreground/20" />
-            <div className="w-full h-8 rounded-md border border-dashed border-muted-foreground/20" />
-            <div className="w-full h-8 rounded-md border border-dashed border-muted-foreground/20" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full h-8 hover:bg-accent/50"
+              onClick={handleCallClick}
+              title="Anrufen"
+            >
+              <Phone className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full h-8 hover:bg-accent/50"
+              onClick={handleMessageClick}
+              title="Nachricht senden"
+            >
+              <MessageSquare className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full h-8 hover:bg-accent/50"
+              onClick={handleShareClick}
+              title="Teilen"
+            >
+              <Share className="h-4 w-4" />
+            </Button>
           </div>
         </div>
         <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none" />
