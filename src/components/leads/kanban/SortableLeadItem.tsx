@@ -33,7 +33,6 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     transform,
     transition,
     isDragging,
-    node
   } = useSortable({
     id: lead.id,
   });
@@ -50,8 +49,6 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     backgroundColor: isDragging ? 'var(--background)' : undefined,
     boxShadow: isDragging ? '0 10px 25px -5px rgba(0, 0, 0, 0.1)' : undefined,
     width: isDragging ? '300px' : '100%',
-    left: isDragging && node.current ? `${node.current.getBoundingClientRect().left + (transform?.x ?? 0)}px` : undefined,
-    top: isDragging && node.current ? `${node.current.getBoundingClientRect().top + (transform?.y ?? 0)}px` : undefined,
   };
 
   const handleClick = (e: React.MouseEvent) => {
