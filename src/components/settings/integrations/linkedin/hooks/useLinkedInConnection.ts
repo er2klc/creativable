@@ -27,7 +27,9 @@ export function useLinkedInConnection() {
       
       const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scopes)}`;
       
-      console.log("Redirecting to LinkedIn auth URL:", linkedInAuthUrl);
+      console.log("LinkedIn Auth URL:", linkedInAuthUrl);
+      console.log("Redirect URI:", redirectUri);
+      console.log("Scopes:", scopes);
       
       window.location.href = linkedInAuthUrl;
     } catch (error) {
