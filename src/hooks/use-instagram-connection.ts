@@ -50,10 +50,9 @@ export function useInstagramConnection() {
       const scope = [
         'email',
         'public_profile',
-        'pages_show_list',
-        'pages_read_engagement',
-        'pages_manage_posts',
-        'business_management'
+        'instagram_basic',
+        'instagram_manage_messages',
+        'pages_messaging'
       ].join(',');
 
       const state = crypto.randomUUID();

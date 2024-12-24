@@ -62,7 +62,7 @@ export function useSettings() {
       console.log("Updating settings:", { field, value });
       
       const { error } = await supabase
-        .from("settings")
+        .from('settings')
         .upsert(
           {
             user_id: session.user.id,
@@ -80,10 +80,13 @@ export function useSettings() {
       // Invalidate and refetch settings
       await queryClient.invalidateQueries({ queryKey: ["settings", session.user.id] });
 
-      toast({
-        title: "Erfolg ✨",
-        description: "Einstellung wurde gespeichert",
-      });
+      // Only show toast when explicitly updating settings
+      if (field !== 'instagram_connected') {
+        toast({
+          title: "Erfolg ✨",
+          description: "Einstellung wurde gespeichert",
+        });
+      }
 
       return true;
     } catch (error) {
