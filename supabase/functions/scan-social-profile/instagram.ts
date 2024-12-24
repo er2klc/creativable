@@ -21,14 +21,30 @@ export async function scanInstagramProfile(username: string): Promise<SocialMedi
       throw new Error('No valid Instagram access token found');
     }
 
-    // Use Instagram Graph API to get profile data
-    const response = await fetch(`https://graph.instagram.com/v12.0/me?fields=id,username,account_type,media_count,followers_count,follows_count,biography&access_token=${authStatus.access_token}`);
+    // First, we need to search for the user's Instagram Business Account ID
+    const businessAccountResponse = await fetch(
+      `https://graph.facebook.com/v18.0/ig_username/${username}?access_token=${authStatus.access_token}`
+    );
 
-    if (!response.ok) {
-      throw new Error(`Instagram API error: ${response.status}`);
+    if (!businessAccountResponse.ok) {
+      console.error('Error getting Instagram business account:', await businessAccountResponse.text());
+      throw new Error('Could not find Instagram business account');
     }
 
-    const data = await response.json();
+    const businessAccountData = await businessAccountResponse.json();
+    const instagramBusinessAccountId = businessAccountData.id;
+
+    // Now get the profile data using the business account ID
+    const profileResponse = await fetch(
+      `https://graph.facebook.com/v18.0/${instagramBusinessAccountId}?fields=biography,followers_count,follows_count,media_count,username&access_token=${authStatus.access_token}`
+    );
+
+    if (!profileResponse.ok) {
+      console.error('Error getting Instagram profile data:', await profileResponse.text());
+      throw new Error('Could not get Instagram profile data');
+    }
+
+    const data = await profileResponse.json();
     console.log('Instagram API response:', data);
 
     return {
@@ -36,7 +52,7 @@ export async function scanInstagramProfile(username: string): Promise<SocialMedi
       followers: data.followers_count,
       following: data.follows_count,
       posts: data.media_count,
-      isPrivate: data.account_type === 'PRIVATE'
+      isPrivate: false // Instagram Business accounts are always public
     };
   } catch (error) {
     console.error('Error scanning Instagram profile:', error);
