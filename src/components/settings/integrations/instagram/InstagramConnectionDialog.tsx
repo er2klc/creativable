@@ -21,7 +21,7 @@ export function InstagramConnectionDialog({ settings, redirectUri }: InstagramCo
         <DialogHeader>
           <DialogTitle>Instagram Integration Einrichten</DialogTitle>
           <DialogDescription>
-            Verbinden Sie Ihr Instagram Business-Konto über Facebook:
+            Verbinden Sie Ihr Instagram Business-Konto:
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -35,7 +35,7 @@ export function InstagramConnectionDialog({ settings, redirectUri }: InstagramCo
             </p>
           </div>
           <Button onClick={connectInstagram} className="w-full">
-            Mit Facebook verbinden
+            Mit Instagram verbinden
           </Button>
         </div>
       </DialogContent>
