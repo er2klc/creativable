@@ -17,29 +17,45 @@ export const extractInstagramStats = (html: string): SocialMediaStats => {
   try {
     // Look for the bio first as it's important
     const bioMatch = html.match(/"biography":"([^"]+)"/);
-    const bio = bioMatch ? bioMatch[1].replace(/\\n/g, '\n') : null;
+    const bio = bioMatch ? bioMatch[1].replace(/\\n/g, '\n').replace(/\\u[0-9a-fA-F]{4}/g, match => 
+      String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16))
+    ) : null;
 
-    // Extract other stats using regex patterns
+    // Extract other stats using more robust regex patterns
     const followersMatch = html.match(/"edge_followed_by":\{"count":(\d+)\}/);
     const followingMatch = html.match(/"edge_follow":\{"count":(\d+)\}/);
     const postsMatch = html.match(/"edge_owner_to_timeline_media":\{"count":(\d+)\}/);
     const isPrivateMatch = html.match(/"is_private":(\w+)/);
 
-    console.log('Extracted Instagram stats:', {
-      bio: bio ? 'Found' : 'Not found',
-      followers: followersMatch?.[1] || 'Not found',
-      following: followingMatch?.[1] || 'Not found',
-      posts: postsMatch?.[1] || 'Not found',
-      isPrivate: isPrivateMatch?.[1] || 'Not found'
-    });
+    // Only include stats that were successfully extracted
+    const stats: SocialMediaStats = {};
+    
+    if (bio) {
+      stats.bio = bio;
+      console.log('Found bio:', bio);
+    }
+    
+    if (followersMatch && !isNaN(parseInt(followersMatch[1]))) {
+      stats.followers = parseInt(followersMatch[1]);
+      console.log('Found followers:', stats.followers);
+    }
+    
+    if (followingMatch && !isNaN(parseInt(followingMatch[1]))) {
+      stats.following = parseInt(followingMatch[1]);
+      console.log('Found following:', stats.following);
+    }
+    
+    if (postsMatch && !isNaN(parseInt(postsMatch[1]))) {
+      stats.posts = parseInt(postsMatch[1]);
+      console.log('Found posts:', stats.posts);
+    }
+    
+    if (isPrivateMatch) {
+      stats.isPrivate = isPrivateMatch[1] === 'true';
+      console.log('Found isPrivate:', stats.isPrivate);
+    }
 
-    return {
-      bio,
-      followers: followersMatch ? parseInt(followersMatch[1]) : null,
-      following: followingMatch ? parseInt(followingMatch[1]) : null,
-      posts: postsMatch ? parseInt(postsMatch[1]) : null,
-      isPrivate: isPrivateMatch ? isPrivateMatch[1] === 'true' : null,
-    };
+    return stats;
   } catch (error) {
     console.error('Error extracting Instagram stats:', error);
     return {};
