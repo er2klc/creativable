@@ -2,30 +2,14 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { Globe, Building2, Phone, Mail, Briefcase, User, ListTodo } from "lucide-react";
+import { Platform, platformsConfig } from "@/config/platforms";
 import * as z from "zod";
-import { formSchema } from "../AddLeadFormFields";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { platforms, getPlatformIcon } from "@/config/platforms";
 
 interface BasicLeadFieldsProps {
-  form: UseFormReturn<z.infer<typeof formSchema>>;
+  form: UseFormReturn<any>;
 }
 
 export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
-  const { data: phases = [] } = useQuery({
-    queryKey: ["lead-phases"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lead_phases")
-        .select("*")
-        .order("order_index");
-      if (error) throw error;
-      return data;
-    },
-  });
-
   return (
     <>
       <FormField
@@ -33,12 +17,58 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Name
-            </FormLabel>
+            <FormLabel>Name 👤</FormLabel>
             <FormControl>
-              <Input placeholder="John Doe" {...field} />
+              <Input placeholder="Name des Kontakts" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="platform"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Kontaktquelle 🌐</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Wo haben Sie den Kontakt kennengelernt?" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {platformsConfig.map((platform) => (
+                  <SelectItem key={platform.name} value={platform.name}>
+                    <div className="flex items-center gap-2">
+                      <platform.icon className="h-4 w-4" />
+                      {platform.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="socialMediaUsername"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Social Media Benutzername 📱</FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="Benutzername (ohne @ oder URL)" 
+                {...field}
+                onChange={(e) => {
+                  const username = e.target.value.replace(/^@/, '');
+                  field.onChange(username);
+                }}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -50,124 +80,9 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         name="phase"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="flex items-center gap-2">
-              <ListTodo className="h-4 w-4" />
-              Phase
-            </FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Wählen Sie eine Phase" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {phases.map((phase) => (
-                  <SelectItem key={phase.id} value={phase.name}>
-                    {phase.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <div className="flex items-center gap-4">
-        <FormField
-          control={form.control}
-          name="platform"
-          render={({ field }) => (
-            <FormItem className="flex-1">
-              <FormLabel className="flex items-center gap-2">
-                <Globe className="h-4 w-4" />
-                Kontaktquelle
-              </FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Wo haben Sie den Kontakt kennengelernt?" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {platforms.map((platform) => (
-                    <SelectItem key={platform} value={platform}>
-                      <div className="flex items-center">
-                        {getPlatformIcon(platform)}
-                        {platform}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="socialMediaUsername"
-          render={({ field }) => (
-            <FormItem className="flex-1">
-              <FormLabel className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Social Media Benutzername
-              </FormLabel>
-              <FormControl>
-                <Input placeholder="Benutzername (ohne @ oder URL)" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      <FormField
-        control={form.control}
-        name="phone_number"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              Telefonnummer
-            </FormLabel>
+            <FormLabel>Phase 📊</FormLabel>
             <FormControl>
-              <Input type="tel" placeholder="Telefonnummer eingeben" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="email"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              E-Mail
-            </FormLabel>
-            <FormControl>
-              <Input type="email" placeholder="E-Mail eingeben" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="company_name"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              Firma
-            </FormLabel>
-            <FormControl>
-              <Input placeholder="Firmennamen eingeben" {...field} />
+              <Input placeholder="Phase des Kontakts" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
