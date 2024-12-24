@@ -31,7 +31,7 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
 
     // Make API call to LinkedIn
     console.log('Fetching LinkedIn profile data...');
-    const response = await fetch('https://api.linkedin.com/v2/me?projection=(id,firstName,lastName,headline,profilePicture,vanityName)', {
+    const response = await fetch('https://api.linkedin.com/v2/me', {
       headers: {
         'Authorization': `Bearer ${authStatus.access_token}`,
         'X-Restli-Protocol-Version': '2.0.0',
@@ -52,7 +52,7 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     }
 
     const profileData = await response.json();
-    console.log('LinkedIn profile data:', profileData);
+    console.log('LinkedIn profile data:', JSON.stringify(profileData, null, 2));
 
     // Get connections count
     console.log('Fetching LinkedIn connections count...');
@@ -68,6 +68,7 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     let connections = null;
     if (connectionsResponse.ok) {
       const connectionsData = await connectionsResponse.json();
+      console.log('LinkedIn connections response:', JSON.stringify(connectionsData, null, 2));
       connections = connectionsData._total || null;
       console.log('Successfully retrieved LinkedIn connections count:', connections);
     } else {
@@ -80,13 +81,19 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
       console.error('LinkedIn connections error details:', errorText);
     }
 
-    // Extract the headline from the profile data
+    // Extract the headline and other profile information
     const headline = profileData.headline?.localized?.['en_US'] || 
                     profileData.headline?.localized?.['de_DE'] || 
-                    profileData.headline || null;
+                    profileData.headline || 
+                    profileData.localizedHeadline || null;
+
+    const bio = profileData.description?.localized?.['en_US'] || 
+                profileData.description?.localized?.['de_DE'] || 
+                profileData.description || 
+                headline || null;
 
     return {
-      bio: headline,
+      bio: bio,
       connections: connections,
       headline: headline
     };
