@@ -8,7 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { platformsConfig, generateSocialMediaUrl } from "@/config/platforms";
+import { platformsConfig, generateSocialMediaUrl, type Platform } from "@/config/platforms";
 
 interface LeadInfoCardProps {
   lead: Tables<"leads">;
@@ -57,8 +57,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
             </dt>
             <dd className="flex items-center gap-2">
               <Select
-                value={lead.platform}
-                onValueChange={(value) => updateLeadMutation.mutate({ platform: value })}
+                value={lead.platform as Platform}
+                onValueChange={(value: Platform) => updateLeadMutation.mutate({ platform: value })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -92,7 +92,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => window.open(generateSocialMediaUrl(lead.platform, lead.social_media_username || ''), '_blank')}
+                  onClick={() => window.open(generateSocialMediaUrl(lead.platform as Platform, lead.social_media_username || ''), '_blank')}
                 >
                   <ExternalLink className="h-4 w-4" />
                 </Button>
