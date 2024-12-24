@@ -3,6 +3,7 @@ import { Send, User, Users, UserCheck } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
+import { cn } from "@/lib/utils";
 
 interface LeadDetailHeaderProps {
   lead: Tables<"leads">;
@@ -14,28 +15,33 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
   const contactTypes = (lead?.contact_type?.split(",") || []).filter(Boolean);
 
   return (
-    <div className="relative -mx-6 -mt-6">
+    <div className="relative -mx-6 -mt-12 mb-8">
       {/* Name Tab */}
-      <div className="absolute -top-2 left-4 bg-[#D3E4FD] px-6 py-2 rounded-t-lg shadow-sm">
-        <div className="flex items-center gap-2">
-          <User className="h-4 w-4 text-blue-800" />
-          <input
-            value={lead?.name || ""}
-            onChange={(e) => onUpdateLead({ name: e.target.value })}
-            className="bg-transparent border-none hover:bg-blue-100/50 transition-colors px-2 rounded w-full max-w-md text-lg font-semibold focus:outline-none placeholder:text-blue-400 text-blue-800"
-            placeholder={settings?.language === "en" ? "Contact name" : "Kontaktname"}
-          />
+      <div className="absolute -top-2 left-8">
+        <div className="relative">
+          <div className="bg-[#F2E6FF]/70 backdrop-blur-sm px-6 py-3 rounded-t-lg shadow-sm">
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-purple-800" />
+              <input
+                value={lead?.name || ""}
+                onChange={(e) => onUpdateLead({ name: e.target.value })}
+                className="bg-transparent border-none hover:bg-purple-100/50 transition-colors px-2 rounded w-full max-w-md text-lg font-semibold focus:outline-none placeholder:text-purple-400 text-purple-800"
+                placeholder={settings?.language === "en" ? "Contact name" : "Kontaktname"}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Contact Type Tabs */}
-      <div className="absolute -top-2 right-16 flex gap-2">
+      <div className="absolute -top-2 right-24 flex gap-2">
         <div
-          className={`px-6 py-2 rounded-t-lg cursor-pointer transition-colors ${
+          className={cn(
+            "px-6 py-3 rounded-t-lg cursor-pointer transition-colors relative",
             contactTypes.includes("Partner")
-              ? "bg-[#F2FCE2] text-green-800 shadow-sm"
+              ? "bg-[#E6FFE6]/70 backdrop-blur-sm text-green-800 shadow-sm"
               : "bg-white/80 text-gray-400 hover:bg-green-50"
-          }`}
+          )}
           onClick={() =>
             onUpdateLead({
               contact_type: contactTypes.includes("Partner")
@@ -50,11 +56,12 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
           </span>
         </div>
         <div
-          className={`px-6 py-2 rounded-t-lg cursor-pointer transition-colors ${
+          className={cn(
+            "px-6 py-3 rounded-t-lg cursor-pointer transition-colors relative",
             contactTypes.includes("Kunde")
-              ? "bg-[#FEF7CD] text-amber-800 shadow-sm"
+              ? "bg-[#FFF3E6]/70 backdrop-blur-sm text-amber-800 shadow-sm"
               : "bg-white/80 text-gray-400 hover:bg-yellow-50"
-          }`}
+          )}
           onClick={() =>
             onUpdateLead({
               contact_type: contactTypes.includes("Kunde")
