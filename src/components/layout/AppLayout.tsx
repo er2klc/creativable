@@ -7,7 +7,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { 
@@ -75,24 +74,22 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const Icon = state === "collapsed" ? PanelLeft : PanelLeftClose;
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background relative">
-        <DashboardSidebar />
-        <button
-          onClick={toggleSidebar}
-          className="absolute left-0 top-2 z-50 p-2 bg-sidebar hover:bg-sidebar-accent rounded-r-md transition-all duration-200 text-sidebar-foreground"
-          style={{
-            transform: state === "collapsed" ? "translateX(0)" : "translateX(var(--sidebar-width))",
-          }}
-        >
-          <Icon className="h-4 w-4" />
-        </button>
-        <main className="flex-1 p-8">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
+    <div className="min-h-screen flex w-full bg-background relative">
+      <DashboardSidebar />
+      <button
+        onClick={toggleSidebar}
+        className="absolute left-0 top-2 z-50 p-2 bg-sidebar hover:bg-sidebar-accent rounded-r-md transition-all duration-200 text-sidebar-foreground"
+        style={{
+          transform: state === "collapsed" ? "translateX(0)" : "translateX(var(--sidebar-width))",
+        }}
+      >
+        <Icon className="h-4 w-4" />
+      </button>
+      <main className="flex-1 p-8">
+        <div className="max-w-7xl mx-auto">
+          {children}
+        </div>
+      </main>
+    </div>
   );
 };

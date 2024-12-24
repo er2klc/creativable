@@ -12,6 +12,7 @@ import Leads from "./pages/Leads";
 import Settings from "./pages/Settings";
 import LinkedInCallback from "./pages/auth/callback/LinkedIn";
 import { supabase } from "@/integrations/supabase/client";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 const queryClient = new QueryClient();
 
@@ -19,39 +20,41 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <SessionContextProvider supabaseClient={supabase}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/auth/callback/linkedin" element={<LinkedInCallback />} />
-            <Route
-              path="/dashboard"
-              element={
-                <AppLayout>
-                  <Dashboard />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/leads"
-              element={
-                <AppLayout>
-                  <Leads />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <AppLayout>
-                  <Settings />
-                </AppLayout>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <SidebarProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/callback/linkedin" element={<LinkedInCallback />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/leads"
+                element={
+                  <AppLayout>
+                    <Leads />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <AppLayout>
+                    <Settings />
+                  </AppLayout>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </SidebarProvider>
       </TooltipProvider>
     </SessionContextProvider>
   </QueryClientProvider>
