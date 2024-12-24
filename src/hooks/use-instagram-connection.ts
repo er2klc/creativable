@@ -36,21 +36,11 @@ export function useInstagramConnection() {
   const connectInstagram = async () => {
     try {
       console.log('Starting Instagram connection process...');
-      
-      if (!settings?.instagram_app_id || !settings?.instagram_app_secret) {
-        toast({
-          title: "Fehlende Zugangsdaten",
-          description: "Bitte geben Sie die Instagram App ID und das App Secret ein",
-          variant: "destructive",
-        });
-        return;
-      }
 
       const scope = [
-        'email',
-        'public_profile',
         'instagram_graph_user_profile',
         'instagram_graph_user_media',
+        'instagram_basic',
         'pages_show_list',
         'pages_read_engagement'
       ].join(',');
@@ -60,7 +50,7 @@ export function useInstagramConnection() {
 
       const redirectUri = `${window.location.origin}/auth/callback/instagram`;
       const params = new URLSearchParams({
-        client_id: settings.instagram_app_id,
+        client_id: '1315021952869619',
         redirect_uri: redirectUri,
         scope: scope,
         response_type: 'code',
@@ -68,7 +58,7 @@ export function useInstagramConnection() {
       });
 
       console.log('Redirecting to Instagram auth URL...');
-      window.location.href = `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`;
+      window.location.href = `https://api.instagram.com/oauth/authorize?${params.toString()}`;
     } catch (error) {
       console.error('Error connecting to Instagram:', error);
       toast({

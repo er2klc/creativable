@@ -42,6 +42,8 @@ const InstagramCallback = () => {
           body: {
             code,
             redirectUri: `${window.location.origin}/auth/callback/instagram`,
+            clientId: '1315021952869619',
+            clientSecret: '0f2632c9c1d490d8ba637339f33aec7e'
           },
         });
 
@@ -68,7 +70,7 @@ const InstagramCallback = () => {
         const { error: settingsError } = await supabase
           .from('settings')
           .update({ 
-            instagram_connected: true,
+            instagram_connected: 'true',
             updated_at: new Date().toISOString()
           })
           .eq('user_id', user.id);

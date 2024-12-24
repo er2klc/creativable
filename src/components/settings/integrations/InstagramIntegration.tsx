@@ -22,7 +22,7 @@ export function InstagramIntegration() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Instagram className="h-6 w-6 text-[#E4405F]" />
-          <h3 className="text-lg font-medium">Instagram & Facebook Integration</h3>
+          <h3 className="text-lg font-medium">Instagram Integration</h3>
           {isConnected ? (
             <CheckCircle className="h-5 w-5 text-green-500" />
           ) : (
@@ -63,7 +63,7 @@ export function InstagramIntegration() {
         )}
       </div>
       <p className="text-sm text-muted-foreground">
-        Verbinden Sie Ihr Instagram-Konto über Facebook um Leads automatisch zu kontaktieren und
+        Verbinden Sie Ihr Instagram-Konto um Leads automatisch zu kontaktieren und
         Nachrichten zu versenden.
       </p>
     </Card>
