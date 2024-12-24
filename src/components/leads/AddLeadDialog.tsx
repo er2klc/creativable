@@ -66,7 +66,7 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
         platform: values.platform,
         social_media_username: socialMediaUrl,
         phase: values.phase,
-        contact_type: values.contact_type || null,
+        contact_type: values.contact_type,
         phone_number: values.phone_number || null,
         email: values.email || null,
         company_name: values.company_name || null,

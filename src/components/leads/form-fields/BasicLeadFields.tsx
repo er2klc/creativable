@@ -7,7 +7,7 @@ import * as z from "zod";
 import { formSchema } from "../AddLeadFormFields";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ContactTypeField } from "./ContactTypeField";
 
 interface BasicLeadFieldsProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
@@ -120,40 +120,7 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         />
       </div>
 
-      <FormField
-        control={form.control}
-        name="contact_type"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Kontakttyp</FormLabel>
-            <FormControl>
-              <RadioGroup
-                onValueChange={field.onChange}
-                defaultValue={field.value || undefined}
-                className="flex space-x-4"
-              >
-                <FormItem className="flex items-center space-x-2">
-                  <FormControl>
-                    <RadioGroupItem value="Partner" />
-                  </FormControl>
-                  <FormLabel className="font-normal">
-                    Partner
-                  </FormLabel>
-                </FormItem>
-                <FormItem className="flex items-center space-x-2">
-                  <FormControl>
-                    <RadioGroupItem value="Kunde" />
-                  </FormControl>
-                  <FormLabel className="font-normal">
-                    Kunde
-                  </FormLabel>
-                </FormItem>
-              </RadioGroup>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <ContactTypeField form={form} />
 
       <FormField
         control={form.control}

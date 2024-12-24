@@ -12,11 +12,11 @@ export const formSchema = z.object({
   socialMediaUsername: z.string().min(1, "Benutzername ist erforderlich 📱"),
   phase: z.string().min(1, "Phase ist erforderlich 📊"),
   contact_type: z.enum([...contactTypes]).nullable(),
-  phone_number: z.string().optional(),
-  email: z.string().email("Ungültige E-Mail-Adresse").optional(),
-  company_name: z.string().optional(),
-  notes: z.string().optional(),
-  industry: z.string().default(""), // Keep industry for OpenAI
+  phone_number: z.string().optional().nullable(),
+  email: z.string().email("Ungültige E-Mail-Adresse").optional().nullable(),
+  company_name: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  industry: z.string().optional().nullable(),
 });
 
 interface AddLeadFormFieldsProps {
