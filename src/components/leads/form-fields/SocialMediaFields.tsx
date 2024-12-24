@@ -4,15 +4,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { ExternalLink, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { platformsConfig, Platform, generateSocialMediaUrl } from "@/config/platforms";
+import { platformsConfig, type Platform, generateSocialMediaUrl } from "@/config/platforms";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
 
-export { Platform, platforms, generateSocialMediaUrl } from "@/config/platforms";
-
-const formSchema = z.object({
+export const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich 📝"),
-  platform: z.enum(platformsConfig.map(p => p.name)),
+  platform: z.enum(["Instagram", "LinkedIn", "Facebook", "TikTok", "Offline"] as const),
   socialMediaUsername: z.string().min(1, "Benutzername ist erforderlich 📱"),
   phase: z.string().min(1, "Phase ist erforderlich 📊"),
   contact_type: z.string().nullable(),
@@ -28,7 +26,7 @@ interface SocialMediaFieldsProps {
 }
 
 export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
-  const platform = form.watch("platform");
+  const platform = form.watch("platform") as Platform;
   const username = form.watch("socialMediaUsername");
   const profileUrl = generateSocialMediaUrl(platform, username);
 
@@ -107,5 +105,3 @@ export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
     </>
   );
 }
-
-export { formSchema };
