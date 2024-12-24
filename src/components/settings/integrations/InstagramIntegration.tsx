@@ -8,7 +8,7 @@ import { InstagramConnectionDialog } from "./instagram/InstagramConnectionDialog
 import { InstagramDisconnectDialog } from "./instagram/InstagramDisconnectDialog";
 import { useInstagramConnection } from "@/hooks/use-instagram-connection";
 
-export function IntegrationSettings() {
+export function InstagramIntegration() {
   const { settings } = useSettings();
   const { isConnected, checkConnectionStatus } = useInstagramConnection();
   const redirectUri = `${window.location.origin}/auth/callback/instagram`;

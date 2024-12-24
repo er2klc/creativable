@@ -16,15 +16,15 @@ export function useInstagramConnection() {
         .select('is_connected, access_token')
         .eq('platform', 'instagram')
         .eq('user_id', user.id)
-        .maybeSingle(); // Changed from single() to maybeSingle()
+        .maybeSingle();
 
       console.log('Platform auth status:', platformAuth);
       
       if (platformAuth?.is_connected && platformAuth?.access_token) {
-        await updateSettings('instagram_connected', 'true'); // Convert boolean to string
+        await updateSettings('instagram_connected', 'true');
         return true;
       } else {
-        await updateSettings('instagram_connected', 'false'); // Convert boolean to string
+        await updateSettings('instagram_connected', 'false');
         return false;
       }
     } catch (error) {
@@ -98,7 +98,7 @@ export function useInstagramConnection() {
       if (statusError) throw statusError;
 
       // Update settings
-      await updateSettings('instagram_connected', 'false'); // Convert boolean to string
+      await updateSettings('instagram_connected', 'false');
       await refetchSettings();
       
       toast({
