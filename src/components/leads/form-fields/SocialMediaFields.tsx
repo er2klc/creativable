@@ -10,7 +10,7 @@ import * as z from "zod";
 export const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich 📝"),
   platform: z.enum(["Instagram", "LinkedIn", "Facebook", "TikTok", "Offline"] as const),
-  socialMediaUsername: z.string().min(1, "Benutzername ist erforderlich 📱"),
+  socialMediaUsername: z.string().optional(),
   phase: z.string().min(1, "Phase ist erforderlich 📊"),
   contact_type: z.string().nullable(),
   phone_number: z.string().optional().nullable(),
@@ -27,7 +27,7 @@ interface SocialMediaFieldsProps {
 export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
   const platform = form.watch("platform");
   const username = form.watch("socialMediaUsername");
-  const profileUrl = generateSocialMediaUrl(platform, username);
+  const profileUrl = generateSocialMediaUrl(platform, username || "");
 
   return (
     <>
@@ -36,11 +36,11 @@ export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
         name="platform"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Plattform 🌐</FormLabel>
+            <FormLabel>Kontaktquelle 🌐</FormLabel>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Wählen Sie eine Plattform" />
+                  <SelectValue placeholder="Wo haben Sie den Kontakt kennengelernt?" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
@@ -59,40 +59,38 @@ export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
         )}
       />
 
-      {platform !== "Offline" && (
-        <FormField
-          control={form.control}
-          name="socialMediaUsername"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Benutzername 📱</FormLabel>
-              <div className="flex items-center gap-2">
-                <FormControl>
-                  <Input 
-                    placeholder="Benutzername (ohne @ oder URL)" 
-                    {...field} 
-                    onChange={(e) => {
-                      const username = e.target.value.replace(/^@/, '');
-                      field.onChange(username);
-                    }}
-                  />
-                </FormControl>
-                {username && platform !== "Offline" && profileUrl && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => window.open(profileUrl, '_blank')}
-                    title="Profil öffnen"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      )}
+      <FormField
+        control={form.control}
+        name="socialMediaUsername"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Social Media Benutzername 📱</FormLabel>
+            <div className="flex items-center gap-2">
+              <FormControl>
+                <Input 
+                  placeholder="Benutzername (ohne @ oder URL)" 
+                  {...field} 
+                  onChange={(e) => {
+                    const username = e.target.value.replace(/^@/, '');
+                    field.onChange(username);
+                  }}
+                />
+              </FormControl>
+              {username && profileUrl && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => window.open(profileUrl, '_blank')}
+                  title="Profil öffnen"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </>
   );
 }
