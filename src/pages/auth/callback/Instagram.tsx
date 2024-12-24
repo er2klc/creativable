@@ -10,11 +10,15 @@ const InstagramCallback = () => {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        console.log('Starting Instagram callback handling...');
+        
         const params = new URLSearchParams(window.location.search);
         const code = params.get("code");
         const state = params.get("state");
         const error = params.get("error");
         const storedState = localStorage.getItem("instagram_oauth_state");
+
+        console.log('Received params:', { code: code ? 'present' : 'missing', state, error });
 
         if (error) {
           throw new Error(params.get("error_description") || "Authentication failed");
@@ -33,6 +37,8 @@ const InstagramCallback = () => {
           throw new Error("No active session");
         }
 
+        console.log('Calling Instagram auth callback function...');
+        
         // Call our Instagram auth callback function
         const response = await fetch("/api/instagram-auth-callback", {
           method: "POST",
@@ -42,6 +48,8 @@ const InstagramCallback = () => {
           },
           body: JSON.stringify({ code }),
         });
+
+        console.log('Received response:', response.status);
 
         if (!response.ok) {
           const errorData = await response.json();
