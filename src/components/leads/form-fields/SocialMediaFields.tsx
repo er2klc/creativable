@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLINE"] as const;
+type Platform = typeof platforms[number];
 
-export const generateSocialMediaUrl = (platform: string, username: string): string => {
+export const generateSocialMediaUrl = (platform: Platform, username: string): string => {
   if (!username) return '';
   switch (platform) {
     case "Instagram":
@@ -20,12 +21,14 @@ export const generateSocialMediaUrl = (platform: string, username: string): stri
       return `https://www.facebook.com/${username}`;
     case "TikTok":
       return `https://www.tiktok.com/@${username}`;
+    case "OFFLINE":
+      return '';
     default:
       return '';
   }
 };
 
-const getPlatformIcon = (platform: string) => {
+const getPlatformIcon = (platform: Platform) => {
   switch (platform) {
     case "Instagram":
       return <Instagram className="h-4 w-4 mr-2" />;
@@ -48,7 +51,7 @@ interface SocialMediaFieldsProps {
 
 const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich 📝"),
-  platform: z.enum([...platforms]),
+  platform: z.enum(platforms),
   socialMediaUsername: z.string().min(1, "Benutzername ist erforderlich 📱"),
   phase: z.string().min(1, "Phase ist erforderlich 📊"),
   contact_type: z.string().nullable(),
