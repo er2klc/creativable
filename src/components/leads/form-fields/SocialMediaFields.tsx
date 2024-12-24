@@ -24,6 +24,8 @@ export const generateSocialMediaUrl = (platform: Platform, username: string) => 
       return `https://www.facebook.com/${cleanUsername}`;
     case "TikTok":
       return `https://www.tiktok.com/@${cleanUsername}`;
+    case "OFFLINE":
+      return username;
     default:
       return username;
   }
