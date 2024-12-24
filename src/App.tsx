@@ -14,6 +14,8 @@ import LinkedInCallback from "./pages/auth/callback/LinkedIn";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useEffect } from "react";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import InstagramDataDeletion from "./pages/legal/InstagramDataDeletion";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +47,8 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback/linkedin" element={<LinkedInCallback />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/auth/data-deletion/instagram" element={<InstagramDataDeletion />} />
               <Route
                 path="/dashboard"
                 element={
