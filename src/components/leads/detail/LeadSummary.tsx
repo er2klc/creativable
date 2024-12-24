@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
-import { Bot, Calendar, Building2, MessageSquare, ListTodo } from "lucide-react";
+import { Bot, Calendar, Building2, MessageSquare, ListTodo, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,64 +57,75 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   }, [lead.id]);
 
   const renderSocialMediaStats = () => {
-    if (!lead.social_media_posts || Object.keys(lead.social_media_posts as any).length === 0) {
+    if (!lead.social_media_posts || !lead.social_media_bio) {
       return null;
     }
 
     const stats = lead.social_media_posts as any;
-    const hasAnyStats = stats.followers !== undefined || 
-                       stats.following !== undefined || 
-                       stats.posts !== undefined || 
-                       stats.connections !== undefined ||
-                       stats.headline;
+    const bio = lead.social_media_bio;
 
-    if (!hasAnyStats) return null;
+    // Only show stats that have actual values
+    const validStats = [];
+
+    if (stats?.followers !== undefined && stats.followers !== null) {
+      validStats.push({
+        label: settings?.language === "en" ? "Followers" : "Follower",
+        value: stats.followers
+      });
+    }
+
+    if (stats?.following !== undefined && stats.following !== null) {
+      validStats.push({
+        label: settings?.language === "en" ? "Following" : "Folgt",
+        value: stats.following
+      });
+    }
+
+    if (stats?.posts !== undefined && stats.posts !== null) {
+      validStats.push({
+        label: settings?.language === "en" ? "Posts" : "Beiträge",
+        value: stats.posts
+      });
+    }
+
+    if (stats?.connections !== undefined && stats.connections !== null) {
+      validStats.push({
+        label: settings?.language === "en" ? "Connections" : "Verbindungen",
+        value: stats.connections
+      });
+    }
+
+    if (!validStats.length && !bio) return null;
 
     return (
       <div className="space-y-4 mb-6">
-        <div className="grid grid-cols-2 gap-4">
-          {stats.followers !== undefined && (
-            <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
-              <span className="text-sm text-gray-500">
-                {settings?.language === "en" ? "Followers" : "Follower"}
-              </span>
-              <p className="font-medium">{stats.followers}</p>
-            </div>
-          )}
-          {stats.following !== undefined && (
-            <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
-              <span className="text-sm text-gray-500">
-                {settings?.language === "en" ? "Following" : "Folgt"}
-              </span>
-              <p className="font-medium">{stats.following}</p>
-            </div>
-          )}
-          {stats.posts !== undefined && (
-            <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
-              <span className="text-sm text-gray-500">
-                {settings?.language === "en" ? "Posts" : "Beiträge"}
-              </span>
-              <p className="font-medium">{stats.posts}</p>
-            </div>
-          )}
-          {stats.connections !== undefined && (
-            <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
-              <span className="text-sm text-gray-500">
-                {settings?.language === "en" ? "Connections" : "Verbindungen"}
-              </span>
-              <p className="font-medium">{stats.connections}</p>
-            </div>
-          )}
-        </div>
-        {stats.headline && (
+        {/* Profile Bio Section */}
+        {bio && (
           <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
-            <span className="text-sm text-gray-500">
-              {settings?.language === "en" ? "Headline" : "Headline"}
-            </span>
-            <p className="font-medium">{stats.headline}</p>
+            <div className="flex items-center gap-2 mb-2">
+              <User className="h-5 w-5 text-blue-500" />
+              <span className="text-sm font-medium text-gray-700">
+                {settings?.language === "en" ? "Profile Description" : "Profilbeschreibung"}
+              </span>
+            </div>
+            <p className="text-sm text-gray-600 whitespace-pre-wrap">{bio}</p>
           </div>
         )}
-        {stats.isPrivate !== undefined && (
+
+        {/* Stats Grid */}
+        {validStats.length > 0 && (
+          <div className="grid grid-cols-2 gap-4">
+            {validStats.map((stat, index) => (
+              <div key={index} className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
+                <span className="text-sm text-gray-500">{stat.label}</span>
+                <p className="font-medium">{stat.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Account Type - only if explicitly set */}
+        {stats?.isPrivate !== undefined && (
           <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
             <span className="text-sm text-gray-500">
               {settings?.language === "en" ? "Account Type" : "Konto-Typ"}
