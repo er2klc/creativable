@@ -21,10 +21,10 @@ export function useInstagramConnection() {
       console.log('Platform auth status:', platformAuth);
       
       if (platformAuth?.is_connected && platformAuth?.access_token) {
-        await updateSettings('instagram_connected', true);
+        await updateSettings('instagram_connected', 'true');
         return true;
       } else {
-        await updateSettings('instagram_connected', false);
+        await updateSettings('instagram_connected', 'false');
         return false;
       }
     } catch (error) {
@@ -46,12 +46,14 @@ export function useInstagramConnection() {
         return;
       }
 
+      // Updated scopes according to latest Meta documentation
       const scope = [
         'email',
         'public_profile',
-        'instagram_basic',
-        'instagram_manage_messages',
-        'pages_messaging'
+        'instagram_graph_user_profile',
+        'instagram_graph_user_media',
+        'pages_show_list',
+        'pages_read_engagement'
       ].join(',');
 
       const state = crypto.randomUUID();
@@ -99,7 +101,7 @@ export function useInstagramConnection() {
       if (statusError) throw statusError;
 
       // Update settings
-      await updateSettings('instagram_connected', false);
+      await updateSettings('instagram_connected', 'false');
       await refetchSettings();
       
       toast({
@@ -120,6 +122,6 @@ export function useInstagramConnection() {
     checkConnectionStatus,
     connectInstagram,
     disconnectInstagram,
-    isConnected: settings?.instagram_connected === true
+    isConnected: settings?.instagram_connected === 'true'
   };
 }
