@@ -12,7 +12,7 @@ export function InstagramIntegration() {
   const { settings, updateSettings } = useSettings();
   const { toast } = useToast();
   const redirectUri = `${window.location.origin}/auth/callback/instagram`;
-  const isConnected = settings?.instagram_connected === 'true';
+  const isConnected = settings?.instagram_connected || false;
 
   const connectInstagram = async () => {
     try {
