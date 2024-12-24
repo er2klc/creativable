@@ -16,9 +16,6 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
 
   return (
     <div className="relative -mx-6 -mt-6 mb-8">
-      {/* Continuous line */}
-      <div className="absolute top-[4.5rem] left-0 right-0 h-px bg-gray-200" />
-
       {/* Name Tab */}
       <div className="absolute left-4 sm:left-8 top-8">
         <div className="relative">
@@ -37,7 +34,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
       </div>
 
       {/* Contact Type Tabs */}
-      <div className="absolute right-4 sm:right-8 top-8 flex gap-2">
+      <div className="absolute right-12 sm:right-16 top-8 flex gap-2">
         <div
           className={cn(
             "px-3 sm:px-6 py-2 sm:py-3 rounded-t-lg cursor-pointer transition-colors relative",
@@ -79,6 +76,9 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
           </span>
         </div>
       </div>
+
+      {/* Continuous line */}
+      <div className="absolute top-[4.5rem] left-0 right-0 h-px bg-gray-200" />
 
       {/* Action Buttons */}
       <div className="mt-24 flex items-center gap-4 px-6">
