@@ -43,7 +43,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     opacity: isDragging ? 0.5 : 1,
     cursor: isDragging ? 'grabbing' : 'grab',
     touchAction: 'none',
-    position: isDragging ? 'relative' : 'static',
+    position: isDragging ? 'relative' as const : 'static' as const,
     zIndex: isDragging ? 50 : 'auto',
   };
 
