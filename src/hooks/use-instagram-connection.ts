@@ -21,10 +21,10 @@ export function useInstagramConnection() {
       console.log('Platform auth status:', platformAuth);
       
       if (platformAuth?.is_connected && platformAuth?.access_token) {
-        await updateSettings('instagram_connected', true);
+        await updateSettings('instagram_connected', 'true');
         return true;
       } else {
-        await updateSettings('instagram_connected', false);
+        await updateSettings('instagram_connected', 'false');
         return false;
       }
     } catch (error) {
@@ -92,7 +92,7 @@ export function useInstagramConnection() {
 
       if (statusError) throw statusError;
 
-      await updateSettings('instagram_connected', false);
+      await updateSettings('instagram_connected', 'false');
       await refetchSettings();
       
       toast({
