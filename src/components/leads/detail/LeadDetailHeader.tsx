@@ -1,97 +1,79 @@
 import { Button } from "@/components/ui/button";
-import { Send, User, Users, UserCheck, Contact } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
-import { useSettings } from "@/hooks/use-settings";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
-import { cn } from "@/lib/utils";
+import { useSettings } from "@/hooks/use-settings";
+import { MessageSquare, Scan } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LeadDetailHeaderProps {
   lead: Tables<"leads">;
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
 }
 
-export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) {
+export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) => {
   const { settings } = useSettings();
-  const contactTypes = (lead?.contact_type?.split(",") || []).filter(Boolean);
+  const [isScanning, setIsScanning] = useState(false);
+
+  const scanProfile = async () => {
+    setIsScanning(true);
+    try {
+      const response = await supabase.functions.invoke('scan-social-profile', {
+        body: {
+          leadId: lead.id,
+          platform: lead.platform,
+          username: lead.social_media_username
+        },
+      });
+
+      if (response.error) throw response.error;
+
+      toast.success(
+        settings?.language === "en"
+          ? "Profile scanned successfully"
+          : "Profil erfolgreich gescannt"
+      );
+    } catch (error) {
+      console.error('Error scanning profile:', error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error scanning profile"
+          : "Fehler beim Scannen des Profils"
+      );
+    } finally {
+      setIsScanning(false);
+    }
+  };
 
   return (
-    <div className="relative -mx-6 -mt-6 mb-8">
-      {/* Contact Type Tabs */}
-      <div className="absolute right-16 top-4 flex gap-2">
-        <div
-          className={cn(
-            "px-3 sm:px-6 py-2 sm:py-3 rounded-t-lg cursor-pointer transition-colors relative",
-            contactTypes.includes("Partner")
-              ? "bg-[#E6FFE6]/70 backdrop-blur-sm text-green-800 shadow-sm"
-              : "bg-white/80 text-gray-400 hover:bg-green-50"
-          )}
-          onClick={() =>
-            onUpdateLead({
-              contact_type: contactTypes.includes("Partner")
-                ? contactTypes.filter((t) => t !== "Partner").join(",")
-                : [...contactTypes, "Partner"].join(","),
-            })
-          }
-        >
-          <span className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base whitespace-nowrap">
-            <UserCheck className="h-4 w-4" />
-            Partner
-          </span>
-        </div>
-        <div
-          className={cn(
-            "px-3 sm:px-6 py-2 sm:py-3 rounded-t-lg cursor-pointer transition-colors relative",
-            contactTypes.includes("Kunde")
-              ? "bg-[#FFF3E6]/70 backdrop-blur-sm text-amber-800 shadow-sm"
-              : "bg-white/80 text-gray-400 hover:bg-yellow-50"
-          )}
-          onClick={() =>
-            onUpdateLead({
-              contact_type: contactTypes.includes("Kunde")
-                ? contactTypes.filter((t) => t !== "Kunde").join(",")
-                : [...contactTypes, "Kunde"].join(","),
-            })
-          }
-        >
-          <span className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base whitespace-nowrap">
-            <Users className="h-4 w-4" />
-            Kunde
-          </span>
-        </div>
+    <div className="flex items-center justify-between p-6 border-b">
+      <div>
+        <h2 className="text-2xl font-semibold">{lead.name}</h2>
+        <p className="text-sm text-muted-foreground">{lead.platform}</p>
       </div>
-
-      {/* Name Tab */}
-      <div className="absolute left-4 sm:left-8 top-4">
-        <div
-          className="px-3 sm:px-6 py-2 sm:py-3 rounded-t-lg bg-white/80 text-gray-600 hover:bg-gray-50/80 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Contact className="h-4 w-4 stroke-[1.5]" />
-            <input
-              value={lead?.name || ""}
-              onChange={(e) => onUpdateLead({ name: e.target.value })}
-              className="bg-transparent border-none hover:bg-gray-100/50 transition-colors px-2 rounded w-full max-w-[150px] sm:max-w-md text-base sm:text-lg font-semibold focus:outline-none placeholder:text-gray-400 text-gray-800"
-              placeholder={settings?.language === "en" ? "Contact name" : "Kontaktname"}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Continuous line */}
-      <div className="absolute top-[4.5rem] left-0 right-0 h-px bg-gray-200" />
-
-      {/* Action Buttons */}
-      <div className="mt-24 flex items-center gap-4 px-6">
+      <div className="flex items-center gap-2">
         <SendMessageDialog
           lead={lead}
           trigger={
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <Send className="h-4 w-4" />
+            <Button variant="outline" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
               {settings?.language === "en" ? "Send Message" : "Nachricht senden"}
             </Button>
           }
         />
+        <Button
+          variant="outline"
+          onClick={scanProfile}
+          disabled={isScanning}
+          className="flex items-center gap-2"
+        >
+          <Scan className="h-4 w-4" />
+          {isScanning 
+            ? (settings?.language === "en" ? "Scanning..." : "Scannt...")
+            : (settings?.language === "en" ? "Scan Profile" : "Profil scannen")}
+        </Button>
       </div>
     </div>
   );
-}
+};
