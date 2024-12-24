@@ -8,6 +8,7 @@ import { formSchema } from "../AddLeadFormFields";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ContactTypeField } from "./ContactTypeField";
+import { platforms } from "./SocialMediaFields";
 
 interface BasicLeadFieldsProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
@@ -23,7 +24,7 @@ const getPlatformIcon = (platform: string) => {
       return <Facebook className="h-4 w-4 mr-2" />;
     case "TikTok":
       return <Video className="h-4 w-4 mr-2" />;
-    case "OFFLINE":
+    case "Offline":
       return <Users className="h-4 w-4 mr-2" />;
     default:
       return <Globe className="h-4 w-4 mr-2" />;
@@ -109,7 +110,7 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLINE"].map((platform) => (
+                  {platforms.map((platform) => (
                     <SelectItem key={platform} value={platform}>
                       <div className="flex items-center">
                         {getPlatformIcon(platform)}
@@ -124,7 +125,7 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
           )}
         />
 
-        {platform !== "OFFLINE" && (
+        {platform !== "Offline" && (
           <FormField
             control={form.control}
             name="socialMediaUsername"

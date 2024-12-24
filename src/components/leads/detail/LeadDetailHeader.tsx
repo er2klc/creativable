@@ -43,13 +43,13 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
         return <Facebook className="h-4 w-4" />;
       case "TikTok":
         return <Video className="h-4 w-4" />;
-      case "OFFLINE":
+      case "Offline":
         return <Users className="h-4 w-4" />;
     }
   };
 
   const scanProfile = async () => {
-    if (!lead.social_media_username || lead.platform === "OFFLINE") return;
+    if (!lead.social_media_username || lead.platform === "Offline") return;
     setIsScanning(true);
     try {
       const response = await supabase.functions.invoke('scan-social-profile', {
@@ -92,7 +92,7 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
             <div className="flex items-center gap-2 mt-1">
               {getPlatformIcon(lead.platform)}
               <span className="text-sm text-muted-foreground">{lead.platform}</span>
-              {lead.platform !== "OFFLINE" && (
+              {lead.platform !== "Offline" && (
                 <>
                   {displayUsername ? (
                     <Button
@@ -127,7 +127,7 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
               </Button>
             }
           />
-          {lead.platform !== "OFFLINE" && (
+          {lead.platform !== "Offline" && (
             <Button
               variant="outline"
               onClick={scanProfile}
