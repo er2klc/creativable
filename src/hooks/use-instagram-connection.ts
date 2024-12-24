@@ -110,9 +110,9 @@ export function useInstagramConnection() {
   };
 
   return {
-    checkConnectionStatus,
-    connectInstagram,
-    disconnectInstagram,
-    isConnected: settings?.instagram_connected === 'true'
+  checkConnectionStatus,
+  connectInstagram,
+  disconnectInstagram,
+  isConnected: settings?.instagram_connected === 'true'
   };
 }
