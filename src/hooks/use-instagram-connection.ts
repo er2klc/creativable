@@ -109,6 +109,6 @@ export function useInstagramConnection() {
     checkConnectionStatus,
     connectInstagram,
     disconnectInstagram,
-    isConnected: settings?.instagram_connected === 'true'
+    isConnected: settings?.instagram_connected === true
   };
 }
