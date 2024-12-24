@@ -7,6 +7,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { 
@@ -18,6 +19,9 @@ import {
   Settings,
   PanelLeftClose,
   PanelLeft,
+  FileText,
+  Shield,
+  Instagram,
 } from "lucide-react";
 
 const navigationItems = [
@@ -27,6 +31,12 @@ const navigationItems = [
   { title: "Kalender", icon: Calendar, url: "/calendar" },
   { title: "Berichte", icon: BarChart, url: "/reports" },
   { title: "Einstellungen", icon: Settings, url: "/settings" },
+];
+
+const legalItems = [
+  { title: "Impressum", icon: FileText, url: "/impressum" },
+  { title: "Datenschutz", icon: Shield, url: "/privacy-policy" },
+  { title: "Instagram Datenlöschung", icon: Instagram, url: "/auth/data-deletion/instagram" },
 ];
 
 const APP_VERSION = "0.1";
@@ -57,6 +67,29 @@ const DashboardSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        <SidebarSeparator />
+
+        <SidebarGroup>
+          <div className="flex items-center justify-between px-4 py-2">
+            <SidebarGroupLabel>Rechtliches</SidebarGroupLabel>
+          </div>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {legalItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <a href={item.url} className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground">
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         <div className="mt-auto pt-4 px-4 text-sm text-muted-foreground border-t">
           Version {APP_VERSION}
         </div>
