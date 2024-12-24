@@ -26,7 +26,7 @@ export function CompactPhaseSelector({
   const secondRow = phases.slice(midPoint);
 
   return (
-    <div className="w-full px-4 py-2 rounded-lg">
+    <div className="w-full px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
       <h3 className="text-sm font-medium mb-3 text-center text-gray-700">
         {settings?.language === "en" ? "Contact Phase" : "Kontaktphase"}
       </h3>
