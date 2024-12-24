@@ -2,7 +2,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { Globe, Building2, Phone, Mail, Briefcase, UserCircle2, User, ListTodo } from "lucide-react";
+import { Globe, Building2, Phone, Mail, Briefcase, UserCircle2, User, ListTodo, Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
 import * as z from "zod";
 import { formSchema } from "../AddLeadFormFields";
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +12,23 @@ import { ContactTypeField } from "./ContactTypeField";
 interface BasicLeadFieldsProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
 }
+
+const getPlatformIcon = (platform: string) => {
+  switch (platform) {
+    case "Instagram":
+      return <Instagram className="h-4 w-4 mr-2" />;
+    case "LinkedIn":
+      return <Linkedin className="h-4 w-4 mr-2" />;
+    case "Facebook":
+      return <Facebook className="h-4 w-4 mr-2" />;
+    case "TikTok":
+      return <Video className="h-4 w-4 mr-2" />;
+    case "OFFLINE":
+      return <Users className="h-4 w-4 mr-2" />;
+    default:
+      return <Globe className="h-4 w-4 mr-2" />;
+  }
+};
 
 export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
   const { data: phases = [] } = useQuery({
@@ -94,7 +111,10 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
                 <SelectContent>
                   {["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLINE"].map((platform) => (
                     <SelectItem key={platform} value={platform}>
-                      {platform}
+                      <div className="flex items-center">
+                        {getPlatformIcon(platform)}
+                        {platform}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
