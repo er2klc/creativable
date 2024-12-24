@@ -1,4 +1,5 @@
 import { Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
+import { type LucideIcon } from "lucide-react";
 
 export type Platform = "Instagram" | "LinkedIn" | "Facebook" | "TikTok" | "Offline";
 
@@ -6,7 +7,7 @@ export const platforms: Platform[] = ["Instagram", "LinkedIn", "Facebook", "TikT
 
 export interface PlatformConfig {
   name: Platform;
-  icon: typeof Instagram;
+  icon: LucideIcon;
   generateUrl: (username: string) => string;
 }
 
@@ -45,4 +46,10 @@ export const getPlatformConfig = (platform: Platform): PlatformConfig => {
 export const generateSocialMediaUrl = (platform: Platform, username: string): string => {
   const config = getPlatformConfig(platform);
   return config.generateUrl(username);
+};
+
+export const getPlatformIcon = (platform: Platform) => {
+  const config = getPlatformConfig(platform);
+  const Icon = config.icon;
+  return <Icon className="h-4 w-4 mr-2" />;
 };

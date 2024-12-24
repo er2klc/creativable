@@ -3,11 +3,11 @@ import * as z from "zod";
 import { BasicLeadFields } from "./form-fields/BasicLeadFields";
 import { NotesFields } from "./form-fields/NotesFields";
 import { ContactTypeField } from "./form-fields/ContactTypeField";
-import { type Platform } from "@/config/platforms";
+import { type Platform, platforms } from "@/config/platforms";
 
 export const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich 📝"),
-  platform: z.enum(["Instagram", "LinkedIn", "Facebook", "TikTok", "Offline"] as const),
+  platform: z.enum(platforms as [Platform, ...Platform[]]),
   socialMediaUsername: z.string().min(1, "Benutzername ist erforderlich 📱"),
   phase: z.string().min(1, "Phase ist erforderlich 📊"),
   contact_type: z.string().nullable(),

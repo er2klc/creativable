@@ -3,21 +3,22 @@ import {
   DialogContent,
   DialogHeader,
 } from "@/components/ui/dialog";
-import { Bot } from "lucide-react";
+import { Bot, Scan } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadInfoCard } from "./detail/LeadInfoCard";
-import { TaskList } from "./detail/TaskList";
-import { NoteList } from "./detail/NoteList";
-import { LeadSummary } from "./detail/LeadSummary";
-import { LeadDetailHeader } from "./detail/LeadDetailHeader";
-import { LeadMessages } from "./detail/LeadMessages";
-import { CompactPhaseSelector } from "./detail/CompactPhaseSelector";
+import { LeadInfoCard } from "./LeadInfoCard";
+import { TaskList } from "./TaskList";
+import { NoteList } from "./NoteList";
+import { LeadSummary } from "./LeadSummary";
+import { LeadDetailHeader } from "./LeadDetailHeader";
+import { LeadMessages } from "./LeadMessages";
+import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Platform } from "./form-fields/SocialMediaFields";
+import { Button } from "@/components/ui/button";
+import { Platform } from "../form-fields/SocialMediaFields";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -28,6 +29,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
 
   const { data: lead, isLoading } = useQuery({
     queryKey: ["lead", leadId],
@@ -83,6 +85,38 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     },
   });
 
+  const scanProfile = async () => {
+    if (!lead) return;
+    setIsScanning(true);
+    try {
+      const response = await supabase.functions.invoke('scan-social-profile', {
+        body: {
+          leadId: lead.id,
+          platform: lead.platform,
+          username: lead.social_media_username
+        },
+      });
+
+      if (response.error) throw response.error;
+
+      toast.success(
+        settings?.language === "en"
+          ? "Profile scanned successfully"
+          : "Profil erfolgreich gescannt"
+      );
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+    } catch (error) {
+      console.error('Error scanning profile:', error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error scanning profile"
+          : "Fehler beim Scannen des Profils"
+      );
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
   const updatePhaseOrderMutation = useMutation({
     mutationFn: async (updatedPhases: Tables<"lead_phases">[]) => {
       const { error } = await supabase
@@ -120,12 +154,25 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         ) : lead ? (
           <div className="flex-1 overflow-y-auto p-6">
             <div className="space-y-6">
-              <CompactPhaseSelector
-                lead={lead}
-                phases={phases}
-                onUpdateLead={updateLeadMutation.mutate}
-                onUpdatePhases={(phases) => updatePhaseOrderMutation.mutate(phases)}
-              />
+              <div className="flex justify-between items-center">
+                <CompactPhaseSelector
+                  lead={lead}
+                  phases={phases}
+                  onUpdateLead={updateLeadMutation.mutate}
+                  onUpdatePhases={(phases) => updatePhaseOrderMutation.mutate(phases)}
+                />
+                <Button
+                  variant="outline"
+                  onClick={scanProfile}
+                  disabled={isScanning}
+                  className="flex items-center gap-2"
+                >
+                  <Scan className="h-4 w-4" />
+                  {isScanning 
+                    ? (settings?.language === "en" ? "Scanning..." : "Scannt...")
+                    : (settings?.language === "en" ? "Scan Profile" : "Profil scannen")}
+                </Button>
+              </div>
               
               <div className="space-y-4">
                 <div className="flex items-center gap-2">

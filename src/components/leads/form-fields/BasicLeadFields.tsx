@@ -2,13 +2,13 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { Globe, Building2, Phone, Mail, Briefcase, UserCircle2, User, ListTodo } from "lucide-react";
+import { Globe, Building2, Phone, Mail, Briefcase, User, ListTodo } from "lucide-react";
 import * as z from "zod";
 import { formSchema } from "../AddLeadFormFields";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ContactTypeField } from "./ContactTypeField";
-import { platforms, type Platform, platformsConfig } from "@/config/platforms";
+import { platforms, getPlatformIcon } from "@/config/platforms";
 
 interface BasicLeadFieldsProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
@@ -115,7 +115,7 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
             render={({ field }) => (
               <FormItem className="flex-1">
                 <FormLabel className="flex items-center gap-2">
-                  <UserCircle2 className="h-4 w-4" />
+                  <User className="h-4 w-4" />
                   Benutzername
                 </FormLabel>
                 <FormControl>
@@ -127,8 +127,6 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
           />
         )}
       </div>
-
-      <ContactTypeField form={form} />
 
       <FormField
         control={form.control}

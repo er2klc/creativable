@@ -17,7 +17,7 @@ import {
 import { Form } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { AddLeadFormFields, formSchema } from "./AddLeadFormFields";
-import { generateSocialMediaUrl } from "./form-fields/SocialMediaFields";
+import { generateSocialMediaUrl } from "@/config/platforms";
 import * as z from "zod";
 
 interface AddLeadDialogProps {
