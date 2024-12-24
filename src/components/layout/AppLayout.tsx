@@ -42,12 +42,6 @@ const DashboardSidebar = () => {
         <SidebarGroup>
           <div className="flex items-center justify-between px-4 py-2">
             <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-            <button
-              className="p-1 hover:bg-sidebar-accent rounded-md transition-colors text-sidebar-foreground group-data-[collapsible=icon]:opacity-100"
-              onClick={toggleSidebar}
-            >
-              <Icon className="h-4 w-4" />
-            </button>
           </div>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -77,10 +71,22 @@ interface AppLayoutProps {
 }
 
 export const AppLayout = ({ children }: AppLayoutProps) => {
+  const { toggleSidebar, state } = useSidebar();
+  const Icon = state === "collapsed" ? PanelLeft : PanelLeftClose;
+
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full bg-background relative">
         <DashboardSidebar />
+        <button
+          onClick={toggleSidebar}
+          className="absolute left-0 top-2 z-50 p-2 bg-sidebar hover:bg-sidebar-accent rounded-r-md transition-all duration-200 text-sidebar-foreground"
+          style={{
+            transform: state === "collapsed" ? "translateX(0)" : "translateX(var(--sidebar-width))",
+          }}
+        >
+          <Icon className="h-4 w-4" />
+        </button>
         <main className="flex-1 p-8">
           <div className="max-w-7xl mx-auto">
             {children}
