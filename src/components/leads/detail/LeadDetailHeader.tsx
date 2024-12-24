@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Send, User, Users, UserCheck } from "lucide-react";
+import { Send, User, Users, UserCheck, Contact } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
@@ -61,18 +61,18 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
       </div>
 
       {/* Name Tab */}
-      <div className="absolute left-4 sm:left-8 top-8">
-        <div className="relative">
-          <div className="px-4 sm:px-6 py-2 sm:py-3 rounded-t-lg">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-gray-600" />
-              <input
-                value={lead?.name || ""}
-                onChange={(e) => onUpdateLead({ name: e.target.value })}
-                className="bg-transparent border-none hover:bg-gray-100/50 transition-colors px-2 rounded w-full max-w-[150px] sm:max-w-md text-base sm:text-lg font-semibold focus:outline-none placeholder:text-gray-400 text-gray-800"
-                placeholder={settings?.language === "en" ? "Contact name" : "Kontaktname"}
-              />
-            </div>
+      <div className="absolute left-4 sm:left-8 top-4">
+        <div
+          className="px-3 sm:px-6 py-2 sm:py-3 rounded-t-lg bg-white/80 text-gray-600 hover:bg-gray-50/80 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Contact className="h-4 w-4 stroke-[1.5]" />
+            <input
+              value={lead?.name || ""}
+              onChange={(e) => onUpdateLead({ name: e.target.value })}
+              className="bg-transparent border-none hover:bg-gray-100/50 transition-colors px-2 rounded w-full max-w-[150px] sm:max-w-md text-base sm:text-lg font-semibold focus:outline-none placeholder:text-gray-400 text-gray-800"
+              placeholder={settings?.language === "en" ? "Contact name" : "Kontaktname"}
+            />
           </div>
         </div>
       </div>

@@ -104,14 +104,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg overflow-hidden">
-        <button
-          onClick={() => onClose()}
-          className="absolute right-4 top-4 z-50 p-2 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-          </svg>
-        </button>
         <DialogHeader className="p-0">
           {lead && (
             <LeadDetailHeader
