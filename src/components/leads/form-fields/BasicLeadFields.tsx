@@ -42,7 +42,7 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
                 {platformsConfig.map((platform) => (
                   <SelectItem key={platform.name} value={platform.name}>
                     <div className="flex items-center gap-2">
-                      <platform.icon className="h-4 w-4" />
+                      <platform.icon className="h-4 w-4 text-gray-900" />
                       {platform.name}
                     </div>
                   </SelectItem>
@@ -83,6 +83,62 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
             <FormLabel>Phase 📊</FormLabel>
             <FormControl>
               <Input placeholder="Phase des Kontakts" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="email"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>E-Mail 📧</FormLabel>
+            <FormControl>
+              <Input type="email" placeholder="E-Mail-Adresse" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="phone_number"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Telefonnummer 📞</FormLabel>
+            <FormControl>
+              <Input placeholder="Telefonnummer" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="company_name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Firmenname 🏢</FormLabel>
+            <FormControl>
+              <Input placeholder="Name der Firma" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="industry"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Branche 🏭</FormLabel>
+            <FormControl>
+              <Input placeholder="Branche" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
