@@ -34,13 +34,15 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (over && active.id !== over.id) {
-      const leadId = active.id as string;
-      const targetPhase = phases.find(phase => phase.id === over.id);
-      
-      if (targetPhase) {
-        updateLeadPhase.mutate({ leadId, phaseName: targetPhase.name });
-      }
+    if (!over || !active) return;
+
+    const leadId = active.id as string;
+    const targetPhaseId = over.id as string;
+    const targetPhase = phases.find(phase => phase.id === targetPhaseId);
+    
+    if (targetPhase) {
+      console.log('Updating lead phase:', { leadId, phaseName: targetPhase.name });
+      updateLeadPhase.mutate({ leadId, phaseName: targetPhase.name });
     }
   };
 

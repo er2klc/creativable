@@ -29,7 +29,7 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
         </div>
       </div>
       <SortableContext items={leads.map((l) => l.id)} strategy={rectSortingStrategy}>
-        <div className="space-y-2">
+        <div className="space-y-2 min-h-[100px]">
           {leads.map((lead) => (
             <SortableLeadItem
               key={lead.id}
