@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export function InstagramIntegration() {
   const { settings, updateSettings } = useSettings();
@@ -32,7 +33,6 @@ export function InstagramIntegration() {
         return;
       }
 
-      // Nur die grundlegendsten Berechtigungen
       const scope = [
         'email',
         'public_profile'
@@ -54,6 +54,25 @@ export function InstagramIntegration() {
       console.error('Error connecting to Instagram:', error);
       toast({
         title: "Fehler bei der Instagram-Verbindung",
+        description: "Bitte versuchen Sie es später erneut",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const disconnectInstagram = async () => {
+    try {
+      await updateSettings('instagram_auth_token', null);
+      await updateSettings('instagram_connected', false);
+      
+      toast({
+        title: "Instagram getrennt",
+        description: "Ihre Instagram-Verbindung wurde erfolgreich getrennt",
+      });
+    } catch (error) {
+      console.error('Error disconnecting from Instagram:', error);
+      toast({
+        title: "Fehler beim Trennen",
         description: "Bitte versuchen Sie es später erneut",
         variant: "destructive",
       });
@@ -96,59 +115,128 @@ export function InstagramIntegration() {
             <XCircle className="h-5 w-5 text-red-500" />
           )}
         </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant={isConnected ? "outline" : "default"}>
-              {isConnected ? "Einstellungen" : "Verbinden"}
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Instagram Integration Einrichten</DialogTitle>
-              <DialogDescription>
-                Geben Sie Ihre Instagram API Zugangsdaten ein:
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleUpdateCredentials} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="instagram_app_id">Instagram App ID</Label>
-                <Input
-                  id="instagram_app_id"
-                  name="instagram_app_id"
-                  defaultValue={settings?.instagram_app_id || ''}
-                  placeholder="123456789..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="instagram_app_secret">Instagram App Secret</Label>
-                <Input
-                  id="instagram_app_secret"
-                  name="instagram_app_secret"
-                  type="password"
-                  defaultValue={settings?.instagram_app_secret || ''}
-                  placeholder="abc123..."
-                />
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-medium">Redirect URI</h4>
-                <code className="block p-2 bg-muted rounded-md text-sm">
-                  {redirectUri}
-                </code>
-                <p className="text-sm text-muted-foreground">
-                  Fügen Sie diese URI zu Ihrer Meta App hinzu
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button type="submit" className="flex-1">
-                  Zugangsdaten Speichern
-                </Button>
-                <Button type="button" onClick={connectInstagram} className="flex-1">
-                  Mit Instagram verbinden
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        {isConnected ? (
+          <div className="flex gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">Einstellungen</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Instagram Integration Einrichten</DialogTitle>
+                  <DialogDescription>
+                    Geben Sie Ihre Instagram API Zugangsdaten ein:
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleUpdateCredentials} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="instagram_app_id">Instagram App ID</Label>
+                    <Input
+                      id="instagram_app_id"
+                      name="instagram_app_id"
+                      defaultValue={settings?.instagram_app_id || ''}
+                      placeholder="123456789..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="instagram_app_secret">Instagram App Secret</Label>
+                    <Input
+                      id="instagram_app_secret"
+                      name="instagram_app_secret"
+                      type="password"
+                      defaultValue={settings?.instagram_app_secret || ''}
+                      placeholder="abc123..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Redirect URI</h4>
+                    <code className="block p-2 bg-muted rounded-md text-sm">
+                      {redirectUri}
+                    </code>
+                    <p className="text-sm text-muted-foreground">
+                      Fügen Sie diese URI zu Ihrer Meta App hinzu
+                    </p>
+                  </div>
+                  <Button type="submit" className="w-full">
+                    Zugangsdaten Speichern
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">Trennen</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Instagram-Verbindung trennen?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Sind Sie sicher, dass Sie die Verbindung zu Instagram trennen möchten? 
+                    Sie können sich jederzeit wieder verbinden.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction onClick={disconnectInstagram}>
+                    Trennen
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        ) : (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>Verbinden</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Instagram Integration Einrichten</DialogTitle>
+                <DialogDescription>
+                  Geben Sie Ihre Instagram API Zugangsdaten ein:
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleUpdateCredentials} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="instagram_app_id">Instagram App ID</Label>
+                  <Input
+                    id="instagram_app_id"
+                    name="instagram_app_id"
+                    defaultValue={settings?.instagram_app_id || ''}
+                    placeholder="123456789..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="instagram_app_secret">Instagram App Secret</Label>
+                  <Input
+                    id="instagram_app_secret"
+                    name="instagram_app_secret"
+                    type="password"
+                    defaultValue={settings?.instagram_app_secret || ''}
+                    placeholder="abc123..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-medium">Redirect URI</h4>
+                  <code className="block p-2 bg-muted rounded-md text-sm">
+                    {redirectUri}
+                  </code>
+                  <p className="text-sm text-muted-foreground">
+                    Fügen Sie diese URI zu Ihrer Meta App hinzu
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit" className="flex-1">
+                    Zugangsdaten Speichern
+                  </Button>
+                  <Button type="button" onClick={connectInstagram} className="flex-1">
+                    Mit Instagram verbinden
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
       <p className="text-sm text-muted-foreground">
         Verbinden Sie Ihr Instagram-Konto um Leads automatisch zu kontaktieren und
