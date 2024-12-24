@@ -81,8 +81,8 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
               : "Generiere Zusammenfassung..."}
           </div>
         ) : summary ? (
-          <div className="whitespace-pre-wrap prose prose-sm max-w-none">
-            {summary}
+          <div className="prose prose-sm max-w-none bg-accent/50 p-4 rounded-lg">
+            <div dangerouslySetInnerHTML={{ __html: summary }} />
           </div>
         ) : !hasGenerated ? (
           <div className="text-center text-muted-foreground">

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tables } from "@/integrations/supabase/types";
-import { Globe, Building2, Phone, Mail, Briefcase } from "lucide-react";
+import { Globe, Building2, Phone, Mail, Briefcase, Contact2 } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -41,7 +41,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Contact2 className="h-5 w-5" />
           {settings?.language === "en" ? "Contact Information" : "Kontakt Informationen"}
         </CardTitle>
       </CardHeader>

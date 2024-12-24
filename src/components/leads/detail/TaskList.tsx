@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TaskForm } from "./tasks/TaskForm";
 import { TaskItem } from "./tasks/TaskItem";
+import { ClipboardList } from "lucide-react";
 
 interface TaskListProps {
   leadId: string;
@@ -68,13 +69,14 @@ export function TaskList({ leadId, tasks }: TaskListProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <ClipboardList className="h-5 w-5" />
           {settings?.language === "en" ? "Tasks" : "Aufgaben"} ({incompleteTasks.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
         <TaskForm onSubmit={(data) => addTaskMutation.mutate(data)} />
-        <div className="space-y-2 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
           {tasks.map((task) => (
             <TaskItem
               key={task.id}
