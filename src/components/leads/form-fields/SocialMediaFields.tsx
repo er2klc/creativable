@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLINE"] as const;
-
 export type Platform = typeof platforms[number];
 
 export const generateSocialMediaUrl = (platform: Platform, username: string) => {
