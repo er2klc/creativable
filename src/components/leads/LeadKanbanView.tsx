@@ -31,7 +31,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
   // Use the subscription hook
   useKanbanSubscription();
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
     if (!over || !active) return;
@@ -40,10 +40,14 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     const newPhase = phases.find(phase => phase.id === over.id);
     
     if (newPhase) {
-      updateLeadPhase.mutate({ 
-        leadId, 
-        phaseName: newPhase.name 
-      });
+      try {
+        await updateLeadPhase.mutateAsync({ 
+          leadId, 
+          phaseName: newPhase.name 
+        });
+      } catch (error) {
+        console.error("Error updating lead phase:", error);
+      }
     }
   };
 

@@ -8,6 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { 
   LayoutGrid, 
@@ -15,7 +16,8 @@ import {
   MessageSquare, 
   Calendar, 
   BarChart, 
-  Settings 
+  Settings,
+  ChevronRight,
 } from "lucide-react";
 
 const navigationItems = [
@@ -26,6 +28,8 @@ const navigationItems = [
   { title: "Berichte", icon: BarChart, url: "/reports" },
   { title: "Einstellungen", icon: Settings, url: "/settings" },
 ];
+
+const APP_VERSION = "0.1";
 
 const DashboardSidebar = () => {
   return (
@@ -48,6 +52,9 @@ const DashboardSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        <div className="mt-auto pt-4 px-4 text-sm text-muted-foreground border-t">
+          Version {APP_VERSION}
+        </div>
       </SidebarContent>
     </Sidebar>
   );
@@ -63,6 +70,11 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
       <div className="min-h-screen flex w-full bg-background">
         <DashboardSidebar />
         <main className="flex-1 p-8">
+          <div className="flex items-center mb-4">
+            <SidebarTrigger>
+              <ChevronRight className="h-6 w-6" />
+            </SidebarTrigger>
+          </div>
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

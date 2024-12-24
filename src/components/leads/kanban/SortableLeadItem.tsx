@@ -26,7 +26,14 @@ interface SortableLeadItemProps {
 }
 
 export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({
     id: lead.id,
   });
 
@@ -38,14 +45,21 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     touchAction: 'none',
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    // Only trigger click if we're not dragging
+    if (!isDragging) {
+      onLeadClick(lead.id);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-background p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-      onClick={() => onLeadClick(lead.id)}
+      onClick={handleClick}
+      className="bg-background p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
