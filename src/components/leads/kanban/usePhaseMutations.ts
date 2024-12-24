@@ -30,6 +30,12 @@ export const usePhaseMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast({
+        title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
+        description: settings?.language === "en"
+          ? "Contact phase has been updated successfully"
+          : "Kontaktphase wurde erfolgreich aktualisiert",
+      });
     },
     onError: (error) => {
       console.error("Error updating phase:", error);

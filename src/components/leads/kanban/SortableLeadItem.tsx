@@ -41,7 +41,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    cursor: 'grab',
+    cursor: isDragging ? 'grabbing' : 'grab',
     touchAction: 'none',
   };
 
@@ -59,14 +59,14 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
       {...attributes}
       {...listeners}
       onClick={handleClick}
-      className="bg-background p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-background p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {getPlatformIcon(lead.platform)}
           <span className="font-medium">{lead.name}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <SendMessageDialog
             lead={lead}
             trigger={
@@ -93,6 +93,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
       <div className="text-sm text-muted-foreground mt-2">
         {lead.contact_type || "Nicht festgelegt"}
       </div>
+      <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none" />
     </div>
   );
 };

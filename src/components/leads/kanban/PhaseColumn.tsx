@@ -1,4 +1,5 @@
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
+import { useDroppable } from "@dnd-kit/core";
 import { Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tables } from "@/integrations/supabase/types";
@@ -13,9 +14,13 @@ interface PhaseColumnProps {
 }
 
 export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseColumnProps) => {
+  const { setNodeRef } = useDroppable({
+    id: phase.id,
+  });
+
   return (
     <div 
-      id={phase.id} 
+      ref={setNodeRef}
       className="bg-muted/50 p-4 rounded-lg flex flex-col"
     >
       <div className="mb-4">
