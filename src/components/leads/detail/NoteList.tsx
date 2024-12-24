@@ -19,18 +19,29 @@ export function NoteList({ leadId }: NoteListProps) {
   const [selectedColor, setSelectedColor] = useState("#FEF7CD");
   const queryClient = useQueryClient();
 
-  const { data: notes = [], isLoading } = useQuery({
+  const { data: notes = [], isLoading, error } = useQuery({
     queryKey: ["lead-notes", leadId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("notes")
-        .select("*")
-        .eq("lead_id", leadId)
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("notes")
+          .select("id, content, color, created_at")
+          .eq("lead_id", leadId)
+          .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data as Tables<"notes">[];
+        if (error) {
+          console.error("Error fetching notes:", error);
+          throw error;
+        }
+
+        return data as Tables<"notes">[];
+      } catch (err) {
+        console.error("Failed to fetch notes:", err);
+        throw err;
+      }
     },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const addNoteMutation = useMutation({
@@ -54,6 +65,14 @@ export function NoteList({ leadId }: NoteListProps) {
       setNewNoteContent("");
       toast.success(settings?.language === "en" ? "Note added" : "Notiz hinzugefügt");
     },
+    onError: (error) => {
+      console.error("Failed to add note:", error);
+      toast.error(
+        settings?.language === "en"
+          ? "Failed to add note"
+          : "Fehler beim Hinzufügen der Notiz"
+      );
+    },
   });
 
   const deleteNoteMutation = useMutation({
@@ -71,6 +90,14 @@ export function NoteList({ leadId }: NoteListProps) {
         settings?.language === "en" ? "Note deleted" : "Notiz gelöscht"
       );
     },
+    onError: (error) => {
+      console.error("Failed to delete note:", error);
+      toast.error(
+        settings?.language === "en"
+          ? "Failed to delete note"
+          : "Fehler beim Löschen der Notiz"
+      );
+    },
   });
 
   const handleAddNote = (e: React.FormEvent) => {
@@ -79,6 +106,26 @@ export function NoteList({ leadId }: NoteListProps) {
       addNoteMutation.mutate(newNoteContent);
     }
   };
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <StickyNote className="h-5 w-5" />
+            {settings?.language === "en" ? "Notes" : "Notizen"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-red-500">
+            {settings?.language === "en"
+              ? "Failed to load notes. Please try again later."
+              : "Fehler beim Laden der Notizen. Bitte versuchen Sie es später erneut."}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
