@@ -28,17 +28,24 @@ const InstagramCallback = () => {
           throw new Error("State mismatch. Possible CSRF attack.");
         }
 
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error("No active session");
+        }
+
         // Call our Instagram auth callback function
         const response = await fetch("/api/instagram-auth-callback", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ code }),
         });
 
         if (!response.ok) {
-          throw new Error("Failed to exchange code for access token");
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to exchange code for access token");
         }
 
         toast({
