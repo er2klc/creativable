@@ -8,17 +8,17 @@ import { Tables } from "@/integrations/supabase/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadInfoCard } from "./LeadInfoCard";
-import { TaskList } from "./TaskList";
-import { NoteList } from "./NoteList";
-import { LeadSummary } from "./LeadSummary";
-import { LeadDetailHeader } from "./LeadDetailHeader";
-import { LeadMessages } from "./LeadMessages";
-import { CompactPhaseSelector } from "./CompactPhaseSelector";
+import { LeadInfoCard } from "./detail/LeadInfoCard";
+import { TaskList } from "./detail/TaskList";
+import { NoteList } from "./detail/NoteList";
+import { LeadSummary } from "./detail/LeadSummary";
+import { LeadDetailHeader } from "./detail/LeadDetailHeader";
+import { LeadMessages } from "./detail/LeadMessages";
+import { CompactPhaseSelector } from "./detail/CompactPhaseSelector";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Platform } from "../form-fields/SocialMediaFields";
+import { Platform } from "@/config/platforms";
 
 interface LeadDetailViewProps {
   leadId: string | null;
