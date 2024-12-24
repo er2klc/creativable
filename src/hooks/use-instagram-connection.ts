@@ -23,7 +23,7 @@ export function useInstagramConnection() {
       
       // Update settings to match platform_auth_status
       if (settings?.instagram_connected !== isConnected) {
-        await updateSettings('instagram_connected', isConnected);
+        await updateSettings('instagram_connected', isConnected ? 'true' : 'false');
       }
       
       return isConnected;
@@ -99,7 +99,7 @@ export function useInstagramConnection() {
       if (statusError) throw statusError;
 
       // Update settings
-      await updateSettings('instagram_connected', false);
+      await updateSettings('instagram_connected', 'false');
       await refetchSettings();
       
       toast({
@@ -120,6 +120,6 @@ export function useInstagramConnection() {
     checkConnectionStatus,
     connectInstagram,
     disconnectInstagram,
-    isConnected: settings?.instagram_connected === true
+    isConnected: settings?.instagram_connected === 'true'
   };
 }
