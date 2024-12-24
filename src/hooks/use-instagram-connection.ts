@@ -38,16 +38,16 @@ export function useInstagramConnection() {
       console.log('Starting Instagram connection process...');
 
       const scope = [
-        'instagram_business_basic',
-        'instagram_business_manage_messages',
-        'instagram_business_manage_comments',
-        'instagram_business_content_publish'
+        'instagram_basic',
+        'instagram_content_publish',
+        'instagram_manage_comments',
+        'instagram_manage_messages',
+        'pages_show_list'
       ].join(',');
 
       const state = crypto.randomUUID();
       localStorage.setItem('instagram_oauth_state', state);
 
-      // Verwende die aktuelle Domain für die Redirect-URI
       const redirectUri = `${window.location.origin}/auth/callback/instagram`;
       console.log('Using redirect URI:', redirectUri);
 
@@ -62,7 +62,7 @@ export function useInstagramConnection() {
       });
 
       console.log('Redirecting to Instagram auth URL...');
-      window.location.href = `https://www.instagram.com/oauth/authorize?${params.toString()}`;
+      window.location.href = `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`;
     } catch (error) {
       console.error('Error connecting to Instagram:', error);
       toast({
@@ -110,9 +110,9 @@ export function useInstagramConnection() {
   };
 
   return {
-  checkConnectionStatus,
-  connectInstagram,
-  disconnectInstagram,
-  isConnected: settings?.instagram_connected === 'true'
+    checkConnectionStatus,
+    connectInstagram,
+    disconnectInstagram,
+    isConnected: settings?.instagram_connected === 'true'
   };
 }
