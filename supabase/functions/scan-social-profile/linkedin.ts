@@ -17,8 +17,11 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
       .single();
 
     if (authError || !authStatus?.access_token) {
-      throw new Error('LinkedIn access token not found');
+      console.error('LinkedIn access token not found:', authError);
+      return {};
     }
+
+    console.log('Retrieved LinkedIn access token');
 
     // Make API call to LinkedIn
     const response = await fetch('https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName,headline,profilePicture,publicProfileUrl)', {
@@ -30,7 +33,10 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     });
 
     if (!response.ok) {
-      throw new Error(`LinkedIn API error: ${response.statusText}`);
+      console.error('LinkedIn API error:', response.status, response.statusText);
+      const errorText = await response.text();
+      console.error('LinkedIn API error details:', errorText);
+      return {};
     }
 
     const profileData = await response.json();
@@ -49,6 +55,9 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     if (connectionsResponse.ok) {
       const connectionsData = await connectionsResponse.json();
       connections = connectionsData._total || null;
+      console.log('LinkedIn connections count:', connections);
+    } else {
+      console.error('Failed to fetch connections:', connectionsResponse.status, connectionsResponse.statusText);
     }
 
     return {

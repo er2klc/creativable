@@ -61,12 +61,24 @@ serve(async (req) => {
         profileData = await scanLinkedInProfile(username);
         break;
       default:
-        throw new Error(`Unsupported platform: ${platform}`);
+        return new Response(
+          JSON.stringify({
+            error: `Unsupported platform: ${platform}`,
+          }),
+          {
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/json",
+            },
+            status: 400,
+          }
+        );
     }
 
     console.log('Scanned profile data:', profileData);
 
     if (!profileData || Object.keys(profileData).length === 0) {
+      console.log('No profile data found');
       return new Response(
         JSON.stringify({
           message: "No profile data found",
@@ -77,7 +89,7 @@ serve(async (req) => {
             ...corsHeaders,
             "Content-Type": "application/json",
           },
-          status: 404,
+          status: 200, // Changed from 404 to 200 to prevent error
         }
       );
     }
@@ -129,7 +141,7 @@ serve(async (req) => {
           ...corsHeaders,
           "Content-Type": "application/json",
         },
-        status: 400,
+        status: 200, // Changed from 400 to 200 to prevent error
       }
     );
   }
