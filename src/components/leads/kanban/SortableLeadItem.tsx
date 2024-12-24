@@ -67,19 +67,26 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
           isDragging ? 'shadow-lg ring-2 ring-primary cursor-grabbing scale-105' : 'cursor-grab'
         }`}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {getPlatformIcon(lead.platform)}
-            <span className="font-medium">{lead.name}</span>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {getPlatformIcon(lead.platform)}
+              <span className="font-medium">{lead.name}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          
+          <div className="text-sm text-muted-foreground">
+            {lead.contact_type || "Nicht festgelegt"}
+          </div>
+
+          <div className="grid grid-cols-4 gap-1">
             <SendMessageDialog
               lead={lead}
               trigger={
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
+                  size="sm"
+                  className="w-full h-8 hover:bg-accent/50"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Send className="h-4 w-4" />
@@ -88,8 +95,8 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
             />
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8"
+              size="sm"
+              className="w-full h-8 hover:bg-accent/50"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditDialogOpen(true);
@@ -99,16 +106,14 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
             </Button>
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8"
+              size="sm"
+              className="w-full h-8 hover:bg-accent/50"
               onClick={(e) => e.stopPropagation()}
             >
               <Star className="h-4 w-4" />
             </Button>
+            <div className="w-full h-8 rounded-md border border-dashed border-muted-foreground/20" />
           </div>
-        </div>
-        <div className="text-sm text-muted-foreground mt-2">
-          {lead.contact_type || "Nicht festgelegt"}
         </div>
         <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none" />
       </div>
