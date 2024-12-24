@@ -91,6 +91,9 @@ export function useLinkedInConnection() {
 
       if (settingsError) throw settingsError;
 
+      // Clear any stored tokens in localStorage
+      localStorage.removeItem("linkedin_oauth_state");
+
       await refetchSettings();
 
       toast({
@@ -98,11 +101,41 @@ export function useLinkedInConnection() {
         description: "LinkedIn Verbindung erfolgreich getrennt",
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error disconnecting LinkedIn:", error);
+      
+      // Handle specific token refresh errors
+      if (error.message?.includes('refresh_token_not_found')) {
+        // If refresh token is not found, force disconnect
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase
+              .from('platform_auth_status')
+              .update({
+                is_connected: false,
+                access_token: null,
+                expires_at: null,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', user.id)
+              .eq('platform', 'linkedin');
+
+            await supabase
+              .from('settings')
+              .update({ linkedin_connected: false })
+              .eq('user_id', user.id);
+
+            await refetchSettings();
+          }
+        } catch (cleanupError) {
+          console.error("Error during forced disconnect:", cleanupError);
+        }
+      }
+
       toast({
         title: "Fehler ❌",
-        description: "Fehler beim Trennen der LinkedIn Verbindung",
+        description: "Fehler beim Trennen der LinkedIn Verbindung. Bitte versuchen Sie es erneut.",
         variant: "destructive",
       });
     }
