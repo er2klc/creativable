@@ -18,7 +18,12 @@ const InstagramCallback = () => {
         const error = params.get("error");
         const storedState = localStorage.getItem("instagram_oauth_state");
 
-        console.log('Received params:', { code: code ? 'present' : 'missing', state, error });
+        console.log('Received params:', { 
+          code: code ? 'present' : 'missing', 
+          state, 
+          error,
+          storedState 
+        });
 
         if (error) {
           throw new Error(params.get("error_description") || "Authentication failed");
@@ -74,12 +79,13 @@ const InstagramCallback = () => {
 
         if (settingsError) throw settingsError;
 
+        localStorage.removeItem("instagram_oauth_state");
+
         toast({
           title: "Instagram erfolgreich verbunden",
           description: "Ihre Instagram-Integration wurde erfolgreich eingerichtet.",
         });
 
-        localStorage.removeItem("instagram_oauth_state");
         navigate("/settings");
       } catch (error) {
         console.error("Instagram auth callback error:", error);

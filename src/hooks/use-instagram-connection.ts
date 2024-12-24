@@ -50,8 +50,12 @@ export function useInstagramConnection() {
       const redirectUri = `${window.location.origin}/auth/callback/instagram`;
       console.log('Using redirect URI:', redirectUri);
 
+      // Use the app ID from settings, or fall back to the default one
+      const appId = settings?.instagram_app_id || '920151696914782';
+      console.log('Using Instagram App ID:', appId);
+
       const params = new URLSearchParams({
-        client_id: settings?.instagram_app_id || '1315021952869619',
+        client_id: appId,
         redirect_uri: redirectUri,
         response_type: 'code',
         scope: scope,
@@ -60,8 +64,10 @@ export function useInstagramConnection() {
         force_authentication: '1'
       });
 
-      console.log('Redirecting to Instagram auth URL with params:', Object.fromEntries(params));
-      window.location.href = `https://www.instagram.com/oauth/authorize?${params.toString()}`;
+      const authUrl = `https://www.instagram.com/oauth/authorize?${params.toString()}`;
+      console.log('Redirecting to Instagram auth URL:', authUrl);
+      
+      window.location.href = authUrl;
     } catch (error) {
       console.error('Error connecting to Instagram:', error);
       toast({
