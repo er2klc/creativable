@@ -59,9 +59,7 @@ const InstagramCallback = () => {
             is_connected: true,
             access_token: response.access_token,
             updated_at: new Date().toISOString()
-          })
-          .eq('user_id', user.id)
-          .eq('platform', 'instagram');
+          });
 
         if (statusError) throw statusError;
 
