@@ -8,7 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { 
   LayoutGrid, 
@@ -17,7 +17,8 @@ import {
   Calendar, 
   BarChart, 
   Settings,
-  ChevronRight,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react";
 
 const navigationItems = [
@@ -32,6 +33,9 @@ const navigationItems = [
 const APP_VERSION = "0.1";
 
 const DashboardSidebar = () => {
+  const { toggleSidebar, state } = useSidebar();
+  const Icon = state === "collapsed" ? PanelLeft : PanelLeftClose;
+  
   return (
     <Sidebar>
       <SidebarContent>
@@ -39,10 +43,10 @@ const DashboardSidebar = () => {
           <div className="flex items-center justify-between px-4 py-2">
             <SidebarGroupLabel>Navigation</SidebarGroupLabel>
             <button
-              className="p-1 hover:bg-accent rounded-md transition-colors"
-              onClick={() => document.querySelector('[data-sidebar="trigger"]')?.click()}
+              className="p-1 hover:bg-accent rounded-md transition-colors text-sidebar-foreground"
+              onClick={toggleSidebar}
             >
-              <ChevronRight className="h-4 w-4" />
+              <Icon className="h-4 w-4" />
             </button>
           </div>
           <SidebarGroupContent>
