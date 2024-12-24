@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLINE"] as const;
-export type Platform = typeof platforms[number];
 
-export const generateSocialMediaUrl = (platform: Platform, username: string): string => {
-  if (!username) return '';
-  // Remove any existing URL parts from the username
+export type Platform = "Instagram" | "LinkedIn" | "Facebook" | "TikTok" | "OFFLINE";
+
+export const generateSocialMediaUrl = (platform: Platform, username: string) => {
+  // Clean the username first
   const cleanUsername = username.replace(/^https?:\/\/[^\/]+\//, '').replace(/^@/, '');
   
   switch (platform) {
@@ -24,8 +24,8 @@ export const generateSocialMediaUrl = (platform: Platform, username: string): st
       return `https://www.facebook.com/${cleanUsername}`;
     case "TikTok":
       return `https://www.tiktok.com/@${cleanUsername}`;
-    case "OFFLINE":
-      return '';
+    default:
+      return username;
   }
 };
 
