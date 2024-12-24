@@ -11,6 +11,7 @@ export function useInstagramConnection() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
 
+      // Check both platform_auth_status and settings tables
       const { data: platformAuth } = await supabase
         .from('platform_auth_status')
         .select('is_connected, access_token')
@@ -20,13 +21,13 @@ export function useInstagramConnection() {
 
       console.log('Platform auth status:', platformAuth);
       
-      if (platformAuth?.is_connected && platformAuth?.access_token) {
-        await updateSettings('instagram_connected', 'true');
-        return true;
-      } else {
-        await updateSettings('instagram_connected', 'false');
-        return false;
-      }
+      // Only consider connected if we have both is_connected true and a valid access_token
+      const isConnected = platformAuth?.is_connected === true && !!platformAuth?.access_token;
+      
+      // Update settings to match platform_auth_status
+      await updateSettings('instagram_connected', isConnected ? 'true' : 'false');
+      
+      return isConnected;
     } catch (error) {
       console.error('Error checking connection status:', error);
       return false;
@@ -38,13 +39,10 @@ export function useInstagramConnection() {
       console.log('Starting Instagram connection process...');
 
       const scope = [
-        'instagram_basic',
-        'instagram_content_publish',
-        'instagram_manage_comments',
-        'instagram_manage_insights',
-        'pages_show_list',
-        'pages_read_engagement',
-        'business_management'
+        'instagram_business_basic',
+        'instagram_business_manage_messages',
+        'instagram_business_manage_comments',
+        'instagram_business_content_publish'
       ].join(',');
 
       const state = crypto.randomUUID();
@@ -53,12 +51,8 @@ export function useInstagramConnection() {
       const redirectUri = `${window.location.origin}/auth/callback/instagram`;
       console.log('Using redirect URI:', redirectUri);
 
-      // Use the app ID from settings, or fall back to the default one
-      const appId = settings?.instagram_app_id || '920151696914782';
-      console.log('Using Instagram App ID:', appId);
-
       const params = new URLSearchParams({
-        client_id: appId,
+        client_id: '1315021952869619', // Using the new App ID
         redirect_uri: redirectUri,
         response_type: 'code',
         scope: scope,
@@ -88,6 +82,7 @@ export function useInstagramConnection() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Kein Benutzer gefunden');
 
+      // Update platform_auth_status
       const { error: statusError } = await supabase
         .from('platform_auth_status')
         .update({
@@ -100,6 +95,7 @@ export function useInstagramConnection() {
 
       if (statusError) throw statusError;
 
+      // Update settings
       await updateSettings('instagram_connected', 'false');
       await refetchSettings();
       

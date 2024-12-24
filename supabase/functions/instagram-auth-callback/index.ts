@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { code } = await req.json();
+    const { code, redirectUri } = await req.json();
     
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -30,28 +30,19 @@ serve(async (req) => {
       throw new Error('User not found');
     }
 
-    // Get user's Instagram credentials
-    const { data: settings } = await supabase
-      .from('settings')
-      .select('instagram_app_id, instagram_app_secret')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!settings?.instagram_app_id || !settings?.instagram_app_secret) {
-      throw new Error('Instagram credentials not found');
-    }
+    console.log('Exchanging code for access token...');
 
     // Exchange code for access token
-    const tokenResponse = await fetch('https://api.facebook.com/v18.0/oauth/access_token', {
-      method: 'GET',
+    const tokenResponse = await fetch('https://api.instagram.com/oauth/access_token', {
+      method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify({
-        client_id: settings.instagram_app_id,
-        client_secret: settings.instagram_app_secret,
+      body: new URLSearchParams({
+        client_id: '1315021952869619',
+        client_secret: Deno.env.get('INSTAGRAM_APP_SECRET') || '',
         grant_type: 'authorization_code',
-        redirect_uri: `${req.headers.get('origin')}/auth/callback/instagram`,
+        redirect_uri: redirectUri,
         code,
       }),
     });
@@ -69,22 +60,7 @@ serve(async (req) => {
       throw new Error('No access token received');
     }
 
-    // Update settings with Instagram token and connection status
-    const { error: updateError } = await supabase
-      .from('settings')
-      .update({
-        instagram_auth_token: tokenData.access_token,
-        instagram_connected: true,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', user.id);
-
-    if (updateError) {
-      console.error('Error updating settings:', updateError);
-      throw new Error('Failed to update settings');
-    }
-
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify(tokenData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
