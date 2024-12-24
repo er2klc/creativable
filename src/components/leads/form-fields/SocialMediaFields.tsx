@@ -1,42 +1,18 @@
-import { UseFormReturn } from "react-hook-form";
-import * as z from "zod";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Instagram, Linkedin, Facebook, Video, Users, ExternalLink, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ExternalLink, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { platformsConfig, Platform, generateSocialMediaUrl } from "@/config/platforms";
+import { UseFormReturn } from "react-hook-form";
+import * as z from "zod";
 
-export const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "Offline"] as const;
-export type Platform = typeof platforms[number];
-
-export const generateSocialMediaUrl = (platform: Platform, username: string) => {
-  if (platform === "Offline") return username;
-  
-  // Clean the username first
-  const cleanUsername = username.replace(/^https?:\/\/[^\/]+\//, '').replace(/^@/, '');
-  
-  switch (platform) {
-    case "Instagram":
-      return `https://www.instagram.com/${cleanUsername}`;
-    case "LinkedIn":
-      return `https://www.linkedin.com/in/${cleanUsername}`;
-    case "Facebook":
-      return `https://www.facebook.com/${cleanUsername}`;
-    case "TikTok":
-      return `https://www.tiktok.com/@${cleanUsername}`;
-    default:
-      return username;
-  }
-};
-
-interface SocialMediaFieldsProps {
-  form: UseFormReturn<z.infer<typeof formSchema>>;
-}
+export { Platform, platforms, generateSocialMediaUrl } from "@/config/platforms";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich 📝"),
-  platform: z.enum(platforms),
+  platform: z.enum(platformsConfig.map(p => p.name)),
   socialMediaUsername: z.string().min(1, "Benutzername ist erforderlich 📱"),
   phase: z.string().min(1, "Phase ist erforderlich 📊"),
   contact_type: z.string().nullable(),
@@ -47,22 +23,9 @@ const formSchema = z.object({
   industry: z.string().optional().nullable(),
 });
 
-const getPlatformIcon = (platform: Platform) => {
-  switch (platform) {
-    case "Instagram":
-      return <Instagram className="h-4 w-4 mr-2" />;
-    case "LinkedIn":
-      return <Linkedin className="h-4 w-4 mr-2" />;
-    case "Facebook":
-      return <Facebook className="h-4 w-4 mr-2" />;
-    case "TikTok":
-      return <Video className="h-4 w-4 mr-2" />;
-    case "Offline":
-      return <Users className="h-4 w-4 mr-2" />;
-    default:
-      return null;
-  }
-};
+interface SocialMediaFieldsProps {
+  form: UseFormReturn<z.infer<typeof formSchema>>;
+}
 
 export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
   const platform = form.watch("platform");
@@ -84,11 +47,11 @@ export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {platforms.map((platform) => (
-                  <SelectItem key={platform} value={platform}>
+                {platformsConfig.map((config) => (
+                  <SelectItem key={config.name} value={config.name}>
                     <div className="flex items-center">
-                      {getPlatformIcon(platform)}
-                      {platform}
+                      <config.icon className="h-4 w-4 mr-2" />
+                      {config.name}
                     </div>
                   </SelectItem>
                 ))}
@@ -117,7 +80,7 @@ export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
                     }}
                   />
                 </FormControl>
-                {username && profileUrl && platform !== "Offline" && (
+                {username && platform !== "Offline" && (
                   <Button
                     variant="ghost"
                     size="icon"

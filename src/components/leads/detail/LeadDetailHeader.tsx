@@ -2,12 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Tables } from "@/integrations/supabase/types";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { useSettings } from "@/hooks/use-settings";
-import { MessageSquare, Scan, ExternalLink, Instagram, Linkedin, Facebook, Video, Users, Check, AlertTriangle } from "lucide-react";
+import { MessageSquare, Scan, ExternalLink, Check, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { generateSocialMediaUrl, Platform } from "../form-fields/SocialMediaFields";
+import { Platform, getPlatformConfig, generateSocialMediaUrl } from "@/config/platforms";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface LeadDetailHeaderProps {
@@ -21,6 +21,7 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
   const { settings } = useSettings();
   const [isScanning, setIsScanning] = useState(false);
   const currentTypes = lead.contact_type?.split(',').filter(Boolean) || [];
+  const platformConfig = getPlatformConfig(lead.platform);
 
   const handleContactTypeChange = (type: string, checked: boolean) => {
     const types = new Set(currentTypes);
@@ -31,21 +32,6 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
     }
     const newValue = Array.from(types).join(',');
     onUpdateLead({ contact_type: newValue || null });
-  };
-
-  const getPlatformIcon = (platform: Platform) => {
-    switch (platform) {
-      case "Instagram":
-        return <Instagram className="h-4 w-4" />;
-      case "LinkedIn":
-        return <Linkedin className="h-4 w-4" />;
-      case "Facebook":
-        return <Facebook className="h-4 w-4" />;
-      case "TikTok":
-        return <Video className="h-4 w-4" />;
-      case "Offline":
-        return <Users className="h-4 w-4" />;
-    }
   };
 
   const scanProfile = async () => {
@@ -79,7 +65,6 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
     }
   };
 
-  // Clean up the username for display
   const displayUsername = lead.social_media_username?.replace(/^https?:\/\/[^\/]+\//, '');
   const profileUrl = generateSocialMediaUrl(lead.platform, lead.social_media_username || '');
 
@@ -90,7 +75,7 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
           <div>
             <h2 className="text-2xl font-semibold">{lead.name}</h2>
             <div className="flex items-center gap-2 mt-1">
-              {getPlatformIcon(lead.platform)}
+              <platformConfig.icon className="h-4 w-4" />
               <span className="text-sm text-muted-foreground">{lead.platform}</span>
               {lead.platform !== "Offline" && (
                 <>
