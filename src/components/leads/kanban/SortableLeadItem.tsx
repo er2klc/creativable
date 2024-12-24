@@ -49,20 +49,10 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     opacity: isDragging ? 0.9 : 1,
   };
 
-  const handleClick = (e: React.MouseEvent) => {
-    if (!isDragging) {
-      onLeadClick(lead.id);
-    }
-  };
-
-  const handleButtonClick = (e: React.MouseEvent) => {
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    // Remove the drag listeners when clicking buttons
-    if (listeners) {
-      Object.keys(listeners).forEach(key => {
-        delete (listeners as any)[key];
-      });
-    }
+    setIsEditDialogOpen(true);
   };
 
   return (
@@ -72,7 +62,6 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
         style={style}
         {...attributes}
         {...listeners}
-        onClick={handleClick}
         className={`bg-background p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 group ${
           isDragging ? 'shadow-lg ring-2 ring-primary cursor-grabbing scale-105' : 'cursor-grab'
         }`}
@@ -90,38 +79,16 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
           </div>
 
           <div className="grid grid-cols-4 gap-1">
-            <SendMessageDialog
-              lead={lead}
-              trigger={
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full h-8 hover:bg-accent/50"
-                  onClick={handleButtonClick}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              }
-            />
             <Button
               variant="ghost"
               size="sm"
               className="w-full h-8 hover:bg-accent/50"
-              onClick={(e) => {
-                handleButtonClick(e);
-                setIsEditDialogOpen(true);
-              }}
+              onClick={handleEditClick}
             >
               <Pencil className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full h-8 hover:bg-accent/50"
-              onClick={handleButtonClick}
-            >
-              <Star className="h-4 w-4" />
-            </Button>
+            <div className="w-full h-8 rounded-md border border-dashed border-muted-foreground/20" />
+            <div className="w-full h-8 rounded-md border border-dashed border-muted-foreground/20" />
             <div className="w-full h-8 rounded-md border border-dashed border-muted-foreground/20" />
           </div>
         </div>
