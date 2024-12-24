@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
-import { Bot, Calendar, Building2, MessageSquare, ListTodo, User } from "lucide-react";
+import { Bot, Calendar, Building2, MessageSquare, ListTodo, User, Users, Image, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,6 +56,78 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     setHasGenerated(false);
   }, [lead.id]);
 
+  const renderSocialMediaStats = () => {
+    if (!lead.social_media_posts) return null;
+
+    const stats = lead.social_media_posts as any;
+    return (
+      <div className="space-y-4 mb-6">
+        <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="h-5 w-5 text-blue-500" />
+            <h3 className="font-semibold text-lg">
+              {settings?.language === "en" ? "Social Media Stats" : "Social Media Statistiken"}
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 gap-4 ml-7">
+            {stats.followers !== undefined && (
+              <div>
+                <span className="text-sm text-gray-500">
+                  {settings?.language === "en" ? "Followers" : "Follower"}
+                </span>
+                <p className="font-medium">{stats.followers}</p>
+              </div>
+            )}
+            {stats.following !== undefined && (
+              <div>
+                <span className="text-sm text-gray-500">
+                  {settings?.language === "en" ? "Following" : "Folgt"}
+                </span>
+                <p className="font-medium">{stats.following}</p>
+              </div>
+            )}
+            {stats.posts !== undefined && (
+              <div>
+                <span className="text-sm text-gray-500">
+                  {settings?.language === "en" ? "Posts" : "Beiträge"}
+                </span>
+                <p className="font-medium">{stats.posts}</p>
+              </div>
+            )}
+            {stats.connections !== undefined && (
+              <div>
+                <span className="text-sm text-gray-500">
+                  {settings?.language === "en" ? "Connections" : "Verbindungen"}
+                </span>
+                <p className="font-medium">{stats.connections}</p>
+              </div>
+            )}
+            {stats.headline && (
+              <div className="col-span-2">
+                <span className="text-sm text-gray-500">
+                  {settings?.language === "en" ? "Headline" : "Headline"}
+                </span>
+                <p className="font-medium">{stats.headline}</p>
+              </div>
+            )}
+            {stats.isPrivate !== undefined && (
+              <div className="col-span-2">
+                <span className="text-sm text-gray-500">
+                  {settings?.language === "en" ? "Account Type" : "Konto-Typ"}
+                </span>
+                <p className="font-medium">
+                  {stats.isPrivate ? 
+                    (settings?.language === "en" ? "Private Account" : "Privates Konto") : 
+                    (settings?.language === "en" ? "Public Account" : "Öffentliches Konto")}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const formatSummary = (text: string) => {
     const sections = text.split('**').filter(Boolean);
     return sections.map((section, index) => {
@@ -96,52 +168,10 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     });
   };
 
-  // Display social media information if available
-  const renderSocialMediaInfo = () => {
-    if (!lead.social_media_bio && !lead.social_media_interests?.length) return null;
-
-    return (
-      <div className="space-y-4 mb-6">
-        {lead.social_media_bio && (
-          <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <User className="h-5 w-5 text-indigo-500" />
-              <h3 className="font-semibold text-lg">
-                {settings?.language === "en" ? "Profile Bio" : "Profil Bio"}
-              </h3>
-            </div>
-            <p className="text-gray-700 ml-7 leading-relaxed">{lead.social_media_bio}</p>
-          </div>
-        )}
-        
-        {lead.social_media_interests?.length > 0 && (
-          <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <MessageSquare className="h-5 w-5 text-pink-500" />
-              <h3 className="font-semibold text-lg">
-                {settings?.language === "en" ? "Interests" : "Interessen"}
-              </h3>
-            </div>
-            <div className="ml-7 flex flex-wrap gap-2">
-              {lead.social_media_interests.map((interest, index) => (
-                <span
-                  key={index}
-                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
-                >
-                  {interest}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <Card className="overflow-hidden bg-gradient-to-b from-white to-gray-50">
       <CardContent className="pt-6">
-        {renderSocialMediaInfo()}
+        {renderSocialMediaStats()}
         
         {!hasGenerated && (
           <Button
