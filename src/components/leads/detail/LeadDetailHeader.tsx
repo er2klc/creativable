@@ -14,7 +14,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 type Platform = "Instagram" | "LinkedIn" | "Facebook" | "TikTok" | "OFFLINE";
 
 interface LeadDetailHeaderProps {
-  lead: Tables<"leads">;
+  lead: Tables<"leads"> & {
+    platform: Platform;
+  };
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
 }
 
@@ -82,7 +84,7 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
     }
   };
 
-  const profileUrl = generateSocialMediaUrl(lead.platform as Platform, lead.social_media_username || '');
+  const profileUrl = generateSocialMediaUrl(lead.platform, lead.social_media_username || '');
 
   return (
     <div className="flex flex-col gap-4 p-6 border-b">
@@ -191,4 +193,4 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
       )}
     </div>
   );
-};
+});

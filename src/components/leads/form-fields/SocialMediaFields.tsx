@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLINE"] as const;
-type Platform = typeof platforms[number];
+export type Platform = typeof platforms[number];
 
 export const generateSocialMediaUrl = (platform: Platform, username: string): string => {
   if (!username) return '';
@@ -22,8 +22,6 @@ export const generateSocialMediaUrl = (platform: Platform, username: string): st
     case "TikTok":
       return `https://www.tiktok.com/@${username}`;
     case "OFFLINE":
-      return '';
-    default:
       return '';
   }
 };
