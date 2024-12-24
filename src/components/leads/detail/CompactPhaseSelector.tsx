@@ -41,7 +41,7 @@ export function CompactPhaseSelector({
       <h3 className="text-sm font-medium mb-3 text-gray-700">
         {settings?.language === "en" ? "Contact Phase" : "Kontaktphase"}
       </h3>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 max-w-full">
         <Button
           variant="ghost"
           size="icon"
@@ -52,21 +52,23 @@ export function CompactPhaseSelector({
           <ChevronLeft className="h-4 w-4" />
         </Button>
         
-        <div className="flex gap-2 overflow-x-auto py-2 no-scrollbar">
-          {phases.map((phase) => (
-            <div
-              key={phase.id}
-              onClick={() => handlePhaseChange(phase.name)}
-              className={cn(
-                "px-4 py-1.5 rounded-full text-sm cursor-pointer transition-all whitespace-nowrap",
-                lead.phase === phase.name
-                  ? "bg-[#D3E4FD] text-blue-800 shadow-sm"
-                  : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-              )}
-            >
-              {phase.name}
-            </div>
-          ))}
+        <div className="flex gap-2 overflow-x-auto py-2 no-scrollbar max-w-[calc(100%-5rem)]">
+          <div className="flex gap-2 min-w-0">
+            {phases.map((phase) => (
+              <div
+                key={phase.id}
+                onClick={() => handlePhaseChange(phase.name)}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-sm cursor-pointer transition-all whitespace-nowrap shrink-0",
+                  lead.phase === phase.name
+                    ? "bg-[#D3E4FD] text-blue-800 shadow-sm"
+                    : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                )}
+              >
+                {phase.name}
+              </div>
+            ))}
+          </div>
         </div>
 
         <Button

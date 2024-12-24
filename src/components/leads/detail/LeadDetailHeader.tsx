@@ -19,7 +19,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
   return (
     <div className="relative -mx-6 -mt-6 mb-8">
       {/* Name Tab */}
-      <div className="absolute left-4 sm:left-8 top-2">
+      <div className="absolute left-4 sm:left-8 top-8">
         <div className="relative">
           <div className="bg-[#F2E6FF]/70 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-t-lg shadow-sm">
             <div className="flex items-center gap-2">
@@ -36,7 +36,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
       </div>
 
       {/* Contact Type Tabs */}
-      <div className="absolute right-4 sm:right-24 top-2 flex gap-2">
+      <div className="absolute right-4 sm:right-24 top-8 flex gap-2">
         <div
           className={cn(
             "px-3 sm:px-6 py-2 sm:py-3 rounded-t-lg cursor-pointer transition-colors relative",
@@ -52,7 +52,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
             })
           }
         >
-          <span className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
+          <span className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base whitespace-nowrap">
             <UserCheck className="h-4 w-4" />
             Partner
           </span>
@@ -72,7 +72,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
             })
           }
         >
-          <span className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
+          <span className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base whitespace-nowrap">
             <Users className="h-4 w-4" />
             Kunde
           </span>
@@ -80,7 +80,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
       </div>
 
       {/* Action Buttons */}
-      <div className="mt-20 flex items-center gap-4 px-6">
+      <div className="mt-24 flex items-center gap-4 px-6">
         <SendMessageDialog
           lead={lead}
           trigger={
