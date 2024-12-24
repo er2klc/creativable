@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Star, Instagram, Linkedin, Facebook, Video } from "lucide-react";
+import { MoreVertical, Star, Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { useSettings } from "@/hooks/use-settings";
@@ -31,6 +31,8 @@ const getPlatformIcon = (platform: string) => {
       return <Facebook className="h-4 w-4 mr-2" />;
     case "tiktok":
       return <Video className="h-4 w-4 mr-2" />;
+    case "offline":
+      return <Users className="h-4 w-4 mr-2" />;
     default:
       return null;
   }
