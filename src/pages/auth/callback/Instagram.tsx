@@ -37,7 +37,6 @@ const InstagramCallback = () => {
 
         console.log('Calling Instagram auth callback function...');
         
-        // Call our Instagram auth callback function
         const { data: response, error: functionError } = await supabase.functions.invoke('instagram-auth-callback', {
           body: {
             code,
