@@ -8,6 +8,9 @@ interface InstagramSetupInstructionsProps {
 }
 
 export function InstagramSetupInstructions({ redirectUri }: InstagramSetupInstructionsProps) {
+  const privacyPolicyUrl = `${window.location.origin}/privacy-policy`;
+  const dataDeleteUrl = `${window.location.origin}/auth/data-deletion/instagram`;
+
   return (
     <Alert>
       <AlertTitle>Einrichtungsanleitung</AlertTitle>
@@ -56,13 +59,14 @@ export function InstagramSetupInstructions({ redirectUri }: InstagramSetupInstru
                   </div>
                   <div>
                     <p className="font-medium">Data Deletion Request URL:</p>
-                    <code className="block mt-1">{`${window.location.origin}/auth/data-deletion/instagram`}</code>
+                    <code className="block mt-1">{dataDeleteUrl}</code>
                   </div>
                 </div>
                 <li>Unter "App-Einstellungen" {'->'} "Grundlegendes":</li>
                 <li className="ml-4">App-ID und App-Geheimnis kopieren</li>
                 <li className="ml-4">App-Domäne hinzufügen: <code>{window.location.host}</code></li>
                 <li className="ml-4">Website-URL hinzufügen: <code>{window.location.origin}</code></li>
+                <li className="ml-4">Datenschutzrichtlinie URL hinzufügen: <code>{privacyPolicyUrl}</code></li>
               </ol>
             </AccordionContent>
           </AccordionItem>
@@ -83,6 +87,32 @@ export function InstagramSetupInstructions({ redirectUri }: InstagramSetupInstru
                   <li>business_management</li>
                 </ul>
               </ol>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="step5">
+            <AccordionTrigger>5. Wichtige URLs für die App-Überprüfung</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium">Datenschutzrichtlinie URL:</h4>
+                  <code className="block p-2 bg-muted rounded-md text-sm mt-1">
+                    {privacyPolicyUrl}
+                  </code>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Diese URL muss in den App-Einstellungen unter "Datenschutzrichtlinie URL" eingetragen werden.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium">Datenlöschungs-Callback URL:</h4>
+                  <code className="block p-2 bg-muted rounded-md text-sm mt-1">
+                    {dataDeleteUrl}
+                  </code>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Diese URL muss in den App-Einstellungen unter "Data Deletion Request URL" eingetragen werden.
+                  </p>
+                </div>
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
