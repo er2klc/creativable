@@ -15,14 +15,25 @@ interface LeadDetailHeaderProps {
 
 export function LeadDetailHeader({ lead, phases, onUpdateLead }: LeadDetailHeaderProps) {
   const { settings } = useSettings();
+  const contactTypes = (lead?.contact_type?.split(",") || []).filter(Boolean);
+
+  const handleContactTypeChange = (type: string, checked: boolean) => {
+    const currentTypes = new Set(contactTypes);
+    if (checked) {
+      currentTypes.add(type);
+    } else {
+      currentTypes.delete(type);
+    }
+    onUpdateLead({ contact_type: Array.from(currentTypes).join(",") });
+  };
 
   return (
-    <div className="space-y-4 border-b pb-4">
+    <div className="space-y-6 border-b pb-6">
       <div className="flex items-center justify-between">
         <Input
           value={lead?.name || ""}
           onChange={(e) => onUpdateLead({ name: e.target.value })}
-          className="text-2xl font-semibold bg-transparent border-none hover:bg-accent/50 transition-colors px-2 rounded"
+          className="text-2xl font-semibold bg-transparent border-none hover:bg-accent/50 transition-colors px-2 rounded w-full max-w-md"
           placeholder={settings?.language === "en" ? "Contact name" : "Kontaktname"}
         />
         <SendMessageDialog
@@ -35,12 +46,12 @@ export function LeadDetailHeader({ lead, phases, onUpdateLead }: LeadDetailHeade
           }
         />
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
         <Select
           value={lead?.phase}
           onValueChange={(value) => onUpdateLead({ phase: value })}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[200px] bg-white">
             <SelectValue placeholder={settings?.language === "en" ? "Select phase" : "Phase auswählen"} />
           </SelectTrigger>
           <SelectContent>
@@ -51,34 +62,22 @@ export function LeadDetailHeader({ lead, phases, onUpdateLead }: LeadDetailHeade
             ))}
           </SelectContent>
         </Select>
-        <div className="flex items-center gap-4 bg-accent/50 px-4 py-2 rounded">
+        <div className="flex items-center gap-6 bg-accent/50 px-6 py-3 rounded-lg">
           <div className="flex items-center gap-2">
             <Checkbox
-              checked={lead?.contact_type?.includes("Partner")}
-              onCheckedChange={(checked) => {
-                const currentTypes = lead?.contact_type?.split(",").filter(Boolean) || [];
-                const newTypes = checked
-                  ? [...currentTypes, "Partner"]
-                  : currentTypes.filter(t => t !== "Partner");
-                onUpdateLead({ contact_type: newTypes.join(",") });
-              }}
+              checked={contactTypes.includes("Partner")}
+              onCheckedChange={(checked) => handleContactTypeChange("Partner", checked as boolean)}
               id="partner"
             />
-            <label htmlFor="partner" className="text-sm">Partner</label>
+            <label htmlFor="partner" className="text-sm font-medium">Partner</label>
           </div>
           <div className="flex items-center gap-2">
             <Checkbox
-              checked={lead?.contact_type?.includes("Kunde")}
-              onCheckedChange={(checked) => {
-                const currentTypes = lead?.contact_type?.split(",").filter(Boolean) || [];
-                const newTypes = checked
-                  ? [...currentTypes, "Kunde"]
-                  : currentTypes.filter(t => t !== "Kunde");
-                onUpdateLead({ contact_type: newTypes.join(",") });
-              }}
+              checked={contactTypes.includes("Kunde")}
+              onCheckedChange={(checked) => handleContactTypeChange("Kunde", checked as boolean)}
               id="kunde"
             />
-            <label htmlFor="kunde" className="text-sm">Kunde</label>
+            <label htmlFor="kunde" className="text-sm font-medium">Kunde</label>
           </div>
         </div>
       </div>

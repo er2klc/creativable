@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -21,13 +20,11 @@ serve(async (req) => {
       throw new Error('Lead ID is required');
     }
 
-    // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log('Fetching lead data from Supabase');
-    // Fetch lead data with messages
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .select(`
@@ -36,6 +33,15 @@ serve(async (req) => {
           content,
           sent_at,
           platform
+        ),
+        tasks (
+          title,
+          completed,
+          due_date
+        ),
+        notes (
+          content,
+          created_at
         )
       `)
       .eq('id', leadId)
@@ -58,7 +64,6 @@ serve(async (req) => {
       : "You are a helpful assistant that creates summaries of leads and their communication history. Summarize the key information concisely in English.";
 
     console.log('Generating summary with OpenAI');
-    // Generate summary with OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -66,7 +71,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -78,8 +83,12 @@ serve(async (req) => {
               Erstelle eine Zusammenfassung für diesen Lead:
               Name: ${lead.name}
               Plattform: ${lead.platform}
-              Branche: ${lead.industry}
+              Branche: ${lead.industry || 'Nicht angegeben'}
               Phase: ${lead.phase}
+              Kontakttyp: ${lead.contact_type || 'Nicht festgelegt'}
+              Firma: ${lead.company_name || 'Nicht angegeben'}
+              Telefon: ${lead.phone_number || 'Nicht angegeben'}
+              Email: ${lead.email || 'Nicht angegeben'}
               Letzte Aktion: ${lead.last_action || 'Keine'}
               Notizen: ${lead.notes || 'Keine'}
               
@@ -87,6 +96,16 @@ serve(async (req) => {
               ${lead.messages?.map((msg: any) => 
                 `- ${new Date(msg.sent_at).toLocaleDateString()}: ${msg.content}`
               ).join('\n') || 'Keine Nachrichten'}
+              
+              Aufgaben:
+              ${lead.tasks?.map((task: any) => 
+                `- ${task.title} (${task.completed ? 'Erledigt' : 'Offen'})`
+              ).join('\n') || 'Keine Aufgaben'}
+              
+              Notizen:
+              ${lead.notes?.map((note: any) => 
+                `- ${new Date(note.created_at).toLocaleDateString()}: ${note.content}`
+              ).join('\n') || 'Keine Notizen'}
               
               Formatiere die Zusammenfassung mit folgenden Kategorien:
               **Kontaktstatus**: [Phase und letzte Interaktion]

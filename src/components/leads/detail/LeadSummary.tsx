@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
 import { Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface LeadSummaryProps {
   lead: Tables<"leads"> & {
@@ -32,20 +33,29 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to generate summary');
+      if (!response.ok) {
+        throw new Error(settings?.language === "en" 
+          ? "Failed to generate summary" 
+          : "Fehler beim Generieren der Zusammenfassung");
+      }
 
       const data = await response.json();
       setSummary(data.summary);
       setHasGenerated(true);
+      toast.success(settings?.language === "en" 
+        ? "Summary generated successfully" 
+        : "Zusammenfassung erfolgreich generiert");
     } catch (error) {
       console.error('Error generating summary:', error);
+      toast.error(settings?.language === "en"
+        ? "Error generating summary"
+        : "Fehler beim Generieren der Zusammenfassung");
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    // Reset summary when lead changes
     setSummary("");
     setHasGenerated(false);
   }, [lead.id]);
@@ -58,6 +68,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
             onClick={generateSummary}
             disabled={isLoading}
             className="w-full mb-4"
+            variant="outline"
           >
             <Bot className="h-4 w-4 mr-2" />
             {isLoading
@@ -70,15 +81,17 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
           </Button>
         )}
         {isLoading ? (
-          <div className="animate-pulse">
+          <div className="animate-pulse text-center text-muted-foreground">
             {settings?.language === "en"
               ? "Generating summary..."
               : "Generiere Zusammenfassung..."}
           </div>
         ) : summary ? (
-          <div className="whitespace-pre-wrap">{summary}</div>
+          <div className="whitespace-pre-wrap prose prose-sm max-w-none">
+            {summary}
+          </div>
         ) : !hasGenerated ? (
-          <div className="text-muted-foreground">
+          <div className="text-center text-muted-foreground">
             {settings?.language === "en"
               ? "Click the button above to generate an AI summary"
               : "Klicken Sie auf den Button oben, um eine KI-Zusammenfassung zu generieren"}
