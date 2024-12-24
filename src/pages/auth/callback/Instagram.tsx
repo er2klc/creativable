@@ -67,12 +67,13 @@ const InstagramCallback = () => {
 
         // Update settings
         const { error: settingsError } = await supabase
-          .from('settings')
-          .update({ 
-            instagram_connected: 'true',
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', user.id);
+  .from('settings')
+  .update({ 
+    instagram_connected: 'true', // Ändere zu String
+    updated_at: new Date().toISOString()
+  })
+  .eq('user_id', user.id);
+
 
         if (settingsError) throw settingsError;
 
