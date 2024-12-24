@@ -51,18 +51,17 @@ export function useInstagramConnection() {
       const redirectUri = `${window.location.origin}/auth/callback/instagram`;
       console.log('Using redirect URI:', redirectUri);
 
+      // Use the correct Instagram App ID
       const params = new URLSearchParams({
-        client_id: '1315021952869619',
+        client_id: settings?.instagram_app_id || '1315021952869619',
         redirect_uri: redirectUri,
         response_type: 'code',
         scope: scope,
-        state: state,
-        enable_fb_login: '0',
-        force_authentication: '1'
+        state: state
       });
 
-      console.log('Redirecting to Instagram auth URL...');
-      window.location.href = `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`;
+      console.log('Redirecting to Instagram auth URL with params:', Object.fromEntries(params));
+      window.location.href = `https://api.instagram.com/oauth/authorize?${params.toString()}`;
     } catch (error) {
       console.error('Error connecting to Instagram:', error);
       toast({
