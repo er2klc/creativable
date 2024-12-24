@@ -46,7 +46,6 @@ export function useInstagramConnection() {
         return;
       }
 
-      // Updated scopes according to latest Meta documentation
       const scope = [
         'email',
         'public_profile',
@@ -87,7 +86,6 @@ export function useInstagramConnection() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Kein Benutzer gefunden');
 
-      // Update platform_auth_status
       const { error: statusError } = await supabase
         .from('platform_auth_status')
         .update({
@@ -100,7 +98,6 @@ export function useInstagramConnection() {
 
       if (statusError) throw statusError;
 
-      // Update settings
       await updateSettings('instagram_connected', 'false');
       await refetchSettings();
       
