@@ -2,8 +2,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, AlertTriangle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ExternalLink } from "lucide-react";
 import { Platform, platformsConfig, generateSocialMediaUrl } from "@/config/platforms";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
@@ -28,7 +27,7 @@ interface SocialMediaFieldsProps {
 export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
   const platform = form.watch("platform");
   const username = form.watch("socialMediaUsername");
-  const profileUrl = platform !== "Offline" ? generateSocialMediaUrl(platform as Exclude<Platform, "Offline">, username) : "";
+  const profileUrl = generateSocialMediaUrl(platform, username);
 
   return (
     <>
@@ -78,7 +77,7 @@ export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
                     }}
                   />
                 </FormControl>
-                {username && platform !== "Offline" && (
+                {username && platform !== "Offline" && profileUrl && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -89,14 +88,6 @@ export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
                   </Button>
                 )}
               </div>
-              {platform !== "Offline" && !username && (
-                <Alert variant="destructive" className="mt-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    Kein Profil gefunden. Bitte überprüfen Sie den Benutzernamen.
-                  </AlertDescription>
-                </Alert>
-              )}
               <FormMessage />
             </FormItem>
           )}
