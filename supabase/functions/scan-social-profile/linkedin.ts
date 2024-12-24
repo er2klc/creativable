@@ -13,25 +13,25 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     console.log('Fetching LinkedIn auth status...');
     const { data: authStatus, error: authError } = await supabase
       .from('platform_auth_status')
-      .select('access_token')
+      .select('access_token, auth_token, refresh_token')
       .eq('platform', 'linkedin')
       .single();
 
     if (authError) {
       console.error('Error fetching LinkedIn auth status:', authError);
-      return {};
+      throw new Error('Could not retrieve LinkedIn authentication status');
     }
 
     if (!authStatus?.access_token) {
       console.error('No LinkedIn access token found in auth status');
-      return {};
+      throw new Error('LinkedIn access token not found. Please reconnect your account.');
     }
 
     console.log('Successfully retrieved LinkedIn access token');
 
     // Make API call to LinkedIn
     console.log('Fetching LinkedIn profile data...');
-    const response = await fetch('https://api.linkedin.com/v2/me', {
+    const response = await fetch(`https://api.linkedin.com/v2/people/(id:${username})`, {
       headers: {
         'Authorization': `Bearer ${authStatus.access_token}`,
         'X-Restli-Protocol-Version': '2.0.0',
@@ -48,7 +48,41 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
       });
       const errorText = await response.text();
       console.error('LinkedIn API error details:', errorText);
-      return {};
+      
+      if (response.status === 401) {
+        // Try to refresh the token
+        try {
+          const refreshData = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              grant_type: 'refresh_token',
+              refresh_token: authStatus.refresh_token,
+              client_id: authStatus.auth_token,
+              client_secret: Deno.env.get('LINKEDIN_CLIENT_SECRET') || '',
+            }),
+          });
+
+          if (refreshData.ok) {
+            const newToken = await refreshData.json();
+            // Update token in database
+            await supabase
+              .from('platform_auth_status')
+              .update({
+                access_token: newToken.access_token,
+                expires_at: new Date(Date.now() + newToken.expires_in * 1000).toISOString(),
+              })
+              .eq('platform', 'linkedin');
+
+            // Retry the original request with new token
+            return scanLinkedInProfile(username);
+          }
+        } catch (refreshError) {
+          console.error('Error refreshing token:', refreshError);
+        }
+      }
+      
+      throw new Error('Failed to fetch LinkedIn profile data');
     }
 
     const profileData = await response.json();
@@ -77,8 +111,6 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
         statusText: connectionsResponse.statusText,
         headers: Object.fromEntries(connectionsResponse.headers.entries())
       });
-      const errorText = await connectionsResponse.text();
-      console.error('LinkedIn connections error details:', errorText);
     }
 
     // Extract the headline and other profile information
@@ -95,10 +127,11 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     return {
       bio: bio,
       connections: connections,
-      headline: headline
+      headline: headline,
+      isPrivate: false // LinkedIn API doesn't provide this information
     };
   } catch (error) {
     console.error('Error scanning LinkedIn profile:', error);
-    return {};
+    throw error;
   }
 }

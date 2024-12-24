@@ -33,26 +33,31 @@ export const linkedInApi = {
     // Handle different URL formats
     let profileId = '';
     
-    // Format: linkedin.com/in/username
-    if (url.includes('linkedin.com/in/')) {
-      profileId = url.split('linkedin.com/in/')[1].split('/')[0].split('?')[0];
-    } 
-    // Format: Just the username
-    else if (!url.includes('http') && !url.includes('/')) {
-      profileId = url;
-    }
-    // Format: Full URL with https
-    else if (url.match(/https?:\/\/(www\.)?linkedin\.com\/in\/([^\/\?]+)/)) {
-      profileId = url.match(/https?:\/\/(www\.)?linkedin\.com\/in\/([^\/\?]+)/)[2];
-    }
+    try {
+      // Format: linkedin.com/in/username
+      if (url.includes('linkedin.com/in/')) {
+        profileId = url.split('linkedin.com/in/')[1].split('/')[0].split('?')[0];
+      } 
+      // Format: Just the username
+      else if (!url.includes('http') && !url.includes('/')) {
+        profileId = url;
+      }
+      // Format: Full URL with https
+      else if (url.match(/https?:\/\/(www\.)?linkedin\.com\/in\/([^\/\?]+)/)) {
+        profileId = url.match(/https?:\/\/(www\.)?linkedin\.com\/in\/([^\/\?]+)/)[2];
+      }
 
-    if (!profileId) {
-      console.error('Could not extract profile ID from URL:', url);
-      throw new Error('Invalid LinkedIn profile URL format');
-    }
+      if (!profileId) {
+        console.error('Could not extract profile ID from URL:', url);
+        throw new Error('Invalid LinkedIn profile URL format');
+      }
 
-    console.log('Extracted LinkedIn profile ID:', profileId);
-    return profileId;
+      console.log('Extracted LinkedIn profile ID:', profileId);
+      return profileId.trim();
+    } catch (error) {
+      console.error('Error parsing LinkedIn URL:', error);
+      throw new Error('Could not parse LinkedIn profile URL');
+    }
   },
 
   async validateToken(accessToken: string) {
@@ -135,17 +140,18 @@ export const linkedInApi = {
     
     try {
       const messagePayload = {
-        recipients: {
-          values: [{
-            person: `urn:li:person:${recipientUrn}`
-          }]
-        },
-        body: message
+        recipients: [{
+          person: {
+            "urn": `urn:li:person:${recipientUrn}`
+          }
+        }],
+        message: {
+          subject: subject || "New message",
+          body: message
+        }
       };
 
-      if (subject) {
-        messagePayload['subject'] = subject;
-      }
+      console.log('Sending message with payload:', JSON.stringify(messagePayload, null, 2));
 
       const response = await fetch('https://api.linkedin.com/v2/messages', {
         method: 'POST',
