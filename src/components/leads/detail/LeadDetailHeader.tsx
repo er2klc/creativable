@@ -16,25 +16,8 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
 
   return (
     <div className="relative -mx-6 -mt-6 mb-8">
-      {/* Name Tab */}
-      <div className="absolute left-4 sm:left-8 top-8">
-        <div className="relative">
-          <div className="px-4 sm:px-6 py-2 sm:py-3 rounded-t-lg">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-gray-600" />
-              <input
-                value={lead?.name || ""}
-                onChange={(e) => onUpdateLead({ name: e.target.value })}
-                className="bg-transparent border-none hover:bg-gray-100/50 transition-colors px-2 rounded w-full max-w-[150px] sm:max-w-md text-base sm:text-lg font-semibold focus:outline-none placeholder:text-gray-400 text-gray-800"
-                placeholder={settings?.language === "en" ? "Contact name" : "Kontaktname"}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Contact Type Tabs */}
-      <div className="absolute right-12 sm:right-16 top-8 flex gap-2">
+      <div className="absolute right-16 top-4 flex gap-2">
         <div
           className={cn(
             "px-3 sm:px-6 py-2 sm:py-3 rounded-t-lg cursor-pointer transition-colors relative",
@@ -74,6 +57,23 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
             <Users className="h-4 w-4" />
             Kunde
           </span>
+        </div>
+      </div>
+
+      {/* Name Tab */}
+      <div className="absolute left-4 sm:left-8 top-8">
+        <div className="relative">
+          <div className="px-4 sm:px-6 py-2 sm:py-3 rounded-t-lg">
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-gray-600" />
+              <input
+                value={lead?.name || ""}
+                onChange={(e) => onUpdateLead({ name: e.target.value })}
+                className="bg-transparent border-none hover:bg-gray-100/50 transition-colors px-2 rounded w-full max-w-[150px] sm:max-w-md text-base sm:text-lg font-semibold focus:outline-none placeholder:text-gray-400 text-gray-800"
+                placeholder={settings?.language === "en" ? "Contact name" : "Kontaktname"}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
