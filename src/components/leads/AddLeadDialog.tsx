@@ -72,10 +72,10 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
         social_media_username: socialMediaUrl,
         phase: values.phase,
         contact_type: contactType, // Use the single value
-        phone_number: values.phone_number,
-        email: values.email,
-        company_name: values.company_name,
-        notes: values.notes,
+        phone_number: values.phone_number || null,
+        email: values.email || null,
+        company_name: values.company_name || null,
+        notes: values.notes || null,
         industry: values.industry,
       });
 
