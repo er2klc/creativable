@@ -32,13 +32,13 @@ export function InstagramIntegration() {
         return;
       }
 
-      // Aktualisierte Meta API Berechtigungen
+      // Grundlegende Facebook-Berechtigungen
       const scope = [
+        'email',
         'public_profile',
-        'instagram_basic',
         'pages_show_list',
         'pages_read_engagement',
-        'instagram_manage_insights'
+        'business_management',
       ].join(',');
 
       const state = crypto.randomUUID();
