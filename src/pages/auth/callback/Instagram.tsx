@@ -69,7 +69,7 @@ const InstagramCallback = () => {
         const { error: settingsError } = await supabase
           .from('settings')
           .update({ 
-            instagram_connected: true,
+            instagram_connected: 'true',
             updated_at: new Date().toISOString()
           })
           .eq('user_id', user.id);

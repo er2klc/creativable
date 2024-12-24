@@ -47,9 +47,13 @@ export function useInstagramConnection() {
       const state = crypto.randomUUID();
       localStorage.setItem('instagram_oauth_state', state);
 
+      // Verwende die aktuelle Domain für die Redirect-URI
+      const redirectUri = `${window.location.origin}/auth/callback/instagram`;
+      console.log('Using redirect URI:', redirectUri);
+
       const params = new URLSearchParams({
         client_id: '1315021952869619',
-        redirect_uri: `${window.location.origin}/auth/callback/instagram`,
+        redirect_uri: redirectUri,
         response_type: 'code',
         scope: scope,
         state: state,
@@ -109,6 +113,6 @@ export function useInstagramConnection() {
     checkConnectionStatus,
     connectInstagram,
     disconnectInstagram,
-    isConnected: settings?.instagram_connected === true
+    isConnected: settings?.instagram_connected === 'true'
   };
 }
