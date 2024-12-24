@@ -7,7 +7,7 @@ import * as z from "zod";
 import { formSchema } from "../AddLeadFormFields";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface BasicLeadFieldsProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
@@ -125,37 +125,31 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         name="contact_type"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="flex items-center gap-2">Kontakttyp</FormLabel>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={field.value?.includes("Partner")}
-                  onCheckedChange={(checked) => {
-                    const currentValue = field.value || [];
-                    const newValue = checked
-                      ? [...currentValue, "Partner"]
-                      : currentValue.filter(v => v !== "Partner");
-                    field.onChange(newValue);
-                  }}
-                  id="partner"
-                />
-                <label htmlFor="partner">Partner</label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={field.value?.includes("Kunde")}
-                  onCheckedChange={(checked) => {
-                    const currentValue = field.value || [];
-                    const newValue = checked
-                      ? [...currentValue, "Kunde"]
-                      : currentValue.filter(v => v !== "Kunde");
-                    field.onChange(newValue);
-                  }}
-                  id="kunde"
-                />
-                <label htmlFor="kunde">Kunde</label>
-              </div>
-            </div>
+            <FormLabel>Kontakttyp</FormLabel>
+            <FormControl>
+              <RadioGroup
+                onValueChange={field.onChange}
+                defaultValue={field.value || undefined}
+                className="flex space-x-4"
+              >
+                <FormItem className="flex items-center space-x-2">
+                  <FormControl>
+                    <RadioGroupItem value="Partner" />
+                  </FormControl>
+                  <FormLabel className="font-normal">
+                    Partner
+                  </FormLabel>
+                </FormItem>
+                <FormItem className="flex items-center space-x-2">
+                  <FormControl>
+                    <RadioGroupItem value="Kunde" />
+                  </FormControl>
+                  <FormLabel className="font-normal">
+                    Kunde
+                  </FormLabel>
+                </FormItem>
+              </RadioGroup>
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}
