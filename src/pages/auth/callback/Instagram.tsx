@@ -32,29 +32,48 @@ const InstagramCallback = () => {
           throw new Error("State mismatch. Possible CSRF attack.");
         }
 
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          throw new Error("No active session");
-        }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("No active session");
 
         console.log('Calling Instagram auth callback function...');
         
         // Call our Instagram auth callback function
-        const response = await fetch("/api/instagram-auth-callback", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${session.access_token}`,
+        const { data: response, error: functionError } = await supabase.functions.invoke('instagram-auth-callback', {
+          body: {
+            code,
+            redirectUri: `${window.location.origin}/auth/callback/instagram`,
           },
-          body: JSON.stringify({ code }),
         });
 
-        console.log('Received response:', response.status);
+        if (functionError) throw functionError;
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to exchange code for access token");
-        }
+        console.log('Instagram auth callback response:', response);
+
+        // Update platform_auth_status
+        const { error: statusError } = await supabase
+          .from('platform_auth_status')
+          .upsert({
+            user_id: user.id,
+            platform: 'instagram',
+            is_connected: true,
+            access_token: response.access_token,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+          .eq('platform', 'instagram');
+
+        if (statusError) throw statusError;
+
+        // Update settings
+        const { error: settingsError } = await supabase
+          .from('settings')
+          .update({ 
+            instagram_connected: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id);
+
+        if (settingsError) throw settingsError;
 
         toast({
           title: "Instagram erfolgreich verbunden",

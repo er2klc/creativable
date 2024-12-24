@@ -7,12 +7,40 @@ import { CheckCircle, XCircle, Instagram } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { InstagramConnectionDialog } from "./instagram/InstagramConnectionDialog";
 import { InstagramDisconnectDialog } from "./instagram/InstagramDisconnectDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 export function InstagramIntegration() {
-  const { settings, updateSettings } = useSettings();
+  const { settings, updateSettings, refetchSettings } = useSettings();
   const { toast } = useToast();
   const redirectUri = `${window.location.origin}/auth/callback/instagram`;
-  const isConnected = settings?.instagram_connected || false;
+  const isConnected = settings?.instagram_connected === true;
+
+  const checkConnectionStatus = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const { data: platformAuth } = await supabase
+        .from('platform_auth_status')
+        .select('is_connected, access_token')
+        .eq('platform', 'instagram')
+        .eq('user_id', user.id)
+        .single();
+
+      console.log('Platform auth status:', platformAuth);
+      
+      if (platformAuth?.is_connected && platformAuth?.access_token) {
+        await updateSettings('instagram_connected', true);
+        return true;
+      } else {
+        await updateSettings('instagram_connected', false);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error checking connection status:', error);
+      return false;
+    }
+  };
 
   const connectInstagram = async () => {
     try {
@@ -29,7 +57,9 @@ export function InstagramIntegration() {
 
       const scope = [
         'email',
-        'public_profile'
+        'public_profile',
+        'instagram_basic',
+        'instagram_content_publish'
       ].join(',');
 
       const state = crypto.randomUUID();
@@ -58,8 +88,26 @@ export function InstagramIntegration() {
   const disconnectInstagram = async () => {
     try {
       console.log('Disconnecting from Instagram...');
-      await updateSettings('instagram_auth_token', null);
-      await updateSettings('instagram_connected', 'false');
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Kein Benutzer gefunden');
+
+      // Update platform_auth_status
+      const { error: statusError } = await supabase
+        .from('platform_auth_status')
+        .update({
+          is_connected: false,
+          access_token: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('platform', 'instagram')
+        .eq('user_id', user.id);
+
+      if (statusError) throw statusError;
+
+      // Update settings
+      await updateSettings('instagram_connected', false);
+      await refetchSettings();
       
       toast({
         title: "Instagram getrennt",
@@ -101,12 +149,16 @@ export function InstagramIntegration() {
     });
   };
 
+  React.useEffect(() => {
+    checkConnectionStatus();
+  }, []);
+
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Instagram className="h-6 w-6 text-[#E4405F]" />
-          <h3 className="text-lg font-medium">Instagram Integration</h3>
+          <h3 className="text-lg font-medium">Instagram Integration (via Facebook)</h3>
           {isConnected ? (
             <CheckCircle className="h-5 w-5 text-green-500" />
           ) : (
@@ -151,7 +203,7 @@ export function InstagramIntegration() {
         )}
       </div>
       <p className="text-sm text-muted-foreground">
-        Verbinden Sie Ihr Instagram-Konto um Leads automatisch zu kontaktieren und
+        Verbinden Sie Ihr Instagram-Konto über Facebook um Leads automatisch zu kontaktieren und
         Nachrichten zu versenden.
       </p>
     </Card>
