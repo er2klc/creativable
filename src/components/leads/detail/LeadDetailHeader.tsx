@@ -193,4 +193,4 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
       )}
     </div>
   );
-});
+};
