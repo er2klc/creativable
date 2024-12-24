@@ -105,16 +105,19 @@ export function NoteList({ leadId }: NoteListProps) {
             />
             <Button type="submit" className="ml-auto">
               <Plus className="h-4 w-4 mr-2" />
-              {settings?.language === "en" ? "+ Add Note" : "+ Notiz hinzufügen"}
+              {settings?.language === "en" ? "Add Note" : "Notiz hinzufügen"}
             </Button>
           </div>
         </form>
-        <div className="grid gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {notes.map((note) => (
             <div
               key={note.id}
-              className="p-4 rounded-lg shadow transform rotate-1 transition-transform hover:rotate-0 relative group"
-              style={{ backgroundColor: note.color || "#FEF7CD" }}
+              className="p-4 rounded-lg shadow-lg transform hover:-rotate-1 transition-all relative group min-h-[150px] flex flex-col"
+              style={{ 
+                backgroundColor: note.color || "#FEF7CD",
+                boxShadow: "2px 2px 5px rgba(0,0,0,0.1)"
+              }}
             >
               <Button
                 variant="ghost"
@@ -124,7 +127,7 @@ export function NoteList({ leadId }: NoteListProps) {
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
-              <p className="whitespace-pre-wrap">{note.content}</p>
+              <p className="whitespace-pre-wrap flex-grow">{note.content}</p>
               <div className="text-xs text-gray-500 mt-2">
                 {new Date(note.created_at || "").toLocaleString(
                   settings?.language === "en" ? "en-US" : "de-DE",

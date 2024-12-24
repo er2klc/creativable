@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Calendar, Clock, Video, Phone, MapPin, Users, BarChart, RefreshCw } from "lucide-react";
+import { Calendar, Clock, Video, Phone, MapPin, Users, BarChart, RefreshCw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSettings } from "@/hooks/use-settings";
@@ -43,12 +43,12 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
   };
 
   const MEETING_TYPES = [
-    { value: "phone_call", label: settings?.language === "en" ? "Phone Call 📞" : "Telefongespräch 📞", icon: <Phone className="h-4 w-4" /> },
-    { value: "on_site", label: settings?.language === "en" ? "On-site Meeting 🏢" : "Vor-Ort-Termin 🏢", icon: <MapPin className="h-4 w-4" /> },
-    { value: "zoom", label: settings?.language === "en" ? "Zoom Meeting 💻" : "Zoom Meeting 💻", icon: <Video className="h-4 w-4" /> },
-    { value: "initial_meeting", label: settings?.language === "en" ? "Initial Meeting 👋" : "Erstgespräch 👋", icon: <Users className="h-4 w-4" /> },
-    { value: "presentation", label: settings?.language === "en" ? "Presentation 📊" : "Präsentation 📊", icon: <BarChart className="h-4 w-4" /> },
-    { value: "follow_up", label: settings?.language === "en" ? "Follow-up 🔄" : "Folgetermin 🔄", icon: <RefreshCw className="h-4 w-4" /> }
+    { value: "phone_call", label: "Telefongespräch", icon: <Phone className="h-4 w-4" /> },
+    { value: "on_site", label: "Vor-Ort-Termin", icon: <MapPin className="h-4 w-4" /> },
+    { value: "zoom", label: "Zoom Meeting", icon: <Video className="h-4 w-4" /> },
+    { value: "initial_meeting", label: "Erstgespräch", icon: <Users className="h-4 w-4" /> },
+    { value: "presentation", label: "Präsentation", icon: <BarChart className="h-4 w-4" /> },
+    { value: "follow_up", label: "Folgetermin", icon: <RefreshCw className="h-4 w-4" /> }
   ];
 
   return (
@@ -100,7 +100,7 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
         />
         <Button type="submit" className="ml-auto">
           <Plus className="h-4 w-4 mr-2" />
-          {settings?.language === "en" ? "+ Add Task" : "+ Aufgabe hinzufügen"}
+          {settings?.language === "en" ? "Add Task" : "Aufgabe hinzufügen"}
         </Button>
       </div>
     </form>
