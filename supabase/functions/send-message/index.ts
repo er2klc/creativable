@@ -52,7 +52,20 @@ serve(async (req) => {
       console.log('Sending Instagram message to:', socialMediaUsername);
       
       try {
-        // First, get all Facebook pages that the user has access to
+        console.log('Checking access token:', authStatus.access_token);
+        
+        // First, verify the access token
+        const tokenVerifyResponse = await fetch(
+          `https://graph.facebook.com/v18.0/me?access_token=${authStatus.access_token}`
+        );
+
+        if (!tokenVerifyResponse.ok) {
+          const error = await tokenVerifyResponse.json();
+          console.error('Access token verification failed:', error);
+          throw new Error('Invalid or expired access token');
+        }
+
+        // Get Facebook pages
         const pagesResponse = await fetch(
           `https://graph.facebook.com/v18.0/me/accounts?access_token=${authStatus.access_token}`
         );
@@ -60,34 +73,40 @@ serve(async (req) => {
         if (!pagesResponse.ok) {
           const error = await pagesResponse.json();
           console.error('Error getting Facebook pages:', error);
-          throw new Error('Could not fetch Facebook pages');
+          throw new Error(`Failed to fetch Facebook pages: ${error.error?.message || 'Unknown error'}`);
         }
 
         const pagesData = await pagesResponse.json();
         console.log('Found Facebook pages:', pagesData);
 
         if (!pagesData.data || pagesData.data.length === 0) {
-          throw new Error('No Facebook pages found');
+          throw new Error('No Facebook pages found. Please make sure you have at least one Facebook page.');
         }
 
         // For each page, try to get the Instagram business account
         let instagramBusinessAccount = null;
         for (const page of pagesData.data) {
+          console.log('Checking page for Instagram business account:', page.id);
+          
           const businessAccountResponse = await fetch(
             `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${authStatus.access_token}`
           );
 
           if (businessAccountResponse.ok) {
             const businessData = await businessAccountResponse.json();
+            console.log('Business account data for page:', businessData);
+            
             if (businessData.instagram_business_account) {
               instagramBusinessAccount = businessData.instagram_business_account;
               break;
             }
+          } else {
+            console.error('Error fetching business account for page:', await businessAccountResponse.json());
           }
         }
 
         if (!instagramBusinessAccount) {
-          throw new Error('No Instagram business account found connected to your Facebook pages');
+          throw new Error('No Instagram business account found. Please make sure you have connected an Instagram business account to one of your Facebook pages.');
         }
 
         // Send message using Instagram Graph API
@@ -98,7 +117,8 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             recipient: { username: socialMediaUsername },
-            message: { text: message }
+            message: { text: message },
+            access_token: authStatus.access_token
           })
         });
 
