@@ -1,12 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tables } from "@/integrations/supabase/types";
-import { Globe, Building2, Phone, Mail, Briefcase, Contact2 } from "lucide-react";
+import { Globe, Building2, Phone, Mail, Briefcase, Contact2, ExternalLink } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface LeadInfoCardProps {
   lead: Tables<"leads">;
@@ -38,6 +39,21 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     },
   });
 
+  const getSocialMediaUrl = (platform: string, username: string) => {
+    switch (platform) {
+      case "Instagram":
+        return `https://www.instagram.com/${username}`;
+      case "LinkedIn":
+        return `https://www.linkedin.com/in/${username}`;
+      case "Facebook":
+        return `https://www.facebook.com/${username}`;
+      case "TikTok":
+        return `https://www.tiktok.com/@${username}`;
+      default:
+        return username;
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -53,7 +69,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
               <Globe className="h-4 w-4" />
               {settings?.language === "en" ? "Platform" : "Plattform"}
             </dt>
-            <dd>
+            <dd className="flex items-center gap-2">
               <Select
                 value={lead.platform}
                 onValueChange={(value) => updateLeadMutation.mutate({ platform: value })}
@@ -69,6 +85,16 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                   ))}
                 </SelectContent>
               </Select>
+              {lead.social_media_username && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => window.open(getSocialMediaUrl(lead.platform, lead.social_media_username || ''), '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              )}
             </dd>
           </div>
           <div>
@@ -78,7 +104,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
             </dt>
             <dd>
               <Input
-                value={lead.industry}
+                value={lead.industry || ''}
                 onChange={(e) => updateLeadMutation.mutate({ industry: e.target.value })}
               />
             </dd>
