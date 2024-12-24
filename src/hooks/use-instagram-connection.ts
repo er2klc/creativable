@@ -38,10 +38,13 @@ export function useInstagramConnection() {
       console.log('Starting Instagram connection process...');
 
       const scope = [
-        'instagram_business_basic',
-        'instagram_business_manage_messages',
-        'instagram_business_manage_comments',
-        'instagram_business_content_publish'
+        'instagram_basic',
+        'instagram_content_publish',
+        'instagram_manage_comments',
+        'instagram_manage_insights',
+        'pages_show_list',
+        'pages_read_engagement',
+        'business_management'
       ].join(',');
 
       const state = crypto.randomUUID();
