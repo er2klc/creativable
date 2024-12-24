@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tables } from "@/integrations/supabase/types";
-import { Globe, Building2, Phone, Mail, Briefcase, Contact2, ExternalLink } from "lucide-react";
+import { Globe, Building2, Phone, Mail, Briefcase, Contact2, ExternalLink, User2 } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -85,6 +85,19 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                   ))}
                 </SelectContent>
               </Select>
+            </dd>
+          </div>
+          <div>
+            <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <User2 className="h-4 w-4" />
+              {settings?.language === "en" ? "Social Media Username" : "Social Media Benutzername"}
+            </dt>
+            <dd className="flex items-center gap-2">
+              <Input
+                value={lead.social_media_username || ""}
+                onChange={(e) => updateLeadMutation.mutate({ social_media_username: e.target.value })}
+                placeholder={settings?.language === "en" ? "Enter username" : "Benutzername eingeben"}
+              />
               {lead.social_media_username && (
                 <Button
                   variant="ghost"
