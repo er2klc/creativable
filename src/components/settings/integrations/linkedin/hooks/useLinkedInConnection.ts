@@ -35,7 +35,7 @@ export function useLinkedInConnection() {
       console.error("Error initiating LinkedIn connection:", error);
       toast({
         title: "Fehler ❌",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Fehler beim Verbinden mit LinkedIn",
         variant: "destructive",
       });
     }
@@ -43,10 +43,12 @@ export function useLinkedInConnection() {
 
   const disconnectLinkedIn = async () => {
     try {
+      console.log("Starting LinkedIn disconnect process...");
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Kein Benutzer gefunden");
 
-      // First revoke the token
+      // Get current platform auth status
       const { data: platformAuth } = await supabase
         .from('platform_auth_status')
         .select('access_token, auth_token, refresh_token')
@@ -54,8 +56,12 @@ export function useLinkedInConnection() {
         .eq('platform', 'linkedin')
         .single();
 
+      console.log("Current platform auth status:", platformAuth);
+
+      // Try to revoke token if we have one
       if (platformAuth?.access_token) {
         try {
+          console.log("Attempting to revoke LinkedIn token...");
           await supabase.functions.invoke('linkedin-auth-callback', {
             body: {
               action: 'revoke',
@@ -64,12 +70,14 @@ export function useLinkedInConnection() {
               clientSecret: platformAuth.refresh_token,
             },
           });
-        } catch (error) {
-          console.error('Error revoking LinkedIn token:', error);
+          console.log("Successfully revoked LinkedIn token");
+        } catch (revokeError) {
+          console.error('Error revoking LinkedIn token:', revokeError);
+          // Continue with disconnection even if revocation fails
         }
       }
 
-      // Then update platform_auth_status
+      // Update platform_auth_status
       const { error: disconnectError } = await supabase
         .from('platform_auth_status')
         .update({
@@ -81,20 +89,28 @@ export function useLinkedInConnection() {
         .eq('user_id', user.id)
         .eq('platform', 'linkedin');
 
-      if (disconnectError) throw disconnectError;
+      if (disconnectError) {
+        console.error("Error updating platform auth status:", disconnectError);
+        throw disconnectError;
+      }
 
-      // Finally update settings
+      // Update settings
       const { error: settingsError } = await supabase
         .from('settings')
         .update({ linkedin_connected: false })
         .eq('user_id', user.id);
 
-      if (settingsError) throw settingsError;
+      if (settingsError) {
+        console.error("Error updating settings:", settingsError);
+        throw settingsError;
+      }
 
       // Clear any stored tokens in localStorage
       localStorage.removeItem("linkedin_oauth_state");
+      console.log("Cleared localStorage tokens");
 
       await refetchSettings();
+      console.log("Successfully refreshed settings");
 
       toast({
         title: "Erfolg ✨",
@@ -106,27 +122,42 @@ export function useLinkedInConnection() {
       
       // Handle specific token refresh errors
       if (error.message?.includes('refresh_token_not_found')) {
+        console.log("Refresh token not found, attempting forced disconnect...");
         // If refresh token is not found, force disconnect
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
+            // Force update platform_auth_status
             await supabase
               .from('platform_auth_status')
               .update({
                 is_connected: false,
                 access_token: null,
+                refresh_token: null, // Also clear refresh token
                 expires_at: null,
                 updated_at: new Date().toISOString()
               })
               .eq('user_id', user.id)
               .eq('platform', 'linkedin');
 
+            // Force update settings
             await supabase
               .from('settings')
-              .update({ linkedin_connected: false })
+              .update({ 
+                linkedin_connected: false,
+                linkedin_auth_token: null // Also clear auth token in settings
+              })
               .eq('user_id', user.id);
 
             await refetchSettings();
+            console.log("Forced disconnect completed successfully");
+            
+            // Show success message for forced disconnect
+            toast({
+              title: "Erfolg ✨",
+              description: "LinkedIn Verbindung wurde zurückgesetzt",
+            });
+            return; // Exit early after successful forced disconnect
           }
         } catch (cleanupError) {
           console.error("Error during forced disconnect:", cleanupError);
