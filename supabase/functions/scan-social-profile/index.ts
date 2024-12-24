@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import { corsHeaders } from "../_shared/social-media-utils.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 import { scanInstagramProfile } from "./instagram.ts";
 import { scanLinkedInProfile } from "./linkedin.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 interface ScanProfileRequest {
   leadId: string;
@@ -65,6 +65,22 @@ serve(async (req) => {
     }
 
     console.log('Scanned profile data:', profileData);
+
+    if (!profileData || Object.keys(profileData).length === 0) {
+      return new Response(
+        JSON.stringify({
+          message: "No profile data found",
+          data: null
+        }),
+        {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+          status: 404,
+        }
+      );
+    }
 
     // Update lead with scanned data
     const { error: updateError } = await supabase
