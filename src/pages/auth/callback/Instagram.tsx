@@ -50,7 +50,7 @@ const InstagramCallback = () => {
 
         console.log('Instagram auth callback response:', response);
 
-        // Update platform_auth_status with boolean
+        // Update platform_auth_status
         const { error: statusError } = await supabase
           .from('platform_auth_status')
           .upsert({
@@ -65,7 +65,7 @@ const InstagramCallback = () => {
 
         if (statusError) throw statusError;
 
-        // Update settings with string 'true'
+        // Update settings
         const { error: settingsError } = await supabase
           .from('settings')
           .update({ 
