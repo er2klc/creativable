@@ -43,16 +43,17 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     opacity: isDragging ? 0.9 : 1,
     cursor: isDragging ? 'grabbing' : 'grab',
     touchAction: 'none' as const,
-    position: isDragging ? 'relative' as const : 'static' as const,
+    position: isDragging ? 'fixed' as const : 'static' as const,
     zIndex: isDragging ? 9999 : 'auto',
-    pointerEvents: isDragging ? 'none' as const : undefined,
+    pointerEvents: isDragging ? 'none' as const : 'auto' as const,
     backgroundColor: isDragging ? 'var(--background)' : undefined,
     boxShadow: isDragging ? '0 10px 25px -5px rgba(0, 0, 0, 0.1)' : undefined,
-    width: isDragging ? '100%' : undefined,
+    width: isDragging ? '300px' : '100%',
+    left: isDragging ? `${transform?.x}px` : undefined,
+    top: isDragging ? `${transform?.y}px` : undefined,
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    // Only trigger click if we're not dragging
     if (!isDragging) {
       onLeadClick(lead.id);
     }
