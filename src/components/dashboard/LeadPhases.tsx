@@ -61,9 +61,7 @@ export const LeadPhases = () => {
               name: phase.name,
               order_index: phase.order_index,
               user_id: session.user.id,
-            })
-            .select()
-            .single();
+            });
 
           if (insertError && insertError.code !== "23505") { // Ignore duplicate key errors
             console.error("Error inserting phase:", insertError);

@@ -37,12 +37,13 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     if (!over || !active) return;
 
     const leadId = active.id as string;
-    const targetPhaseId = over.id as string;
-    const targetPhase = phases.find(phase => phase.id === targetPhaseId);
+    const newPhase = phases.find(phase => phase.id === over.id);
     
-    if (targetPhase) {
-      console.log('Updating lead phase:', { leadId, phaseName: targetPhase.name });
-      updateLeadPhase.mutate({ leadId, phaseName: targetPhase.name });
+    if (newPhase) {
+      updateLeadPhase.mutate({ 
+        leadId, 
+        phaseName: newPhase.name 
+      });
     }
   };
 
