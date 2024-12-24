@@ -7,20 +7,23 @@ import { Instagram, Linkedin, Facebook, Video, Users, ExternalLink, AlertTriangl
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLINE"] as const;
+export const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLINE"] as const;
 export type Platform = typeof platforms[number];
 
 export const generateSocialMediaUrl = (platform: Platform, username: string): string => {
   if (!username) return '';
+  // Remove any existing URL parts from the username
+  const cleanUsername = username.replace(/^https?:\/\/[^\/]+\//, '').replace(/^@/, '');
+  
   switch (platform) {
     case "Instagram":
-      return `https://www.instagram.com/${username}`;
+      return `https://www.instagram.com/${cleanUsername}`;
     case "LinkedIn":
-      return `https://www.linkedin.com/in/${username}`;
+      return `https://www.linkedin.com/in/${cleanUsername}`;
     case "Facebook":
-      return `https://www.facebook.com/${username}`;
+      return `https://www.facebook.com/${cleanUsername}`;
     case "TikTok":
-      return `https://www.tiktok.com/@${username}`;
+      return `https://www.tiktok.com/@${cleanUsername}`;
     case "OFFLINE":
       return '';
   }
@@ -38,8 +41,6 @@ const getPlatformIcon = (platform: Platform) => {
       return <Video className="h-4 w-4 mr-2" />;
     case "OFFLINE":
       return <Users className="h-4 w-4 mr-2" />;
-    default:
-      return null;
   }
 };
 

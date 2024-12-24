@@ -2,16 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Tables } from "@/integrations/supabase/types";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { useSettings } from "@/hooks/use-settings";
-import { MessageSquare, Scan, User2, ExternalLink, Instagram, Linkedin, Facebook, Video, Users, Check, AlertTriangle } from "lucide-react";
+import { MessageSquare, Scan, ExternalLink, Instagram, Linkedin, Facebook, Video, Users, Check, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { generateSocialMediaUrl } from "../form-fields/SocialMediaFields";
+import { generateSocialMediaUrl, Platform } from "../form-fields/SocialMediaFields";
 import { Checkbox } from "@/components/ui/checkbox";
-
-type Platform = "Instagram" | "LinkedIn" | "Facebook" | "TikTok" | "OFFLINE";
 
 interface LeadDetailHeaderProps {
   lead: Tables<"leads"> & {
@@ -48,8 +45,6 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
         return <Video className="h-4 w-4" />;
       case "OFFLINE":
         return <Users className="h-4 w-4" />;
-      default:
-        return null;
     }
   };
 
@@ -84,6 +79,8 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
     }
   };
 
+  // Clean up the username for display
+  const displayUsername = lead.social_media_username?.replace(/^https?:\/\/[^\/]+\//, '');
   const profileUrl = generateSocialMediaUrl(lead.platform, lead.social_media_username || '');
 
   return (
@@ -97,14 +94,14 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
               <span className="text-sm text-muted-foreground">{lead.platform}</span>
               {lead.platform !== "OFFLINE" && (
                 <>
-                  {lead.social_media_username ? (
+                  {displayUsername ? (
                     <Button
                       variant="ghost"
                       size="sm"
                       className="flex items-center gap-2 h-6"
                       onClick={() => window.open(profileUrl, '_blank')}
                     >
-                      <span className="text-sm">{lead.social_media_username}</span>
+                      <span className="text-sm">{displayUsername}</span>
                       <ExternalLink className="h-3 w-3" />
                     </Button>
                   ) : (

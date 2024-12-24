@@ -17,6 +17,7 @@ import { LeadMessages } from "./detail/LeadMessages";
 import { CompactPhaseSelector } from "./detail/CompactPhaseSelector";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Platform } from "./form-fields/SocialMediaFields";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -39,10 +40,11 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         .single();
 
       if (error) throw error;
-      return data as Tables<"leads"> & {
+      return data as (Tables<"leads"> & {
+        platform: Platform;
         messages: Tables<"messages">[];
         tasks: Tables<"tasks">[];
-      };
+      });
     },
     enabled: !!leadId,
   });
