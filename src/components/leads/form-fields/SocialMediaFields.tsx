@@ -1,14 +1,29 @@
+import { UseFormReturn } from "react-hook-form";
+import * as z from "zod";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Instagram, Linkedin, Facebook, Video, Users, ExternalLink, AlertTriangle } from "lucide-react";
-import { UseFormReturn } from "react-hook-form";
-import * as z from "zod";
-import { formSchema } from "../AddLeadFormFields";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLINE"] as const;
+
+export const generateSocialMediaUrl = (platform: string, username: string): string => {
+  if (!username) return '';
+  switch (platform) {
+    case "Instagram":
+      return `https://www.instagram.com/${username}`;
+    case "LinkedIn":
+      return `https://www.linkedin.com/in/${username}`;
+    case "Facebook":
+      return `https://www.facebook.com/${username}`;
+    case "TikTok":
+      return `https://www.tiktok.com/@${username}`;
+    default:
+      return '';
+  }
+};
 
 const getPlatformIcon = (platform: string) => {
   switch (platform) {
@@ -27,25 +42,22 @@ const getPlatformIcon = (platform: string) => {
   }
 };
 
-export const generateSocialMediaUrl = (platform: string, username: string): string => {
-  if (!username) return '';
-  switch (platform) {
-    case "Instagram":
-      return `https://www.instagram.com/${username}`;
-    case "LinkedIn":
-      return `https://www.linkedin.com/in/${username}`;
-    case "Facebook":
-      return `https://www.facebook.com/${username}`;
-    case "TikTok":
-      return `https://www.tiktok.com/@${username}`;
-    default:
-      return '';
-  }
-};
-
 interface SocialMediaFieldsProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
 }
+
+const formSchema = z.object({
+  name: z.string().min(1, "Name ist erforderlich 📝"),
+  platform: z.enum([...platforms]),
+  socialMediaUsername: z.string().min(1, "Benutzername ist erforderlich 📱"),
+  phase: z.string().min(1, "Phase ist erforderlich 📊"),
+  contact_type: z.string().nullable(),
+  phone_number: z.string().optional().nullable(),
+  email: z.string().email("Ungültige E-Mail-Adresse").optional().nullable(),
+  company_name: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  industry: z.string().optional().nullable(),
+});
 
 export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
   const platform = form.watch("platform");
@@ -128,4 +140,4 @@ export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
   );
 }
 
-export { generateSocialMediaUrl };
+export { formSchema };
