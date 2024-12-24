@@ -15,12 +15,11 @@ export function useLinkedInConnection() {
         throw new Error("Bitte speichern Sie zuerst Ihre LinkedIn Client ID");
       }
 
-      // Updated scopes to include all required permissions
+      // Aktualisierte LinkedIn OAuth Scopes
       const scopes = [
-        'openid',
-        'profile',
-        'email',
-        'w_member_social'
+        'profile',           // Ersetzt r_liteprofile
+        'email',            // Ersetzt r_emailaddress
+        'w_member_social'   // Für Messaging-Funktionalität
       ].join(' ');
 
       const state = Math.random().toString(36).substring(7);
