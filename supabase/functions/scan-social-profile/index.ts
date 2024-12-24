@@ -11,16 +11,25 @@ interface ScanProfileRequest {
 }
 
 serve(async (req) => {
+  console.log('Received scan request');
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    console.log('Handling CORS preflight request');
+    return new Response('ok', { 
+      headers: {
+        ...corsHeaders,
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      }
+    });
   }
 
   try {
     const { leadId, platform, username } = await req.json() as ScanProfileRequest;
-    console.log('Received scan request:', { leadId, platform, username });
+    console.log('Processing request:', { leadId, platform, username });
 
     if (!username || platform === "Offline") {
+      console.log('No social media profile to scan');
       return new Response(
         JSON.stringify({
           message: "No social media profile to scan for offline contacts",
@@ -42,6 +51,8 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     let profileData;
+    console.log(`Attempting to scan ${platform} profile for username: ${username}`);
+    
     switch (platform.toLowerCase()) {
       case 'instagram':
         profileData = await scanInstagramProfile(username);

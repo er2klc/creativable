@@ -1,4 +1,4 @@
-import { SocialMediaStats, extractInstagramStats } from "../_shared/social-media-utils.ts";
+import { SocialMediaStats } from "../_shared/social-media-utils.ts";
 
 export async function scanInstagramProfile(username: string): Promise<SocialMediaStats> {
   console.log('Scanning Instagram profile for:', username);
@@ -25,46 +25,74 @@ export async function scanInstagramProfile(username: string): Promise<SocialMedi
 
     if (!response.ok) {
       console.error('Failed to fetch Instagram profile:', response.status, response.statusText);
-      return {};
+      throw new Error(`Failed to fetch Instagram profile: ${response.status}`);
     }
 
     const html = await response.text();
     console.log('Successfully fetched Instagram profile HTML');
     
     // Try to extract data from multiple possible formats
-    let stats = extractInstagramStats(html);
+    let stats: SocialMediaStats = {};
     
-    // If no data found, try alternative URL
-    if (Object.keys(stats).length === 0) {
-      console.log('Trying alternative Instagram API endpoint...');
-      const altResponse = await fetch(`https://i.instagram.com/api/v1/users/web_profile_info/?username=${username}`, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/json',
-          'X-IG-App-ID': '936619743392459',
-          'X-Requested-With': 'XMLHttpRequest'
-        }
-      });
-
-      if (altResponse.ok) {
-        const jsonData = await altResponse.json();
-        if (jsonData.data?.user) {
-          const user = jsonData.data.user;
-          stats = {
-            bio: user.biography || null,
-            followers: user.edge_followed_by?.count || null,
-            following: user.edge_follow?.count || null,
-            posts: user.edge_owner_to_timeline_media?.count || null,
-            isPrivate: user.is_private || null
-          };
-          console.log('Successfully extracted stats from alternative endpoint:', stats);
-        }
+    try {
+      // Try parsing as JSON first
+      const jsonData = JSON.parse(html);
+      if (jsonData.graphql?.user) {
+        const user = jsonData.graphql.user;
+        stats = {
+          bio: user.biography,
+          followers: user.edge_followed_by?.count,
+          following: user.edge_follow?.count,
+          posts: user.edge_owner_to_timeline_media?.count,
+          isPrivate: user.is_private
+        };
       }
+    } catch (e) {
+      console.log('Could not parse JSON response, trying HTML extraction');
+      // If JSON parsing fails, try extracting from HTML
+      const extractedStats = extractInstagramStats(html);
+      stats = { ...extractedStats };
     }
+
+    // Log the extracted data
+    console.log('Extracted Instagram stats:', stats);
     
     return stats;
   } catch (error) {
     console.error('Error scanning Instagram profile:', error);
     return {};
   }
+}
+
+function extractInstagramStats(html: string): SocialMediaStats {
+  const stats: SocialMediaStats = {};
+  
+  // Extract bio
+  const bioMatch = html.match(/<meta property="og:description" content="([^"]+)"/);
+  if (bioMatch) {
+    stats.bio = bioMatch[1].split('Followers')[0].trim();
+  }
+  
+  // Extract followers count
+  const followersMatch = html.match(/(\d+(?:,\d+)*)\s*Followers/);
+  if (followersMatch) {
+    stats.followers = parseInt(followersMatch[1].replace(/,/g, ''));
+  }
+  
+  // Extract following count
+  const followingMatch = html.match(/(\d+(?:,\d+)*)\s*Following/);
+  if (followingMatch) {
+    stats.following = parseInt(followingMatch[1].replace(/,/g, ''));
+  }
+  
+  // Extract posts count
+  const postsMatch = html.match(/(\d+(?:,\d+)*)\s*Posts/);
+  if (postsMatch) {
+    stats.posts = parseInt(postsMatch[1].replace(/,/g, ''));
+  }
+  
+  // Check if account is private
+  stats.isPrivate = html.includes('This Account is Private');
+  
+  return stats;
 }
