@@ -51,65 +51,71 @@ serve(async (req) => {
     if (platform.toLowerCase() === 'instagram') {
       console.log('Sending Instagram message to:', socialMediaUsername);
       
-      // First, get the Instagram Business Account ID for the recipient
-      const businessAccountResponse = await fetch(
-        `https://graph.facebook.com/v18.0/ig_username/${socialMediaUsername}?access_token=${authStatus.access_token}`
-      );
+      try {
+        // First, get the Instagram Business Account ID for the recipient
+        const businessAccountResponse = await fetch(
+          `https://graph.facebook.com/v18.0/ig_username/${socialMediaUsername}?access_token=${authStatus.access_token}`
+        );
 
-      if (!businessAccountResponse.ok) {
-        const error = await businessAccountResponse.json();
-        console.error('Error getting Instagram business account:', error);
-        throw new Error('Could not find Instagram account');
-      }
+        if (!businessAccountResponse.ok) {
+          const error = await businessAccountResponse.json();
+          console.error('Error getting Instagram business account:', error);
+          throw new Error(`Could not find Instagram account for username: ${socialMediaUsername}`);
+        }
 
-      const businessAccountData = await businessAccountResponse.json();
-      const recipientId = businessAccountData.id;
+        const businessAccountData = await businessAccountResponse.json();
+        console.log('Found Instagram business account:', businessAccountData);
+        const recipientId = businessAccountData.id;
 
-      // Send message using Instagram Graph API
-      const response = await fetch(`https://graph.facebook.com/v18.0/me/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authStatus.access_token}`
-        },
-        body: JSON.stringify({
-          recipient: { instagram_id: recipientId },
-          message: { text: message }
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Instagram API error:', error);
-        throw new Error(error.error?.message || 'Failed to send Instagram message');
-      }
-
-      // Save message to database
-      const { error: insertError } = await supabaseClient
-        .from('messages')
-        .insert({
-          lead_id: leadId,
-          user_id: user.id,
-          platform,
-          content: message,
-          sent_at: new Date().toISOString()
+        // Send message using Instagram Graph API
+        const response = await fetch(`https://graph.facebook.com/v18.0/me/messages`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authStatus.access_token}`
+          },
+          body: JSON.stringify({
+            recipient: { instagram_id: recipientId },
+            message: { text: message }
+          })
         });
 
-      if (insertError) {
-        console.error('Error saving message:', insertError);
-      }
+        if (!response.ok) {
+          const error = await response.json();
+          console.error('Instagram API error:', error);
+          throw new Error(error.error?.message || 'Failed to send Instagram message');
+        }
 
-      // Update lead's last action
-      const { error: updateError } = await supabaseClient
-        .from('leads')
-        .update({
-          last_action: 'Message sent',
-          last_action_date: new Date().toISOString(),
-        })
-        .eq('id', leadId);
+        // Save message to database
+        const { error: insertError } = await supabaseClient
+          .from('messages')
+          .insert({
+            lead_id: leadId,
+            user_id: user.id,
+            platform,
+            content: message,
+            sent_at: new Date().toISOString()
+          });
 
-      if (updateError) {
-        console.error('Error updating lead:', updateError);
+        if (insertError) {
+          console.error('Error saving message:', insertError);
+        }
+
+        // Update lead's last action
+        const { error: updateError } = await supabaseClient
+          .from('leads')
+          .update({
+            last_action: 'Message sent',
+            last_action_date: new Date().toISOString(),
+          })
+          .eq('id', leadId);
+
+        if (updateError) {
+          console.error('Error updating lead:', updateError);
+        }
+      } catch (error) {
+        console.error('Error in Instagram message flow:', error);
+        throw error;
       }
     }
 
