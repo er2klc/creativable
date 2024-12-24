@@ -23,7 +23,7 @@ export function useInstagramConnection() {
       
       // Update settings to match platform_auth_status
       if (settings?.instagram_connected !== isConnected) {
-        await updateSettings('instagram_connected', isConnected ? 'true' : 'false');
+        await updateSettings('instagram_connected', isConnected);
       }
       
       return isConnected;
@@ -38,10 +38,14 @@ export function useInstagramConnection() {
       console.log('Starting Instagram connection process...');
 
       const scope = [
-        'instagram_business_basic',
-        'instagram_business_manage_messages',
-        'instagram_business_manage_comments',
-        'instagram_business_content_publish'
+        'instagram_basic',
+        'instagram_manage_messages',
+        'instagram_manage_comments',
+        'instagram_content_publish',
+        'pages_manage_metadata',
+        'pages_read_engagement',
+        'pages_show_list',
+        'pages_messaging'
       ].join(',');
 
       const state = crypto.randomUUID();
@@ -60,8 +64,8 @@ export function useInstagramConnection() {
         force_authentication: '1'
       });
 
-      const authUrl = `https://www.instagram.com/oauth/authorize?${params.toString()}`;
-      console.log('Redirecting to Instagram auth URL:', authUrl);
+      const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`;
+      console.log('Redirecting to Facebook auth URL:', authUrl);
       
       window.location.href = authUrl;
     } catch (error) {
@@ -95,7 +99,7 @@ export function useInstagramConnection() {
       if (statusError) throw statusError;
 
       // Update settings
-      await updateSettings('instagram_connected', 'false');
+      await updateSettings('instagram_connected', false);
       await refetchSettings();
       
       toast({
@@ -116,6 +120,6 @@ export function useInstagramConnection() {
     checkConnectionStatus,
     connectInstagram,
     disconnectInstagram,
-    isConnected: settings?.instagram_connected === 'true'
+    isConnected: settings?.instagram_connected === true
   };
 }

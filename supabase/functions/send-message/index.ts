@@ -54,7 +54,7 @@ serve(async (req) => {
       try {
         // First, get the Instagram Business Account ID for the recipient
         const businessAccountResponse = await fetch(
-          `https://graph.facebook.com/v18.0/instagram_business_accounts?username=${socialMediaUsername}&access_token=${authStatus.access_token}`
+          `https://graph.facebook.com/v18.0/me/accounts?fields=instagram_business_account{id,username}&access_token=${authStatus.access_token}`
         );
 
         if (!businessAccountResponse.ok) {
@@ -64,23 +64,27 @@ serve(async (req) => {
         }
 
         const businessAccountData = await businessAccountResponse.json();
-        console.log('Found Instagram business account:', businessAccountData);
+        console.log('Found Instagram business accounts:', businessAccountData);
         
         if (!businessAccountData.data || businessAccountData.data.length === 0) {
           throw new Error(`No Instagram business account found for username: ${socialMediaUsername}`);
         }
 
-        const recipientId = businessAccountData.data[0].id;
+        // Get the Instagram business account ID
+        const instagramBusinessAccount = businessAccountData.data[0].instagram_business_account;
+        if (!instagramBusinessAccount) {
+          throw new Error('No Instagram business account connected to this Facebook page');
+        }
 
         // Send message using Instagram Graph API
-        const response = await fetch(`https://graph.facebook.com/v18.0/me/messages`, {
+        const response = await fetch(`https://graph.facebook.com/v18.0/${instagramBusinessAccount.id}/messages`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${authStatus.access_token}`
           },
           body: JSON.stringify({
-            recipient: { instagram_id: recipientId },
+            recipient: { username: socialMediaUsername },
             message: { text: message }
           })
         });
