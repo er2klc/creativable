@@ -13,7 +13,7 @@ serve(async (req) => {
 
   try {
     const { platform, message, leadId, socialMediaUsername } = await req.json();
-    console.log('Processing message request:', { platform, leadId });
+    console.log('Processing message request:', { platform, leadId, socialMediaUsername });
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -49,15 +49,31 @@ serve(async (req) => {
     }
 
     if (platform.toLowerCase() === 'instagram') {
+      console.log('Sending Instagram message to:', socialMediaUsername);
+      
+      // First, get the Instagram Business Account ID for the recipient
+      const businessAccountResponse = await fetch(
+        `https://graph.facebook.com/v18.0/ig_username/${socialMediaUsername}?access_token=${authStatus.access_token}`
+      );
+
+      if (!businessAccountResponse.ok) {
+        const error = await businessAccountResponse.json();
+        console.error('Error getting Instagram business account:', error);
+        throw new Error('Could not find Instagram account');
+      }
+
+      const businessAccountData = await businessAccountResponse.json();
+      const recipientId = businessAccountData.id;
+
       // Send message using Instagram Graph API
-      const response = await fetch(`https://graph.facebook.com/v12.0/me/messages`, {
+      const response = await fetch(`https://graph.facebook.com/v18.0/me/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authStatus.access_token}`
         },
         body: JSON.stringify({
-          recipient: { instagram_id: socialMediaUsername },
+          recipient: { instagram_id: recipientId },
           message: { text: message }
         })
       });
@@ -65,7 +81,7 @@ serve(async (req) => {
       if (!response.ok) {
         const error = await response.json();
         console.error('Instagram API error:', error);
-        throw new Error(error.error.message || 'Failed to send Instagram message');
+        throw new Error(error.error?.message || 'Failed to send Instagram message');
       }
 
       // Save message to database
