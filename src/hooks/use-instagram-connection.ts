@@ -11,7 +11,7 @@ export function useInstagramConnection() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
 
-      // Check both platform_auth_status and settings tables
+      // Check platform_auth_status table
       const { data: platformAuth } = await supabase
         .from('platform_auth_status')
         .select('is_connected, access_token')
@@ -19,13 +19,12 @@ export function useInstagramConnection() {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      console.log('Platform auth status:', platformAuth);
-      
-      // Only consider connected if we have both is_connected true and a valid access_token
       const isConnected = platformAuth?.is_connected === true && !!platformAuth?.access_token;
       
       // Update settings to match platform_auth_status
-      await updateSettings('instagram_connected', isConnected ? 'true' : 'false');
+      if (settings?.instagram_connected !== isConnected) {
+        await updateSettings('instagram_connected', isConnected);
+      }
       
       return isConnected;
     } catch (error) {
@@ -52,7 +51,7 @@ export function useInstagramConnection() {
       console.log('Using redirect URI:', redirectUri);
 
       const params = new URLSearchParams({
-        client_id: '1315021952869619', // Using the new App ID
+        client_id: '1315021952869619',
         redirect_uri: redirectUri,
         response_type: 'code',
         scope: scope,
@@ -96,7 +95,7 @@ export function useInstagramConnection() {
       if (statusError) throw statusError;
 
       // Update settings
-      await updateSettings('instagram_connected', 'false');
+      await updateSettings('instagram_connected', false);
       await refetchSettings();
       
       toast({
@@ -117,6 +116,6 @@ export function useInstagramConnection() {
     checkConnectionStatus,
     connectInstagram,
     disconnectInstagram,
-    isConnected: settings?.instagram_connected === 'true'
+    isConnected: settings?.instagram_connected === true
   };
 }

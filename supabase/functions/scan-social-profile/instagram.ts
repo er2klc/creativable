@@ -1,98 +1,45 @@
 import { SocialMediaStats } from "../_shared/social-media-utils.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 export async function scanInstagramProfile(username: string): Promise<SocialMediaStats> {
   console.log('Scanning Instagram profile for:', username);
   
   try {
-    // Use a more browser-like request
-    const response = await fetch(`https://www.instagram.com/${username}/?__a=1&__d=1`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9,de;q=0.8',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'Upgrade-Insecure-Requests': '1'
-      }
-    });
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get Instagram access token from platform_auth_status
+    const { data: authStatus, error: authError } = await supabase
+      .from('platform_auth_status')
+      .select('access_token')
+      .eq('platform', 'instagram')
+      .single();
+
+    if (authError || !authStatus?.access_token) {
+      throw new Error('No valid Instagram access token found');
+    }
+
+    // Use Instagram Graph API to get profile data
+    const response = await fetch(`https://graph.instagram.com/v12.0/me?fields=id,username,account_type,media_count,followers_count,follows_count,biography&access_token=${authStatus.access_token}`);
 
     if (!response.ok) {
-      console.error('Failed to fetch Instagram profile:', response.status, response.statusText);
-      throw new Error(`Failed to fetch Instagram profile: ${response.status}`);
+      throw new Error(`Instagram API error: ${response.status}`);
     }
 
-    const html = await response.text();
-    console.log('Successfully fetched Instagram profile HTML');
-    
-    // Try to extract data from multiple possible formats
-    let stats: SocialMediaStats = {};
-    
-    try {
-      // Try parsing as JSON first
-      const jsonData = JSON.parse(html);
-      if (jsonData.graphql?.user) {
-        const user = jsonData.graphql.user;
-        stats = {
-          bio: user.biography,
-          followers: user.edge_followed_by?.count,
-          following: user.edge_follow?.count,
-          posts: user.edge_owner_to_timeline_media?.count,
-          isPrivate: user.is_private
-        };
-      }
-    } catch (e) {
-      console.log('Could not parse JSON response, trying HTML extraction');
-      // If JSON parsing fails, try extracting from HTML
-      const extractedStats = extractInstagramStats(html);
-      stats = { ...extractedStats };
-    }
+    const data = await response.json();
+    console.log('Instagram API response:', data);
 
-    // Log the extracted data
-    console.log('Extracted Instagram stats:', stats);
-    
-    return stats;
+    return {
+      bio: data.biography,
+      followers: data.followers_count,
+      following: data.follows_count,
+      posts: data.media_count,
+      isPrivate: data.account_type === 'PRIVATE'
+    };
   } catch (error) {
     console.error('Error scanning Instagram profile:', error);
     return {};
   }
-}
-
-function extractInstagramStats(html: string): SocialMediaStats {
-  const stats: SocialMediaStats = {};
-  
-  // Extract bio
-  const bioMatch = html.match(/<meta property="og:description" content="([^"]+)"/);
-  if (bioMatch) {
-    stats.bio = bioMatch[1].split('Followers')[0].trim();
-  }
-  
-  // Extract followers count
-  const followersMatch = html.match(/(\d+(?:,\d+)*)\s*Followers/);
-  if (followersMatch) {
-    stats.followers = parseInt(followersMatch[1].replace(/,/g, ''));
-  }
-  
-  // Extract following count
-  const followingMatch = html.match(/(\d+(?:,\d+)*)\s*Following/);
-  if (followingMatch) {
-    stats.following = parseInt(followingMatch[1].replace(/,/g, ''));
-  }
-  
-  // Extract posts count
-  const postsMatch = html.match(/(\d+(?:,\d+)*)\s*Posts/);
-  if (postsMatch) {
-    stats.posts = parseInt(postsMatch[1].replace(/,/g, ''));
-  }
-  
-  // Check if account is private
-  stats.isPrivate = html.includes('This Account is Private');
-  
-  return stats;
 }
