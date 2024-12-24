@@ -39,18 +39,15 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     setIsEditDialogOpen(true);
   };
 
-  // Separate click handlers for each action
   const handleMessageClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Message functionality will be implemented later
     console.log("Message clicked for lead:", lead.id);
   };
 
   const handleCallClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Call functionality will be implemented later
     if (lead.phone_number) {
       window.location.href = `tel:${lead.phone_number}`;
     }
@@ -59,7 +56,6 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
   const handleShareClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Share functionality will be implemented later
     console.log("Share clicked for lead:", lead.id);
   };
 
@@ -68,23 +64,29 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
       <div
         ref={setNodeRef}
         style={style}
-        {...attributes}
-        {...listeners}
-        className={`bg-background p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 group ${
-          isDragging ? 'shadow-lg ring-2 ring-primary cursor-grabbing scale-105' : 'cursor-grab'
+        className={`bg-background rounded-lg shadow-sm hover:shadow-md transition-all duration-200 group ${
+          isDragging ? 'shadow-lg ring-2 ring-primary cursor-grabbing scale-105' : ''
         }`}
       >
-        <div className="flex flex-col gap-3">
+        {/* Draggable header area */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="p-4 cursor-grab active:cursor-grabbing"
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="font-medium">{lead.name}</span>
             </div>
           </div>
           
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground mt-2">
             {lead.contact_type || "Nicht festgelegt"}
           </div>
+        </div>
 
+        {/* Non-draggable actions area */}
+        <div className="px-4 pb-4">
           <div className="grid grid-cols-4 gap-1">
             <Button
               variant="ghost"
