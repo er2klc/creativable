@@ -41,7 +41,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 50 : undefined,
-    position: isDragging ? 'relative' : undefined,
+    position: isDragging ? 'relative' as const : undefined,
     opacity: isDragging ? 0.9 : 1,
   };
 
