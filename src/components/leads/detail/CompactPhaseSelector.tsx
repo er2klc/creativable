@@ -48,8 +48,8 @@ function SortablePhase({ phase, isActive, onClick }: {
       className={cn(
         "px-3 py-1 text-sm rounded-full cursor-pointer transition-all transform hover:scale-105",
         isActive
-          ? "bg-blue-500 text-white shadow-lg"
-          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          ? "bg-blue-200 text-blue-800 shadow-sm"
+          : "bg-gray-50 text-gray-600 hover:bg-gray-100"
       )}
     >
       {phase.name}
@@ -76,12 +76,19 @@ export function CompactPhaseSelector({
     if (active.id !== over.id && onUpdatePhases) {
       const oldIndex = phases.findIndex((p) => p.id === active.id);
       const newIndex = phases.findIndex((p) => p.id === over.id);
-      onUpdatePhases(arrayMove(phases, oldIndex, newIndex));
+      
+      const updatedPhases = arrayMove(phases, oldIndex, newIndex);
+      const phasesWithNewOrder = updatedPhases.map((phase, index) => ({
+        ...phase,
+        order_index: index,
+      }));
+      
+      onUpdatePhases(phasesWithNewOrder);
     }
   };
 
   return (
-    <div className="w-full bg-white p-4 rounded-lg shadow-sm">
+    <div className="w-full p-4 rounded-lg">
       <h3 className="text-sm font-medium mb-3 text-gray-700">
         {settings?.language === "en" ? "Contact Phase" : "Kontaktphase"}
       </h3>

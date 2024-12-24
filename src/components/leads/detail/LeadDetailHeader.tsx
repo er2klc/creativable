@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Send } from "lucide-react";
+import { Send, User } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
@@ -14,15 +14,18 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
   const contactTypes = (lead?.contact_type?.split(",") || []).filter(Boolean);
 
   return (
-    <div className="relative -mx-6 -mt-6 bg-white border-b pb-4">
+    <div className="relative -mx-6 -mt-6">
       {/* Name Tab */}
-      <div className="absolute -top-2 left-4 bg-blue-500 text-white px-6 py-2 rounded-t-lg shadow-lg transform -skew-x-12">
-        <input
-          value={lead?.name || ""}
-          onChange={(e) => onUpdateLead({ name: e.target.value })}
-          className="bg-transparent border-none hover:bg-blue-600/50 transition-colors px-2 rounded w-full max-w-md text-lg font-semibold focus:outline-none placeholder:text-white/70"
-          placeholder={settings?.language === "en" ? "Contact name" : "Kontaktname"}
-        />
+      <div className="absolute -top-2 left-4 bg-gradient-to-b from-blue-100 to-blue-200 text-blue-800 px-6 py-2 rounded-t-lg shadow-sm transform -skew-x-12">
+        <div className="flex items-center gap-2 transform skew-x-12">
+          <User className="h-4 w-4" />
+          <input
+            value={lead?.name || ""}
+            onChange={(e) => onUpdateLead({ name: e.target.value })}
+            className="bg-transparent border-none hover:bg-blue-200/50 transition-colors px-2 rounded w-full max-w-md text-lg font-semibold focus:outline-none placeholder:text-blue-400"
+            placeholder={settings?.language === "en" ? "Contact name" : "Kontaktname"}
+          />
+        </div>
       </div>
 
       {/* Contact Type Tabs */}
@@ -30,8 +33,8 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
         <div
           className={`px-6 py-2 rounded-t-lg cursor-pointer transition-all transform -skew-x-12 ${
             contactTypes.includes("Partner")
-              ? "bg-green-500 text-white shadow-lg"
-              : "bg-white/80 text-gray-600 border-t border-x hover:bg-green-100"
+              ? "bg-gradient-to-b from-green-100 to-green-200 text-green-800 shadow-sm"
+              : "bg-white/80 text-gray-400 hover:bg-green-50"
           }`}
           onClick={() =>
             onUpdateLead({
@@ -46,8 +49,8 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
         <div
           className={`px-6 py-2 rounded-t-lg cursor-pointer transition-all transform -skew-x-12 ${
             contactTypes.includes("Kunde")
-              ? "bg-blue-500 text-white shadow-lg"
-              : "bg-white/80 text-gray-600 border-t border-x hover:bg-blue-100"
+              ? "bg-gradient-to-b from-blue-100 to-blue-200 text-blue-800 shadow-sm"
+              : "bg-white/80 text-gray-400 hover:bg-blue-50"
           }`}
           onClick={() =>
             onUpdateLead({

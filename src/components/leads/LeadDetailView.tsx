@@ -83,14 +83,16 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
   const updatePhaseOrderMutation = useMutation({
     mutationFn: async (updatedPhases: Tables<"lead_phases">[]) => {
-      const updates = updatedPhases.map((phase, index) => ({
-        id: phase.id,
-        order_index: index,
-      }));
-
       const { error } = await supabase
         .from("lead_phases")
-        .upsert(updates);
+        .upsert(
+          updatedPhases.map(phase => ({
+            id: phase.id,
+            name: phase.name,
+            order_index: phase.order_index,
+            user_id: phase.user_id
+          }))
+        );
 
       if (error) throw error;
     },
@@ -101,43 +103,45 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          {lead && (
-            <LeadDetailHeader
-              lead={lead}
-              onUpdateLead={updateLeadMutation.mutate}
-            />
-          )}
-        </DialogHeader>
-
-        {isLoading ? (
-          <div>{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
-        ) : lead ? (
-          <div className="grid gap-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Bot className="h-5 w-5" />
-                <h3 className="text-lg font-semibold">
-                  {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
-                </h3>
-              </div>
-              <LeadSummary lead={lead} />
-              <CompactPhaseSelector
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-transparent border-none shadow-none">
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg">
+          <DialogHeader>
+            {lead && (
+              <LeadDetailHeader
                 lead={lead}
-                phases={phases}
                 onUpdateLead={updateLeadMutation.mutate}
-                onUpdatePhases={(phases) => updatePhaseOrderMutation.mutate(phases)}
               />
+            )}
+          </DialogHeader>
+
+          {isLoading ? (
+            <div>{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
+          ) : lead ? (
+            <div className="grid gap-6 p-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Bot className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">
+                    {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
+                  </h3>
+                </div>
+                <LeadSummary lead={lead} />
+                <CompactPhaseSelector
+                  lead={lead}
+                  phases={phases}
+                  onUpdateLead={updateLeadMutation.mutate}
+                  onUpdatePhases={(phases) => updatePhaseOrderMutation.mutate(phases)}
+                />
+              </div>
+              
+              <LeadInfoCard lead={lead} />
+              <TaskList leadId={lead.id} tasks={lead.tasks} />
+              <NoteList leadId={lead.id} />
+              <LeadMessages messages={lead.messages} />
             </div>
-            
-            <LeadInfoCard lead={lead} />
-            <TaskList leadId={lead.id} tasks={lead.tasks} />
-            <NoteList leadId={lead.id} />
-            <LeadMessages messages={lead.messages} />
-          </div>
-        ) : null}
+          ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );
-}
+};
