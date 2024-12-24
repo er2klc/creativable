@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { ExternalLink, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { platformsConfig, type Platform, generateSocialMediaUrl } from "@/config/platforms";
+import { Platform, platformsConfig, generateSocialMediaUrl } from "@/config/platforms";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
 
@@ -26,9 +26,9 @@ interface SocialMediaFieldsProps {
 }
 
 export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
-  const platform = form.watch("platform") as Platform;
+  const platform = form.watch("platform");
   const username = form.watch("socialMediaUsername");
-  const profileUrl = generateSocialMediaUrl(platform, username);
+  const profileUrl = platform !== "Offline" ? generateSocialMediaUrl(platform as Exclude<Platform, "Offline">, username) : "";
 
   return (
     <>

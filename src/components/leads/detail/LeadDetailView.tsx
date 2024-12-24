@@ -18,7 +18,7 @@ import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Platform } from "../form-fields/SocialMediaFields";
+import { Platform } from "@/config/platforms";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -195,3 +195,4 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     </Dialog>
   );
 };
+
