@@ -40,6 +40,9 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    zIndex: isDragging ? 50 : undefined,
+    position: isDragging ? 'relative' : undefined,
+    opacity: isDragging ? 0.9 : 1,
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -55,8 +58,8 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
       {...attributes}
       {...listeners}
       onClick={handleClick}
-      className={`bg-background p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 group relative ${
-        isDragging ? 'shadow-lg ring-2 ring-primary/20 z-50' : ''
+      className={`bg-background p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 group ${
+        isDragging ? 'shadow-lg ring-2 ring-primary cursor-grabbing scale-105' : 'cursor-grab'
       }`}
     >
       <div className="flex items-center justify-between">
