@@ -103,7 +103,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-4xl h-[90vh] overflow-y-auto bg-white border rounded-lg shadow-lg p-0 relative">
+      <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg p-0 relative">
         <button
           onClick={() => onClose()}
           className="absolute right-4 top-4 z-50 p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -124,7 +124,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         {isLoading ? (
           <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
         ) : lead ? (
-          <div className="grid gap-6 p-6">
+          <div className="grid gap-6 p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <Bot className="h-5 w-5" />
