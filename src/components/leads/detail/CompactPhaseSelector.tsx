@@ -3,11 +3,13 @@ import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CompactPhaseSelectorProps {
   lead: Tables<"leads">;
   phases: Tables<"lead_phases">[];
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
+  onUpdatePhases?: (phases: Tables<"lead_phases">[]) => void;
 }
 
 export function CompactPhaseSelector({ 
@@ -16,6 +18,7 @@ export function CompactPhaseSelector({
   onUpdateLead 
 }: CompactPhaseSelectorProps) {
   const { settings } = useSettings();
+  const isMobile = useIsMobile();
   
   const currentPhaseIndex = phases.findIndex(p => p.name === lead.phase);
   
@@ -49,7 +52,7 @@ export function CompactPhaseSelector({
           <ChevronLeft className="h-4 w-4" />
         </Button>
         
-        <div className="flex gap-2 overflow-x-auto py-2 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto py-2 no-scrollbar">
           {phases.map((phase) => (
             <div
               key={phase.id}

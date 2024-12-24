@@ -103,8 +103,8 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white border rounded-lg shadow-lg">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white border rounded-lg shadow-lg p-0">
+        <DialogHeader className="p-0">
           {lead && (
             <LeadDetailHeader
               lead={lead}
@@ -114,7 +114,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         </DialogHeader>
 
         {isLoading ? (
-          <div>{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
+          <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
         ) : lead ? (
           <div className="grid gap-6 p-6">
             <div className="space-y-4">
@@ -142,4 +142,4 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       </DialogContent>
     </Dialog>
   );
-};
+}
