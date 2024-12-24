@@ -10,30 +10,42 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get auth status to retrieve access token
+    console.log('Fetching LinkedIn auth status...');
     const { data: authStatus, error: authError } = await supabase
       .from('platform_auth_status')
       .select('access_token')
       .eq('platform', 'linkedin')
       .single();
 
-    if (authError || !authStatus?.access_token) {
-      console.error('LinkedIn access token not found:', authError);
+    if (authError) {
+      console.error('Error fetching LinkedIn auth status:', authError);
       return {};
     }
 
-    console.log('Retrieved LinkedIn access token');
+    if (!authStatus?.access_token) {
+      console.error('No LinkedIn access token found in auth status');
+      return {};
+    }
+
+    console.log('Successfully retrieved LinkedIn access token');
 
     // Make API call to LinkedIn
-    const response = await fetch('https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName,headline,profilePicture,publicProfileUrl)', {
+    console.log('Fetching LinkedIn profile data...');
+    const response = await fetch('https://api.linkedin.com/v2/me?projection=(id,firstName,lastName,headline,profilePicture,vanityName)', {
       headers: {
         'Authorization': `Bearer ${authStatus.access_token}`,
         'X-Restli-Protocol-Version': '2.0.0',
-        'LinkedIn-Version': '202304'
+        'LinkedIn-Version': '202304',
+        'Content-Type': 'application/json',
       }
     });
 
     if (!response.ok) {
-      console.error('LinkedIn API error:', response.status, response.statusText);
+      console.error('LinkedIn API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
       const errorText = await response.text();
       console.error('LinkedIn API error details:', errorText);
       return {};
@@ -43,11 +55,13 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     console.log('LinkedIn profile data:', profileData);
 
     // Get connections count
+    console.log('Fetching LinkedIn connections count...');
     const connectionsResponse = await fetch('https://api.linkedin.com/v2/connections?q=viewer&start=0&count=0', {
       headers: {
         'Authorization': `Bearer ${authStatus.access_token}`,
         'X-Restli-Protocol-Version': '2.0.0',
-        'LinkedIn-Version': '202304'
+        'LinkedIn-Version': '202304',
+        'Content-Type': 'application/json',
       }
     });
 
@@ -55,15 +69,26 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     if (connectionsResponse.ok) {
       const connectionsData = await connectionsResponse.json();
       connections = connectionsData._total || null;
-      console.log('LinkedIn connections count:', connections);
+      console.log('Successfully retrieved LinkedIn connections count:', connections);
     } else {
-      console.error('Failed to fetch connections:', connectionsResponse.status, connectionsResponse.statusText);
+      console.error('Failed to fetch connections:', {
+        status: connectionsResponse.status,
+        statusText: connectionsResponse.statusText,
+        headers: Object.fromEntries(connectionsResponse.headers.entries())
+      });
+      const errorText = await connectionsResponse.text();
+      console.error('LinkedIn connections error details:', errorText);
     }
 
+    // Extract the headline from the profile data
+    const headline = profileData.headline?.localized?.['en_US'] || 
+                    profileData.headline?.localized?.['de_DE'] || 
+                    profileData.headline || null;
+
     return {
-      bio: profileData.headline || null,
+      bio: headline,
       connections: connections,
-      headline: profileData.headline || null
+      headline: headline
     };
   } catch (error) {
     console.error('Error scanning LinkedIn profile:', error);
