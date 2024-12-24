@@ -7,11 +7,11 @@ import { Instagram, Linkedin, Facebook, Video, Users, ExternalLink, AlertTriangl
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLINE"] as const;
+export const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "Offline"] as const;
 export type Platform = typeof platforms[number];
 
 export const generateSocialMediaUrl = (platform: Platform, username: string) => {
-  if (platform === "OFFLINE") return username;
+  if (platform === "Offline") return username;
   
   // Clean the username first
   const cleanUsername = username.replace(/^https?:\/\/[^\/]+\//, '').replace(/^@/, '');
@@ -27,21 +27,6 @@ export const generateSocialMediaUrl = (platform: Platform, username: string) => 
       return `https://www.tiktok.com/@${cleanUsername}`;
     default:
       return username;
-  }
-};
-
-const getPlatformIcon = (platform: Platform) => {
-  switch (platform) {
-    case "Instagram":
-      return <Instagram className="h-4 w-4 mr-2" />;
-    case "LinkedIn":
-      return <Linkedin className="h-4 w-4 mr-2" />;
-    case "Facebook":
-      return <Facebook className="h-4 w-4 mr-2" />;
-    case "TikTok":
-      return <Video className="h-4 w-4 mr-2" />;
-    case "OFFLINE":
-      return <Users className="h-4 w-4 mr-2" />;
   }
 };
 
@@ -61,6 +46,23 @@ const formSchema = z.object({
   notes: z.string().optional().nullable(),
   industry: z.string().optional().nullable(),
 });
+
+const getPlatformIcon = (platform: Platform) => {
+  switch (platform) {
+    case "Instagram":
+      return <Instagram className="h-4 w-4 mr-2" />;
+    case "LinkedIn":
+      return <Linkedin className="h-4 w-4 mr-2" />;
+    case "Facebook":
+      return <Facebook className="h-4 w-4 mr-2" />;
+    case "TikTok":
+      return <Video className="h-4 w-4 mr-2" />;
+    case "Offline":
+      return <Users className="h-4 w-4 mr-2" />;
+    default:
+      return null;
+  }
+};
 
 export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
   const platform = form.watch("platform");
@@ -97,7 +99,7 @@ export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
         )}
       />
 
-      {platform !== "OFFLINE" && (
+      {platform !== "Offline" && (
         <FormField
           control={form.control}
           name="socialMediaUsername"
@@ -115,7 +117,7 @@ export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
                     }}
                   />
                 </FormControl>
-                {username && profileUrl && platform !== "OFFLINE" && (
+                {username && profileUrl && platform !== "Offline" && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -126,7 +128,7 @@ export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
                   </Button>
                 )}
               </div>
-              {platform !== "OFFLINE" && !username && (
+              {platform !== "Offline" && !username && (
                 <Alert variant="destructive" className="mt-2">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>

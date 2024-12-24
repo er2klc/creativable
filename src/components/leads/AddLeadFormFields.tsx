@@ -3,8 +3,7 @@ import * as z from "zod";
 import { BasicLeadFields } from "./form-fields/BasicLeadFields";
 import { NotesFields } from "./form-fields/NotesFields";
 import { ContactTypeField } from "./form-fields/ContactTypeField";
-
-const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLINE"] as const;
+import { platforms } from "./form-fields/SocialMediaFields";
 
 export const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich 📝"),
