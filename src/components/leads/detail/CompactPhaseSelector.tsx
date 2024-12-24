@@ -44,11 +44,15 @@ function SortablePhase({ phase, isActive, onClick }: {
       style={style}
       {...attributes}
       {...listeners}
-      onClick={onClick}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick();
+      }}
       className={cn(
         "px-3 py-1 text-sm rounded-full cursor-pointer transition-all transform hover:scale-105",
         isActive
-          ? "bg-blue-200 text-blue-800 shadow-sm"
+          ? "bg-[#D3E4FD] text-blue-800 shadow-sm"
           : "bg-gray-50 text-gray-600 hover:bg-gray-100"
       )}
     >
