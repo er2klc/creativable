@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Settings from "./pages/Settings";
 import LinkedInCallback from "./pages/auth/callback/LinkedIn";
+import InstagramCallback from "./pages/auth/callback/Instagram";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useEffect } from "react";
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback/linkedin" element={<LinkedInCallback />} />
+              <Route path="/auth/callback/instagram" element={<InstagramCallback />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/auth/data-deletion/instagram" element={<InstagramDataDeletion />} />
               <Route
