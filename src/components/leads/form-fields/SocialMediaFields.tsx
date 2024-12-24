@@ -1,12 +1,14 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Instagram, Linkedin, Facebook, Video } from "lucide-react";
+import { Instagram, Linkedin, Facebook, Video, Users, ExternalLink, AlertTriangle } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
 import { formSchema } from "../AddLeadFormFields";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok"] as const;
+const platforms = ["Instagram", "LinkedIn", "Facebook", "TikTok", "OFFLINE"] as const;
 
 const getPlatformIcon = (platform: string) => {
   switch (platform) {
@@ -18,12 +20,15 @@ const getPlatformIcon = (platform: string) => {
       return <Facebook className="h-4 w-4 mr-2" />;
     case "TikTok":
       return <Video className="h-4 w-4 mr-2" />;
+    case "OFFLINE":
+      return <Users className="h-4 w-4 mr-2" />;
     default:
       return null;
   }
 };
 
-const generateSocialMediaUrl = (platform: string, username: string): string => {
+export const generateSocialMediaUrl = (platform: string, username: string): string => {
+  if (!username) return '';
   switch (platform) {
     case "Instagram":
       return `https://www.instagram.com/${username}`;
@@ -34,7 +39,7 @@ const generateSocialMediaUrl = (platform: string, username: string): string => {
     case "TikTok":
       return `https://www.tiktok.com/@${username}`;
     default:
-      return username;
+      return '';
   }
 };
 
@@ -43,6 +48,10 @@ interface SocialMediaFieldsProps {
 }
 
 export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
+  const platform = form.watch("platform");
+  const username = form.watch("socialMediaUsername");
+  const profileUrl = generateSocialMediaUrl(platform, username);
+
   return (
     <>
       <FormField
@@ -73,31 +82,48 @@ export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
         )}
       />
 
-      <FormField
-        control={form.control}
-        name="socialMediaUsername"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Benutzername 📱</FormLabel>
-            <FormControl>
-              <Input 
-                placeholder="Benutzername (ohne @ oder URL)" 
-                {...field} 
-                onChange={(e) => {
-                  const username = e.target.value.replace(/^@/, '');
-                  field.onChange(username);
-                  const platform = form.getValues("platform");
-                  if (username && platform) {
-                    const url = generateSocialMediaUrl(platform, username);
-                    console.log("Generated URL:", url);
-                  }
-                }}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {platform !== "OFFLINE" && (
+        <FormField
+          control={form.control}
+          name="socialMediaUsername"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Benutzername 📱</FormLabel>
+              <div className="flex items-center gap-2">
+                <FormControl>
+                  <Input 
+                    placeholder="Benutzername (ohne @ oder URL)" 
+                    {...field} 
+                    onChange={(e) => {
+                      const username = e.target.value.replace(/^@/, '');
+                      field.onChange(username);
+                    }}
+                  />
+                </FormControl>
+                {username && profileUrl && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => window.open(profileUrl, '_blank')}
+                    title="Profil öffnen"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              {platform !== "OFFLINE" && !username && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Kein Profil gefunden. Bitte überprüfen Sie den Benutzernamen.
+                  </AlertDescription>
+                </Alert>
+              )}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
     </>
   );
 }

@@ -30,36 +30,44 @@ export function ContactTypeField({ form }: ContactTypeFieldProps) {
         <FormItem>
           <FormLabel>Kontakttyp</FormLabel>
           <FormControl>
-            <div className="flex items-center gap-6 bg-accent/50 px-6 py-3 rounded-lg">
+            <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={currentTypes.includes("Partner")}
-                  onCheckedChange={(checked) => 
-                    handleContactTypeChange("Partner", checked as boolean)
-                  }
-                  id="partner"
-                />
-                <label 
-                  htmlFor="partner" 
-                  className="text-sm font-medium cursor-pointer"
-                >
-                  Partner
-                </label>
+                <div className={`p-2 rounded-lg transition-colors ${
+                  currentTypes.includes("Partner") ? "bg-blue-100" : ""
+                }`}>
+                  <Checkbox
+                    checked={currentTypes.includes("Partner")}
+                    onCheckedChange={(checked) => 
+                      handleContactTypeChange("Partner", checked as boolean)
+                    }
+                    id="partner"
+                  />
+                  <label 
+                    htmlFor="partner" 
+                    className="ml-2 text-sm font-medium cursor-pointer"
+                  >
+                    Partner
+                  </label>
+                </div>
               </div>
               <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={currentTypes.includes("Kunde")}
-                  onCheckedChange={(checked) => 
-                    handleContactTypeChange("Kunde", checked as boolean)
-                  }
-                  id="kunde"
-                />
-                <label 
-                  htmlFor="kunde" 
-                  className="text-sm font-medium cursor-pointer"
-                >
-                  Kunde
-                </label>
+                <div className={`p-2 rounded-lg transition-colors ${
+                  currentTypes.includes("Kunde") ? "bg-green-100" : ""
+                }`}>
+                  <Checkbox
+                    checked={currentTypes.includes("Kunde")}
+                    onCheckedChange={(checked) => 
+                      handleContactTypeChange("Kunde", checked as boolean)
+                    }
+                    id="kunde"
+                  />
+                  <label 
+                    htmlFor="kunde" 
+                    className="ml-2 text-sm font-medium cursor-pointer"
+                  >
+                    Kunde
+                  </label>
+                </div>
               </div>
             </div>
           </FormControl>
