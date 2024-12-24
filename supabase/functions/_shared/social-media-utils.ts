@@ -15,75 +15,86 @@ export interface SocialMediaStats {
 
 export const extractInstagramStats = (html: string): SocialMediaStats => {
   try {
-    // Look for the bio first as it's important
-    const bioMatch = html.match(/"biography":"([^"]+)"/);
-    const bio = bioMatch ? bioMatch[1].replace(/\\n/g, '\n').replace(/\\u[0-9a-fA-F]{4}/g, match => 
-      String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16))
-    ) : null;
+    // Try multiple patterns for bio extraction
+    let bio = null;
+    const bioPatterns = [
+      /"biography":"([^"]+)"/,
+      /<meta property="og:description" content="([^"]+)"/,
+      /biography\\?":\\?"([^"\\]+)\\?"/
+    ];
+    
+    for (const pattern of bioPatterns) {
+      const match = html.match(pattern);
+      if (match) {
+        bio = match[1]
+          .replace(/\\n/g, '\n')
+          .replace(/\\u([0-9a-fA-F]{4})/g, (_, code) => 
+            String.fromCharCode(parseInt(code, 16))
+          );
+        break;
+      }
+    }
 
-    // Extract other stats using more robust regex patterns
-    const followersMatch = html.match(/"edge_followed_by":\{"count":(\d+)\}/);
-    const followingMatch = html.match(/"edge_follow":\{"count":(\d+)\}/);
-    const postsMatch = html.match(/"edge_owner_to_timeline_media":\{"count":(\d+)\}/);
-    const isPrivateMatch = html.match(/"is_private":(\w+)/);
+    // Try multiple patterns for stats
+    const statsPatterns = {
+      followers: [
+        /"edge_followed_by":\{"count":(\d+)\}/,
+        /Followers:\s*([0-9,]+)/,
+        /followers\\?":\\?"(\d+)\\?"/
+      ],
+      following: [
+        /"edge_follow":\{"count":(\d+)\}/,
+        /Following:\s*([0-9,]+)/,
+        /following\\?":\\?"(\d+)\\?"/
+      ],
+      posts: [
+        /"edge_owner_to_timeline_media":\{"count":(\d+)\}/,
+        /Posts:\s*([0-9,]+)/,
+        /media\\?":\\?"(\d+)\\?"/
+      ]
+    };
 
-    // Only include stats that were successfully extracted
     const stats: SocialMediaStats = {};
     
     if (bio) {
       stats.bio = bio;
       console.log('Found bio:', bio);
     }
-    
-    if (followersMatch && !isNaN(parseInt(followersMatch[1]))) {
-      stats.followers = parseInt(followersMatch[1]);
-      console.log('Found followers:', stats.followers);
+
+    // Extract numeric stats using multiple patterns
+    for (const [key, patterns] of Object.entries(statsPatterns)) {
+      for (const pattern of patterns) {
+        const match = html.match(pattern);
+        if (match) {
+          const value = parseInt(match[1].replace(/,/g, ''));
+          if (!isNaN(value)) {
+            stats[key as keyof SocialMediaStats] = value;
+            console.log(`Found ${key}:`, value);
+            break;
+          }
+        }
+      }
     }
-    
-    if (followingMatch && !isNaN(parseInt(followingMatch[1]))) {
-      stats.following = parseInt(followingMatch[1]);
-      console.log('Found following:', stats.following);
-    }
-    
-    if (postsMatch && !isNaN(parseInt(postsMatch[1]))) {
-      stats.posts = parseInt(postsMatch[1]);
-      console.log('Found posts:', stats.posts);
-    }
-    
-    if (isPrivateMatch) {
-      stats.isPrivate = isPrivateMatch[1] === 'true';
-      console.log('Found isPrivate:', stats.isPrivate);
+
+    // Try multiple patterns for private account status
+    const privatePatterns = [
+      /"is_private":(\w+)/,
+      /Private account/i,
+      /is_private\\?":\\?"(\w+)\\?"/
+    ];
+
+    for (const pattern of privatePatterns) {
+      const match = html.match(pattern);
+      if (match) {
+        stats.isPrivate = match[1] === 'true' || match[1] === 'True' || !!match[1];
+        console.log('Found isPrivate:', stats.isPrivate);
+        break;
+      }
     }
 
     return stats;
   } catch (error) {
     console.error('Error extracting Instagram stats:', error);
-    return {};
-  }
-};
-
-export const extractLinkedInStats = (html: string): SocialMediaStats => {
-  try {
-    const connectionsMatch = html.match(/(\d+)\s+connections?/i);
-    const headlineMatch = html.match(/<div class="text-body-medium break-words">(.*?)<\/div>/);
-    const postsMatch = html.match(/(\d+)\s+posts?/i);
-    const bioMatch = html.match(/<div class="pv-shared-text-with-see-more[^>]*>(.*?)<\/div>/);
-
-    console.log('Extracted LinkedIn stats:', {
-      connections: connectionsMatch?.[1] || 'Not found',
-      headline: headlineMatch?.[1] || 'Not found',
-      posts: postsMatch?.[1] || 'Not found',
-      bio: bioMatch?.[1] || 'Not found'
-    });
-
-    return {
-      connections: connectionsMatch ? parseInt(connectionsMatch[1]) : null,
-      headline: headlineMatch ? headlineMatch[1].trim() : null,
-      posts: postsMatch ? parseInt(postsMatch[1]) : null,
-      bio: bioMatch ? bioMatch[1].trim() : null,
-    };
-  } catch (error) {
-    console.error('Error extracting LinkedIn stats:', error);
     return {};
   }
 };
