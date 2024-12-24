@@ -11,6 +11,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { generateSocialMediaUrl } from "../form-fields/SocialMediaFields";
 import { Checkbox } from "@/components/ui/checkbox";
 
+type Platform = "Instagram" | "LinkedIn" | "Facebook" | "TikTok" | "OFFLINE";
+
 interface LeadDetailHeaderProps {
   lead: Tables<"leads">;
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
@@ -32,7 +34,7 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
     onUpdateLead({ contact_type: newValue || null });
   };
 
-  const getPlatformIcon = (platform: string) => {
+  const getPlatformIcon = (platform: Platform) => {
     switch (platform) {
       case "Instagram":
         return <Instagram className="h-4 w-4" />;
@@ -80,7 +82,7 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
     }
   };
 
-  const profileUrl = generateSocialMediaUrl(lead.platform, lead.social_media_username || '');
+  const profileUrl = generateSocialMediaUrl(lead.platform as Platform, lead.social_media_username || '');
 
   return (
     <div className="flex flex-col gap-4 p-6 border-b">
