@@ -92,12 +92,16 @@ export type Database = {
           industry: string
           last_action: string | null
           last_action_date: string | null
+          last_social_media_scan: string | null
           name: string
           notes: string | null
           phase: string
           phone_number: string | null
           platform: string
           products_services: string | null
+          social_media_bio: string | null
+          social_media_interests: string[] | null
+          social_media_posts: Json | null
           social_media_username: string | null
           target_audience: string | null
           updated_at: string | null
@@ -114,12 +118,16 @@ export type Database = {
           industry: string
           last_action?: string | null
           last_action_date?: string | null
+          last_social_media_scan?: string | null
           name: string
           notes?: string | null
           phase?: string
           phone_number?: string | null
           platform: string
           products_services?: string | null
+          social_media_bio?: string | null
+          social_media_interests?: string[] | null
+          social_media_posts?: Json | null
           social_media_username?: string | null
           target_audience?: string | null
           updated_at?: string | null
@@ -136,12 +144,16 @@ export type Database = {
           industry?: string
           last_action?: string | null
           last_action_date?: string | null
+          last_social_media_scan?: string | null
           name?: string
           notes?: string | null
           phase?: string
           phone_number?: string | null
           platform?: string
           products_services?: string | null
+          social_media_bio?: string | null
+          social_media_interests?: string[] | null
+          social_media_posts?: Json | null
           social_media_username?: string | null
           target_audience?: string | null
           updated_at?: string | null
