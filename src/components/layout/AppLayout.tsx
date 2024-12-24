@@ -36,7 +36,15 @@ const DashboardSidebar = () => {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <div className="flex items-center justify-between px-4 py-2">
+            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+            <button
+              className="p-1 hover:bg-accent rounded-md transition-colors"
+              onClick={() => document.querySelector('[data-sidebar="trigger"]')?.click()}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => (
@@ -70,11 +78,6 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
       <div className="min-h-screen flex w-full bg-background">
         <DashboardSidebar />
         <main className="flex-1 p-8">
-          <div className="flex items-center mb-4">
-            <SidebarTrigger>
-              <ChevronRight className="h-6 w-6" />
-            </SidebarTrigger>
-          </div>
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
