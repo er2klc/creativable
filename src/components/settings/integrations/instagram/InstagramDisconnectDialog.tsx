@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { useInstagramConnection } from "@/hooks/use-instagram-connection";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,11 +13,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-interface InstagramDisconnectDialogProps {
-  onDisconnect: () => Promise<void>;
-}
+export function InstagramDisconnectDialog() {
+  const { disconnectInstagram } = useInstagramConnection();
 
-export function InstagramDisconnectDialog({ onDisconnect }: InstagramDisconnectDialogProps) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -32,7 +31,7 @@ export function InstagramDisconnectDialog({ onDisconnect }: InstagramDisconnectD
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-          <AlertDialogAction onClick={onDisconnect}>
+          <AlertDialogAction onClick={disconnectInstagram}>
             Trennen
           </AlertDialogAction>
         </AlertDialogFooter>
