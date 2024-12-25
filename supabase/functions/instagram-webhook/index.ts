@@ -1,18 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from "../_shared/cors.ts";
 
-const VERIFY_TOKEN = "lovable_instagram_webhook_verify_123";
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const VERIFY_TOKEN = 'lovable_instagram_webhook_verify_123';
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
-  
-  const url = new URL(req.url);
-  
-  // Handle webhook verification from Meta
-  if (req.method === "GET") {
+
+  if (req.method === 'GET') {
+    // Handle webhook verification from Meta
+    const url = new URL(req.url);
     const mode = url.searchParams.get("hub.mode");
     const token = url.searchParams.get("hub.verify_token");
     const challenge = url.searchParams.get("hub.challenge");
@@ -21,76 +24,91 @@ serve(async (req) => {
       mode,
       token,
       challenge,
-      url: req.url
+      fullUrl: req.url,
+      headers: Object.fromEntries(req.headers.entries())
     });
 
-    // Strict verification as per Meta's requirements
     if (mode === "subscribe" && token === VERIFY_TOKEN) {
       console.log("Webhook verified successfully");
-      // Return ONLY the challenge value without any JSON wrapping
-      return new Response(challenge, { 
+      // Return ONLY the challenge value as plain text
+      return new Response(challenge, {
         status: 200,
         headers: {
           ...corsHeaders,
-          "Content-Type": "text/plain",
-        }
+          'Content-Type': 'text/plain',
+        },
       });
     }
 
-    console.log("Verification failed:", { mode, token });
-    return new Response("Verification failed", { 
-      status: 403,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "text/plain",
+    console.log("Webhook verification failed:", { mode, token });
+    return new Response(
+      JSON.stringify({ error: "Verification failed" }),
+      {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
-    });
+    );
   }
 
-  // Handle actual webhook events
-  if (req.method === "POST") {
+  if (req.method === 'POST') {
     try {
       const body = await req.json();
       console.log("Received webhook event:", body);
 
-      // Handle different types of webhook events based on the documentation
       if (body.object === "instagram") {
         const entry = body.entry[0];
         
-        // Handle different types of notifications
+        // Handle messaging events
         if (entry.messaging) {
-          console.log("Received messaging event:", entry.messaging[0]);
-          // Handle messaging events (messages, reactions, etc.)
-        } else if (entry.changes) {
-          console.log("Received changes event:", entry.changes[0]);
-          // Handle other Instagram updates
+          const messaging = entry.messaging[0];
+          
+          // Handle different types of messages
+          if (messaging.message) {
+            console.log("Received message:", messaging.message);
+            // Handle text messages, attachments, etc.
+          }
+          
+          if (messaging.reaction) {
+            console.log("Received reaction:", messaging.reaction);
+            // Handle message reactions
+          }
+          
+          if (messaging.read) {
+            console.log("Message read event:", messaging.read);
+            // Handle read receipts
+          }
         }
+
+        return new Response(JSON.stringify({ status: "ok" }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: { 
-          ...corsHeaders,
-          "Content-Type": "application/json" 
-        },
-      });
+      return new Response(
+        JSON.stringify({ error: "Unsupported webhook object type" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     } catch (error) {
       console.error("Error processing webhook:", error);
-      return new Response(JSON.stringify({ error: "Invalid request" }), {
-        status: 400,
-        headers: { 
-          ...corsHeaders,
-          "Content-Type": "application/json" 
-        },
-      });
+      return new Response(
+        JSON.stringify({ error: "Internal server error" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
   }
 
-  return new Response("Method not allowed", { 
-    status: 405,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "text/plain",
+  return new Response(
+    JSON.stringify({ error: "Method not allowed" }),
+    {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     }
-  });
+  );
 });
