@@ -74,10 +74,10 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div>
-            <h2 className="text-2xl font-semibold">{lead.name}</h2>
+            <h2 className="text-2xl font-semibold antialiased">{lead.name}</h2>
             <div className="flex items-center gap-2 mt-1">
               <platformConfig.icon className="h-4 w-4" />
-              <span className="text-sm text-muted-foreground">{lead.platform}</span>
+              <span className="text-sm text-muted-foreground antialiased">{lead.platform}</span>
               {lead.platform !== "Offline" && (
                 <>
                   {displayUsername ? (
@@ -87,13 +87,13 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
                       className="flex items-center gap-2 h-6"
                       onClick={() => window.open(profileUrl, '_blank')}
                     >
-                      <span className="text-sm">{displayUsername}</span>
+                      <span className="text-sm antialiased">{displayUsername}</span>
                       <ExternalLink className="h-3 w-3" />
                     </Button>
                   ) : (
                     <Alert variant="destructive" className="py-1 px-2">
                       <AlertTriangle className="h-3 w-3" />
-                      <AlertDescription className="text-xs">
+                      <AlertDescription className="text-xs antialiased">
                         Kein Profil gefunden
                       </AlertDescription>
                     </Alert>
@@ -130,8 +130,8 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
           )}
         </div>
       </div>
-      
-      <div className="flex items-center gap-4">
+
+      <div className="flex justify-end mt-2">
         <div className="flex items-center gap-6">
           <div className={`p-2 rounded-lg transition-colors ${
             currentTypes.includes("Partner") ? "bg-blue-100" : ""
@@ -145,9 +145,9 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
             />
             <label 
               htmlFor="partner" 
-              className="ml-2 text-sm font-medium cursor-pointer"
+              className="ml-2 text-sm font-medium cursor-pointer antialiased"
             >
-              Partner
+              Likely Partner
             </label>
           </div>
           <div className={`p-2 rounded-lg transition-colors ${
@@ -162,16 +162,16 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
             />
             <label 
               htmlFor="kunde" 
-              className="ml-2 text-sm font-medium cursor-pointer"
+              className="ml-2 text-sm font-medium cursor-pointer antialiased"
             >
-              Kunde
+              Likely Kunde
             </label>
           </div>
         </div>
       </div>
 
       {lead.last_social_media_scan && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground antialiased">
           <Check className="h-4 w-4 text-green-500" />
           Zuletzt gescannt: {new Date(lead.last_social_media_scan).toLocaleString()}
         </div>

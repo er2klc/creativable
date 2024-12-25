@@ -15,13 +15,15 @@ serve(async (req) => {
     const { 
       prompt,
       leadName, 
-      leadPlatform, 
+      leadPlatform,
       leadIndustry,
       companyName, 
       productsServices, 
       targetAudience, 
       usp,
       businessDescription,
+      contactType,
+      interests,
       language = "Deutsch"
     } = await req.json();
 
@@ -39,6 +41,8 @@ serve(async (req) => {
             content: `Du bist ein Experte für personalisierte Verkaufsnachrichten im MLM-Bereich. 
                      Erstelle eine freundliche, aber direkte Nachricht für ${leadPlatform}.
                      Berücksichtige dabei die Branche ${leadIndustry} des Leads.
+                     ${contactType?.includes('Partner') ? 'Der Kontakt wurde als potenzieller Partner markiert. Hebe relevante Skills und Erfahrungen positiv hervor.' : ''}
+                     ${contactType?.includes('Kunde') ? 'Der Kontakt wurde als potenzieller Kunde markiert. Fokussiere auf mögliche Probleme und Lösungen.' : ''}
                      Die Nachricht soll in folgender Sprache sein: ${language}`
           },
           {
@@ -49,13 +53,17 @@ serve(async (req) => {
               Zielgruppe: ${targetAudience}
               USP: ${usp}
               Business Description: ${businessDescription}
+              Interessen/Skills: ${interests?.join(', ')}
+              Kontakttyp: ${contactType || 'Nicht spezifiziert'}
               
               Die Nachricht sollte:
               - Kurz und prägnant sein (max. 2-3 Sätze)
               - Freundlich und persönlich klingen
               - Einen klaren Call-to-Action enthalten
               - In ${language} sein
-              - Für ${leadPlatform} optimiert sein`
+              - Für ${leadPlatform} optimiert sein
+              ${contactType?.includes('Partner') ? '- Die Skills und Erfahrungen der Person positiv hervorheben' : ''}
+              ${contactType?.includes('Kunde') ? '- Auf mögliche Probleme und deren Lösungen eingehen' : ''}`
           }
         ],
       }),

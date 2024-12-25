@@ -67,7 +67,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 antialiased">
           <Contact2 className="h-5 w-5" />
           {settings?.language === "en" ? "Contact Information" : "Kontakt Informationen"}
         </CardTitle>
@@ -176,8 +176,9 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
               />
             </dd>
           </div>
+
           <div className="col-span-2">
-            <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
+            <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2 antialiased">
               <UserCircle className="h-4 w-4" />
               Bio
             </dt>
@@ -186,12 +187,12 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                 value={lead.social_media_bio || ""}
                 onChange={(e) => updateLeadMutation.mutate({ social_media_bio: e.target.value })}
                 placeholder={settings?.language === "en" ? "Enter bio" : "Bio eingeben"}
-                className="min-h-[100px]"
+                className="min-h-[150px] antialiased"
               />
             </dd>
           </div>
           <div className="col-span-2">
-            <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
+            <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2 antialiased">
               <UserCircle className="h-4 w-4" />
               {settings?.language === "en" ? "Interests/Skills/Positives" : "Interessen/Skills/Positives"}
             </dt>
@@ -201,6 +202,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                   value={newInterest}
                   onChange={(e) => setNewInterest(e.target.value)}
                   placeholder={settings?.language === "en" ? "Add new interest/skill" : "Neue Interesse/Skill hinzufügen"}
+                  className="antialiased"
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -211,6 +213,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                 <Button 
                   onClick={handleAddInterest}
                   type="button"
+                  className="antialiased"
                 >
                   {settings?.language === "en" ? "Add" : "Hinzufügen"}
                 </Button>
@@ -221,7 +224,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                     <Badge
                       key={index}
                       variant="secondary"
-                      className="flex items-center gap-1"
+                      className="flex items-center gap-1 antialiased"
                     >
                       {interest}
                       <Button

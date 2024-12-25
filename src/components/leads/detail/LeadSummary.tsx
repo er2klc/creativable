@@ -104,11 +104,11 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
           <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
             <div className="flex items-center gap-2 mb-2">
               <User className="h-5 w-5 text-blue-500" />
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-gray-700 antialiased">
                 {settings?.language === "en" ? "Profile Description" : "Profilbeschreibung"}
               </span>
             </div>
-            <p className="text-sm text-gray-600 whitespace-pre-wrap">{bio}</p>
+            <p className="text-sm text-gray-600 whitespace-pre-wrap antialiased">{bio}</p>
           </div>
         )}
 
@@ -117,24 +117,10 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
           <div className="grid grid-cols-2 gap-4">
             {validStats.map((stat, index) => (
               <div key={index} className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
-                <span className="text-sm text-gray-500">{stat.label}</span>
-                <p className="font-medium">{stat.value}</p>
+                <span className="text-sm text-gray-500 antialiased">{stat.label}</span>
+                <p className="font-medium antialiased">{stat.value}</p>
               </div>
             ))}
-          </div>
-        )}
-
-        {/* Account Type - only if explicitly set */}
-        {stats?.isPrivate !== undefined && (
-          <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
-            <span className="text-sm text-gray-500">
-              {settings?.language === "en" ? "Account Type" : "Konto-Typ"}
-            </span>
-            <p className="font-medium">
-              {stats.isPrivate ? 
-                (settings?.language === "en" ? "Private Account" : "Privates Konto") : 
-                (settings?.language === "en" ? "Public Account" : "Öffentliches Konto")}
-            </p>
           </div>
         )}
       </div>
@@ -173,9 +159,9 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         <div key={index} className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm mb-4 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
             {icon}
-            <h3 className="font-semibold text-lg">{title}</h3>
+            <h3 className="font-semibold text-lg antialiased">{title}</h3>
           </div>
-          <p className="text-gray-700 ml-7 leading-relaxed">{content}</p>
+          <p className="text-gray-700 ml-7 leading-relaxed antialiased">{content}</p>
         </div>
       );
     });
@@ -190,7 +176,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
           <Button
             onClick={generateSummary}
             disabled={isLoading}
-            className="w-full mb-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+            className="w-full mb-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white antialiased"
           >
             <Bot className="h-4 w-4 mr-2" />
             {isLoading
@@ -216,7 +202,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
             {formatSummary(summary)}
           </div>
         ) : !hasGenerated ? (
-          <div className="text-center text-muted-foreground">
+          <div className="text-center text-muted-foreground antialiased">
             {settings?.language === "en"
               ? "Click the button above to generate an AI summary"
               : "Klicken Sie auf den Button oben, um eine KI-Zusammenfassung zu generieren"}
