@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
-import { Bot, Calendar, Building2, MessageSquare, ListTodo, User } from "lucide-react";
+import { Bot, Calendar, Building2, MessageSquare, ListTodo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,77 +56,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     setHasGenerated(false);
   }, [lead.id]);
 
-  const renderSocialMediaStats = () => {
-    if (!lead.social_media_posts || !lead.social_media_bio) {
-      return null;
-    }
-
-    const stats = lead.social_media_posts as any;
-    const bio = lead.social_media_bio;
-
-    // Only show stats that have actual values
-    const validStats = [];
-
-    if (stats?.followers !== undefined && stats.followers !== null) {
-      validStats.push({
-        label: settings?.language === "en" ? "Followers" : "Follower",
-        value: stats.followers
-      });
-    }
-
-    if (stats?.following !== undefined && stats.following !== null) {
-      validStats.push({
-        label: settings?.language === "en" ? "Following" : "Folgt",
-        value: stats.following
-      });
-    }
-
-    if (stats?.posts !== undefined && stats.posts !== null) {
-      validStats.push({
-        label: settings?.language === "en" ? "Posts" : "Beiträge",
-        value: stats.posts
-      });
-    }
-
-    if (stats?.connections !== undefined && stats.connections !== null) {
-      validStats.push({
-        label: settings?.language === "en" ? "Connections" : "Verbindungen",
-        value: stats.connections
-      });
-    }
-
-    if (!validStats.length && !bio) return null;
-
-    return (
-      <div className="space-y-4 mb-6">
-        {/* Profile Bio Section */}
-        {bio && (
-          <div className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <User className="h-5 w-5 text-blue-500" />
-              <span className="text-sm font-medium text-gray-700 antialiased">
-                {settings?.language === "en" ? "Profile Description" : "Profilbeschreibung"}
-              </span>
-            </div>
-            <p className="text-sm text-gray-600 whitespace-pre-wrap antialiased">{bio}</p>
-          </div>
-        )}
-
-        {/* Stats Grid */}
-        {validStats.length > 0 && (
-          <div className="grid grid-cols-2 gap-4">
-            {validStats.map((stat, index) => (
-              <div key={index} className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm border border-gray-100">
-                <span className="text-sm text-gray-500 antialiased">{stat.label}</span>
-                <p className="font-medium antialiased">{stat.value}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const formatSummary = (text: string) => {
     const sections = text.split('**').filter(Boolean);
     return sections.map((section, index) => {
@@ -170,8 +99,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   return (
     <Card className="overflow-hidden bg-gradient-to-b from-white to-gray-50">
       <CardContent className="pt-6">
-        {renderSocialMediaStats()}
-        
         {!hasGenerated && (
           <Button
             onClick={generateSummary}

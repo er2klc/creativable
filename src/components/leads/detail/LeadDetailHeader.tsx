@@ -136,42 +136,48 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
           <div className={`p-2 rounded-lg transition-colors ${
             currentTypes.includes("Partner") ? "bg-blue-100" : ""
           }`}>
-            <Checkbox
-              checked={currentTypes.includes("Partner")}
-              onCheckedChange={(checked) => 
-                handleContactTypeChange("Partner", checked as boolean)
-              }
-              id="partner"
-            />
-            <label 
-              htmlFor="partner" 
-              className="ml-2 text-sm font-medium cursor-pointer antialiased"
-            >
-              Likely Partner
-            </label>
+            <div className="flex items-center">
+              <Checkbox
+                checked={currentTypes.includes("Partner")}
+                onCheckedChange={(checked) => 
+                  handleContactTypeChange("Partner", checked as boolean)
+                }
+                id="partner"
+                className="mr-2"
+              />
+              <label 
+                htmlFor="partner" 
+                className="text-sm font-medium cursor-pointer antialiased"
+              >
+                Likely Partner
+              </label>
+            </div>
           </div>
           <div className={`p-2 rounded-lg transition-colors ${
             currentTypes.includes("Kunde") ? "bg-green-100" : ""
           }`}>
-            <Checkbox
-              checked={currentTypes.includes("Kunde")}
-              onCheckedChange={(checked) => 
-                handleContactTypeChange("Kunde", checked as boolean)
-              }
-              id="kunde"
-            />
-            <label 
-              htmlFor="kunde" 
-              className="ml-2 text-sm font-medium cursor-pointer antialiased"
-            >
-              Likely Kunde
-            </label>
+            <div className="flex items-center">
+              <Checkbox
+                checked={currentTypes.includes("Kunde")}
+                onCheckedChange={(checked) => 
+                  handleContactTypeChange("Kunde", checked as boolean)
+                }
+                id="kunde"
+                className="mr-2"
+              />
+              <label 
+                htmlFor="kunde" 
+                className="text-sm font-medium cursor-pointer antialiased"
+              >
+                Likely Kunde
+              </label>
+            </div>
           </div>
         </div>
       </div>
 
       {lead.last_social_media_scan && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground antialiased">
+        <div className="flex items-center justify-end gap-2 text-sm text-muted-foreground antialiased">
           <Check className="h-4 w-4 text-green-500" />
           Zuletzt gescannt: {new Date(lead.last_social_media_scan).toLocaleString()}
         </div>
