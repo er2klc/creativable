@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
+import Messages from "./pages/Messages";
 import Settings from "./pages/Settings";
 import LinkedInCallback from "./pages/auth/callback/LinkedIn";
 import InstagramCallback from "./pages/auth/callback/Instagram";
@@ -64,6 +65,14 @@ const App = () => (
                 element={
                   <AppLayout>
                     <Leads />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/messages"
+                element={
+                  <AppLayout>
+                    <Messages />
                   </AppLayout>
                 }
               />

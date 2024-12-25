@@ -23,11 +23,19 @@ import {
   Shield,
   Instagram,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const navigationItems = [
   { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
   { title: "Kontakt", icon: Users, url: "/leads" },
-  { title: "Nachrichten", icon: MessageSquare, url: "/messages" },
+  { 
+    title: "Nachrichten", 
+    icon: MessageSquare, 
+    url: "/messages",
+    badge: true 
+  },
   { title: "Kalender", icon: Calendar, url: "/calendar" },
   { title: "Berichte", icon: BarChart, url: "/reports" },
   { title: "Einstellungen", icon: Settings, url: "/settings" },
@@ -44,6 +52,29 @@ const APP_VERSION = "0.1";
 const DashboardSidebar = () => {
   const { toggleSidebar, state } = useSidebar();
   const Icon = state === "collapsed" ? PanelLeft : PanelLeftClose;
+
+  // Query for unread messages count
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['unread-messages-count'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+
+      const { count, error } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+
+      if (error) {
+        console.error('Error fetching unread messages:', error);
+        return 0;
+      }
+
+      return count || 0;
+    },
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
   
   return (
     <Sidebar>
@@ -57,9 +88,14 @@ const DashboardSidebar = () => {
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url} className="flex items-center gap-3">
+                    <a href={item.url} className="flex items-center gap-3 relative">
                       <item.icon className="h-5 w-5" />
                       <span>{item.title}</span>
+                      {item.badge && unreadCount > 0 && (
+                        <Badge variant="destructive" className="absolute right-0 -top-1">
+                          {unreadCount}
+                        </Badge>
+                      )}
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
