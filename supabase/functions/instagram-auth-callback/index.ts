@@ -52,7 +52,7 @@ serve(async (req) => {
     const tokenUrl = 'https://api.instagram.com/oauth/access_token';
     console.log('Preparing token exchange request to:', tokenUrl);
 
-    // Ensure the redirect URI matches exactly what's registered with Instagram
+    // Use the exact same redirect URI as in the authorization request
     const cleanRedirectUri = redirectUri.split('#')[0].split('?')[0];
     console.log('Using cleaned redirect URI:', cleanRedirectUri);
 
@@ -115,7 +115,7 @@ serve(async (req) => {
         platform: 'instagram',
         is_connected: true,
         access_token: tokenData.access_token,
-        auth_token: tokenData.access_token, // Speichere auch in auth_token für Kompatibilität
+        auth_token: tokenData.access_token,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'user_id,platform'

@@ -56,6 +56,7 @@ export function useInstagramConnection() {
       const state = crypto.randomUUID();
       localStorage.setItem('instagram_oauth_state', state);
 
+      // Use window.location.origin to ensure consistent redirect URI
       const redirectUri = `${window.location.origin}/auth/callback/instagram`;
       console.log('Using redirect URI:', redirectUri);
 
