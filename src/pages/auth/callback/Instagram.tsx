@@ -48,7 +48,7 @@ const InstagramCallback = () => {
         const { data: response, error: functionError } = await supabase.functions.invoke('instagram-auth-callback', {
           body: {
             code,
-            redirectUri: 'https://social-lead-symphony.lovable.app/auth/callback/instagram'
+            redirectUri: `${window.location.origin}/auth/callback/instagram`
           },
         });
 
@@ -82,7 +82,7 @@ const InstagramCallback = () => {
         const { error: settingsError } = await supabase
           .from('settings')
           .update({ 
-            instagram_connected: 'true',
+            instagram_connected: true,
             instagram_auth_token: response.access_token,
             updated_at: new Date().toISOString()
           })

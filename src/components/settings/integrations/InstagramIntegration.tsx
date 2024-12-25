@@ -1,73 +1,118 @@
-import React from "react";
-import { Instagram } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React, { useEffect, useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { CheckCircle, XCircle, Instagram, AlertCircle, Info } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useInstagramConnection } from "@/hooks/use-instagram-connection";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+interface ConnectionStatus {
+  isConnected: boolean;
+  expiresAt: string | null;
+}
 
 export function InstagramIntegration() {
-  const { settings, updateSettings } = useSettings();
-  const { toast } = useToast();
+  const { settings } = useSettings();
+  const { checkConnectionStatus, connectInstagram, disconnectInstagram } = useInstagramConnection();
+  const [connectionDetails, setConnectionDetails] = useState<ConnectionStatus>({ 
+    isConnected: false, 
+    expiresAt: null 
+  });
+  const redirectUri = `${window.location.origin}/auth/callback/instagram`;
 
-  const connectInstagram = async () => {
-    try {
-      // Generate random state for CSRF protection
-      const state = Math.random().toString(36).substring(7);
-      localStorage.setItem('instagram_oauth_state', state);
-
-      // Use the direct Instagram OAuth URL with the state parameter
-      const instagramUrl = `https://www.instagram.com/oauth/authorize?enable_fb_login=0&force_authentication=1&client_id=1315021952869619&redirect_uri=https://social-lead-symphony.lovable.app/auth/callback/instagram&response_type=code&scope=instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish&state=${state}`;
-
-      // Redirect to Instagram
-      window.location.href = instagramUrl;
-    } catch (error) {
-      console.error('Error connecting to Instagram:', error);
-      toast({
-        title: "Fehler",
-        description: "Verbindung zu Instagram konnte nicht hergestellt werden.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const disconnectInstagram = async () => {
-    try {
-      await updateSettings('instagram_connected', 'false');
-      await updateSettings('instagram_auth_token', null);
-      
-      toast({
-        title: "Erfolg",
-        description: "Instagram wurde erfolgreich getrennt.",
-      });
-    } catch (error) {
-      console.error('Error disconnecting Instagram:', error);
-      toast({
-        title: "Fehler",
-        description: "Instagram konnte nicht getrennt werden.",
-        variant: "destructive",
-      });
-    }
-  };
+  useEffect(() => {
+    const fetchStatus = async () => {
+      const status = await checkConnectionStatus();
+      setConnectionDetails(status);
+    };
+    fetchStatus();
+  }, [settings?.instagram_connected]);
 
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg">
-      <div className="flex items-center gap-2">
-        <Instagram className="h-5 w-5" />
-        <div>
-          <h3 className="font-medium">Instagram</h3>
-          <p className="text-sm text-muted-foreground">
-            {settings?.instagram_connected === 'true'
-              ? "Verbunden mit Instagram" 
-              : "Nicht verbunden mit Instagram"}
-          </p>
+    <Card className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Instagram className="h-6 w-6 text-[#E4405F]" />
+          <h3 className="text-lg font-medium">Instagram Integration</h3>
+          {connectionDetails.isConnected ? (
+            <CheckCircle className="h-5 w-5 text-green-500" />
+          ) : (
+            <XCircle className="h-5 w-5 text-red-500" />
+          )}
+        </div>
+        <div className="flex gap-2">
+          {connectionDetails.isConnected ? (
+            <>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline">Einstellungen</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Instagram Integration Details</DialogTitle>
+                    <DialogDescription>
+                      Ihre Instagram-Verbindung ist aktiv
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Token gültig bis</h4>
+                      <p className="text-sm">
+                        {connectionDetails.expiresAt ? (
+                          format(new Date(connectionDetails.expiresAt), "PPP", { locale: de })
+                        ) : (
+                          "Kein Ablaufdatum verfügbar"
+                        )}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Redirect URI</h4>
+                      <code className="block p-2 bg-muted rounded-md text-sm">
+                        {redirectUri}
+                      </code>
+                    </div>
+                    <Button 
+                      onClick={connectInstagram} 
+                      className="w-full"
+                    >
+                      Verbindung erneuern
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              <Button variant="destructive" onClick={disconnectInstagram}>
+                Trennen
+              </Button>
+            </>
+          ) : (
+            <Button onClick={connectInstagram}>Verbinden</Button>
+          )}
         </div>
       </div>
-      <Button
-        variant={settings?.instagram_connected === 'true' ? "destructive" : "default"}
-        onClick={settings?.instagram_connected === 'true' ? disconnectInstagram : connectInstagram}
-      >
-        {settings?.instagram_connected === 'true' ? "Trennen" : "Verbinden"}
-      </Button>
-    </div>
+      <p className="text-sm text-muted-foreground mb-4">
+        Verbinden Sie Ihr Instagram-Konto um Leads automatisch zu kontaktieren und
+        Nachrichten zu versenden.
+      </p>
+
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          Diese Integration erfordert einen Instagram Business oder Creator Account. 
+          Normale Instagram-Konten können nicht für das Senden von Nachrichten verwendet werden.
+        </AlertDescription>
+      </Alert>
+
+      {connectionDetails.expiresAt && new Date(connectionDetails.expiresAt) < new Date() && (
+        <div className="mt-4 flex items-center gap-2 text-yellow-600 bg-yellow-50 p-3 rounded-md">
+          <AlertCircle className="h-5 w-5" />
+          <p className="text-sm">
+            Ihr Instagram-Token ist abgelaufen. Bitte erneuern Sie die Verbindung.
+          </p>
+        </div>
+      )}
+    </Card>
   );
 }

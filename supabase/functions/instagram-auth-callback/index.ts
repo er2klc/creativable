@@ -1,59 +1,183 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { corsHeaders } from '../_shared/cors.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { code, redirectUri } = await req.json();
+    const { code } = await req.json();
     
-    // Get Instagram credentials from secrets
-    const INSTAGRAM_APP_ID = Deno.env.get('INSTAGRAM_APP_ID');
-    const INSTAGRAM_APP_SECRET = Deno.env.get('INSTAGRAM_APP_SECRET');
+    console.log('Instagram Callback - Starting token exchange process');
+    console.log('Received parameters:', { 
+      codePresent: !!code,
+      timestamp: new Date().toISOString()
+    });
 
-    if (!INSTAGRAM_APP_ID || !INSTAGRAM_APP_SECRET) {
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get user's Instagram credentials from the request
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('No authorization header found');
+      throw new Error('No authorization header');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError) {
+      console.error('User authentication error:', userError);
+      throw userError;
+    }
+    
+    if (!user) {
+      console.error('No user found in auth context');
+      throw new Error('User not found');
+    }
+
+    console.log('User authenticated successfully:', { userId: user.id });
+
+    // Get user's Instagram app credentials from settings
+    const { data: settings, error: settingsError } = await supabase
+      .from('settings')
+      .select('instagram_app_id, instagram_app_secret')
+      .eq('user_id', user.id)
+      .single();
+
+    if (settingsError) {
+      console.error('Error fetching Instagram credentials:', settingsError);
+      throw new Error('Could not fetch Instagram credentials');
+    }
+
+    if (!settings.instagram_app_id || !settings.instagram_app_secret) {
+      console.error('Missing Instagram credentials in settings');
       throw new Error('Instagram credentials not configured');
     }
 
-    console.log('Starting Instagram auth with code:', code);
+    console.log('Successfully retrieved Instagram credentials');
 
-    const params = new URLSearchParams({
-      client_id: INSTAGRAM_APP_ID,
-      client_secret: INSTAGRAM_APP_SECRET,
+    // Exchange code for access token using the exact same redirect URI
+    const tokenUrl = 'https://api.instagram.com/oauth/access_token';
+    console.log('Preparing token exchange request to:', tokenUrl);
+
+    const redirectUri = 'https://social-lead-symphony.lovable.app/auth/callback/instagram';
+    console.log('Using redirect URI for token exchange:', redirectUri);
+
+    const formData = new URLSearchParams({
+      client_id: settings.instagram_app_id,
+      client_secret: settings.instagram_app_secret,
       grant_type: 'authorization_code',
       redirect_uri: redirectUri,
-      code: code,
+      code,
     });
 
-    const response = await fetch(`https://api.instagram.com/oauth/access_token`, {
+    console.log('Token exchange request parameters:', {
+      client_id: settings.instagram_app_id,
+      redirect_uri: redirectUri,
+      code_length: code?.length,
+      has_secret: !!settings.instagram_app_secret
+    });
+
+    const tokenResponse = await fetch(tokenUrl, {
       method: 'POST',
-      body: params,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
+      body: formData,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Instagram API error:', errorText);
-      throw new Error(`Instagram API error: ${errorText}`);
+    const responseText = await tokenResponse.text();
+    console.log('Raw Instagram response:', responseText);
+
+    if (!tokenResponse.ok) {
+      console.error('Instagram token exchange failed:', {
+        status: tokenResponse.status,
+        statusText: tokenResponse.statusText,
+        response: responseText
+      });
+      throw new Error(`Failed to exchange code for access token: ${responseText}`);
     }
 
-    const data = await response.json();
-    console.log('Instagram auth successful:', data);
+    let tokenData;
+    try {
+      tokenData = JSON.parse(responseText);
+      console.log('Successfully parsed token data');
+    } catch (e) {
+      console.error('Failed to parse Instagram response:', e);
+      throw new Error('Invalid JSON response from Instagram');
+    }
 
-    return new Response(JSON.stringify(data), {
+    if (!tokenData.access_token) {
+      console.error('No access token in response:', tokenData);
+      throw new Error('No access token received');
+    }
+
+    console.log('Successfully received access token');
+
+    // Update platform_auth_status with the new access token
+    const { error: statusError } = await supabase
+      .from('platform_auth_status')
+      .upsert({
+        user_id: user.id,
+        platform: 'instagram',
+        is_connected: true,
+        access_token: tokenData.access_token,
+        auth_token: tokenData.access_token,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id,platform'
+      });
+
+    if (statusError) {
+      console.error('Failed to update platform auth status:', statusError);
+      throw statusError;
+    }
+
+    // Update settings table
+    const { error: settingsError2 } = await supabase
+      .from('settings')
+      .update({ 
+        instagram_connected: true,
+        instagram_auth_token: tokenData.access_token,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', user.id);
+
+    if (settingsError2) {
+      console.error('Failed to update settings:', settingsError2);
+      throw settingsError2;
+    }
+
+    console.log('Successfully updated platform auth status and settings');
+
+    return new Response(JSON.stringify(tokenData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
     });
   } catch (error) {
-    console.error('Error in instagram-auth-callback:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
+    console.error('Instagram auth callback error:', {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
     });
+
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
