@@ -40,34 +40,43 @@ export function LinkedInIntegration() {
             <XCircle className="h-5 w-5 text-red-500" />
           )}
         </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant={isConnected ? "outline" : "default"}>
-              {isConnected ? "Einstellungen" : "Verbinden"}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>LinkedIn Integration Einrichten</DialogTitle>
-              <DialogDescription>
-                Geben Sie Ihre LinkedIn API Zugangsdaten ein. Sie finden diese in Ihrer LinkedIn Developer Console unter "App Credentials".
-              </DialogDescription>
-            </DialogHeader>
-            <LinkedInCredentialsForm
-              clientId={clientId}
-              clientSecret={clientSecret}
-              redirectUri={redirectUri}
-              onClientIdChange={setClientId}
-              onClientSecretChange={setClientSecret}
-              onSubmit={handleUpdateCredentials}
-              onConnect={connectLinkedIn}
-              onDisconnect={disconnectLinkedIn}
-              onCopyRedirectUri={copyRedirectUri}
-              error={error}
-              isConnected={isConnected}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          {isConnected ? (
+            <>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline">Einstellungen</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>LinkedIn Integration Einrichten</DialogTitle>
+                    <DialogDescription>
+                      Geben Sie Ihre LinkedIn API Zugangsdaten ein. Sie finden diese in Ihrer LinkedIn Developer Console unter "App Credentials".
+                    </DialogDescription>
+                  </DialogHeader>
+                  <LinkedInCredentialsForm
+                    clientId={clientId}
+                    clientSecret={clientSecret}
+                    redirectUri={redirectUri}
+                    onClientIdChange={setClientId}
+                    onClientSecretChange={setClientSecret}
+                    onSubmit={handleUpdateCredentials}
+                    onConnect={connectLinkedIn}
+                    onDisconnect={disconnectLinkedIn}
+                    onCopyRedirectUri={copyRedirectUri}
+                    error={error}
+                    isConnected={isConnected}
+                  />
+                </DialogContent>
+              </Dialog>
+              <Button variant="destructive" onClick={disconnectLinkedIn}>
+                Trennen
+              </Button>
+            </>
+          ) : (
+            <Button onClick={connectLinkedIn}>Verbinden</Button>
+          )}
+        </div>
       </div>
       <p className="text-sm text-muted-foreground">
         Verbinden Sie Ihr LinkedIn-Konto um Leads automatisch zu kontaktieren und

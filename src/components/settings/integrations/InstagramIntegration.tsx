@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card";
 import { CheckCircle, XCircle, Instagram, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { InstagramConnectionDialog } from "./instagram/InstagramConnectionDialog";
-import { InstagramDisconnectDialog } from "./instagram/InstagramDisconnectDialog";
 import { useInstagramConnection } from "@/hooks/use-instagram-connection";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -17,7 +16,7 @@ interface ConnectionStatus {
 
 export function InstagramIntegration() {
   const { settings } = useSettings();
-  const { checkConnectionStatus } = useInstagramConnection();
+  const { checkConnectionStatus, connectInstagram, disconnectInstagram } = useInstagramConnection();
   const [connectionDetails, setConnectionDetails] = useState<ConnectionStatus>({ 
     isConnected: false, 
     expiresAt: null 
@@ -47,53 +46,54 @@ export function InstagramIntegration() {
             <XCircle className="h-5 w-5 text-red-500" />
           )}
         </div>
-        {connectionDetails.isConnected ? (
-          <div className="flex gap-2">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline">Einstellungen</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Instagram Integration Details</DialogTitle>
-                  <DialogDescription>
-                    Ihre Instagram-Verbindung ist aktiv
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Token gültig bis</h4>
-                    <p className="text-sm">
-                      {connectionDetails.expiresAt ? (
-                        format(new Date(connectionDetails.expiresAt), "PPP", { locale: de })
-                      ) : (
-                        "Kein Ablaufdatum verfügbar"
-                      )}
-                    </p>
+        <div className="flex gap-2">
+          {connectionDetails.isConnected ? (
+            <>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline">Einstellungen</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Instagram Integration Details</DialogTitle>
+                    <DialogDescription>
+                      Ihre Instagram-Verbindung ist aktiv
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Token gültig bis</h4>
+                      <p className="text-sm">
+                        {connectionDetails.expiresAt ? (
+                          format(new Date(connectionDetails.expiresAt), "PPP", { locale: de })
+                        ) : (
+                          "Kein Ablaufdatum verfügbar"
+                        )}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Redirect URI</h4>
+                      <code className="block p-2 bg-muted rounded-md text-sm">
+                        {redirectUri}
+                      </code>
+                    </div>
+                    <Button 
+                      onClick={connectInstagram} 
+                      className="w-full"
+                    >
+                      Verbindung erneuern
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Redirect URI</h4>
-                    <code className="block p-2 bg-muted rounded-md text-sm">
-                      {redirectUri}
-                    </code>
-                  </div>
-                  <Button 
-                    onClick={() => window.location.reload()} 
-                    className="w-full"
-                  >
-                    Verbindung erneuern
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-            <InstagramDisconnectDialog />
-          </div>
-        ) : (
-          <InstagramConnectionDialog
-            settings={settings}
-            redirectUri={redirectUri}
-          />
-        )}
+                </DialogContent>
+              </Dialog>
+              <Button variant="destructive" onClick={disconnectInstagram}>
+                Trennen
+              </Button>
+            </>
+          ) : (
+            <Button onClick={connectInstagram}>Verbinden</Button>
+          )}
+        </div>
       </div>
       <p className="text-sm text-muted-foreground">
         Verbinden Sie Ihr Instagram-Konto um Leads automatisch zu kontaktieren und

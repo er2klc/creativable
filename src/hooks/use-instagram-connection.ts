@@ -14,15 +14,13 @@ export function useInstagramConnection() {
       // Check platform_auth_status table
       const { data: platformAuth } = await supabase
         .from('platform_auth_status')
-        .select('is_connected, access_token, expires_at')
+        .select('access_token, expires_at')
         .eq('platform', 'instagram')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      const isConnected = platformAuth?.is_connected === true && !!platformAuth?.access_token;
-      
-      // Update settings to match platform_auth_status
-      await updateSettings('instagram_connected', isConnected ? 'true' : 'false');
+      // Simply check if access_token exists
+      const isConnected = !!platformAuth?.access_token;
       
       return {
         isConnected,
@@ -104,7 +102,7 @@ export function useInstagramConnection() {
       if (statusError) throw statusError;
 
       // Update settings
-      await updateSettings('instagram_connected', 'false');
+      await updateSettings('instagram_connected', false);
       await refetchSettings();
       
       toast({
@@ -125,6 +123,6 @@ export function useInstagramConnection() {
     checkConnectionStatus,
     connectInstagram,
     disconnectInstagram,
-    isConnected: settings?.instagram_connected === 'true'
+    isConnected: !!settings?.instagram_connected
   };
 }
