@@ -18,36 +18,47 @@ export function useSettings() {
 
       console.log("Fetching settings for user:", session.user.id);
       
-      const { data: settings, error } = await supabase
+      // First try to get existing settings
+      const { data: existingSettings, error: fetchError } = await supabase
         .from("settings")
         .select("*")
         .eq("user_id", session.user.id)
-        .maybeSingle();
+        .single();
 
-      if (error) throw error;
-
-      if (!settings) {
-        // Create initial settings using upsert to handle potential race conditions
-        const { data: newSettings, error: createError } = await supabase
-          .from("settings")
-          .upsert(
-            {
-              user_id: session.user.id,
-              language: 'de'
-            },
-            { 
-              onConflict: 'user_id',
-              ignoreDuplicates: false 
-            }
-          )
-          .select()
-          .single();
-
-        if (createError) throw createError;
-        return newSettings as Settings;
+      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows returned
+        throw fetchError;
       }
 
-      return settings as Settings;
+      if (existingSettings) {
+        return existingSettings as Settings;
+      }
+
+      // If no settings exist, create initial settings
+      const { data: newSettings, error: createError } = await supabase
+        .from("settings")
+        .insert({
+          user_id: session.user.id,
+          language: 'de'
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        // If we get a duplicate key error, try fetching again as another request might have created the settings
+        if (createError.code === '23505') {
+          const { data: retrySettings, error: retryError } = await supabase
+            .from("settings")
+            .select("*")
+            .eq("user_id", session.user.id)
+            .single();
+
+          if (retryError) throw retryError;
+          return retrySettings as Settings;
+        }
+        throw createError;
+      }
+
+      return newSettings as Settings;
     },
     enabled: !!session?.user?.id,
   });
@@ -70,8 +81,7 @@ export function useSettings() {
             updated_at: new Date().toISOString()
           },
           { 
-            onConflict: 'user_id',
-            ignoreDuplicates: false 
+            onConflict: 'user_id'
           }
         );
 
