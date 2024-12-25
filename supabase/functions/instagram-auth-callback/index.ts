@@ -14,6 +14,11 @@ serve(async (req) => {
   try {
     const { code, redirectUri } = await req.json();
     
+    console.log('Received request with code and redirect URI:', { 
+      codePresent: !!code,
+      redirectUri 
+    });
+
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -47,13 +52,22 @@ serve(async (req) => {
       }),
     });
 
+    const responseText = await tokenResponse.text();
+    console.log('Raw token response:', responseText);
+
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.json();
-      console.error('Instagram token exchange error:', errorData);
-      throw new Error('Failed to exchange code for access token');
+      console.error('Instagram token exchange error:', responseText);
+      throw new Error(`Failed to exchange code for access token: ${responseText}`);
     }
 
-    const tokenData = await tokenResponse.json();
+    let tokenData;
+    try {
+      tokenData = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Error parsing token response:', e);
+      throw new Error('Invalid JSON response from Instagram');
+    }
+
     console.log('Instagram token data:', tokenData);
 
     if (!tokenData.access_token) {

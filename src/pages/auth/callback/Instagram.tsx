@@ -23,7 +23,8 @@ const InstagramCallback = () => {
           state, 
           error,
           storedState,
-          error_description: params.get("error_description")
+          error_description: params.get("error_description"),
+          full_url: window.location.href
         });
 
         if (error) {
@@ -50,7 +51,10 @@ const InstagramCallback = () => {
           },
         });
 
-        if (functionError) throw functionError;
+        if (functionError) {
+          console.error('Function error:', functionError);
+          throw functionError;
+        }
 
         console.log('Instagram auth callback response:', response);
 
@@ -67,7 +71,10 @@ const InstagramCallback = () => {
             onConflict: 'user_id,platform'
           });
 
-        if (statusError) throw statusError;
+        if (statusError) {
+          console.error('Status update error:', statusError);
+          throw statusError;
+        }
 
         // Update settings
         const { error: settingsError } = await supabase
@@ -78,7 +85,10 @@ const InstagramCallback = () => {
           })
           .eq('user_id', user.id);
 
-        if (settingsError) throw settingsError;
+        if (settingsError) {
+          console.error('Settings update error:', settingsError);
+          throw settingsError;
+        }
 
         localStorage.removeItem("instagram_oauth_state");
 
