@@ -47,13 +47,13 @@ export function useInstagramConnection() {
 
       // Updated scopes with current valid Instagram permissions
       const scope = [
-        'pages_show_list',
-        'pages_messaging',
-        'pages_read_engagement',
+        'instagram_basic',
         'instagram_manage_insights',
         'instagram_manage_messages',
         'instagram_content_publish',
         'instagram_manage_comments',
+        'pages_read_engagement',
+        'pages_messaging',
         'business_management'
       ].join(',');
 
