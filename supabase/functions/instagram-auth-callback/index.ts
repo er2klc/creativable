@@ -115,6 +115,7 @@ serve(async (req) => {
         platform: 'instagram',
         is_connected: true,
         access_token: tokenData.access_token,
+        auth_token: tokenData.access_token, // Speichere auch in auth_token für Kompatibilität
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'user_id,platform'
@@ -125,7 +126,22 @@ serve(async (req) => {
       throw statusError;
     }
 
-    console.log('Successfully updated platform auth status');
+    // Update settings table
+    const { error: settingsError } = await supabase
+      .from('settings')
+      .update({ 
+        instagram_connected: true,
+        instagram_auth_token: tokenData.access_token,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', user.id);
+
+    if (settingsError) {
+      console.error('Failed to update settings:', settingsError);
+      throw settingsError;
+    }
+
+    console.log('Successfully updated platform auth status and settings');
 
     return new Response(JSON.stringify(tokenData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
