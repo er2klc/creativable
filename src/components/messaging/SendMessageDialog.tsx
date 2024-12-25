@@ -83,7 +83,7 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
           <DialogTitle>
             {lead ? (
               isDirectMessagePlatform
-                ? `✨ KI-Nachricht für Erstkontakt für ${lead.name} erstellen`
+                ? `✨ KI-Erstkontakt Nachricht für ${lead.name} erstellen`
                 : settings?.language === "en" 
                 ? `Create message for ${lead.name}` 
                 : `Nachricht für ${lead.name} erstellen`

@@ -22,6 +22,7 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
   const [isScanning, setIsScanning] = useState(false);
   const currentTypes = lead.contact_type?.split(',').filter(Boolean) || [];
   const platformConfig = getPlatformConfig(lead.platform);
+  const isDirectMessagePlatform = lead.platform === "Instagram" || lead.platform === "Facebook";
 
   const handleContactTypeChange = (type: string, checked: boolean) => {
     const types = new Set(currentTypes);
@@ -108,7 +109,9 @@ export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) 
             trigger={
               <Button variant="outline" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
-                {settings?.language === "en" ? "Send Message" : "Nachricht senden"}
+                {isDirectMessagePlatform 
+                  ? "✨ KI-Nachricht für Erstkontakt"
+                  : settings?.language === "en" ? "Send Message" : "Nachricht senden"}
               </Button>
             }
           />
