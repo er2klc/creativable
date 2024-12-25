@@ -31,6 +31,9 @@ export function InstagramIntegration() {
     fetchStatus();
   }, [settings?.instagram_connected]);
 
+  // Convert string to boolean for comparison
+  const isInstagramConnected = settings?.instagram_connected === true || settings?.instagram_connected === 'true';
+
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
@@ -44,7 +47,7 @@ export function InstagramIntegration() {
           )}
         </div>
         <div className="flex gap-2">
-          {connectionDetails.isConnected ? (
+          {isInstagramConnected ? (
             <>
               <Dialog>
                 <DialogTrigger asChild>

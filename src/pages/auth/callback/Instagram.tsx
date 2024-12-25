@@ -41,7 +41,16 @@ const InstagramCallback = () => {
 
         // Check session first
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) throw new Error("No active session");
+        if (!session) {
+          console.error('No active session found');
+          toast({
+            title: "Nicht eingeloggt",
+            description: "Bitte melden Sie sich an und versuchen Sie es erneut.",
+            variant: "destructive",
+          });
+          navigate("/auth");
+          return;
+        }
 
         console.log('Calling Instagram auth callback function...');
         
