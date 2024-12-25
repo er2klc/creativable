@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CheckCircle, XCircle, Instagram, AlertCircle } from "lucide-react";
+import { CheckCircle, XCircle, Instagram, AlertCircle, Info } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useInstagramConnection } from "@/hooks/use-instagram-connection";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ConnectionStatus {
   isConnected: boolean;
@@ -28,7 +29,7 @@ export function InstagramIntegration() {
       setConnectionDetails(status);
     };
     fetchStatus();
-  }, [settings?.instagram_connected]); // Re-fetch when connection status changes
+  }, [settings?.instagram_connected]);
 
   return (
     <Card className="p-6">
@@ -91,10 +92,19 @@ export function InstagramIntegration() {
           )}
         </div>
       </div>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground mb-4">
         Verbinden Sie Ihr Instagram-Konto um Leads automatisch zu kontaktieren und
         Nachrichten zu versenden.
       </p>
+
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          Diese Integration erfordert einen Instagram Business oder Creator Account. 
+          Normale Instagram-Konten können nicht für das Senden von Nachrichten verwendet werden.
+        </AlertDescription>
+      </Alert>
+
       {connectionDetails.expiresAt && new Date(connectionDetails.expiresAt) < new Date() && (
         <div className="mt-4 flex items-center gap-2 text-yellow-600 bg-yellow-50 p-3 rounded-md">
           <AlertCircle className="h-5 w-5" />
