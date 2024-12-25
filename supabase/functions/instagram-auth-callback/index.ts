@@ -47,6 +47,25 @@ serve(async (req) => {
 
     console.log('User authenticated successfully:', { userId: user.id });
 
+    // Get user's Instagram app credentials from settings
+    const { data: settings, error: settingsError } = await supabase
+      .from('settings')
+      .select('instagram_app_id, instagram_app_secret')
+      .eq('user_id', user.id)
+      .single();
+
+    if (settingsError) {
+      console.error('Error fetching Instagram credentials:', settingsError);
+      throw new Error('Could not fetch Instagram credentials');
+    }
+
+    if (!settings.instagram_app_id || !settings.instagram_app_secret) {
+      console.error('Missing Instagram credentials in settings');
+      throw new Error('Instagram credentials not configured');
+    }
+
+    console.log('Successfully retrieved Instagram credentials');
+
     // Exchange code for access token using the exact same redirect URI
     const tokenUrl = 'https://api.instagram.com/oauth/access_token';
     console.log('Preparing token exchange request to:', tokenUrl);
@@ -55,18 +74,18 @@ serve(async (req) => {
     console.log('Using redirect URI for token exchange:', redirectUri);
 
     const formData = new URLSearchParams({
-      client_id: '1315021952869619',
-      client_secret: Deno.env.get('INSTAGRAM_APP_SECRET') || '',
+      client_id: settings.instagram_app_id,
+      client_secret: settings.instagram_app_secret,
       grant_type: 'authorization_code',
       redirect_uri: redirectUri,
       code,
     });
 
     console.log('Token exchange request parameters:', {
-      client_id: '1315021952869619',
+      client_id: settings.instagram_app_id,
       redirect_uri: redirectUri,
       code_length: code?.length,
-      has_secret: !!Deno.env.get('INSTAGRAM_APP_SECRET')
+      has_secret: !!settings.instagram_app_secret
     });
 
     const tokenResponse = await fetch(tokenUrl, {
@@ -125,7 +144,7 @@ serve(async (req) => {
     }
 
     // Update settings table
-    const { error: settingsError } = await supabase
+    const { error: settingsError2 } = await supabase
       .from('settings')
       .update({ 
         instagram_connected: true,
@@ -134,9 +153,9 @@ serve(async (req) => {
       })
       .eq('user_id', user.id);
 
-    if (settingsError) {
-      console.error('Failed to update settings:', settingsError);
-      throw settingsError;
+    if (settingsError2) {
+      console.error('Failed to update settings:', settingsError2);
+      throw settingsError2;
     }
 
     console.log('Successfully updated platform auth status and settings');
