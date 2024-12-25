@@ -14,7 +14,7 @@ export function useInstagramConnection() {
       // Check platform_auth_status table
       const { data: platformAuth } = await supabase
         .from('platform_auth_status')
-        .select('is_connected, access_token')
+        .select('is_connected, access_token, expires_at')
         .eq('platform', 'instagram')
         .eq('user_id', user.id)
         .maybeSingle();
@@ -22,14 +22,18 @@ export function useInstagramConnection() {
       const isConnected = platformAuth?.is_connected === true && !!platformAuth?.access_token;
       
       // Update settings to match platform_auth_status
-      if (settings?.instagram_connected !== isConnected) {
-        await updateSettings('instagram_connected', isConnected ? 'true' : 'false');
-      }
+      await updateSettings('instagram_connected', isConnected ? 'true' : 'false');
       
-      return isConnected;
+      return {
+        isConnected,
+        expiresAt: platformAuth?.expires_at
+      };
     } catch (error) {
       console.error('Error checking connection status:', error);
-      return false;
+      return {
+        isConnected: false,
+        expiresAt: null
+      };
     }
   };
 
@@ -91,6 +95,7 @@ export function useInstagramConnection() {
         .update({
           is_connected: false,
           access_token: null,
+          expires_at: null,
           updated_at: new Date().toISOString()
         })
         .eq('platform', 'instagram')
