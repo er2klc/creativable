@@ -35,16 +35,23 @@ export function useInstagramConnection() {
     try {
       console.log('Starting Instagram connection process...');
 
+      // Definiere die korrekten Scopes für Instagram Business
       const scope = [
-        'instagram_business_basic',
-        'instagram_business_manage_messages',
-        'instagram_business_manage_comments',
-        'instagram_business_content_publish'
+        'instagram_basic',
+        'instagram_content_publish',
+        'instagram_manage_comments',
+        'instagram_manage_insights',
+        'instagram_manage_messages',
+        'pages_manage_metadata',
+        'pages_messaging',
+        'pages_show_list',
+        'business_management'
       ].join(',');
 
       const state = crypto.randomUUID();
       localStorage.setItem('instagram_oauth_state', state);
 
+      // Stelle sicher, dass die Redirect URI korrekt ist
       const redirectUri = `${window.location.origin}/auth/callback/instagram`;
       console.log('Using redirect URI:', redirectUri);
 
@@ -53,12 +60,11 @@ export function useInstagramConnection() {
         redirect_uri: redirectUri,
         response_type: 'code',
         scope: scope,
-        state: state,
-        enable_fb_login: '0',
-        force_authentication: '1'
+        state: state
       });
 
-      const authUrl = `https://www.instagram.com/oauth/authorize?${params.toString()}`;
+      // Verwende die korrekte Instagram OAuth URL
+      const authUrl = `https://api.instagram.com/oauth/authorize?${params.toString()}`;
       console.log('Redirecting to Instagram auth URL:', authUrl);
       
       window.location.href = authUrl;
@@ -83,6 +89,7 @@ export function useInstagramConnection() {
         .from('platform_auth_status')
         .update({
           access_token: null,
+          auth_token: null,
           expires_at: null,
           updated_at: new Date().toISOString()
         })

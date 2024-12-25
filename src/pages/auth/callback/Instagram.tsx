@@ -66,6 +66,7 @@ const InstagramCallback = () => {
             platform: 'instagram',
             is_connected: true,
             access_token: response.access_token,
+            auth_token: response.access_token,
             updated_at: new Date().toISOString()
           }, {
             onConflict: 'user_id,platform'
@@ -81,6 +82,7 @@ const InstagramCallback = () => {
           .from('settings')
           .update({ 
             instagram_connected: true,
+            instagram_auth_token: response.access_token,
             updated_at: new Date().toISOString()
           })
           .eq('user_id', user.id);
