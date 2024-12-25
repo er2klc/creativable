@@ -14,9 +14,11 @@ serve(async (req) => {
   try {
     const { code, redirectUri } = await req.json();
     
-    console.log('Received request with code and redirect URI:', { 
+    console.log('Instagram Callback - Starting token exchange process');
+    console.log('Received parameters:', { 
       codePresent: !!code,
-      redirectUri 
+      redirectUri,
+      timestamp: new Date().toISOString()
     });
 
     // Create Supabase client
@@ -27,61 +29,98 @@ serve(async (req) => {
     // Get user's Instagram credentials from the request
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('No authorization header found');
       throw new Error('No authorization header');
     }
+
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !user) {
+    
+    if (userError) {
+      console.error('User authentication error:', userError);
+      throw userError;
+    }
+    
+    if (!user) {
+      console.error('No user found in auth context');
       throw new Error('User not found');
     }
 
-    console.log('Exchanging code for access token...');
+    console.log('User authenticated successfully:', { userId: user.id });
 
     // Exchange code for access token
-    const tokenResponse = await fetch('https://api.instagram.com/oauth/access_token', {
+    const tokenUrl = 'https://api.instagram.com/oauth/access_token';
+    console.log('Preparing token exchange request to:', tokenUrl);
+
+    const formData = new URLSearchParams({
+      client_id: '1315021952869619',
+      client_secret: Deno.env.get('INSTAGRAM_APP_SECRET') || '',
+      grant_type: 'authorization_code',
+      redirect_uri: redirectUri,
+      code,
+    });
+
+    console.log('Token exchange request parameters:', {
+      client_id: '1315021952869619',
+      redirect_uri: redirectUri,
+      code_length: code?.length,
+      has_secret: !!Deno.env.get('INSTAGRAM_APP_SECRET')
+    });
+
+    const tokenResponse = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        client_id: '1315021952869619',
-        client_secret: Deno.env.get('INSTAGRAM_APP_SECRET') || '',
-        grant_type: 'authorization_code',
-        redirect_uri: redirectUri,
-        code,
-      }),
+      body: formData,
     });
 
     const responseText = await tokenResponse.text();
-    console.log('Raw token response:', responseText);
+    console.log('Raw Instagram response:', responseText);
 
     if (!tokenResponse.ok) {
-      console.error('Instagram token exchange error:', responseText);
+      console.error('Instagram token exchange failed:', {
+        status: tokenResponse.status,
+        statusText: tokenResponse.statusText,
+        response: responseText
+      });
       throw new Error(`Failed to exchange code for access token: ${responseText}`);
     }
 
     let tokenData;
     try {
       tokenData = JSON.parse(responseText);
+      console.log('Successfully parsed token data');
     } catch (e) {
-      console.error('Error parsing token response:', e);
+      console.error('Failed to parse Instagram response:', e);
       throw new Error('Invalid JSON response from Instagram');
     }
 
-    console.log('Instagram token data:', tokenData);
-
     if (!tokenData.access_token) {
+      console.error('No access token in response:', tokenData);
       throw new Error('No access token received');
     }
+
+    console.log('Successfully received access token');
 
     return new Response(JSON.stringify(tokenData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in instagram-auth-callback:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    console.error('Instagram auth callback error:', {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
     });
+
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
