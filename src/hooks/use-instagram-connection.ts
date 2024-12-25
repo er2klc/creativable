@@ -8,14 +8,14 @@ export function useInstagramConnection() {
 
   const checkConnectionStatus = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return { isConnected: false, expiresAt: null };
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return { isConnected: false, expiresAt: null };
 
       const { data: platformAuth } = await supabase
         .from('platform_auth_status')
         .select('access_token, expires_at')
         .eq('platform', 'instagram')
-        .eq('user_id', user.id)
+        .eq('user_id', session.user.id)
         .maybeSingle();
 
       return {
@@ -33,9 +33,19 @@ export function useInstagramConnection() {
 
   const connectInstagram = async () => {
     try {
+      // Check session first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Nicht eingeloggt",
+          description: "Bitte melden Sie sich an, um fortzufahren",
+          variant: "destructive",
+        });
+        return;
+      }
+
       console.log('Starting Instagram connection process...');
 
-      // Definiere die korrekten Scopes für Instagram Business
       const scope = [
         'instagram_basic',
         'instagram_content_publish',
@@ -51,7 +61,6 @@ export function useInstagramConnection() {
       const state = crypto.randomUUID();
       localStorage.setItem('instagram_oauth_state', state);
 
-      // Stelle sicher, dass die Redirect URI korrekt ist
       const redirectUri = `${window.location.origin}/auth/callback/instagram`;
       console.log('Using redirect URI:', redirectUri);
 
@@ -63,7 +72,6 @@ export function useInstagramConnection() {
         state: state
       });
 
-      // Verwende die korrekte Instagram OAuth URL
       const authUrl = `https://api.instagram.com/oauth/authorize?${params.toString()}`;
       console.log('Redirecting to Instagram auth URL:', authUrl);
       
@@ -82,8 +90,15 @@ export function useInstagramConnection() {
     try {
       console.log('Disconnecting from Instagram...');
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Kein Benutzer gefunden');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Nicht eingeloggt",
+          description: "Bitte melden Sie sich an, um fortzufahren",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const { error: statusError } = await supabase
         .from('platform_auth_status')
@@ -94,7 +109,7 @@ export function useInstagramConnection() {
           updated_at: new Date().toISOString()
         })
         .eq('platform', 'instagram')
-        .eq('user_id', user.id);
+        .eq('user_id', session.user.id);
 
       if (statusError) throw statusError;
 
@@ -106,7 +121,6 @@ export function useInstagramConnection() {
         description: "Ihre Instagram-Verbindung wurde erfolgreich getrennt",
       });
 
-      // Force a page reload to ensure all states are reset
       window.location.reload();
     } catch (error) {
       console.error('Error disconnecting from Instagram:', error);

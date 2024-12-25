@@ -39,8 +39,9 @@ const InstagramCallback = () => {
           throw new Error("State mismatch. Possible CSRF attack.");
         }
 
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("No active session");
+        // Check session first
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("No active session");
 
         console.log('Calling Instagram auth callback function...');
         
@@ -62,7 +63,7 @@ const InstagramCallback = () => {
         const { error: statusError } = await supabase
           .from('platform_auth_status')
           .upsert({
-            user_id: user.id,
+            user_id: session.user.id,
             platform: 'instagram',
             is_connected: true,
             access_token: response.access_token,
@@ -85,7 +86,7 @@ const InstagramCallback = () => {
             instagram_auth_token: response.access_token,
             updated_at: new Date().toISOString()
           })
-          .eq('user_id', user.id);
+          .eq('user_id', session.user.id);
 
         if (settingsError) {
           console.error('Settings update error:', settingsError);
