@@ -45,16 +45,12 @@ export function useInstagramConnection() {
 
       console.log('Starting Instagram connection process...');
 
-      // Updated scopes with current valid Instagram permissions
+      // Updated scopes to match the working configuration
       const scope = [
-        'instagram_basic',
-        'instagram_manage_insights',
-        'instagram_manage_messages',
-        'instagram_content_publish',
-        'instagram_manage_comments',
-        'pages_read_engagement',
-        'pages_messaging',
-        'business_management'
+        'instagram_business_basic',
+        'instagram_business_manage_messages',
+        'instagram_business_manage_comments',
+        'instagram_business_content_publish'
       ].join(',');
 
       const state = crypto.randomUUID();
@@ -68,7 +64,9 @@ export function useInstagramConnection() {
         redirect_uri: redirectUri,
         response_type: 'code',
         scope: scope,
-        state: state
+        state: state,
+        enable_fb_login: '0',
+        force_authentication: '1'
       });
 
       const authUrl = `https://api.instagram.com/oauth/authorize?${params.toString()}`;
