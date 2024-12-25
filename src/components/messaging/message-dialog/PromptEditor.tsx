@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { Settings } from "@/integrations/supabase/types/settings";
 import { Tables } from "@/integrations/supabase/types";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Bot, Copy, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -71,6 +71,8 @@ Die Nachricht sollte:
     }
   };
 
+  const isDirectMessagePlatform = lead.platform === "Instagram" || lead.platform === "Facebook";
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -95,7 +97,7 @@ Die Nachricht sollte:
             value={customPrompt || defaultPrompt}
             onChange={(e) => setCustomPrompt(e.target.value)}
             rows={10}
-            className="font-mono text-sm"
+            className="font-mono text-sm leading-relaxed"
           />
         </div>
       )}
@@ -114,7 +116,9 @@ Die Nachricht sollte:
           ) : (
             <>
               <Bot className="mr-2 h-4 w-4" />
-              {settings?.language === "en"
+              {isDirectMessagePlatform
+                ? "✨ KI-Nachricht für Erstkontakt generieren"
+                : settings?.language === "en"
                 ? "Generate Message"
                 : "Nachricht generieren"}
             </>
