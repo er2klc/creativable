@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -105,6 +106,26 @@ serve(async (req) => {
     }
 
     console.log('Successfully received access token');
+
+    // Update platform_auth_status with the new access token
+    const { error: statusError } = await supabase
+      .from('platform_auth_status')
+      .upsert({
+        user_id: user.id,
+        platform: 'instagram',
+        is_connected: true,
+        access_token: tokenData.access_token,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id,platform'
+      });
+
+    if (statusError) {
+      console.error('Failed to update platform auth status:', statusError);
+      throw statusError;
+    }
+
+    console.log('Successfully updated platform auth status');
 
     return new Response(JSON.stringify(tokenData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
