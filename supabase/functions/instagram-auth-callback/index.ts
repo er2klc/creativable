@@ -47,13 +47,12 @@ serve(async (req) => {
 
     console.log('User authenticated successfully:', { userId: user.id });
 
-    // Exchange code for access token
+    // Exchange code for access token using the exact same redirect URI
     const tokenUrl = 'https://api.instagram.com/oauth/access_token';
     console.log('Preparing token exchange request to:', tokenUrl);
 
-    // Use the exact same redirect URI as in the authorization request
     const redirectUri = 'https://social-lead-symphony.lovable.app/auth/callback/instagram';
-    console.log('Using redirect URI:', redirectUri);
+    console.log('Using redirect URI for token exchange:', redirectUri);
 
     const formData = new URLSearchParams({
       client_id: '1315021952869619',
