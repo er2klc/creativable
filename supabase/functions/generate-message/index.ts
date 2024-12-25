@@ -13,6 +13,7 @@ serve(async (req) => {
 
   try {
     const { 
+      prompt,
       leadName, 
       leadPlatform, 
       leadIndustry,
@@ -20,7 +21,8 @@ serve(async (req) => {
       productsServices, 
       targetAudience, 
       usp,
-      language = "Deutsch" // Standardsprache falls keine angegeben
+      businessDescription,
+      language = "Deutsch"
     } = await req.json();
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -41,11 +43,12 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: `Erstelle eine kurze Verkaufsnachricht für ${leadName} mit folgenden Informationen:
+            content: prompt || `Erstelle eine personalisierte Erstkontakt-Nachricht für ${leadName} mit folgenden Informationen:
               Firma: ${companyName}
               Produkte/Services: ${productsServices}
               Zielgruppe: ${targetAudience}
               USP: ${usp}
+              Business Description: ${businessDescription}
               
               Die Nachricht sollte:
               - Kurz und prägnant sein (max. 2-3 Sätze)

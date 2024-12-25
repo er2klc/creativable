@@ -10,13 +10,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
-import { MessageDialogContent } from "./message-dialog/MessageDialogContent";
-import { useMessageGeneration } from "./message-dialog/useMessageGeneration";
-import { useMessageSending } from "./message-dialog/useMessageSending";
+import { supabase } from "@/integrations/supabase/client";
+import { PromptEditor } from "./message-dialog/PromptEditor";
+import { MessageSquare } from "lucide-react";
 
 interface SendMessageDialogProps {
   lead?: Tables<"leads">;
@@ -28,18 +25,31 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
   const session = useSession();
   const { settings } = useSettings();
   const [open, setOpen] = useState(false);
-  const [platform, setPlatform] = useState<string>(lead?.platform || "");
   const [message, setMessage] = useState<string>("");
-  
-  const { generateMessage, isGenerating } = useMessageGeneration();
-  const { sendMessage, isSending } = useMessageSending();
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleGenerateMessage = async () => {
+  const handleGenerateMessage = async (customPrompt?: string) => {
     if (!lead) return;
     
+    setIsGenerating(true);
     try {
-      const generatedMessage = await generateMessage(lead);
-      setMessage(generatedMessage);
+      const { data, error } = await supabase.functions.invoke("generate-message", {
+        body: {
+          prompt: customPrompt,
+          leadName: lead.name,
+          leadPlatform: lead.platform,
+          leadIndustry: lead.industry,
+          companyName: settings?.company_name,
+          productsServices: settings?.products_services,
+          targetAudience: settings?.target_audience,
+          usp: settings?.usp,
+          businessDescription: settings?.business_description,
+          language: settings?.language || "de",
+        },
+      });
+
+      if (error) throw error;
+      setMessage(data.message);
     } catch (error) {
       console.error("Error generating message:", error);
       toast({
@@ -47,73 +57,49 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
         description: settings?.language === "en" ? "Could not generate message" : "Nachricht konnte nicht generiert werden",
         variant: "destructive",
       });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!message || !platform || !lead || !session?.user?.id) {
-      toast({
-        title: settings?.language === "en" ? "Error" : "Fehler",
-        description: settings?.language === "en" ? "Please fill in all fields" : "Bitte füllen Sie alle Felder aus",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await sendMessage({
-        platform,
-        message,
-        leadId: lead.id,
-        socialMediaUsername: lead.social_media_username,
-      });
-
-      toast({
-        title: settings?.language === "en" ? "Success" : "Erfolg",
-        description: settings?.language === "en" ? "Message sent successfully" : "Nachricht wurde erfolgreich gesendet",
-      });
-      setOpen(false);
-    } catch (error) {
-      console.error("Error sending message:", error);
-      toast({
-        title: settings?.language === "en" ? "Error" : "Fehler",
-        description: error.message || (settings?.language === "en" ? "Could not send message" : "Nachricht konnte nicht gesendet werden"),
-        variant: "destructive",
-      });
-    }
-  };
+  const isDirectMessagePlatform = lead?.platform === "Instagram" || lead?.platform === "Facebook";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" className="flex items-center gap-2">
-            {settings?.language === "en" ? "Send Message" : "Nachricht senden"}
+            <MessageSquare className="h-4 w-4" />
+            {isDirectMessagePlatform
+              ? "✨ KI-Nachricht für Erstkontakt"
+              : settings?.language === "en"
+              ? "Send Message"
+              : "Nachricht senden"}
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
             {lead ? (
               settings?.language === "en" 
-                ? `Send message to ${lead.name}` 
-                : `Nachricht an ${lead.name} senden`
+                ? `Create message for ${lead.name}` 
+                : `Nachricht für ${lead.name} erstellen`
             ) : (
-              settings?.language === "en" ? "Send message" : "Nachricht senden"
+              settings?.language === "en" ? "Create message" : "Nachricht erstellen"
             )}
           </DialogTitle>
         </DialogHeader>
-        <MessageDialogContent
-          platform={platform}
-          message={message}
-          onMessageChange={setMessage}
-          isGenerating={isGenerating}
-          isSending={isSending}
-          onGenerate={handleGenerateMessage}
-          onSend={handleSendMessage}
-          settings={settings}
-        />
+
+        {lead && (
+          <PromptEditor
+            lead={lead}
+            settings={settings}
+            onGenerate={handleGenerateMessage}
+            isGenerating={isGenerating}
+            generatedMessage={message}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
