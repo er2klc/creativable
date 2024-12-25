@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { SessionContextProvider, useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
@@ -23,43 +23,22 @@ const queryClient = new QueryClient();
 
 const AuthStateHandler = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const session = useSession();
   const supabase = useSupabaseClient();
 
   useEffect(() => {
-    supabase.auth.onAuthStateChange((event, session) => {
+    supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         navigate("/");
-      } else if (event === "SIGNED_IN") {
-        // Redirect to the intended page or dashboard
-        const intendedPath = location.state?.from || "/dashboard";
-        navigate(intendedPath);
       }
     });
-
-    // Check session on mount
-    const checkSession = async () => {
-      try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        if (!currentSession && !location.pathname.startsWith('/auth')) {
-          navigate('/auth', { state: { from: location.pathname } });
-        }
-      } catch (error) {
-        console.error('Session check failed:', error);
-        navigate('/auth');
-      }
-    };
-
-    checkSession();
-  }, [navigate, supabase.auth, location]);
+  }, [navigate, supabase.auth]);
 
   return null;
 };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <SessionContextProvider supabaseClient={supabase} initialSession={null}>
+    <SessionContextProvider supabaseClient={supabase}>
       <TooltipProvider>
         <SidebarProvider>
           <Toaster />

@@ -44,7 +44,7 @@ export function InstagramIntegration() {
 
   const disconnectInstagram = async () => {
     try {
-      await updateSettings('instagram_connected', 'false');
+      await updateSettings('instagram_connected', false);
       await updateSettings('instagram_auth_token', null);
       
       toast({
