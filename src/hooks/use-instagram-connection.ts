@@ -9,7 +9,7 @@ export function useInstagramConnection() {
   const checkConnectionStatus = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
+      if (!user) return { isConnected: false, expiresAt: null };
 
       // Check platform_auth_status table
       const { data: platformAuth } = await supabase
@@ -26,7 +26,7 @@ export function useInstagramConnection() {
       
       return {
         isConnected,
-        expiresAt: platformAuth?.expires_at
+        expiresAt: platformAuth?.expires_at || null
       };
     } catch (error) {
       console.error('Error checking connection status:', error);

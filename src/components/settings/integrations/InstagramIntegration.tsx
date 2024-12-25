@@ -10,19 +10,27 @@ import { useInstagramConnection } from "@/hooks/use-instagram-connection";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
+interface ConnectionStatus {
+  isConnected: boolean;
+  expiresAt: string | null;
+}
+
 export function InstagramIntegration() {
   const { settings } = useSettings();
-  const { checkConnectionStatus, isConnected } = useInstagramConnection();
-  const [connectionDetails, setConnectionDetails] = useState<{
-    isConnected: boolean;
-    expiresAt: string | null;
-  }>({ isConnected: false, expiresAt: null });
+  const { checkConnectionStatus } = useInstagramConnection();
+  const [connectionDetails, setConnectionDetails] = useState<ConnectionStatus>({ 
+    isConnected: false, 
+    expiresAt: null 
+  });
   const redirectUri = `${window.location.origin}/auth/callback/instagram`;
 
   useEffect(() => {
     const fetchStatus = async () => {
       const status = await checkConnectionStatus();
-      setConnectionDetails(status);
+      setConnectionDetails({
+        isConnected: status.isConnected,
+        expiresAt: status.expiresAt
+      });
     };
     fetchStatus();
   }, []);
