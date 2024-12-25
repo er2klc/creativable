@@ -17,12 +17,17 @@ serve(async (req) => {
     const token = url.searchParams.get("hub.verify_token");
     const challenge = url.searchParams.get("hub.challenge");
 
-    console.log("Webhook verification request:", { mode, token, challenge });
+    console.log("Webhook verification request received:", {
+      mode,
+      token,
+      challenge,
+      url: req.url
+    });
 
-    // Verify both mode and token as per Meta's requirements
+    // Strict verification as per Meta's requirements
     if (mode === "subscribe" && token === VERIFY_TOKEN) {
       console.log("Webhook verified successfully");
-      // Return ONLY the challenge value as plain text
+      // Return ONLY the challenge value without any JSON wrapping
       return new Response(challenge, { 
         status: 200,
         headers: {
@@ -48,7 +53,7 @@ serve(async (req) => {
       const body = await req.json();
       console.log("Received webhook event:", body);
 
-      // Here we'll handle different types of webhook events based on the documentation
+      // Handle different types of webhook events based on the documentation
       if (body.object === "instagram") {
         const entry = body.entry[0];
         
