@@ -46,16 +46,18 @@ export function useInstagramConnection() {
       console.log('Starting Instagram connection process...');
 
       const scope = [
-        'instagram_business_basic',
-        'instagram_business_manage_messages',
-        'instagram_business_manage_comments',
-        'instagram_business_content_publish'
+        'instagram_basic',
+        'instagram_content_publish',
+        'pages_show_list',
+        'pages_read_engagement',
+        'business_management'
       ].join(',');
 
       const state = crypto.randomUUID();
       localStorage.setItem('instagram_oauth_state', state);
 
-      const redirectUri = 'https://social-lead-symphony.lovable.app/auth/callback/instagram';
+      // Neuer, einheitlicher Redirect URI
+      const redirectUri = `${window.location.origin}/auth/callback/instagram`;
       console.log('Using redirect URI:', redirectUri);
 
       const params = new URLSearchParams({
@@ -63,9 +65,7 @@ export function useInstagramConnection() {
         redirect_uri: redirectUri,
         response_type: 'code',
         scope: scope,
-        state: state,
-        enable_fb_login: '0',
-        force_authentication: '1'
+        state: state
       });
 
       const authUrl = `https://api.instagram.com/oauth/authorize?${params.toString()}`;

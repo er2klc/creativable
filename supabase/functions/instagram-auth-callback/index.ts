@@ -51,7 +51,7 @@ serve(async (req) => {
     const tokenUrl = 'https://api.instagram.com/oauth/access_token';
     console.log('Preparing token exchange request to:', tokenUrl);
 
-    // Use the exact same redirect URI as in the authorization request
+    // Verwende den gleichen Redirect URI wie bei der Autorisierung
     const redirectUri = 'https://social-lead-symphony.lovable.app/auth/callback/instagram';
     console.log('Using redirect URI:', redirectUri);
 
