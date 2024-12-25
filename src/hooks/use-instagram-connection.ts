@@ -45,7 +45,6 @@ export function useInstagramConnection() {
 
       console.log('Starting Instagram connection process...');
 
-      // Updated scopes to match the working configuration
       const scope = [
         'instagram_business_basic',
         'instagram_business_manage_messages',
@@ -56,8 +55,7 @@ export function useInstagramConnection() {
       const state = crypto.randomUUID();
       localStorage.setItem('instagram_oauth_state', state);
 
-      // Use window.location.origin to ensure consistent redirect URI
-      const redirectUri = `${window.location.origin}/auth/callback/instagram`;
+      const redirectUri = 'https://social-lead-symphony.lovable.app/auth/callback/instagram';
       console.log('Using redirect URI:', redirectUri);
 
       const params = new URLSearchParams({

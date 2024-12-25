@@ -12,12 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const { code, redirectUri } = await req.json();
+    const { code } = await req.json();
     
     console.log('Instagram Callback - Starting token exchange process');
     console.log('Received parameters:', { 
       codePresent: !!code,
-      redirectUri,
       timestamp: new Date().toISOString()
     });
 
@@ -53,20 +52,20 @@ serve(async (req) => {
     console.log('Preparing token exchange request to:', tokenUrl);
 
     // Use the exact same redirect URI as in the authorization request
-    const cleanRedirectUri = redirectUri.split('#')[0].split('?')[0];
-    console.log('Using cleaned redirect URI:', cleanRedirectUri);
+    const redirectUri = 'https://social-lead-symphony.lovable.app/auth/callback/instagram';
+    console.log('Using redirect URI:', redirectUri);
 
     const formData = new URLSearchParams({
       client_id: '1315021952869619',
       client_secret: Deno.env.get('INSTAGRAM_APP_SECRET') || '',
       grant_type: 'authorization_code',
-      redirect_uri: cleanRedirectUri,
+      redirect_uri: redirectUri,
       code,
     });
 
     console.log('Token exchange request parameters:', {
       client_id: '1315021952869619',
-      redirect_uri: cleanRedirectUri,
+      redirect_uri: redirectUri,
       code_length: code?.length,
       has_secret: !!Deno.env.get('INSTAGRAM_APP_SECRET')
     });
