@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle, XCircle, Instagram, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { InstagramConnectionDialog } from "./instagram/InstagramConnectionDialog";
 import { useInstagramConnection } from "@/hooks/use-instagram-connection";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -26,10 +25,7 @@ export function InstagramIntegration() {
   useEffect(() => {
     const fetchStatus = async () => {
       const status = await checkConnectionStatus();
-      setConnectionDetails({
-        isConnected: status.isConnected,
-        expiresAt: status.expiresAt
-      });
+      setConnectionDetails(status);
     };
     fetchStatus();
   }, []);
