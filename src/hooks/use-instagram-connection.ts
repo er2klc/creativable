@@ -45,20 +45,16 @@ export function useInstagramConnection() {
 
       console.log('Starting Instagram connection process...');
 
-      // Updated scopes for full functionality
+      // Updated scopes with current valid Instagram permissions
       const scope = [
-        'instagram_basic',
-        'instagram_content_publish',
-        'instagram_manage_comments',
+        'pages_show_list',
+        'pages_messaging',
+        'pages_read_engagement',
         'instagram_manage_insights',
         'instagram_manage_messages',
-        'pages_manage_metadata',
-        'pages_messaging',
-        'pages_show_list',
-        'business_management',
-        'instagram_graph_user_profile',
-        'instagram_graph_user_media',
-        'instagram_manage_messages'
+        'instagram_content_publish',
+        'instagram_manage_comments',
+        'business_management'
       ].join(',');
 
       const state = crypto.randomUUID();
