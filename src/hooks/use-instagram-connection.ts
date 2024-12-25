@@ -33,7 +33,6 @@ export function useInstagramConnection() {
 
   const connectInstagram = async () => {
     try {
-      // Check session first
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast({
@@ -46,6 +45,7 @@ export function useInstagramConnection() {
 
       console.log('Starting Instagram connection process...');
 
+      // Updated scopes for full functionality
       const scope = [
         'instagram_basic',
         'instagram_content_publish',
@@ -55,7 +55,10 @@ export function useInstagramConnection() {
         'pages_manage_metadata',
         'pages_messaging',
         'pages_show_list',
-        'business_management'
+        'business_management',
+        'instagram_graph_user_profile',
+        'instagram_graph_user_media',
+        'instagram_manage_messages'
       ].join(',');
 
       const state = crypto.randomUUID();
