@@ -195,6 +195,7 @@ export type Database = {
           id: string
           lead_id: string | null
           platform: string
+          read: boolean
           sent_at: string | null
           user_id: string
         }
@@ -203,6 +204,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           platform: string
+          read?: boolean
           sent_at?: string | null
           user_id: string
         }
@@ -211,6 +213,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           platform?: string
+          read?: boolean
           sent_at?: string | null
           user_id?: string
         }

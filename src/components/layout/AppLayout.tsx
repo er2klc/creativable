@@ -60,16 +60,11 @@ const DashboardSidebar = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return 0;
 
-      const { count, error } = await supabase
+      const { count } = await supabase
         .from('messages')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .eq('read', false);
-
-      if (error) {
-        console.error('Error fetching unread messages:', error);
-        return 0;
-      }
 
       return count || 0;
     },
