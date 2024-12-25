@@ -11,24 +11,12 @@ export function InstagramIntegration() {
 
   const connectInstagram = async () => {
     try {
-      // Get the Instagram App ID from Edge Function
-      const { data: { INSTAGRAM_APP_ID }, error } = await supabase.functions.invoke('get-secret', {
-        body: JSON.stringify({ secretName: 'INSTAGRAM_APP_ID' }),
-      });
-
-      if (error || !INSTAGRAM_APP_ID) {
-        throw new Error('Could not get Instagram configuration');
-      }
-
       // Generate random state for CSRF protection
       const state = Math.random().toString(36).substring(7);
       localStorage.setItem('instagram_oauth_state', state);
 
-      // Construct Instagram OAuth URL
-      const redirectUri = `${window.location.origin}/auth/callback/instagram`;
-      const scope = 'basic,instagram_basic,instagram_content_publish,instagram_manage_comments,instagram_manage_insights';
-      
-      const instagramUrl = `https://api.instagram.com/oauth/authorize?client_id=${INSTAGRAM_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=${state}`;
+      // Use the direct Instagram OAuth URL with the state parameter
+      const instagramUrl = `https://www.instagram.com/oauth/authorize?enable_fb_login=0&force_authentication=1&client_id=1315021952869619&redirect_uri=https://social-lead-symphony.lovable.app/auth/callback/instagram&response_type=code&scope=instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish&state=${state}`;
 
       // Redirect to Instagram
       window.location.href = instagramUrl;
@@ -44,7 +32,7 @@ export function InstagramIntegration() {
 
   const disconnectInstagram = async () => {
     try {
-      await updateSettings('instagram_connected', false);
+      await updateSettings('instagram_connected', 'false');
       await updateSettings('instagram_auth_token', null);
       
       toast({
@@ -68,17 +56,17 @@ export function InstagramIntegration() {
         <div>
           <h3 className="font-medium">Instagram</h3>
           <p className="text-sm text-muted-foreground">
-            {settings?.instagram_connected 
+            {settings?.instagram_connected === 'true'
               ? "Verbunden mit Instagram" 
               : "Nicht verbunden mit Instagram"}
           </p>
         </div>
       </div>
       <Button
-        variant={settings?.instagram_connected ? "destructive" : "default"}
-        onClick={settings?.instagram_connected ? disconnectInstagram : connectInstagram}
+        variant={settings?.instagram_connected === 'true' ? "destructive" : "default"}
+        onClick={settings?.instagram_connected === 'true' ? disconnectInstagram : connectInstagram}
       >
-        {settings?.instagram_connected ? "Trennen" : "Verbinden"}
+        {settings?.instagram_connected === 'true' ? "Trennen" : "Verbinden"}
       </Button>
     </div>
   );
