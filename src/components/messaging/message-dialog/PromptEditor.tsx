@@ -26,15 +26,23 @@ export function PromptEditor({
   const [customPrompt, setCustomPrompt] = useState("");
 
   const defaultPrompt = `Erstelle eine personalisierte Erstkontakt-Nachricht für ${lead.name} mit folgenden Informationen:
-Firma: ${settings?.company_name || ""}
-Produkte/Services: ${settings?.products_services || ""}
-Zielgruppe: ${settings?.target_audience || ""}
-USP: ${settings?.usp || ""}
-Business Description: ${settings?.business_description || ""}
 
-Berücksichtige dabei:
-- Die Plattform ist ${lead.platform}
-- Die Branche des Kontakts ist ${lead.industry || "nicht angegeben"}
+Über mich:
+${settings?.about_me || ""}
+
+Geschäftsinformationen:
+- Firma: ${settings?.company_name || ""}
+- Produkte/Services: ${settings?.products_services || ""}
+- Zielgruppe: ${settings?.target_audience || ""}
+- USP: ${settings?.usp || ""}
+- Business Description: ${settings?.business_description || ""}
+
+Kontaktinformationen:
+- Plattform: ${lead.platform}
+- Branche: ${lead.industry || "nicht angegeben"}
+- Firma: ${lead.company_name || "nicht angegeben"}
+- Email: ${lead.email || "nicht angegeben"}
+- Telefon: ${lead.phone_number || "nicht angegeben"}
 ${lead.social_media_bio ? `- Profil Bio: ${lead.social_media_bio}` : ""}
 ${lead.social_media_interests?.length ? `- Interessen: ${lead.social_media_interests.join(", ")}` : ""}
 
