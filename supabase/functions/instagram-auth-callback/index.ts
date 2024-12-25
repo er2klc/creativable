@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -52,17 +51,21 @@ serve(async (req) => {
     const tokenUrl = 'https://api.instagram.com/oauth/access_token';
     console.log('Preparing token exchange request to:', tokenUrl);
 
+    // Ensure the redirect URI matches exactly what's registered with Instagram
+    const cleanRedirectUri = redirectUri.split('#')[0].split('?')[0];
+    console.log('Using cleaned redirect URI:', cleanRedirectUri);
+
     const formData = new URLSearchParams({
       client_id: '1315021952869619',
       client_secret: Deno.env.get('INSTAGRAM_APP_SECRET') || '',
       grant_type: 'authorization_code',
-      redirect_uri: redirectUri,
+      redirect_uri: cleanRedirectUri,
       code,
     });
 
     console.log('Token exchange request parameters:', {
       client_id: '1315021952869619',
-      redirect_uri: redirectUri,
+      redirect_uri: cleanRedirectUri,
       code_length: code?.length,
       has_secret: !!Deno.env.get('INSTAGRAM_APP_SECRET')
     });
