@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Settings } from "@/integrations/supabase/types/settings";
 import { Tables } from "@/integrations/supabase/types";
 import { Bot, Copy, RefreshCw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface PromptEditorProps {
   lead: Tables<"leads">;
@@ -20,6 +21,7 @@ export function PromptEditor({
   isGenerating,
   generatedMessage,
 }: PromptEditorProps) {
+  const { toast } = useToast();
   const [showPrompt, setShowPrompt] = useState(false);
   const [customPrompt, setCustomPrompt] = useState("");
 
@@ -44,18 +46,20 @@ Die Nachricht sollte:
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(generatedMessage);
-      toast.success(
-        settings?.language === "en"
+      toast({
+        title: settings?.language === "en"
           ? "Message copied to clipboard"
-          : "Nachricht in die Zwischenablage kopiert"
-      );
+          : "Nachricht in die Zwischenablage kopiert",
+        variant: "default",
+      });
     } catch (err) {
       console.error("Failed to copy text: ", err);
-      toast.error(
-        settings?.language === "en"
+      toast({
+        title: settings?.language === "en"
           ? "Failed to copy message"
-          : "Fehler beim Kopieren der Nachricht"
-      );
+          : "Fehler beim Kopieren der Nachricht",
+        variant: "destructive",
+      });
     }
   };
 
