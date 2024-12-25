@@ -28,7 +28,7 @@ export function InstagramIntegration() {
       setConnectionDetails(status);
     };
     fetchStatus();
-  }, []);
+  }, [settings?.instagram_connected]); // Re-fetch when connection status changes
 
   return (
     <Card className="p-6">

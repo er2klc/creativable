@@ -23,7 +23,7 @@ export function useInstagramConnection() {
         expiresAt: platformAuth?.expires_at || null
       };
     } catch (error) {
-      console.error('Error checking connection status:', error);
+      console.error('Error checking Instagram connection status:', error);
       return {
         isConnected: false,
         expiresAt: null
@@ -83,7 +83,6 @@ export function useInstagramConnection() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Kein Benutzer gefunden');
 
-      // Update platform_auth_status
       const { error: statusError } = await supabase
         .from('platform_auth_status')
         .update({
@@ -103,6 +102,9 @@ export function useInstagramConnection() {
         title: "Instagram getrennt",
         description: "Ihre Instagram-Verbindung wurde erfolgreich getrennt",
       });
+
+      // Force a page reload to ensure all states are reset
+      window.location.reload();
     } catch (error) {
       console.error('Error disconnecting from Instagram:', error);
       toast({
