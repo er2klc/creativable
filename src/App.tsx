@@ -23,6 +23,7 @@ const queryClient = new QueryClient();
 
 const AuthStateHandler = () => {
   const navigate = useNavigate();
+  const session = useSession();
   const supabase = useSupabaseClient();
 
   useEffect(() => {
@@ -32,6 +33,12 @@ const AuthStateHandler = () => {
       }
     });
   }, [navigate, supabase.auth]);
+
+  useEffect(() => {
+    if (!session) {
+      navigate("/auth");
+    }
+  }, [session, navigate]);
 
   return null;
 };

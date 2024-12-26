@@ -31,8 +31,8 @@ export function InstagramIntegration() {
     fetchStatus();
   }, [settings?.instagram_connected]);
 
-  // Convert string to boolean for comparison
-  const isInstagramConnected = settings?.instagram_connected === true || settings?.instagram_connected === 'true';
+  // Convert string or boolean to boolean
+  const isInstagramConnected = Boolean(settings?.instagram_connected);
 
   return (
     <Card className="p-6">
