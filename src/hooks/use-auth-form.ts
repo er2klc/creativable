@@ -32,6 +32,20 @@ export const useAuthForm = () => {
       console.log('Starting company info fetch for user:', userId);
       setIsLoading(true);
 
+      // First create initial settings record
+      const { error: settingsError } = await supabase
+        .from('settings')
+        .insert({
+          user_id: userId,
+          registration_step: 1,
+          language: 'de'
+        });
+
+      if (settingsError) {
+        console.error('Settings creation error:', settingsError);
+        throw new Error('Fehler beim Erstellen der Benutzereinstellungen');
+      }
+
       const { data, error } = await supabase.functions.invoke('fetch-company-info', {
         body: { 
           companyName: formData.companyName,
@@ -52,10 +66,9 @@ export const useAuthForm = () => {
         throw new Error('Keine Firmeninformationen gefunden. Bitte überprüfen Sie den Firmennamen.');
       }
 
-      const { error: settingsError } = await supabase
+      const { error: updateError } = await supabase
         .from('settings')
-        .upsert({
-          user_id: userId,
+        .update({
           registration_company_name: formData.companyName,
           registration_completed: true,
           company_name: data.companyName,
@@ -64,11 +77,12 @@ export const useAuthForm = () => {
           usp: data.usp,
           business_description: data.businessDescription,
           whatsapp_number: formData.phoneNumber,
-        });
+        })
+        .eq('user_id', userId);
 
-      if (settingsError) {
-        console.error('Settings update error:', settingsError);
-        throw new Error('Fehler beim Speichern der Firmeninformationen. Bitte versuchen Sie es später erneut.');
+      if (updateError) {
+        console.error('Settings update error:', updateError);
+        throw new Error('Fehler beim Speichern der Firmeninformationen');
       }
 
       toast.success("Registrierung erfolgreich abgeschlossen! ✨");
