@@ -31,6 +31,7 @@ const AuthStateHandler = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
+        toast.error("Bitte melden Sie sich an, um fortzufahren.");
         navigate("/auth");
       }
     });
@@ -43,11 +44,11 @@ const AuthStateHandler = () => {
   useEffect(() => {
     const publicPaths = ["/", "/auth", "/privacy-policy", "/auth/data-deletion/instagram"];
     const currentPath = location.pathname;
-    
+
     // Only redirect to auth if not logged in and trying to access a private route
     if (!session && !publicPaths.includes(currentPath)) {
       toast.error("Bitte melden Sie sich an, um fortzufahren.");
-      navigate("/auth", { state: { returnTo: currentPath } });
+      navigate("/auth", { state: { returnTo: currentPath }, replace: true });
       return;
     }
 
@@ -56,7 +57,7 @@ const AuthStateHandler = () => {
       const returnTo = location.state?.returnTo || "/dashboard";
       navigate(returnTo, { replace: true });
     }
-  }, [session, location.pathname]);
+  }, [session, location, navigate]);
 
   return null;
 };
