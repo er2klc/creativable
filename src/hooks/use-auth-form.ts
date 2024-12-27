@@ -31,7 +31,8 @@ export const useAuthForm = () => {
       const { data, error } = await supabase.functions.invoke('fetch-company-info', {
         body: { 
           companyName: formData.companyName,
-          userId: userId
+          userId: userId,
+          isRegistration: true // This indicates we're in the registration process
         }
       });
 

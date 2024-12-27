@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { companyName, userId } = await req.json();
+    const { companyName, userId, isRegistration } = await req.json();
 
     if (!companyName) {
       throw new Error('Company name is required');
@@ -21,9 +21,13 @@ serve(async (req) => {
 
     console.log('Fetching information for company:', companyName);
 
-    // First try to get user's OpenAI API key from settings
+    // During registration, use the default key
     let openAIApiKey = null;
-    if (userId) {
+    if (isRegistration) {
+      openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+      console.log('Using default OpenAI key for registration');
+    } else if (userId) {
+      // For all other operations, try to get user's OpenAI API key
       const supabase = getSupabase();
       const { data: settings } = await supabase
         .from('settings')
@@ -33,16 +37,12 @@ serve(async (req) => {
       
       if (settings?.openai_api_key) {
         openAIApiKey = settings.openai_api_key;
+        console.log('Using user OpenAI key');
       }
     }
 
-    // If no user key found, use the default key
     if (!openAIApiKey) {
-      openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    }
-
-    if (!openAIApiKey) {
-      throw new Error('No OpenAI API key available');
+      throw new Error('No OpenAI API key available. Please add your OpenAI API key in settings to use AI features.');
     }
 
     const prompt = `
