@@ -41,57 +41,6 @@ const AuthStateHandler = () => {
   }, [navigate, supabase.auth]);
 
   useEffect(() => {
-    const publicPaths = ["/", "/auth", "/
-
-Let's fix the authentication handling to prevent unnecessary redirects while maintaining security. I'll update the `AuthStateHandler` component in `App.tsx`:
-
-<lov-code>
-Let's update the App.tsx file to fix the authentication handling:
-
-<lov-write file_path="src/App.tsx">
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { SessionContextProvider, useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
-import { AppLayout } from "@/components/layout/AppLayout";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import Leads from "./pages/Leads";
-import Messages from "./pages/Messages";
-import Settings from "./pages/Settings";
-import LinkedInCallback from "./pages/auth/callback/LinkedIn";
-import InstagramCallback from "./pages/auth/callback/Instagram";
-import { supabase } from "@/integrations/supabase/client";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { useEffect } from "react";
-import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
-import InstagramDataDeletion from "./pages/legal/InstagramDataDeletion";
-import { toast } from "sonner";
-
-const queryClient = new QueryClient();
-
-const AuthStateHandler = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const session = useSession();
-  const supabase = useSupabaseClient();
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        navigate("/auth");
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate, supabase.auth]);
-
-  useEffect(() => {
     const publicPaths = ["/", "/auth", "/privacy-policy", "/auth/data-deletion/instagram"];
     const currentPath = location.pathname;
     
