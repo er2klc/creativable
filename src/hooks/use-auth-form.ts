@@ -25,11 +25,14 @@ export const useAuthForm = () => {
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
   const [cooldownEndTime, setCooldownEndTime] = useState(0);
 
-  const handleCompanyInfoFetch = async () => {
+  const handleCompanyInfoFetch = async (userId: string) => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase.functions.invoke('fetch-company-info', {
-        body: { companyName: formData.companyName }
+        body: { 
+          companyName: formData.companyName,
+          userId: userId
+        }
       });
 
       if (error) throw error;
@@ -37,7 +40,7 @@ export const useAuthForm = () => {
       const { error: settingsError } = await supabase
         .from('settings')
         .upsert({
-          user_id: supabase.auth.getUser().then(response => response.data.user?.id),
+          user_id: userId,
           registration_company_name: formData.companyName,
           registration_completed: true,
           company_name: data.companyName,
@@ -91,7 +94,7 @@ export const useAuthForm = () => {
             return;
           }
 
-          const { error } = await supabase.auth.signUp({
+          const { data: authData, error } = await supabase.auth.signUp({
             email: formData.email,
             password: formData.password,
             options: {
@@ -112,7 +115,9 @@ export const useAuthForm = () => {
             return;
           }
 
-          await handleCompanyInfoFetch();
+          if (authData.user) {
+            await handleCompanyInfoFetch(authData.user.id);
+          }
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({

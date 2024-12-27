@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { getSupabase } from "../_shared/supabase.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,20 +8,42 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { companyName } = await req.json();
+    const { companyName, userId } = await req.json();
 
     if (!companyName) {
       throw new Error('Company name is required');
     }
 
     console.log('Fetching information for company:', companyName);
+
+    // First try to get user's OpenAI API key from settings
+    let openAIApiKey = null;
+    if (userId) {
+      const supabase = getSupabase();
+      const { data: settings } = await supabase
+        .from('settings')
+        .select('openai_api_key')
+        .eq('user_id', userId)
+        .single();
+      
+      if (settings?.openai_api_key) {
+        openAIApiKey = settings.openai_api_key;
+      }
+    }
+
+    // If no user key found, use the default key
+    if (!openAIApiKey) {
+      openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    }
+
+    if (!openAIApiKey) {
+      throw new Error('No OpenAI API key available');
+    }
 
     const prompt = `
       Analyze the network marketing company "${companyName}" and provide the following information in a structured format:
@@ -64,18 +87,14 @@ serve(async (req) => {
     const data = await response.json();
     console.log('OpenAI response:', data);
 
-    // Extract the content from the response
     const content = data.choices[0].message.content;
     console.log('Content from OpenAI:', content);
 
-    // Try to parse the content as JSON, or extract JSON from markdown
     let companyInfo;
     try {
-      // First try direct JSON parsing
       companyInfo = JSON.parse(content);
     } catch (e) {
       console.log('Direct JSON parse failed, trying to extract JSON from content');
-      // If direct parsing fails, try to extract JSON from potential markdown
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         companyInfo = JSON.parse(jsonMatch[0]);
