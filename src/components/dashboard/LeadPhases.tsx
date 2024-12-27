@@ -62,15 +62,19 @@ export const LeadPhases = () => {
               order_index: phase.order_index,
               user_id: session.user.id,
             })
-            .select()
             .maybeSingle();
 
-          // Only show error if it's not a duplicate key error
-          if (insertError && insertError.code !== "23505") {
+          if (insertError) {
+            // Only show error if it's not a duplicate key error
+            if (insertError.code === "23505") {
+              console.log(`Phase "${phase.name}" already exists for this user`);
+              continue;
+            }
+            
             console.error("Error inserting phase:", insertError);
             toast({
               title: "Fehler",
-              description: `Fehler beim Hinzufügen der Phase "${phase.name}"`,
+              description: `Die Phase "${phase.name}" konnte nicht hinzugefügt werden, da sie bereits existiert.`,
               variant: "destructive",
             });
           }
@@ -82,7 +86,7 @@ export const LeadPhases = () => {
         console.error("Error initializing default phases:", error);
         toast({
           title: "Fehler",
-          description: "Fehler beim Initialisieren der Phasen",
+          description: "Fehler beim Initialisieren der Phasen. Möglicherweise existieren einige Phasen bereits.",
           variant: "destructive",
         });
       }
