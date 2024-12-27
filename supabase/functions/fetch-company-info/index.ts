@@ -16,16 +16,16 @@ serve(async (req) => {
     const { companyName, userId, isRegistration } = await req.json();
 
     if (!companyName) {
-      throw new Error('Company name is required');
+      throw new Error('Firmenname ist erforderlich');
     }
 
-    console.log('Fetching information for company:', companyName);
+    console.log('Hole Informationen für Firma:', companyName);
 
     // During registration, use the default key
     let openAIApiKey = null;
     if (isRegistration) {
       openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-      console.log('Using default OpenAI key for registration');
+      console.log('Verwende Standard OpenAI Key für Registrierung');
     } else if (userId) {
       // For all other operations, try to get user's OpenAI API key
       const supabase = getSupabase();
@@ -37,34 +37,39 @@ serve(async (req) => {
       
       if (settings?.openai_api_key) {
         openAIApiKey = settings.openai_api_key;
-        console.log('Using user OpenAI key');
+        console.log('Verwende Benutzer OpenAI Key');
       }
     }
 
     if (!openAIApiKey) {
-      throw new Error('No OpenAI API key available. Please add your OpenAI API key in settings to use AI features.');
+      throw new Error('Kein OpenAI API-Schlüssel verfügbar. Bitte fügen Sie Ihren OpenAI API-Schlüssel in den Einstellungen hinzu, um KI-Funktionen zu nutzen.');
     }
 
-    const systemPrompt = `You are a helpful assistant that analyzes network marketing companies and provides structured information. Always provide factual, professional information. If specific details are uncertain, provide general, positive information about companies in that industry.`;
+    const systemPrompt = `Du bist ein hilfreicher Assistent, der Network Marketing Unternehmen analysiert und strukturierte Informationen bereitstellt. 
+Deine Aufgabe ist es, präzise und professionelle Informationen zu liefern. 
+Wenn spezifische Details unsicher sind, liefere allgemeine, positive Informationen über Unternehmen in dieser Branche.
+Halte die Antworten kurz, prägnant und professionell.`;
 
-    const userPrompt = `Please analyze the network marketing company "${companyName}" and provide the following specific information:
+    const userPrompt = `Bitte analysiere das Network Marketing Unternehmen "${companyName}" und stelle die folgenden spezifischen Informationen bereit:
 
-1. Official company name
-2. Main products or services (be specific but concise)
-3. Target audience (who are their ideal customers)
-4. Unique selling proposition (what makes them special)
-5. Business description (2-3 sentences about their business model and approach)
+1. Offizieller Firmenname (kurz und präzise)
+2. Hauptprodukte oder -dienstleistungen (maximal 2 Sätze)
+3. Zielgruppe (wer sind die idealen Kunden, maximal 1 Satz)
+4. Alleinstellungsmerkmal/USP (was macht sie besonders, maximal 1 Satz)
+5. Geschäftsbeschreibung (2-3 Sätze über ihr Geschäftsmodell und ihren Ansatz)
 
-Format your response as a JSON object with these exact keys:
+Formatiere deine Antwort als JSON-Objekt mit genau diesen Schlüsseln:
 {
-  "companyName": "string",
-  "productsServices": "string",
-  "targetAudience": "string",
-  "usp": "string",
-  "businessDescription": "string"
-}`;
+  "companyName": "string (kurz und präzise)",
+  "productsServices": "string (maximal 2 Sätze)",
+  "targetAudience": "string (maximal 1 Satz)",
+  "usp": "string (maximal 1 Satz)",
+  "businessDescription": "string (2-3 Sätze)"
+}
 
-    console.log('Sending request to OpenAI with prompt');
+Halte die Antworten kurz und prägnant. Wenn du dir bei Details nicht sicher bist, gib allgemeine, aber positive Informationen über Network Marketing Unternehmen in dieser Branche an.`;
+
+    console.log('Sende Anfrage an OpenAI');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -83,48 +88,63 @@ Format your response as a JSON object with these exact keys:
     });
 
     if (!response.ok) {
-      console.error('OpenAI API error:', await response.text());
-      throw new Error('Failed to fetch company information from OpenAI');
+      console.error('OpenAI API Fehler:', await response.text());
+      throw new Error('Fehler beim Abrufen der Firmeninformationen von OpenAI');
     }
 
     const data = await response.json();
-    console.log('OpenAI response:', data);
+    console.log('OpenAI Antwort:', data);
 
     const content = data.choices[0].message.content;
-    console.log('Content from OpenAI:', content);
+    console.log('Inhalt von OpenAI:', content);
 
     let companyInfo;
     try {
       companyInfo = JSON.parse(content);
     } catch (e) {
-      console.log('Direct JSON parse failed, trying to extract JSON from content');
+      console.log('Direktes JSON-Parsing fehlgeschlagen, versuche JSON aus Inhalt zu extrahieren');
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         companyInfo = JSON.parse(jsonMatch[0]);
       } else {
-        throw new Error('Could not parse company information from OpenAI response');
+        throw new Error('Konnte Firmeninformationen nicht aus OpenAI-Antwort extrahieren');
       }
     }
 
-    // Validate that all required fields are present
+    // Validiere, dass alle erforderlichen Felder vorhanden sind
     const requiredFields = ['companyName', 'productsServices', 'targetAudience', 'usp', 'businessDescription'];
     for (const field of requiredFields) {
       if (!companyInfo[field]) {
-        companyInfo[field] = `Information about ${field} not available`;
+        companyInfo[field] = `Informationen zu ${field} nicht verfügbar`;
       }
     }
 
-    console.log('Parsed and validated company info:', companyInfo);
+    // Stelle sicher, dass die Antworten nicht zu lang sind
+    const maxLengths = {
+      companyName: 100,
+      productsServices: 200,
+      targetAudience: 150,
+      usp: 150,
+      businessDescription: 300
+    };
+
+    for (const [field, maxLength] of Object.entries(maxLengths)) {
+      if (companyInfo[field] && companyInfo[field].length > maxLength) {
+        companyInfo[field] = companyInfo[field].substring(0, maxLength) + '...';
+      }
+    }
+
+    console.log('Verarbeitete und validierte Firmeninfo:', companyInfo);
 
     return new Response(JSON.stringify(companyInfo), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in fetch-company-info function:', error);
+    console.error('Fehler in fetch-company-info Funktion:', error);
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: 'If this error persists, please try again or contact support.'
+        details: 'Wenn dieser Fehler weiterhin besteht, versuchen Sie es erneut oder kontaktieren Sie den Support.'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
