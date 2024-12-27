@@ -9,6 +9,7 @@ import { RegistrationForm } from "@/components/auth/RegistrationForm";
 import { useAuthForm } from "@/hooks/use-auth-form";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
+import { toast } from "@/hooks/use-toast";
 
 const Auth = () => {
   const session = useSession();
