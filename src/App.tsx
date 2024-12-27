@@ -32,7 +32,7 @@ const AuthStateHandler = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event, session);
       
-      if (event === "SIGNED_OUT" || event === "USER_DELETED") {
+      if (event === "SIGNED_OUT") {
         console.log("User signed out, redirecting to auth page");
         toast.error("Sie wurden abgemeldet. Bitte melden Sie sich erneut an.");
         navigate("/auth");
