@@ -28,8 +28,7 @@ const AuthStateHandler = () => {
   const session = useSession();
 
   useEffect(() => {
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const handleAuthChange = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event, session);
       
       if (event === "SIGNED_OUT") {
@@ -40,7 +39,7 @@ const AuthStateHandler = () => {
     });
 
     return () => {
-      subscription.unsubscribe();
+      handleAuthChange.data.subscription.unsubscribe();
     };
   }, [navigate]);
 
