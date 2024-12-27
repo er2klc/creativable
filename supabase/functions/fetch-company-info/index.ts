@@ -20,16 +20,21 @@ serve(async (req) => {
       throw new Error('Company name is required');
     }
 
+    console.log('Fetching information for company:', companyName);
+
     const prompt = `
-      Analyze the network marketing company "${companyName}" and provide the following information in a JSON format:
-      - companyName: The official company name
-      - productsServices: Main products or services offered
-      - targetAudience: Primary target audience
-      - usp: Unique selling proposition
-      - businessDescription: A brief business description
+      Analyze the network marketing company "${companyName}" and provide the following information in a structured format:
+      - Company name (official name)
+      - Main products or services offered
+      - Primary target audience
+      - Unique selling proposition (USP)
+      - Brief business description
       
       If you're not certain about specific details, provide general, positive information about network marketing companies in that industry.
       Keep all responses professional and factual.
+      
+      Format the response as a JSON object with these exact keys:
+      companyName, productsServices, targetAudience, usp, businessDescription
     `;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -41,7 +46,10 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are a helpful assistant that provides accurate information about network marketing companies.' },
+          { 
+            role: 'system', 
+            content: 'You are a helpful assistant that provides accurate information about network marketing companies in JSON format.' 
+          },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
@@ -49,20 +57,48 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch company information');
+      console.error('OpenAI API error:', await response.text());
+      throw new Error('Failed to fetch company information from OpenAI');
     }
 
     const data = await response.json();
-    const companyInfo = JSON.parse(data.choices[0].message.content);
+    console.log('OpenAI response:', data);
+
+    // Extract the content from the response
+    const content = data.choices[0].message.content;
+    console.log('Content from OpenAI:', content);
+
+    // Try to parse the content as JSON, or extract JSON from markdown
+    let companyInfo;
+    try {
+      // First try direct JSON parsing
+      companyInfo = JSON.parse(content);
+    } catch (e) {
+      console.log('Direct JSON parse failed, trying to extract JSON from content');
+      // If direct parsing fails, try to extract JSON from potential markdown
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        companyInfo = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('Could not parse company information from OpenAI response');
+      }
+    }
+
+    console.log('Parsed company info:', companyInfo);
 
     return new Response(JSON.stringify(companyInfo), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in fetch-company-info function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        details: 'If this error persists, please try again or contact support.'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
