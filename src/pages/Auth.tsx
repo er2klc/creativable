@@ -44,7 +44,11 @@ const Auth = () => {
       if (error) throw error;
     } catch (error: any) {
       console.error('Google login error:', error);
-      toast.error("Fehler beim Anmelden mit Google. Bitte versuchen Sie es später erneut.");
+      toast({
+        variant: "destructive",
+        title: "Fehler",
+        description: "Fehler beim Anmelden mit Google. Bitte versuchen Sie es später erneut."
+      });
     }
   };
 
@@ -59,7 +63,11 @@ const Auth = () => {
       if (error) throw error;
     } catch (error: any) {
       console.error('Apple login error:', error);
-      toast.error("Fehler beim Anmelden mit Apple. Bitte versuchen Sie es später erneut.");
+      toast({
+        variant: "destructive",
+        title: "Fehler",
+        description: "Fehler beim Anmelden mit Apple. Bitte versuchen Sie es später erneut."
+      });
     }
   };
 
