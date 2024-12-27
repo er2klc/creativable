@@ -4,6 +4,19 @@ import { toast } from "sonner";
 import { useRegistration } from "./auth/use-registration";
 import { useLogin } from "./auth/use-login";
 
+export interface RegistrationFormData {
+  name: string;
+  email: string;
+  password: string;
+  companyName: string;
+  phoneNumber: string;
+}
+
+export interface LoginFormData {
+  email: string;
+  password: string;
+}
+
 export const useAuthForm = () => {
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
