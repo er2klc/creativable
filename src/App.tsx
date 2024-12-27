@@ -52,8 +52,10 @@ const AuthStateHandler = () => {
   }, [navigate, location.pathname]);
 
   useEffect(() => {
-    const handleAuthChange = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event, session?.user?.id);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      console.log("Auth state changed:", event, currentSession?.user?.id);
       
       if (event === "SIGNED_OUT") {
         console.log("User signed out, redirecting to auth page");
@@ -67,12 +69,22 @@ const AuthStateHandler = () => {
         navigate("/dashboard");
         return;
       }
+
+      // Überprüfen Sie die Session bei jedem Auth-State-Change
+      if (!currentSession && !location.pathname.startsWith("/auth")) {
+        const publicPaths = ["/", "/privacy-policy", "/auth/data-deletion/instagram"];
+        if (!publicPaths.includes(location.pathname)) {
+          console.log("Session expired, redirecting to auth page");
+          toast.error("Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.");
+          navigate("/auth");
+        }
+      }
     });
 
     return () => {
-      handleAuthChange.data.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   if (isLoading) {
     return (
