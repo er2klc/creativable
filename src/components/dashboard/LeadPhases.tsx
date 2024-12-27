@@ -33,6 +33,37 @@ export const LeadPhases = () => {
     },
   });
 
+  // Query to get lead counts per phase
+  const { data: leadCounts = {} } = useQuery({
+    queryKey: ["lead-phase-counts"],
+    queryFn: async () => {
+      if (!session?.user?.id) return {};
+      
+      const { data: leads, error } = await supabase
+        .from("leads")
+        .select("phase")
+        .eq("user_id", session.user.id);
+
+      if (error) throw error;
+
+      // Calculate percentages
+      const counts: { [key: string]: number } = {};
+      const total = leads?.length || 0;
+      
+      leads?.forEach(lead => {
+        counts[lead.phase] = (counts[lead.phase] || 0) + 1;
+      });
+
+      // Convert to percentages
+      const percentages: { [key: string]: number } = {};
+      Object.keys(counts).forEach(phase => {
+        percentages[phase] = total > 0 ? Math.round((counts[phase] / total) * 100) : 0;
+      });
+
+      return percentages;
+    },
+  });
+
   useEffect(() => {
     const initializeDefaultPhases = async () => {
       if (!session?.user?.id || phases.length > 0) return;
@@ -65,7 +96,6 @@ export const LeadPhases = () => {
             .maybeSingle();
 
           if (insertError) {
-            // Only show error if it's not a duplicate key error
             if (insertError.code === "23505") {
               console.log(`Phase "${phase.name}" already exists for this user`);
               continue;
@@ -104,40 +134,28 @@ export const LeadPhases = () => {
       <CardHeader>
         <CardTitle className="text-lg font-medium flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Lead-Phasen
+          Kontakt-Phasen
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <div className="flex justify-between mb-1 text-sm">
-            <span className="flex items-center gap-2">
-              <UserPlus className="h-4 w-4" />
-              Erstkontakt
-            </span>
-            <span>45%</span>
+        {phases.map(phase => (
+          <div key={phase.id}>
+            <div className="flex justify-between mb-1 text-sm">
+              <span className="flex items-center gap-2">
+                {phase.order_index === 0 ? (
+                  <UserPlus className="h-4 w-4" />
+                ) : phase.order_index === phases.length - 1 ? (
+                  <CheckCircle className="h-4 w-4" />
+                ) : (
+                  <Users className="h-4 w-4" />
+                )}
+                {phase.name}
+              </span>
+              <span>{leadCounts[phase.name] || 0}%</span>
+            </div>
+            <Progress value={leadCounts[phase.name] || 0} className="h-2" />
           </div>
-          <Progress value={45} className="h-2" />
-        </div>
-        <div>
-          <div className="flex justify-between mb-1 text-sm">
-            <span className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Follow-up
-            </span>
-            <span>35%</span>
-          </div>
-          <Progress value={35} className="h-2" />
-        </div>
-        <div>
-          <div className="flex justify-between mb-1 text-sm">
-            <span className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Abschluss
-            </span>
-            <span>20%</span>
-          </div>
-          <Progress value={20} className="h-2" />
-        </div>
+        ))}
       </CardContent>
     </Card>
   );

@@ -32,18 +32,12 @@ export function DeleteAccountButton() {
         }
       }
 
-      // Delete user's own account using the current method
-      const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(
-        session.user.id
-      );
+      // Mark the user as deleted in their metadata
+      const { error: updateError } = await supabaseClient.auth.updateUser({
+        data: { deleted: true }
+      });
 
-      if (deleteError) {
-        // If admin deletion fails, try self-deletion
-        const { error: selfDeleteError } = await supabaseClient.auth.updateUser({
-          data: { deleted: true }
-        });
-        if (selfDeleteError) throw selfDeleteError;
-      }
+      if (updateError) throw updateError;
 
       // Sign out the user
       await supabaseClient.auth.signOut();
