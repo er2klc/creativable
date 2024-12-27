@@ -45,20 +45,26 @@ serve(async (req) => {
       throw new Error('No OpenAI API key available. Please add your OpenAI API key in settings to use AI features.');
     }
 
-    const prompt = `
-      Analyze the network marketing company "${companyName}" and provide the following information in a structured format:
-      - Company name (official name)
-      - Main products or services offered
-      - Primary target audience
-      - Unique selling proposition (USP)
-      - Brief business description
-      
-      If you're not certain about specific details, provide general, positive information about network marketing companies in that industry.
-      Keep all responses professional and factual.
-      
-      Format the response as a JSON object with these exact keys:
-      companyName, productsServices, targetAudience, usp, businessDescription
-    `;
+    const systemPrompt = `You are a helpful assistant that analyzes network marketing companies and provides structured information. Always provide factual, professional information. If specific details are uncertain, provide general, positive information about companies in that industry.`;
+
+    const userPrompt = `Please analyze the network marketing company "${companyName}" and provide the following specific information:
+
+1. Official company name
+2. Main products or services (be specific but concise)
+3. Target audience (who are their ideal customers)
+4. Unique selling proposition (what makes them special)
+5. Business description (2-3 sentences about their business model and approach)
+
+Format your response as a JSON object with these exact keys:
+{
+  "companyName": "string",
+  "productsServices": "string",
+  "targetAudience": "string",
+  "usp": "string",
+  "businessDescription": "string"
+}`;
+
+    console.log('Sending request to OpenAI with prompt');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -69,11 +75,8 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { 
-            role: 'system', 
-            content: 'You are a helpful assistant that provides accurate information about network marketing companies in JSON format.' 
-          },
-          { role: 'user', content: prompt }
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
         ],
         temperature: 0.7,
       }),
@@ -103,7 +106,15 @@ serve(async (req) => {
       }
     }
 
-    console.log('Parsed company info:', companyInfo);
+    // Validate that all required fields are present
+    const requiredFields = ['companyName', 'productsServices', 'targetAudience', 'usp', 'businessDescription'];
+    for (const field of requiredFields) {
+      if (!companyInfo[field]) {
+        companyInfo[field] = `Information about ${field} not available`;
+      }
+    }
+
+    console.log('Parsed and validated company info:', companyInfo);
 
     return new Response(JSON.stringify(companyInfo), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
