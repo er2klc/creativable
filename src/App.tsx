@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { SessionContextProvider, useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
@@ -23,6 +23,7 @@ const queryClient = new QueryClient();
 
 const AuthStateHandler = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const session = useSession();
   const supabase = useSupabaseClient();
 
@@ -35,14 +36,13 @@ const AuthStateHandler = () => {
   }, [navigate, supabase.auth]);
 
   useEffect(() => {
-    // Only redirect to auth if we're not already on the auth page or public pages
     const publicPaths = ["/", "/auth", "/privacy-policy", "/auth/data-deletion/instagram"];
-    const currentPath = window.location.pathname;
+    const currentPath = location.pathname;
     
     if (!session && !publicPaths.includes(currentPath)) {
       navigate("/auth");
     }
-  }, [session, navigate]);
+  }, [session, navigate, location]);
 
   return null;
 };
