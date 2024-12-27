@@ -29,12 +29,10 @@ const AuthStateHandler = () => {
   const supabase = useSupabaseClient();
 
   useEffect(() => {
-    let previousPath = location.pathname;
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
-      if (event === "SIGNED_OUT" || event === "TOKEN_REFRESHED" && !currentSession) {
-        toast.error("Bitte melden Sie sich erneut an, Ihre Sitzung ist abgelaufen.");
-        navigate("/auth", { state: { returnTo: previousPath } });
+      if (event === "SIGNED_OUT") {
+        toast.error("Bitte melden Sie sich an.");
+        navigate("/auth");
       }
     });
 
@@ -47,8 +45,8 @@ const AuthStateHandler = () => {
     const publicPaths = ["/", "/auth", "/privacy-policy", "/auth/data-deletion/instagram"];
     const currentPath = location.pathname;
     
+    // Only redirect if there's no session and we're not on a public path
     if (!session && !publicPaths.includes(currentPath)) {
-      toast.error("Bitte melden Sie sich an, um fortzufahren.");
       navigate("/auth", { state: { returnTo: currentPath } });
     }
 
