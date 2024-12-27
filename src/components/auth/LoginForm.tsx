@@ -2,11 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+interface LoginFormData {
+  email: string;
+  password: string;
+}
+
 interface LoginFormProps {
-  formData: {
-    email: string;
-    password: string;
-  };
+  formData: LoginFormData;
   isLoading: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }

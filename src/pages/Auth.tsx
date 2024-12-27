@@ -117,7 +117,7 @@ const Auth = () => {
           />
         ) : (
           <LoginForm
-            formData={formData}
+            formData={{ email: formData.email, password: formData.password }}
             isLoading={isLoading}
             onInputChange={handleInputChange}
           />
