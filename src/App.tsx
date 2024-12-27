@@ -18,6 +18,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { useEffect } from "react";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import InstagramDataDeletion from "./pages/legal/InstagramDataDeletion";
+import { toast } from "sonner";
 
 const queryClient = new QueryClient();
 
@@ -28,11 +29,18 @@ const AuthStateHandler = () => {
   const supabase = useSupabaseClient();
 
   useEffect(() => {
-    supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        navigate("/");
+    let previousPath = location.pathname;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      if (event === "SIGNED_OUT" || event === "TOKEN_REFRESHED" && !currentSession) {
+        toast.error("Bitte melden Sie sich erneut an, Ihre Sitzung ist abgelaufen.");
+        navigate("/auth", { state: { returnTo: previousPath } });
       }
     });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate, supabase.auth]);
 
   useEffect(() => {
@@ -40,7 +48,14 @@ const AuthStateHandler = () => {
     const currentPath = location.pathname;
     
     if (!session && !publicPaths.includes(currentPath)) {
-      navigate("/auth");
+      toast.error("Bitte melden Sie sich an, um fortzufahren.");
+      navigate("/auth", { state: { returnTo: currentPath } });
+    }
+
+    // If user is logged in and on auth page, redirect to intended destination or dashboard
+    if (session && currentPath === "/auth") {
+      const returnTo = location.state?.returnTo || "/dashboard";
+      navigate(returnTo);
     }
   }, [session, navigate, location]);
 
