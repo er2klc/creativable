@@ -32,12 +32,18 @@ export function DeleteAccountButton() {
         }
       }
 
-      // Delete the user account
+      // Delete the user's own account (not using admin API)
       const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(
         session.user.id
       );
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        // If admin deletion fails, try self-deletion
+        const { error: selfDeleteError } = await supabaseClient.auth.api.deleteUser(
+          session.user.id
+        );
+        if (selfDeleteError) throw selfDeleteError;
+      }
 
       // Sign out the user
       await supabaseClient.auth.signOut();
