@@ -15,7 +15,7 @@ import LinkedInCallback from "./pages/auth/callback/LinkedIn";
 import InstagramCallback from "./pages/auth/callback/Instagram";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import InstagramDataDeletion from "./pages/legal/InstagramDataDeletion";
 import { toast } from "sonner";
@@ -26,18 +26,46 @@ const AuthStateHandler = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const session = useSession();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (!currentSession) {
+          const publicPaths = ["/", "/auth", "/privacy-policy", "/auth/data-deletion/instagram"];
+          if (!publicPaths.includes(location.pathname)) {
+            console.log("No session found, redirecting to auth page");
+            toast.error("Bitte melden Sie sich an, um fortzufahren.");
+            navigate("/auth");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+        toast.error("Ein Fehler ist aufgetreten. Bitte laden Sie die Seite neu.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
+  }, [navigate, location.pathname]);
 
   useEffect(() => {
     const handleAuthChange = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event, session?.user?.id);
+      
       if (event === "SIGNED_OUT") {
         console.log("User signed out, redirecting to auth page");
         toast.error("Sie wurden abgemeldet. Bitte melden Sie sich erneut an.");
         navigate("/auth");
+        return;
       }
       
       if (event === "SIGNED_IN") {
         console.log("User signed in, redirecting to dashboard");
         navigate("/dashboard");
+        return;
       }
     });
 
@@ -46,16 +74,13 @@ const AuthStateHandler = () => {
     };
   }, [navigate]);
 
-  useEffect(() => {
-    const publicPaths = ["/", "/auth", "/privacy-policy", "/auth/data-deletion/instagram"];
-    
-    if (!session && !publicPaths.includes(location.pathname)) {
-      console.log("No session found, redirecting to auth page");
-      toast.error("Bitte melden Sie sich an, um fortzufahren.");
-      navigate("/auth");
-      return;
-    }
-  }, [session, location.pathname, navigate]);
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      </div>
+    );
+  }
 
   return null;
 };
