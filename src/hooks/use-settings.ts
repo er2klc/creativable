@@ -23,9 +23,10 @@ export function useSettings() {
         .from("settings")
         .select("*")
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle();
 
-      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows returned
+      if (fetchError) {
+        console.error('Error fetching settings:', fetchError);
         throw fetchError;
       }
 
@@ -34,6 +35,7 @@ export function useSettings() {
       }
 
       // If no settings exist, create initial settings
+      console.log("No settings found, creating initial settings");
       const { data: newSettings, error: createError } = await supabase
         .from("settings")
         .insert({
@@ -41,20 +43,10 @@ export function useSettings() {
           language: 'de'
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (createError) {
-        // If we get a duplicate key error, try fetching again as another request might have created the settings
-        if (createError.code === '23505') {
-          const { data: retrySettings, error: retryError } = await supabase
-            .from("settings")
-            .select("*")
-            .eq("user_id", session.user.id)
-            .single();
-
-          if (retryError) throw retryError;
-          return retrySettings as Settings;
-        }
+        console.error('Error creating settings:', createError);
         throw createError;
       }
 
