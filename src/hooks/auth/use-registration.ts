@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { handleCompanyInfoFetch } from "./utils/company-info";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 
-interface RegistrationData {
+export interface RegistrationData {
   name: string;
   email: string;
   password: string;
   companyName: string;
   phoneNumber: string;
+  language: string;
 }
 
 export const useRegistration = () => {
@@ -21,6 +23,7 @@ export const useRegistration = () => {
     password: "",
     companyName: "",
     phoneNumber: "",
+    language: "Deutsch",
   });
 
   const handleRegistration = async () => {

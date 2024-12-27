@@ -10,6 +10,7 @@ export interface RegistrationFormData {
   password: string;
   companyName: string;
   phoneNumber: string;
+  language: string;
 }
 
 export interface LoginFormData {
