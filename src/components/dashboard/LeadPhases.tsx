@@ -61,9 +61,12 @@ export const LeadPhases = () => {
               name: phase.name,
               order_index: phase.order_index,
               user_id: session.user.id,
-            });
+            })
+            .select()
+            .maybeSingle();
 
-          if (insertError && insertError.code !== "23505") { // Ignore duplicate key errors
+          // Only show error if it's not a duplicate key error
+          if (insertError && insertError.code !== "23505") {
             console.error("Error inserting phase:", insertError);
             toast({
               title: "Fehler",
