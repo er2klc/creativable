@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { SessionContextProvider, useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
+import { SessionContextProvider, useSession } from "@supabase/auth-helpers-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -28,9 +28,7 @@ const AuthStateHandler = () => {
   const session = useSession();
 
   useEffect(() => {
-    const handleAuthChange = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event, session);
-      
+    const handleAuthChange = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         console.log("User signed out, redirecting to auth page");
         toast.error("Sie wurden abgemeldet. Bitte melden Sie sich erneut an.");
@@ -45,16 +43,15 @@ const AuthStateHandler = () => {
 
   useEffect(() => {
     const publicPaths = ["/", "/auth", "/privacy-policy", "/auth/data-deletion/instagram"];
-    const currentPath = location.pathname;
-
-    if (!session && !publicPaths.includes(currentPath)) {
+    
+    if (!session && !publicPaths.includes(location.pathname)) {
       console.log("No session found, redirecting to auth page");
       toast.error("Bitte melden Sie sich an, um fortzufahren.");
       navigate("/auth");
       return;
     }
 
-    if (session && currentPath === "/auth") {
+    if (session && location.pathname === "/auth") {
       console.log("User is logged in and on auth page, redirecting to dashboard");
       navigate("/dashboard");
     }
@@ -79,38 +76,10 @@ const App = () => (
               <Route path="/auth/callback/instagram" element={<InstagramCallback />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/auth/data-deletion/instagram" element={<InstagramDataDeletion />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <AppLayout>
-                    <Dashboard />
-                  </AppLayout>
-                }
-              />
-              <Route
-                path="/leads"
-                element={
-                  <AppLayout>
-                    <Leads />
-                  </AppLayout>
-                }
-              />
-              <Route
-                path="/messages"
-                element={
-                  <AppLayout>
-                    <Messages />
-                  </AppLayout>
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <AppLayout>
-                    <Settings />
-                  </AppLayout>
-                }
-              />
+              <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
+              <Route path="/leads" element={<AppLayout><Leads /></AppLayout>} />
+              <Route path="/messages" element={<AppLayout><Messages /></AppLayout>} />
+              <Route path="/settings" element={<AppLayout><Settings /></AppLayout>} />
             </Routes>
           </BrowserRouter>
         </SidebarProvider>
