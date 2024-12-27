@@ -33,7 +33,7 @@ serve(async (req) => {
         .from('settings')
         .select('openai_api_key')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
       if (settings?.openai_api_key) {
         openAIApiKey = settings.openai_api_key;
@@ -42,7 +42,7 @@ serve(async (req) => {
     }
 
     if (!openAIApiKey) {
-      throw new Error('Kein OpenAI API-Schlüssel verfügbar. Bitte fügen Sie Ihren OpenAI API-Schlüssel in den Einstellungen hinzu, um KI-Funktionen zu nutzen.');
+      throw new Error('Kein OpenAI API-Schlüssel verfügbar');
     }
 
     const systemPrompt = `Du bist ein hilfreicher Assistent, der Network Marketing Unternehmen analysiert und strukturierte Informationen bereitstellt. 
@@ -65,9 +65,7 @@ Formatiere deine Antwort als JSON-Objekt mit genau diesen Schlüsseln:
   "targetAudience": "string (maximal 1 Satz)",
   "usp": "string (maximal 1 Satz)",
   "businessDescription": "string (2-3 Sätze)"
-}
-
-Halte die Antworten kurz und prägnant. Wenn du dir bei Details nicht sicher bist, gib allgemeine, aber positive Informationen über Network Marketing Unternehmen in dieser Branche an.`;
+}`;
 
     console.log('Sende Anfrage an OpenAI');
 

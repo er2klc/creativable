@@ -6,6 +6,7 @@ import * as z from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,9 @@ import type { Settings } from "@/integrations/supabase/types/settings";
 
 const formSchema = z.object({
   language: z.string(),
+  name: z.string(),
+  phoneNumber: z.string(),
+  email: z.string().email(),
 });
 
 const languages = [
@@ -30,7 +34,7 @@ export function GeneralSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch current settings
+  // Fetch current settings and user data
   const { data: settings } = useQuery({
     queryKey: ["settings", session?.user?.id],
     queryFn: async () => {
@@ -38,7 +42,6 @@ export function GeneralSettings() {
         .from("settings")
         .select("*")
         .eq("user_id", session?.user?.id)
-        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
@@ -51,17 +54,22 @@ export function GeneralSettings() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       language: settings?.language || "Deutsch",
+      name: session?.user?.user_metadata?.full_name || "",
+      phoneNumber: session?.user?.phone || "",
+      email: session?.user?.email || "",
     },
   });
 
-  // Update form when settings are loaded
   React.useEffect(() => {
-    if (settings?.language) {
+    if (settings?.language || session?.user) {
       form.reset({
-        language: settings.language,
+        language: settings?.language || "Deutsch",
+        name: session?.user?.user_metadata?.full_name || "",
+        phoneNumber: session?.user?.phone || "",
+        email: session?.user?.email || "",
       });
     }
-  }, [settings, form]);
+  }, [settings, session?.user, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -71,7 +79,8 @@ export function GeneralSettings() {
         throw new Error("No user session found");
       }
 
-      const { error } = await supabase
+      // Update settings
+      const { error: settingsError } = await supabase
         .from("settings")
         .upsert(
           {
@@ -85,7 +94,15 @@ export function GeneralSettings() {
           }
         );
 
-      if (error) throw error;
+      if (settingsError) throw settingsError;
+
+      // Update user metadata
+      const { error: userError } = await supabase.auth.updateUser({
+        data: { full_name: values.name },
+        phone: values.phoneNumber,
+      });
+
+      if (userError) throw userError;
 
       // Invalidate and refetch settings
       await queryClient.invalidateQueries({ queryKey: ["settings", session.user.id] });
@@ -109,12 +126,54 @@ export function GeneralSettings() {
       <CardHeader>
         <CardTitle>Allgemeine Einstellungen</CardTitle>
         <CardDescription>
-          Verwalten Sie hier Ihre Spracheinstellungen und andere globale Präferenzen.
+          Verwalten Sie hier Ihre persönlichen Daten und Spracheinstellungen.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>E-Mail</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="phoneNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Telefonnummer</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="language"

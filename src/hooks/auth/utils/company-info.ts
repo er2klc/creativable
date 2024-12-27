@@ -12,6 +12,7 @@ interface CompanyInfo {
 interface RegistrationData {
   companyName: string;
   phoneNumber: string;
+  language: string;
 }
 
 export const handleCompanyInfoFetch = async (
@@ -28,7 +29,7 @@ export const handleCompanyInfoFetch = async (
       .insert({
         user_id: userId,
         registration_step: 1,
-        language: 'de',
+        language: formData.language || 'de',
         registration_company_name: formData.companyName,
         whatsapp_number: formData.phoneNumber,
       });
@@ -58,6 +59,7 @@ export const handleCompanyInfoFetch = async (
       throw new Error('Keine Firmeninformationen gefunden. Bitte überprüfen Sie den Firmennamen.');
     }
 
+    // Update settings with company info
     const { error: updateError } = await supabase
       .from('settings')
       .update({
@@ -75,6 +77,7 @@ export const handleCompanyInfoFetch = async (
       throw new Error('Fehler beim Speichern der Firmeninformationen');
     }
 
+    console.log('Successfully saved company info:', data);
     return true;
   } catch (error: any) {
     console.error("Error in handleCompanyInfoFetch:", error);

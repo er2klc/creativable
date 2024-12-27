@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface RegistrationFormProps {
   registrationStep: number;
@@ -11,16 +11,28 @@ interface RegistrationFormProps {
     password: string;
     companyName: string;
     phoneNumber: string;
+    language: string;
   };
   isLoading: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onLanguageChange: (value: string) => void;
 }
+
+const languages = [
+  { value: "Deutsch", label: "🇩🇪 Deutsch" },
+  { value: "English", label: "🇬🇧 English" },
+  { value: "Français", label: "🇫🇷 Français" },
+  { value: "Español", label: "🇪🇸 Español" },
+  { value: "Italiano", label: "🇮🇹 Italiano" },
+  { value: "Türkçe", label: "🇹🇷 Türkçe" },
+];
 
 export const RegistrationForm = ({
   registrationStep,
   formData,
   isLoading,
   onInputChange,
+  onLanguageChange,
 }: RegistrationFormProps) => {
   if (registrationStep === 1) {
     return (
@@ -72,6 +84,25 @@ export const RegistrationForm = ({
             onChange={onInputChange}
             disabled={isLoading}
           />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="language">Sprache</Label>
+          <Select
+            value={formData.language}
+            onValueChange={onLanguageChange}
+            disabled={isLoading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Wählen Sie Ihre Sprache" />
+            </SelectTrigger>
+            <SelectContent>
+              {languages.map((language) => (
+                <SelectItem key={language.value} value={language.value}>
+                  {language.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </>
     );
