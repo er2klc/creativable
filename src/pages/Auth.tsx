@@ -11,6 +11,19 @@ import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
 import { toast } from "@/hooks/use-toast";
 
+type LoginFormData = {
+  email: string;
+  password: string;
+};
+
+type RegistrationFormData = {
+  name: string;
+  email: string;
+  password: string;
+  companyName: string;
+  phoneNumber: string;
+};
+
 const Auth = () => {
   const session = useSession();
   const navigate = useNavigate();
@@ -89,13 +102,13 @@ const Auth = () => {
             {isSignUp ? (
               <RegistrationForm
                 registrationStep={registrationStep}
-                formData={formData}
+                formData={formData as RegistrationFormData}
                 isLoading={isLoading}
                 onInputChange={handleInputChange}
               />
             ) : (
               <LoginForm
-                formData={formData}
+                formData={formData as LoginFormData}
                 isLoading={isLoading}
                 onInputChange={handleInputChange}
               />
