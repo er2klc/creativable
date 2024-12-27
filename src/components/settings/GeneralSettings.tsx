@@ -1,5 +1,5 @@
 import React from "react";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Settings } from "@/integrations/supabase/types/settings";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useNavigate } from "react-router-dom";
 
 const formSchema = z.object({
   language: z.string(),
@@ -33,6 +35,8 @@ export function GeneralSettings() {
   const session = useSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const supabaseClient = useSupabaseClient();
 
   // Fetch current settings and user data
   const { data: settings } = useQuery({
@@ -121,13 +125,84 @@ export function GeneralSettings() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      if (!session?.user?.id) {
+        throw new Error("No user session found");
+      }
+
+      // Delete user data from all tables
+      const tables = ['settings', 'leads', 'messages', 'notes', 'tasks', 'documents', 'keywords', 'message_templates', 'platform_auth_status', 'lead_phases'];
+      
+      for (const table of tables) {
+        const { error } = await supabase
+          .from(table)
+          .delete()
+          .eq('user_id', session.user.id);
+        
+        if (error) {
+          console.error(`Error deleting from ${table}:`, error);
+        }
+      }
+
+      // Delete the user account
+      const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(
+        session.user.id
+      );
+
+      if (deleteError) throw deleteError;
+
+      // Sign out the user
+      await supabaseClient.auth.signOut();
+      
+      toast({
+        title: "Konto gelöscht",
+        description: "Ihr Konto wurde erfolgreich gelöscht.",
+      });
+      
+      navigate("/");
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      toast({
+        title: "Fehler beim Löschen",
+        description: "Konto konnte nicht gelöscht werden. Bitte versuchen Sie es später erneut.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Allgemeine Einstellungen</CardTitle>
-        <CardDescription>
-          Verwalten Sie hier Ihre persönlichen Daten und Spracheinstellungen.
-        </CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Allgemeine Einstellungen</CardTitle>
+            <CardDescription>
+              Verwalten Sie hier Ihre persönlichen Daten und Spracheinstellungen.
+            </CardDescription>
+          </div>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">
+                Konto löschen
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Sind Sie sicher?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Diese Aktion kann nicht rückgängig gemacht werden. Ihr Konto und alle damit verbundenen Daten werden permanent gelöscht.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Konto löschen
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </CardHeader>
       <CardContent>
         <Form {...form}>
