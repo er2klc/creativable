@@ -35,7 +35,11 @@ const AuthStateHandler = () => {
   }, [navigate, supabase.auth]);
 
   useEffect(() => {
-    if (!session) {
+    // Only redirect to auth if we're not already on the auth page or public pages
+    const publicPaths = ["/", "/auth", "/privacy-policy", "/auth/data-deletion/instagram"];
+    const currentPath = window.location.pathname;
+    
+    if (!session && !publicPaths.includes(currentPath)) {
       navigate("/auth");
     }
   }, [session, navigate]);
