@@ -28,11 +28,16 @@ const AuthStateHandler = () => {
   const session = useSession();
 
   useEffect(() => {
-    const handleAuthChange = supabase.auth.onAuthStateChange((event) => {
+    const handleAuthChange = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
         console.log("User signed out, redirecting to auth page");
         toast.error("Sie wurden abgemeldet. Bitte melden Sie sich erneut an.");
         navigate("/auth");
+      }
+      
+      if (event === "SIGNED_IN") {
+        console.log("User signed in, redirecting to dashboard");
+        navigate("/dashboard");
       }
     });
 
@@ -49,11 +54,6 @@ const AuthStateHandler = () => {
       toast.error("Bitte melden Sie sich an, um fortzufahren.");
       navigate("/auth");
       return;
-    }
-
-    if (session && location.pathname === "/auth") {
-      console.log("User is logged in and on auth page, redirecting to dashboard");
-      navigate("/dashboard");
     }
   }, [session, location.pathname, navigate]);
 

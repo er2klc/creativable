@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
 import { handleCompanyInfoFetch } from "./utils/company-info";
@@ -14,7 +13,6 @@ interface RegistrationData {
 
 export const useRegistration = () => {
   const supabase = useSupabaseClient();
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [registrationStep, setRegistrationStep] = useState(1);
   const [formData, setFormData] = useState<RegistrationData>({
@@ -35,7 +33,6 @@ export const useRegistration = () => {
     const { data: authData, error } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.password,
-      phone: formData.phoneNumber,
       options: {
         data: {
           full_name: formData.name,

@@ -22,18 +22,16 @@ export const handleCompanyInfoFetch = async (
   try {
     console.log('Starting company info fetch for user:', userId);
 
-    // First create initial settings record with RLS-compliant insert
-    const { error: settingsError } = await supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) throw new Error('No session found');
-      
-      return supabase
-        .from('settings')
-        .insert({
-          user_id: userId,
-          registration_step: 1,
-          language: 'de'
-        });
-    });
+    // First create initial settings record
+    const { error: settingsError } = await supabase
+      .from('settings')
+      .insert({
+        user_id: userId,
+        registration_step: 1,
+        language: 'de',
+        registration_company_name: formData.companyName,
+        whatsapp_number: formData.phoneNumber,
+      });
 
     if (settingsError) {
       console.error('Settings creation error:', settingsError);
@@ -63,14 +61,12 @@ export const handleCompanyInfoFetch = async (
     const { error: updateError } = await supabase
       .from('settings')
       .update({
-        registration_company_name: formData.companyName,
         registration_completed: true,
         company_name: data.companyName,
         products_services: data.productsServices,
         target_audience: data.targetAudience,
         usp: data.usp,
         business_description: data.businessDescription,
-        whatsapp_number: formData.phoneNumber,
       })
       .eq('user_id', userId);
 
@@ -79,7 +75,6 @@ export const handleCompanyInfoFetch = async (
       throw new Error('Fehler beim Speichern der Firmeninformationen');
     }
 
-    toast.success("Registrierung erfolgreich abgeschlossen! ✨");
     return true;
   } catch (error: any) {
     console.error("Error in handleCompanyInfoFetch:", error);

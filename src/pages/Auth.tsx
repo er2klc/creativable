@@ -1,34 +1,17 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { FcGoogle } from "react-icons/fc";
+import { FaApple } from "react-icons/fa";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { RegistrationForm } from "@/components/auth/RegistrationForm";
 import { AILoadingAnimation } from "@/components/auth/AILoadingAnimation";
 import { RegistrationSuccess } from "@/components/auth/RegistrationSuccess";
 import { useAuthForm } from "@/hooks/use-auth-form";
-import { FcGoogle } from "react-icons/fc";
-import { FaApple } from "react-icons/fa";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { toast } from "@/hooks/use-toast";
 
-type LoginFormData = {
-  email: string;
-  password: string;
-};
-
-type RegistrationFormData = {
-  name: string;
-  email: string;
-  password: string;
-  companyName: string;
-  phoneNumber: string;
-};
-
 const Auth = () => {
-  const session = useSession();
-  const navigate = useNavigate();
   const supabase = useSupabaseClient();
   const [showAILoading, setShowAILoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -45,23 +28,21 @@ const Auth = () => {
     cooldownRemaining,
   } = useAuthForm();
 
-  useEffect(() => {
-    if (session) {
-      navigate("/dashboard");
-    }
-  }, [session, navigate]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (isSignUp && registrationStep === 2) {
       setShowAILoading(true);
       try {
-        await originalHandleSubmit(e);
-        setTimeout(() => {
+        const success = await originalHandleSubmit(e);
+        if (success) {
+          setTimeout(() => {
+            setShowAILoading(false);
+            setShowSuccess(true);
+          }, 3000);
+        } else {
           setShowAILoading(false);
-          setShowSuccess(true);
-        }, 3000); // Show AI animation for 3 seconds
+        }
       } catch (error) {
         setShowAILoading(false);
         throw error;
@@ -147,13 +128,13 @@ const Auth = () => {
             {isSignUp ? (
               <RegistrationForm
                 registrationStep={registrationStep}
-                formData={formData as RegistrationFormData}
+                formData={formData}
                 isLoading={isLoading}
                 onInputChange={handleInputChange}
               />
             ) : (
               <LoginForm
-                formData={formData as LoginFormData}
+                formData={formData}
                 isLoading={isLoading}
                 onInputChange={handleInputChange}
               />
@@ -165,7 +146,7 @@ const Auth = () => {
               disabled={isLoading || cooldownRemaining > 0}
             >
               {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Laden...</span>
               ) : cooldownRemaining > 0 ? (
                 `Bitte warten (${cooldownRemaining}s)`
               ) : isSignUp ? (
