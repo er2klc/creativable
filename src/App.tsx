@@ -26,12 +26,15 @@ const AuthStateHandler = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const session = useSession();
-  const supabase = useSupabaseClient();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        toast.error("Bitte melden Sie sich an, um fortzufahren.");
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event, session);
+      
+      if (event === "SIGNED_OUT" || event === "USER_DELETED") {
+        console.log("User signed out, redirecting to auth page");
+        toast.error("Sie wurden abgemeldet. Bitte melden Sie sich erneut an.");
         navigate("/auth");
       }
     });
@@ -39,25 +42,24 @@ const AuthStateHandler = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, supabase.auth]);
+  }, [navigate]);
 
   useEffect(() => {
     const publicPaths = ["/", "/auth", "/privacy-policy", "/auth/data-deletion/instagram"];
     const currentPath = location.pathname;
 
-    // Only redirect to auth if not logged in and trying to access a private route
     if (!session && !publicPaths.includes(currentPath)) {
+      console.log("No session found, redirecting to auth page");
       toast.error("Bitte melden Sie sich an, um fortzufahren.");
-      navigate("/auth", { state: { returnTo: currentPath }, replace: true });
+      navigate("/auth");
       return;
     }
 
-    // Only redirect from auth page to intended destination if logged in
     if (session && currentPath === "/auth") {
-      const returnTo = location.state?.returnTo || "/dashboard";
-      navigate(returnTo, { replace: true });
+      console.log("User is logged in and on auth page, redirecting to dashboard");
+      navigate("/dashboard");
     }
-  }, [session, location, navigate]);
+  }, [session, location.pathname, navigate]);
 
   return null;
 };
