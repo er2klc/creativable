@@ -23,6 +23,7 @@ export const useAuthForm = () => {
   });
   const [isSignUp, setIsSignUp] = useState(false);
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
+  const [cooldownEndTime, setCooldownEndTime] = useState(0);
 
   const handleCompanyInfoFetch = async () => {
     try {
@@ -58,18 +59,23 @@ export const useAuthForm = () => {
     }
   };
 
+  const getRemainingCooldown = () => {
+    if (cooldownEndTime === 0) return 0;
+    const remaining = Math.ceil((cooldownEndTime - Date.now()) / 1000);
+    return remaining > 0 ? remaining : 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check rate limiting
-    const now = Date.now();
-    if (now - lastSubmitTime < 15000) { // 15 seconds cooldown
-      toast.error("Bitte warten Sie 15 Sekunden, bevor Sie es erneut versuchen.");
+    const remainingCooldown = getRemainingCooldown();
+    if (remainingCooldown > 0) {
+      toast.error(`Bitte warten Sie noch ${remainingCooldown} Sekunden, bevor Sie es erneut versuchen.`);
       return;
     }
     
     setIsLoading(true);
-    setLastSubmitTime(now);
+    setLastSubmitTime(Date.now());
 
     try {
       if (isSignUp) {
@@ -97,7 +103,9 @@ export const useAuthForm = () => {
 
           if (error) {
             if (error.message.includes('rate_limit')) {
-              toast.error("Bitte warten Sie einen Moment, bevor Sie es erneut versuchen.");
+              const cooldownTime = Date.now() + 15000; // 15 seconds cooldown
+              setCooldownEndTime(cooldownTime);
+              toast.error(`Bitte warten Sie ${getRemainingCooldown()} Sekunden, bevor Sie es erneut versuchen.`);
             } else {
               throw error;
             }
@@ -114,7 +122,9 @@ export const useAuthForm = () => {
 
         if (error) {
           if (error.message.includes('rate_limit')) {
-            toast.error("Bitte warten Sie einen Moment, bevor Sie es erneut versuchen.");
+            const cooldownTime = Date.now() + 15000; // 15 seconds cooldown
+            setCooldownEndTime(cooldownTime);
+            toast.error(`Bitte warten Sie ${getRemainingCooldown()} Sekunden, bevor Sie es erneut versuchen.`);
           } else {
             throw error;
           }
@@ -146,5 +156,6 @@ export const useAuthForm = () => {
     handleInputChange,
     setIsSignUp,
     setRegistrationStep,
+    cooldownRemaining: getRemainingCooldown(),
   };
 };

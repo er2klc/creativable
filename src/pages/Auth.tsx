@@ -20,6 +20,7 @@ const Auth = () => {
     handleInputChange,
     setIsSignUp,
     setRegistrationStep,
+    cooldownRemaining,
   } = useAuthForm();
 
   useEffect(() => {
@@ -61,10 +62,12 @@ const Auth = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading}
+              disabled={isLoading || cooldownRemaining > 0}
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
+              ) : cooldownRemaining > 0 ? (
+                `Bitte warten (${cooldownRemaining}s)`
               ) : isSignUp ? (
                 registrationStep === 1 ? "Weiter" : "Registrieren"
               ) : (
