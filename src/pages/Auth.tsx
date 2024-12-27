@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2 } from "lucide-react";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { RegistrationForm } from "@/components/auth/RegistrationForm";
+import { AILoadingAnimation } from "@/components/auth/AILoadingAnimation";
+import { RegistrationSuccess } from "@/components/auth/RegistrationSuccess";
 import { useAuthForm } from "@/hooks/use-auth-form";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
@@ -28,12 +30,15 @@ const Auth = () => {
   const session = useSession();
   const navigate = useNavigate();
   const supabase = useSupabaseClient();
+  const [showAILoading, setShowAILoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  
   const {
     isLoading,
     registrationStep,
     formData,
     isSignUp,
-    handleSubmit,
+    handleSubmit: originalHandleSubmit,
     handleInputChange,
     setIsSignUp,
     setRegistrationStep,
@@ -45,6 +50,26 @@ const Auth = () => {
       navigate("/dashboard");
     }
   }, [session, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (isSignUp && registrationStep === 2) {
+      setShowAILoading(true);
+      try {
+        await originalHandleSubmit(e);
+        setTimeout(() => {
+          setShowAILoading(false);
+          setShowSuccess(true);
+        }, 3000); // Show AI animation for 3 seconds
+      } catch (error) {
+        setShowAILoading(false);
+        throw error;
+      }
+    } else {
+      await originalHandleSubmit(e);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     try {
@@ -83,6 +108,26 @@ const Auth = () => {
       });
     }
   };
+
+  if (showSuccess) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-background p-4">
+        <RegistrationSuccess />
+      </div>
+    );
+  }
+
+  if (showAILoading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-[400px]">
+          <CardContent className="pt-6">
+            <AILoadingAnimation />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background p-4">
