@@ -17,6 +17,8 @@ export interface LoginFormData {
   password: string;
 }
 
+export type FormData = RegistrationFormData | LoginFormData;
+
 export const useAuthForm = () => {
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
@@ -61,8 +63,9 @@ export const useAuthForm = () => {
       setLastSubmitTime(Date.now());
 
       try {
+        const data = registrationData as RegistrationFormData;
         if (registrationStep === 1) {
-          if (!registrationData.name || !registrationData.email || !registrationData.password || !registrationData.phoneNumber) {
+          if (!data.name || !data.email || !data.password || !data.phoneNumber) {
             toast.error("Bitte füllen Sie alle Felder aus");
             setRegistrationLoading(false);
             return false;
@@ -70,7 +73,7 @@ export const useAuthForm = () => {
 
           // Validate phone number format
           const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-          if (!phoneRegex.test(registrationData.phoneNumber.replace(/\s+/g, ''))) {
+          if (!phoneRegex.test(data.phoneNumber.replace(/\s+/g, ''))) {
             toast.error("Bitte geben Sie eine gültige Telefonnummer ein (z.B. +49 123 45678900)");
             setRegistrationLoading(false);
             return false;
@@ -100,6 +103,12 @@ export const useAuthForm = () => {
       setLastSubmitTime(Date.now());
 
       try {
+        const data = loginData as LoginFormData;
+        if (!data.email || !data.password) {
+          toast.error("Bitte füllen Sie E-Mail und Passwort aus");
+          setLoginLoading(false);
+          return false;
+        }
         return await handleLogin();
       } catch (error: any) {
         console.error('Login error:', error);

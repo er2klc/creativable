@@ -4,7 +4,7 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { RegistrationForm } from "@/components/auth/RegistrationForm";
 import { AILoadingAnimation } from "@/components/auth/AILoadingAnimation";
 import { RegistrationSuccess } from "@/components/auth/RegistrationSuccess";
-import { useAuthForm } from "@/hooks/use-auth-form";
+import { useAuthForm, LoginFormData, RegistrationFormData } from "@/hooks/use-auth-form";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
 import { AuthCard } from "@/components/auth/AuthCard";
@@ -111,13 +111,13 @@ const Auth = () => {
         {isSignUp ? (
           <RegistrationForm
             registrationStep={registrationStep}
-            formData={formData}
+            formData={formData as RegistrationFormData}
             isLoading={isLoading}
             onInputChange={handleInputChange}
           />
         ) : (
           <LoginForm
-            formData={{ email: formData.email, password: formData.password }}
+            formData={formData as LoginFormData}
             isLoading={isLoading}
             onInputChange={handleInputChange}
           />
