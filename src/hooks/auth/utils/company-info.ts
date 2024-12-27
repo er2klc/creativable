@@ -23,7 +23,7 @@ export const handleCompanyInfoFetch = async (
   try {
     console.log('Starting company info fetch for user:', userId);
 
-    // First create initial settings record
+    // First create initial settings record with phone number
     const { error: settingsError } = await supabase
       .from('settings')
       .insert({
@@ -31,7 +31,7 @@ export const handleCompanyInfoFetch = async (
         registration_step: 1,
         language: formData.language || 'de',
         registration_company_name: formData.companyName,
-        whatsapp_number: formData.phoneNumber,
+        whatsapp_number: formData.phoneNumber, // Save phone number
       });
 
     if (settingsError) {
@@ -59,7 +59,7 @@ export const handleCompanyInfoFetch = async (
       throw new Error('Keine Firmeninformationen gefunden. Bitte überprüfen Sie den Firmennamen.');
     }
 
-    // Update settings with company info
+    // Update settings with company info and phone number
     const { error: updateError } = await supabase
       .from('settings')
       .update({
@@ -69,6 +69,7 @@ export const handleCompanyInfoFetch = async (
         target_audience: data.targetAudience,
         usp: data.usp,
         business_description: data.businessDescription,
+        whatsapp_number: formData.phoneNumber, // Ensure phone number is saved
       })
       .eq('user_id', userId);
 

@@ -48,7 +48,8 @@ serve(async (req) => {
     const systemPrompt = `Du bist ein hilfreicher Assistent, der Network Marketing Unternehmen analysiert und strukturierte Informationen bereitstellt. 
 Deine Aufgabe ist es, präzise und professionelle Informationen zu liefern. 
 Wenn spezifische Details unsicher sind, liefere allgemeine, positive Informationen über Unternehmen in dieser Branche.
-Halte die Antworten kurz, prägnant und professionell.`;
+Halte die Antworten kurz, prägnant und professionell.
+Fokussiere dich auf die Stärken und positiven Aspekte des Unternehmens.`;
 
     const userPrompt = `Bitte analysiere das Network Marketing Unternehmen "${companyName}" und stelle die folgenden spezifischen Informationen bereit:
 

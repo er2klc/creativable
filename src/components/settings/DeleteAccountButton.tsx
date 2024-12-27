@@ -32,14 +32,7 @@ export function DeleteAccountButton() {
         }
       }
 
-      // Mark the user as deleted in their metadata
-      const { error: updateError } = await supabaseClient.auth.updateUser({
-        data: { deleted: true }
-      });
-
-      if (updateError) throw updateError;
-
-      // Sign out the user
+      // Sign out the user first
       await supabaseClient.auth.signOut();
       
       toast({
