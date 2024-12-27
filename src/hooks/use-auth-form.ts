@@ -27,16 +27,28 @@ export const useAuthForm = () => {
 
   const handleCompanyInfoFetch = async (userId: string) => {
     try {
+      console.log('Starting company info fetch for user:', userId);
       setIsLoading(true);
+
       const { data, error } = await supabase.functions.invoke('fetch-company-info', {
         body: { 
           companyName: formData.companyName,
           userId: userId,
-          isRegistration: true // This indicates we're in the registration process
+          isRegistration: true
         }
       });
 
-      if (error) throw error;
+      console.log('Company info fetch response:', { data, error });
+
+      if (error) {
+        console.error('Function invocation error:', error);
+        throw new Error('Fehler beim Abrufen der Firmeninformationen. Bitte versuchen Sie es später erneut.');
+      }
+
+      if (!data) {
+        console.error('No data returned from function');
+        throw new Error('Keine Firmeninformationen gefunden. Bitte überprüfen Sie den Firmennamen.');
+      }
 
       const { error: settingsError } = await supabase
         .from('settings')
@@ -51,14 +63,17 @@ export const useAuthForm = () => {
           business_description: data.businessDescription,
         });
 
-      if (settingsError) throw settingsError;
+      if (settingsError) {
+        console.error('Settings update error:', settingsError);
+        throw new Error('Fehler beim Speichern der Firmeninformationen. Bitte versuchen Sie es später erneut.');
+      }
 
       toast.success("Registrierung erfolgreich abgeschlossen! ✨");
       navigate("/dashboard");
     } catch (error: any) {
-      console.error("Error fetching company info:", error);
-      toast.error("Fehler beim Abrufen der Firmeninformationen");
-    } finally {
+      console.error("Error in handleCompanyInfoFetch:", error);
+      toast.error(error.message || "Fehler beim Abrufen der Firmeninformationen");
+      // Reset loading state but stay on the same step so user can try again
       setIsLoading(false);
     }
   };
@@ -86,15 +101,19 @@ export const useAuthForm = () => {
         if (registrationStep === 1) {
           if (!formData.name || !formData.email || !formData.password) {
             toast.error("Bitte füllen Sie alle Felder aus");
+            setIsLoading(false);
             return;
           }
           setRegistrationStep(2);
+          setIsLoading(false);
         } else {
           if (!formData.companyName) {
             toast.error("Bitte geben Sie Ihren Firmennamen ein");
+            setIsLoading(false);
             return;
           }
 
+          console.log('Starting signup process with email:', formData.email);
           const { data: authData, error } = await supabase.auth.signUp({
             email: formData.email,
             password: formData.password,
@@ -106,42 +125,56 @@ export const useAuthForm = () => {
           });
 
           if (error) {
+            console.error('Signup error:', error);
             if (error.message.includes('rate_limit')) {
               const cooldownTime = Date.now() + 15000; // 15 seconds cooldown
               setCooldownEndTime(cooldownTime);
               toast.error(`Bitte warten Sie ${getRemainingCooldown()} Sekunden, bevor Sie es erneut versuchen.`);
+            } else if (error.message.includes('already registered')) {
+              toast.error("Diese E-Mail-Adresse ist bereits registriert. Bitte melden Sie sich an.");
             } else {
-              throw error;
+              toast.error(error.message);
             }
+            setIsLoading(false);
             return;
           }
 
           if (authData.user) {
+            console.log('User created successfully:', authData.user.id);
             await handleCompanyInfoFetch(authData.user.id);
+          } else {
+            console.error('No user data returned from signup');
+            toast.error("Fehler bei der Registrierung. Bitte versuchen Sie es später erneut.");
+            setIsLoading(false);
           }
         }
       } else {
+        console.log('Starting signin process with email:', formData.email);
         const { error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
         });
 
         if (error) {
+          console.error('Signin error:', error);
           if (error.message.includes('rate_limit')) {
-            const cooldownTime = Date.now() + 15000; // 15 seconds cooldown
+            const cooldownTime = Date.now() + 15000;
             setCooldownEndTime(cooldownTime);
             toast.error(`Bitte warten Sie ${getRemainingCooldown()} Sekunden, bevor Sie es erneut versuchen.`);
+          } else if (error.message.includes('Invalid login credentials')) {
+            toast.error("Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.");
           } else {
-            throw error;
+            toast.error(error.message);
           }
+          setIsLoading(false);
           return;
         }
         
         toast.success("Erfolgreich angemeldet! ✨");
       }
     } catch (error: any) {
-      toast.error(error.message);
-    } finally {
+      console.error('Unexpected error:', error);
+      toast.error("Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
       setIsLoading(false);
     }
   };
