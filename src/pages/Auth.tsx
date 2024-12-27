@@ -27,30 +27,6 @@ const Auth = () => {
     cooldownRemaining,
   } = useAuthForm();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (isSignUp && registrationStep === 2) {
-      setShowAILoading(true);
-      try {
-        const result = await originalHandleSubmit(e);
-        if (result) {
-          setTimeout(() => {
-            setShowAILoading(false);
-            setShowSuccess(true);
-          }, 3000);
-        } else {
-          setShowAILoading(false);
-        }
-      } catch (error) {
-        setShowAILoading(false);
-        throw error;
-      }
-    } else {
-      await originalHandleSubmit(e);
-    }
-  };
-
   const handleGoogleLogin = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -79,6 +55,42 @@ const Auth = () => {
       console.error('Apple login error:', error);
       toast.error("Fehler beim Anmelden mit Apple. Bitte versuchen Sie es später erneut.");
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (isSignUp && registrationStep === 2) {
+      setShowAILoading(true);
+      try {
+        const result = await originalHandleSubmit(e);
+        if (result) {
+          setTimeout(() => {
+            setShowAILoading(false);
+            setShowSuccess(true);
+          }, 3000);
+        } else {
+          setShowAILoading(false);
+        }
+      } catch (error) {
+        setShowAILoading(false);
+        throw error;
+      }
+    } else {
+      await originalHandleSubmit(e);
+    }
+  };
+
+  const handleLanguageChange = (value: string) => {
+    // We need to simulate an input change event to work with the existing handleInputChange
+    const event = {
+      target: {
+        name: 'language',
+        value: value
+      }
+    } as React.ChangeEvent<HTMLInputElement>;
+    
+    handleInputChange(event);
   };
 
   if (showSuccess) {
@@ -114,6 +126,7 @@ const Auth = () => {
             formData={formData as RegistrationFormData}
             isLoading={isLoading}
             onInputChange={handleInputChange}
+            onLanguageChange={handleLanguageChange}
           />
         ) : (
           <LoginForm
