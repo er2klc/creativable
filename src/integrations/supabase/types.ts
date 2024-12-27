@@ -323,6 +323,9 @@ export type Database = {
           linkedin_connected: boolean | null
           openai_api_key: string | null
           products_services: string | null
+          registration_company_name: string | null
+          registration_completed: boolean | null
+          registration_step: number | null
           superchat_api_key: string | null
           target_audience: string | null
           tiktok_auth_token: string | null
@@ -351,6 +354,9 @@ export type Database = {
           linkedin_connected?: boolean | null
           openai_api_key?: string | null
           products_services?: string | null
+          registration_company_name?: string | null
+          registration_completed?: boolean | null
+          registration_step?: number | null
           superchat_api_key?: string | null
           target_audience?: string | null
           tiktok_auth_token?: string | null
@@ -379,6 +385,9 @@ export type Database = {
           linkedin_connected?: boolean | null
           openai_api_key?: string | null
           products_services?: string | null
+          registration_company_name?: string | null
+          registration_completed?: boolean | null
+          registration_step?: number | null
           superchat_api_key?: string | null
           target_audience?: string | null
           tiktok_auth_token?: string | null
