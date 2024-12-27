@@ -10,6 +10,7 @@ interface RegistrationFormProps {
     email: string;
     password: string;
     companyName: string;
+    phoneNumber: string;
   };
   isLoading: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -44,6 +45,18 @@ export const RegistrationForm = ({
             type="email"
             placeholder="name@example.com"
             value={formData.email}
+            onChange={onInputChange}
+            disabled={isLoading}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phoneNumber">Telefonnummer</Label>
+          <Input
+            id="phoneNumber"
+            name="phoneNumber"
+            type="tel"
+            placeholder="+49 123 45678900"
+            value={formData.phoneNumber}
             onChange={onInputChange}
             disabled={isLoading}
           />

@@ -1,16 +1,19 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { RegistrationForm } from "@/components/auth/RegistrationForm";
 import { useAuthForm } from "@/hooks/use-auth-form";
+import { FcGoogle } from "react-icons/fc";
+import { FaApple } from "react-icons/fa";
 
 const Auth = () => {
   const session = useSession();
   const navigate = useNavigate();
+  const supabase = useSupabaseClient();
   const {
     isLoading,
     registrationStep,
@@ -28,6 +31,36 @@ const Auth = () => {
       navigate("/dashboard");
     }
   }, [session, navigate]);
+
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback/google`,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Google login error:', error);
+      toast.error("Fehler beim Anmelden mit Google. Bitte versuchen Sie es später erneut.");
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback/apple`,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Apple login error:', error);
+      toast.error("Fehler beim Anmelden mit Apple. Bitte versuchen Sie es später erneut.");
+    }
+  };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background p-4">
@@ -74,6 +107,42 @@ const Auth = () => {
                 "Anmelden"
               )}
             </Button>
+
+            {!isSignUp && (
+              <div className="space-y-2">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Oder anmelden mit
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGoogleLogin}
+                    disabled={isLoading}
+                  >
+                    <FcGoogle className="h-5 w-5 mr-2" />
+                    Google
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAppleLogin}
+                    disabled={isLoading}
+                  >
+                    <FaApple className="h-5 w-5 mr-2" />
+                    Apple
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {registrationStep === 2 && (
               <Button

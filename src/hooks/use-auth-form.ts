@@ -8,6 +8,7 @@ interface RegistrationStep {
   email: string;
   password: string;
   companyName: string;
+  phoneNumber: string;
 }
 
 export const useAuthForm = () => {
@@ -20,6 +21,7 @@ export const useAuthForm = () => {
     email: "",
     password: "",
     companyName: "",
+    phoneNumber: "",
   });
   const [isSignUp, setIsSignUp] = useState(false);
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
@@ -61,6 +63,7 @@ export const useAuthForm = () => {
           target_audience: data.targetAudience,
           usp: data.usp,
           business_description: data.businessDescription,
+          whatsapp_number: formData.phoneNumber,
         });
 
       if (settingsError) {
@@ -73,7 +76,6 @@ export const useAuthForm = () => {
     } catch (error: any) {
       console.error("Error in handleCompanyInfoFetch:", error);
       toast.error(error.message || "Fehler beim Abrufen der Firmeninformationen");
-      // Reset loading state but stay on the same step so user can try again
       setIsLoading(false);
     }
   };
@@ -99,11 +101,20 @@ export const useAuthForm = () => {
     try {
       if (isSignUp) {
         if (registrationStep === 1) {
-          if (!formData.name || !formData.email || !formData.password) {
+          if (!formData.name || !formData.email || !formData.password || !formData.phoneNumber) {
             toast.error("Bitte füllen Sie alle Felder aus");
             setIsLoading(false);
             return;
           }
+
+          // Validate phone number format
+          const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+          if (!phoneRegex.test(formData.phoneNumber.replace(/\s+/g, ''))) {
+            toast.error("Bitte geben Sie eine gültige Telefonnummer ein (z.B. +49 123 45678900)");
+            setIsLoading(false);
+            return;
+          }
+
           setRegistrationStep(2);
           setIsLoading(false);
         } else {
@@ -117,9 +128,11 @@ export const useAuthForm = () => {
           const { data: authData, error } = await supabase.auth.signUp({
             email: formData.email,
             password: formData.password,
+            phone: formData.phoneNumber,
             options: {
               data: {
                 full_name: formData.name,
+                phone: formData.phoneNumber,
               },
             },
           });
@@ -127,7 +140,7 @@ export const useAuthForm = () => {
           if (error) {
             console.error('Signup error:', error);
             if (error.message.includes('rate_limit')) {
-              const cooldownTime = Date.now() + 15000; // 15 seconds cooldown
+              const cooldownTime = Date.now() + 15000;
               setCooldownEndTime(cooldownTime);
               toast.error(`Bitte warten Sie ${getRemainingCooldown()} Sekunden, bevor Sie es erneut versuchen.`);
             } else if (error.message.includes('already registered')) {
