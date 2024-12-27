@@ -34,13 +34,13 @@ export const useAuthForm = () => {
     return remaining > 0 ? remaining : 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<boolean> => {
     e.preventDefault();
     
     const remainingCooldown = getRemainingCooldown();
     if (remainingCooldown > 0) {
       toast.error(`Bitte warten Sie noch ${remainingCooldown} Sekunden, bevor Sie es erneut versuchen.`);
-      return;
+      return false;
     }
     
     if (isSignUp) {
@@ -52,7 +52,7 @@ export const useAuthForm = () => {
           if (!registrationData.name || !registrationData.email || !registrationData.password || !registrationData.phoneNumber) {
             toast.error("Bitte füllen Sie alle Felder aus");
             setRegistrationLoading(false);
-            return;
+            return false;
           }
 
           // Validate phone number format
@@ -60,16 +60,14 @@ export const useAuthForm = () => {
           if (!phoneRegex.test(registrationData.phoneNumber.replace(/\s+/g, ''))) {
             toast.error("Bitte geben Sie eine gültige Telefonnummer ein (z.B. +49 123 45678900)");
             setRegistrationLoading(false);
-            return;
+            return false;
           }
 
           setRegistrationStep(2);
           setRegistrationLoading(false);
+          return true;
         } else {
-          const success = await handleRegistration();
-          if (success) {
-            navigate("/dashboard");
-          }
+          return await handleRegistration();
         }
       } catch (error: any) {
         console.error('Registration error:', error);
@@ -80,6 +78,7 @@ export const useAuthForm = () => {
         } else {
           toast.error(error.message || "Ein unerwarteter Fehler ist aufgetreten");
         }
+        return false;
       } finally {
         setRegistrationLoading(false);
       }
@@ -88,10 +87,7 @@ export const useAuthForm = () => {
       setLastSubmitTime(Date.now());
 
       try {
-        const success = await handleLogin();
-        if (success) {
-          navigate("/dashboard");
-        }
+        return await handleLogin();
       } catch (error: any) {
         console.error('Login error:', error);
         if (error.message.includes('rate_limit')) {
@@ -101,6 +97,7 @@ export const useAuthForm = () => {
         } else {
           toast.error(error.message || "Ein unerwarteter Fehler ist aufgetreten");
         }
+        return false;
       } finally {
         setLoginLoading(false);
       }
