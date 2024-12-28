@@ -44,10 +44,10 @@ export function ProductsServicesField({ initialValue, onSave }: ProductsServices
           name="products_services"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Produkte/Services 🛍️</FormLabel>
+              <FormLabel>Produkte/Services</FormLabel>
               <div className="flex gap-2">
                 <FormControl>
-                  <Input placeholder="z.B. Nahrungsergänzungsmittel, Hautpflege" {...field} />
+                  <Input placeholder="z.B. Nahrungsergänzungsmittel" {...field} />
                 </FormControl>
                 <Button 
                   type="button"

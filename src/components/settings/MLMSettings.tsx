@@ -6,22 +6,75 @@ import { TargetAudienceField } from "./mlm/TargetAudienceField";
 import { UspField } from "./mlm/UspField";
 import { BusinessDescriptionField } from "./mlm/BusinessDescriptionField";
 import { useSettings } from "@/hooks/use-settings";
-import { Building2, Package, Users2, Star, FileText } from "lucide-react";
+import { Building2, Package, Users2, Star, FileText, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 export function MLMSettings() {
   const { settings, updateSettings } = useSettings();
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const handleSave = async (field: string, value: string) => {
     await updateSettings.mutateAsync({ [field]: value });
   };
 
+  const fetchCompanyInfo = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-company-info', {
+        body: { companyName: settings?.company_name }
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        await updateSettings.mutateAsync({
+          company_name: data.companyName,
+          products_services: data.productsServices,
+          target_audience: data.targetAudience,
+          usp: data.usp,
+          business_description: data.businessDescription,
+        });
+
+        toast.success("Firmeninformationen erfolgreich aktualisiert");
+      }
+    } catch (error: any) {
+      console.error('Error fetching company info:', error);
+      toast.error(error.message || "Fehler beim Abrufen der Firmeninformationen");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle>MLM-Firmeninformationen</CardTitle>
-        <CardDescription>
-          Hinterlegen Sie hier Ihre Firmeninformationen für die automatische Verwendung in Nachrichten.
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <div className="space-y-1">
+          <CardTitle>MLM-Firmeninformationen</CardTitle>
+          <CardDescription>
+            Hinterlegen Sie hier Ihre Firmeninformationen für die automatische Verwendung in Nachrichten.
+          </CardDescription>
+        </div>
+        <Button 
+          variant="secondary"
+          onClick={fetchCompanyInfo}
+          disabled={isLoading}
+          className="ml-4"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Laden...
+            </>
+          ) : (
+            <>
+              <Sparkles className="mr-2 h-4 w-4" />
+              Mit KI analysieren
+            </>
+          )}
+        </Button>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="relative">

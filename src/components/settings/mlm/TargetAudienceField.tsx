@@ -44,10 +44,10 @@ export function TargetAudienceField({ initialValue, onSave }: TargetAudienceFiel
           name="target_audience"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Zielgruppe 👥</FormLabel>
+              <FormLabel>Zielgruppe</FormLabel>
               <div className="flex gap-2">
                 <FormControl>
-                  <Input placeholder="z.B. Gesundheitsbewusste Menschen, Sportler" {...field} />
+                  <Input placeholder="z.B. Gesundheitsbewusste Menschen" {...field} />
                 </FormControl>
                 <Button 
                   type="button"

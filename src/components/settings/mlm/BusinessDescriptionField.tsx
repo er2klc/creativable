@@ -44,12 +44,12 @@ export function BusinessDescriptionField({ initialValue, onSave }: BusinessDescr
           name="business_description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Geschäftsbeschreibung 📝</FormLabel>
+              <FormLabel>Geschäftsbeschreibung</FormLabel>
               <div className="flex gap-2">
                 <FormControl>
                   <Textarea 
-                    placeholder="Beschreiben Sie Ihr Geschäft und was Sie anbieten..."
-                    className="resize-none"
+                    placeholder="Beschreiben Sie Ihr Geschäft..."
+                    className="min-h-[100px]"
                     {...field}
                   />
                 </FormControl>

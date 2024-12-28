@@ -44,10 +44,10 @@ export function UspField({ initialValue, onSave }: UspFieldProps) {
           name="usp"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Alleinstellungsmerkmal (USP) ⭐</FormLabel>
+              <FormLabel>Alleinstellungsmerkmal (USP)</FormLabel>
               <div className="flex gap-2">
                 <FormControl>
-                  <Input placeholder="z.B. Patentierte Formel, Wissenschaftlich belegt" {...field} />
+                  <Input placeholder="z.B. Patentierte Omega-3 Formel" {...field} />
                 </FormControl>
                 <Button 
                   type="button"
