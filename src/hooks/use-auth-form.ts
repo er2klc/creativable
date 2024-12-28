@@ -8,21 +8,22 @@ export interface RegistrationFormData {
   name: string;
   email: string;
   password: string;
-  companyName: string;
   phoneNumber: string;
   language: string;
 }
 
 export interface LoginFormData {
+  name: string;
   email: string;
   password: string;
+  phoneNumber: string;
+  language: string;
 }
 
 export type FormData = RegistrationFormData | LoginFormData;
 
 export const useAuthForm = () => {
   const navigate = useNavigate();
-  const [isSignUp, setIsSignUp] = useState(false);
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
   const [cooldownEndTime, setCooldownEndTime] = useState(0);
 
@@ -34,6 +35,7 @@ export const useAuthForm = () => {
     formData: registrationData,
     handleRegistration,
     handleInputChange: handleRegistrationInputChange,
+    setFormData: setRegistrationFormData,
   } = useRegistration();
 
   const {
@@ -42,6 +44,7 @@ export const useAuthForm = () => {
     formData: loginData,
     handleLogin,
     handleInputChange: handleLoginInputChange,
+    setFormData: setLoginFormData,
   } = useLogin();
 
   const getRemainingCooldown = () => {
@@ -58,13 +61,13 @@ export const useAuthForm = () => {
       toast.error(`Bitte warten Sie noch ${remainingCooldown} Sekunden, bevor Sie es erneut versuchen.`);
       return false;
     }
-    
+
     if (isSignUp) {
       setRegistrationLoading(true);
       setLastSubmitTime(Date.now());
 
       try {
-        const data = registrationData as RegistrationFormData;
+        const data = registrationData;
         if (registrationStep === 1) {
           if (!data.name || !data.email || !data.password || !data.phoneNumber) {
             toast.error("Bitte füllen Sie alle Felder aus");
@@ -104,7 +107,7 @@ export const useAuthForm = () => {
       setLastSubmitTime(Date.now());
 
       try {
-        const data = loginData as LoginFormData;
+        const data = loginData;
         if (!data.email || !data.password) {
           toast.error("Bitte füllen Sie E-Mail und Passwort aus");
           setLoginLoading(false);
@@ -127,15 +130,21 @@ export const useAuthForm = () => {
     }
   };
 
+  const setFormData = (data: Partial<FormData> | ((prev: FormData) => FormData)) => {
+    if (isSignUp) {
+      setRegistrationFormData(data);
+    } else {
+      setLoginFormData(data);
+    }
+  };
+
   return {
     isLoading: isSignUp ? registrationLoading : loginLoading,
     registrationStep,
     formData: isSignUp ? registrationData : loginData,
-    isSignUp,
     handleSubmit,
     handleInputChange: isSignUp ? handleRegistrationInputChange : handleLoginInputChange,
-    setIsSignUp,
-    setRegistrationStep,
+    setFormData,
     cooldownRemaining: getRemainingCooldown(),
   };
 };

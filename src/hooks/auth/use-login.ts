@@ -4,16 +4,22 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface LoginData {
+  name: string;
   email: string;
   password: string;
+  phoneNumber: string;
+  language: string;
 }
 
 export const useLogin = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<LoginData>({
+    name: "",
     email: "",
     password: "",
+    phoneNumber: "",
+    language: "Deutsch",
   });
 
   const handleLogin = async () => {
@@ -77,5 +83,6 @@ export const useLogin = () => {
     formData,
     handleLogin,
     handleInputChange,
+    setFormData,
   };
 };
