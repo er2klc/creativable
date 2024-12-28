@@ -30,34 +30,28 @@ export const useLogin = () => {
         console.error('Signin error:', error);
         
         // Check if user exists when login fails
-        if (error.message.includes('Invalid login credentials')) {
-          const { data: usersData, error: listError } = await supabase.auth.admin.listUsers({
-            email: formData.email
-        });
+        const { data: usersData, error: listError } = await supabase.auth.admin.listUsers();
 
-          
-          if (listError) {
-            console.error('Error checking user existence:', listError);
-            toast.error("Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
-            return false;
-          }
-
-          // If no user found with this email, redirect to registration
-          if (!usersData?.users?.length) {
-            console.log('User does not exist, redirecting to registration');
-            navigate('/auth', { 
-              state: { 
-                isSignUp: true, 
-                email: formData.email 
-              }
-            });
-            return false;
-          }
-          
-          toast.error("Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.");
-        } else {
-          toast.error(error.message);
+        if (listError) {
+          console.error('Error checking user existence:', listError);
+          toast.error("Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
+          return false;
         }
+
+        // If no user found with this email, redirect to registration
+        const userExists = usersData?.users?.some(user => user.email === formData.email);
+        if (!userExists) {
+          console.log('User does not exist, redirecting to registration');
+          navigate('/auth', { 
+            state: { 
+              isSignUp: true, 
+              initialEmail: formData.email 
+            }
+          });
+          return false;
+        }
+          
+        toast.error("Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.");
         return false;
       }
 

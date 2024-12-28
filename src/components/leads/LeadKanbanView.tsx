@@ -103,6 +103,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
                   updatePhaseName.mutate({
                     id: editingPhase.id,
                     name: editingPhase.name,
+                    oldName: editingPhase.name,
                   });
                   setEditingPhase(null);
                 }
