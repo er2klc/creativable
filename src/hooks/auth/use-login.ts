@@ -32,10 +32,9 @@ export const useLogin = () => {
         // Check if user exists when login fails
         if (error.message.includes('Invalid login credentials')) {
           const { data: usersData, error: listError } = await supabase.auth.admin.listUsers({
-            filters: {
-              email: formData.email
-            }
-          });
+            email: formData.email
+        });
+
           
           if (listError) {
             console.error('Error checking user existence:', listError);
