@@ -4,11 +4,12 @@ import { RegistrationForm } from "./RegistrationForm";
 import { SocialLoginButtons } from "./SocialLoginButtons";
 import { useAuthFormState } from "@/hooks/auth/use-auth-form-state";
 import { useAuthForm } from "@/hooks/use-auth-form";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 export const AuthFormContent = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const {
     isSignUp,
     setIsSignUp,
@@ -56,6 +57,8 @@ export const AuthFormContent = () => {
       language: "Deutsch",
       companyName: "",
     });
+    // Update URL state when toggling between login and registration
+    navigate("/auth", { state: { isSignUp: !isSignUp } });
   };
 
   return (
