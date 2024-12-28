@@ -26,11 +26,11 @@ export const AuthFormContent = () => {
     setFormData,
   } = useAuthForm();
 
-  // Handle initial email from navigation state
+  // Synchronisiere Zustand mit Navigation
   useEffect(() => {
     const state = location.state as { isSignUp?: boolean; initialEmail?: string } | null;
-    if (state?.isSignUp) {
-      setIsSignUp(true);
+    if (state?.isSignUp !== undefined) {
+      setIsSignUp(state.isSignUp);
     }
     if (state?.initialEmail) {
       setFormData(prev => ({ ...prev, email: state.initialEmail }));
@@ -41,7 +41,6 @@ export const AuthFormContent = () => {
     e.preventDefault();
     const success = await handleSubmit(e);
     
-    // Only proceed if handleSubmit was successful
     if (success && isSignUp && registrationStep === 1) {
       setRegistrationStep(2);
     }
@@ -49,8 +48,7 @@ export const AuthFormContent = () => {
 
   const handleToggleMode = () => {
     setIsSignUp(!isSignUp);
-    setRegistrationStep(1); // Reset registration step when toggling
-    // Reset form data when switching modes
+    setRegistrationStep(1);
     setFormData({
       name: "",
       email: "",
