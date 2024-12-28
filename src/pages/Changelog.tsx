@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChangelogEntry } from "@/components/changelog/ChangelogEntry";
+import { ChangelogItem } from "@/components/changelog/types";
 
 const changelog = [
   {
@@ -11,27 +12,27 @@ const changelog = [
     changes: [
       {
         title: "MLM-Einstellungen Verbesserungen",
-        status: "completed",
+        status: "completed" as const,
         description: "KI-Analyse Button für automatische Firmendaten-Erfassung hinzugefügt"
       },
       {
         title: "UI Verbesserungen",
-        status: "completed",
+        status: "completed" as const,
         description: "Schwarz-weiße Icons im Vordergrund, farbige Welt-Icons im Hintergrund"
       },
       {
         title: "Changelog Seite",
-        status: "completed",
+        status: "completed" as const,
         description: "Neue Seite zur Verfolgung von Änderungen und geplanten Features"
       },
       {
         title: "Handynummer & Sprache Einstellungen",
-        status: "in-progress",
+        status: "in-progress" as const,
         description: "Behebung von Problemen beim Speichern von Handynummer und Spracheinstellungen"
       },
       {
         title: "Automatische MLM-Datenerfassung",
-        status: "planned",
+        status: "planned" as const,
         description: "Verbesserung der KI-Analyse für genauere Firmendaten"
       }
     ]
@@ -42,7 +43,7 @@ const changelog = [
     changes: [
       {
         title: "Erste Version",
-        status: "completed",
+        status: "completed" as const,
         description: "Initiale Version mit grundlegenden Funktionen"
       }
     ]
