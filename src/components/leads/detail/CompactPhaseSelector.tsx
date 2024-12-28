@@ -6,13 +6,14 @@ interface CompactPhaseSelectorProps {
   lead: Tables<"leads">;
   phases: Tables<"lead_phases">[];
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
-  onUpdatePhases?: (phases: Tables<"lead_phases">[]) => void;
+  onUpdatePhases?: (phases: Tables<"lead_phases">[], oldName: string) => void;
 }
 
 export function CompactPhaseSelector({ 
   lead, 
   phases,
-  onUpdateLead 
+  onUpdateLead,
+  onUpdatePhases
 }: CompactPhaseSelectorProps) {
   const { settings } = useSettings();
   

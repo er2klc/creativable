@@ -87,33 +87,32 @@ export const usePhaseMutations = () => {
   });
 
   const updatePhaseName = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+    mutationFn: async ({ id, name, oldName }: { id: string; name: string; oldName: string }) => {
       if (!session?.user?.id) {
         throw new Error("No authenticated user found");
       }
 
-      const { error } = await supabase
+      // First update the phase name
+      const { error: phaseError } = await supabase
         .from("lead_phases")
         .update({ name })
         .eq("id", id)
         .eq("user_id", session.user.id);
 
-      if (error) throw error;
+      if (phaseError) throw phaseError;
 
-      // Update all leads with the old phase name to the new phase name
-      const { data: phase } = await supabase
-        .from("lead_phases")
-        .select("name")
-        .eq("id", id)
-        .single();
+      // Then update all leads that were in the old phase
+      const { error: leadsError } = await supabase
+        .from("leads")
+        .update({ 
+          phase: name,
+          last_action: settings?.language === "en" ? "Phase renamed" : "Phase umbenannt",
+          last_action_date: new Date().toISOString(),
+        })
+        .eq("phase", oldName)
+        .eq("user_id", session.user.id);
 
-      if (phase) {
-        await supabase
-          .from("leads")
-          .update({ phase: name })
-          .eq("phase", phase.name)
-          .eq("user_id", session.user.id);
-      }
+      if (leadsError) throw leadsError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
@@ -121,10 +120,20 @@ export const usePhaseMutations = () => {
       toast({
         title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
         description: settings?.language === "en"
-          ? "Phase name has been updated successfully"
-          : "Phasenname wurde erfolgreich aktualisiert",
+          ? "Phase name and all associated contacts have been updated successfully"
+          : "Phasenname und alle zugehörigen Kontakte wurden erfolgreich aktualisiert",
       });
     },
+    onError: (error) => {
+      console.error("Error updating phase name:", error);
+      toast({
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description: settings?.language === "en"
+          ? "Failed to update phase name and contacts. Please try again."
+          : "Phasenname und Kontakte konnten nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
+        variant: "destructive",
+      });
+    }
   });
 
   return { updateLeadPhase, addPhase, updatePhaseName };
