@@ -26,6 +26,7 @@ export const useAuthForm = () => {
   const navigate = useNavigate();
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
   const [cooldownEndTime, setCooldownEndTime] = useState(0);
+  const [isSignUp, setIsSignUp] = useState(false);
 
   const {
     isLoading: registrationLoading,
@@ -132,9 +133,9 @@ export const useAuthForm = () => {
 
   const setFormData = (data: Partial<FormData> | ((prev: FormData) => FormData)) => {
     if (isSignUp) {
-      setRegistrationFormData(data);
+      setRegistrationFormData(data as SetStateAction<RegistrationFormData>);
     } else {
-      setLoginFormData(data);
+      setLoginFormData(data as SetStateAction<LoginFormData>);
     }
   };
 
@@ -146,5 +147,8 @@ export const useAuthForm = () => {
     handleInputChange: isSignUp ? handleRegistrationInputChange : handleLoginInputChange,
     setFormData,
     cooldownRemaining: getRemainingCooldown(),
+    isSignUp,
+    setIsSignUp,
+    setRegistrationStep,
   };
 };

@@ -8,7 +8,6 @@ export interface RegistrationData {
   name: string;
   email: string;
   password: string;
-  companyName: string;
   phoneNumber: string;
   language: string;
 }
@@ -21,17 +20,11 @@ export const useRegistration = () => {
     name: "",
     email: "",
     password: "",
-    companyName: "",
     phoneNumber: "",
     language: "Deutsch",
   });
 
   const handleRegistration = async () => {
-    if (!formData.companyName) {
-      toast.error("Bitte geben Sie Ihren Firmennamen ein");
-      return false;
-    }
-
     console.log('Starting signup process with email:', formData.email);
     const { data: authData, error } = await supabase.auth.signUp({
       email: formData.email,
@@ -80,5 +73,6 @@ export const useRegistration = () => {
     formData,
     handleRegistration,
     handleInputChange,
+    setFormData,
   };
 };
