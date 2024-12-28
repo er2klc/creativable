@@ -31,6 +31,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("[Auth] Initial session check:", session?.user?.id);
         
         if (session) {
+          // Verify user exists
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          
+          if (userError || !user) {
+            console.error("[Auth] Invalid user detected:", userError);
+            await supabase.auth.signOut();
+            if (!publicPaths.includes(location.pathname)) {
+              navigate("/auth");
+            }
+            return;
+          }
+
           setIsAuthenticated(true);
           if (location.pathname === "/auth") {
             navigate("/dashboard");
@@ -45,6 +57,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log("[Auth] Auth state changed:", event, session?.user?.id);
 
           if (event === "SIGNED_IN") {
+            // Verify user exists after sign in
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            
+            if (userError || !user) {
+              console.error("[Auth] Invalid user after sign in:", userError);
+              await supabase.auth.signOut();
+              navigate("/auth");
+              return;
+            }
+
             setIsAuthenticated(true);
             console.log("[Auth] User signed in, redirecting to dashboard");
             navigate("/dashboard");
@@ -53,6 +75,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.log("[Auth] User signed out, redirecting to auth");
             navigate("/auth");
           } else if (event === "TOKEN_REFRESHED") {
+            // Verify user still exists when token is refreshed
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            
+            if (userError || !user) {
+              console.error("[Auth] Invalid user after token refresh:", userError);
+              await supabase.auth.signOut();
+              navigate("/auth");
+              return;
+            }
+
             console.log("[Auth] Token refreshed for user:", session?.user?.id);
             setIsAuthenticated(true);
           }
