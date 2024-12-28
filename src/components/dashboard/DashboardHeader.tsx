@@ -14,18 +14,42 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      // First check if we have a session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        console.log("No active session found during logout");
+        // Clear any local state/storage if needed
+        navigate("/");
+        return;
+      }
+
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        if (error.message.includes('user_not_found')) {
+          console.log("User not found during logout, clearing session anyway");
+          // Force navigation to clear the invalid session state
+          navigate("/");
+          return;
+        }
+        throw error;
+      }
+
       toast({
         title: "Erfolgreich abgemeldet",
         description: "Auf Wiedersehen!",
       });
       navigate("/");
     } catch (error) {
+      console.error("Logout error:", error);
       toast({
         variant: "destructive",
         title: "Fehler beim Abmelden",
         description: "Bitte versuchen Sie es erneut.",
       });
+      // Force navigation on critical errors
+      navigate("/");
     }
   };
 

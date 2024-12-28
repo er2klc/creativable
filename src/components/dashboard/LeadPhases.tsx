@@ -69,7 +69,20 @@ export const LeadPhases = () => {
       if (!session?.user?.id || phases.length > 0) return;
 
       try {
-        // Verwende UPSERT für jede Phase
+        // First verify that the user exists in auth
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+          console.error("Error verifying user:", userError);
+          toast({
+            title: "Fehler",
+            description: "Benutzer konnte nicht verifiziert werden. Bitte melden Sie sich erneut an.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Proceed with phase initialization using UPSERT
         const phasesToAdd = DEFAULT_PHASES.map(phase => ({
           name: phase.name,
           order_index: phase.order_index,
@@ -84,6 +97,17 @@ export const LeadPhases = () => {
           });
 
         if (error) {
+          // Handle foreign key constraint error
+          if (error.code === '23503') {
+            console.error("Foreign key constraint error:", error);
+            toast({
+              title: "Fehler",
+              description: "Benutzer-Authentifizierung fehlgeschlagen. Bitte melden Sie sich erneut an.",
+              variant: "destructive",
+            });
+            return;
+          }
+          
           console.error("Error initializing phases:", error);
           toast({
             title: "Fehler",
