@@ -2,15 +2,7 @@ import { useState, Dispatch, SetStateAction } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useRegistration, RegistrationData } from "./auth/use-registration";
-import { useLogin } from "./auth/use-login";
-
-export interface LoginFormData {
-  name: string;
-  email: string;
-  password: string;
-  phoneNumber: string;
-  language: string;
-}
+import { useLogin, LoginFormData } from "./auth/use-login";
 
 export type FormData = RegistrationData | LoginFormData;
 
@@ -77,7 +69,9 @@ export const useAuthForm = () => {
             setRegistrationLoading(false);
             return false;
           }
-          return await handleRegistration();
+          const success = await handleRegistration();
+          setRegistrationLoading(false);
+          return success;
         }
       } catch (error: any) {
         console.error('Registration error:', error);
@@ -88,9 +82,8 @@ export const useAuthForm = () => {
         } else {
           toast.error(error.message || "Ein unerwarteter Fehler ist aufgetreten");
         }
-        return false;
-      } finally {
         setRegistrationLoading(false);
+        return false;
       }
     } else {
       setLoginLoading(true);
@@ -103,7 +96,9 @@ export const useAuthForm = () => {
           setLoginLoading(false);
           return false;
         }
-        return await handleLogin();
+        const success = await handleLogin();
+        setLoginLoading(false);
+        return success;
       } catch (error: any) {
         console.error('Login error:', error);
         if (error.message.includes('rate_limit')) {
@@ -113,9 +108,8 @@ export const useAuthForm = () => {
         } else {
           toast.error(error.message || "Ein unerwarteter Fehler ist aufgetreten");
         }
-        return false;
-      } finally {
         setLoginLoading(false);
+        return false;
       }
     }
   };

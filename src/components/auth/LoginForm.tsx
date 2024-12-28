@@ -1,14 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-interface LoginFormData {
-  name: string;
-  email: string;
-  password: string;
-  phoneNumber: string;
-  language: string;
-}
+import { LoginFormData } from "@/hooks/auth/use-login";
 
 interface LoginFormProps {
   formData: LoginFormData;

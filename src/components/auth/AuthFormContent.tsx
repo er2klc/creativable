@@ -49,15 +49,22 @@ export const AuthFormContent = () => {
   const handleToggleMode = () => {
     setIsSignUp(!isSignUp);
     setRegistrationStep(1);
-    setFormData({
-      name: "",
-      email: "",
-      password: "",
-      phoneNumber: "",
-      language: "Deutsch",
-      companyName: "",
-    });
-    // Update URL state when toggling between login and registration
+    if (!isSignUp) {
+      // Switching to registration
+      setFormData({
+        name: "",
+        email: "",
+        password: "",
+        phoneNumber: "",
+        language: "Deutsch",
+      });
+    } else {
+      // Switching to login
+      setFormData({
+        email: "",
+        password: "",
+      });
+    }
     navigate("/auth", { replace: true, state: { isSignUp: !isSignUp } });
   };
 
