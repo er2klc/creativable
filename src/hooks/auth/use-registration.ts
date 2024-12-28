@@ -29,12 +29,6 @@ export const useRegistration = () => {
     try {
       setIsLoading(true);
       
-      // Validate required fields
-      if (!formData.email || !formData.password || !formData.name) {
-        toast.error("Bitte füllen Sie alle Pflichtfelder aus");
-        return false;
-      }
-
       // Create the user account
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
@@ -48,7 +42,7 @@ export const useRegistration = () => {
 
       if (signUpError) {
         if (signUpError.message.includes('already registered')) {
-          toast.error("Diese E-Mail-Adresse ist bereits registriert");
+          toast.error("Diese E-Mail-Adresse ist bereits registriert. Bitte verwenden Sie eine andere E-Mail-Adresse.");
         } else {
           toast.error(signUpError.message);
         }

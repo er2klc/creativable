@@ -58,7 +58,7 @@ export const AuthFormContent = () => {
       companyName: "",
     });
     // Update URL state when toggling between login and registration
-    navigate("/auth", { state: { isSignUp: !isSignUp } });
+    navigate("/auth", { replace: true, state: { isSignUp: !isSignUp } });
   };
 
   return (

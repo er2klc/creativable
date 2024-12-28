@@ -4,14 +4,19 @@ import { AILoadingAnimation } from "@/components/auth/AILoadingAnimation";
 import { RegistrationSuccess } from "@/components/auth/RegistrationSuccess";
 import { AuthFormContent } from "@/components/auth/AuthFormContent";
 import { useAuthFormState } from "@/hooks/auth/use-auth-form-state";
+import { useLocation } from "react-router-dom";
 
 const Auth = () => {
+  const location = useLocation();
   const {
     showAILoading,
     showSuccess,
     isSignUp,
     registrationStep,
   } = useAuthFormState();
+
+  const state = location.state as { isSignUp?: boolean } | null;
+  const isRegistering = state?.isSignUp || isSignUp;
 
   if (showSuccess) {
     return <RegistrationSuccess />;
@@ -32,9 +37,9 @@ const Auth = () => {
     <>
       <AuthStateHandler />
       <AuthCard
-        title={isSignUp ? "Registrierung" : "Anmeldung"}
+        title={isRegistering ? "Registrierung" : "Anmeldung"}
         description={
-          isSignUp
+          isRegistering
             ? registrationStep === 1
               ? "Erstellen Sie Ihr Konto"
               : "Vervollständigen Sie Ihre Registrierung"

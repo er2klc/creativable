@@ -25,24 +25,30 @@ export const useLogin = () => {
   const handleLogin = async () => {
     console.log('Starting signin process with email:', formData.email);
     
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: formData.email,
-      password: formData.password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
 
-    if (error) {
+      if (error) {
+        console.error('Signin error:', error);
+        toast.error("Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.");
+        return false;
+      }
+
+      if (data?.user) {
+        toast.success("Erfolgreich angemeldet!");
+        navigate("/dashboard");
+        return true;
+      }
+
+      return false;
+    } catch (error) {
       console.error('Signin error:', error);
-      toast.error("Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.");
+      toast.error("Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
       return false;
     }
-
-    if (data?.user) {
-      toast.success("Erfolgreich angemeldet!");
-      navigate("/dashboard");
-      return true;
-    }
-
-    return false;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
