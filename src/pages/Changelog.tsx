@@ -1,6 +1,5 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ChangelogEntry {
   version: string;
@@ -65,9 +64,9 @@ export default function Changelog() {
         Hier finden Sie alle Änderungen und geplanten Features unserer Anwendung.
       </p>
       
-      <ScrollArea className="h-[600px] rounded-md border p-4">
+      <div className="space-y-6">
         {changelog.map((entry) => (
-          <Card key={entry.version} className="mb-6">
+          <Card key={entry.version}>
             <CardHeader>
               <CardTitle>Version {entry.version}</CardTitle>
               <CardDescription>{entry.date}</CardDescription>
@@ -97,7 +96,7 @@ export default function Changelog() {
             </CardContent>
           </Card>
         ))}
-      </ScrollArea>
+      </div>
     </div>
   );
 }
