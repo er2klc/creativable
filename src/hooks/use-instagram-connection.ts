@@ -110,7 +110,7 @@ export function useInstagramConnection() {
 
       if (statusError) throw statusError;
 
-      await updateSettings('instagram_connected', null);
+      await updateSettings.mutateAsync({ instagram_connected: false });
       await refetchSettings();
       
       toast({
