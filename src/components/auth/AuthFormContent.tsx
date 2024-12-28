@@ -37,8 +37,18 @@ export const AuthFormContent = () => {
     }
   }, [location.state, setIsSignUp, setFormData]);
 
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const success = await handleSubmit(e);
+    
+    // Only proceed if handleSubmit was successful
+    if (success && isSignUp && registrationStep === 1) {
+      setRegistrationStep(2);
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       {isSignUp ? (
         <RegistrationForm
           registrationStep={registrationStep}
