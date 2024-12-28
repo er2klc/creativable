@@ -3,8 +3,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface LoginFormData {
+  name: string;
   email: string;
   password: string;
+  phoneNumber: string;
+  language: string;
 }
 
 interface LoginFormProps {

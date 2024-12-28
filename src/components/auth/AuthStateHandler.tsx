@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionManagement } from "@/hooks/auth/use-session-management";
+import { AuthChangeEvent } from "@supabase/supabase-js";
 
 export const AuthStateHandler = () => {
   const navigate = useNavigate();
@@ -9,12 +10,12 @@ export const AuthStateHandler = () => {
 
   useEffect(() => {
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
       console.log("[Auth] State changed:", event);
 
       if (event === "SIGNED_IN") {
         navigate("/dashboard");
-      } else if (event === "SIGNED_OUT" || event === "USER_DELETED") {
+      } else if (event === "SIGNED_OUT") {
         navigate("/auth");
       } else if (event === "TOKEN_REFRESHED") {
         console.log("[Auth] Token refreshed for user:", session?.user?.id);
@@ -29,7 +30,7 @@ export const AuthStateHandler = () => {
       subscription.unsubscribe();
       clearInterval(refreshInterval);
     };
-  }, [navigate]);
+  }, [navigate, refreshSession]);
 
   return null;
 };
