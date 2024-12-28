@@ -62,8 +62,8 @@ export function GeneralSettings() {
         throw new Error("No user session found");
       }
 
-      // Format phone number to E.164 format
-      const formattedPhone = formatPhoneNumber(values.phoneNumber);
+      // Format phone number to E.164 format if provided
+      const formattedPhone = values.phoneNumber ? formatPhoneNumber(values.phoneNumber) : null;
 
       // Update settings
       const { error: settingsError } = await supabase
@@ -72,7 +72,7 @@ export function GeneralSettings() {
           {
             user_id: session.user.id,
             language: values.language,
-            name: values.name, // Store name in settings table as well
+            name: values.name,
             updated_at: new Date().toISOString(),
           },
           { 
@@ -92,23 +92,17 @@ export function GeneralSettings() {
 
       // Only try to update phone if it's provided and different
       if (formattedPhone && formattedPhone !== session.user.phone) {
-        try {
-          const { error: phoneError } = await supabase.auth.updateUser({
-            phone: formattedPhone
-          });
+        const { error: phoneError } = await supabase.auth.updateUser({
+          phone: formattedPhone
+        });
 
-          if (phoneError) {
-            // If phone update fails, show warning but don't fail the whole operation
-            console.warn("Phone number update failed:", phoneError);
-            toast({
-              title: "Hinweis",
-              description: "Telefonnummer konnte nicht gespeichert werden. Andere Änderungen wurden gespeichert.",
-              variant: "warning",
-            });
-          }
-        } catch (phoneError) {
-          console.warn("Phone update error:", phoneError);
-          // Continue with other updates even if phone update fails
+        if (phoneError) {
+          console.warn("Phone number update failed:", phoneError);
+          toast({
+            title: "Hinweis",
+            description: "Telefonnummer konnte nicht gespeichert werden. Andere Änderungen wurden gespeichert.",
+            variant: "default"
+          });
         }
       }
 
