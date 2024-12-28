@@ -26,52 +26,48 @@ export const useRegistration = () => {
   });
 
   const handleRegistration = async () => {
-    console.log('Starting registration process with email:', formData.email);
-    
-    const { data: existingUser, error: checkError } = await supabase
-      .from('settings')
-      .select('user_id')
-      .eq('registration_company_name', formData.companyName)
-      .single();
-
-    if (existingUser) {
-      toast.error("Dieser Firmenname ist bereits registriert");
-      return false;
-    }
-
-    const { data: authData, error } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        data: {
-          full_name: formData.name,
-          phone: formData.phoneNumber,
-        },
-      },
-    });
-
-    if (error) {
-      console.error('Registration error:', error);
-      if (error.message.includes('already registered')) {
-        toast.error("Diese E-Mail-Adresse ist bereits registriert");
-      } else {
-        toast.error(error.message);
-      }
-      return false;
-    }
-
-    if (authData.user) {
-      console.log('User created successfully:', authData.user.id);
+    try {
+      setIsLoading(true);
       
-      // Create initial settings record
+      // Validate required fields
+      if (!formData.email || !formData.password || !formData.name) {
+        toast.error("Bitte füllen Sie alle Pflichtfelder aus");
+        return false;
+      }
+
+      // Create the user account
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.name,
+          },
+        },
+      });
+
+      if (signUpError) {
+        if (signUpError.message.includes('already registered')) {
+          toast.error("Diese E-Mail-Adresse ist bereits registriert");
+        } else {
+          toast.error(signUpError.message);
+        }
+        return false;
+      }
+
+      if (!authData.user) {
+        toast.error("Fehler bei der Registrierung");
+        return false;
+      }
+
+      // Create initial settings
       const { error: settingsError } = await supabase
         .from('settings')
         .insert({
           user_id: authData.user.id,
-          registration_step: 1,
           language: formData.language,
-          registration_company_name: formData.companyName,
           whatsapp_number: formData.phoneNumber,
+          registration_step: registrationStep,
         });
 
       if (settingsError) {
@@ -82,10 +78,12 @@ export const useRegistration = () => {
 
       toast.success("Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail-Adresse.");
       return true;
-    } else {
-      console.error('No user data returned from signup');
-      toast.error("Fehler bei der Registrierung. Bitte versuchen Sie es später erneut.");
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      toast.error(error.message || "Ein unerwarteter Fehler ist aufgetreten");
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 

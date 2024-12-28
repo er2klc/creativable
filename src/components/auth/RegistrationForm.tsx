@@ -33,32 +33,55 @@ export const RegistrationForm = ({
   onInputChange,
   onLanguageChange,
 }: RegistrationFormProps) => {
+  if (registrationStep === 1) {
+    return (
+      <>
+        <div className="space-y-2">
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            name="name"
+            type="text"
+            placeholder="Ihr vollständiger Name"
+            value={formData.name}
+            onChange={onInputChange}
+            disabled={isLoading}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">E-Mail</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="name@example.com"
+            value={formData.email}
+            onChange={onInputChange}
+            disabled={isLoading}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Passwort</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            placeholder="••••••••"
+            value={formData.password}
+            onChange={onInputChange}
+            disabled={isLoading}
+            required
+            minLength={6}
+          />
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
-      <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
-        <Input
-          id="name"
-          name="name"
-          type="text"
-          placeholder="Ihr vollständiger Name"
-          value={formData.name}
-          onChange={onInputChange}
-          disabled={isLoading}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="email">E-Mail</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="name@example.com"
-          value={formData.email}
-          onChange={onInputChange}
-          disabled={isLoading}
-        />
-      </div>
       <div className="space-y-2">
         <Label htmlFor="phoneNumber">Telefonnummer</Label>
         <Input
@@ -69,18 +92,7 @@ export const RegistrationForm = ({
           value={formData.phoneNumber}
           onChange={onInputChange}
           disabled={isLoading}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Passwort</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          placeholder="••••••••"
-          value={formData.password}
-          onChange={onInputChange}
-          disabled={isLoading}
+          required
         />
       </div>
       <div className="space-y-2">

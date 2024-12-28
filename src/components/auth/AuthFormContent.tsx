@@ -28,9 +28,7 @@ export const AuthFormContent = () => {
 
   useEffect(() => {
     const state = location.state as { isSignUp?: boolean; initialEmail?: string } | null;
-    console.log("Location state:", state);
     if (state?.isSignUp !== undefined) {
-      console.log("Setting isSignUp to:", state.isSignUp);
       setIsSignUp(state.isSignUp);
     }
     if (state?.initialEmail) {
@@ -48,7 +46,6 @@ export const AuthFormContent = () => {
   };
 
   const handleToggleMode = () => {
-    console.log("Switching isSignUp from:", isSignUp, "to:", !isSignUp);
     setIsSignUp(!isSignUp);
     setRegistrationStep(1);
     setFormData({
@@ -60,8 +57,6 @@ export const AuthFormContent = () => {
       companyName: "",
     });
   };
-
-  console.log("Rendering AuthFormContent, isSignUp:", isSignUp);
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -109,7 +104,7 @@ export const AuthFormContent = () => {
         />
       )}
 
-      {registrationStep === 2 && (
+      {isSignUp && registrationStep === 2 && (
         <Button
           type="button"
           variant="outline"
