@@ -55,9 +55,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           } else if (event === "TOKEN_REFRESHED") {
             console.log("[Auth] Token refreshed for user:", session?.user?.id);
             setIsAuthenticated(true);
-          } else if (event === "USER_DELETED") {
-            setIsAuthenticated(false);
-            navigate("/auth");
           }
         });
 
