@@ -6,6 +6,8 @@ import { useAuthFormState } from "@/hooks/auth/use-auth-form-state";
 import { useAuthForm } from "@/hooks/use-auth-form";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { LoginFormData } from "@/hooks/auth/use-login";
+import { RegistrationData } from "@/hooks/auth/use-registration";
 
 export const AuthFormContent = () => {
   const location = useLocation();
@@ -57,13 +59,13 @@ export const AuthFormContent = () => {
         password: "",
         phoneNumber: "",
         language: "Deutsch",
-      });
+      } as RegistrationData);
     } else {
       // Switching to login
       setFormData({
         email: "",
         password: "",
-      });
+      } as LoginFormData);
     }
     navigate("/auth", { replace: true, state: { isSignUp: !isSignUp } });
   };
@@ -73,7 +75,7 @@ export const AuthFormContent = () => {
       {isSignUp ? (
         <RegistrationForm
           registrationStep={registrationStep}
-          formData={formData}
+          formData={formData as RegistrationData}
           isLoading={isLoading}
           onInputChange={handleInputChange}
           onLanguageChange={(value) =>
@@ -84,7 +86,7 @@ export const AuthFormContent = () => {
         />
       ) : (
         <LoginForm
-          formData={formData}
+          formData={formData as LoginFormData}
           isLoading={isLoading}
           onInputChange={handleInputChange}
         />
