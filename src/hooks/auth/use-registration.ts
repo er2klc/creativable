@@ -1,6 +1,6 @@
-import { useState, Dispatch, SetStateAction } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { handleCompanyInfoFetch } from "./utils/company-info";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface RegistrationData {
@@ -13,6 +13,7 @@ export interface RegistrationData {
 }
 
 export const useRegistration = () => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [registrationStep, setRegistrationStep] = useState(1);
   const [formData, setFormData] = useState<RegistrationData>({
