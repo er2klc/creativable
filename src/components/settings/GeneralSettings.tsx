@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Settings } from "@/integrations/supabase/types/settings";
@@ -13,11 +13,9 @@ import { DeleteAccountButton } from "./DeleteAccountButton";
 import { UserInfoFields } from "./form-fields/UserInfoFields";
 import { formSchema, formatPhoneNumber } from "./schemas/settings-schema";
 import type { z } from "zod";
-import { User, Globe2 } from "lucide-react";
 
 export function GeneralSettings() {
   const session = useSession();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch current settings and user data
@@ -91,27 +89,13 @@ export function GeneralSettings() {
 
       // Only try to update phone if it's provided and different
       if (formattedPhone && formattedPhone !== session.user.phone) {
-        try {
-          const { error: phoneError } = await supabase.auth.updateUser({
-            phone: formattedPhone
-          });
+        const { error: phoneError } = await supabase.auth.updateUser({
+          phone: formattedPhone
+        });
 
-          if (phoneError) {
-            console.warn("Phone number update failed:", phoneError);
-            toast({
-              title: "Hinweis",
-              description: "Handynummer konnte nicht gespeichert werden. Andere Änderungen wurden gespeichert.",
-              variant: "default"
-            });
-            return;
-          }
-        } catch (phoneError) {
+        if (phoneError) {
           console.error("Phone update error:", phoneError);
-          toast({
-            title: "Hinweis",
-            description: "Handynummer konnte nicht gespeichert werden. Andere Änderungen wurden gespeichert.",
-            variant: "default"
-          });
+          toast.error("Handynummer konnte nicht gespeichert werden. Bitte überprüfen Sie das Format (+491234567890).");
           return;
         }
       }
@@ -119,17 +103,10 @@ export function GeneralSettings() {
       // Invalidate and refetch settings
       await queryClient.invalidateQueries({ queryKey: ["settings", session.user.id] });
 
-      toast({
-        title: "Erfolg ✨",
-        description: "Einstellungen wurden gespeichert",
-      });
+      toast.success("Einstellungen wurden gespeichert");
     } catch (error) {
       console.error("Error saving settings:", error);
-      toast({
-        title: "Fehler ❌",
-        description: "Einstellungen konnten nicht gespeichert werden",
-        variant: "destructive",
-      });
+      toast.error("Einstellungen konnten nicht gespeichert werden");
     }
   };
 
@@ -141,16 +118,10 @@ export function GeneralSettings() {
           Verwalten Sie hier Ihre persönlichen Daten und Spracheinstellungen.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="relative">
-              <User className="absolute left-0 top-8 h-5 w-5 text-gray-500" />
-              <Globe2 className="absolute right-4 top-[4.5rem] h-5 w-5 text-blue-500" />
-              <div className="pl-8">
-                <UserInfoFields form={form} />
-              </div>
-            </div>
+            <UserInfoFields form={form} />
             <div className="flex justify-between items-center pt-4">
               <Button type="submit">Speichern</Button>
               <DeleteAccountButton />

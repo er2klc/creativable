@@ -6,9 +6,7 @@ import { TargetAudienceField } from "./mlm/TargetAudienceField";
 import { UspField } from "./mlm/UspField";
 import { BusinessDescriptionField } from "./mlm/BusinessDescriptionField";
 import { useSettings } from "@/hooks/use-settings";
-import { Building2, Package, Users2, Star, FileText, Bot } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Building2, Package, Users2, Star, FileText } from "lucide-react";
 
 export function MLMSettings() {
   const { settings, updateSettings } = useSettings();
@@ -17,49 +15,10 @@ export function MLMSettings() {
     await updateSettings.mutateAsync({ [field]: value });
   };
 
-  const analyzeWithAI = async () => {
-    if (!settings?.company_name) {
-      toast.error("Bitte geben Sie zuerst einen Firmennamen ein.");
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke('fetch-company-info', {
-        body: { companyName: settings.company_name }
-      });
-
-      if (error) throw error;
-
-      if (data) {
-        await updateSettings.mutateAsync({
-          products_services: data.productsServices,
-          target_audience: data.targetAudience,
-          usp: data.usp,
-          business_description: data.businessDescription,
-        });
-
-        toast.success("Firmendaten erfolgreich analysiert und aktualisiert");
-      }
-    } catch (error) {
-      console.error('Error analyzing company:', error);
-      toast.error("Fehler bei der KI-Analyse. Bitte versuchen Sie es später erneut.");
-    }
-  };
-
   return (
     <Card>
       <CardHeader className="space-y-1">
-        <div className="flex justify-between items-center">
-          <CardTitle>MLM-Firmeninformationen</CardTitle>
-          <Button
-            onClick={analyzeWithAI}
-            className="flex items-center gap-2"
-            variant="outline"
-          >
-            <Bot className="h-4 w-4" />
-            Mit KI analysieren
-          </Button>
-        </div>
+        <CardTitle>MLM-Firmeninformationen</CardTitle>
         <CardDescription>
           Hinterlegen Sie hier Ihre Firmeninformationen für die automatische Verwendung in Nachrichten.
         </CardDescription>

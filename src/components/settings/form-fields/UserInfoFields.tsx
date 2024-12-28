@@ -5,6 +5,7 @@ import { languages } from "../constants/languages";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { formSchema } from "../schemas/settings-schema";
+import { User, Mail, Phone, Globe } from "lucide-react";
 
 type FormType = z.infer<typeof formSchema>;
 
@@ -14,13 +15,16 @@ interface UserInfoFieldsProps {
 
 export function UserInfoFields({ form }: UserInfoFieldsProps) {
   return (
-    <>
+    <div className="space-y-4 max-w-md">
       <FormField
         control={form.control}
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Name</FormLabel>
+            <FormLabel className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Name
+            </FormLabel>
             <FormControl>
               <Input {...field} />
             </FormControl>
@@ -34,7 +38,10 @@ export function UserInfoFields({ form }: UserInfoFieldsProps) {
         name="email"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>E-Mail</FormLabel>
+            <FormLabel className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              E-Mail
+            </FormLabel>
             <FormControl>
               <Input {...field} disabled />
             </FormControl>
@@ -48,7 +55,10 @@ export function UserInfoFields({ form }: UserInfoFieldsProps) {
         name="phoneNumber"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Handynummer</FormLabel>
+            <FormLabel className="flex items-center gap-2">
+              <Phone className="h-4 w-4" />
+              Handynummer
+            </FormLabel>
             <FormControl>
               <Input {...field} placeholder="+491234567890" />
             </FormControl>
@@ -62,7 +72,10 @@ export function UserInfoFields({ form }: UserInfoFieldsProps) {
         name="language"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Hauptsprache</FormLabel>
+            <FormLabel className="flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              Hauptsprache
+            </FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger>
@@ -81,6 +94,6 @@ export function UserInfoFields({ form }: UserInfoFieldsProps) {
           </FormItem>
         )}
       />
-    </>
+    </div>
   );
 }
