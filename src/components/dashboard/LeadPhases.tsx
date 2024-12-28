@@ -69,13 +69,16 @@ export const LeadPhases = () => {
       if (!session?.user?.id || phases.length > 0) return;
 
       try {
-        // First, check which phases don't exist yet
+        // Get existing phase names for this user
         const { data: existingPhases, error: checkError } = await supabase
           .from("lead_phases")
           .select("name")
           .eq("user_id", session.user.id);
 
-        if (checkError) throw checkError;
+        if (checkError) {
+          console.error("Error checking existing phases:", checkError);
+          return;
+        }
 
         const existingPhaseNames = new Set(existingPhases?.map(p => p.name) || []);
         const phasesToAdd = DEFAULT_PHASES.filter(
@@ -84,39 +87,42 @@ export const LeadPhases = () => {
 
         if (phasesToAdd.length === 0) return;
 
-        // Insert phases one by one to better handle potential errors
-        for (const phase of phasesToAdd) {
-          const { error: insertError } = await supabase
-            .from("lead_phases")
-            .insert({
+        // Insert all phases at once to avoid multiple requests
+        const { error: insertError } = await supabase
+          .from("lead_phases")
+          .insert(
+            phasesToAdd.map(phase => ({
               name: phase.name,
               order_index: phase.order_index,
               user_id: session.user.id,
-            })
-            .maybeSingle();
+            }))
+          );
 
-          if (insertError) {
-            if (insertError.code === "23505") {
-              console.log(`Phase "${phase.name}" already exists for this user`);
-              continue;
-            }
-            
-            console.error("Error inserting phase:", insertError);
-            toast({
-              title: "Fehler",
-              description: `Die Phase "${phase.name}" konnte nicht hinzugefügt werden, da sie bereits existiert.`,
-              variant: "destructive",
-            });
+        if (insertError) {
+          // Handle duplicate key error gracefully
+          if (insertError.code === "23505") {
+            console.log("Some phases already exist for this user, continuing...");
+            // Refresh the phases list to get the latest state
+            refetch();
+            return;
           }
+          
+          console.error("Error inserting phases:", insertError);
+          toast({
+            title: "Fehler",
+            description: "Fehler beim Initialisieren der Phasen. Bitte versuchen Sie es später erneut.",
+            variant: "destructive",
+          });
+          return;
         }
         
         // Refresh the phases list
         refetch();
       } catch (error) {
-        console.error("Error initializing default phases:", error);
+        console.error("Error in initializeDefaultPhases:", error);
         toast({
           title: "Fehler",
-          description: "Fehler beim Initialisieren der Phasen. Möglicherweise existieren einige Phasen bereits.",
+          description: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
           variant: "destructive",
         });
       }
