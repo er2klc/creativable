@@ -93,7 +93,7 @@ export const AuthFormContent = () => {
         ) : cooldownRemaining > 0 ? (
           `Bitte warten (${cooldownRemaining}s)`
         ) : isSignUp ? (
-          registrationStep === 1 ? "Weiter" : "Registrieren"
+          registrationStep === 1 ? "Weiter" : "Account erstellen"
         ) : (
           "Anmelden"
         )}

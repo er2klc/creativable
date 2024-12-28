@@ -32,7 +32,7 @@ const Auth = () => {
     <>
       <AuthStateHandler />
       <AuthCard
-        title={isSignUp ? "Registrierung" : "Anmeldung"}
+        title={isSignUp ? "Account erstellen" : "Anmeldung"}
         description={
           isSignUp
             ? registrationStep === 1
