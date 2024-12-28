@@ -92,6 +92,8 @@ export const usePhaseMutations = () => {
         throw new Error("No authenticated user found");
       }
 
+      console.log("Starting phase rename operation:", { id, name, oldName });
+
       // First update the phase name
       const { error: phaseError } = await supabase
         .from("lead_phases")
@@ -99,10 +101,15 @@ export const usePhaseMutations = () => {
         .eq("id", id)
         .eq("user_id", session.user.id);
 
-      if (phaseError) throw phaseError;
+      if (phaseError) {
+        console.error("Error updating phase name:", phaseError);
+        throw phaseError;
+      }
+
+      console.log("Phase name updated successfully, now updating leads...");
 
       // Then update all leads that were in the old phase
-      const { error: leadsError } = await supabase
+      const { data: updatedLeads, error: leadsError } = await supabase
         .from("leads")
         .update({ 
           phase: name,
@@ -112,9 +119,18 @@ export const usePhaseMutations = () => {
         .eq("phase", oldName)
         .eq("user_id", session.user.id);
 
-      if (leadsError) throw leadsError;
+      console.log("Leads update result:", { updatedLeads, error: leadsError });
+
+      if (leadsError) {
+        console.error("Error updating leads:", leadsError);
+        throw leadsError;
+      }
+
+      // Return both results
+      return { phaseName: name, oldName };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Phase rename operation completed successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast({
@@ -125,7 +141,7 @@ export const usePhaseMutations = () => {
       });
     },
     onError: (error) => {
-      console.error("Error updating phase name:", error);
+      console.error("Error in phase rename operation:", error);
       toast({
         title: settings?.language === "en" ? "Error" : "Fehler",
         description: settings?.language === "en"
