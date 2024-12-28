@@ -29,13 +29,14 @@ export const useRegistration = () => {
     try {
       console.log("Starting registration process with email:", formData.email);
       
-      // Create the user account
+      // Create the user account with phone number in metadata
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
             full_name: formData.name,
+            phoneNumber: formData.phoneNumber, // Add phone number to metadata
           },
         },
       });
@@ -55,14 +56,14 @@ export const useRegistration = () => {
         return false;
       }
 
-      // Create initial settings
+      // Create initial settings with phone number
       const { error: settingsError } = await supabase
         .from('settings')
         .insert({
           user_id: authData.user.id,
           language: formData.language,
           whatsapp_number: formData.phoneNumber,
-          registration_step: registrationStep,
+          name: formData.name,
         });
 
       if (settingsError) {

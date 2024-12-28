@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/use-settings";
 import { supabase } from "@/integrations/supabase/client";
-import { Bot } from "lucide-react"; // Adding OpenAI logo
+import { Bot } from "lucide-react";
 
 const formSchema = z.object({
   openai_api_key: z.string().min(1, "OpenAI API-Key ist erforderlich"),
@@ -52,7 +52,7 @@ export function OpenAIIntegration() {
   };
 
   const saveApiKey = async (value: string) => {
-    await updateSettings('openai_api_key', value);
+    await updateSettings.mutateAsync({ openai_api_key: value });
     await updateOpenAIContext();
   };
 
