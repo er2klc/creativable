@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Messages from "./pages/Messages";
 import Settings from "./pages/Settings";
+import Changelog from "./pages/Changelog";
 import LinkedInCallback from "./pages/auth/callback/LinkedIn";
 import InstagramCallback from "./pages/auth/callback/Instagram";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
@@ -23,6 +24,7 @@ const App = () => (
       <Route path="/auth/callback/instagram" element={<InstagramCallback />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/auth/data-deletion/instagram" element={<InstagramDataDeletion />} />
+      <Route path="/changelog" element={<AppLayout><Changelog /></AppLayout>} />
       <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
       <Route path="/leads" element={<AppLayout><Leads /></AppLayout>} />
       <Route path="/messages" element={<AppLayout><Messages /></AppLayout>} />
