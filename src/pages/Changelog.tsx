@@ -73,7 +73,7 @@ export default function Changelog() {
   const [isEditing, setIsEditing] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const { data: entries } = useQuery({
+  const { data: entries, refetch: refetchEntries } = useQuery({
     queryKey: ["changelog_entries"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -81,7 +81,10 @@ export default function Changelog() {
         .select("*")
         .order("version", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching changelog entries:", error);
+        throw error;
+      }
       return data;
     },
   });
@@ -104,16 +107,20 @@ export default function Changelog() {
 
   const handleStatusChange = async (version: string, title: string, newStatus: string) => {
     try {
+      console.log("Updating status:", { version, title, newStatus });
+      
       const { error } = await supabase
         .from("changelog_entries")
         .update({ status: newStatus })
         .eq("version", version)
         .eq("title", title);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating status in database:", error);
+        throw error;
+      }
 
-      // Invalidate and refetch
-      await queryClient.invalidateQueries({ queryKey: ["changelog_entries"] });
+      await refetchEntries();
       setIsEditing(null);
       toast.success("Status erfolgreich aktualisiert");
     } catch (error) {
