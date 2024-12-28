@@ -9,7 +9,6 @@ export interface RegistrationData {
   password: string;
   phoneNumber: string;
   language: string;
-  companyName: string;
 }
 
 export const useRegistration = () => {
@@ -22,7 +21,6 @@ export const useRegistration = () => {
     password: "",
     phoneNumber: "",
     language: "Deutsch",
-    companyName: "",
   });
 
   const handleRegistration = async () => {
