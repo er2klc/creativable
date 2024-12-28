@@ -9,8 +9,10 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
+import { useLocation } from "react-router-dom";
 
 const Auth = () => {
+  const location = useLocation();
   const supabase = useSupabaseClient();
   const [showAILoading, setShowAILoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -26,6 +28,19 @@ const Auth = () => {
     setRegistrationStep,
     cooldownRemaining,
   } = useAuthForm();
+
+  // Wenn wir von der Login-Seite mit einer E-Mail weitergeleitet wurden
+  useEffect(() => {
+    const state = location.state as { isSignUp?: boolean; email?: string } | null;
+    if (state?.isSignUp) {
+      setIsSignUp(true);
+      if (state.email) {
+        handleInputChange({
+          target: { name: 'email', value: state.email }
+        } as React.ChangeEvent<HTMLInputElement>);
+      }
+    }
+  }, [location.state, setIsSignUp]);
 
   const handleGoogleLogin = async () => {
     try {
@@ -82,7 +97,6 @@ const Auth = () => {
   };
 
   const handleLanguageChange = (value: string) => {
-    // We need to simulate an input change event to work with the existing handleInputChange
     const event = {
       target: {
         name: 'language',
