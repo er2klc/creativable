@@ -11,7 +11,7 @@ export const AuthFormContent = () => {
     setIsSignUp,
     registrationStep,
     setRegistrationStep,
-    handleSocialLogin
+    handleSocialLogin,
   } = useAuthFormState();
 
   const {
@@ -19,7 +19,7 @@ export const AuthFormContent = () => {
     formData,
     handleSubmit,
     handleInputChange,
-    cooldownRemaining
+    cooldownRemaining,
   } = useAuthForm();
 
   return (
@@ -30,11 +30,11 @@ export const AuthFormContent = () => {
           formData={formData}
           isLoading={isLoading}
           onInputChange={handleInputChange}
-          onLanguageChange={(value) => {
+          onLanguageChange={(value) =>
             handleInputChange({
-              target: { name: 'language', value }
-            } as React.ChangeEvent<HTMLInputElement>);
-          }}
+              target: { name: "language", value },
+            } as React.ChangeEvent<HTMLInputElement>)
+          }
         />
       ) : (
         <LoginForm
@@ -62,8 +62,8 @@ export const AuthFormContent = () => {
 
       {!isSignUp && (
         <SocialLoginButtons
-          onGoogleLogin={() => handleSocialLogin('google')}
-          onAppleLogin={() => handleSocialLogin('apple')}
+          onGoogleLogin={() => handleSocialLogin("google")}
+          onAppleLogin={() => handleSocialLogin("apple")}
           isLoading={isLoading}
         />
       )}
