@@ -6,7 +6,7 @@ import { toast } from "sonner";
 export const useSettings = () => {
   const queryClient = useQueryClient();
 
-  const { data: settings, isLoading } = useQuery({
+  const { data: settings, isLoading, refetch: refetchSettings } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -31,11 +31,16 @@ export const useSettings = () => {
       if (!data) {
         console.info("No settings found, creating initial settings");
         
+        const { data: userMetadata } = await supabase.auth.getUser();
+        const phoneNumber = userMetadata.user?.phone || userMetadata.user?.user_metadata?.phoneNumber;
+        
         const newSettings = {
           user_id: user.id,
           language: "Deutsch",
           registration_step: 1,
           registration_completed: false,
+          whatsapp_number: phoneNumber,
+          name: userMetadata.user?.user_metadata?.full_name,
         };
 
         const { data: createdSettings, error: createError } = await supabase
@@ -91,5 +96,6 @@ export const useSettings = () => {
     settings,
     isLoading,
     updateSettings,
+    refetchSettings,
   };
 };

@@ -24,23 +24,21 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
         .from("settings")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
     }
   });
 
-  const displayName = settings?.registration_company_name || userEmail?.split('@')[0] || "Benutzer";
+  const displayName = settings?.name || settings?.registration_company_name || userEmail?.split('@')[0] || "Benutzer";
 
   const handleSignOut = async () => {
     try {
-      // First check if we have a session
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
         console.log("No active session found during logout");
-        // Clear any local state/storage if needed
         navigate("/");
         return;
       }
@@ -50,7 +48,6 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
       if (error) {
         if (error.message.includes('user_not_found')) {
           console.log("User not found during logout, clearing session anyway");
-          // Force navigation to clear the invalid session state
           navigate("/");
           return;
         }
@@ -69,7 +66,6 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
         title: "Fehler beim Abmelden",
         description: "Bitte versuchen Sie es erneut.",
       });
-      // Force navigation on critical errors
       navigate("/");
     }
   };
