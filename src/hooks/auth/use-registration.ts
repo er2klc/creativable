@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Dispatch, SetStateAction } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { handleCompanyInfoFetch } from "./utils/company-info";
@@ -10,6 +10,7 @@ export interface RegistrationData {
   password: string;
   phoneNumber: string;
   language: string;
+  companyName: string;
 }
 
 export const useRegistration = () => {
@@ -22,9 +23,15 @@ export const useRegistration = () => {
     password: "",
     phoneNumber: "",
     language: "Deutsch",
+    companyName: "",
   });
 
   const handleRegistration = async () => {
+    if (!formData.companyName) {
+      toast.error("Bitte geben Sie Ihren Firmennamen ein");
+      return false;
+    }
+
     console.log('Starting signup process with email:', formData.email);
     const { data: authData, error } = await supabase.auth.signUp({
       email: formData.email,

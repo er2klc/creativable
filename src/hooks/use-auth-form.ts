@@ -1,16 +1,8 @@
-import { useState } from "react";
+import { useState, Dispatch, SetStateAction } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useRegistration } from "./auth/use-registration";
+import { useRegistration, RegistrationData } from "./auth/use-registration";
 import { useLogin } from "./auth/use-login";
-
-export interface RegistrationFormData {
-  name: string;
-  email: string;
-  password: string;
-  phoneNumber: string;
-  language: string;
-}
 
 export interface LoginFormData {
   name: string;
@@ -20,7 +12,7 @@ export interface LoginFormData {
   language: string;
 }
 
-export type FormData = RegistrationFormData | LoginFormData;
+export type FormData = RegistrationData | LoginFormData;
 
 export const useAuthForm = () => {
   const navigate = useNavigate();
@@ -133,7 +125,7 @@ export const useAuthForm = () => {
 
   const setFormData = (data: Partial<FormData> | ((prev: FormData) => FormData)) => {
     if (isSignUp) {
-      setRegistrationFormData(data as SetStateAction<RegistrationFormData>);
+      setRegistrationFormData(data as SetStateAction<RegistrationData>);
     } else {
       setLoginFormData(data as SetStateAction<LoginFormData>);
     }
