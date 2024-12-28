@@ -47,6 +47,20 @@ export const AuthFormContent = () => {
     }
   };
 
+  const handleToggleMode = () => {
+    setIsSignUp(!isSignUp);
+    setRegistrationStep(1); // Reset registration step when toggling
+    // Reset form data when switching modes
+    setFormData({
+      name: "",
+      email: "",
+      password: "",
+      phoneNumber: "",
+      language: "Deutsch",
+      companyName: "",
+    });
+  };
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {isSignUp ? (
@@ -108,10 +122,7 @@ export const AuthFormContent = () => {
       <div className="mt-4 text-center">
         <button
           type="button"
-          onClick={() => {
-            setIsSignUp(!isSignUp);
-            setRegistrationStep(1);
-          }}
+          onClick={handleToggleMode}
           className="text-sm text-muted-foreground hover:underline"
           disabled={isLoading}
         >
