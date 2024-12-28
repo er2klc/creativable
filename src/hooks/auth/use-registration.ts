@@ -27,7 +27,7 @@ export const useRegistration = () => {
 
   const handleRegistration = async () => {
     try {
-      setIsLoading(true);
+      console.log("Starting registration process with email:", formData.email);
       
       // Create the user account
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -77,8 +77,6 @@ export const useRegistration = () => {
       console.error('Registration error:', error);
       toast.error(error.message || "Ein unerwarteter Fehler ist aufgetreten");
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 

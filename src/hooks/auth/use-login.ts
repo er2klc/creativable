@@ -3,28 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-interface LoginFormData {
-  name: string;
+export interface LoginFormData {
   email: string;
   password: string;
-  phoneNumber: string;
-  language: string;
 }
 
 export const useLogin = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<LoginFormData>({
-    name: "",
     email: "",
     password: "",
-    phoneNumber: "",
-    language: "Deutsch",
   });
 
   const handleLogin = async () => {
-    console.log('Starting signin process with email:', formData.email);
-    
+    console.log("Starting signin process with email:", formData.email);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
@@ -32,21 +25,23 @@ export const useLogin = () => {
       });
 
       if (error) {
-        console.error('Signin error:', error);
-        toast.error("Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.");
-        return false;
+        console.error("Signin error:", error);
+        throw error;
       }
 
       if (data?.user) {
-        toast.success("Erfolgreich angemeldet!");
         navigate("/dashboard");
         return true;
       }
 
       return false;
-    } catch (error) {
-      console.error('Signin error:', error);
-      toast.error("Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
+    } catch (error: any) {
+      console.error("Signin error:", error);
+      if (error.message.includes("Invalid login credentials")) {
+        toast.error("Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.");
+      } else {
+        toast.error(error.message || "Ein Fehler ist aufgetreten");
+      }
       return false;
     }
   };
