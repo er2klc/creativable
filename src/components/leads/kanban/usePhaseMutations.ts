@@ -94,6 +94,20 @@ export const usePhaseMutations = () => {
 
       console.log("Starting phase rename operation:", { id, name, oldName });
 
+      // First verify that leads exist with the old phase name
+      const { data: existingLeads, error: checkError } = await supabase
+        .from("leads")
+        .select("id")
+        .eq("phase", oldName)
+        .eq("user_id", session.user.id);
+
+      if (checkError) {
+        console.error("Error checking existing leads:", checkError);
+        throw checkError;
+      }
+
+      console.log("Found leads to update:", existingLeads?.length || 0);
+
       // First update the phase name
       const { error: phaseError } = await supabase
         .from("lead_phases")
@@ -116,7 +130,7 @@ export const usePhaseMutations = () => {
           last_action: settings?.language === "en" ? "Phase renamed" : "Phase umbenannt",
           last_action_date: new Date().toISOString(),
         })
-        .eq("phase", oldName)
+        .eq("phase", oldName.trim())
         .eq("user_id", session.user.id);
 
       console.log("Leads update result:", { updatedLeads, error: leadsError });
@@ -127,7 +141,11 @@ export const usePhaseMutations = () => {
       }
 
       // Return both results
-      return { phaseName: name, oldName };
+      return { 
+        phaseName: name, 
+        oldName,
+        updatedLeadsCount: existingLeads?.length || 0 
+      };
     },
     onSuccess: (data) => {
       console.log("Phase rename operation completed successfully:", data);
@@ -136,8 +154,8 @@ export const usePhaseMutations = () => {
       toast({
         title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
         description: settings?.language === "en"
-          ? "Phase name and all associated contacts have been updated successfully"
-          : "Phasenname und alle zugehörigen Kontakte wurden erfolgreich aktualisiert",
+          ? `Phase name and ${data.updatedLeadsCount} contacts have been updated successfully`
+          : `Phasenname und ${data.updatedLeadsCount} Kontakte wurden erfolgreich aktualisiert`,
       });
     },
     onError: (error) => {
