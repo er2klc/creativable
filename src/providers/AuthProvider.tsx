@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const publicPaths = ["/", "/auth", "/privacy-policy", "/auth/data-deletion/instagram"];
+    const publicPaths = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram"];
     let subscription: any = null;
     
     const setupAuth = async () => {
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
           setUser(user);
           setIsAuthenticated(true);
-          if (location.pathname === "/auth") {
+          if (location.pathname === "/auth" || location.pathname === "/register") {
             navigate("/dashboard");
           }
         } else if (!publicPaths.includes(location.pathname)) {
