@@ -29,11 +29,22 @@ export const useLogin = () => {
       if (error) {
         console.error('Signin error:', error);
         
-        // Wenn der Benutzer nicht existiert, zur Registrierung weiterleiten
+        // Check if user exists when login fails
         if (error.message.includes('Invalid login credentials')) {
-          const { data: userExists } = await supabase.auth.admin.getUserByEmail(formData.email);
+          const { data: usersData, error: listError } = await supabase.auth.admin.listUsers({
+            filters: {
+              email: formData.email
+            }
+          });
           
-          if (!userExists) {
+          if (listError) {
+            console.error('Error checking user existence:', listError);
+            toast.error("Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
+            return false;
+          }
+
+          // If no user found with this email, redirect to registration
+          if (!usersData?.users?.length) {
             console.log('User does not exist, redirecting to registration');
             navigate('/auth', { 
               state: { 
@@ -43,6 +54,7 @@ export const useLogin = () => {
             });
             return false;
           }
+          
           toast.error("Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.");
         } else {
           toast.error(error.message);
