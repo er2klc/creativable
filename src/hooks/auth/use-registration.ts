@@ -41,6 +41,7 @@ export const useRegistration = () => {
       });
 
       if (signUpError) {
+        console.error('Registration error:', signUpError);
         if (signUpError.message.includes('already registered')) {
           toast.error("Diese E-Mail-Adresse ist bereits registriert. Bitte verwenden Sie eine andere E-Mail-Adresse.");
         } else {

@@ -62,16 +62,8 @@ export const useAuthForm = () => {
       try {
         const data = registrationData;
         if (registrationStep === 1) {
-          if (!data.name || !data.email || !data.password || !data.phoneNumber) {
-            toast.error("Bitte füllen Sie alle Felder aus");
-            setRegistrationLoading(false);
-            return false;
-          }
-
-          // Validate phone number format
-          const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-          if (!phoneRegex.test(data.phoneNumber.replace(/\s+/g, ''))) {
-            toast.error("Bitte geben Sie eine gültige Telefonnummer ein (z.B. +49 123 45678900)");
+          if (!data.name || !data.email || !data.password) {
+            toast.error("Bitte füllen Sie alle Pflichtfelder aus");
             setRegistrationLoading(false);
             return false;
           }
@@ -80,8 +72,8 @@ export const useAuthForm = () => {
           setRegistrationLoading(false);
           return true;
         } else {
-          if (!data.companyName) {
-            toast.error("Bitte geben Sie Ihren Firmennamen ein");
+          if (!data.phoneNumber) {
+            toast.error("Bitte geben Sie Ihre Telefonnummer ein");
             setRegistrationLoading(false);
             return false;
           }
