@@ -16,7 +16,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const setupAuth = async () => {
       try {
         // Initial session check
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("[Auth] Session error:", sessionError);
+          // Clear any invalid session data
+          await supabase.auth.signOut();
+          if (!publicPaths.includes(location.pathname)) {
+            navigate("/auth");
+          }
+          return;
+        }
+
         console.log("[Auth] Initial session check:", session?.user?.id);
         
         if (session) {
@@ -44,13 +55,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           } else if (event === "TOKEN_REFRESHED") {
             console.log("[Auth] Token refreshed for user:", session?.user?.id);
             setIsAuthenticated(true);
+          } else if (event === "USER_DELETED") {
+            setIsAuthenticated(false);
+            navigate("/auth");
           }
         });
 
         authListener = subscription;
       } catch (error: any) {
         console.error("[Auth] Setup error:", error);
-        toast.error("Ein Fehler ist aufgetreten. Bitte laden Sie die Seite neu.");
+        // Clear any potentially corrupted auth state
+        await supabase.auth.signOut();
+        toast.error("Ein Fehler ist aufgetreten. Bitte melden Sie sich erneut an.");
       } finally {
         setIsLoading(false);
       }
