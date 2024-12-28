@@ -4,16 +4,16 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { RegistrationForm } from "@/components/auth/RegistrationForm";
 import { AILoadingAnimation } from "@/components/auth/AILoadingAnimation";
 import { RegistrationSuccess } from "@/components/auth/RegistrationSuccess";
-import { useAuthForm, LoginFormData, RegistrationFormData } from "@/hooks/use-auth-form";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { toast } from "sonner";
+import { useAuthForm } from "@/hooks/use-auth-form";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { useLocation } from "react-router-dom";
+import { AuthStateHandler } from "@/components/auth/AuthStateHandler";
+import { useSessionManagement } from "@/hooks/auth/use-session-management";
 
 const Auth = () => {
   const location = useLocation();
-  const supabase = useSupabaseClient();
+  const { handleSessionError } = useSessionManagement();
   const [showAILoading, setShowAILoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   
@@ -29,7 +29,6 @@ const Auth = () => {
     cooldownRemaining,
   } = useAuthForm();
 
-  // Wenn wir von der Login-Seite mit einer E-Mail weitergeleitet wurden
   useEffect(() => {
     const state = location.state as { isSignUp?: boolean; email?: string } | null;
     if (state?.isSignUp) {
@@ -42,42 +41,12 @@ const Auth = () => {
     }
   }, [location.state, setIsSignUp]);
 
-  const handleGoogleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback/google`,
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('Google login error:', error);
-      toast.error("Fehler beim Anmelden mit Google. Bitte versuchen Sie es später erneut.");
-    }
-  };
-
-  const handleAppleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'apple',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback/apple`,
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('Apple login error:', error);
-      toast.error("Fehler beim Anmelden mit Apple. Bitte versuchen Sie es später erneut.");
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isSignUp && registrationStep === 2) {
-      setShowAILoading(true);
-      try {
+    try {
+      if (isSignUp && registrationStep === 2) {
+        setShowAILoading(true);
         const result = await originalHandleSubmit(e);
         if (result) {
           setTimeout(() => {
@@ -87,24 +56,16 @@ const Auth = () => {
         } else {
           setShowAILoading(false);
         }
-      } catch (error) {
-        setShowAILoading(false);
+      } else {
+        await originalHandleSubmit(e);
+      }
+    } catch (error: any) {
+      if (error?.code === "session_not_found") {
+        await handleSessionError(error);
+      } else {
         throw error;
       }
-    } else {
-      await originalHandleSubmit(e);
     }
-  };
-
-  const handleLanguageChange = (value: string) => {
-    const event = {
-      target: {
-        name: 'language',
-        value: value
-      }
-    } as React.ChangeEvent<HTMLInputElement>;
-    
-    handleInputChange(event);
   };
 
   if (showSuccess) {
@@ -123,86 +84,127 @@ const Auth = () => {
   }
 
   return (
-    <AuthCard
-      title={isSignUp ? "Registrierung" : "Anmeldung"}
-      description={
-        isSignUp
-          ? registrationStep === 1
-            ? "Erstellen Sie Ihr Konto"
-            : "Geben Sie Ihre Firmeninformationen ein"
-          : "Melden Sie sich an"
-      }
-    >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {isSignUp ? (
-          <RegistrationForm
-            registrationStep={registrationStep}
-            formData={formData as RegistrationFormData}
-            isLoading={isLoading}
-            onInputChange={handleInputChange}
-            onLanguageChange={handleLanguageChange}
-          />
-        ) : (
-          <LoginForm
-            formData={formData as LoginFormData}
-            isLoading={isLoading}
-            onInputChange={handleInputChange}
-          />
-        )}
-
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isLoading || cooldownRemaining > 0}
-        >
-          {isLoading ? (
-            <span>Laden...</span>
-          ) : cooldownRemaining > 0 ? (
-            `Bitte warten (${cooldownRemaining}s)`
-          ) : isSignUp ? (
-            registrationStep === 1 ? "Weiter" : "Registrieren"
+    <>
+      <AuthStateHandler />
+      <AuthCard
+        title={isSignUp ? "Registrierung" : "Anmeldung"}
+        description={
+          isSignUp
+            ? registrationStep === 1
+              ? "Erstellen Sie Ihr Konto"
+              : "Geben Sie Ihre Firmeninformationen ein"
+            : "Melden Sie sich an"
+        }
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {isSignUp ? (
+            <RegistrationForm
+              registrationStep={registrationStep}
+              formData={formData}
+              isLoading={isLoading}
+              onInputChange={handleInputChange}
+              onLanguageChange={(value) => {
+                handleInputChange({
+                  target: { name: 'language', value }
+                } as React.ChangeEvent<HTMLInputElement>);
+              }}
+            />
           ) : (
-            "Anmelden"
+            <LoginForm
+              formData={formData}
+              isLoading={isLoading}
+              onInputChange={handleInputChange}
+            />
           )}
-        </Button>
 
-        {!isSignUp && (
-          <SocialLoginButtons
-            onGoogleLogin={handleGoogleLogin}
-            onAppleLogin={handleAppleLogin}
-            isLoading={isLoading}
-          />
-        )}
-
-        {registrationStep === 2 && (
           <Button
-            type="button"
-            variant="outline"
+            type="submit"
             className="w-full"
-            onClick={() => setRegistrationStep(1)}
+            disabled={isLoading || cooldownRemaining > 0}
+          >
+            {isLoading ? (
+              <span>Laden...</span>
+            ) : cooldownRemaining > 0 ? (
+              `Bitte warten (${cooldownRemaining}s)`
+            ) : isSignUp ? (
+              registrationStep === 1 ? "Weiter" : "Registrieren"
+            ) : (
+              "Anmelden"
+            )}
+          </Button>
+
+          {!isSignUp && (
+            <SocialLoginButtons
+              onGoogleLogin={async () => {
+                try {
+                  const { error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                      redirectTo: `${window.location.origin}/auth/callback/google`,
+                    },
+                  });
+                  if (error) throw error;
+                } catch (error: any) {
+                  console.error('Google login error:', error);
+                  if (error?.code === "session_not_found") {
+                    await handleSessionError(error);
+                  } else {
+                    throw error;
+                  }
+                }
+              }}
+              onAppleLogin={async () => {
+                try {
+                  const { error } = await supabase.auth.signInWithOAuth({
+                    provider: 'apple',
+                    options: {
+                      redirectTo: `${window.location.origin}/auth/callback/apple`,
+                    },
+                  });
+                  if (error) throw error;
+                } catch (error: any) {
+                  console.error('Apple login error:', error);
+                  if (error?.code === "session_not_found") {
+                    await handleSessionError(error);
+                  } else {
+                    throw error;
+                  }
+                }
+              }}
+              isLoading={isLoading}
+            />
+          )}
+
+          {registrationStep === 2 && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => setRegistrationStep(1)}
+              disabled={isLoading}
+            >
+              Zurück
+            </Button>
+          )}
+        </form>
+
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setIsSignUp(!isSignUp);
+              setRegistrationStep(1);
+            }}
+            className="text-sm text-muted-foreground hover:underline"
             disabled={isLoading}
           >
-            Zurück
-          </Button>
-        )}
-      </form>
-
-      <div className="mt-4 text-center">
-        <button
-          type="button"
-          onClick={() => {
-            setIsSignUp(!isSignUp);
-            setRegistrationStep(1);
-          }}
-          className="text-sm text-muted-foreground hover:underline"
-          disabled={isLoading}
-        >
-          {isSignUp
-            ? "Bereits registriert? Hier anmelden"
-            : "Noch kein Account? Hier registrieren"}
-        </button>
-      </div>
-    </AuthCard>
+            {isSignUp
+              ? "Bereits registriert? Hier anmelden"
+              : "Noch kein Account? Hier registrieren"}
+          </button>
+        </div>
+      </AuthCard>
+    </>
   );
 };
 
