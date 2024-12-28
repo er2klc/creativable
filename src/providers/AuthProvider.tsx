@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { User } from "@supabase/supabase-js";
+import { AuthContext } from "./auth/AuthContext";
+import { handleSessionError, refreshSession } from "./auth/auth-utils";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const publicPaths = ["/", "/auth", "/privacy-policy", "/auth/data-deletion/instagram"];
-    let authListener: any = null;
+    let subscription: any = null;
     
     const setupAuth = async () => {
       try {
@@ -20,7 +23,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (sessionError) {
           console.error("[Auth] Session error:", sessionError);
-          await handleSessionError(sessionError);
+          await handleSessionError(sessionError, setIsAuthenticated, navigate, publicPaths, location.pathname);
           return;
         }
 
@@ -32,10 +35,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           if (userError || !user) {
             console.error("[Auth] Invalid user detected:", userError);
-            await handleSessionError(userError);
+            await handleSessionError(userError, setIsAuthenticated, navigate, publicPaths, location.pathname);
             return;
           }
 
+          setUser(user);
           setIsAuthenticated(true);
           if (location.pathname === "/auth") {
             navigate("/dashboard");
@@ -46,7 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         // Setup auth state listener with automatic token refresh
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           console.log("[Auth] Auth state changed:", event, session?.user?.id);
 
           if (event === "SIGNED_IN") {
@@ -54,14 +58,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             if (userError || !user) {
               console.error("[Auth] Invalid user after sign in:", userError);
-              await handleSessionError(userError);
+              await handleSessionError(userError, setIsAuthenticated, navigate, publicPaths, location.pathname);
               return;
             }
 
+            setUser(user);
             setIsAuthenticated(true);
             console.log("[Auth] User signed in, redirecting to dashboard");
             navigate("/dashboard");
-          } else if (event === "SIGNED_OUT" || event === "USER_DELETED") {
+          } else if (event === "SIGNED_OUT") {
+            setUser(null);
             setIsAuthenticated(false);
             console.log("[Auth] User signed out, redirecting to auth");
             navigate("/auth");
@@ -71,52 +77,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             if (userError || !user) {
               console.error("[Auth] Invalid user after token refresh:", userError);
-              await handleSessionError(userError);
+              await handleSessionError(userError, setIsAuthenticated, navigate, publicPaths, location.pathname);
               return;
             }
 
+            setUser(user);
             console.log("[Auth] Token refreshed for user:", session?.user?.id);
             setIsAuthenticated(true);
           }
         });
 
-        authListener = subscription;
+        subscription = authSubscription;
       } catch (error: any) {
         console.error("[Auth] Setup error:", error);
-        await handleSessionError(error);
+        await handleSessionError(error, setIsAuthenticated, navigate, publicPaths, location.pathname);
       } finally {
         setIsLoading(false);
-      }
-    };
-
-    const handleSessionError = async (error: any) => {
-      // Clear any potentially corrupted auth state
-      await supabase.auth.signOut();
-      setIsAuthenticated(false);
-
-      // Check if it's a session expiration error
-      if (error?.message?.includes("session_not_found") || error?.error?.message?.includes("session_not_found")) {
-        toast.error("Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.");
-      } else {
-        toast.error("Ein Fehler ist aufgetreten. Bitte melden Sie sich erneut an.");
-      }
-
-      // Only redirect if not already on a public path
-      if (!publicPaths.includes(location.pathname)) {
-        navigate("/auth");
       }
     };
 
     // Attempt to refresh the session periodically (every 10 minutes)
     const refreshInterval = setInterval(async () => {
       try {
-        const { error } = await supabase.auth.refreshSession();
-        if (error) {
-          console.error("[Auth] Session refresh failed:", error);
-          await handleSessionError(error);
-        }
+        await refreshSession();
       } catch (error) {
-        console.error("[Auth] Error during session refresh:", error);
+        await handleSessionError(error, setIsAuthenticated, navigate, publicPaths, location.pathname);
       }
     }, 10 * 60 * 1000); // 10 minutes
 
@@ -124,8 +109,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => {
       console.log("[Auth] Cleaning up auth listener");
-      if (authListener) {
-        authListener.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
       }
       clearInterval(refreshInterval);
     };
@@ -139,5 +124,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, user }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
