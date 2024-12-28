@@ -80,6 +80,11 @@ export const useAuthForm = () => {
           setRegistrationLoading(false);
           return true;
         } else {
+          if (!data.companyName) {
+            toast.error("Bitte geben Sie Ihren Firmennamen ein");
+            setRegistrationLoading(false);
+            return false;
+          }
           return await handleRegistration();
         }
       } catch (error: any) {
