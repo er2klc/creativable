@@ -11,7 +11,7 @@ export function MLMSettings() {
   const { settings, updateSettings } = useSettings();
 
   const handleSave = async (field: string, value: string) => {
-    await updateSettings(field, value);
+    await updateSettings.mutateAsync({ [field]: value });
   };
 
   return (

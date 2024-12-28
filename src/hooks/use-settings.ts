@@ -32,7 +32,7 @@ export const useSettings = () => {
         console.info("No settings found, creating initial settings");
         
         const { data: userMetadata } = await supabase.auth.getUser();
-        const phoneNumber = userMetadata.user?.phone || userMetadata.user?.user_metadata?.phoneNumber;
+        const phoneNumber = userMetadata.user?.phone || userMetadata.user?.user_metadata?.phoneNumber || null;
         
         const newSettings = {
           user_id: user.id,
