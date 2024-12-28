@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { ChangelogEntry } from "@/components/changelog/ChangelogEntry";
 import { ChangelogItem } from "@/components/changelog/types";
 
-const changelog = [
+const defaultChangelog = [
   {
     version: "0.2",
     date: "2024-03-21",
@@ -54,6 +54,54 @@ export default function Changelog() {
   const [isAdmin, setIsAdmin] = React.useState(false);
   const queryClient = useQueryClient();
 
+  // Fetch changelog entries from database
+  const { data: changelogEntries, isLoading } = useQuery({
+    queryKey: ["changelog_entries"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("changelog_entries")
+        .select("*")
+        .order("date", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching changelog entries:", error);
+        throw error;
+      }
+
+      // If no entries exist, create initial entries
+      if (!data || data.length === 0) {
+        console.log("No changelog entries found, creating initial entries...");
+        await createInitialEntries();
+        return defaultChangelog;
+      }
+
+      // Transform the data into the required format
+      const groupedEntries = data.reduce((acc: any[], entry) => {
+        const existingVersion = acc.find(v => v.version === entry.version);
+        if (existingVersion) {
+          existingVersion.changes.push({
+            title: entry.title,
+            status: entry.status as "completed" | "in-progress" | "planned",
+            description: entry.description
+          });
+        } else {
+          acc.push({
+            version: entry.version,
+            date: new Date(entry.date).toISOString().split('T')[0],
+            changes: [{
+              title: entry.title,
+              status: entry.status as "completed" | "in-progress" | "planned",
+              description: entry.description
+            }]
+          });
+        }
+        return acc;
+      }, []);
+
+      return groupedEntries;
+    }
+  });
+
   React.useEffect(() => {
     const checkAdminStatus = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -70,6 +118,32 @@ export default function Changelog() {
 
     checkAdminStatus();
   }, []);
+
+  const createInitialEntries = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Flatten the changelog data for database storage
+    const entries = defaultChangelog.flatMap(version => 
+      version.changes.map(change => ({
+        version: version.version,
+        date: version.date,
+        title: change.title,
+        description: change.description,
+        status: change.status,
+        created_by: user.id
+      }))
+    );
+
+    const { error } = await supabase
+      .from("changelog_entries")
+      .insert(entries);
+
+    if (error) {
+      console.error("Error creating initial changelog entries:", error);
+      throw error;
+    }
+  };
 
   const handleStatusChange = async (version: string, title: string, newStatus: string) => {
     try {
@@ -95,6 +169,10 @@ export default function Changelog() {
     }
   };
 
+  if (isLoading) {
+    return <div>Lädt...</div>;
+  }
+
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6">Changelog</h1>
@@ -103,7 +181,7 @@ export default function Changelog() {
       </p>
       
       <div className="space-y-6">
-        {changelog.map((entry) => (
+        {(changelogEntries || defaultChangelog).map((entry) => (
           <ChangelogEntry
             key={entry.version}
             entry={entry}
