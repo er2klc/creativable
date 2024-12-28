@@ -69,45 +69,22 @@ export const LeadPhases = () => {
       if (!session?.user?.id || phases.length > 0) return;
 
       try {
-        // Get existing phase names for this user
-        const { data: existingPhases, error: checkError } = await supabase
+        // Verwende UPSERT für jede Phase
+        const phasesToAdd = DEFAULT_PHASES.map(phase => ({
+          name: phase.name,
+          order_index: phase.order_index,
+          user_id: session.user.id,
+        }));
+
+        const { error } = await supabase
           .from("lead_phases")
-          .select("name")
-          .eq("user_id", session.user.id);
+          .upsert(phasesToAdd, {
+            onConflict: 'user_id,name',
+            ignoreDuplicates: true
+          });
 
-        if (checkError) {
-          console.error("Error checking existing phases:", checkError);
-          return;
-        }
-
-        const existingPhaseNames = new Set(existingPhases?.map(p => p.name) || []);
-        const phasesToAdd = DEFAULT_PHASES.filter(
-          phase => !existingPhaseNames.has(phase.name)
-        );
-
-        if (phasesToAdd.length === 0) return;
-
-        // Insert all phases at once to avoid multiple requests
-        const { error: insertError } = await supabase
-          .from("lead_phases")
-          .insert(
-            phasesToAdd.map(phase => ({
-              name: phase.name,
-              order_index: phase.order_index,
-              user_id: session.user.id,
-            }))
-          );
-
-        if (insertError) {
-          // Handle duplicate key error gracefully
-          if (insertError.code === "23505") {
-            console.log("Some phases already exist for this user, continuing...");
-            // Refresh the phases list to get the latest state
-            refetch();
-            return;
-          }
-          
-          console.error("Error inserting phases:", insertError);
+        if (error) {
+          console.error("Error initializing phases:", error);
           toast({
             title: "Fehler",
             description: "Fehler beim Initialisieren der Phasen. Bitte versuchen Sie es später erneut.",
@@ -115,8 +92,8 @@ export const LeadPhases = () => {
           });
           return;
         }
-        
-        // Refresh the phases list
+
+        // Aktualisiere die Phasenliste
         refetch();
       } catch (error) {
         console.error("Error in initializeDefaultPhases:", error);
