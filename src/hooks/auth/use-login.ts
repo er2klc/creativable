@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LoginData {
   email: string;
@@ -10,7 +10,6 @@ interface LoginData {
 
 export const useLogin = () => {
   const navigate = useNavigate();
-  const supabase = useSupabaseClient();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<LoginData>({
     email: "",
@@ -29,25 +28,20 @@ export const useLogin = () => {
       if (error) {
         console.error('Signin error:', error);
         
-        // Check if user exists when login fails
-        const { data: usersData, error: listError } = await supabase.auth.admin.listUsers();
-
-        if (listError) {
-          console.error('Error checking user existence:', listError);
-          toast.error("Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
-          return false;
-        }
-
-        // If no user found with this email, redirect to registration
-        const userExists = usersData?.users?.some(user => user.email === formData.email);
-        if (!userExists) {
-          console.log('User does not exist, redirecting to registration');
-          navigate('/auth', { 
-            state: { 
-              isSignUp: true, 
-              initialEmail: formData.email 
-            }
-          });
+        // Check if error is invalid credentials
+        if (error.message === "Invalid login credentials") {
+          const shouldRegister = window.confirm(
+            "Diese E-Mail-Adresse ist nicht registriert. Möchten Sie ein Konto erstellen?"
+          );
+          
+          if (shouldRegister) {
+            navigate('/auth', { 
+              state: { 
+                isSignUp: true, 
+                initialEmail: formData.email 
+              }
+            });
+          }
           return false;
         }
           

@@ -4,8 +4,11 @@ import { RegistrationForm } from "./RegistrationForm";
 import { SocialLoginButtons } from "./SocialLoginButtons";
 import { useAuthFormState } from "@/hooks/auth/use-auth-form-state";
 import { useAuthForm } from "@/hooks/use-auth-form";
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
 
 export const AuthFormContent = () => {
+  const location = useLocation();
   const {
     isSignUp,
     setIsSignUp,
@@ -20,7 +23,19 @@ export const AuthFormContent = () => {
     handleSubmit,
     handleInputChange,
     cooldownRemaining,
+    setFormData,
   } = useAuthForm();
+
+  // Handle initial email from navigation state
+  useEffect(() => {
+    const state = location.state as { isSignUp?: boolean; initialEmail?: string } | null;
+    if (state?.isSignUp) {
+      setIsSignUp(true);
+    }
+    if (state?.initialEmail) {
+      setFormData(prev => ({ ...prev, email: state.initialEmail }));
+    }
+  }, [location.state, setIsSignUp, setFormData]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
