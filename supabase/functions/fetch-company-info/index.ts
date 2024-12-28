@@ -22,18 +22,20 @@ serve(async (req) => {
     console.log('Hole Informationen für Firma:', companyName);
 
     // During registration, use the default key
-    let openAIApiKey = null;
-    if (isRegistration) {
-      openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-      console.log('Verwende Standard OpenAI Key für Registrierung');
-    } else if (userId) {
+    let openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    
+    if (!isRegistration && userId) {
       // For all other operations, try to get user's OpenAI API key
       const supabase = getSupabase();
-      const { data: settings } = await supabase
+      const { data: settings, error: settingsError } = await supabase
         .from('settings')
         .select('openai_api_key')
         .eq('user_id', userId)
         .maybeSingle();
+      
+      if (settingsError) {
+        console.error('Error fetching settings:', settingsError);
+      }
       
       if (settings?.openai_api_key) {
         openAIApiKey = settings.openai_api_key;
@@ -42,7 +44,7 @@ serve(async (req) => {
     }
 
     if (!openAIApiKey) {
-      throw new Error('Kein OpenAI API-Schlüssel verfügbar');
+      throw new Error('Kein OpenAI API-Schlüssel verfügbar. Bitte stellen Sie sicher, dass Sie einen OpenAI API-Schlüssel in den Einstellungen hinterlegt haben.');
     }
 
     const systemPrompt = `Du bist ein Experte für Network Marketing und MLM-Unternehmen.
