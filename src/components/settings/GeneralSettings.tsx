@@ -91,17 +91,32 @@ export function GeneralSettings() {
 
       // Only try to update phone if it's provided and different
       if (formattedPhone && formattedPhone !== session.user.phone) {
-        const { error: phoneError } = await supabase.auth.updateUser({
-          phone: formattedPhone
-        });
+        try {
+          const { error: phoneError } = await supabase.auth.updateUser({
+            phone: formattedPhone
+          });
 
-        if (phoneError) {
-          console.warn("Phone number update failed:", phoneError);
+          if (phoneError) {
+            console.warn("Phone number update failed:", phoneError);
+            toast({
+              title: "Hinweis",
+              description: "Handynummer konnte nicht gespeichert werden. Andere Änderungen wurden gespeichert.",
+              variant: "default"
+            });
+            // Reset phone number to previous value
+            form.setValue('phoneNumber', formatPhoneNumber(session.user.phone || ""));
+            return;
+          }
+        } catch (phoneError) {
+          console.error("Phone update error:", phoneError);
           toast({
             title: "Hinweis",
-            description: "Telefonnummer konnte nicht gespeichert werden. Andere Änderungen wurden gespeichert.",
+            description: "Handynummer konnte nicht gespeichert werden. Andere Änderungen wurden gespeichert.",
             variant: "default"
           });
+          // Reset phone number to previous value
+          form.setValue('phoneNumber', formatPhoneNumber(session.user.phone || ""));
+          return;
         }
       }
 

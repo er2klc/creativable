@@ -48,9 +48,9 @@ export function UserInfoFields({ form }: UserInfoFieldsProps) {
         name="phoneNumber"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Telefonnummer</FormLabel>
+            <FormLabel>Handynummer</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} placeholder="+491234567890" />
             </FormControl>
             <FormMessage />
           </FormItem>
