@@ -2,7 +2,7 @@ import * as z from "zod";
 
 export const formSchema = z.object({
   language: z.string(),
-  name: z.string(),
+  name: z.string().min(1, "Name ist erforderlich"),
   phoneNumber: z.string()
     .refine(value => {
       // Allow empty phone number
@@ -10,7 +10,7 @@ export const formSchema = z.object({
       // Must start with + and contain only digits
       return /^\+[0-9]+$/.test(value);
     }, {
-      message: "Telefonnummer muss im internationalen Format sein (z.B. +491621845195)",
+      message: "Telefonnummer muss im internationalen Format sein (z.B. +491621234567)",
     }),
   email: z.string().email(),
 });

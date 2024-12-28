@@ -22,6 +22,13 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
+      // First try to get the name from user metadata
+      const fullName = user.user_metadata?.full_name;
+      if (fullName) {
+        return { name: fullName };
+      }
+
+      // If not found in metadata, try to get from settings table
       const { data, error } = await supabase
         .from("settings")
         .select("*")
@@ -63,7 +70,7 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
     fetchDailyQuote();
   }, [supabase.functions]);
 
-  const displayName = settings?.name || settings?.registration_company_name || userEmail?.split('@')[0] || "Benutzer";
+  const displayName = settings?.name || userEmail?.split('@')[0] || "Benutzer";
 
   const handleSignOut = async () => {
     try {

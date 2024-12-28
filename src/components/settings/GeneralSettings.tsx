@@ -72,6 +72,7 @@ export function GeneralSettings() {
           {
             user_id: session.user.id,
             language: values.language,
+            name: values.name, // Store name in settings table as well
             updated_at: new Date().toISOString(),
           },
           { 
@@ -82,13 +83,34 @@ export function GeneralSettings() {
 
       if (settingsError) throw settingsError;
 
-      // Update user metadata
-      const { error: userError } = await supabase.auth.updateUser({
-        data: { full_name: values.name },
-        phone: formattedPhone || null,
+      // Update user metadata first
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: { full_name: values.name }
       });
 
-      if (userError) throw userError;
+      if (metadataError) throw metadataError;
+
+      // Only try to update phone if it's provided and different
+      if (formattedPhone && formattedPhone !== session.user.phone) {
+        try {
+          const { error: phoneError } = await supabase.auth.updateUser({
+            phone: formattedPhone
+          });
+
+          if (phoneError) {
+            // If phone update fails, show warning but don't fail the whole operation
+            console.warn("Phone number update failed:", phoneError);
+            toast({
+              title: "Hinweis",
+              description: "Telefonnummer konnte nicht gespeichert werden. Andere Änderungen wurden gespeichert.",
+              variant: "warning",
+            });
+          }
+        } catch (phoneError) {
+          console.warn("Phone update error:", phoneError);
+          // Continue with other updates even if phone update fails
+        }
+      }
 
       // Invalidate and refetch settings
       await queryClient.invalidateQueries({ queryKey: ["settings", session.user.id] });
