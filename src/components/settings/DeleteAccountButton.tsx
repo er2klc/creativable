@@ -1,31 +1,54 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-
-const tables = ["settings", "leads", "messages", "notes", "tasks", "documents", "keywords", "message_templates", "platform_auth_status", "lead_phases"] as const;
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/components/ui/use-toast";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 
 export function DeleteAccountButton() {
-  const session = useSession();
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const supabaseClient = useSupabaseClient();
 
   const handleDeleteAccount = async () => {
     try {
-      if (!session?.user?.id) {
-        throw new Error("No user session found");
-      }
+      setIsDeleting(true);
 
-      // Delete user data from all tables
+      // Get current user
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error("No user found");
+
+      // Delete all user data from all tables
+      const tables = [
+        'documents',
+        'keywords',
+        'lead_phases',
+        'leads',
+        'message_templates',
+        'messages',
+        'notes',
+        'platform_auth_status',
+        'settings',
+        'tasks'
+      ];
+
       for (const table of tables) {
-        const { error } = await supabase
+        const { error } = await supabaseClient
           .from(table)
           .delete()
-          .eq('user_id', session.user.id);
+          .eq('user_id', user.id);
         
         if (error) {
           console.error(`Error deleting from ${table}:`, error);
@@ -36,39 +59,43 @@ export function DeleteAccountButton() {
       await supabaseClient.auth.signOut();
       
       toast({
-        title: "Konto gelöscht",
-        description: "Ihr Konto wurde erfolgreich gelöscht.",
+        title: "Account gelöscht",
+        description: "Ihr Account wurde erfolgreich gelöscht.",
       });
-      
+
       navigate("/");
-    } catch (error) {
-      console.error("Error deleting account:", error);
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
       toast({
-        title: "Fehler beim Löschen",
-        description: "Konto konnte nicht gelöscht werden. Bitte versuchen Sie es später erneut.",
         variant: "destructive",
+        title: "Fehler",
+        description: "Beim Löschen Ihres Accounts ist ein Fehler aufgetreten.",
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" className="text-destructive border-destructive hover:bg-destructive/10">
-          Konto löschen
-        </Button>
+        <Button variant="destructive">Account löschen</Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Sind Sie sicher?</AlertDialogTitle>
           <AlertDialogDescription>
-            Diese Aktion kann nicht rückgängig gemacht werden. Ihr Konto und alle damit verbundenen Daten werden permanent gelöscht.
+            Diese Aktion kann nicht rückgängig gemacht werden. Ihr Account und alle damit verbundenen Daten werden permanent gelöscht.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-            Konto löschen
+          <AlertDialogAction
+            onClick={handleDeleteAccount}
+            disabled={isDeleting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {isDeleting ? "Wird gelöscht..." : "Account löschen"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

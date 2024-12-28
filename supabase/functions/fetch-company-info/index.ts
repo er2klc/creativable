@@ -45,11 +45,15 @@ serve(async (req) => {
       throw new Error('Kein OpenAI API-Schlüssel verfügbar');
     }
 
-    const systemPrompt = `Du bist ein hilfreicher Assistent, der Network Marketing Unternehmen analysiert und strukturierte Informationen bereitstellt. 
-Deine Aufgabe ist es, präzise und professionelle Informationen zu liefern. 
-Wenn spezifische Details unsicher sind, liefere allgemeine, positive Informationen über Unternehmen in dieser Branche.
-Halte die Antworten kurz, prägnant und professionell.
-Fokussiere dich auf die Stärken und positiven Aspekte des Unternehmens.`;
+    const systemPrompt = `Du bist ein Experte für Network Marketing und MLM-Unternehmen.
+Deine Aufgabe ist es, präzise und professionelle Informationen über MLM-Unternehmen zu liefern.
+Fokussiere dich auf:
+- Die Stärken und USPs des Unternehmens
+- Die Qualität der Produkte und Dienstleistungen
+- Die Marktchancen und das Wachstumspotenzial
+- Die Zielgruppe und deren Bedürfnisse
+Wenn spezifische Details unsicher sind, liefere allgemeine, positive Informationen die typisch für erfolgreiche MLM-Unternehmen sind.
+Halte die Antworten kurz, prägnant und professionell.`;
 
     const userPrompt = `Bitte analysiere das Network Marketing Unternehmen "${companyName}" und stelle die folgenden spezifischen Informationen bereit:
 
@@ -77,7 +81,7 @@ Formatiere deine Antwort als JSON-Objekt mit genau diesen Schlüsseln:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
