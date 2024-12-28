@@ -62,8 +62,8 @@ export function UserInfoFields({ form }: UserInfoFieldsProps) {
         name="language"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Hauptsprache 🌍</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <FormLabel>Hauptsprache</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Wählen Sie eine Sprache" />

@@ -13,6 +13,7 @@ import { DeleteAccountButton } from "./DeleteAccountButton";
 import { UserInfoFields } from "./form-fields/UserInfoFields";
 import { formSchema, formatPhoneNumber } from "./schemas/settings-schema";
 import type { z } from "zod";
+import { User, Globe2 } from "lucide-react";
 
 export function GeneralSettings() {
   const session = useSession();
@@ -75,8 +76,7 @@ export function GeneralSettings() {
             updated_at: new Date().toISOString(),
           },
           { 
-            onConflict: 'user_id',
-            ignoreDuplicates: false 
+            onConflict: 'user_id'
           }
         );
 
@@ -103,8 +103,6 @@ export function GeneralSettings() {
               description: "Handynummer konnte nicht gespeichert werden. Andere Änderungen wurden gespeichert.",
               variant: "default"
             });
-            // Reset phone number to previous value
-            form.setValue('phoneNumber', formatPhoneNumber(session.user.phone || ""));
             return;
           }
         } catch (phoneError) {
@@ -114,8 +112,6 @@ export function GeneralSettings() {
             description: "Handynummer konnte nicht gespeichert werden. Andere Änderungen wurden gespeichert.",
             variant: "default"
           });
-          // Reset phone number to previous value
-          form.setValue('phoneNumber', formatPhoneNumber(session.user.phone || ""));
           return;
         }
       }
@@ -148,7 +144,13 @@ export function GeneralSettings() {
       <CardContent className="space-y-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <UserInfoFields form={form} />
+            <div className="relative">
+              <User className="absolute left-0 top-8 h-5 w-5 text-gray-500" />
+              <Globe2 className="absolute right-4 top-[4.5rem] h-5 w-5 text-blue-500" />
+              <div className="pl-8">
+                <UserInfoFields form={form} />
+              </div>
+            </div>
             <div className="flex justify-between items-center pt-4">
               <Button type="submit">Speichern</Button>
               <DeleteAccountButton />

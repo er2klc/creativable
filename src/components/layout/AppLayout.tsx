@@ -22,10 +22,13 @@ import {
   FileText,
   Shield,
   Instagram,
+  Globe2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+const APP_VERSION = "0.2";
 
 const navigationItems = [
   { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
@@ -46,8 +49,6 @@ const legalItems = [
   { title: "Datenschutz", icon: Shield, url: "/privacy-policy" },
   { title: "Instagram Datenlöschung", icon: Instagram, url: "/auth/data-deletion/instagram" },
 ];
-
-const APP_VERSION = "0.1";
 
 const DashboardSidebar = () => {
   const { toggleSidebar, state } = useSidebar();
@@ -122,7 +123,9 @@ const DashboardSidebar = () => {
         </SidebarGroup>
 
         <div className="mt-auto pt-4 px-4 text-sm text-muted-foreground border-t">
-          Version {APP_VERSION}
+          <a href="/changelog" className="hover:text-foreground">
+            Version {APP_VERSION}
+          </a>
         </div>
       </SidebarContent>
     </Sidebar>
