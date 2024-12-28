@@ -1,19 +1,23 @@
 import React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { ChangelogEntry } from "@/components/changelog/ChangelogEntry";
 import { ChangelogItem } from "@/components/changelog/types";
 
 const defaultChangelog = [
   {
     version: "0.2",
-    date: "2024-03-21",
+    date: "2024-12-29",
     changes: [
       {
-        title: "MLM-Einstellungen Verbesserungen",
+        title: "Verbesserte Registrierung",
         status: "completed" as const,
-        description: "KI-Analyse Button für automatische Firmendaten-Erfassung hinzugefügt"
+        description: "Live-Tracking für Passwort-Anforderungen während der Registrierung"
+      },
+      {
+        title: "Account-Verwaltung",
+        status: "completed" as const,
+        description: "Möglichkeit zum Löschen des Benutzerkontos hinzugefügt"
       },
       {
         title: "UI Verbesserungen",
@@ -26,25 +30,60 @@ const defaultChangelog = [
         description: "Neue Seite zur Verfolgung von Änderungen und geplanten Features"
       },
       {
-        title: "Handynummer & Sprache Einstellungen",
+        title: "Social Media Integrationen",
         status: "in-progress" as const,
-        description: "Behebung von Problemen beim Speichern von Handynummer und Spracheinstellungen"
-      },
-      {
-        title: "Automatische MLM-Datenerfassung",
-        status: "planned" as const,
-        description: "Verbesserung der KI-Analyse für genauere Firmendaten"
+        description: "Integration verschiedener Social-Media-Plattformen für besseres Lead-Management"
       }
     ]
   },
   {
     version: "0.1",
-    date: "2024-03-20",
+    date: "2024-12-21",
     changes: [
       {
         title: "Erste Version",
         status: "completed" as const,
         description: "Initiale Version mit grundlegenden Funktionen"
+      },
+      {
+        title: "Social Media Integrationen",
+        status: "completed" as const,
+        description: "Grundlegende Integration von verschiedenen Social-Media-Plattformen"
+      },
+      {
+        title: "KI-Nachrichtengenerierung",
+        status: "completed" as const,
+        description: "Automatische Generierung von personalisierten Nachrichten mit KI"
+      },
+      {
+        title: "Lead-Zusammenfassungen",
+        status: "completed" as const,
+        description: "KI-gestützte Zusammenfassungen von Lead-Informationen"
+      },
+      {
+        title: "Notizen & Aufgaben",
+        status: "completed" as const,
+        description: "System zum Erstellen und Verwalten von Notizen und Aufgaben"
+      },
+      {
+        title: "Kanban-Ansicht",
+        status: "completed" as const,
+        description: "Drag & Drop Kanban-Board für Lead-Management"
+      },
+      {
+        title: "Spracheinstellungen",
+        status: "completed" as const,
+        description: "Anpassbare Hauptsprache für die Benutzeroberfläche"
+      },
+      {
+        title: "Über Mich Profil",
+        status: "completed" as const,
+        description: "Profilbereich für bessere KI-Personalisierung"
+      },
+      {
+        title: "Anpassbare Lead-Phasen",
+        status: "completed" as const,
+        description: "Benutzerdefinierte Erstellung und Benennung von Lead-Phasen"
       }
     ]
   }
