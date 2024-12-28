@@ -6,14 +6,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 
-const Auth = () => {
+const Register = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
     password: "",
+    phoneNumber: "",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,51 +24,67 @@ const Auth = () => {
     });
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: {
+          data: {
+            full_name: formData.name,
+            phone: formData.phoneNumber,
+          },
+        },
       });
 
       if (error) throw error;
 
-      if (data.user) {
-        toast.success("Erfolgreich angemeldet!");
-        navigate("/dashboard");
+      if (data) {
+        // Create initial settings
+        const { error: settingsError } = await supabase
+          .from('settings')
+          .insert({
+            user_id: data.user?.id,
+            language: "Deutsch",
+            whatsapp_number: formData.phoneNumber,
+          });
+
+        if (settingsError) throw settingsError;
+
+        toast.success("Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail-Adresse.");
+        navigate("/auth");
       }
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('Registration error:', error);
       toast.error(error.message || "Ein Fehler ist aufgetreten");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'apple') => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback/${provider}`,
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      console.error(`${provider} login error:`, error);
-      toast.error(`Fehler beim ${provider}-Login`);
-    }
-  };
-
   return (
     <AuthCard
-      title="Anmeldung"
-      description="Melden Sie sich in Ihrem Konto an"
+      title="Registrierung"
+      description="Erstellen Sie Ihr Konto"
     >
-      <form onSubmit={handleLogin} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            name="name"
+            type="text"
+            placeholder="Max Mustermann"
+            value={formData.name}
+            onChange={handleInputChange}
+            disabled={isLoading}
+            required
+          />
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="email">E-Mail</Label>
           <Input
@@ -96,27 +113,35 @@ const Auth = () => {
           />
         </div>
 
+        <div className="space-y-2">
+          <Label htmlFor="phoneNumber">Telefonnummer</Label>
+          <Input
+            id="phoneNumber"
+            name="phoneNumber"
+            type="tel"
+            placeholder="+49 123 4567890"
+            value={formData.phoneNumber}
+            onChange={handleInputChange}
+            disabled={isLoading}
+            required
+          />
+        </div>
+
         <Button
           type="submit"
           className="w-full"
           disabled={isLoading}
         >
-          {isLoading ? "Laden..." : "Anmelden"}
+          {isLoading ? "Laden..." : "Registrieren"}
         </Button>
-
-        <SocialLoginButtons
-          onGoogleLogin={() => handleSocialLogin("google")}
-          onAppleLogin={() => handleSocialLogin("apple")}
-          isLoading={isLoading}
-        />
 
         <div className="mt-4 text-center">
           <button
             type="button"
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/auth")}
             className="text-sm text-muted-foreground hover:underline"
           >
-            Noch kein Account? Hier registrieren
+            Bereits registriert? Hier anmelden
           </button>
         </div>
       </form>
@@ -124,4 +149,4 @@ const Auth = () => {
   );
 };
 
-export default Auth;
+export default Register;

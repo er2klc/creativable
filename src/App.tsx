@@ -2,6 +2,7 @@ import { AppProvider } from "@/providers/AppProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Messages from "./pages/Messages";
@@ -17,6 +18,7 @@ const App = () => (
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/auth/callback/linkedin" element={<LinkedInCallback />} />
       <Route path="/auth/callback/instagram" element={<InstagramCallback />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
