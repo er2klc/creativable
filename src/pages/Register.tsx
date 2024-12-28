@@ -2,10 +2,18 @@ import { AuthCard } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { CheckCircle2, XCircle } from "lucide-react";
+
+const passwordRequirements = [
+  { check: (pwd: string) => pwd.length >= 8, label: "Mindestens 8 Zeichen" },
+  { check: (pwd: string) => /[A-Z]/.test(pwd), label: "Ein Großbuchstabe" },
+  { check: (pwd: string) => /[0-9]/.test(pwd), label: "Eine Zahl" },
+  { check: (pwd: string) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd), label: "Ein Sonderzeichen" },
+];
 
 const Register = () => {
   const navigate = useNavigate();
@@ -18,6 +26,18 @@ const Register = () => {
     phoneNumber: "",
   });
 
+  const [passwordStrength, setPasswordStrength] = useState<{
+    [key: string]: boolean;
+  }>({});
+
+  useEffect(() => {
+    const strength = passwordRequirements.reduce((acc, req) => ({
+      ...acc,
+      [req.label]: req.check(formData.password),
+    }), {});
+    setPasswordStrength(strength);
+  }, [formData.password]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -25,12 +45,19 @@ const Register = () => {
     });
   };
 
+  const isPasswordValid = Object.values(passwordStrength).every(Boolean);
+  const doPasswordsMatch = formData.password === formData.confirmPassword;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      if (formData.password !== formData.confirmPassword) {
+      if (!isPasswordValid) {
+        throw new Error("Passwort erfüllt nicht alle Anforderungen");
+      }
+
+      if (!doPasswordsMatch) {
         throw new Error("Passwörter stimmen nicht überein");
       }
 
@@ -115,8 +142,19 @@ const Register = () => {
             onChange={handleInputChange}
             disabled={isLoading}
             required
-            minLength={8}
           />
+          <div className="space-y-2 text-sm">
+            {passwordRequirements.map(({ label }) => (
+              <div key={label} className="flex items-center gap-2 transition-opacity duration-200" style={{ opacity: passwordStrength[label] ? 1 : 0.5 }}>
+                {passwordStrength[label] ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-500 transition-transform duration-200 animate-in fade-in-0" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-gray-400" />
+                )}
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -150,7 +188,7 @@ const Register = () => {
         <Button
           type="submit"
           className="w-full"
-          disabled={isLoading || formData.password !== formData.confirmPassword}
+          disabled={isLoading || !isPasswordValid || !doPasswordsMatch}
         >
           {isLoading ? "Laden..." : "Registrieren"}
         </Button>
