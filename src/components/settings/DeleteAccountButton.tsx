@@ -25,46 +25,23 @@ export function DeleteAccountButton() {
     try {
       setIsDeleting(true);
 
-      // Get current user
-      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-      if (userError) throw userError;
-      if (!user) throw new Error("No user found");
+      // Get the session
+      const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!session) throw new Error("No session found");
 
-      // Delete all user data from all tables
-      const tables = [
-        'documents',
-        'keywords',
-        'lead_phases',
-        'leads',
-        'message_templates',
-        'messages',
-        'notes',
-        'platform_auth_status',
-        'settings',
-        'tasks'
-      ];
-
-      for (const table of tables) {
-        const { error } = await supabaseClient
-          .from(table)
-          .delete()
-          .eq('user_id', user.id);
-        
-        if (error) {
-          console.error(`Error deleting from ${table}:`, error);
-        }
-      }
-
-      // Delete the user from Supabase Auth
-      const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(
-        user.id
-      );
+      // Call the Edge Function to delete the account
+      const { error: deleteError } = await supabaseClient.functions.invoke('delete-user-account', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
       if (deleteError) {
         throw deleteError;
       }
 
-      // Sign out the user
+      // Sign out the user locally
       await supabaseClient.auth.signOut();
       
       toast({
