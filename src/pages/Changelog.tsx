@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { ChangelogEntry } from "@/components/changelog/ChangelogEntry";
 import { ChangelogItem } from "@/components/changelog/types";
 
