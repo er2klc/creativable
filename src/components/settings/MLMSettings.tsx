@@ -21,6 +21,11 @@ export function MLMSettings() {
   };
 
   const fetchCompanyInfo = async () => {
+    if (!settings?.company_name) {
+      toast.error("Bitte geben Sie zuerst einen Firmennamen ein");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('fetch-company-info', {
