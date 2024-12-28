@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface ChangelogEntry {
   version: string;
@@ -69,15 +70,30 @@ const changelog: ChangelogEntry[] = [
 export default function Changelog() {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data: entries } = useQuery({
+    queryKey: ["changelog_entries"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("changelog_entries")
+        .select("*")
+        .order("version", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   React.useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) return;
       
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
         .single();
       
       setIsAdmin(profile?.is_admin || false);
@@ -89,19 +105,41 @@ export default function Changelog() {
   const handleStatusChange = async (version: string, title: string, newStatus: string) => {
     try {
       const { error } = await supabase
-        .from('changelog_entries')
+        .from("changelog_entries")
         .update({ status: newStatus })
-        .eq('version', version)
-        .eq('title', title);
+        .eq("version", version)
+        .eq("title", title);
 
       if (error) throw error;
 
-      toast.success('Status erfolgreich aktualisiert');
+      // Invalidate and refetch
+      await queryClient.invalidateQueries({ queryKey: ["changelog_entries"] });
+      setIsEditing(null);
+      toast.success("Status erfolgreich aktualisiert");
     } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error('Fehler beim Aktualisieren des Status');
+      console.error("Error updating status:", error);
+      toast.error("Fehler beim Aktualisieren des Status");
     }
   };
+
+  const StatusBadge = ({ status, onClick }: { status: string; onClick?: () => void }) => (
+    <span
+      onClick={onClick}
+      className={`text-xs px-2 py-1 rounded-full cursor-${onClick ? 'pointer' : 'default'} ${
+        status === 'completed'
+          ? 'bg-green-100 text-green-800'
+          : status === 'in-progress'
+          ? 'bg-blue-100 text-blue-800'
+          : 'bg-orange-100 text-orange-800'
+      }`}
+    >
+      {status === 'completed'
+        ? '✓ Fertig'
+        : status === 'in-progress'
+        ? '⚡ In Arbeit'
+        : '📅 Geplant'}
+    </span>
+  );
 
   return (
     <div className="container mx-auto py-8">
@@ -124,7 +162,7 @@ export default function Changelog() {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{change.title}</span>
-                        {isAdmin ? (
+                        {isAdmin && isEditing === `${entry.version}-${change.title}` ? (
                           <Select
                             defaultValue={change.status}
                             onValueChange={(value) => handleStatusChange(entry.version, change.title, value)}
@@ -139,15 +177,10 @@ export default function Changelog() {
                             </SelectContent>
                           </Select>
                         ) : (
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            change.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            change.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                            'bg-orange-100 text-orange-800'
-                          }`}>
-                            {change.status === 'completed' ? '✓ Fertig' :
-                             change.status === 'in-progress' ? '⚡ In Arbeit' :
-                             '📅 Geplant'}
-                          </span>
+                          <StatusBadge 
+                            status={change.status} 
+                            onClick={isAdmin ? () => setIsEditing(`${entry.version}-${change.title}`) : undefined}
+                          />
                         )}
                       </div>
                     </div>
