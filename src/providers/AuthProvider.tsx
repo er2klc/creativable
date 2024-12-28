@@ -20,11 +20,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (sessionError) {
           console.error("[Auth] Session error:", sessionError);
-          // Clear any invalid session data
-          await supabase.auth.signOut();
-          if (!publicPaths.includes(location.pathname)) {
-            navigate("/auth");
-          }
+          await handleSessionError(sessionError);
           return;
         }
 
@@ -36,10 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           if (userError || !user) {
             console.error("[Auth] Invalid user detected:", userError);
-            await supabase.auth.signOut();
-            if (!publicPaths.includes(location.pathname)) {
-              navigate("/auth");
-            }
+            await handleSessionError(userError);
             return;
           }
 
@@ -52,25 +45,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           navigate("/auth");
         }
 
-        // Setup auth state listener
+        // Setup auth state listener with automatic token refresh
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           console.log("[Auth] Auth state changed:", event, session?.user?.id);
 
           if (event === "SIGNED_IN") {
-            // Verify user exists after sign in
             const { data: { user }, error: userError } = await supabase.auth.getUser();
             
             if (userError || !user) {
               console.error("[Auth] Invalid user after sign in:", userError);
-              await supabase.auth.signOut();
-              navigate("/auth");
+              await handleSessionError(userError);
               return;
             }
 
             setIsAuthenticated(true);
             console.log("[Auth] User signed in, redirecting to dashboard");
             navigate("/dashboard");
-          } else if (event === "SIGNED_OUT") {
+          } else if (event === "SIGNED_OUT" || event === "USER_DELETED") {
             setIsAuthenticated(false);
             console.log("[Auth] User signed out, redirecting to auth");
             navigate("/auth");
@@ -80,8 +71,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             if (userError || !user) {
               console.error("[Auth] Invalid user after token refresh:", userError);
-              await supabase.auth.signOut();
-              navigate("/auth");
+              await handleSessionError(userError);
               return;
             }
 
@@ -93,13 +83,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         authListener = subscription;
       } catch (error: any) {
         console.error("[Auth] Setup error:", error);
-        // Clear any potentially corrupted auth state
-        await supabase.auth.signOut();
-        toast.error("Ein Fehler ist aufgetreten. Bitte melden Sie sich erneut an.");
+        await handleSessionError(error);
       } finally {
         setIsLoading(false);
       }
     };
+
+    const handleSessionError = async (error: any) => {
+      // Clear any potentially corrupted auth state
+      await supabase.auth.signOut();
+      setIsAuthenticated(false);
+
+      // Check if it's a session expiration error
+      if (error?.message?.includes("session_not_found") || error?.error?.message?.includes("session_not_found")) {
+        toast.error("Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.");
+      } else {
+        toast.error("Ein Fehler ist aufgetreten. Bitte melden Sie sich erneut an.");
+      }
+
+      // Only redirect if not already on a public path
+      if (!publicPaths.includes(location.pathname)) {
+        navigate("/auth");
+      }
+    };
+
+    // Attempt to refresh the session periodically (every 10 minutes)
+    const refreshInterval = setInterval(async () => {
+      try {
+        const { error } = await supabase.auth.refreshSession();
+        if (error) {
+          console.error("[Auth] Session refresh failed:", error);
+          await handleSessionError(error);
+        }
+      } catch (error) {
+        console.error("[Auth] Error during session refresh:", error);
+      }
+    }, 10 * 60 * 1000); // 10 minutes
 
     setupAuth();
 
@@ -108,6 +127,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (authListener) {
         authListener.unsubscribe();
       }
+      clearInterval(refreshInterval);
     };
   }, [navigate, location.pathname]);
 
