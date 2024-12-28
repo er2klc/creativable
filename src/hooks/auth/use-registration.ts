@@ -7,6 +7,7 @@ export interface RegistrationData {
   name: string;
   email: string;
   password: string;
+  confirmPassword: string;
   phoneNumber: string;
   language: string;
 }
@@ -19,6 +20,7 @@ export const useRegistration = () => {
     name: "",
     email: "",
     password: "",
+    confirmPassword: "",
     phoneNumber: "",
     language: "Deutsch",
   });
