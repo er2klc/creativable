@@ -14,6 +14,7 @@ const Register = () => {
     name: "",
     email: "",
     password: "",
+    confirmPassword: "",
     phoneNumber: "",
   });
 
@@ -29,6 +30,10 @@ const Register = () => {
     setIsLoading(true);
 
     try {
+      if (formData.password !== formData.confirmPassword) {
+        throw new Error("Passwörter stimmen nicht überein");
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -43,7 +48,7 @@ const Register = () => {
       if (error) throw error;
 
       if (data) {
-        // Create initial settings
+        // Create initial settings with phone number
         const { error: settingsError } = await supabase
           .from('settings')
           .insert({
@@ -110,6 +115,21 @@ const Register = () => {
             onChange={handleInputChange}
             disabled={isLoading}
             required
+            minLength={8}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Passwort bestätigen</Label>
+          <Input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            placeholder="••••••••"
+            value={formData.confirmPassword}
+            onChange={handleInputChange}
+            disabled={isLoading}
+            required
           />
         </div>
 
@@ -130,7 +150,7 @@ const Register = () => {
         <Button
           type="submit"
           className="w-full"
-          disabled={isLoading}
+          disabled={isLoading || formData.password !== formData.confirmPassword}
         >
           {isLoading ? "Laden..." : "Registrieren"}
         </Button>
