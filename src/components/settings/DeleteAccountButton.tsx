@@ -55,7 +55,16 @@ export function DeleteAccountButton() {
         }
       }
 
-      // Sign out the user first
+      // Delete the user from Supabase Auth
+      const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(
+        user.id
+      );
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      // Sign out the user
       await supabaseClient.auth.signOut();
       
       toast({
