@@ -72,7 +72,6 @@ export function GeneralSettings() {
           {
             user_id: session.user.id,
             language: values.language,
-            name: values.name,
             updated_at: new Date().toISOString(),
           },
           { 
