@@ -67,7 +67,9 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         const profile = profileData?.find(p => p.id === member.user_id);
         return {
           ...member,
-          profiles: profile || { email: member.user_id }  // Fallback to user_id if no email
+          profiles: profile || { 
+            email: 'Unbekannter Benutzer'  // Default to "Unknown User" in German if no email
+          }
         };
       });
     },
@@ -97,7 +99,9 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         const profile = profileData?.find(p => p.id === admin.user_id);
         return {
           ...admin,
-          profiles: profile || { email: admin.user_id }  // Fallback to user_id if no email
+          profiles: profile || { 
+            email: 'Unbekannter Benutzer'  // Default to "Unknown User" in German if no email
+          }
         };
       });
     },
