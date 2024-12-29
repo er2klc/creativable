@@ -117,6 +117,10 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   console.log('Admin Members:', adminMembers);
   console.log('Current team ID:', team.id);
 
+  // Calculate correct counts
+  const membersCount = members?.length || 0;
+  const adminsCount = adminMembers?.length || 0;
+
   return (
     <div className="bg-background border-b">
       <div className="container py-4">
@@ -124,8 +128,8 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           <TeamHeaderTitle 
             team={team}
             isAdmin={isAdmin || false}
-            membersCount={members?.length || 0}
-            adminsCount={adminMembers?.length || 0}
+            membersCount={membersCount}
+            adminsCount={adminsCount}
             members={members || []}
             adminMembers={adminMembers || []}
           />
