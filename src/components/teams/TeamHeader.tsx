@@ -6,6 +6,18 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { TeamHeaderTitle } from "./header/TeamHeaderTitle";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface TeamHeaderProps {
   team: {
@@ -72,6 +84,35 @@ export function TeamHeader({ team }: TeamHeaderProps) {
     enabled: !!team.id,
   });
 
+  const handleLeaveTeam = async () => {
+    try {
+      const { data: membershipData } = await supabase
+        .from('team_members')
+        .select('id')
+        .eq('team_id', team.id)
+        .eq('user_id', user?.id)
+        .single();
+
+      if (!membershipData) {
+        toast.error("Mitgliedschaft nicht gefunden");
+        return;
+      }
+
+      const { error } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('id', membershipData.id);
+
+      if (error) throw error;
+
+      toast.success("Team erfolgreich verlassen");
+      navigate('/unity');
+    } catch (error) {
+      console.error('Error leaving team:', error);
+      toast.error("Fehler beim Verlassen des Teams");
+    }
+  };
+
   // Filter admins from the full members list
   const adminMembers = members?.filter(member => 
     member.role === 'admin' || member.role === 'owner'
@@ -80,10 +121,6 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   // Calculate counts
   const membersCount = members?.length || 0;
   const adminsCount = adminMembers.length;
-
-  console.log('Members:', members);
-  console.log('Admin Members:', adminMembers);
-  console.log('Current team ID:', team.id);
 
   return (
     <div className="bg-background border-b">
@@ -97,13 +134,45 @@ export function TeamHeader({ team }: TeamHeaderProps) {
             members={members || []}
             adminMembers={adminMembers}
           />
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/unity')}
-            className="text-sm text-muted-foreground hover:text-primary transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {!isAdmin && user && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="text-sm text-destructive hover:bg-destructive/10"
+                  >
+                    Team verlassen
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Team verlassen</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Sind Sie sicher, dass Sie dieses Team verlassen möchten? 
+                      Diese Aktion kann nicht rückgängig gemacht werden.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleLeaveTeam}
+                      className="bg-destructive hover:bg-destructive/90"
+                    >
+                      Verlassen
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/unity')}
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         <Separator className="my-4" />
       </div>
