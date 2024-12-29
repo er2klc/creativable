@@ -15,21 +15,11 @@ interface TeamHeaderProps {
   };
 }
 
-interface TeamMemberResponse {
-  id: string;
-  role: string;
-  user_id: string;
-  profiles: {
-    display_name: string | null;
-    email: string | null;
-  };
-}
-
 interface TeamMember {
   id: string;
   role: string;
   user_id: string;
-  display_name: string;
+  display_name: string | null;
 }
 
 export function TeamHeader({ team }: TeamHeaderProps) {
@@ -53,15 +43,15 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: members } = useQuery<TeamMember[]>({
     queryKey: ['team-members', team.id],
     queryFn: async () => {
+      console.log('Fetching team members for team:', team.id);
       const { data, error } = await supabase
         .from('team_members')
         .select(`
           id,
           role,
           user_id,
-          profiles:user_id (
-            display_name,
-            email
+          profiles!inner (
+            display_name
           )
         `)
         .eq('team_id', team.id);
@@ -71,13 +61,13 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      if (!data) return [];
+      console.log('Raw team members data:', data);
 
       return data.map((member: any) => ({
         id: member.id,
         role: member.role,
         user_id: member.user_id,
-        display_name: member.profiles?.display_name || member.profiles?.email || 'Unbekannter Benutzer'
+        display_name: member.profiles.display_name || 'Unbekannter Benutzer'
       }));
     },
   });
@@ -85,15 +75,15 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: adminMembers } = useQuery<TeamMember[]>({
     queryKey: ['team-admins', team.id],
     queryFn: async () => {
+      console.log('Fetching admin members for team:', team.id);
       const { data, error } = await supabase
         .from('team_members')
         .select(`
           id,
           role,
           user_id,
-          profiles:user_id (
-            display_name,
-            email
+          profiles!inner (
+            display_name
           )
         `)
         .eq('team_id', team.id)
@@ -104,19 +94,20 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      if (!data) return [];
+      console.log('Raw admin members data:', data);
 
       return data.map((admin: any) => ({
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
-        display_name: admin.profiles?.display_name || admin.profiles?.email || 'Unbekannter Benutzer'
+        display_name: admin.profiles.display_name || 'Unbekannter Benutzer'
       }));
     },
   });
 
   console.log('Members:', members);
   console.log('Admin Members:', adminMembers);
+  console.log('Current team ID:', team.id);
 
   return (
     <div className="bg-background border-b">
