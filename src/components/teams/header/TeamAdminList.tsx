@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface TeamAdminListProps {
   admins: any[];
@@ -10,9 +11,19 @@ export function TeamAdminList({ admins }: TeamAdminListProps) {
       {admins?.filter(admin => ['admin', 'owner'].includes(admin.role)).map((admin) => (
         <div key={admin.id} className="flex items-center justify-between p-2 border rounded">
           <div className="flex items-center gap-2">
-            <Badge variant={admin.role === 'owner' ? 'default' : 'secondary'}>
-              {admin.role === 'owner' ? 'Owner' : 'Admin'}
-            </Badge>
+            <Avatar className="h-8 w-8">
+              <AvatarFallback>
+                {admin.profiles?.email?.substring(0, 2).toUpperCase() || '??'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">
+                {admin.profiles?.email?.split('@')[0] || 'Unbekannt'}
+              </span>
+              <Badge variant={admin.role === 'owner' ? 'default' : 'secondary'} className="mt-1">
+                {admin.role === 'owner' ? 'Owner' : 'Admin'}
+              </Badge>
+            </div>
           </div>
         </div>
       ))}

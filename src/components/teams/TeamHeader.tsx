@@ -49,7 +49,14 @@ export function TeamHeader({ team }: TeamHeaderProps) {
     queryFn: async () => {
       const { data } = await supabase
         .from('team_members')
-        .select('id, role')
+        .select(`
+          id, 
+          role,
+          user_id,
+          profiles:user_id (
+            email
+          )
+        `)
         .eq('team_id', team.id);
       
       return data;
@@ -61,7 +68,14 @@ export function TeamHeader({ team }: TeamHeaderProps) {
     queryFn: async () => {
       const { data } = await supabase
         .from('team_members')
-        .select('id, role')
+        .select(`
+          id, 
+          role,
+          user_id,
+          profiles:user_id (
+            email
+          )
+        `)
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);
       
@@ -89,13 +103,26 @@ export function TeamHeader({ team }: TeamHeaderProps) {
                 <h1 className="text-3xl font-semibold text-primary">
                   {team.name}
                 </h1>
-                <TeamLogoUpload teamId={team.id} currentLogoUrl={team.logo_url} />
+                {isAdmin && <TeamLogoUpload teamId={team.id} currentLogoUrl={team.logo_url} />}
               </div>
               <div className="flex items-center gap-4 mt-1 text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  <span>{members?.length || 0} Mitglieder</span>
-                </div>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      <span>{members?.length || 0} Mitglieder</span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent>
+                    <SheetHeader>
+                      <SheetTitle>Team Mitglieder</SheetTitle>
+                      <SheetDescription>
+                        Übersicht aller Mitglieder in diesem Team
+                      </SheetDescription>
+                    </SheetHeader>
+                    <TeamMemberList members={members || []} isAdmin={isAdmin} />
+                  </SheetContent>
+                </Sheet>
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant="ghost" size="sm" className="flex items-center gap-1">
