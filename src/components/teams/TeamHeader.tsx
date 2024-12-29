@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -16,6 +15,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { TeamMemberList } from "./header/TeamMemberList";
+import { TeamAdminList } from "./header/TeamAdminList";
 
 interface TeamHeaderProps {
   team: {
@@ -23,13 +24,9 @@ interface TeamHeaderProps {
     name: string;
     logo_url?: string;
   };
-  teamStats?: {
-    totalMembers: number;
-    admins: number;
-  };
 }
 
-export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
+export function TeamHeader({ team }: TeamHeaderProps) {
   const navigate = useNavigate();
   const user = useUser();
 
@@ -52,15 +49,7 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
     queryFn: async () => {
       const { data } = await supabase
         .from('team_members')
-        .select(`
-          id,
-          role,
-          user_id,
-          profiles:profiles!team_members_user_id_fkey (
-            id,
-            email
-          )
-        `)
+        .select('id, role')
         .eq('team_id', team.id);
       
       return data;
@@ -72,15 +61,7 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
     queryFn: async () => {
       const { data } = await supabase
         .from('team_members')
-        .select(`
-          id,
-          role,
-          user_id,
-          profiles:profiles!team_members_user_id_fkey (
-            id,
-            email
-          )
-        `)
+        .select('id, role')
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);
       
@@ -129,18 +110,7 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
                         Übersicht aller Administratoren in diesem Team
                       </SheetDescription>
                     </SheetHeader>
-                    <div className="mt-4 space-y-4">
-                      {members?.filter(member => ['admin', 'owner'].includes(member.role)).map((admin) => (
-                        <div key={admin.id} className="flex items-center justify-between p-2 border rounded">
-                          <div className="flex items-center gap-2">
-                            <Badge variant={admin.role === 'owner' ? 'default' : 'secondary'}>
-                              {admin.role === 'owner' ? 'Owner' : 'Admin'}
-                            </Badge>
-                            <span className="text-sm">{admin.profiles?.email}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <TeamAdminList admins={adminMembers || []} />
                   </SheetContent>
                 </Sheet>
                 {isAdmin && (
@@ -158,33 +128,7 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
                           Hier können Sie Mitgliederrollen verwalten und neue Admins ernennen.
                         </SheetDescription>
                       </SheetHeader>
-                      <div className="mt-4 space-y-4">
-                        {members?.map((member) => (
-                          <div key={member.id} className="flex items-center justify-between p-2 border rounded">
-                            <div className="flex items-center gap-2">
-                              <Badge variant={member.role === 'owner' ? 'default' : 'secondary'}>
-                                {member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Mitglied'}
-                              </Badge>
-                              <span className="text-sm">{member.profiles?.email}</span>
-                            </div>
-                            {member.role !== 'owner' && isAdmin && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={async () => {
-                                  const newRole = member.role === 'admin' ? 'member' : 'admin';
-                                  await supabase
-                                    .from('team_members')
-                                    .update({ role: newRole })
-                                    .eq('id', member.id);
-                                }}
-                              >
-                                {member.role === 'admin' ? 'Zum Mitglied machen' : 'Zum Admin machen'}
-                              </Button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                      <TeamMemberList members={members || []} isAdmin={isAdmin} />
                     </SheetContent>
                   </Sheet>
                 )}
