@@ -16,7 +16,7 @@ export function PostList({ teamId }: PostListProps) {
         .select(`
           *,
           team_categories (name),
-          profiles (email)
+          created_by_profile:profiles!team_posts_created_by_fkey (email)
         `)
         .eq('team_id', teamId)
         .order('created_at', { ascending: false });
@@ -45,7 +45,7 @@ export function PostList({ teamId }: PostListProps) {
               </div>
             </div>
             <div className="mt-4 text-sm text-muted-foreground">
-              Erstellt von {post.profiles?.email} am {new Date(post.created_at).toLocaleDateString()}
+              Erstellt von {post.created_by_profile?.email} am {new Date(post.created_at).toLocaleDateString()}
             </div>
           </CardContent>
         </Card>
