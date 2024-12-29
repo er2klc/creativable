@@ -19,7 +19,7 @@ interface TeamMemberResponse {
   id: string;
   role: string;
   user_id: string;
-  user: {
+  profiles: {
     display_name: string;
     email: string;
   };
@@ -52,9 +52,9 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          user:user_id (
-            display_name:profiles!inner(display_name),
-            email:profiles!inner(email)
+          profiles (
+            display_name,
+            email
           )
         `)
         .eq('team_id', team.id);
@@ -68,7 +68,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         id: member.id,
         role: member.role,
         user_id: member.user_id,
-        display_name: member.user?.display_name || member.user?.email || 'Unbekannter Benutzer'
+        display_name: member.profiles?.display_name || member.profiles?.email || 'Unbekannter Benutzer'
       })) || [];
     },
   });
@@ -82,9 +82,9 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          user:user_id (
-            display_name:profiles!inner(display_name),
-            email:profiles!inner(email)
+          profiles (
+            display_name,
+            email
           )
         `)
         .eq('team_id', team.id)
@@ -99,7 +99,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
-        display_name: admin.user?.display_name || admin.user?.email || 'Unbekannter Benutzer'
+        display_name: admin.profiles?.display_name || admin.profiles?.email || 'Unbekannter Benutzer'
       })) || [];
     },
   });
