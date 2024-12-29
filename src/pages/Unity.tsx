@@ -7,12 +7,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Infinity, Users, Plus } from "lucide-react";
 import type { Team } from "@/integrations/supabase/types/teams";
+import { InviteTeamMemberDialog } from "@/components/teams/InviteTeamMemberDialog";
 
 const Unity = () => {
   const navigate = useNavigate();
   const user = useUser();
 
-  const { data: teams, isLoading } = useQuery<Team[]>({
+  const { data: teams, isLoading, refetch } = useQuery<Team[]>({
     queryKey: ['teams'],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -80,8 +81,11 @@ const Unity = () => {
                   {team.description || 'Keine Beschreibung verfügbar'}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                {/* Team details will be added here */}
+              <CardContent className="flex justify-end">
+                <InviteTeamMemberDialog 
+                  teamId={team.id} 
+                  onInviteSent={refetch}
+                />
               </CardContent>
             </Card>
           ))
