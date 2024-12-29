@@ -13,12 +13,17 @@ interface InviteTeamMemberDialogProps {
   onInviteSent?: () => void;
 }
 
+interface SearchResult {
+  id: string;
+  email: string;
+}
+
 export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMemberDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [email, setEmail] = useState("");
-  const [searchResults, setSearchResults] = useState<Array<{ id: string; email: string }>>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showEmailInput, setShowEmailInput] = useState(false);
   const user = useUser();
 
@@ -29,14 +34,14 @@ export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMembe
     }
 
     try {
-      const { data: profiles, error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('id, email')
         .textSearch('email', query)
         .limit(5);
 
       if (error) throw error;
-      setSearchResults(profiles || []);
+      setSearchResults(data || []);
     } catch (error: any) {
       console.error("Error searching users:", error);
       setSearchResults([]);
@@ -57,7 +62,6 @@ export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMembe
     try {
       setIsLoading(true);
 
-      // First get the user's registration_company_name from settings
       const { data: adminData, error: adminError } = await supabase
         .from('settings')
         .select('registration_company_name')
