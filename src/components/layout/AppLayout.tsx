@@ -33,7 +33,7 @@ const APP_VERSION = "0.2";
 
 const navigationItems = [
   { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
-  { title: "Unity", icon: Infinity, url: "/unity", className: "font-['Orbitron'] text-primary" },
+  { title: "Unity", icon: Infinity, url: "/unity" },
   { title: "Kontakt", icon: Users, url: "/leads" },
   { 
     title: "Nachrichten", 
