@@ -4,7 +4,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Infinity, Users, UserPlus, Crown, Image as ImageIcon, Copy, Plus } from "lucide-react";
+import { Infinity, Users, UserPlus, Crown, Copy, Trash2 } from "lucide-react";
 import type { Team } from "@/integrations/supabase/types/teams";
 import { CreateTeamDialog } from "@/components/teams/CreateTeamDialog";
 import { JoinTeamDialog } from "@/components/teams/JoinTeamDialog";
@@ -13,6 +13,17 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const Unity = () => {
   const navigate = useNavigate();
@@ -61,9 +72,27 @@ const Unity = () => {
     }
   }, [user, navigate]);
 
-  const copyJoinCode = async (joinCode: string) => {
+  const copyJoinCode = async (joinCode: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     await navigator.clipboard.writeText(joinCode);
     toast.success("Beitritts-Code kopiert!");
+  };
+
+  const handleDeleteTeam = async (teamId: string) => {
+    try {
+      const { error } = await supabase
+        .from('teams')
+        .delete()
+        .eq('id', teamId);
+
+      if (error) throw error;
+
+      toast.success("Team erfolgreich gelöscht");
+      refetch();
+    } catch (error: any) {
+      console.error("Error deleting team:", error);
+      toast.error("Fehler beim Löschen des Teams");
+    }
   };
 
   if (!user) return null;
@@ -130,24 +159,56 @@ const Unity = () => {
                           </CardDescription>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2">
-                      {team.join_code && (
-                        <div className="flex items-center gap-2 p-2 bg-muted rounded-lg flex-1">
-                          <code className="text-sm flex-1">Code: {team.join_code}</code>
-                          <Button 
-                            size="icon" 
+                      <div className="flex gap-2">
+                        {team.join_code && (
+                          <Button
+                            size="icon"
                             variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              copyJoinCode(team.join_code!);
-                            }}
+                            onClick={(e) => copyJoinCode(team.join_code!, e)}
+                            className="h-8 w-8"
                           >
                             <Copy className="h-4 w-4" />
                           </Button>
-                        </div>
-                      )}
+                        )}
+                        {team.created_by === user.id && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Team löschen</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Sind Sie sicher, dass Sie dieses Team löschen möchten? 
+                                  Diese Aktion kann nicht rückgängig gemacht werden. 
+                                  Alle Teammitglieder werden entfernt.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
+                                  Abbrechen
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteTeam(team.id);
+                                  }}
+                                  className="bg-destructive hover:bg-destructive/90"
+                                >
+                                  Löschen
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
