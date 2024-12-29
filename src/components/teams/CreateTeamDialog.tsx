@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Copy, Upload, Image } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { useTeamCreation } from "./hooks/useTeamCreation";
+import { TeamLogoUpload } from "./TeamLogoUpload";
 
 interface CreateTeamDialogProps {
   onTeamCreated?: () => void;
@@ -15,13 +17,21 @@ interface CreateTeamDialogProps {
 
 export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [joinCode, setJoinCode] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const user = useUser();
+  
+  const { isLoading, handleCreate } = useTeamCreation({
+    onSuccess: (code) => {
+      setJoinCode(code);
+      onTeamCreated?.();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Fehler beim Erstellen des Teams");
+    }
+  });
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -35,104 +45,16 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
     }
   };
 
-  const uploadLogo = async (teamId: string): Promise<string | null> => {
-    if (!logoFile) return null;
-
-    const fileExt = logoFile.name.split('.').pop();
-    const filePath = `${teamId}/logo.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('team-logos')
-      .upload(filePath, logoFile);
-
-    if (uploadError) {
-      console.error("Error uploading logo:", uploadError);
-      throw uploadError;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('team-logos')
-      .getPublicUrl(filePath);
-
-    return publicUrl;
-  };
-
-  const handleCreate = async () => {
-    if (!user) {
-      toast.error("Sie müssen eingeloggt sein, um ein Team zu erstellen");
-      return;
-    }
-
-    if (!name.trim()) {
-      toast.error("Bitte geben Sie einen Team-Namen ein");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { data: team, error: teamError } = await supabase
-        .from("teams")
-        .insert({
-          name: name.trim(),
-          description: description.trim(),
-          created_by: user.id,
-        })
-        .select('id, name, join_code')
-        .single();
-
-      if (teamError) {
-        console.error("Error inserting team:", teamError);
-        throw teamError;
-      }
-
-      if (!team) {
-        throw new Error("Team wurde erstellt, aber keine Daten zurückgegeben");
-      }
-
-      let logoUrl = null;
-      if (logoFile) {
-        logoUrl = await uploadLogo(team.id);
-        const { error: updateError } = await supabase
-          .from("teams")
-          .update({ logo_url: logoUrl })
-          .eq('id', team.id);
-
-        if (updateError) {
-          console.error("Error updating team logo:", updateError);
-          throw updateError;
-        }
-      }
-
-      const { error: memberError } = await supabase
-        .from("team_members")
-        .insert({
-          team_id: team.id,
-          user_id: user.id,
-          role: "owner",
-        });
-
-      if (memberError) {
-        console.error("Error creating team member:", memberError);
-        throw memberError;
-      }
-
-      setJoinCode(team.join_code);
-      toast.success("Team erfolgreich erstellt");
-      onTeamCreated?.();
-    } catch (error: any) {
-      console.error("Error creating team:", error);
-      toast.error(error.message || "Fehler beim Erstellen des Teams");
-      if (error.hint) console.error("Policy hint:", error.hint);
-    } finally {
-      setIsLoading(false);
+  const copyJoinCode = async () => {
+    if (joinCode) {
+      await navigator.clipboard.writeText(joinCode);
+      toast.success("Beitritts-Code kopiert!");
     }
   };
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
-      setIsLoading(false);
       setName("");
       setDescription("");
       setJoinCode(null);
@@ -141,11 +63,12 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
     }
   };
 
-  const copyJoinCode = async () => {
-    if (joinCode) {
-      await navigator.clipboard.writeText(joinCode);
-      toast.success("Beitritts-Code kopiert!");
-    }
+  const handleSubmit = async () => {
+    await handleCreate({
+      name,
+      description,
+      logoFile
+    });
   };
 
   return (
@@ -186,51 +109,14 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
               </div>
             </div>
 
-            <div className="space-y-4">
-              <Label>Team Logo</Label>
-              <div className="flex flex-col items-center gap-4">
-                {logoPreview ? (
-                  <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-primary/20">
-                    <img
-                      src={logoPreview}
-                      alt="Team logo preview"
-                      className="w-full h-full object-cover"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-0 right-0 bg-background/80 hover:bg-background"
-                      onClick={() => {
-                        setLogoFile(null);
-                        setLogoPreview(null);
-                      }}
-                    >
-                      ×
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="w-32 h-32 rounded-full border-2 border-dashed border-primary/20 flex items-center justify-center">
-                    <Image className="w-12 h-12 text-muted-foreground" />
-                  </div>
-                )}
-                <div className="flex justify-center">
-                  <Label
-                    htmlFor="logo-upload"
-                    className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Logo hochladen
-                    <Input
-                      id="logo-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleLogoChange}
-                    />
-                  </Label>
-                </div>
-              </div>
-            </div>
+            <TeamLogoUpload
+              logoPreview={logoPreview}
+              onLogoChange={handleLogoChange}
+              onLogoRemove={() => {
+                setLogoFile(null);
+                setLogoPreview(null);
+              }}
+            />
           </div>
         ) : (
           <div className="space-y-4">
@@ -251,7 +137,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
         <DialogFooter>
           {!joinCode ? (
             <Button
-              onClick={handleCreate}
+              onClick={handleSubmit}
               disabled={!name.trim() || isLoading}
             >
               {isLoading ? "Erstelle..." : "Team erstellen"}

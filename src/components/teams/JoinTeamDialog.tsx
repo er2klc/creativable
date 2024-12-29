@@ -31,37 +31,32 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
     setIsLoading(true);
 
     try {
-      // Find team by join code
       const { data: team, error: teamError } = await supabase
         .from("teams")
         .select("id")
         .eq("join_code", joinCode.trim())
         .single();
 
-      if (teamError || !team) {
-        throw new Error("Ungültiger Beitritts-Code");
-      }
+      if (teamError) throw new Error("Ungültiger Beitritts-Code");
 
-      // Check if user is already a member
       const { data: existingMember, error: memberCheckError } = await supabase
         .from("team_members")
         .select("id")
         .eq("team_id", team.id)
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (existingMember) {
-        throw new Error("Sie sind bereits Mitglied dieses Teams");
-      }
+      if (memberCheckError) throw new Error("Fehler beim Überprüfen der Mitgliedschaft");
+      if (existingMember) throw new Error("Sie sind bereits Mitglied dieses Teams");
 
-      // Join team
       const { error: joinError } = await supabase
         .from("team_members")
         .insert({
           team_id: team.id,
           user_id: user.id,
           role: "member",
-        });
+        })
+        .select();
 
       if (joinError) throw joinError;
 
@@ -101,6 +96,7 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value)}
             placeholder="Geben Sie den Beitritts-Code ein"
+            disabled={isLoading}
           />
         </div>
         <DialogFooter>

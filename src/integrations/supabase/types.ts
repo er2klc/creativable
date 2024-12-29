@@ -723,6 +723,7 @@ export type Database = {
           logo_url: string | null
           max_members: number | null
           name: string
+          order_index: number | null
         }
         Insert: {
           created_at?: string | null
@@ -733,6 +734,7 @@ export type Database = {
           logo_url?: string | null
           max_members?: number | null
           name: string
+          order_index?: number | null
         }
         Update: {
           created_at?: string | null
@@ -743,6 +745,7 @@ export type Database = {
           logo_url?: string | null
           max_members?: number | null
           name?: string
+          order_index?: number | null
         }
         Relationships: []
       }
@@ -768,6 +771,7 @@ export type Database = {
           logo_url: string | null
           max_members: number | null
           name: string
+          order_index: number | null
         }[]
       }
     }

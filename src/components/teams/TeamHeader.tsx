@@ -1,89 +1,89 @@
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { TeamHeaderTitle } from "./header/TeamHeaderTitle";
+import { TeamActions } from "./header/TeamActions";
 
 interface TeamHeaderProps {
   team: {
     id: string;
     name: string;
     logo_url?: string;
+    created_by: string;
   };
 }
 
-interface TeamMember {
-  id: string;
-  role: string;
-  user_id: string;
-  display_name: string | null;
-}
-
 export function TeamHeader({ team }: TeamHeaderProps) {
-  const navigate = useNavigate();
   const user = useUser();
 
-  const { data: isAdmin } = useQuery({
+  const { data: memberRole } = useQuery({
     queryKey: ['team-member-role', team.id],
     queryFn: async () => {
-      const { data } = await supabase
+      if (!user?.id) return null;
+      
+      const { data, error } = await supabase
         .from('team_members')
         .select('role')
         .eq('team_id', team.id)
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .maybeSingle();
 
-      return data?.role === 'admin' || data?.role === 'owner';
+      if (error) {
+        console.error('Error fetching member role:', error);
+        return null;
+      }
+
+      return data?.role;
     },
     enabled: !!user?.id && !!team.id,
   });
 
-  const { data: members } = useQuery<TeamMember[]>({
+  const isAdmin = memberRole === 'admin' || memberRole === 'owner';
+  const isOwner = team.created_by === user?.id;
+
+  const { data: members = [] } = useQuery({
     queryKey: ['team-members', team.id],
     queryFn: async () => {
-      const { data: teamMembers, error } = await supabase
+      const { data: teamMembers, error: membersError } = await supabase
         .from('team_members')
         .select('id, role, user_id')
         .eq('team_id', team.id);
 
-      if (error) {
-        console.error('Error fetching team members:', error);
+      if (membersError) {
+        console.error('Error fetching team members:', membersError);
         return [];
       }
 
-      const memberIds = teamMembers.map(member => member.user_id);
-      const { data: profiles } = await supabase
+      // Fetch display names for all members
+      const userIds = teamMembers.map(member => member.user_id);
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, display_name')
-        .in('id', memberIds);
+        .in('id', userIds);
 
-      const profileMap = new Map(profiles?.map(p => [p.id, p.display_name]) || []);
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        return teamMembers;
+      }
 
+      // Merge profiles with team members
       return teamMembers.map(member => ({
-        id: member.id,
-        role: member.role,
-        user_id: member.user_id,
-        display_name: profileMap.get(member.user_id) || 'Unbekannter Benutzer'
+        ...member,
+        profiles: profiles.find(profile => profile.id === member.user_id)
       }));
     },
     enabled: !!team.id,
   });
 
   // Filter admins from the full members list
-  const adminMembers = members?.filter(member => 
+  const adminMembers = members.filter(member => 
     member.role === 'admin' || member.role === 'owner'
-  ) || [];
+  );
 
   // Calculate counts
-  const membersCount = members?.length || 0;
+  const membersCount = members.length;
   const adminsCount = adminMembers.length;
-
-  console.log('Members:', members);
-  console.log('Admin Members:', adminMembers);
-  console.log('Current team ID:', team.id);
 
   return (
     <div className="bg-background border-b">
@@ -91,19 +91,17 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         <div className="flex items-center justify-between">
           <TeamHeaderTitle 
             team={team}
-            isAdmin={isAdmin || false}
+            isAdmin={isAdmin}
             membersCount={membersCount}
             adminsCount={adminsCount}
-            members={members || []}
+            members={members}
             adminMembers={adminMembers}
           />
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/unity')}
-            className="text-sm text-muted-foreground hover:text-primary transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+          <TeamActions 
+            teamId={team.id}
+            isAdmin={isAdmin}
+            isOwner={isOwner}
+          />
         </div>
         <Separator className="my-4" />
       </div>
