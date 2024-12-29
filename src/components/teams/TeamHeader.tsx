@@ -38,7 +38,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         .select('role')
         .eq('team_id', team.id)
         .eq('user_id', user?.id)
-        .single();
+        .maybeSingle();
       
       return data?.role === 'admin' || data?.role === 'owner';
     },
@@ -47,21 +47,25 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: members } = useQuery({
     queryKey: ['team-members', team.id],
     queryFn: async () => {
-      const { data } = await supabase
+      // First get team members
+      const { data: memberData } = await supabase
         .from('team_members')
-        .select(`
-          id, 
-          role,
-          user_id,
-          user:user_id (
-            email
-          )
-        `)
+        .select('id, role, user_id')
         .eq('team_id', team.id);
-      
-      return data?.map(member => ({
+
+      if (!memberData) return [];
+
+      // Then get profiles for those members
+      const memberIds = memberData.map(member => member.user_id);
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('id', memberIds);
+
+      // Combine the data
+      return memberData.map(member => ({
         ...member,
-        profiles: { email: member.user.email }
+        profiles: profileData?.find(profile => profile.id === member.user_id) || { email: 'Unknown' }
       }));
     },
   });
@@ -69,22 +73,26 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: adminMembers } = useQuery({
     queryKey: ['team-admins', team.id],
     queryFn: async () => {
-      const { data } = await supabase
+      // First get admin team members
+      const { data: adminData } = await supabase
         .from('team_members')
-        .select(`
-          id, 
-          role,
-          user_id,
-          user:user_id (
-            email
-          )
-        `)
+        .select('id, role, user_id')
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);
-      
-      return data?.map(member => ({
-        ...member,
-        profiles: { email: member.user.email }
+
+      if (!adminData) return [];
+
+      // Then get profiles for those admins
+      const adminIds = adminData.map(admin => admin.user_id);
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('id', adminIds);
+
+      // Combine the data
+      return adminData.map(admin => ({
+        ...admin,
+        profiles: profileData?.find(profile => profile.id === admin.user_id) || { email: 'Unknown' }
       }));
     },
   });
