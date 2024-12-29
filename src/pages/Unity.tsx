@@ -48,7 +48,7 @@ const Unity = () => {
           }
 
           const admins = members.filter(m => ['admin', 'owner'].includes(m.role)).length;
-          const totalMembers = members.length; // All members including admins
+          const totalMembers = members.length;
 
           return {
             ...team,
@@ -67,16 +67,17 @@ const Unity = () => {
 
   const updateTeamOrder = async (teamId: string, newIndex: number) => {
     try {
-      const { error: updateError } = await supabase
+      const { error } = await supabase
         .from('teams')
         .update({ order_index: newIndex })
-        .eq('id', teamId);
+        .eq('id', teamId)
+        .select();
 
-      if (updateError) throw updateError;
+      if (error) throw error;
 
       await refetch();
       toast.success("Reihenfolge erfolgreich aktualisiert");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating team order:', error);
       toast.error("Fehler beim Aktualisieren der Reihenfolge");
     }
@@ -95,14 +96,10 @@ const Unity = () => {
         .delete()
         .eq('id', teamId);
 
-      if (error) {
-        console.error("Error deleting team:", error);
-        toast.error("Fehler beim Löschen des Teams");
-        return;
-      }
+      if (error) throw error;
 
       toast.success("Team erfolgreich gelöscht");
-      refetch(); // Refresh the teams list
+      refetch();
     } catch (error: any) {
       console.error("Error deleting team:", error);
       toast.error("Fehler beim Löschen des Teams");

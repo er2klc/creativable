@@ -55,7 +55,8 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
           team_id: team.id,
           user_id: user.id,
           role: "member",
-        });
+        })
+        .select();
 
       if (joinError) throw joinError;
 

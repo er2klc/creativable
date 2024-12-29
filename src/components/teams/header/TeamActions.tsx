@@ -28,14 +28,16 @@ export function TeamActions({ teamId, isAdmin }: TeamActionsProps) {
       const { error } = await supabase
         .from('team_members')
         .delete()
-        .eq('team_id', teamId)
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+        .match({ 
+          team_id: teamId,
+          user_id: (await supabase.auth.getUser()).data.user?.id 
+        });
 
       if (error) throw error;
 
       toast.success("Team erfolgreich verlassen");
       navigate('/unity');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error leaving team:', error);
       toast.error("Fehler beim Verlassen des Teams");
     }
@@ -52,7 +54,7 @@ export function TeamActions({ teamId, isAdmin }: TeamActionsProps) {
 
       toast.success("Team erfolgreich gelöscht");
       navigate('/unity');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting team:', error);
       toast.error("Fehler beim Löschen des Teams");
     }
