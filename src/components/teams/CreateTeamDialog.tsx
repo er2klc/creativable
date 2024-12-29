@@ -41,7 +41,8 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           description: description.trim(),
           created_by: user.id,
         })
-        .select()
+        .select('*')
+        .throwOnError()
         .single();
 
       if (teamError) throw teamError;
@@ -53,12 +54,10 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           team_id: team.id,
           user_id: user.id,
           role: "owner",
-        });
+        })
+        .throwOnError();
 
-      if (memberError) {
-        console.error("Error creating team member:", memberError);
-        throw new Error("Fehler beim Erstellen des Team-Mitglieds");
-      }
+      if (memberError) throw memberError;
 
       toast.success("Team erfolgreich erstellt");
       setIsOpen(false);
@@ -67,7 +66,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
       onTeamCreated?.();
     } catch (error: any) {
       console.error("Error creating team:", error);
-      toast.error("Fehler beim Erstellen des Teams: " + (error.message || "Unbekannter Fehler"));
+      toast.error(`Fehler beim Erstellen des Teams: ${error.message || "Unbekannter Fehler"}`);
     } finally {
       setIsLoading(false);
     }

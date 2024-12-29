@@ -20,23 +20,18 @@ const Unity = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      try {
-        const { data: teams, error } = await supabase
-          .from('teams')
-          .select('*');
+      const { data, error } = await supabase
+        .from('teams')
+        .select('*')
+        .throwOnError();
 
-        if (error) {
-          console.error("Error loading teams:", error);
-          toast.error("Fehler beim Laden der Teams");
-          return [];
-        }
-
-        return teams || [];
-      } catch (error: any) {
+      if (error) {
         console.error("Error loading teams:", error);
         toast.error("Fehler beim Laden der Teams");
         return [];
       }
+
+      return data || [];
     },
     enabled: !!user,
   });
