@@ -5,6 +5,7 @@ export interface Team {
   created_at: string | null;
   created_by: string;
   max_members: number | null;
+  join_code: string | null;
 }
 
 export interface TeamMember {
