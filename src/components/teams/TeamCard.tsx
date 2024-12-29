@@ -42,8 +42,10 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
     e.stopPropagation();
     try {
       await onDelete(team.id);
+      toast.success("Team erfolgreich gelöscht");
     } catch (error) {
       console.error('Error in TeamCard delete:', error);
+      toast.error("Fehler beim Löschen des Teams");
     }
   };
 
@@ -51,8 +53,10 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
     e.stopPropagation();
     try {
       await onLeave(team.id);
+      toast.success("Team erfolgreich verlassen");
     } catch (error) {
       console.error('Error in TeamCard leave:', error);
+      toast.error("Fehler beim Verlassen des Teams");
     }
   };
 
