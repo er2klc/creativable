@@ -115,6 +115,9 @@ export function TeamHeader({ team }: TeamHeaderProps) {
     },
   });
 
+  console.log('Members:', members);
+  console.log('Admin Members:', adminMembers);
+
   return (
     <div className="bg-background border-b">
       <div className="container py-4">
