@@ -44,7 +44,10 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
         .select()
         .single();
 
-      if (teamError) throw teamError;
+      if (teamError) {
+        console.error("Team creation error:", teamError);
+        throw teamError;
+      }
 
       // Create the team member entry for the creator
       const { error: memberError } = await supabase
@@ -55,7 +58,10 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           role: "owner",
         });
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error("Team member creation error:", memberError);
+        throw memberError;
+      }
 
       toast.success("Team erfolgreich erstellt");
       setIsOpen(false);

@@ -20,24 +20,18 @@ const Unity = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      try {
-        // Get all teams where user is either creator or member
-        const { data: teams, error: teamsError } = await supabase
-          .from('teams')
-          .select('id, name, description, created_at, created_by, max_members')
-          .or(`created_by.eq.${user.id},id.in.(select team_id from team_members where user_id = '${user.id}')`);
+      const { data, error } = await supabase
+        .from('teams')
+        .select('*')
+        .or(`created_by.eq.${user.id},id.in.(select team_id from team_members where user_id = '${user.id}')`);
 
-        if (teamsError) {
-          console.error("Error loading teams:", teamsError);
-          throw teamsError;
-        }
-
-        return teams || [];
-      } catch (error: any) {
+      if (error) {
         console.error("Error loading teams:", error);
         toast.error("Fehler beim Laden der Teams");
         return [];
       }
+
+      return data || [];
     },
     enabled: !!user,
   });
