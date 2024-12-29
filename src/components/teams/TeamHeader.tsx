@@ -39,7 +39,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         .select('role')
         .eq('team_id', team.id)
         .eq('user_id', user?.id)
-        .maybeSingle();
+        .single();
 
       return data?.role;
     },
@@ -53,7 +53,14 @@ export function TeamHeader({ team }: TeamHeaderProps) {
     queryFn: async () => {
       const { data: teamMembers, error } = await supabase
         .from('team_members')
-        .select('id, role, user_id, profiles:user_id(display_name)')
+        .select(`
+          id, 
+          role, 
+          user_id,
+          profiles:user_id (
+            display_name
+          )
+        `)
         .eq('team_id', team.id);
 
       if (error) {
@@ -71,12 +78,17 @@ export function TeamHeader({ team }: TeamHeaderProps) {
 
   const handleLeaveTeam = async () => {
     try {
+      if (isAdmin) {
+        toast.error("Administratoren können das Team nicht verlassen. Bitte löschen Sie das Team stattdessen.");
+        return;
+      }
+
       const { data: membershipData } = await supabase
         .from('team_members')
         .select('id')
         .eq('team_id', team.id)
         .eq('user_id', user?.id)
-        .maybeSingle();
+        .single();
 
       if (!membershipData) {
         toast.error("Mitgliedschaft nicht gefunden");

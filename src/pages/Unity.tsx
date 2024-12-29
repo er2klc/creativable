@@ -10,6 +10,7 @@ import { JoinTeamDialog } from "@/components/teams/JoinTeamDialog";
 import { TeamCard } from "@/components/teams/TeamCard";
 import { toast } from "sonner";
 import { Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Unity = () => {
   const navigate = useNavigate();
@@ -110,12 +111,11 @@ const Unity = () => {
             </CardContent>
           </Card>
         ) : (
-          teams?.map((team, index) => (
+          teams?.map((team: any, index: number) => (
             <div key={team.id} className="flex items-center gap-2">
               <div className="flex-1">
                 <TeamCard
                   team={team}
-                  teamStats={teamStats?.[team.id]}
                   onDelete={handleDeleteTeam}
                 />
               </div>
