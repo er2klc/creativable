@@ -51,15 +51,7 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
     queryFn: async () => {
       const { data } = await supabase
         .from('team_members')
-        .select(`
-          id,
-          user_id,
-          role,
-          profiles:profiles!team_members_user_id_fkey (
-            id,
-            email
-          )
-        `)
+        .select('id, role')
         .eq('team_id', team.id);
       
       return data;
@@ -71,14 +63,7 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
     queryFn: async () => {
       const { data } = await supabase
         .from('team_members')
-        .select(`
-          id,
-          role,
-          profiles:profiles!team_members_user_id_fkey (
-            id,
-            email
-          )
-        `)
+        .select('id, role')
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);
       
@@ -125,7 +110,6 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
                             <Badge variant={admin.role === 'owner' ? 'default' : 'secondary'}>
                               {admin.role === 'owner' ? 'Owner' : 'Admin'}
                             </Badge>
-                            <span className="text-sm">{admin.profiles?.email}</span>
                           </div>
                         </div>
                       ))}
@@ -154,7 +138,6 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
                               <Badge variant={member.role === 'owner' ? 'default' : 'secondary'}>
                                 {member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Mitglied'}
                               </Badge>
-                              <span className="text-sm">{member.profiles?.email}</span>
                             </div>
                             {member.role !== 'owner' && isAdmin && (
                               <Button
