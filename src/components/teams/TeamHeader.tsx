@@ -16,6 +16,15 @@ interface TeamHeaderProps {
   };
 }
 
+interface TeamMember {
+  id: string;
+  role: string;
+  user_id: string;
+  profiles: {
+    display_name: string | null;
+  } | null;
+}
+
 export function TeamHeader({ team }: TeamHeaderProps) {
   const navigate = useNavigate();
   const user = useUser();
@@ -37,7 +46,6 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: members } = useQuery({
     queryKey: ['team-members', team.id],
     queryFn: async () => {
-      // First get all team members
       const { data: memberData, error } = await supabase
         .from('team_members')
         .select(`
@@ -53,7 +61,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
       if (error) throw error;
       if (!memberData) return [];
 
-      return memberData.map(member => ({
+      return (memberData as TeamMember[]).map(member => ({
         ...member,
         display_name: member.profiles?.display_name || 'Unbekannter Benutzer'
       }));
@@ -79,7 +87,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
       if (error) throw error;
       if (!adminData) return [];
 
-      return adminData.map(admin => ({
+      return (adminData as TeamMember[]).map(admin => ({
         ...admin,
         display_name: admin.profiles?.display_name || 'Unbekannter Benutzer'
       }));
