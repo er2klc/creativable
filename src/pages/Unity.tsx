@@ -16,12 +16,14 @@ const Unity = () => {
   const navigate = useNavigate();
   const user = useUser();
 
-  const { data: teams = [], isLoading, refetch } = useQuery({
-    queryKey: ['teams'],
+  // Fetch teams with member stats
+  const { data: teamsWithStats = [], isLoading, refetch } = useQuery({
+    queryKey: ['teams-with-stats'],
     queryFn: async () => {
       if (!user?.id) return [];
       
-      const { data, error } = await supabase.rpc('get_user_teams', { uid: user.id });
+      // First get the teams
+      const { data: teams, error } = await supabase.rpc('get_user_teams', { uid: user.id });
 
       if (error) {
         console.error("Error loading teams:", error);
@@ -29,7 +31,36 @@ const Unity = () => {
         return [];
       }
 
-      return data?.sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)) || [];
+      // Then get member stats for each team
+      const teamsWithStats = await Promise.all(
+        teams.map(async (team) => {
+          const { data: members, error: membersError } = await supabase
+            .from('team_members')
+            .select('role')
+            .eq('team_id', team.id);
+
+          if (membersError) {
+            console.error("Error loading team members:", membersError);
+            return {
+              ...team,
+              stats: { totalMembers: 0, admins: 0 }
+            };
+          }
+
+          const admins = members.filter(m => ['admin', 'owner'].includes(m.role)).length;
+          const totalMembers = members.length; // All members including admins
+
+          return {
+            ...team,
+            stats: {
+              totalMembers,
+              admins
+            }
+          };
+        })
+      );
+
+      return teamsWithStats.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
     },
     enabled: !!user,
   });
@@ -98,7 +129,7 @@ const Unity = () => {
               </div>
             </CardContent>
           </Card>
-        ) : teams?.length === 0 ? (
+        ) : teamsWithStats?.length === 0 ? (
           <Card>
             <CardContent className="p-6">
               <div className="flex flex-col items-center justify-center space-y-4 py-12">
@@ -113,11 +144,12 @@ const Unity = () => {
             </CardContent>
           </Card>
         ) : (
-          teams?.map((team: any, index: number) => (
+          teamsWithStats?.map((team: any, index: number) => (
             <div key={team.id} className="flex items-center gap-2">
               <div className="flex-1">
                 <TeamCard
                   team={team}
+                  teamStats={team.stats}
                   onDelete={handleDeleteTeam}
                 />
               </div>
@@ -134,7 +166,7 @@ const Unity = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => updateTeamOrder(team.id, index + 1)}
-                  disabled={index === teams.length - 1}
+                  disabled={index === teamsWithStats.length - 1}
                 >
                   ↓
                 </Button>

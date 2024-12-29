@@ -22,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 interface TeamCardProps {
   team: Team;
   teamStats?: {
-    totalMembers: number;
+    totalMembers: number; // This includes both regular members and admins
     admins: number;
   };
   onDelete: (teamId: string) => Promise<void>;
@@ -37,6 +37,8 @@ export const TeamCard = ({ team, teamStats, onDelete }: TeamCardProps) => {
     await navigator.clipboard.writeText(joinCode);
     toast.success("Beitritts-Code kopiert!");
   };
+
+  const isAdmin = team.created_by === user?.id;
 
   return (
     <Card 
@@ -77,7 +79,7 @@ export const TeamCard = ({ team, teamStats, onDelete }: TeamCardProps) => {
                   <Crown className="h-3 w-3" />
                   {teamStats?.admins || 0} Admins
                 </Badge>
-                {team.created_by === user?.id && (
+                {isAdmin && (
                   <Badge variant="default" className="flex items-center gap-1">
                     <Crown className="h-3 w-3" />
                     Team Owner
@@ -97,7 +99,7 @@ export const TeamCard = ({ team, teamStats, onDelete }: TeamCardProps) => {
                 <Copy className="h-4 w-4" />
               </Button>
             )}
-            {team.created_by === user?.id && (
+            {isAdmin && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -119,9 +121,7 @@ export const TeamCard = ({ team, teamStats, onDelete }: TeamCardProps) => {
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>
-                      Abbrechen
-                    </AlertDialogCancel>
+                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={(e) => {
                         e.stopPropagation();
