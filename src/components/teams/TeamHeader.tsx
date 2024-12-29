@@ -15,21 +15,14 @@ interface TeamHeaderProps {
   };
 }
 
-interface TeamMember {
-  id: string;
-  role: string;
-  user_id: string;
-  display_name: string;
-}
-
 interface TeamMemberResponse {
   id: string;
   role: string;
   user_id: string;
-  profiles: {
+  user: {
     display_name: string | null;
     email: string | null;
-  } | null;
+  };
 }
 
 export function TeamHeader({ team }: TeamHeaderProps) {
@@ -59,9 +52,9 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          profiles (
-            display_name,
-            email
+          user:user_id (
+            display_name:profiles!inner(display_name),
+            email:profiles!inner(email)
           )
         `)
         .eq('team_id', team.id);
@@ -71,11 +64,11 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      return (data as TeamMemberResponse[])?.map(member => ({
+      return (data as any[])?.map(member => ({
         id: member.id,
         role: member.role,
         user_id: member.user_id,
-        display_name: member.profiles?.display_name || member.profiles?.email || 'Unbekannter Benutzer'
+        display_name: member.user?.display_name || member.user?.email || 'Unbekannter Benutzer'
       })) || [];
     },
   });
@@ -89,9 +82,9 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          profiles (
-            display_name,
-            email
+          user:user_id (
+            display_name:profiles!inner(display_name),
+            email:profiles!inner(email)
           )
         `)
         .eq('team_id', team.id)
@@ -102,11 +95,11 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      return (data as TeamMemberResponse[])?.map(admin => ({
+      return (data as any[])?.map(admin => ({
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
-        display_name: admin.profiles?.display_name || admin.profiles?.email || 'Unbekannter Benutzer'
+        display_name: admin.user?.display_name || admin.user?.email || 'Unbekannter Benutzer'
       })) || [];
     },
   });
