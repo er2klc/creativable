@@ -22,7 +22,14 @@ const Unity = () => {
       
       const { data, error } = await supabase
         .from('teams')
-        .select('*')
+        .select('id, name, description, created_at, created_by, max_members')
+        .or(`created_by.eq.${user.id},id.in.(${
+          supabase
+            .from('team_members')
+            .select('team_id')
+            .eq('user_id', user.id)
+            .then(({ data }) => data?.map(d => d.team_id).join(','))
+        })`)
         .throwOnError();
 
       if (error) {
