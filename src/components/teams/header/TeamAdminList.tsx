@@ -18,7 +18,7 @@ export function TeamAdminList({ admins }: TeamAdminListProps) {
             </Avatar>
             <div className="flex flex-col">
               <span className="text-sm font-medium">
-                {admin.profiles?.email?.split('@')[0] || 'Unbekannt'}
+                {admin.profiles?.email || 'Unbekannter Benutzer'}
               </span>
               <Badge variant={admin.role === 'owner' ? 'default' : 'secondary'} className="mt-1">
                 {admin.role === 'owner' ? 'Owner' : 'Admin'}
