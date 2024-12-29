@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,14 +31,26 @@ const Unity = () => {
 
         // Get teams where user is a member
         const { data: memberTeams, error: memberError } = await supabase
-          .from('teams')
-          .select('*')
-          .neq('created_by', user.id);
+          .from('team_members')
+          .select('team_id')
+          .eq('user_id', user.id);
 
         if (memberError) throw memberError;
 
+        // If user is a member of any teams, get those team details
+        let memberTeamDetails = [];
+        if (memberTeams.length > 0) {
+          const { data: teamDetails, error: teamDetailsError } = await supabase
+            .from('teams')
+            .select('*')
+            .in('id', memberTeams.map(tm => tm.team_id));
+
+          if (teamDetailsError) throw teamDetailsError;
+          memberTeamDetails = teamDetails || [];
+        }
+
         // Combine and remove duplicates
-        const allTeams = [...(ownedTeams || []), ...(memberTeams || [])];
+        const allTeams = [...(ownedTeams || []), ...memberTeamDetails];
         return Array.from(new Map(allTeams.map(team => [team.id, team])).values());
 
       } catch (error: any) {
