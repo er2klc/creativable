@@ -20,40 +20,35 @@ const Unity = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      // First try to get teams where user is creator
-      const { data: ownedTeams, error: ownedError } = await supabase
-        .from('teams')
-        .select('*')
-        .eq('created_by', user.id);
+      try {
+        // Hole Teams, wo der User Creator ist
+        const { data: ownedTeams, error: ownedError } = await supabase
+          .from('teams')
+          .select('*')
+          .eq('created_by', user.id);
 
-      if (ownedError) {
-        console.error("Error fetching owned teams:", ownedError);
+        if (ownedError) throw ownedError;
+
+        // Hole Teams, wo der User Mitglied ist
+        const { data: memberTeams, error: memberError } = await supabase
+          .from('teams')
+          .select('*, team_members!inner(*)')
+          .eq('team_members.user_id', user.id)
+          .neq('created_by', user.id);
+
+        if (memberError) throw memberError;
+
+        // Kombiniere und entferne Duplikate
+        const allTeams = [...(ownedTeams || []), ...(memberTeams || [])];
+        const uniqueTeams = Array.from(new Map(allTeams.map(team => [team.id, team])).values());
+        
+        console.log("Geladene Teams:", uniqueTeams);
+        return uniqueTeams;
+      } catch (error: any) {
+        console.error("Fehler beim Laden der Teams:", error);
         toast.error("Fehler beim Laden der Teams");
-        throw ownedError;
+        return [];
       }
-
-      // Then get teams where user is a member
-      const { data: memberTeams, error: memberError } = await supabase
-        .from('teams')
-        .select('*')
-        .neq('created_by', user.id)
-        .exists(
-          'team_members',
-          { user_id: user.id }
-        );
-
-      if (memberError) {
-        console.error("Error fetching member teams:", memberError);
-        toast.error("Fehler beim Laden der Teams");
-        throw memberError;
-      }
-
-      // Combine and deduplicate teams
-      const allTeams = [...(ownedTeams || []), ...(memberTeams || [])];
-      const uniqueTeams = Array.from(new Map(allTeams.map(team => [team.id, team])).values());
-      
-      console.log("Fetched teams:", uniqueTeams);
-      return uniqueTeams;
     },
     enabled: !!user,
   });
