@@ -15,6 +15,15 @@ interface TeamHeaderProps {
   };
 }
 
+interface RawTeamMember {
+  id: string;
+  role: string;
+  user_id: string;
+  user: {
+    display_name: string | null;
+  } | null;
+}
+
 interface TeamMember {
   id: string;
   role: string;
@@ -49,7 +58,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          auth.users (
+          user:user_id (
             display_name
           )
         `)
@@ -62,11 +71,11 @@ export function TeamHeader({ team }: TeamHeaderProps) {
 
       if (!data) return [];
 
-      return data.map(member => ({
+      return (data as unknown as RawTeamMember[]).map(member => ({
         id: member.id,
         role: member.role,
         user_id: member.user_id,
-        display_name: member['auth.users']?.display_name || 'Unbekannter Benutzer',
+        display_name: member.user?.display_name || 'Unbekannter Benutzer',
       }));
     },
   });
@@ -80,7 +89,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          auth.users (
+          user:user_id (
             display_name
           )
         `)
@@ -94,11 +103,11 @@ export function TeamHeader({ team }: TeamHeaderProps) {
 
       if (!data) return [];
 
-      return data.map(admin => ({
+      return (data as unknown as RawTeamMember[]).map(admin => ({
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
-        display_name: admin['auth.users']?.display_name || 'Unbekannter Benutzer',
+        display_name: admin.user?.display_name || 'Unbekannter Benutzer',
       }));
     },
   });
