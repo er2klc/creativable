@@ -33,13 +33,15 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
     try {
       setIsLoading(true);
 
+      const teamData = {
+        name: name.trim(),
+        description: description.trim(),
+        created_by: user.id,
+      };
+
       const { data: team, error: teamError } = await supabase
         .from("teams")
-        .insert({
-          name: name.trim(),
-          description: description.trim(),
-          created_by: user.id,
-        })
+        .insert(teamData)
         .select()
         .maybeSingle();
 
