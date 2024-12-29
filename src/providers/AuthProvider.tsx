@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Session } from "@supabase/supabase-js";
+import { User } from "@supabase/supabase-js";
 import { AuthContext } from "./auth/AuthContext";
 import { handleSessionError, refreshSession } from "./auth/auth-utils";
 
@@ -11,7 +11,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
     const publicPaths = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram"];
@@ -20,7 +19,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const setupAuth = async () => {
       try {
         // Initial session check
-        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           console.error("[Auth] Session error:", sessionError);
@@ -28,9 +27,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        console.log("[Auth] Initial session check:", initialSession?.user?.id);
+        console.log("[Auth] Initial session check:", session?.user?.id);
         
-        if (initialSession) {
+        if (session) {
           // Verify user exists
           const { data: { user }, error: userError } = await supabase.auth.getUser();
           
@@ -41,7 +40,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
 
           setUser(user);
-          setSession(initialSession);
           setIsAuthenticated(true);
           if (location.pathname === "/auth" || location.pathname === "/register") {
             navigate("/dashboard");
@@ -52,8 +50,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         // Setup auth state listener with automatic token refresh
-        const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-          console.log("[Auth] Auth state changed:", event, newSession?.user?.id);
+        const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log("[Auth] Auth state changed:", event, session?.user?.id);
 
           if (event === "SIGNED_IN") {
             const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -65,13 +63,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
 
             setUser(user);
-            setSession(newSession);
             setIsAuthenticated(true);
             console.log("[Auth] User signed in, redirecting to dashboard");
             navigate("/dashboard");
           } else if (event === "SIGNED_OUT") {
             setUser(null);
-            setSession(null);
             setIsAuthenticated(false);
             console.log("[Auth] User signed out, redirecting to auth");
             navigate("/auth");
@@ -86,8 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
 
             setUser(user);
-            setSession(newSession);
-            console.log("[Auth] Token refreshed for user:", newSession?.user?.id);
+            console.log("[Auth] Token refreshed for user:", session?.user?.id);
             setIsAuthenticated(true);
           }
         });
@@ -130,7 +125,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, session }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, user }}>
       {children}
     </AuthContext.Provider>
   );
