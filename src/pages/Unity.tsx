@@ -242,10 +242,7 @@ const Unity = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => teamToDelete && handleDeleteTeam(teamToDelete)}
-            >
+            <AlertDialogAction onClick={() => teamToDelete && handleDeleteTeam(teamToDelete)}>
               Löschen
             </AlertDialogAction>
           </AlertDialogFooter>
