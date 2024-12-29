@@ -43,14 +43,9 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: members } = useQuery<TeamMember[]>({
     queryKey: ['team-members', team.id],
     queryFn: async () => {
-      console.log('Fetching team members for team:', team.id);
-      const { data, error } = await supabase
+      const { data: teamMembers, error } = await supabase
         .from('team_members')
-        .select(`
-          id,
-          role,
-          user_id
-        `)
+        .select('id, role, user_id')
         .eq('team_id', team.id);
 
       if (error) {
@@ -58,8 +53,8 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      // Get display names from profiles in a separate query
-      const memberIds = data.map(member => member.user_id);
+      // Get display names from profiles
+      const memberIds = teamMembers.map(member => member.user_id);
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, display_name')
@@ -67,7 +62,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
 
       const profileMap = new Map(profiles?.map(p => [p.id, p.display_name]) || []);
 
-      return data.map((member: any) => ({
+      return teamMembers.map(member => ({
         id: member.id,
         role: member.role,
         user_id: member.user_id,
@@ -79,14 +74,9 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: adminMembers } = useQuery<TeamMember[]>({
     queryKey: ['team-admins', team.id],
     queryFn: async () => {
-      console.log('Fetching admin members for team:', team.id);
-      const { data, error } = await supabase
+      const { data: admins, error } = await supabase
         .from('team_members')
-        .select(`
-          id,
-          role,
-          user_id
-        `)
+        .select('id, role, user_id')
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);
 
@@ -95,8 +85,8 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      // Get display names from profiles in a separate query
-      const adminIds = data.map(admin => admin.user_id);
+      // Get display names from profiles
+      const adminIds = admins.map(admin => admin.user_id);
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, display_name')
@@ -104,7 +94,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
 
       const profileMap = new Map(profiles?.map(p => [p.id, p.display_name]) || []);
 
-      return data.map((admin: any) => ({
+      return admins.map(admin => ({
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
@@ -117,9 +107,11 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   console.log('Admin Members:', adminMembers);
   console.log('Current team ID:', team.id);
 
-  // Calculate correct counts
+  // Calculate correct counts from the full members list
   const membersCount = members?.length || 0;
-  const adminsCount = adminMembers?.length || 0;
+  const adminsCount = members?.filter(member => 
+    member.role === 'admin' || member.role === 'owner'
+  ).length || 0;
 
   return (
     <div className="bg-background border-b">
