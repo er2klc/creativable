@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSettings } from "@/hooks/use-settings";
 
 interface CreatePostDialogProps {
   teamId: string;
@@ -39,8 +40,14 @@ export function CreatePostDialog({ teamId, categoryId }: CreatePostDialogProps) 
   const [isGenerating, setIsGenerating] = useState(false);
   const queryClient = useQueryClient();
   const form = useForm<FormValues>();
+  const { settings } = useSettings();
 
   const generateWithAI = async (prompt: string) => {
+    if (!settings?.openai_api_key) {
+      toast.error("Bitte fügen Sie zuerst Ihren OpenAI API-Key in den Einstellungen hinzu.");
+      return;
+    }
+
     try {
       setIsGenerating(true);
       const { data, error } = await supabase.functions.invoke('generate-post-content', {
