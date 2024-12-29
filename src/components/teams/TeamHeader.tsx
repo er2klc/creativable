@@ -15,16 +15,6 @@ interface TeamHeaderProps {
   };
 }
 
-interface RawTeamMember {
-  id: string;
-  role: string;
-  user_id: string;
-  profiles: {
-    display_name: string | null;
-    email: string | null;
-  } | null;
-}
-
 interface TeamMember {
   id: string;
   role: string;
@@ -53,13 +43,13 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: members } = useQuery({
     queryKey: ['team-members', team.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: membersData, error } = await supabase
         .from('team_members')
         .select(`
           id,
           role,
           user_id,
-          profiles!team_members_user_id_fkey (
+          profiles:user_id (
             display_name,
             email
           )
@@ -71,27 +61,25 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      if (!data) return [];
-
-      return (data as unknown as RawTeamMember[]).map(member => ({
+      return membersData?.map(member => ({
         id: member.id,
         role: member.role,
         user_id: member.user_id,
-        display_name: member.profiles?.display_name || member.profiles?.email || 'Unbekannter Benutzer',
-      }));
+        display_name: member.profiles?.display_name || member.profiles?.email || 'Unbekannter Benutzer'
+      })) || [];
     },
   });
 
   const { data: adminMembers } = useQuery({
     queryKey: ['team-admins', team.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: adminsData, error } = await supabase
         .from('team_members')
         .select(`
           id,
           role,
           user_id,
-          profiles!team_members_user_id_fkey (
+          profiles:user_id (
             display_name,
             email
           )
@@ -104,14 +92,12 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      if (!data) return [];
-
-      return (data as unknown as RawTeamMember[]).map(admin => ({
+      return adminsData?.map(admin => ({
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
-        display_name: admin.profiles?.display_name || admin.profiles?.email || 'Unbekannter Benutzer',
-      }));
+        display_name: admin.profiles?.display_name || admin.profiles?.email || 'Unbekannter Benutzer'
+      })) || [];
     },
   });
 
