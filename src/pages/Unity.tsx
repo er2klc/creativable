@@ -1,11 +1,10 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Infinity, Users } from "lucide-react";
+import { Infinity, Users, LoaderCircle } from "lucide-react";
 import type { Team } from "@/integrations/supabase/types/teams";
 import { InviteTeamMemberDialog } from "@/components/teams/InviteTeamMemberDialog";
 import { CreateTeamDialog } from "@/components/teams/CreateTeamDialog";
@@ -72,9 +71,8 @@ const Unity = () => {
         {isLoading ? (
           <Card>
             <CardContent className="p-6">
-              <div className="animate-pulse space-y-4">
-                <div className="h-4 bg-muted rounded w-3/4" />
-                <div className="h-4 bg-muted rounded w-1/2" />
+              <div className="flex items-center justify-center py-8">
+                <LoaderCircle className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
@@ -89,11 +87,6 @@ const Unity = () => {
                     Erstellen Sie ein neues Team oder warten Sie auf eine Einladung.
                   </p>
                 </div>
-                <img 
-                  src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d" 
-                  alt="Placeholder" 
-                  className="mt-4 rounded-lg w-full max-w-2xl h-48 object-cover"
-                />
               </div>
             </CardContent>
           </Card>
