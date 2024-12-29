@@ -16,12 +16,12 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
               <AvatarFallback>
-                {member.profiles?.email?.substring(0, 2).toUpperCase() || '??'}
+                {member.profiles?.display_name?.substring(0, 2).toUpperCase() || '??'}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
               <span className="text-sm font-medium">
-                {member.profiles?.email || 'Unbekannter Benutzer'}
+                {member.profiles?.display_name || 'Unbekannter Benutzer'}
               </span>
               <Badge variant={member.role === 'owner' ? 'default' : 'secondary'} className="mt-1">
                 {member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Mitglied'}

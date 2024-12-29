@@ -59,7 +59,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
       const memberIds = memberData.map(member => member.user_id);
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('id, email')
+        .select('id, email, display_name')
         .in('id', memberIds);
 
       // Combine the data and ensure we have profile data
@@ -68,7 +68,8 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return {
           ...member,
           profiles: profile || { 
-            email: 'Unbekannter Benutzer'  // Default to "Unknown User" in German if no email
+            email: 'Unbekannter Benutzer',
+            display_name: 'Unbekannter Benutzer'
           }
         };
       });
@@ -91,7 +92,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
       const adminIds = adminData.map(admin => admin.user_id);
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('id, email')
+        .select('id, email, display_name')
         .in('id', adminIds);
 
       // Combine the data and ensure we have profile data
@@ -100,7 +101,8 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return {
           ...admin,
           profiles: profile || { 
-            email: 'Unbekannter Benutzer'  // Default to "Unknown User" in German if no email
+            email: 'Unbekannter Benutzer',
+            display_name: 'Unbekannter Benutzer'
           }
         };
       });
