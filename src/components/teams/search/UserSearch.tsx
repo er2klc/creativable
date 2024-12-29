@@ -32,7 +32,7 @@ export const UserSearch = ({ onSelectUser, onSwitchToEmailInput }: UserSearchPro
       const { data, error } = await supabase
         .from('profiles')
         .select('id, email')
-        .ilike('email', `%${query}%`)
+        .or(`email.ilike.%${query}%,name.ilike.%${query}%`)
         .limit(5);
 
       if (error) {
