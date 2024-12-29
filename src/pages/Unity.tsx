@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Infinity, Users, Plus } from "lucide-react";
+import { Infinity, Users } from "lucide-react";
 import type { Team } from "@/integrations/supabase/types/teams";
 import { InviteTeamMemberDialog } from "@/components/teams/InviteTeamMemberDialog";
+import { CreateTeamDialog } from "@/components/teams/CreateTeamDialog";
 
 const Unity = () => {
   const navigate = useNavigate();
@@ -44,10 +45,7 @@ const Unity = () => {
           <Infinity className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-['Orbitron'] text-primary">Unity</h1>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Team erstellen
-        </Button>
+        <CreateTeamDialog onTeamCreated={refetch} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
