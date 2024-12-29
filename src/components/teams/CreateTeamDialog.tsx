@@ -33,7 +33,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
     try {
       setIsLoading(true);
 
-      // Create the team
+      // First, create the team
       const { data: team, error: teamError } = await supabase
         .from("teams")
         .insert({
@@ -42,14 +42,18 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           created_by: user.id,
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (teamError) {
         console.error("Team creation error:", teamError);
         throw teamError;
       }
 
-      // Create the team member entry for the creator
+      if (!team) {
+        throw new Error("Team wurde erstellt, aber keine Daten zurückgegeben");
+      }
+
+      // Then create the team member entry for the creator
       const { error: memberError } = await supabase
         .from("team_members")
         .insert({
@@ -70,7 +74,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
       onTeamCreated?.();
     } catch (error: any) {
       console.error("Error creating team:", error);
-      toast.error("Fehler beim Erstellen des Teams");
+      toast.error(error.message || "Fehler beim Erstellen des Teams");
     } finally {
       setIsLoading(false);
     }
