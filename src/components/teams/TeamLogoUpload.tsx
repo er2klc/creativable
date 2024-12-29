@@ -1,114 +1,62 @@
-import { useState } from "react";
-import { ImagePlus } from "lucide-react";
+import { Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { Label } from "@/components/ui/label";
+import { Upload } from "lucide-react";
 
 interface TeamLogoUploadProps {
-  teamId: string;
-  currentLogoUrl?: string | null;
+  logoPreview: string | null;
+  onLogoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onLogoRemove: () => void;
 }
 
-export const TeamLogoUpload = ({ teamId, currentLogoUrl }: TeamLogoUploadProps) => {
-  const [isUploading, setIsUploading] = useState(false);
-  const queryClient = useQueryClient();
-
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error("Bitte laden Sie nur Bilder hoch");
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Die Datei ist zu groß (maximal 5MB)");
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-      toast.loading("Logo wird hochgeladen...");
-
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${teamId}/logo.${fileExt}`;
-
-      const { error: uploadError, data: uploadData } = await supabase.storage
-        .from('team-logos')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw new Error("Fehler beim Hochladen des Logos");
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('team-logos')
-        .getPublicUrl(filePath);
-
-      const { error: updateError } = await supabase
-        .from('teams')
-        .update({ logo_url: publicUrl })
-        .eq('id', teamId);
-
-      if (updateError) {
-        console.error("Update error:", updateError);
-        throw new Error("Fehler beim Aktualisieren des Team Logos");
-      }
-
-      queryClient.invalidateQueries({ queryKey: ['team', teamId] });
-      toast.dismiss();
-      toast.success("Team Logo erfolgreich aktualisiert");
-    } catch (error) {
-      console.error("Error updating team logo:", error);
-      toast.dismiss();
-      toast.error(error instanceof Error ? error.message : "Fehler beim Aktualisieren des Team Logos");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
+export const TeamLogoUpload = ({
+  logoPreview,
+  onLogoChange,
+  onLogoRemove,
+}: TeamLogoUploadProps) => {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="cursor-pointer">
-          <Input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleLogoUpload}
-            disabled={isUploading}
-            id={`logo-upload-${teamId}`}
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            disabled={isUploading}
-            onClick={() => {
-              const input = document.getElementById(`logo-upload-${teamId}`);
-              if (input) {
-                input.click();
-              }
-            }}
+    <div className="space-y-4">
+      <Label>Team Logo</Label>
+      <div className="flex flex-col items-center gap-4">
+        {logoPreview ? (
+          <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-primary/20">
+            <img
+              src={logoPreview}
+              alt="Team logo preview"
+              className="w-full h-full object-cover"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-0 right-0 bg-background/80 hover:bg-background"
+              onClick={onLogoRemove}
+            >
+              ×
+            </Button>
+          </div>
+        ) : (
+          <div className="w-32 h-32 rounded-full border-2 border-dashed border-primary/20 flex items-center justify-center">
+            <Image className="w-12 h-12 text-muted-foreground" />
+          </div>
+        )}
+        <div className="flex justify-center">
+          <Label
+            htmlFor="logo-upload"
+            className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
           >
-            <ImagePlus className="h-4 w-4" />
-          </Button>
+            <Upload className="h-4 w-4 mr-2" />
+            Logo hochladen
+            <Input
+              id="logo-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onLogoChange}
+            />
+          </Label>
         </div>
-      </TooltipTrigger>
-      <TooltipContent>
-        {currentLogoUrl ? "Logo ändern" : "Logo hochladen"}
-      </TooltipContent>
-    </Tooltip>
+      </div>
+    </div>
   );
 };
