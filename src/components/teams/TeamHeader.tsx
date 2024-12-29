@@ -38,6 +38,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
 
       return data?.role === 'admin' || data?.role === 'owner';
     },
+    enabled: !!user?.id && !!team.id,
   });
 
   const { data: members } = useQuery<TeamMember[]>({
@@ -68,6 +69,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         display_name: profileMap.get(member.user_id) || 'Unbekannter Benutzer'
       }));
     },
+    enabled: !!team.id,
   });
 
   // Filter admins from the full members list
