@@ -20,8 +20,8 @@ interface TeamMemberResponse {
   role: string;
   user_id: string;
   user: {
-    display_name: string | null;
-    email: string | null;
+    display_name: string;
+    email: string;
   };
 }
 
@@ -64,7 +64,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      return (data as any[])?.map(member => ({
+      return data?.map(member => ({
         id: member.id,
         role: member.role,
         user_id: member.user_id,
@@ -95,7 +95,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      return (data as any[])?.map(admin => ({
+      return data?.map(admin => ({
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
