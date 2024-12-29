@@ -7,25 +7,31 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Infinity, Users, Plus } from "lucide-react";
 
+interface Team {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string | null;
+  created_by: string;
+  max_members: number | null;
+}
+
 const Unity = () => {
   const navigate = useNavigate();
   const user = useUser();
 
-  const { data: teams, isLoading } = useQuery({
+  const { data: teams, isLoading } = useQuery<Team[]>({
     queryKey: ['teams'],
     queryFn: async () => {
+      if (!user?.id) return [];
+      
       const { data, error } = await supabase
         .from('teams')
-        .select(`
-          *,
-          team_members!inner (
-            user_id
-          )
-        `)
-        .eq('team_members.user_id', user?.id);
+        .select('*')
+        .eq('created_by', user.id);
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!user,
   });
