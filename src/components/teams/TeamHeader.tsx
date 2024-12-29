@@ -53,7 +53,6 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      // Get display names from profiles
       const memberIds = teamMembers.map(member => member.user_id);
       const { data: profiles } = await supabase
         .from('profiles')
@@ -74,40 +73,19 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: adminMembers } = useQuery<TeamMember[]>({
     queryKey: ['team-admins', team.id],
     queryFn: async () => {
-      const { data: admins, error } = await supabase
-        .from('team_members')
-        .select('id, role, user_id')
-        .eq('team_id', team.id)
-        .in('role', ['admin', 'owner']);
-
-      if (error) {
-        console.error('Error fetching admin members:', error);
-        return [];
-      }
-
-      // Get display names from profiles
-      const adminIds = admins.map(admin => admin.user_id);
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, display_name')
-        .in('id', adminIds);
-
-      const profileMap = new Map(profiles?.map(p => [p.id, p.display_name]) || []);
-
-      return admins.map(admin => ({
-        id: admin.id,
-        role: admin.role,
-        user_id: admin.user_id,
-        display_name: profileMap.get(admin.user_id) || 'Unbekannter Benutzer'
-      }));
+      // Filter admins from the full members list instead of making a separate query
+      return members?.filter(member => 
+        member.role === 'admin' || member.role === 'owner'
+      ) || [];
     },
+    enabled: !!members, // Only run this query when members data is available
   });
 
   console.log('Members:', members);
   console.log('Admin Members:', adminMembers);
   console.log('Current team ID:', team.id);
 
-  // Calculate correct counts from the full members list
+  // Calculate counts from the full members list
   const membersCount = members?.length || 0;
   const adminsCount = members?.filter(member => 
     member.role === 'admin' || member.role === 'owner'
