@@ -125,19 +125,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           </div>
           <div>
             <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Building2 className="h-4 w-4" />
-              {settings?.language === "en" ? "Industry" : "Branche"}
-            </dt>
-            <dd>
-              <Input
-                value={lead.industry || ''}
-                onChange={(e) => updateLeadMutation.mutate({ industry: e.target.value })}
-              />
-            </dd>
-          </div>
-          <div>
-            <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Phone className="h-4 w-4" />
+              <Phone className="h-4 w-4 text-gray-900" />
               {settings?.language === "en" ? "Phone Number" : "Telefonnummer"}
             </dt>
             <dd>
@@ -151,7 +139,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           </div>
           <div>
             <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Mail className="h-4 w-4" />
+              <Mail className="h-4 w-4 text-gray-900" />
               {settings?.language === "en" ? "Email" : "E-Mail"}
             </dt>
             <dd>
@@ -160,19 +148,6 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                 onChange={(e) => updateLeadMutation.mutate({ email: e.target.value })}
                 placeholder={settings?.language === "en" ? "Enter email" : "E-Mail eingeben"}
                 type="email"
-              />
-            </dd>
-          </div>
-          <div>
-            <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Briefcase className="h-4 w-4" />
-              {settings?.language === "en" ? "Company" : "Firma"}
-            </dt>
-            <dd>
-              <Input
-                value={lead.company_name || ""}
-                onChange={(e) => updateLeadMutation.mutate({ company_name: e.target.value })}
-                placeholder={settings?.language === "en" ? "Enter company name" : "Firmennamen eingeben"}
               />
             </dd>
           </div>
