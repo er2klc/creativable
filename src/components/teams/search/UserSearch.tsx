@@ -26,6 +26,8 @@ export const UserSearch = ({ onSelectUser, onSwitchToEmailInput }: UserSearchPro
     }
 
     try {
+      console.log("Searching for:", query);
+
       const { data, error } = await supabase
         .from('profiles')
         .select('id, email')
@@ -37,7 +39,7 @@ export const UserSearch = ({ onSelectUser, onSwitchToEmailInput }: UserSearchPro
         throw error;
       }
 
-      setSearchResults(Array.isArray(data) ? data : []);
+      setSearchResults(data || []);
     } catch (error) {
       console.error("Fehler bei der Benutzersuche:", error);
       setSearchResults([]);
@@ -56,8 +58,7 @@ export const UserSearch = ({ onSelectUser, onSwitchToEmailInput }: UserSearchPro
             searchUsers(value);
           }}
         />
-        <CommandEmpty>Keine Benutzer gefunden.</CommandEmpty>
-        {Array.isArray(searchResults) && searchResults.length > 0 && (
+        {Array.isArray(searchResults) && searchResults.length > 0 ? (
           <CommandGroup>
             {searchResults.map((result) => (
               <CommandItem
@@ -68,6 +69,8 @@ export const UserSearch = ({ onSelectUser, onSwitchToEmailInput }: UserSearchPro
               </CommandItem>
             ))}
           </CommandGroup>
+        ) : (
+          <CommandEmpty>Keine Benutzer gefunden.</CommandEmpty>
         )}
       </Command>
       <Button
