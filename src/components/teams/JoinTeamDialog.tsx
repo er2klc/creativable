@@ -35,7 +35,6 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
         .from("teams")
         .select("id")
         .eq("join_code", joinCode.trim())
-        .limit(1)
         .maybeSingle();
 
       if (teamError) {
@@ -86,14 +85,16 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setJoinCode("");
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      setIsOpen(open);
-      if (!open) {
-        setJoinCode("");
-        setIsLoading(false);
-      }
-    }}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <UserPlus className="h-4 w-4 mr-2" />
