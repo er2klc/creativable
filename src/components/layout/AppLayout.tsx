@@ -23,6 +23,7 @@ import {
   Shield,
   Instagram,
   Globe2,
+  Infinity,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -32,6 +33,7 @@ const APP_VERSION = "0.2";
 
 const navigationItems = [
   { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
+  { title: "Unity", icon: Infinity, url: "/unity", className: "font-['Orbitron'] text-primary" },
   { title: "Kontakt", icon: Users, url: "/leads" },
   { 
     title: "Nachrichten", 
