@@ -34,19 +34,28 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
     setIsLoading(true);
 
     try {
-      const teamData = {
+      console.log("Creating team with data:", {
         name: name.trim(),
         description: description.trim(),
         created_by: user.id,
-      };
+      });
 
       const { data: team, error: teamError } = await supabase
         .from("teams")
-        .insert(teamData)
-        .select('*, team_members(*)')
+        .insert({
+          name: name.trim(),
+          description: description.trim(),
+          created_by: user.id,
+        })
+        .select('id, name, join_code')
         .single();
 
-      if (teamError) throw teamError;
+      if (teamError) {
+        console.error("Error inserting team:", teamError);
+        throw teamError;
+      }
+
+      console.log("Team created successfully:", team);
 
       if (!team) {
         throw new Error("Team wurde erstellt, aber keine Daten zurückgegeben");
@@ -60,7 +69,10 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           role: "owner",
         });
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error("Error creating team member:", memberError);
+        throw memberError;
+      }
 
       setJoinCode(team.join_code);
       toast.success("Team erfolgreich erstellt");
@@ -68,6 +80,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
     } catch (error: any) {
       console.error("Error creating team:", error);
       toast.error(error.message || "Fehler beim Erstellen des Teams");
+      if (error.hint) console.error("Policy hint:", error.hint);
     } finally {
       setIsLoading(false);
     }
