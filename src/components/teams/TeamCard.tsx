@@ -22,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 interface TeamCardProps {
   team: Team;
   teamStats?: {
-    totalMembers: number; // This includes both regular members and admins
+    totalMembers: number;
     admins: number;
   };
   onDelete: (teamId: string) => Promise<void>;
@@ -36,6 +36,16 @@ export const TeamCard = ({ team, teamStats, onDelete }: TeamCardProps) => {
     e?.stopPropagation();
     await navigator.clipboard.writeText(joinCode);
     toast.success("Beitritts-Code kopiert!");
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await onDelete(team.id);
+    } catch (error) {
+      console.error('Error in TeamCard delete:', error);
+      toast.error("Fehler beim Löschen des Teams");
+    }
   };
 
   const isAdmin = team.created_by === user?.id;
@@ -123,10 +133,7 @@ export const TeamCard = ({ team, teamStats, onDelete }: TeamCardProps) => {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(team.id);
-                      }}
+                      onClick={handleDelete}
                       className="bg-destructive hover:bg-destructive/90"
                     >
                       Löschen
