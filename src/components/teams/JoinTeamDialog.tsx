@@ -31,32 +31,28 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
     setIsLoading(true);
 
     try {
-      console.log("Attempting to join team with code:", joinCode);
-      
       // Find team by join code
-      const { data: team, error: teamError } = await supabase
+      const { data: teams, error: teamError } = await supabase
         .from("teams")
         .select("id")
-        .eq("join_code", joinCode.trim())
-        .single();
+        .eq("join_code", joinCode.trim());
 
-      console.log("Team lookup result:", { team, teamError });
-
-      if (teamError || !team) {
+      if (teamError) throw teamError;
+      if (!teams || teams.length === 0) {
         throw new Error("Ungültiger Beitritts-Code");
       }
 
+      const team = teams[0];
+
       // Check if user is already a member
-      const { data: existingMember, error: memberCheckError } = await supabase
+      const { data: members, error: memberCheckError } = await supabase
         .from("team_members")
         .select("id")
         .eq("team_id", team.id)
-        .eq("user_id", user.id)
-        .single();
+        .eq("user_id", user.id);
 
-      console.log("Existing member check:", { existingMember, memberCheckError });
-
-      if (existingMember) {
+      if (memberCheckError) throw memberCheckError;
+      if (members && members.length > 0) {
         throw new Error("Sie sind bereits Mitglied dieses Teams");
       }
 
@@ -69,12 +65,7 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
           role: "member",
         });
 
-      console.log("Join attempt result:", { joinError });
-
-      if (joinError) {
-        console.error("Error details:", joinError);
-        throw joinError;
-      }
+      if (joinError) throw joinError;
 
       toast.success("Team erfolgreich beigetreten");
       setIsOpen(false);

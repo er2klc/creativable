@@ -71,25 +71,24 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
     setIsLoading(true);
 
     try {
-      const { data: team, error: teamError } = await supabase
+      // Create team
+      const { data: teams, error: teamError } = await supabase
         .from("teams")
         .insert({
           name: name.trim(),
           description: description.trim(),
           created_by: user.id,
         })
-        .select('id, name, join_code')
-        .single();
+        .select('id, name, join_code');
 
-      if (teamError) {
-        console.error("Error inserting team:", teamError);
-        throw teamError;
-      }
-
-      if (!team) {
+      if (teamError) throw teamError;
+      if (!teams || teams.length === 0) {
         throw new Error("Team wurde erstellt, aber keine Daten zurückgegeben");
       }
 
+      const team = teams[0];
+
+      // Upload logo if exists
       let logoUrl = null;
       if (logoFile) {
         logoUrl = await uploadLogo(team.id);
@@ -98,12 +97,10 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           .update({ logo_url: logoUrl })
           .eq('id', team.id);
 
-        if (updateError) {
-          console.error("Error updating team logo:", updateError);
-          throw updateError;
-        }
+        if (updateError) throw updateError;
       }
 
+      // Add creator as owner
       const { error: memberError } = await supabase
         .from("team_members")
         .insert({
@@ -112,10 +109,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           role: "owner",
         });
 
-      if (memberError) {
-        console.error("Error creating team member:", memberError);
-        throw memberError;
-      }
+      if (memberError) throw memberError;
 
       setJoinCode(team.join_code);
       toast.success("Team erfolgreich erstellt");
@@ -123,7 +117,6 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
     } catch (error: any) {
       console.error("Error creating team:", error);
       toast.error(error.message || "Fehler beim Erstellen des Teams");
-      if (error.hint) console.error("Policy hint:", error.hint);
     } finally {
       setIsLoading(false);
     }
