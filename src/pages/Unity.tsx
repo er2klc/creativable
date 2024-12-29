@@ -21,7 +21,7 @@ const Unity = () => {
       if (!user?.id) return [];
       
       try {
-        // First get teams where user is creator
+        // Get teams where user is creator
         const { data: ownedTeams, error: ownedError } = await supabase
           .from('teams')
           .select('*')
@@ -32,7 +32,7 @@ const Unity = () => {
           throw ownedError;
         }
 
-        // First get the team IDs where user is a member
+        // Get team IDs where user is a member
         const { data: memberTeamIds, error: memberIdsError } = await supabase
           .from('team_members')
           .select('team_id')
@@ -43,21 +43,27 @@ const Unity = () => {
           throw memberIdsError;
         }
 
-        // Then get the actual teams using those IDs
+        // Get the actual teams using those IDs
         const teamIds = memberTeamIds?.map(record => record.team_id) || [];
-        const { data: memberTeams, error: memberTeamsError } = await supabase
-          .from('teams')
-          .select('*')
-          .neq('created_by', user.id)
-          .in('id', teamIds);
+        let memberTeams: any[] = [];
+        
+        if (teamIds.length > 0) {
+          const { data: fetchedTeams, error: memberTeamsError } = await supabase
+            .from('teams')
+            .select('*')
+            .neq('created_by', user.id)
+            .in('id', teamIds);
 
-        if (memberTeamsError) {
-          console.error("Error fetching member teams:", memberTeamsError);
-          throw memberTeamsError;
+          if (memberTeamsError) {
+            console.error("Error fetching member teams:", memberTeamsError);
+            throw memberTeamsError;
+          }
+          
+          memberTeams = fetchedTeams || [];
         }
 
         // Combine and remove duplicates
-        const allTeams = [...(ownedTeams || []), ...(memberTeams || [])];
+        const allTeams = [...(ownedTeams || []), ...memberTeams];
         const uniqueTeams = Array.from(new Map(allTeams.map(team => [team.id, team])).values());
         
         return uniqueTeams;
