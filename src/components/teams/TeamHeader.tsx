@@ -51,7 +51,15 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
     queryFn: async () => {
       const { data } = await supabase
         .from('team_members')
-        .select('id, user_id, role')
+        .select(`
+          id, 
+          user_id, 
+          role,
+          profiles:user_id (
+            id,
+            email
+          )
+        `)
         .eq('team_id', team.id);
       
       return data;
@@ -63,7 +71,14 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
     queryFn: async () => {
       const { data } = await supabase
         .from('team_members')
-        .select('id, role')
+        .select(`
+          id, 
+          role,
+          profiles:user_id (
+            id,
+            email
+          )
+        `)
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);
       
@@ -106,10 +121,11 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
                     <div className="mt-4 space-y-4">
                       {members?.filter(member => ['admin', 'owner'].includes(member.role)).map((admin) => (
                         <div key={admin.id} className="flex items-center justify-between p-2 border rounded">
-                          <div>
+                          <div className="flex items-center gap-2">
                             <Badge variant={admin.role === 'owner' ? 'default' : 'secondary'}>
                               {admin.role === 'owner' ? 'Owner' : 'Admin'}
                             </Badge>
+                            <span className="text-sm">{admin.profiles?.email}</span>
                           </div>
                         </div>
                       ))}
@@ -134,10 +150,11 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
                       <div className="mt-4 space-y-4">
                         {members?.map((member) => (
                           <div key={member.id} className="flex items-center justify-between p-2 border rounded">
-                            <div>
+                            <div className="flex items-center gap-2">
                               <Badge variant={member.role === 'owner' ? 'default' : 'secondary'}>
                                 {member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Mitglied'}
                               </Badge>
+                              <span className="text-sm">{member.profiles?.email}</span>
                             </div>
                             {member.role !== 'owner' && isAdmin && (
                               <Button
