@@ -22,7 +22,7 @@ interface TeamMember {
   user_id: string;
   profiles: {
     display_name: string | null;
-  } | null;
+  };
 }
 
 export function TeamHeader({ team }: TeamHeaderProps) {
@@ -46,7 +46,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: members } = useQuery({
     queryKey: ['team-members', team.id],
     queryFn: async () => {
-      const { data: memberData, error } = await supabase
+      const { data, error } = await supabase
         .from('team_members')
         .select(`
           id,
@@ -59,9 +59,9 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         .eq('team_id', team.id);
 
       if (error) throw error;
-      if (!memberData) return [];
+      if (!data) return [];
 
-      return (memberData as TeamMember[]).map(member => ({
+      return data.map(member => ({
         ...member,
         display_name: member.profiles?.display_name || 'Unbekannter Benutzer'
       }));
@@ -71,7 +71,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: adminMembers } = useQuery({
     queryKey: ['team-admins', team.id],
     queryFn: async () => {
-      const { data: adminData, error } = await supabase
+      const { data, error } = await supabase
         .from('team_members')
         .select(`
           id,
@@ -85,9 +85,9 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         .in('role', ['admin', 'owner']);
 
       if (error) throw error;
-      if (!adminData) return [];
+      if (!data) return [];
 
-      return (adminData as TeamMember[]).map(admin => ({
+      return data.map(admin => ({
         ...admin,
         display_name: admin.profiles?.display_name || 'Unbekannter Benutzer'
       }));
