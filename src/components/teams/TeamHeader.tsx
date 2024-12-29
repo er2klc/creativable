@@ -70,26 +70,18 @@ export function TeamHeader({ team }: TeamHeaderProps) {
     },
   });
 
-  const { data: adminMembers } = useQuery<TeamMember[]>({
-    queryKey: ['team-admins', team.id],
-    queryFn: async () => {
-      // Filter admins from the full members list instead of making a separate query
-      return members?.filter(member => 
-        member.role === 'admin' || member.role === 'owner'
-      ) || [];
-    },
-    enabled: !!members, // Only run this query when members data is available
-  });
+  // Filter admins from the full members list
+  const adminMembers = members?.filter(member => 
+    member.role === 'admin' || member.role === 'owner'
+  ) || [];
+
+  // Calculate counts
+  const membersCount = members?.length || 0;
+  const adminsCount = adminMembers.length;
 
   console.log('Members:', members);
   console.log('Admin Members:', adminMembers);
   console.log('Current team ID:', team.id);
-
-  // Calculate counts from the full members list
-  const membersCount = members?.length || 0;
-  const adminsCount = members?.filter(member => 
-    member.role === 'admin' || member.role === 'owner'
-  ).length || 0;
 
   return (
     <div className="bg-background border-b">
@@ -101,7 +93,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
             membersCount={membersCount}
             adminsCount={adminsCount}
             members={members || []}
-            adminMembers={adminMembers || []}
+            adminMembers={adminMembers}
           />
           <Button
             variant="ghost"
