@@ -1,33 +1,24 @@
-import { Command, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { Search } from "lucide-react";
-
-interface SearchResult {
-  id: string;
-  email: string;
-}
-
 interface UserSearchResultsProps {
   searchResults: SearchResult[];
   onSelectUser: (email: string) => void;
 }
 
 export const UserSearchResults = ({ searchResults, onSelectUser }: UserSearchResultsProps) => {
+  if (!searchResults || searchResults.length === 0) {
+    return <div className="p-4">Keine Benutzer gefunden.</div>;
+  }
+
   return (
-    <Command className="rounded-lg border shadow-md">
-      <CommandEmpty>Keine Benutzer gefunden.</CommandEmpty>
-      {searchResults.length > 0 && (
-        <CommandGroup>
-          {searchResults.map((result) => (
-            <CommandItem
-              key={result.id}
-              onSelect={() => onSelectUser(result.email)}
-            >
-              <Search className="mr-2 h-4 w-4" />
-              {result.email}
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      )}
-    </Command>
+    <div className="p-4">
+      {searchResults.map((result) => (
+        <div
+          key={result.id}
+          onClick={() => onSelectUser(result.email)}
+          className="cursor-pointer hover:bg-gray-100 p-2 rounded"
+        >
+          {result.email}
+        </div>
+      ))}
+    </div>
   );
 };
