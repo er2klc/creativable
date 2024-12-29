@@ -88,10 +88,10 @@ const Unity = () => {
 
       if (error) throw error;
 
-      toast.success("Team erfolgreich gelöscht");
       await refetch();
+      toast.success("Team erfolgreich gelöscht");
     } catch (error: any) {
-      console.error("Error deleting team:", error);
+      console.error('Error deleting team:', error);
       toast.error("Fehler beim Löschen des Teams");
     }
   };

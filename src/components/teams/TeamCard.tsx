@@ -41,10 +41,8 @@ export const TeamCard = ({ team, teamStats, onDelete }: TeamCardProps) => {
     e.stopPropagation();
     try {
       await onDelete(team.id);
-      toast.success("Team erfolgreich gelöscht");
     } catch (error) {
       console.error('Error in TeamCard delete:', error);
-      toast.error("Fehler beim Löschen des Teams");
     }
   };
 
