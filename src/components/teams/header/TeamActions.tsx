@@ -82,7 +82,7 @@ export function TeamActions({ teamId, isAdmin, isOwner }: TeamActionsProps) {
               <AlertDialogDescription>
                 Sind Sie sicher, dass Sie dieses Team löschen möchten? 
                 Diese Aktion kann nicht rückgängig gemacht werden.
-                Alle Teammitglieder werden entfernt.
+                Das Team und alle zugehörigen Daten werden permanent gelöscht.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -96,7 +96,7 @@ export function TeamActions({ teamId, isAdmin, isOwner }: TeamActionsProps) {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      ) : isAdmin ? null : (
+      ) : !isAdmin ? (
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
@@ -111,7 +111,7 @@ export function TeamActions({ teamId, isAdmin, isOwner }: TeamActionsProps) {
               <AlertDialogTitle>Team verlassen</AlertDialogTitle>
               <AlertDialogDescription>
                 Sind Sie sicher, dass Sie dieses Team verlassen möchten? 
-                Diese Aktion kann nicht rückgängig gemacht werden.
+                Sie können später nur über einen neuen Einladungslink wieder beitreten.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -125,7 +125,7 @@ export function TeamActions({ teamId, isAdmin, isOwner }: TeamActionsProps) {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      )}
+      ) : null}
       <Button
         variant="ghost"
         onClick={() => navigate('/unity')}

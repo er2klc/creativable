@@ -62,23 +62,6 @@ const Unity = () => {
     enabled: !!user,
   });
 
-  const updateTeamOrder = async (teamId: string, newIndex: number) => {
-    try {
-      const { error } = await supabase
-        .from('teams')
-        .update({ order_index: newIndex })
-        .eq('id', teamId);
-
-      if (error) throw error;
-
-      toast.success("Reihenfolge erfolgreich aktualisiert");
-      await refetch();
-    } catch (error: any) {
-      console.error('Error updating team order:', error);
-      toast.error("Fehler beim Aktualisieren der Reihenfolge");
-    }
-  };
-
   const handleDeleteTeam = async (teamId: string) => {
     try {
       const { error } = await supabase
@@ -93,6 +76,41 @@ const Unity = () => {
     } catch (error: any) {
       console.error('Error deleting team:', error);
       toast.error("Fehler beim Löschen des Teams");
+    }
+  };
+
+  const handleLeaveTeam = async (teamId: string) => {
+    try {
+      const { error } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('team_id', teamId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      await refetch();
+      toast.success("Team erfolgreich verlassen");
+    } catch (error: any) {
+      console.error('Error leaving team:', error);
+      toast.error("Fehler beim Verlassen des Teams");
+    }
+  };
+
+  const updateTeamOrder = async (teamId: string, newIndex: number) => {
+    try {
+      const { error } = await supabase
+        .from('teams')
+        .update({ order_index: newIndex })
+        .eq('id', teamId);
+
+      if (error) throw error;
+
+      await refetch();
+      toast.success("Reihenfolge erfolgreich aktualisiert");
+    } catch (error: any) {
+      console.error('Error updating team order:', error);
+      toast.error("Fehler beim Aktualisieren der Reihenfolge");
     }
   };
 
@@ -148,6 +166,7 @@ const Unity = () => {
                   team={team}
                   teamStats={team.stats}
                   onDelete={handleDeleteTeam}
+                  onLeave={handleLeaveTeam}
                 />
               </div>
               <div className="flex flex-col gap-1">
