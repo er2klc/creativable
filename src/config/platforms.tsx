@@ -15,22 +15,42 @@ export const platformsConfig: PlatformConfig[] = [
   {
     name: "Instagram",
     icon: Instagram,
-    generateUrl: (username) => `https://www.instagram.com/${username.replace(/^@/, '')}`,
+    generateUrl: (username) => {
+      if (username.startsWith('https://www.instagram.com/')) {
+        return username;
+      }
+      return `https://www.instagram.com/${username.replace(/^@/, '')}`;
+    },
   },
   {
     name: "LinkedIn",
     icon: Linkedin,
-    generateUrl: (username) => `https://www.linkedin.com/in/${username.replace(/^@/, '')}`,
+    generateUrl: (username) => {
+      if (username.startsWith('https://www.linkedin.com/')) {
+        return username;
+      }
+      return `https://www.linkedin.com/in/${username.replace(/^@/, '')}`;
+    },
   },
   {
     name: "Facebook",
     icon: Facebook,
-    generateUrl: (username) => `https://www.facebook.com/${username.replace(/^@/, '')}`,
+    generateUrl: (username) => {
+      if (username.startsWith('https://www.facebook.com/')) {
+        return username;
+      }
+      return `https://www.facebook.com/${username.replace(/^@/, '')}`;
+    },
   },
   {
     name: "TikTok",
     icon: Video,
-    generateUrl: (username) => `https://www.tiktok.com/@${username.replace(/^@/, '')}`,
+    generateUrl: (username) => {
+      if (username.startsWith('https://www.tiktok.com/')) {
+        return username;
+      }
+      return `https://www.tiktok.com/@${username.replace(/^@/, '')}`;
+    },
   },
   {
     name: "Offline",
