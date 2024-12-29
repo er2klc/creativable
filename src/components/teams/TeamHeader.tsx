@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { TeamHeaderTitle } from "./header/TeamHeaderTitle";
-import { TeamManagementButton } from "./header/TeamManagementButton";
 
 interface TeamHeaderProps {
   team: {
@@ -17,6 +16,13 @@ interface TeamHeaderProps {
 }
 
 interface TeamMember {
+  id: string;
+  role: string;
+  user_id: string;
+  display_name: string;
+}
+
+interface RawTeamMember {
   id: string;
   role: string;
   user_id: string;
@@ -52,7 +58,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          profiles:user_id (
+          profiles (
             display_name
           )
         `)
@@ -65,8 +71,10 @@ export function TeamHeader({ team }: TeamHeaderProps) {
       
       if (!data) return [];
 
-      return (data as TeamMember[]).map(member => ({
-        ...member,
+      return (data as RawTeamMember[]).map(member => ({
+        id: member.id,
+        role: member.role,
+        user_id: member.user_id,
         display_name: member.profiles?.display_name || 'Unbekannter Benutzer'
       }));
     },
@@ -81,7 +89,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          profiles:user_id (
+          profiles (
             display_name
           )
         `)
@@ -95,8 +103,10 @@ export function TeamHeader({ team }: TeamHeaderProps) {
 
       if (!data) return [];
 
-      return (data as TeamMember[]).map(admin => ({
-        ...admin,
+      return (data as RawTeamMember[]).map(admin => ({
+        id: admin.id,
+        role: admin.role,
+        user_id: admin.user_id,
         display_name: admin.profiles?.display_name || 'Unbekannter Benutzer'
       }));
     },
