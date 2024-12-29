@@ -22,51 +22,53 @@ const Unity = () => {
       
       try {
         // Get teams where user is creator
-        const { data: ownedTeams, error: ownedError } = await supabase
+        const ownedTeamsQuery = await supabase
           .from('teams')
           .select('*')
           .eq('created_by', user.id);
 
-        if (ownedError) {
-          console.error("Error fetching owned teams:", ownedError);
+        if (ownedTeamsQuery.error) {
+          console.error("Error fetching owned teams:", ownedTeamsQuery.error);
           toast.error("Fehler beim Laden der eigenen Teams");
           return [];
         }
 
+        const ownedTeams = ownedTeamsQuery.data || [];
+
         // Get team IDs where user is a member
-        const { data: memberTeamIds, error: memberIdsError } = await supabase
+        const memberTeamIdsQuery = await supabase
           .from('team_members')
           .select('team_id')
           .eq('user_id', user.id);
 
-        if (memberIdsError) {
-          console.error("Error fetching member team IDs:", memberIdsError);
+        if (memberTeamIdsQuery.error) {
+          console.error("Error fetching member team IDs:", memberTeamIdsQuery.error);
           toast.error("Fehler beim Laden der Team-Mitgliedschaften");
-          return ownedTeams || [];
+          return ownedTeams;
         }
 
-        // Get the actual teams using those IDs
-        const teamIds = memberTeamIds?.map(record => record.team_id) || [];
-        let memberTeams: Team[] = [];
+        const teamIds = memberTeamIdsQuery.data?.map(record => record.team_id) || [];
         
+        // Get the actual teams using those IDs
+        let memberTeams: Team[] = [];
         if (teamIds.length > 0) {
-          const { data: fetchedTeams, error: memberTeamsError } = await supabase
+          const memberTeamsQuery = await supabase
             .from('teams')
             .select('*')
             .neq('created_by', user.id)
             .in('id', teamIds);
 
-          if (memberTeamsError) {
-            console.error("Error fetching member teams:", memberTeamsError);
+          if (memberTeamsQuery.error) {
+            console.error("Error fetching member teams:", memberTeamsQuery.error);
             toast.error("Fehler beim Laden der Team-Details");
-            return ownedTeams || [];
+            return ownedTeams;
           }
           
-          memberTeams = fetchedTeams || [];
+          memberTeams = memberTeamsQuery.data || [];
         }
 
         // Combine and remove duplicates
-        const allTeams = [...(ownedTeams || []), ...memberTeams];
+        const allTeams = [...ownedTeams, ...memberTeams];
         return Array.from(new Map(allTeams.map(team => [team.id, team])).values());
       } catch (error: any) {
         console.error("Error loading teams:", error);
