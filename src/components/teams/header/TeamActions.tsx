@@ -25,13 +25,17 @@ export function TeamActions({ teamId, isAdmin }: TeamActionsProps) {
 
   const handleLeaveTeam = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Nicht eingeloggt");
+
       const { error } = await supabase
         .from('team_members')
         .delete()
         .match({ 
           team_id: teamId,
-          user_id: (await supabase.auth.getUser()).data.user?.id 
-        });
+          user_id: user.id 
+        })
+        .select();
 
       if (error) throw error;
 
@@ -48,7 +52,8 @@ export function TeamActions({ teamId, isAdmin }: TeamActionsProps) {
       const { error } = await supabase
         .from('teams')
         .delete()
-        .eq('id', teamId);
+        .eq('id', teamId)
+        .select();
 
       if (error) throw error;
 

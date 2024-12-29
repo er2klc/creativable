@@ -49,26 +49,28 @@ export const useTeamCreation = ({ onSuccess, onError }: TeamCreationProps) => {
     setIsLoading(true);
 
     try {
-      const { data: teams, error: teamError } = await supabase
+      // Create team
+      const { data: team, error: teamError } = await supabase
         .from("teams")
         .insert({
           name: name.trim(),
           description: description.trim(),
           created_by: user.id,
         })
-        .select('id, name, join_code')
+        .select('id, join_code')
         .single();
 
       if (teamError) throw teamError;
 
       // Upload logo if exists
       if (logoFile) {
-        const logoUrl = await uploadLogo(teams.id, logoFile);
+        const logoUrl = await uploadLogo(team.id, logoFile);
         
         const { error: updateError } = await supabase
           .from("teams")
           .update({ logo_url: logoUrl })
-          .eq('id', teams.id);
+          .eq('id', team.id)
+          .select();
 
         if (updateError) throw updateError;
       }
@@ -77,14 +79,15 @@ export const useTeamCreation = ({ onSuccess, onError }: TeamCreationProps) => {
       const { error: memberError } = await supabase
         .from("team_members")
         .insert({
-          team_id: teams.id,
+          team_id: team.id,
           user_id: user.id,
           role: "owner",
-        });
+        })
+        .select();
 
       if (memberError) throw memberError;
 
-      onSuccess(teams.join_code);
+      onSuccess(team.join_code);
     } catch (error: any) {
       console.error("Error creating team:", error);
       onError(error);

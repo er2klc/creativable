@@ -16,13 +16,11 @@ const Unity = () => {
   const navigate = useNavigate();
   const user = useUser();
 
-  // Fetch teams with member stats
   const { data: teamsWithStats = [], isLoading, refetch } = useQuery({
     queryKey: ['teams-with-stats'],
     queryFn: async () => {
       if (!user?.id) return [];
       
-      // First get the teams
       const { data: teams, error } = await supabase.rpc('get_user_teams', { uid: user.id });
 
       if (error) {
@@ -31,7 +29,6 @@ const Unity = () => {
         return [];
       }
 
-      // Then get member stats for each team
       const teamsWithStats = await Promise.all(
         teams.map(async (team) => {
           const { data: members, error: membersError } = await supabase
@@ -69,14 +66,16 @@ const Unity = () => {
     try {
       const { error } = await supabase
         .from('teams')
-        .update({ order_index: newIndex })
+        .update({ 
+          order_index: newIndex 
+        })
         .eq('id', teamId)
         .select();
 
       if (error) throw error;
 
-      await refetch();
       toast.success("Reihenfolge erfolgreich aktualisiert");
+      await refetch();
     } catch (error: any) {
       console.error('Error updating team order:', error);
       toast.error("Fehler beim Aktualisieren der Reihenfolge");
@@ -94,12 +93,13 @@ const Unity = () => {
       const { error } = await supabase
         .from('teams')
         .delete()
-        .eq('id', teamId);
+        .eq('id', teamId)
+        .select();
 
       if (error) throw error;
 
       toast.success("Team erfolgreich gelöscht");
-      refetch();
+      await refetch();
     } catch (error: any) {
       console.error("Error deleting team:", error);
       toast.error("Fehler beim Löschen des Teams");
