@@ -21,23 +21,16 @@ const Unity = () => {
       if (!user?.id) return [];
       
       try {
-        // First get team_ids where user is a member
-        const { data: memberTeams, error: memberError } = await supabase
-          .from('team_members')
-          .select('team_id')
-          .eq('user_id', user.id);
-
-        if (memberError) throw memberError;
-
-        const teamIds = memberTeams?.map(m => m.team_id) || [];
-        
-        // Then get teams where user is either creator or member
+        // Get all teams where user is either creator or member
         const { data: teams, error: teamsError } = await supabase
           .from('teams')
           .select('id, name, description, created_at, created_by, max_members')
-          .or(`created_by.eq.${user.id}${teamIds.length ? `,id.in.(${teamIds.join(',')})` : ''}`);
+          .or(`created_by.eq.${user.id},id.in.(select team_id from team_members where user_id = '${user.id}')`);
 
-        if (teamsError) throw teamsError;
+        if (teamsError) {
+          console.error("Error loading teams:", teamsError);
+          throw teamsError;
+        }
 
         return teams || [];
       } catch (error: any) {
