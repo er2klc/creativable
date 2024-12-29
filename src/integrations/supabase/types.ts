@@ -504,6 +504,44 @@ export type Database = {
           },
         ]
       }
+      team_categories: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          order_index: number
+          team_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          order_index?: number
+          team_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          order_index?: number
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_categories_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_invites: {
         Row: {
           admin_name: string | null
@@ -576,6 +614,95 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_post_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string
+          id: string
+          post_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by: string
+          id?: string
+          post_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          post_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "team_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_posts: {
+        Row: {
+          category_id: string
+          content: string
+          created_at: string | null
+          created_by: string
+          file_urls: string[] | null
+          id: string
+          pinned: boolean | null
+          team_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category_id: string
+          content: string
+          created_at?: string | null
+          created_by: string
+          file_urls?: string[] | null
+          id?: string
+          pinned?: boolean | null
+          team_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string
+          content?: string
+          created_at?: string | null
+          created_by?: string
+          file_urls?: string[] | null
+          id?: string
+          pinned?: boolean | null
+          team_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_posts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "team_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_posts_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
