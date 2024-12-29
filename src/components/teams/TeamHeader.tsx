@@ -68,7 +68,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
 
       if (!data) return [];
 
-      return data.map((member: TeamMemberResponse) => ({
+      return (data as any[]).map((member) => ({
         id: member.id,
         role: member.role,
         user_id: member.user_id,
@@ -96,7 +96,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
 
       if (!data) return [];
 
-      return data.map((admin: TeamMemberResponse) => ({
+      return (data as any[]).map((admin) => ({
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
