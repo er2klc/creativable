@@ -1,8 +1,44 @@
 import { Tables } from './tables';
+import { Team, TeamInsert, TeamUpdate, TeamMember, TeamMemberInsert, TeamMemberUpdate, TeamInvite, TeamInviteInsert, TeamInviteUpdate } from './teams';
 
-export type Database = {
+export interface Database {
   public: {
-    Tables: Tables;
+    Tables: {
+      teams: {
+        Row: Team;
+        Insert: TeamInsert;
+        Update: TeamUpdate;
+        Relationships: [];
+      };
+      team_members: {
+        Row: TeamMember;
+        Insert: TeamMemberInsert;
+        Update: TeamMemberUpdate;
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      team_invites: {
+        Row: TeamInvite;
+        Insert: TeamInviteInsert;
+        Update: TeamInviteUpdate;
+        Relationships: [
+          {
+            foreignKeyName: "team_invites_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+    } & Tables;
     Views: {
       [_ in never]: never;
     };
@@ -16,10 +52,6 @@ export type Database = {
       [_ in never]: never;
     };
   };
-};
+}
 
 export type PublicSchema = Database['public'];
-
-export type TablesInsert<T extends keyof Tables> = Tables[T]['Insert'];
-export type TablesUpdate<T extends keyof Tables> = Tables[T]['Update'];
-export type TablesRow<T extends keyof Tables> = Tables[T]['Row'];

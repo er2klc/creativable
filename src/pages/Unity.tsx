@@ -6,15 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Infinity, Users, Plus } from "lucide-react";
-
-interface Team {
-  id: string;
-  name: string;
-  description: string | null;
-  created_at: string | null;
-  created_by: string;
-  max_members: number | null;
-}
+import type { Team } from "@/integrations/supabase/types/teams";
 
 const Unity = () => {
   const navigate = useNavigate();
