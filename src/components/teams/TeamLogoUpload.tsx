@@ -81,23 +81,30 @@ export const TeamLogoUpload = ({ teamId, currentLogoUrl }: TeamLogoUploadProps) 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <label className="cursor-pointer">
+        <div className="cursor-pointer">
           <Input
             type="file"
             accept="image/*"
             className="hidden"
             onChange={handleLogoUpload}
             disabled={isUploading}
+            id={`logo-upload-${teamId}`}
           />
           <Button
             variant="ghost"
             size="icon"
             className="h-8 w-8"
             disabled={isUploading}
+            onClick={() => {
+              const input = document.getElementById(`logo-upload-${teamId}`);
+              if (input) {
+                input.click();
+              }
+            }}
           >
             <ImagePlus className="h-4 w-4" />
           </Button>
-        </label>
+        </div>
       </TooltipTrigger>
       <TooltipContent>
         {currentLogoUrl ? "Logo ändern" : "Logo hochladen"}
