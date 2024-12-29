@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CommandInput } from "@/components/ui/command";
+import { Command, CommandInput } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
 import { UserSearchResults } from "./UserSearchResults";
