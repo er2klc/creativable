@@ -20,28 +20,31 @@ const Unity = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      // First get team_ids where user is a member
-      const { data: memberTeamIds } = await supabase
-        .from('team_members')
-        .select('team_id')
-        .eq('user_id', user.id);
+      try {
+        // First get team_ids where user is a member
+        const { data: memberTeams, error: memberError } = await supabase
+          .from('team_members')
+          .select('team_id')
+          .eq('user_id', user.id);
 
-      const teamIds = memberTeamIds?.map(m => m.team_id) || [];
-      
-      // Then get teams where user is either creator or member
-      const { data, error } = await supabase
-        .from('teams')
-        .select('id, name, description, created_at, created_by, max_members')
-        .or(`created_by.eq.${user.id},id.in.(${teamIds.join(',')})`)
-        .throwOnError();
+        if (memberError) throw memberError;
 
-      if (error) {
+        const teamIds = memberTeams?.map(m => m.team_id) || [];
+        
+        // Then get teams where user is either creator or member
+        const { data: teams, error: teamsError } = await supabase
+          .from('teams')
+          .select('id, name, description, created_at, created_by, max_members')
+          .or(`created_by.eq.${user.id}${teamIds.length ? `,id.in.(${teamIds.join(',')})` : ''}`);
+
+        if (teamsError) throw teamsError;
+
+        return teams || [];
+      } catch (error: any) {
         console.error("Error loading teams:", error);
         toast.error("Fehler beim Laden der Teams");
         return [];
       }
-
-      return data || [];
     },
     enabled: !!user,
   });
