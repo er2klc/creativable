@@ -24,7 +24,12 @@ const Unity = () => {
         .select('*')
         .eq('created_by', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching teams:", error);
+        throw error;
+      }
+      
+      console.log("Fetched teams:", data);
       return data || [];
     },
     enabled: !!user,
