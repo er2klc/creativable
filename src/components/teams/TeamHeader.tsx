@@ -47,7 +47,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
       const memberIds = memberData.map(member => member.user_id);
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('id, email')
+        .select('id, email, display_name')
         .in('id', memberIds);
 
       return memberData.map(member => {
@@ -55,7 +55,8 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return {
           ...member,
           profiles: profile || { 
-            email: 'Unbekannter Benutzer'
+            email: 'Unbekannter Benutzer',
+            display_name: null
           }
         };
       });
@@ -76,7 +77,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
       const adminIds = adminData.map(admin => admin.user_id);
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('id, email')
+        .select('id, email, display_name')
         .in('id', adminIds);
 
       return adminData.map(admin => {
@@ -84,7 +85,8 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return {
           ...admin,
           profiles: profile || { 
-            email: 'Unbekannter Benutzer'
+            email: 'Unbekannter Benutzer',
+            display_name: null
           }
         };
       });
