@@ -54,9 +54,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         const profile = profileData?.find(p => p.id === member.user_id);
         return {
           ...member,
-          profiles: profile || { 
-            display_name: 'Unbekannter Benutzer'
-          }
+          display_name: profile?.display_name || 'Unbekannter Benutzer'
         };
       });
     },
@@ -83,9 +81,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         const profile = profileData?.find(p => p.id === admin.user_id);
         return {
           ...admin,
-          profiles: profile || { 
-            display_name: 'Unbekannter Benutzer'
-          }
+          display_name: profile?.display_name || 'Unbekannter Benutzer'
         };
       });
     },
