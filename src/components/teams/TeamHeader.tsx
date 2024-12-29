@@ -22,7 +22,7 @@ interface TeamMember {
   user_id: string;
   profiles: {
     display_name: string | null;
-  };
+  } | null;
 }
 
 export function TeamHeader({ team }: TeamHeaderProps) {
@@ -58,10 +58,14 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         `)
         .eq('team_id', team.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching members:', error);
+        return [];
+      }
+      
       if (!data) return [];
 
-      return data.map(member => ({
+      return (data as TeamMember[]).map(member => ({
         ...member,
         display_name: member.profiles?.display_name || 'Unbekannter Benutzer'
       }));
@@ -84,10 +88,14 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching admins:', error);
+        return [];
+      }
+
       if (!data) return [];
 
-      return data.map(admin => ({
+      return (data as TeamMember[]).map(admin => ({
         ...admin,
         display_name: admin.profiles?.display_name || 'Unbekannter Benutzer'
       }));
