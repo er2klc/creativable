@@ -40,15 +40,8 @@ export const UserSearch = ({ onSelectUser, onSwitchToEmailInput }: UserSearchPro
         throw error;
       }
 
-      console.log("Search results:", data);
-
-      if (!data || data.length === 0) {
-        setSearchResults([]);
-        return;
-      }
-
       setSearchResults(Array.isArray(data) ? data : []);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error searching users:", error);
       setSearchResults([]);
       toast.error("Fehler bei der Benutzersuche");
