@@ -15,7 +15,7 @@ export const formSchema = z.object({
   email: z.string().email("Ungültige E-Mail-Adresse").optional().nullable(),
   company_name: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
-  industry: z.string().optional().nullable(),
+  industry: z.string().min(1, "Branche ist erforderlich"),
 });
 
 interface AddLeadFormFieldsProps {

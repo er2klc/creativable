@@ -43,7 +43,7 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
       email: "",
       company_name: "",
       notes: "",
-      industry: "",
+      industry: "Nicht angegeben", // Set a default value for industry
     },
   });
 
@@ -71,7 +71,7 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
         email: values.email || null,
         company_name: values.company_name || null,
         notes: values.notes || null,
-        industry: values.industry || null,
+        industry: values.industry, // This will now always have a value
       });
 
       if (error) throw error;
