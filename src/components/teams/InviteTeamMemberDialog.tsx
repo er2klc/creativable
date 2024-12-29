@@ -5,62 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { UserPlus, Search, Mail } from "lucide-react";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { UserPlus } from "lucide-react";
+import { UserSearch } from "./search/UserSearch";
 
 interface InviteTeamMemberDialogProps {
   teamId: string;
   onInviteSent?: () => void;
 }
 
-interface SearchResult {
-  id: string;
-  email: string;
-}
-
 export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMemberDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [email, setEmail] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showEmailInput, setShowEmailInput] = useState(false);
   const user = useUser();
-
-  const searchUsers = async (query: string) => {
-    if (query.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-
-    try {
-      console.log("Searching for:", query);
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .ilike('email', `%${query}%`)
-        .limit(5);
-
-      if (error) {
-        console.error("Error searching users:", error);
-        throw error;
-      }
-
-      console.log("Search results:", data);
-
-      if (!data || data.length === 0) {
-        setSearchResults([]);
-        return;
-      }
-
-      setSearchResults(Array.isArray(data) ? data : []);
-    } catch (error: any) {
-      console.error("Error searching users:", error);
-      setSearchResults([]);
-      toast.error("Fehler bei der Benutzersuche");
-    }
-  };
 
   const handleInvite = async () => {
     if (!user) {
@@ -125,43 +83,13 @@ export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMembe
         </DialogHeader>
 
         {!showEmailInput ? (
-          <>
-            <Command className="rounded-lg border shadow-md">
-              <CommandInput 
-                placeholder="Nach Benutzern suchen..." 
-                value={searchTerm}
-                onValueChange={(value) => {
-                  setSearchTerm(value);
-                  searchUsers(value);
-                }}
-              />
-              <CommandEmpty>Keine Benutzer gefunden.</CommandEmpty>
-              {searchResults.length > 0 && (
-                <CommandGroup>
-                  {searchResults.map((result) => (
-                    <CommandItem
-                      key={result.id}
-                      onSelect={() => {
-                        setEmail(result.email);
-                        setShowEmailInput(true);
-                      }}
-                    >
-                      <Search className="mr-2 h-4 w-4" />
-                      {result.email}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-            </Command>
-            <Button
-              variant="outline"
-              onClick={() => setShowEmailInput(true)}
-              className="w-full"
-            >
-              <Mail className="mr-2 h-4 w-4" />
-              Per E-Mail einladen
-            </Button>
-          </>
+          <UserSearch
+            onSelectUser={(selectedEmail) => {
+              setEmail(selectedEmail);
+              setShowEmailInput(true);
+            }}
+            onSwitchToEmailInput={() => setShowEmailInput(true)}
+          />
         ) : (
           <div>
             <label htmlFor="email" className="text-sm font-medium">
