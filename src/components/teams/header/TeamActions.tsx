@@ -48,21 +48,17 @@ export function TeamActions({ teamId, isAdmin }: TeamActionsProps) {
 
   const handleDeleteTeam = async () => {
     try {
-      // First delete all team members
-      const { error: membersError } = await supabase
+      // Delete team members first
+      await supabase
         .from('team_members')
         .delete()
         .eq('team_id', teamId);
 
-      if (membersError) throw membersError;
-
-      // Then delete the team
-      const { error: teamError } = await supabase
+      // Then delete the team itself
+      await supabase
         .from('teams')
         .delete()
         .eq('id', teamId);
-
-      if (teamError) throw teamError;
 
       toast.success("Team erfolgreich gelöscht");
       navigate('/unity');
