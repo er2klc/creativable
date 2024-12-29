@@ -53,7 +53,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: members } = useQuery<TeamMember[]>({
     queryKey: ['team-members', team.id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('team_members')
         .select(`
           id,
@@ -65,6 +65,11 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           )
         `)
         .eq('team_id', team.id);
+
+      if (error) {
+        console.error('Error fetching team members:', error);
+        return [];
+      }
 
       if (!data) return [];
 
@@ -80,7 +85,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: adminMembers } = useQuery<TeamMember[]>({
     queryKey: ['team-admins', team.id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('team_members')
         .select(`
           id,
@@ -93,6 +98,11 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         `)
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);
+
+      if (error) {
+        console.error('Error fetching admin members:', error);
+        return [];
+      }
 
       if (!data) return [];
 
