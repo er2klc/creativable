@@ -2,6 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface TeamMemberListProps {
   members: any[];
@@ -9,6 +11,30 @@ interface TeamMemberListProps {
 }
 
 export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
+  const queryClient = useQueryClient();
+
+  const handleRoleChange = async (memberId: string, currentRole: string) => {
+    const newRole = currentRole === 'admin' ? 'member' : 'admin';
+    
+    try {
+      const { error } = await supabase
+        .from('team_members')
+        .update({ role: newRole })
+        .eq('id', memberId);
+
+      if (error) throw error;
+
+      // Invalidate and refetch
+      await queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      await queryClient.invalidateQueries({ queryKey: ['team-admins'] });
+
+      toast.success(`Rolle erfolgreich zu ${newRole === 'admin' ? 'Administrator' : 'Mitglied'} geändert`);
+    } catch (error) {
+      console.error('Error updating role:', error);
+      toast.error('Fehler beim Ändern der Rolle');
+    }
+  };
+
   return (
     <div className="mt-4 space-y-4">
       {members?.map((member) => (
@@ -32,13 +58,7 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={async () => {
-                const newRole = member.role === 'admin' ? 'member' : 'admin';
-                await supabase
-                  .from('team_members')
-                  .update({ role: newRole })
-                  .eq('id', member.id);
-              }}
+              onClick={() => handleRoleChange(member.id, member.role)}
             >
               {member.role === 'admin' ? 'Zum Mitglied machen' : 'Zum Admin machen'}
             </Button>
