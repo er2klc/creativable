@@ -503,29 +503,35 @@ export type Database = {
       }
       team_invites: {
         Row: {
+          admin_name: string | null
           created_at: string | null
           email: string
           expires_at: string | null
           id: string
           invited_by: string
+          invited_user_id: string | null
           status: string | null
           team_id: string
         }
         Insert: {
+          admin_name?: string | null
           created_at?: string | null
           email: string
           expires_at?: string | null
           id?: string
           invited_by: string
+          invited_user_id?: string | null
           status?: string | null
           team_id: string
         }
         Update: {
+          admin_name?: string | null
           created_at?: string | null
           email?: string
           expires_at?: string | null
           id?: string
           invited_by?: string
+          invited_user_id?: string | null
           status?: string | null
           team_id?: string
         }
