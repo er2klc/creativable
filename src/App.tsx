@@ -5,6 +5,7 @@ import Auth from "./pages/Auth";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Unity from "./pages/Unity";
+import TeamDetail from "./pages/TeamDetail";
 import Leads from "./pages/Leads";
 import Messages from "./pages/Messages";
 import Settings from "./pages/Settings";
@@ -28,6 +29,7 @@ const App = () => (
       <Route path="/changelog" element={<AppLayout><Changelog /></AppLayout>} />
       <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
       <Route path="/unity" element={<AppLayout><Unity /></AppLayout>} />
+      <Route path="/unity/team/:teamId" element={<AppLayout><TeamDetail /></AppLayout>} />
       <Route path="/leads" element={<AppLayout><Leads /></AppLayout>} />
       <Route path="/messages" element={<AppLayout><Messages /></AppLayout>} />
       <Route path="/settings" element={<AppLayout><Settings /></AppLayout>} />
