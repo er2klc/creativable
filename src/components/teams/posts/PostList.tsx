@@ -16,7 +16,9 @@ export function PostList({ teamId }: PostListProps) {
         .select(`
           *,
           team_categories (name),
-          created_by_profile:profiles!team_posts_created_by_fkey (email)
+          created_by_profile:created_by (
+            email
+          )
         `)
         .eq('team_id', teamId)
         .order('created_at', { ascending: false });

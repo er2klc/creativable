@@ -53,7 +53,9 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
         .from('team_members')
         .select(`
           *,
-          profiles (email)
+          profiles:user_id (
+            email
+          )
         `)
         .eq('team_id', team.id);
       
