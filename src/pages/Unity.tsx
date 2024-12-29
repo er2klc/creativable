@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Infinity, Users } from "lucide-react";
-import type { Team } from "@/integrations/supabase/types/teams";
 import { InviteTeamMemberDialog } from "@/components/teams/InviteTeamMemberDialog";
 import { CreateTeamDialog } from "@/components/teams/CreateTeamDialog";
 import { toast } from "sonner";
@@ -22,48 +21,50 @@ const Unity = () => {
       
       try {
         // Get teams where user is creator
-        const { data: ownedTeams, error: ownedError } = await supabase
+        const ownedTeamsQuery = await supabase
           .from('teams')
           .select('*')
           .eq('created_by', user.id);
 
-        if (ownedError) {
-          console.error("Error fetching owned teams:", ownedError);
-          throw ownedError;
+        if (ownedTeamsQuery.error) {
+          console.error("Error fetching owned teams:", ownedTeamsQuery.error);
+          throw ownedTeamsQuery.error;
         }
 
+        const ownedTeams = ownedTeamsQuery.data || [];
+
         // Get team IDs where user is a member
-        const { data: memberTeamIds, error: memberIdsError } = await supabase
+        const memberTeamIdsQuery = await supabase
           .from('team_members')
           .select('team_id')
           .eq('user_id', user.id);
 
-        if (memberIdsError) {
-          console.error("Error fetching member team IDs:", memberIdsError);
-          throw memberIdsError;
+        if (memberTeamIdsQuery.error) {
+          console.error("Error fetching member team IDs:", memberTeamIdsQuery.error);
+          throw memberTeamIdsQuery.error;
         }
 
         // Get the actual teams using those IDs
-        const teamIds = memberTeamIds?.map(record => record.team_id) || [];
+        const teamIds = memberTeamIdsQuery.data?.map(record => record.team_id) || [];
         let memberTeams: any[] = [];
         
         if (teamIds.length > 0) {
-          const { data: fetchedTeams, error: memberTeamsError } = await supabase
+          const memberTeamsQuery = await supabase
             .from('teams')
             .select('*')
             .neq('created_by', user.id)
             .in('id', teamIds);
 
-          if (memberTeamsError) {
-            console.error("Error fetching member teams:", memberTeamsError);
-            throw memberTeamsError;
+          if (memberTeamsQuery.error) {
+            console.error("Error fetching member teams:", memberTeamsQuery.error);
+            throw memberTeamsQuery.error;
           }
           
-          memberTeams = fetchedTeams || [];
+          memberTeams = memberTeamsQuery.data || [];
         }
 
         // Combine and remove duplicates
-        const allTeams = [...(ownedTeams || []), ...memberTeams];
+        const allTeams = [...ownedTeams, ...memberTeams];
         const uniqueTeams = Array.from(new Map(allTeams.map(team => [team.id, team])).values());
         
         return uniqueTeams;
