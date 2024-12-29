@@ -27,6 +27,15 @@ interface TeamHeaderProps {
   };
 }
 
+interface TeamMember {
+  id: string;
+  role: string;
+  user_id: string;
+  profiles: {
+    display_name: string | null;
+  } | null;
+}
+
 export function TeamHeader({ team }: TeamHeaderProps) {
   const navigate = useNavigate();
   const user = useUser();
@@ -68,7 +77,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      return teamMembers.map(member => ({
+      return (teamMembers as TeamMember[]).map(member => ({
         ...member,
         display_name: member.profiles?.display_name || 'Unbekannter Benutzer'
       }));
