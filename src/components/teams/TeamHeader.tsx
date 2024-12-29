@@ -19,7 +19,7 @@ interface RawTeamMember {
   id: string;
   role: string;
   user_id: string;
-  user: {
+  profiles: {
     display_name: string | null;
   } | null;
 }
@@ -58,7 +58,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          user:user_id (
+          profiles (
             display_name
           )
         `)
@@ -75,7 +75,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         id: member.id,
         role: member.role,
         user_id: member.user_id,
-        display_name: member.user?.display_name || 'Unbekannter Benutzer',
+        display_name: member.profiles?.display_name || 'Unbekannter Benutzer',
       }));
     },
   });
@@ -89,7 +89,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          user:user_id (
+          profiles (
             display_name
           )
         `)
@@ -107,7 +107,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
-        display_name: admin.user?.display_name || 'Unbekannter Benutzer',
+        display_name: admin.profiles?.display_name || 'Unbekannter Benutzer',
       }));
     },
   });
