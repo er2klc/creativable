@@ -26,7 +26,7 @@ function App() {
           <Route path="/auth/data-deletion/instagram" element={<InstagramDataDeletion />} />
         </Route>
 
-        <Route element={<AppLayout />}>
+        <Route element={<AppLayout><Outlet /></AppLayout>}>
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={
               <Suspense fallback={<div>Loading...</div>}>
