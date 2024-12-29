@@ -2,7 +2,8 @@ import { Team } from "@/integrations/supabase/types/teams";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Trash2, Users, Crown, ChevronRight, Image, LogOut } from "lucide-react";
+import { Copy, Trash2, Users, Crown, ChevronRight, Image } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useUser } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
 import {
@@ -25,10 +26,9 @@ interface TeamCardProps {
     admins: number;
   };
   onDelete: (teamId: string) => Promise<void>;
-  onLeave: (teamId: string) => Promise<void>;
 }
 
-export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) => {
+export const TeamCard = ({ team, teamStats, onDelete }: TeamCardProps) => {
   const user = useUser();
   const navigate = useNavigate();
 
@@ -37,31 +37,6 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
     await navigator.clipboard.writeText(joinCode);
     toast.success("Beitritts-Code kopiert!");
   };
-
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      await onDelete(team.id);
-      toast.success("Team erfolgreich gelöscht");
-    } catch (error) {
-      console.error('Error in TeamCard delete:', error);
-      toast.error("Fehler beim Löschen des Teams");
-    }
-  };
-
-  const handleLeave = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      await onLeave(team.id);
-      toast.success("Team erfolgreich verlassen");
-    } catch (error) {
-      console.error('Error in TeamCard leave:', error);
-      toast.error("Fehler beim Verlassen des Teams");
-    }
-  };
-
-  // Only the team creator (owner) can delete the team
-  const isOwner = team.created_by === user?.id;
 
   return (
     <Card 
@@ -102,7 +77,7 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
                   <Crown className="h-3 w-3" />
                   {teamStats?.admins || 0} Admins
                 </Badge>
-                {isOwner && (
+                {team.created_by === user?.id && (
                   <Badge variant="default" className="flex items-center gap-1">
                     <Crown className="h-3 w-3" />
                     Team Owner
@@ -122,7 +97,7 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
                 <Copy className="h-4 w-4" />
               </Button>
             )}
-            {isOwner ? (
+            {team.created_by === user?.id && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -140,47 +115,21 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
                     <AlertDialogDescription>
                       Sind Sie sicher, dass Sie dieses Team löschen möchten? 
                       Diese Aktion kann nicht rückgängig gemacht werden. 
-                      Das Team und alle zugehörigen Daten werden permanent gelöscht.
+                      Alle Teammitglieder werden entfernt.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                    <AlertDialogCancel>
+                      Abbrechen
+                    </AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={handleDelete}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(team.id);
+                      }}
                       className="bg-destructive hover:bg-destructive/90"
                     >
                       Löschen
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            ) : (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Team verlassen</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Sind Sie sicher, dass Sie dieses Team verlassen möchten? 
-                      Sie können später nur über einen neuen Einladungslink wieder beitreten.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleLeave}
-                      className="bg-destructive hover:bg-destructive/90"
-                    >
-                      Verlassen
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

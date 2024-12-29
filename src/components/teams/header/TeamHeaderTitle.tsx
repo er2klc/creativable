@@ -1,4 +1,4 @@
-import { Crown, Image, Users } from "lucide-react";
+import { Crown, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -44,26 +44,7 @@ export function TeamHeaderTitle({
           <h1 className="text-3xl font-semibold text-primary">
             {team.name}
           </h1>
-          {isAdmin && (
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Image className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Team Logo ändern</SheetTitle>
-                  <SheetDescription>
-                    Laden Sie ein neues Logo für Ihr Team hoch
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="mt-6">
-                  <TeamLogoUpload teamId={team.id} currentLogoUrl={team.logo_url} />
-                </div>
-              </SheetContent>
-            </Sheet>
-          )}
+          {isAdmin && <TeamLogoUpload teamId={team.id} currentLogoUrl={team.logo_url} />}
         </div>
         <div className="flex items-center gap-4 mt-1 text-muted-foreground">
           <Sheet>
