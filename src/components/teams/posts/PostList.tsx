@@ -16,7 +16,7 @@ export function PostList({ teamId }: PostListProps) {
         .select(`
           *,
           team_categories (name),
-          created_by_profile:created_by (
+          created_by_profile:profiles (
             email
           )
         `)
