@@ -18,9 +18,10 @@ import {
 interface TeamActionsProps {
   teamId: string;
   isAdmin: boolean;
+  isOwner: boolean;
 }
 
-export function TeamActions({ teamId, isAdmin }: TeamActionsProps) {
+export function TeamActions({ teamId, isAdmin, isOwner }: TeamActionsProps) {
   const navigate = useNavigate();
 
   const handleLeaveTeam = async () => {
@@ -48,17 +49,12 @@ export function TeamActions({ teamId, isAdmin }: TeamActionsProps) {
 
   const handleDeleteTeam = async () => {
     try {
-      // Delete team members first
-      await supabase
-        .from('team_members')
-        .delete()
-        .eq('team_id', teamId);
-
-      // Then delete the team itself
-      await supabase
+      const { error } = await supabase
         .from('teams')
         .delete()
         .eq('id', teamId);
+
+      if (error) throw error;
 
       toast.success("Team erfolgreich gelöscht");
       navigate('/unity');
@@ -70,7 +66,7 @@ export function TeamActions({ teamId, isAdmin }: TeamActionsProps) {
 
   return (
     <div className="flex items-center gap-2">
-      {isAdmin ? (
+      {isOwner ? (
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
@@ -100,7 +96,7 @@ export function TeamActions({ teamId, isAdmin }: TeamActionsProps) {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      ) : (
+      ) : isAdmin ? null : (
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button

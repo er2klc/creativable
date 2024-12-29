@@ -3,7 +3,6 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Copy, Trash2, Users, Crown, ChevronRight, Image } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useUser } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
 import {
@@ -49,7 +48,8 @@ export const TeamCard = ({ team, teamStats, onDelete }: TeamCardProps) => {
     }
   };
 
-  const isAdmin = team.created_by === user?.id;
+  // Only the team creator (owner) can delete the team
+  const isOwner = team.created_by === user?.id;
 
   return (
     <Card 
@@ -90,7 +90,7 @@ export const TeamCard = ({ team, teamStats, onDelete }: TeamCardProps) => {
                   <Crown className="h-3 w-3" />
                   {teamStats?.admins || 0} Admins
                 </Badge>
-                {isAdmin && (
+                {isOwner && (
                   <Badge variant="default" className="flex items-center gap-1">
                     <Crown className="h-3 w-3" />
                     Team Owner
@@ -110,7 +110,7 @@ export const TeamCard = ({ team, teamStats, onDelete }: TeamCardProps) => {
                 <Copy className="h-4 w-4" />
               </Button>
             )}
-            {isAdmin && (
+            {isOwner && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
