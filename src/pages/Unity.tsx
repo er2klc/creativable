@@ -32,21 +32,28 @@ const Unity = () => {
           throw ownedError;
         }
 
-        // Then get teams where user is a member
-        const { data: memberTeams, error: memberError } = await supabase
+        // First get the team IDs where user is a member
+        const { data: memberTeamIds, error: memberIdsError } = await supabase
+          .from('team_members')
+          .select('team_id')
+          .eq('user_id', user.id);
+
+        if (memberIdsError) {
+          console.error("Error fetching member team IDs:", memberIdsError);
+          throw memberIdsError;
+        }
+
+        // Then get the actual teams using those IDs
+        const teamIds = memberTeamIds?.map(record => record.team_id) || [];
+        const { data: memberTeams, error: memberTeamsError } = await supabase
           .from('teams')
           .select('*')
           .neq('created_by', user.id)
-          .in('id', 
-            supabase
-              .from('team_members')
-              .select('team_id')
-              .eq('user_id', user.id)
-          );
+          .in('id', teamIds);
 
-        if (memberError) {
-          console.error("Error fetching member teams:", memberError);
-          throw memberError;
+        if (memberTeamsError) {
+          console.error("Error fetching member teams:", memberTeamsError);
+          throw memberTeamsError;
         }
 
         // Combine and remove duplicates
