@@ -64,12 +64,21 @@ const Unity = () => {
 
   const handleDeleteTeam = async (teamId: string) => {
     try {
-      const { error } = await supabase
+      // First delete team members
+      const { error: membersError } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('team_id', teamId);
+
+      if (membersError) throw membersError;
+
+      // Then delete the team
+      const { error: teamError } = await supabase
         .from('teams')
         .delete()
         .eq('id', teamId);
 
-      if (error) throw error;
+      if (teamError) throw teamError;
 
       await refetch();
       toast.success("Team erfolgreich gelöscht");
@@ -97,7 +106,7 @@ const Unity = () => {
     }
   };
 
-  const updateTeamOrder = async (teamId: string, newIndex: number) => {
+  const handleUpdateTeamOrder = async (teamId: string, newIndex: number) => {
     try {
       const { error } = await supabase
         .from('teams')
@@ -107,7 +116,6 @@ const Unity = () => {
       if (error) throw error;
 
       await refetch();
-      toast.success("Reihenfolge erfolgreich aktualisiert");
     } catch (error: any) {
       console.error('Error updating team order:', error);
       toast.error("Fehler beim Aktualisieren der Reihenfolge");
@@ -173,7 +181,7 @@ const Unity = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => updateTeamOrder(team.id, index - 1)}
+                  onClick={() => handleUpdateTeamOrder(team.id, index - 1)}
                   disabled={index === 0}
                 >
                   ↑
@@ -181,7 +189,7 @@ const Unity = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => updateTeamOrder(team.id, index + 1)}
+                  onClick={() => handleUpdateTeamOrder(team.id, index + 1)}
                   disabled={index === teamsWithStats.length - 1}
                 >
                   ↓
