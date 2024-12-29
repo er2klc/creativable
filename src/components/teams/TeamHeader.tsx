@@ -26,7 +26,7 @@ interface RawTeamMember {
   id: string;
   role: string;
   user_id: string;
-  profiles: {
+  profiles?: {
     display_name: string | null;
   } | null;
 }
@@ -71,7 +71,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
       
       if (!data) return [];
 
-      return (data as RawTeamMember[]).map(member => ({
+      return (data as unknown as RawTeamMember[]).map(member => ({
         id: member.id,
         role: member.role,
         user_id: member.user_id,
@@ -103,7 +103,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
 
       if (!data) return [];
 
-      return (data as RawTeamMember[]).map(admin => ({
+      return (data as unknown as RawTeamMember[]).map(admin => ({
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
