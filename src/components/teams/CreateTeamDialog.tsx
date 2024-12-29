@@ -33,7 +33,6 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
     try {
       setIsLoading(true);
 
-      // First, create the team
       const { data: team, error: teamError } = await supabase
         .from("teams")
         .insert({
@@ -53,7 +52,6 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
         throw new Error("Team wurde erstellt, aber keine Daten zurückgegeben");
       }
 
-      // Then create the team member entry for the creator
       const { error: memberError } = await supabase
         .from("team_members")
         .insert({
@@ -80,8 +78,17 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setIsLoading(false);
+      setName("");
+      setDescription("");
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
