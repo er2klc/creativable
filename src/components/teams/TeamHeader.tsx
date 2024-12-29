@@ -22,7 +22,7 @@ interface TeamMemberResponse {
   profiles: {
     display_name: string | null;
     email: string | null;
-  } | null;
+  };
 }
 
 interface TeamMember {
@@ -59,7 +59,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          profiles (
+          profiles:user_id (
             display_name,
             email
           )
@@ -68,7 +68,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
 
       if (!data) return [];
 
-      return (data as any[]).map((member) => ({
+      return data.map((member: any) => ({
         id: member.id,
         role: member.role,
         user_id: member.user_id,
@@ -86,7 +86,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          profiles (
+          profiles:user_id (
             display_name,
             email
           )
@@ -96,7 +96,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
 
       if (!data) return [];
 
-      return (data as any[]).map((admin) => ({
+      return data.map((admin: any) => ({
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
