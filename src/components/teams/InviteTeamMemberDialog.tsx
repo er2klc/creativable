@@ -18,7 +18,7 @@ export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMembe
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [email, setEmail] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<Array<{ id: string; email: string }>>([]);
   const [showEmailInput, setShowEmailInput] = useState(false);
   const user = useUser();
 
@@ -39,6 +39,7 @@ export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMembe
       setSearchResults(profiles || []);
     } catch (error: any) {
       console.error("Error searching users:", error);
+      setSearchResults([]);
     }
   };
 
@@ -117,20 +118,22 @@ export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMembe
                 }}
               />
               <CommandEmpty>Keine Benutzer gefunden.</CommandEmpty>
-              <CommandGroup>
-                {searchResults.map((result) => (
-                  <CommandItem
-                    key={result.id}
-                    onSelect={() => {
-                      setEmail(result.email);
-                      setShowEmailInput(true);
-                    }}
-                  >
-                    <Search className="mr-2 h-4 w-4" />
-                    {result.email}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+              {searchResults.length > 0 && (
+                <CommandGroup>
+                  {searchResults.map((result) => (
+                    <CommandItem
+                      key={result.id}
+                      onSelect={() => {
+                        setEmail(result.email);
+                        setShowEmailInput(true);
+                      }}
+                    >
+                      <Search className="mr-2 h-4 w-4" />
+                      {result.email}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
             </Command>
             <Button
               variant="outline"
