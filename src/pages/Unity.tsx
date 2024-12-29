@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Infinity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,8 +15,9 @@ import { Button } from "@/components/ui/button";
 const Unity = () => {
   const navigate = useNavigate();
   const user = useUser();
+  const queryClient = useQueryClient();
 
-  const { data: teams, isLoading, refetch } = useQuery({
+  const { data: teams = [], isLoading, refetch } = useQuery({
     queryKey: ['teams'],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -36,13 +37,35 @@ const Unity = () => {
 
   const updateTeamOrder = async (teamId: string, newIndex: number) => {
     try {
+      // Optimistically update the UI
+      const oldTeams = [...teams];
+      const newTeams = [...teams];
+      const teamIndex = newTeams.findIndex(t => t.id === teamId);
+      
+      if (teamIndex === -1 || newIndex < 0 || newIndex >= newTeams.length) {
+        return;
+      }
+
+      // Update the order_index of the affected teams
+      const [movedTeam] = newTeams.splice(teamIndex, 1);
+      newTeams.splice(newIndex, 0, movedTeam);
+      
+      // Update the cache immediately
+      queryClient.setQueryData(['teams'], newTeams);
+
+      // Make the API call
       const { error } = await supabase
         .from('teams')
         .update({ order_index: newIndex })
         .eq('id', teamId);
 
-      if (error) throw error;
-      refetch();
+      if (error) {
+        // Revert on error
+        queryClient.setQueryData(['teams'], oldTeams);
+        throw error;
+      }
+
+      await refetch();
     } catch (error) {
       console.error('Error updating team order:', error);
       toast.error("Fehler beim Aktualisieren der Reihenfolge");

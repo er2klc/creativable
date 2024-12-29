@@ -33,7 +33,7 @@ interface TeamMember {
   user_id: string;
   profiles: {
     display_name: string | null;
-  } | null;
+  };
 }
 
 export function TeamHeader({ team }: TeamHeaderProps) {
@@ -43,12 +43,19 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: memberRole } = useQuery({
     queryKey: ['team-member-role', team.id],
     queryFn: async () => {
-      const { data } = await supabase
+      if (!user?.id) return null;
+      
+      const { data, error } = await supabase
         .from('team_members')
         .select('role')
         .eq('team_id', team.id)
-        .eq('user_id', user?.id)
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching member role:', error);
+        return null;
+      }
 
       return data?.role;
     },
@@ -57,14 +64,14 @@ export function TeamHeader({ team }: TeamHeaderProps) {
 
   const isAdmin = memberRole === 'admin' || memberRole === 'owner';
 
-  const { data: members } = useQuery({
+  const { data: members = [] } = useQuery({
     queryKey: ['team-members', team.id],
     queryFn: async () => {
-      const { data: teamMembers, error } = await supabase
+      const { data, error } = await supabase
         .from('team_members')
         .select(`
-          id, 
-          role, 
+          id,
+          role,
           user_id,
           profiles:user_id (
             display_name
@@ -77,10 +84,12 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      return (teamMembers as TeamMember[]).map(member => ({
+      return (data as any[]).map(member => ({
         ...member,
-        display_name: member.profiles?.display_name || 'Unbekannter Benutzer'
-      }));
+        profiles: {
+          display_name: member.profiles?.display_name || 'Unbekannter Benutzer'
+        }
+      })) as TeamMember[];
     },
     enabled: !!team.id,
   });
@@ -92,24 +101,30 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return;
       }
 
-      const { data: membershipData } = await supabase
+      const { data: membershipData, error: membershipError } = await supabase
         .from('team_members')
         .select('id')
         .eq('team_id', team.id)
         .eq('user_id', user?.id)
-        .single();
+        .maybeSingle();
+
+      if (membershipError) {
+        console.error('Error finding membership:', membershipError);
+        toast.error("Fehler beim Finden der Mitgliedschaft");
+        return;
+      }
 
       if (!membershipData) {
         toast.error("Mitgliedschaft nicht gefunden");
         return;
       }
 
-      const { error } = await supabase
+      const { error: deleteError } = await supabase
         .from('team_members')
         .delete()
         .eq('id', membershipData.id);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
 
       toast.success("Team erfolgreich verlassen");
       navigate('/unity');
@@ -120,6 +135,11 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   };
 
   const handleDeleteTeam = async () => {
+    if (!isAdmin) {
+      toast.error("Nur Administratoren können Teams löschen");
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('teams')
@@ -137,12 +157,12 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   };
 
   // Filter admins from the full members list
-  const adminMembers = members?.filter(member => 
+  const adminMembers = members.filter(member => 
     member.role === 'admin' || member.role === 'owner'
-  ) || [];
+  );
 
   // Calculate counts
-  const membersCount = members?.length || 0;
+  const membersCount = members.length;
   const adminsCount = adminMembers.length;
 
   return (
@@ -154,7 +174,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
             isAdmin={isAdmin}
             membersCount={membersCount}
             adminsCount={adminsCount}
-            members={members || []}
+            members={members}
             adminMembers={adminMembers}
           />
           <div className="flex items-center gap-2">

@@ -120,6 +120,7 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value)}
             placeholder="Geben Sie den Beitritts-Code ein"
+            disabled={isLoading}
           />
         </div>
         <DialogFooter>
