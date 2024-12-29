@@ -10,6 +10,7 @@ interface TeamHeaderProps {
     id: string;
     name: string;
     logo_url?: string;
+    created_by: string;
   };
 }
 
@@ -39,6 +40,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   });
 
   const isAdmin = memberRole === 'admin' || memberRole === 'owner';
+  const isOwner = team.created_by === user?.id;
 
   const { data: members = [] } = useQuery({
     queryKey: ['team-members', team.id],
@@ -98,6 +100,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           <TeamActions 
             teamId={team.id}
             isAdmin={isAdmin}
+            isOwner={isOwner}
           />
         </div>
         <Separator className="my-4" />
