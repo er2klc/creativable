@@ -1,38 +1,58 @@
+import { Routes, Route } from "react-router-dom";
 import { AppProvider } from "@/providers/AppProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import Unity from "./pages/Unity";
-import Leads from "./pages/Leads";
-import Messages from "./pages/Messages";
-import Settings from "./pages/Settings";
-import Changelog from "./pages/Changelog";
-import LinkedInCallback from "./pages/auth/callback/LinkedIn";
-import InstagramCallback from "./pages/auth/callback/Instagram";
-import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
-import InstagramDataDeletion from "./pages/legal/InstagramDataDeletion";
-import { Routes, Route } from "react-router-dom";
+import { AuthLayout } from "@/components/layout/AuthLayout";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { Suspense, lazy } from "react";
 
-const App = () => (
-  <AppProvider>
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/auth/callback/linkedin" element={<LinkedInCallback />} />
-      <Route path="/auth/callback/instagram" element={<InstagramCallback />} />
-      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-      <Route path="/auth/data-deletion/instagram" element={<InstagramDataDeletion />} />
-      <Route path="/changelog" element={<AppLayout><Changelog /></AppLayout>} />
-      <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
-      <Route path="/unity" element={<AppLayout><Unity /></AppLayout>} />
-      <Route path="/leads" element={<AppLayout><Leads /></AppLayout>} />
-      <Route path="/messages" element={<AppLayout><Messages /></AppLayout>} />
-      <Route path="/settings" element={<AppLayout><Settings /></AppLayout>} />
-    </Routes>
-  </AppProvider>
-);
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Unity = lazy(() => import("@/pages/Unity"));
+const TeamDetails = lazy(() => import("@/pages/TeamDetails"));
+const Login = lazy(() => import("@/pages/auth/Login"));
+const Register = lazy(() => import("@/pages/auth/Register"));
+const ForgotPassword = lazy(() => import("@/pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("@/pages/auth/ResetPassword"));
+const InstagramDataDeletion = lazy(() => import("@/pages/auth/InstagramDataDeletion"));
+
+function App() {
+  return (
+    <AppProvider>
+      <Routes>
+        <Route element={<AuthLayout />}>
+          <Route path="/auth" element={<Login />} />
+          <Route path="/auth/register" element={<Register />} />
+          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+          <Route path="/auth/reset-password" element={<ResetPassword />} />
+          <Route path="/auth/data-deletion/instagram" element={<InstagramDataDeletion />} />
+        </Route>
+
+        <Route element={<AppLayout />}>
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <Dashboard />
+              </Suspense>
+            } />
+            <Route path="/dashboard" element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <Dashboard />
+              </Suspense>
+            } />
+            <Route path="/unity" element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <Unity />
+              </Suspense>
+            } />
+            <Route path="/teams/:teamId" element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <TeamDetails />
+              </Suspense>
+            } />
+          </Route>
+        </Route>
+      </Routes>
+    </AppProvider>
+  );
+}
 
 export default App;

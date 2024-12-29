@@ -10,14 +10,12 @@ import { CreateTeamDialog } from "@/components/teams/CreateTeamDialog";
 import { JoinTeamDialog } from "@/components/teams/JoinTeamDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const Unity = () => {
   const navigate = useNavigate();
   const user = useUser();
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
 
   const { data: teams, isLoading, refetch } = useQuery({
     queryKey: ['teams'],
@@ -38,21 +36,27 @@ const Unity = () => {
   });
 
   const { data: teamStats } = useQuery({
-    queryKey: ['team-stats', selectedTeam?.id],
+    queryKey: ['team-stats'],
     queryFn: async () => {
-      if (!selectedTeam?.id) return null;
+      if (!teams) return {};
       
-      const { data: members } = await supabase
-        .from('team_members')
-        .select('role')
-        .eq('team_id', selectedTeam.id);
+      const statsMap: Record<string, { totalMembers: number; admins: number }> = {};
+      
+      for (const team of teams) {
+        const { data: members } = await supabase
+          .from('team_members')
+          .select('role')
+          .eq('team_id', team.id);
 
-      return {
-        totalMembers: members?.length || 0,
-        admins: members?.filter(m => ['admin', 'owner'].includes(m.role)).length || 0,
-      };
+        statsMap[team.id] = {
+          totalMembers: members?.length || 0,
+          admins: members?.filter(m => ['admin', 'owner'].includes(m.role)).length || 0,
+        };
+      }
+
+      return statsMap;
     },
-    enabled: !!selectedTeam?.id,
+    enabled: !!teams?.length,
   });
 
   useEffect(() => {
@@ -81,7 +85,7 @@ const Unity = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {isLoading ? (
           <Card>
             <CardContent className="p-6">
@@ -91,7 +95,7 @@ const Unity = () => {
             </CardContent>
           </Card>
         ) : teams?.length === 0 ? (
-          <Card className="col-span-full">
+          <Card>
             <CardContent className="p-6">
               <div className="flex flex-col items-center justify-center space-y-4 py-12">
                 <Users className="h-12 w-12 text-muted-foreground" />
@@ -106,79 +110,70 @@ const Unity = () => {
           </Card>
         ) : (
           teams?.map((team: Team) => (
-            <Sheet key={team.id}>
-              <SheetTrigger asChild>
-                <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 group">
-                  <CardHeader className="space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-12 w-12">
-                          {team.logo_url ? (
-                            <AvatarImage src={team.logo_url} alt={team.name} />
-                          ) : (
-                            <AvatarFallback className="bg-primary/10">
-                              {team.name.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                        <div>
-                          <CardTitle className="group-hover:text-primary transition-colors">
-                            {team.name}
-                          </CardTitle>
-                          <CardDescription>
-                            {team.description || 'Keine Beschreibung verfügbar'}
-                          </CardDescription>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2">
-                      {team.join_code && (
-                        <div className="flex items-center gap-2 p-2 bg-muted rounded-lg flex-1">
-                          <code className="text-sm flex-1">Code: {team.join_code}</code>
-                          <Button 
-                            size="icon" 
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              copyJoinCode(team.join_code!);
-                            }}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </div>
+            <Card 
+              key={team.id}
+              className="cursor-pointer hover:shadow-lg transition-all duration-300 group"
+              onClick={() => navigate(`/teams/${team.id}`)}
+            >
+              <CardHeader className="space-y-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12">
+                      {team.logo_url ? (
+                        <AvatarImage src={team.logo_url} alt={team.name} />
+                      ) : (
+                        <AvatarFallback className="bg-primary/10">
+                          {team.name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
                       )}
+                    </Avatar>
+                    <div>
+                      <CardTitle className="group-hover:text-primary transition-colors">
+                        {team.name}
+                      </CardTitle>
+                      <CardDescription>
+                        {team.description || 'Keine Beschreibung verfügbar'}
+                      </CardDescription>
                     </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="secondary" className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {teamStats?.totalMembers || 0} Mitglieder
-                      </Badge>
-                      <Badge variant="secondary" className="flex items-center gap-1">
-                        <Crown className="h-3 w-3" />
-                        {teamStats?.admins || 0} Admins
-                      </Badge>
-                      {team.created_by === user.id && (
-                        <Badge variant="default" className="flex items-center gap-1">
-                          <Crown className="h-3 w-3" />
-                          Team Owner
-                        </Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-                </Card>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-full sm:w-[540px]">
-                <SheetHeader>
-                  <SheetTitle>Team Details</SheetTitle>
-                </SheetHeader>
-                {/* Team management content will go here in the next iteration */}
-                <div className="mt-6">
-                  <p>Team Management Funktionen werden hier implementiert...</p>
+                  </div>
                 </div>
-              </SheetContent>
-            </Sheet>
+                
+                <div className="flex flex-wrap gap-2">
+                  {team.join_code && (
+                    <div className="flex items-center gap-2 p-2 bg-muted rounded-lg flex-1">
+                      <code className="text-sm flex-1">Code: {team.join_code}</code>
+                      <Button 
+                        size="icon" 
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copyJoinCode(team.join_code!);
+                        }}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Users className="h-3 w-3" />
+                    {teamStats?.[team.id]?.totalMembers || 0} Mitglieder
+                  </Badge>
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Crown className="h-3 w-3" />
+                    {teamStats?.[team.id]?.admins || 0} Admins
+                  </Badge>
+                  {team.created_by === user.id && (
+                    <Badge variant="default" className="flex items-center gap-1">
+                      <Crown className="h-3 w-3" />
+                      Team Owner
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+            </Card>
           ))
         )}
       </div>
