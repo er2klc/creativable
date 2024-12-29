@@ -1,11 +1,10 @@
 import { useState } from "react";
+import { useUser } from "@supabase/auth-helpers-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@supabase/auth-helpers-react";
+import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
 
 interface InviteTeamMemberDialogProps {
@@ -15,8 +14,8 @@ interface InviteTeamMemberDialogProps {
 
 export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMemberDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
   const user = useUser();
 
   const handleInvite = async () => {
@@ -24,27 +23,32 @@ export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMembe
       toast.error("Sie müssen eingeloggt sein, um Mitglieder einzuladen");
       return;
     }
+
+    if (!email.trim()) {
+      toast.error("Bitte geben Sie eine E-Mail-Adresse ein");
+      return;
+    }
     
     try {
       setIsLoading(true);
-      
+
       const { error } = await supabase
-        .from('team_invites')
+        .from("team_invites")
         .insert({
           team_id: teamId,
-          email: email.toLowerCase(),
+          email: email.trim(),
           invited_by: user.id,
         });
 
       if (error) throw error;
 
-      toast.success("Einladung wurde erfolgreich versendet");
+      toast.success("Einladung erfolgreich gesendet");
       setIsOpen(false);
       setEmail("");
       onInviteSent?.();
     } catch (error: any) {
       console.error("Error sending invite:", error);
-      toast.error(error.message || "Fehler beim Versenden der Einladung");
+      toast.error("Fehler beim Senden der Einladung");
     } finally {
       setIsLoading(false);
     }
@@ -53,41 +57,34 @@ export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMembe
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button variant="outline" size="sm">
           <UserPlus className="h-4 w-4 mr-2" />
           Mitglied einladen
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Neues Teammitglied einladen</DialogTitle>
+          <DialogTitle>Team-Mitglied einladen</DialogTitle>
           <DialogDescription>
-            Senden Sie eine Einladung an die E-Mail-Adresse des neuen Teammitglieds.
+            Laden Sie neue Mitglieder per E-Mail ein.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">E-Mail-Adresse</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+        <div>
+          <label htmlFor="email" className="text-sm font-medium">
+            E-Mail-Adresse
+          </label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="beispiel@email.com"
+          />
         </div>
         <DialogFooter>
           <Button
-            variant="outline"
-            onClick={() => setIsOpen(false)}
-            disabled={isLoading}
-          >
-            Abbrechen
-          </Button>
-          <Button
             onClick={handleInvite}
-            disabled={!email || isLoading}
+            disabled={!email.trim() || isLoading}
           >
             {isLoading ? "Sende..." : "Einladung senden"}
           </Button>

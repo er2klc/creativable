@@ -29,7 +29,8 @@ const Unity = () => {
 
         if (ownedError) {
           console.error("Error fetching owned teams:", ownedError);
-          throw ownedError;
+          toast.error("Fehler beim Laden der eigenen Teams");
+          return [];
         }
 
         // Get team IDs where user is a member
@@ -40,7 +41,8 @@ const Unity = () => {
 
         if (memberIdsError) {
           console.error("Error fetching member team IDs:", memberIdsError);
-          throw memberIdsError;
+          toast.error("Fehler beim Laden der Team-Mitgliedschaften");
+          return ownedTeams || [];
         }
 
         // Get the actual teams using those IDs
@@ -56,7 +58,8 @@ const Unity = () => {
 
           if (memberTeamsError) {
             console.error("Error fetching member teams:", memberTeamsError);
-            throw memberTeamsError;
+            toast.error("Fehler beim Laden der Team-Details");
+            return ownedTeams || [];
           }
           
           memberTeams = fetchedTeams || [];
@@ -64,9 +67,7 @@ const Unity = () => {
 
         // Combine and remove duplicates
         const allTeams = [...(ownedTeams || []), ...memberTeams];
-        const uniqueTeams = Array.from(new Map(allTeams.map(team => [team.id, team])).values());
-        
-        return uniqueTeams;
+        return Array.from(new Map(allTeams.map(team => [team.id, team])).values());
       } catch (error: any) {
         console.error("Error loading teams:", error);
         toast.error("Fehler beim Laden der Teams");

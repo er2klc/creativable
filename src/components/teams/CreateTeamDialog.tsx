@@ -1,12 +1,11 @@
 import { useState } from "react";
+import { useUser } from "@supabase/auth-helpers-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@supabase/auth-helpers-react";
+import { toast } from "sonner";
 import { Plus } from "lucide-react";
 
 interface CreateTeamDialogProps {
@@ -15,9 +14,9 @@ interface CreateTeamDialogProps {
 
 export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const user = useUser();
 
   const handleCreate = async () => {
@@ -25,44 +24,48 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
       toast.error("Sie müssen eingeloggt sein, um ein Team zu erstellen");
       return;
     }
-    
+
+    if (!name.trim()) {
+      toast.error("Bitte geben Sie einen Team-Namen ein");
+      return;
+    }
+
     try {
       setIsLoading(true);
-      
+
       // Create the team
       const { data: team, error: teamError } = await supabase
-        .from('teams')
+        .from("teams")
         .insert({
-          name,
-          description,
+          name: name.trim(),
+          description: description.trim(),
           created_by: user.id,
         })
         .select()
         .maybeSingle();
 
       if (teamError) throw teamError;
+      if (!team) throw new Error("Team konnte nicht erstellt werden");
 
-      if (!team) throw new Error("Kein Team wurde erstellt");
-
-      // Add creator as team member
+      // Add the creator as team owner
       const { error: memberError } = await supabase
-        .from('team_members')
+        .from("team_members")
         .insert({
           team_id: team.id,
           user_id: user.id,
-          role: 'owner',
+          role: "owner",
         });
 
       if (memberError) throw memberError;
 
-      toast.success("Team wurde erfolgreich erstellt");
+      toast.success("Team erfolgreich erstellt");
       setIsOpen(false);
       setName("");
       setDescription("");
       onTeamCreated?.();
     } catch (error: any) {
       console.error("Error creating team:", error);
-      toast.error(error.message || "Fehler beim Erstellen des Teams");
+      toast.error("Fehler beim Erstellen des Teams");
     } finally {
       setIsLoading(false);
     }
@@ -83,37 +86,34 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
             Erstellen Sie ein neues Team und laden Sie Mitglieder ein.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Team Name</Label>
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="name" className="text-sm font-medium">
+              Team Name
+            </label>
             <Input
               id="name"
-              placeholder="Mein Team"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              placeholder="Geben Sie einen Team-Namen ein"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Beschreibung</Label>
+          <div>
+            <label htmlFor="description" className="text-sm font-medium">
+              Beschreibung
+            </label>
             <Textarea
               id="description"
-              placeholder="Beschreiben Sie Ihr Team..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              placeholder="Beschreiben Sie Ihr Team (optional)"
             />
           </div>
         </div>
         <DialogFooter>
           <Button
-            variant="outline"
-            onClick={() => setIsOpen(false)}
-            disabled={isLoading}
-          >
-            Abbrechen
-          </Button>
-          <Button
             onClick={handleCreate}
-            disabled={!name || isLoading}
+            disabled={!name.trim() || isLoading}
           >
             {isLoading ? "Erstelle..." : "Team erstellen"}
           </Button>
