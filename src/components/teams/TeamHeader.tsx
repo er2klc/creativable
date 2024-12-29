@@ -50,9 +50,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          profiles (
-            display_name
-          )
+          display_name:profiles!inner(display_name)
         `)
         .eq('team_id', team.id);
 
@@ -67,7 +65,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         id: member.id,
         role: member.role,
         user_id: member.user_id,
-        display_name: member.profiles?.display_name || 'Unbekannter Benutzer'
+        display_name: member.display_name?.display_name || 'Unbekannter Benutzer'
       }));
     },
   });
@@ -82,9 +80,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          profiles (
-            display_name
-          )
+          display_name:profiles!inner(display_name)
         `)
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);
@@ -100,7 +96,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
-        display_name: admin.profiles?.display_name || 'Unbekannter Benutzer'
+        display_name: admin.display_name?.display_name || 'Unbekannter Benutzer'
       }));
     },
   });
