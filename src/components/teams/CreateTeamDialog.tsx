@@ -42,10 +42,9 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           created_by: user.id,
         })
         .select()
-        .maybeSingle();
+        .single();
 
       if (teamError) throw teamError;
-      if (!team) throw new Error("Team konnte nicht erstellt werden");
 
       // Add the creator as team owner
       const { error: memberError } = await supabase

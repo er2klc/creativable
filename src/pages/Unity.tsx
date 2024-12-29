@@ -21,7 +21,7 @@ const Unity = () => {
       if (!user?.id) return [];
       
       try {
-        // First, get teams where user is creator
+        // Get teams where user is creator
         const { data: ownedTeams, error: ownedError } = await supabase
           .from('teams')
           .select('*')
@@ -29,35 +29,22 @@ const Unity = () => {
 
         if (ownedError) throw ownedError;
 
-        // Then, get team IDs where user is a member
-        const { data: memberTeamIds, error: memberIdsError } = await supabase
-          .from('team_members')
-          .select('team_id')
-          .eq('user_id', user.id);
+        // Get teams where user is a member
+        const { data: memberTeams, error: memberError } = await supabase
+          .from('teams')
+          .select('*')
+          .neq('created_by', user.id);
 
-        if (memberIdsError) throw memberIdsError;
+        if (memberError) throw memberError;
 
-        const teamIds = memberTeamIds.map(record => record.team_id);
-        
-        // Finally, get the teams where user is a member
-        let memberTeams: Team[] = [];
-        if (teamIds.length > 0) {
-          const { data: teams, error: teamsError } = await supabase
-            .from('teams')
-            .select('*')
-            .in('id', teamIds);
-
-          if (teamsError) throw teamsError;
-          memberTeams = teams || [];
-        }
-
-        // Combine all teams and remove duplicates
-        const allTeams = [...(ownedTeams || []), ...memberTeams];
+        // Combine and remove duplicates
+        const allTeams = [...(ownedTeams || []), ...(memberTeams || [])];
         return Array.from(new Map(allTeams.map(team => [team.id, team])).values());
 
       } catch (error: any) {
         console.error("Error loading teams:", error);
-        throw error;
+        toast.error("Fehler beim Laden der Teams");
+        return [];
       }
     },
     enabled: !!user,
@@ -81,7 +68,7 @@ const Unity = () => {
         <CreateTeamDialog onTeamCreated={refetch} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="space-y-4">
         {isLoading ? (
           <Card>
             <CardContent className="p-6">
@@ -92,20 +79,27 @@ const Unity = () => {
             </CardContent>
           </Card>
         ) : teams?.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center space-y-4">
-              <Users className="h-12 w-12 mx-auto text-muted-foreground" />
-              <div className="space-y-2">
-                <h3 className="font-semibold">Keine Teams gefunden</h3>
-                <p className="text-sm text-muted-foreground">
-                  Erstellen Sie ein neues Team oder warten Sie auf eine Einladung.
-                </p>
+          <Card className="w-full">
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center justify-center space-y-4 py-12">
+                <Users className="h-12 w-12 text-muted-foreground" />
+                <div className="text-center space-y-2">
+                  <h3 className="font-semibold">Keine Teams gefunden</h3>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    Erstellen Sie ein neues Team oder warten Sie auf eine Einladung.
+                  </p>
+                </div>
+                <img 
+                  src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d" 
+                  alt="Placeholder" 
+                  className="mt-4 rounded-lg w-full max-w-2xl h-48 object-cover"
+                />
               </div>
             </CardContent>
           </Card>
         ) : (
           teams?.map((team) => (
-            <Card key={team.id} className="hover:shadow-md transition-shadow">
+            <Card key={team.id} className="w-full hover:shadow-md transition-shadow">
               <CardHeader>
                 <CardTitle>{team.name}</CardTitle>
                 <CardDescription>
