@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Copy } from "lucide-react";
+import { Plus, Copy, Upload, Image } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 interface CreateTeamDialogProps {
   onTeamCreated?: () => void;
@@ -18,7 +19,43 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [joinCode, setJoinCode] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const user = useUser();
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadLogo = async (teamId: string): Promise<string | null> => {
+    if (!logoFile) return null;
+
+    const fileExt = logoFile.name.split('.').pop();
+    const filePath = `${teamId}/logo.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('team-logos')
+      .upload(filePath, logoFile);
+
+    if (uploadError) {
+      console.error("Error uploading logo:", uploadError);
+      throw uploadError;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('team-logos')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
 
   const handleCreate = async () => {
     if (!user) {
@@ -34,12 +71,6 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
     setIsLoading(true);
 
     try {
-      console.log("Creating team with data:", {
-        name: name.trim(),
-        description: description.trim(),
-        created_by: user.id,
-      });
-
       const { data: team, error: teamError } = await supabase
         .from("teams")
         .insert({
@@ -55,10 +86,22 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
         throw teamError;
       }
 
-      console.log("Team created successfully:", team);
-
       if (!team) {
         throw new Error("Team wurde erstellt, aber keine Daten zurückgegeben");
+      }
+
+      let logoUrl = null;
+      if (logoFile) {
+        logoUrl = await uploadLogo(team.id);
+        const { error: updateError } = await supabase
+          .from("teams")
+          .update({ logo_url: logoUrl })
+          .eq('id', team.id);
+
+        if (updateError) {
+          console.error("Error updating team logo:", updateError);
+          throw updateError;
+        }
       }
 
       const { error: memberError } = await supabase
@@ -93,6 +136,8 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
       setName("");
       setDescription("");
       setJoinCode(null);
+      setLogoFile(null);
+      setLogoPreview(null);
     }
   };
 
@@ -111,7 +156,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           Team erstellen
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Neues Team erstellen</DialogTitle>
           <DialogDescription>
@@ -119,28 +164,72 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           </DialogDescription>
         </DialogHeader>
         {!joinCode ? (
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="name" className="text-sm font-medium">
-                Team Name
-              </label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Geben Sie einen Team-Namen ein"
-              />
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">Team Name</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Geben Sie einen Team-Namen ein"
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">Beschreibung</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Beschreiben Sie Ihr Team (optional)"
+                />
+              </div>
             </div>
-            <div>
-              <label htmlFor="description" className="text-sm font-medium">
-                Beschreibung
-              </label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Beschreiben Sie Ihr Team (optional)"
-              />
+
+            <div className="space-y-4">
+              <Label>Team Logo</Label>
+              <div className="flex flex-col items-center gap-4">
+                {logoPreview ? (
+                  <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-primary/20">
+                    <img
+                      src={logoPreview}
+                      alt="Team logo preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-0 right-0 bg-background/80 hover:bg-background"
+                      onClick={() => {
+                        setLogoFile(null);
+                        setLogoPreview(null);
+                      }}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="w-32 h-32 rounded-full border-2 border-dashed border-primary/20 flex items-center justify-center">
+                    <Image className="w-12 h-12 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex justify-center">
+                  <Label
+                    htmlFor="logo-upload"
+                    className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Logo hochladen
+                    <Input
+                      id="logo-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleLogoChange}
+                    />
+                  </Label>
+                </div>
+              </div>
             </div>
           </div>
         ) : (

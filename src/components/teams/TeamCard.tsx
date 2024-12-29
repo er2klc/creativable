@@ -2,7 +2,7 @@ import { Team } from "@/integrations/supabase/types/teams";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Trash2, Users, Crown, ChevronRight } from "lucide-react";
+import { Copy, Trash2, Users, Crown, ChevronRight, Image } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useUser } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
@@ -43,25 +43,47 @@ export const TeamCard = ({ team, teamStats, onDelete }: TeamCardProps) => {
       className="cursor-pointer hover:shadow-lg transition-all duration-300 group"
       onClick={() => navigate(`/unity/team/${team.id}`)}
     >
-      <CardHeader className="space-y-4">
+      <CardHeader className="space-y-6">
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12">
+          <div className="flex items-start gap-6">
+            <div className="relative group/logo">
               {team.logo_url ? (
-                <AvatarImage src={team.logo_url} alt={team.name} />
+                <div className="w-24 h-24 rounded-xl overflow-hidden border border-border">
+                  <img 
+                    src={team.logo_url} 
+                    alt={team.name}
+                    className="w-full h-full object-cover transition-transform group-hover/logo:scale-110"
+                  />
+                </div>
               ) : (
-                <AvatarFallback className="bg-primary/10">
-                  {team.name.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
+                <div className="w-24 h-24 rounded-xl border border-border bg-primary/5 flex items-center justify-center">
+                  <Image className="w-12 h-12 text-primary/40" />
+                </div>
               )}
-            </Avatar>
-            <div>
-              <CardTitle className="group-hover:text-primary transition-colors">
+            </div>
+            <div className="space-y-2">
+              <CardTitle className="group-hover:text-primary transition-colors text-2xl">
                 {team.name}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-base">
                 {team.description || 'Keine Beschreibung verfügbar'}
               </CardDescription>
+              <div className="flex flex-wrap items-center gap-2 pt-2">
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  {teamStats?.totalMembers || 0} Mitglieder
+                </Badge>
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Crown className="h-3 w-3" />
+                  {teamStats?.admins || 0} Admins
+                </Badge>
+                {team.created_by === user?.id && (
+                  <Badge variant="default" className="flex items-center gap-1">
+                    <Crown className="h-3 w-3" />
+                    Team Owner
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex gap-2">
@@ -121,23 +143,6 @@ export const TeamCard = ({ team, teamStats, onDelete }: TeamCardProps) => {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary" className="flex items-center gap-1">
-            <Users className="h-3 w-3" />
-            {teamStats?.totalMembers || 0} Mitglieder
-          </Badge>
-          <Badge variant="secondary" className="flex items-center gap-1">
-            <Crown className="h-3 w-3" />
-            {teamStats?.admins || 0} Admins
-          </Badge>
-          {team.created_by === user?.id && (
-            <Badge variant="default" className="flex items-center gap-1">
-              <Crown className="h-3 w-3" />
-              Team Owner
-            </Badge>
-          )}
         </div>
       </CardHeader>
     </Card>
