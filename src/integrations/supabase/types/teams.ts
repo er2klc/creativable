@@ -6,6 +6,7 @@ export interface Team {
   created_by: string;
   max_members: number | null;
   join_code: string | null;
+  logo_url: string | null;
 }
 
 export interface TeamMember {

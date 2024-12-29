@@ -590,6 +590,7 @@ export type Database = {
           description: string | null
           id: string
           join_code: string | null
+          logo_url: string | null
           max_members: number | null
           name: string
         }
@@ -599,6 +600,7 @@ export type Database = {
           description?: string | null
           id?: string
           join_code?: string | null
+          logo_url?: string | null
           max_members?: number | null
           name: string
         }
@@ -608,6 +610,7 @@ export type Database = {
           description?: string | null
           id?: string
           join_code?: string | null
+          logo_url?: string | null
           max_members?: number | null
           name?: string
         }
@@ -632,6 +635,7 @@ export type Database = {
           description: string | null
           id: string
           join_code: string | null
+          logo_url: string | null
           max_members: number | null
           name: string
         }[]
