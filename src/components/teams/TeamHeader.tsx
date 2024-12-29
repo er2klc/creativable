@@ -51,17 +51,24 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
     queryFn: async () => {
       const { data } = await supabase
         .from('team_members')
-        .select(`
-          *,
-          profiles (
-            email
-          )
-        `)
+        .select('id, user_id, role')
         .eq('team_id', team.id);
       
       return data;
     },
-    enabled: isAdmin,
+  });
+
+  const { data: adminMembers } = useQuery({
+    queryKey: ['team-admins', team.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('team_members')
+        .select('id, role')
+        .eq('team_id', team.id)
+        .in('role', ['admin', 'owner']);
+      
+      return data;
+    },
   });
 
   return (
@@ -80,12 +87,35 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
               <div className="flex items-center gap-4 mt-1 text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Users className="h-4 w-4" />
-                  <span>{teamStats?.totalMembers || 0} Mitglieder</span>
+                  <span>{members?.length || 0} Mitglieder</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Crown className="h-4 w-4" />
-                  <span>{teamStats?.admins || 0} Admins</span>
-                </div>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                      <Crown className="h-4 w-4" />
+                      <span>{adminMembers?.length || 0} Admins</span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent>
+                    <SheetHeader>
+                      <SheetTitle>Team Administratoren</SheetTitle>
+                      <SheetDescription>
+                        Übersicht aller Administratoren in diesem Team
+                      </SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-4 space-y-4">
+                      {members?.filter(member => ['admin', 'owner'].includes(member.role)).map((admin) => (
+                        <div key={admin.id} className="flex items-center justify-between p-2 border rounded">
+                          <div>
+                            <Badge variant={admin.role === 'owner' ? 'default' : 'secondary'}>
+                              {admin.role === 'owner' ? 'Owner' : 'Admin'}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </SheetContent>
+                </Sheet>
                 {isAdmin && (
                   <Sheet>
                     <SheetTrigger asChild>
@@ -105,7 +135,6 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
                         {members?.map((member) => (
                           <div key={member.id} className="flex items-center justify-between p-2 border rounded">
                             <div>
-                              <div>{member.profiles?.email}</div>
                               <Badge variant={member.role === 'owner' ? 'default' : 'secondary'}>
                                 {member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Mitglied'}
                               </Badge>
