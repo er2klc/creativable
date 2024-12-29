@@ -21,12 +21,15 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
   const user = useUser();
 
   const handleCreate = async () => {
-    if (!user) return;
+    if (!user) {
+      toast.error("Sie müssen eingeloggt sein, um ein Team zu erstellen");
+      return;
+    }
     
     try {
       setIsLoading(true);
       
-      // Erstelle zuerst das Team
+      // Erstelle das Team
       const { data: team, error: teamError } = await supabase
         .from('teams')
         .insert({
@@ -34,10 +37,17 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           description,
           created_by: user.id,
         })
-        .select()
+        .select('*')
         .single();
 
-      if (teamError) throw teamError;
+      if (teamError) {
+        console.error("Error creating team:", teamError);
+        throw teamError;
+      }
+
+      if (!team) {
+        throw new Error("Kein Team wurde erstellt");
+      }
 
       // Füge den Ersteller als Team-Member hinzu
       const { error: memberError } = await supabase
@@ -48,7 +58,10 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           role: 'owner',
         });
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error("Error adding team member:", memberError);
+        throw memberError;
+      }
 
       toast.success("Team wurde erfolgreich erstellt");
       setIsOpen(false);
@@ -110,7 +123,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
             onClick={handleCreate}
             disabled={!name || isLoading}
           >
-            Team erstellen
+            {isLoading ? "Erstelle..." : "Team erstellen"}
           </Button>
         </DialogFooter>
       </DialogContent>
