@@ -58,7 +58,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          profiles (
+          profiles!team_members_user_id_fkey (
             display_name
           )
         `)
@@ -89,7 +89,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          profiles (
+          profiles!team_members_user_id_fkey (
             display_name
           )
         `)
