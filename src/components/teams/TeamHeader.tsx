@@ -37,53 +37,52 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: members } = useQuery({
     queryKey: ['team-members', team.id],
     queryFn: async () => {
-      const { data: memberData } = await supabase
+      // First get all team members
+      const { data: memberData, error } = await supabase
         .from('team_members')
-        .select('id, role, user_id')
+        .select(`
+          id,
+          role,
+          user_id,
+          profiles:user_id (
+            display_name
+          )
+        `)
         .eq('team_id', team.id);
 
+      if (error) throw error;
       if (!memberData) return [];
 
-      const memberIds = memberData.map(member => member.user_id);
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id, display_name')
-        .in('id', memberIds);
-
-      return memberData.map(member => {
-        const profile = profileData?.find(p => p.id === member.user_id);
-        return {
-          ...member,
-          display_name: profile?.display_name || 'Unbekannter Benutzer'
-        };
-      });
+      return memberData.map(member => ({
+        ...member,
+        display_name: member.profiles?.display_name || 'Unbekannter Benutzer'
+      }));
     },
   });
 
   const { data: adminMembers } = useQuery({
     queryKey: ['team-admins', team.id],
     queryFn: async () => {
-      const { data: adminData } = await supabase
+      const { data: adminData, error } = await supabase
         .from('team_members')
-        .select('id, role, user_id')
+        .select(`
+          id,
+          role,
+          user_id,
+          profiles:user_id (
+            display_name
+          )
+        `)
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);
 
+      if (error) throw error;
       if (!adminData) return [];
 
-      const adminIds = adminData.map(admin => admin.user_id);
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id, display_name')
-        .in('id', adminIds);
-
-      return adminData.map(admin => {
-        const profile = profileData?.find(p => p.id === admin.user_id);
-        return {
-          ...admin,
-          display_name: profile?.display_name || 'Unbekannter Benutzer'
-        };
-      });
+      return adminData.map(admin => ({
+        ...admin,
+        display_name: admin.profiles?.display_name || 'Unbekannter Benutzer'
+      }));
     },
   });
 
