@@ -27,18 +27,11 @@ interface TeamHeaderProps {
   };
 }
 
-interface TeamMember {
-  id: string;
-  role: string;
-  user_id: string;
-  display_name: string | null;
-}
-
 export function TeamHeader({ team }: TeamHeaderProps) {
   const navigate = useNavigate();
   const user = useUser();
 
-  const { data: isAdmin } = useQuery({
+  const { data: memberRole } = useQuery({
     queryKey: ['team-member-role', team.id],
     queryFn: async () => {
       const { data } = await supabase
@@ -48,17 +41,19 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         .eq('user_id', user?.id)
         .maybeSingle();
 
-      return data?.role === 'admin' || data?.role === 'owner';
+      return data?.role;
     },
     enabled: !!user?.id && !!team.id,
   });
 
-  const { data: members } = useQuery<TeamMember[]>({
+  const isAdmin = memberRole === 'admin' || memberRole === 'owner';
+
+  const { data: members } = useQuery({
     queryKey: ['team-members', team.id],
     queryFn: async () => {
       const { data: teamMembers, error } = await supabase
         .from('team_members')
-        .select('id, role, user_id')
+        .select('id, role, user_id, profiles:user_id(display_name)')
         .eq('team_id', team.id);
 
       if (error) {
@@ -66,19 +61,9 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      const memberIds = teamMembers.map(member => member.user_id);
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, display_name')
-        .in('id', memberIds);
-
-      const profileMap = new Map(profiles?.map(p => [p.id, p.display_name]) || []);
-
       return teamMembers.map(member => ({
-        id: member.id,
-        role: member.role,
-        user_id: member.user_id,
-        display_name: profileMap.get(member.user_id) || 'Unbekannter Benutzer'
+        ...member,
+        display_name: member.profiles?.display_name || 'Unbekannter Benutzer'
       }));
     },
     enabled: !!team.id,
@@ -113,6 +98,23 @@ export function TeamHeader({ team }: TeamHeaderProps) {
     }
   };
 
+  const handleDeleteTeam = async () => {
+    try {
+      const { error } = await supabase
+        .from('teams')
+        .delete()
+        .eq('id', team.id);
+
+      if (error) throw error;
+
+      toast.success("Team erfolgreich gelöscht");
+      navigate('/unity');
+    } catch (error) {
+      console.error('Error deleting team:', error);
+      toast.error("Fehler beim Löschen des Teams");
+    }
+  };
+
   // Filter admins from the full members list
   const adminMembers = members?.filter(member => 
     member.role === 'admin' || member.role === 'owner'
@@ -128,14 +130,44 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         <div className="flex items-center justify-between">
           <TeamHeaderTitle 
             team={team}
-            isAdmin={isAdmin || false}
+            isAdmin={isAdmin}
             membersCount={membersCount}
             adminsCount={adminsCount}
             members={members || []}
             adminMembers={adminMembers}
           />
           <div className="flex items-center gap-2">
-            {!isAdmin && user && (
+            {isAdmin ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="text-sm text-destructive hover:bg-destructive/10"
+                  >
+                    Team löschen
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Team löschen</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Sind Sie sicher, dass Sie dieses Team löschen möchten? 
+                      Diese Aktion kann nicht rückgängig gemacht werden.
+                      Alle Teammitglieder werden entfernt.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteTeam}
+                      className="bg-destructive hover:bg-destructive/90"
+                    >
+                      Löschen
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button

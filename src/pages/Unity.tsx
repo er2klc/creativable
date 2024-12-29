@@ -28,34 +28,25 @@ const Unity = () => {
         return [];
       }
 
-      return data || [];
+      return data?.sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)) || [];
     },
     enabled: !!user,
   });
 
-  const { data: teamStats } = useQuery({
-    queryKey: ['team-stats'],
-    queryFn: async () => {
-      if (!teams?.length) return {};
-      
-      const statsMap: Record<string, { totalMembers: number; admins: number }> = {};
-      
-      for (const team of teams) {
-        const { data: members } = await supabase
-          .from('team_members')
-          .select('role')
-          .eq('team_id', team.id);
+  const updateTeamOrder = async (teamId: string, newIndex: number) => {
+    try {
+      const { error } = await supabase
+        .from('teams')
+        .update({ order_index: newIndex })
+        .eq('id', teamId);
 
-        statsMap[team.id] = {
-          totalMembers: members?.length || 0,
-          admins: members?.filter(m => ['admin', 'owner'].includes(m.role)).length || 0,
-        };
-      }
-
-      return statsMap;
-    },
-    enabled: !!teams?.length,
-  });
+      if (error) throw error;
+      refetch();
+    } catch (error) {
+      console.error('Error updating team order:', error);
+      toast.error("Fehler beim Aktualisieren der Reihenfolge");
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -119,13 +110,34 @@ const Unity = () => {
             </CardContent>
           </Card>
         ) : (
-          teams?.map((team) => (
-            <TeamCard
-              key={team.id}
-              team={team}
-              teamStats={teamStats?.[team.id]}
-              onDelete={handleDeleteTeam}
-            />
+          teams?.map((team, index) => (
+            <div key={team.id} className="flex items-center gap-2">
+              <div className="flex-1">
+                <TeamCard
+                  team={team}
+                  teamStats={teamStats?.[team.id]}
+                  onDelete={handleDeleteTeam}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => updateTeamOrder(team.id, index - 1)}
+                  disabled={index === 0}
+                >
+                  ↑
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => updateTeamOrder(team.id, index + 1)}
+                  disabled={index === teams.length - 1}
+                >
+                  ↓
+                </Button>
+              </div>
+            </div>
           ))
         )}
       </div>

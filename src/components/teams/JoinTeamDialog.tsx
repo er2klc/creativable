@@ -31,7 +31,8 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
     setIsLoading(true);
 
     try {
-      const { data: teamData, error: teamError } = await supabase
+      // First, find the team
+      const { data: team, error: teamError } = await supabase
         .from("teams")
         .select("id")
         .eq("join_code", joinCode.trim())
@@ -41,18 +42,19 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
         throw new Error("Fehler beim Suchen des Teams");
       }
 
-      if (!teamData) {
+      if (!team) {
         throw new Error("Ungültiger Beitritts-Code");
       }
 
-      const { data: existingMember, error: memberError } = await supabase
+      // Check if user is already a member
+      const { data: existingMember, error: memberCheckError } = await supabase
         .from("team_members")
         .select("id")
-        .eq("team_id", teamData.id)
+        .eq("team_id", team.id)
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (memberError) {
+      if (memberCheckError) {
         throw new Error("Fehler beim Überprüfen der Mitgliedschaft");
       }
 
@@ -60,10 +62,11 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
         throw new Error("Sie sind bereits Mitglied dieses Teams");
       }
 
+      // Join the team
       const { error: joinError } = await supabase
         .from("team_members")
         .insert({
-          team_id: teamData.id,
+          team_id: team.id,
           user_id: user.id,
           role: "member",
         });
