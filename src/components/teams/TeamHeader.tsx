@@ -47,8 +47,12 @@ export function TeamHeader({ team }: TeamHeaderProps) {
       const { data, error } = await supabase
         .from('team_members')
         .select(`
-          *,
-          profiles!team_members_user_id_fkey(display_name)
+          id,
+          role,
+          user_id,
+          profiles (
+            display_name
+          )
         `)
         .eq('team_id', team.id);
 
@@ -75,8 +79,12 @@ export function TeamHeader({ team }: TeamHeaderProps) {
       const { data, error } = await supabase
         .from('team_members')
         .select(`
-          *,
-          profiles!team_members_user_id_fkey(display_name)
+          id,
+          role,
+          user_id,
+          profiles (
+            display_name
+          )
         `)
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);
