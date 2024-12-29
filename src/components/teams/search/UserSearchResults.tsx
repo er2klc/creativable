@@ -1,3 +1,8 @@
+interface SearchResult {
+  id: string;
+  email: string;
+}
+
 interface UserSearchResultsProps {
   searchResults: SearchResult[];
   onSelectUser: (email: string) => void;
