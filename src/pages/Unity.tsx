@@ -20,16 +20,19 @@ const Unity = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
+      // First get team_ids where user is a member
+      const { data: memberTeamIds } = await supabase
+        .from('team_members')
+        .select('team_id')
+        .eq('user_id', user.id);
+
+      const teamIds = memberTeamIds?.map(m => m.team_id) || [];
+      
+      // Then get teams where user is either creator or member
       const { data, error } = await supabase
         .from('teams')
         .select('id, name, description, created_at, created_by, max_members')
-        .or(`created_by.eq.${user.id},id.in.(${
-          supabase
-            .from('team_members')
-            .select('team_id')
-            .eq('user_id', user.id)
-            .then(({ data }) => data?.map(d => d.team_id).join(','))
-        })`)
+        .or(`created_by.eq.${user.id},id.in.(${teamIds.join(',')})`)
         .throwOnError();
 
       if (error) {
