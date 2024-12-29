@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Command, CommandInput, CommandGroup, CommandEmpty, CommandItem } from "@/components/ui/command";
+import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,18 +58,17 @@ export const UserSearch = ({ onSelectUser, onSwitchToEmailInput }: UserSearchPro
             searchUsers(value);
           }}
         />
-        {Array.isArray(searchResults) && searchResults.length > 0 ? (
-          <CommandGroup>
-            {searchResults.map((result) => (
-              <CommandItem
-                key={result.id}
-                onSelect={() => onSelectUser(result.email)}
-              >
-                {result.email}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        ) : (
+        <CommandGroup>
+          {searchResults.map((result) => (
+            <CommandItem
+              key={result.id}
+              onSelect={() => onSelectUser(result.email)}
+            >
+              {result.email}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+        {searchResults.length === 0 && (
           <CommandEmpty>Keine Benutzer gefunden.</CommandEmpty>
         )}
       </Command>
