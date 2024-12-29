@@ -7,25 +7,39 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface TeamLogoUploadProps {
-  teamId: string;
+  teamId?: string;
   currentLogoUrl?: string;
+  logoPreview?: string | null;
+  onLogoChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onLogoRemove?: () => void;
 }
 
 export const TeamLogoUpload = ({
   teamId,
   currentLogoUrl,
+  logoPreview: externalLogoPreview,
+  onLogoChange: externalLogoChange,
+  onLogoRemove: externalLogoRemove,
 }: TeamLogoUploadProps) => {
-  const [logoPreview, setLogoPreview] = useState<string | null>(currentLogoUrl || null);
+  const [internalLogoPreview, setInternalLogoPreview] = useState<string | null>(currentLogoUrl || null);
   const { toast } = useToast();
 
-  const onLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Use external or internal state/handlers based on whether we're in create or edit mode
+  const logoPreview = externalLogoPreview !== undefined ? externalLogoPreview : internalLogoPreview;
+  
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (externalLogoChange) {
+      externalLogoChange(e);
+      return;
+    }
+
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !teamId) return;
 
     // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
-      setLogoPreview(reader.result as string);
+      setInternalLogoPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
 
@@ -33,7 +47,7 @@ export const TeamLogoUpload = ({
       // Upload to Supabase Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${teamId}-logo.${fileExt}`;
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('team-logos')
         .upload(fileName, file, { upsert: true });
 
@@ -66,7 +80,14 @@ export const TeamLogoUpload = ({
     }
   };
 
-  const onLogoRemove = async () => {
+  const handleLogoRemove = async () => {
+    if (externalLogoRemove) {
+      externalLogoRemove();
+      return;
+    }
+
+    if (!teamId) return;
+
     try {
       // Update team record to remove logo
       const { error: updateError } = await supabase
@@ -76,7 +97,7 @@ export const TeamLogoUpload = ({
 
       if (updateError) throw updateError;
 
-      setLogoPreview(null);
+      setInternalLogoPreview(null);
       toast({
         title: "Logo removed",
         description: "Your team logo has been removed successfully.",
@@ -106,7 +127,7 @@ export const TeamLogoUpload = ({
               variant="ghost"
               size="icon"
               className="absolute top-0 right-0 bg-background/80 hover:bg-background"
-              onClick={onLogoRemove}
+              onClick={handleLogoRemove}
             >
               ×
             </Button>
@@ -128,7 +149,7 @@ export const TeamLogoUpload = ({
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={onLogoChange}
+              onChange={handleLogoChange}
             />
           </Label>
         </div>
