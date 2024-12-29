@@ -4,7 +4,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Infinity, Users, UserPlus, Crown, Image as ImageIcon, Copy, Plus } from "lucide-react";
+import { Infinity, Users, UserPlus, Crown, Copy, Eye, Trash2, Plus } from "lucide-react";
 import type { Team } from "@/integrations/supabase/types/teams";
 import { CreateTeamDialog } from "@/components/teams/CreateTeamDialog";
 import { JoinTeamDialog } from "@/components/teams/JoinTeamDialog";
@@ -12,10 +12,22 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Unity = () => {
   const navigate = useNavigate();
   const user = useUser();
+  const [showJoinCode, setShowJoinCode] = useState<string | null>(null);
+  const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
 
   const { data: teams, isLoading, refetch } = useQuery({
     queryKey: ['teams'],
@@ -59,16 +71,46 @@ const Unity = () => {
     enabled: !!teams?.length,
   });
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
+  const handleDeleteTeam = async (team: Team) => {
+    if (!user) return;
+
+    try {
+      // Delete team members first
+      const { error: membersError } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('team_id', team.id);
+
+      if (membersError) throw membersError;
+
+      // Then delete the team
+      const { error: teamError } = await supabase
+        .from('teams')
+        .delete()
+        .eq('id', team.id)
+        .eq('created_by', user.id);
+
+      if (teamError) throw teamError;
+
+      toast.success("Team erfolgreich gelöscht");
+      refetch();
+    } catch (error: any) {
+      console.error("Error deleting team:", error);
+      toast.error(error.message || "Fehler beim Löschen des Teams");
     }
-  }, [user, navigate]);
+    setTeamToDelete(null);
+  };
 
   const copyJoinCode = async (joinCode: string) => {
     await navigator.clipboard.writeText(joinCode);
     toast.success("Beitritts-Code kopiert!");
   };
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+    }
+  }, [user, navigate]);
 
   if (!user) return null;
 
@@ -85,7 +127,7 @@ const Unity = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="space-y-4">
         {isLoading ? (
           <Card>
             <CardContent className="p-6">
@@ -112,7 +154,7 @@ const Unity = () => {
           teams?.map((team: Team) => (
             <Card 
               key={team.id}
-              className="cursor-pointer hover:shadow-lg transition-all duration-300 group"
+              className="cursor-pointer hover:shadow-lg transition-all duration-300 group relative"
               onClick={() => navigate(`/teams/${team.id}`)}
             >
               <CardHeader className="space-y-4">
@@ -136,21 +178,32 @@ const Unity = () => {
                       </CardDescription>
                     </div>
                   </div>
-                </div>
-                
-                <div className="flex flex-wrap gap-2">
-                  {team.join_code && (
-                    <div className="flex items-center gap-2 p-2 bg-muted rounded-lg flex-1">
-                      <code className="text-sm flex-1">Code: {team.join_code}</code>
-                      <Button 
-                        size="icon" 
-                        variant="ghost"
+                  
+                  {team.created_by === user.id && (
+                    <div className="flex items-center gap-2">
+                      {team.join_code && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyJoinCode(team.join_code!);
+                          }}
+                          className="h-8 w-8"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        size="icon"
+                        variant="destructive"
                         onClick={(e) => {
                           e.stopPropagation();
-                          copyJoinCode(team.join_code!);
+                          setTeamToDelete(team);
                         }}
+                        className="h-8 w-8"
                       >
-                        <Copy className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   )}
@@ -177,6 +230,27 @@ const Unity = () => {
           ))
         )}
       </div>
+
+      <AlertDialog open={!!teamToDelete} onOpenChange={() => setTeamToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Team löschen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sind Sie sicher, dass Sie das Team "{teamToDelete?.name}" löschen möchten? 
+              Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => teamToDelete && handleDeleteTeam(teamToDelete)}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
