@@ -26,9 +26,15 @@ const Unity = () => {
 
       const teamsWithStats = await Promise.all(
         teams.map(async (team) => {
+          // Get all team members with their profile information
           const { data: members, error: membersError } = await supabase
             .from('team_members')
-            .select('role, profiles:user_id(display_name)')
+            .select(`
+              role,
+              profiles:user_id (
+                display_name
+              )
+            `)
             .eq('team_id', team.id);
 
           if (membersError) {
@@ -39,6 +45,7 @@ const Unity = () => {
             };
           }
 
+          // Count admins (including owner) and total members
           const admins = members.filter(m => ['admin', 'owner'].includes(m.role)).length;
           const totalMembers = members.length; // All members count, including admins
 
@@ -59,6 +66,7 @@ const Unity = () => {
 
   const handleDeleteTeam = async (teamId: string) => {
     try {
+      // Delete the team - the trigger will handle member deletion
       const { error: teamError } = await supabase
         .from('teams')
         .delete()
@@ -67,9 +75,10 @@ const Unity = () => {
       if (teamError) throw teamError;
 
       await refetch();
+      toast.success("Team erfolgreich gelöscht");
     } catch (error: any) {
       console.error('Error deleting team:', error);
-      throw error;
+      toast.error("Fehler beim Löschen des Teams");
     }
   };
 
@@ -84,9 +93,10 @@ const Unity = () => {
       if (error) throw error;
 
       await refetch();
+      toast.success("Team erfolgreich verlassen");
     } catch (error: any) {
       console.error('Error leaving team:', error);
-      throw error;
+      toast.error("Fehler beim Verlassen des Teams");
     }
   };
 
@@ -102,7 +112,7 @@ const Unity = () => {
       await refetch();
     } catch (error: any) {
       console.error('Error updating team order:', error);
-      throw error;
+      toast.error("Fehler beim Aktualisieren der Reihenfolge");
     }
   };
 
