@@ -56,9 +56,10 @@ export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMembe
     try {
       setIsLoading(true);
 
+      // First get the user's registration_company_name from settings
       const { data: adminData, error: adminError } = await supabase
         .from('settings')
-        .select('name')
+        .select('registration_company_name')
         .eq('user_id', user.id)
         .single();
 
@@ -70,7 +71,7 @@ export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMembe
           team_id: teamId,
           email: email.trim(),
           invited_by: user.id,
-          admin_name: adminData?.name || user.email
+          admin_name: adminData?.registration_company_name || user.email
         });
 
       if (error) throw error;
