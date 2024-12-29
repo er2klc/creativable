@@ -62,11 +62,14 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         .select('id, email')
         .in('id', memberIds);
 
-      // Combine the data
-      return memberData.map(member => ({
-        ...member,
-        profiles: profileData?.find(profile => profile.id === member.user_id) || { email: 'Unknown' }
-      }));
+      // Combine the data and ensure we have profile data
+      return memberData.map(member => {
+        const profile = profileData?.find(p => p.id === member.user_id);
+        return {
+          ...member,
+          profiles: profile || { email: member.user_id }  // Fallback to user_id if no email
+        };
+      });
     },
   });
 
@@ -89,11 +92,14 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         .select('id, email')
         .in('id', adminIds);
 
-      // Combine the data
-      return adminData.map(admin => ({
-        ...admin,
-        profiles: profileData?.find(profile => profile.id === admin.user_id) || { email: 'Unknown' }
-      }));
+      // Combine the data and ensure we have profile data
+      return adminData.map(admin => {
+        const profile = profileData?.find(p => p.id === admin.user_id);
+        return {
+          ...admin,
+          profiles: profile || { email: admin.user_id }  // Fallback to user_id if no email
+        };
+      });
     },
   });
 
