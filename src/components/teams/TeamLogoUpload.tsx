@@ -1,20 +1,96 @@
-import { Image } from "lucide-react";
+import { Image, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload } from "lucide-react";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface TeamLogoUploadProps {
-  logoPreview: string | null;
-  onLogoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onLogoRemove: () => void;
+  teamId: string;
+  currentLogoUrl?: string;
 }
 
 export const TeamLogoUpload = ({
-  logoPreview,
-  onLogoChange,
-  onLogoRemove,
+  teamId,
+  currentLogoUrl,
 }: TeamLogoUploadProps) => {
+  const [logoPreview, setLogoPreview] = useState<string | null>(currentLogoUrl || null);
+  const { toast } = useToast();
+
+  const onLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLogoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    try {
+      // Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${teamId}-logo.${fileExt}`;
+      const { error: uploadError, data } = await supabase.storage
+        .from('team-logos')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('team-logos')
+        .getPublicUrl(fileName);
+
+      // Update team record
+      const { error: updateError } = await supabase
+        .from('teams')
+        .update({ logo_url: publicUrl })
+        .eq('id', teamId);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Logo updated",
+        description: "Your team logo has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      toast({
+        title: "Error",
+        description: "There was an error uploading your logo. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const onLogoRemove = async () => {
+    try {
+      // Update team record to remove logo
+      const { error: updateError } = await supabase
+        .from('teams')
+        .update({ logo_url: null })
+        .eq('id', teamId);
+
+      if (updateError) throw updateError;
+
+      setLogoPreview(null);
+      toast({
+        title: "Logo removed",
+        description: "Your team logo has been removed successfully.",
+      });
+    } catch (error) {
+      console.error('Error removing logo:', error);
+      toast({
+        title: "Error",
+        description: "There was an error removing your logo. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Label>Team Logo</Label>
