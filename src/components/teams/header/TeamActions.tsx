@@ -34,8 +34,7 @@ export function TeamActions({ teamId, isAdmin }: TeamActionsProps) {
         .match({ 
           team_id: teamId,
           user_id: user.id 
-        })
-        .select();
+        });
 
       if (error) throw error;
 
@@ -52,8 +51,7 @@ export function TeamActions({ teamId, isAdmin }: TeamActionsProps) {
       const { error } = await supabase
         .from('teams')
         .delete()
-        .eq('id', teamId)
-        .select();
+        .eq('id', teamId);
 
       if (error) throw error;
 
