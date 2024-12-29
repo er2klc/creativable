@@ -24,16 +24,33 @@ export const TeamLogoUpload = ({ teamId, currentLogoUrl }: TeamLogoUploadProps) 
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Bitte laden Sie nur Bilder hoch");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Die Datei ist zu groß (maximal 5MB)");
+      return;
+    }
+
     try {
       setIsUploading(true);
+      toast.loading("Logo wird hochgeladen...");
+
       const fileExt = file.name.split('.').pop();
       const filePath = `${teamId}/logo.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from('team-logos')
         .upload(filePath, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw new Error("Fehler beim Hochladen des Logos");
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('team-logos')
@@ -44,13 +61,18 @@ export const TeamLogoUpload = ({ teamId, currentLogoUrl }: TeamLogoUploadProps) 
         .update({ logo_url: publicUrl })
         .eq('id', teamId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Update error:", updateError);
+        throw new Error("Fehler beim Aktualisieren des Team Logos");
+      }
 
       queryClient.invalidateQueries({ queryKey: ['team', teamId] });
+      toast.dismiss();
       toast.success("Team Logo erfolgreich aktualisiert");
     } catch (error) {
       console.error("Error updating team logo:", error);
-      toast.error("Fehler beim Aktualisieren des Team Logos");
+      toast.dismiss();
+      toast.error(error instanceof Error ? error.message : "Fehler beim Aktualisieren des Team Logos");
     } finally {
       setIsUploading(false);
     }
