@@ -38,7 +38,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           created_by: user.id,
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (teamError) throw teamError;
 

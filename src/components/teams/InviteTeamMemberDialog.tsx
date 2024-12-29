@@ -20,7 +20,10 @@ export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMembe
   const user = useUser();
 
   const handleInvite = async () => {
-    if (!user) return;
+    if (!user) {
+      toast.error("Sie müssen eingeloggt sein, um Mitglieder einzuladen");
+      return;
+    }
     
     try {
       setIsLoading(true);
@@ -86,7 +89,7 @@ export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMembe
             onClick={handleInvite}
             disabled={!email || isLoading}
           >
-            Einladung senden
+            {isLoading ? "Sende..." : "Einladung senden"}
           </Button>
         </DialogFooter>
       </DialogContent>
