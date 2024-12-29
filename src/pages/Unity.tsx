@@ -21,31 +21,41 @@ const Unity = () => {
       if (!user?.id) return [];
       
       try {
-        // Hole Teams, wo der User Creator ist
+        // First get teams where user is creator
         const { data: ownedTeams, error: ownedError } = await supabase
           .from('teams')
           .select('*')
           .eq('created_by', user.id);
 
-        if (ownedError) throw ownedError;
+        if (ownedError) {
+          console.error("Error fetching owned teams:", ownedError);
+          throw ownedError;
+        }
 
-        // Hole Teams, wo der User Mitglied ist
+        // Then get teams where user is a member
         const { data: memberTeams, error: memberError } = await supabase
           .from('teams')
-          .select('*, team_members!inner(*)')
-          .eq('team_members.user_id', user.id)
-          .neq('created_by', user.id);
+          .select('*')
+          .neq('created_by', user.id)
+          .in('id', 
+            supabase
+              .from('team_members')
+              .select('team_id')
+              .eq('user_id', user.id)
+          );
 
-        if (memberError) throw memberError;
+        if (memberError) {
+          console.error("Error fetching member teams:", memberError);
+          throw memberError;
+        }
 
-        // Kombiniere und entferne Duplikate
+        // Combine and remove duplicates
         const allTeams = [...(ownedTeams || []), ...(memberTeams || [])];
         const uniqueTeams = Array.from(new Map(allTeams.map(team => [team.id, team])).values());
         
-        console.log("Geladene Teams:", uniqueTeams);
         return uniqueTeams;
       } catch (error: any) {
-        console.error("Fehler beim Laden der Teams:", error);
+        console.error("Error loading teams:", error);
         toast.error("Fehler beim Laden der Teams");
         return [];
       }
