@@ -22,15 +22,6 @@ interface TeamMember {
   display_name: string;
 }
 
-interface RawTeamMember {
-  id: string;
-  role: string;
-  user_id: string;
-  profiles?: {
-    display_name: string | null;
-  } | null;
-}
-
 export function TeamHeader({ team }: TeamHeaderProps) {
   const navigate = useNavigate();
   const user = useUser();
@@ -44,7 +35,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         .eq('team_id', team.id)
         .eq('user_id', user?.id)
         .maybeSingle();
-      
+
       return data?.role === 'admin' || data?.role === 'owner';
     },
   });
@@ -58,7 +49,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          profiles (
+          auth.users (
             display_name
           )
         `)
@@ -68,14 +59,14 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         console.error('Error fetching members:', error);
         return [];
       }
-      
+
       if (!data) return [];
 
-      return (data as unknown as RawTeamMember[]).map(member => ({
+      return data.map(member => ({
         id: member.id,
         role: member.role,
         user_id: member.user_id,
-        display_name: member.profiles?.display_name || 'Unbekannter Benutzer'
+        display_name: member['auth.users']?.display_name || 'Unbekannter Benutzer',
       }));
     },
   });
@@ -89,7 +80,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          profiles (
+          auth.users (
             display_name
           )
         `)
@@ -103,11 +94,11 @@ export function TeamHeader({ team }: TeamHeaderProps) {
 
       if (!data) return [];
 
-      return (data as unknown as RawTeamMember[]).map(admin => ({
+      return data.map(admin => ({
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
-        display_name: admin.profiles?.display_name || 'Unbekannter Benutzer'
+        display_name: admin['auth.users']?.display_name || 'Unbekannter Benutzer',
       }));
     },
   });
