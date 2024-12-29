@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
-import { Plus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 
 interface InviteTeamMemberDialogProps {
   teamId: string;
@@ -51,7 +51,7 @@ export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMembe
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="h-4 w-4 mr-2" />
+          <UserPlus className="h-4 w-4 mr-2" />
           Mitglied einladen
         </Button>
       </DialogTrigger>
