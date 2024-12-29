@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
 import { Platform, platformsConfig } from "@/config/platforms";
+import { User, Globe, AtSign, Phone, Mail } from "lucide-react";
 import * as z from "zod";
 
 interface BasicLeadFieldsProps {
@@ -17,7 +18,10 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Name 👤</FormLabel>
+            <FormLabel className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Name
+            </FormLabel>
             <FormControl>
               <Input placeholder="Name des Kontakts" {...field} />
             </FormControl>
@@ -31,7 +35,10 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         name="platform"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Kontaktquelle 🌐</FormLabel>
+            <FormLabel className="flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              Kontaktquelle
+            </FormLabel>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
                 <SelectTrigger>
@@ -59,7 +66,10 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         name="socialMediaUsername"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Social Media Benutzername 📱</FormLabel>
+            <FormLabel className="flex items-center gap-2">
+              <AtSign className="h-4 w-4" />
+              Social Media Benutzername
+            </FormLabel>
             <FormControl>
               <Input 
                 placeholder="Benutzername (ohne @ oder URL)" 
@@ -80,7 +90,10 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         name="phase"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Phase 📊</FormLabel>
+            <FormLabel className="flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              Phase
+            </FormLabel>
             <FormControl>
               <Input placeholder="Phase des Kontakts" {...field} />
             </FormControl>
@@ -94,7 +107,10 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         name="email"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>E-Mail 📧</FormLabel>
+            <FormLabel className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              E-Mail
+            </FormLabel>
             <FormControl>
               <Input type="email" placeholder="E-Mail-Adresse" {...field} />
             </FormControl>
@@ -108,37 +124,12 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         name="phone_number"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Telefonnummer 📞</FormLabel>
+            <FormLabel className="flex items-center gap-2">
+              <Phone className="h-4 w-4" />
+              Telefonnummer
+            </FormLabel>
             <FormControl>
               <Input placeholder="Telefonnummer" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="company_name"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Firmenname 🏢</FormLabel>
-            <FormControl>
-              <Input placeholder="Name der Firma" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="industry"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Branche 🏭</FormLabel>
-            <FormControl>
-              <Input placeholder="Branche" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
