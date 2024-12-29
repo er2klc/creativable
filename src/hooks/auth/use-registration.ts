@@ -29,14 +29,15 @@ export const useRegistration = () => {
     try {
       console.log("Starting registration process with email:", formData.email);
       
-      // Create the user account with phone number in metadata
+      // Create the user account with display_name in metadata
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
+            display_name: formData.name, // This will be used by the trigger
             full_name: formData.name,
-            phoneNumber: formData.phoneNumber, // Add phone number to metadata
+            phoneNumber: formData.phoneNumber,
           },
         },
       });
