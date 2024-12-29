@@ -49,8 +49,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         .select(`
           id,
           role,
-          user_id,
-          display_name:profiles!inner(display_name)
+          user_id
         `)
         .eq('team_id', team.id);
 
@@ -59,13 +58,20 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      console.log('Raw team members data:', data);
+      // Get display names from profiles in a separate query
+      const memberIds = data.map(member => member.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', memberIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p.display_name]) || []);
 
       return data.map((member: any) => ({
         id: member.id,
         role: member.role,
         user_id: member.user_id,
-        display_name: member.display_name?.display_name || 'Unbekannter Benutzer'
+        display_name: profileMap.get(member.user_id) || 'Unbekannter Benutzer'
       }));
     },
   });
@@ -79,8 +85,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         .select(`
           id,
           role,
-          user_id,
-          display_name:profiles!inner(display_name)
+          user_id
         `)
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);
@@ -90,13 +95,20 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      console.log('Raw admin members data:', data);
+      // Get display names from profiles in a separate query
+      const adminIds = data.map(admin => admin.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', adminIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p.display_name]) || []);
 
       return data.map((admin: any) => ({
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
-        display_name: admin.display_name?.display_name || 'Unbekannter Benutzer'
+        display_name: profileMap.get(admin.user_id) || 'Unbekannter Benutzer'
       }));
     },
   });
