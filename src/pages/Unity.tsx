@@ -95,10 +95,14 @@ const Unity = () => {
         .delete()
         .eq('id', teamId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting team:", error);
+        toast.error("Fehler beim Löschen des Teams");
+        return;
+      }
 
       toast.success("Team erfolgreich gelöscht");
-      refetch();
+      refetch(); // Refresh the teams list
     } catch (error: any) {
       console.error("Error deleting team:", error);
       toast.error("Fehler beim Löschen des Teams");
