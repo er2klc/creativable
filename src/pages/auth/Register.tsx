@@ -1,15 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AuthCard } from "@/components/auth/AuthCard";
+import { AuthFormContent } from "@/components/auth/AuthFormContent";
 
 const Register = () => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Registrierung</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p>Registrierungsformular kommt hier</p>
-      </CardContent>
-    </Card>
+    <AuthCard
+      title="Registrierung"
+      description="Erstellen Sie Ihr Konto"
+    >
+      <AuthFormContent />
+    </AuthCard>
   );
 };
 

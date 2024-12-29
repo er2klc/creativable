@@ -1,21 +1,14 @@
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { AuthCard } from "@/components/auth/AuthCard";
+import { AuthFormContent } from "@/components/auth/AuthFormContent";
 
 const Login = () => {
-  const navigate = useNavigate();
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Login</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Button onClick={() => navigate("/auth/register")}>
-          Zur Registrierung
-        </Button>
-      </CardContent>
-    </Card>
+    <AuthCard
+      title="Anmeldung"
+      description="Melden Sie sich in Ihrem Konto an"
+    >
+      <AuthFormContent />
+    </AuthCard>
   );
 };
 

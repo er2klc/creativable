@@ -1,11 +1,15 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useAuth } from "@/hooks/use-auth";
 
 export const ProtectedRoute = () => {
-  const user = useUser();
+  const { isAuthenticated, isLoading } = useAuth();
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" />;
   }
 
   return <Outlet />;
