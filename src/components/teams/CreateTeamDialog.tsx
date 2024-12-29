@@ -31,9 +31,9 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
       return;
     }
 
-    try {
-      setIsLoading(true);
+    setIsLoading(true);
 
+    try {
       const teamData = {
         name: name.trim(),
         description: description.trim(),
