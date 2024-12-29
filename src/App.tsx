@@ -13,11 +13,18 @@ const Register = lazy(() => import("@/pages/auth/Register"));
 const ForgotPassword = lazy(() => import("@/pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/auth/ResetPassword"));
 const InstagramDataDeletion = lazy(() => import("@/pages/auth/InstagramDataDeletion"));
+const Index = lazy(() => import("@/pages/Index"));
 
 function App() {
   return (
     <AppProvider>
       <Routes>
+        <Route path="/" element={
+          <Suspense fallback={<div>Loading...</div>}>
+            <Index />
+          </Suspense>
+        } />
+        
         <Route element={<AuthLayout />}>
           <Route path="/auth" element={<Login />} />
           <Route path="/auth/register" element={<Register />} />
@@ -28,11 +35,6 @@ function App() {
 
         <Route element={<AppLayout><Outlet /></AppLayout>}>
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <Dashboard />
-              </Suspense>
-            } />
             <Route path="/dashboard" element={
               <Suspense fallback={<div>Loading...</div>}>
                 <Dashboard />
