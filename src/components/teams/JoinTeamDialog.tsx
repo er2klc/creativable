@@ -36,13 +36,9 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
         .from("teams")
         .select("id")
         .eq("join_code", joinCode.trim())
-        .maybeSingle();
+        .single();
 
       if (teamError) {
-        throw new Error("Fehler beim Suchen des Teams");
-      }
-
-      if (!team) {
         throw new Error("Ungültiger Beitritts-Code");
       }
 
@@ -88,16 +84,8 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
     }
   };
 
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    if (!open) {
-      setJoinCode("");
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <UserPlus className="h-4 w-4 mr-2" />

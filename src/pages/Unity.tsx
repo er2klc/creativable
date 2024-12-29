@@ -37,35 +37,23 @@ const Unity = () => {
 
   const updateTeamOrder = async (teamId: string, newIndex: number) => {
     try {
-      // Optimistically update the UI
-      const oldTeams = [...teams];
-      const newTeams = [...teams];
-      const teamIndex = newTeams.findIndex(t => t.id === teamId);
-      
-      if (teamIndex === -1 || newIndex < 0 || newIndex >= newTeams.length) {
-        return;
-      }
+      const { data: currentTeam, error: currentTeamError } = await supabase
+        .from('teams')
+        .select('order_index')
+        .eq('id', teamId)
+        .single();
 
-      // Update the order_index of the affected teams
-      const [movedTeam] = newTeams.splice(teamIndex, 1);
-      newTeams.splice(newIndex, 0, movedTeam);
-      
-      // Update the cache immediately
-      queryClient.setQueryData(['teams'], newTeams);
+      if (currentTeamError) throw currentTeamError;
 
-      // Make the API call
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('teams')
         .update({ order_index: newIndex })
         .eq('id', teamId);
 
-      if (error) {
-        // Revert on error
-        queryClient.setQueryData(['teams'], oldTeams);
-        throw error;
-      }
+      if (updateError) throw updateError;
 
       await refetch();
+      toast.success("Reihenfolge erfolgreich aktualisiert");
     } catch (error) {
       console.error('Error updating team order:', error);
       toast.error("Fehler beim Aktualisieren der Reihenfolge");

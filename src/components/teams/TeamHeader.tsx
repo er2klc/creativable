@@ -19,7 +19,7 @@ interface TeamMember {
   user_id: string;
   profiles: {
     display_name: string | null;
-  } | null;
+  };
 }
 
 export function TeamHeader({ team }: TeamHeaderProps) {
@@ -58,7 +58,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id,
           role,
           user_id,
-          profiles:user_id(
+          profiles:profiles!inner(
             display_name
           )
         `)

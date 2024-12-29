@@ -28,7 +28,8 @@ export function TeamActions({ teamId, isAdmin }: TeamActionsProps) {
       const { error } = await supabase
         .from('team_members')
         .delete()
-        .eq('team_id', teamId);
+        .eq('team_id', teamId)
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
 
       if (error) throw error;
 
