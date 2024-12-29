@@ -91,7 +91,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         .select('id')
         .eq('team_id', team.id)
         .eq('user_id', user?.id)
-        .single();
+        .maybeSingle();
 
       if (!membershipData) {
         toast.error("Mitgliedschaft nicht gefunden");
