@@ -62,6 +62,23 @@ const Unity = () => {
     enabled: !!user,
   });
 
+  const updateTeamOrder = async (teamId: string, newIndex: number) => {
+    try {
+      const { error } = await supabase
+        .from('teams')
+        .update({ order_index: newIndex })
+        .eq('id', teamId);
+
+      if (error) throw error;
+
+      toast.success("Reihenfolge erfolgreich aktualisiert");
+      await refetch();
+    } catch (error: any) {
+      console.error('Error updating team order:', error);
+      toast.error("Fehler beim Aktualisieren der Reihenfolge");
+    }
+  };
+
   const handleDeleteTeam = async (teamId: string) => {
     try {
       const { error } = await supabase
