@@ -46,7 +46,10 @@ export function TeamHeader({ team }: TeamHeaderProps) {
       console.log('Fetching team members for team:', team.id);
       const { data, error } = await supabase
         .from('team_members')
-        .select('*, user:user_id(profiles:id(display_name))')
+        .select(`
+          *,
+          profiles!team_members_user_id_fkey(display_name)
+        `)
         .eq('team_id', team.id);
 
       if (error) {
@@ -60,7 +63,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         id: member.id,
         role: member.role,
         user_id: member.user_id,
-        display_name: member.user?.profiles?.display_name || 'Unbekannter Benutzer'
+        display_name: member.profiles?.display_name || 'Unbekannter Benutzer'
       }));
     },
   });
@@ -71,7 +74,10 @@ export function TeamHeader({ team }: TeamHeaderProps) {
       console.log('Fetching admin members for team:', team.id);
       const { data, error } = await supabase
         .from('team_members')
-        .select('*, user:user_id(profiles:id(display_name))')
+        .select(`
+          *,
+          profiles!team_members_user_id_fkey(display_name)
+        `)
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);
 
@@ -86,7 +92,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
-        display_name: admin.user?.profiles?.display_name || 'Unbekannter Benutzer'
+        display_name: admin.profiles?.display_name || 'Unbekannter Benutzer'
       }));
     },
   });
