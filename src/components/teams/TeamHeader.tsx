@@ -1,4 +1,4 @@
-import { Infinity, Users, Crown, Settings } from "lucide-react";
+import { Users, Crown, Settings, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
 import { Separator } from "@/components/ui/separator";
@@ -15,6 +15,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface TeamHeaderProps {
   team: {
@@ -51,7 +52,15 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
     queryFn: async () => {
       const { data } = await supabase
         .from('team_members')
-        .select('id, role')
+        .select(`
+          id,
+          role,
+          user_id,
+          profiles:profiles!team_members_user_id_fkey (
+            id,
+            email
+          )
+        `)
         .eq('team_id', team.id);
       
       return data;
@@ -63,7 +72,15 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
     queryFn: async () => {
       const { data } = await supabase
         .from('team_members')
-        .select('id, role')
+        .select(`
+          id,
+          role,
+          user_id,
+          profiles:profiles!team_members_user_id_fkey (
+            id,
+            email
+          )
+        `)
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);
       
@@ -76,7 +93,16 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
       <div className="container py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Infinity className="h-8 w-8 text-primary" />
+            {team.logo_url ? (
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={team.logo_url} alt={team.name} />
+                <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+            ) : (
+              <Avatar className="h-12 w-12">
+                <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+            )}
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-3xl font-semibold text-primary">
@@ -110,6 +136,7 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
                             <Badge variant={admin.role === 'owner' ? 'default' : 'secondary'}>
                               {admin.role === 'owner' ? 'Owner' : 'Admin'}
                             </Badge>
+                            <span className="text-sm">{admin.profiles?.email}</span>
                           </div>
                         </div>
                       ))}
@@ -138,6 +165,7 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
                               <Badge variant={member.role === 'owner' ? 'default' : 'secondary'}>
                                 {member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Mitglied'}
                               </Badge>
+                              <span className="text-sm">{member.profiles?.email}</span>
                             </div>
                             {member.role !== 'owner' && isAdmin && (
                               <Button
@@ -168,7 +196,7 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
             onClick={() => navigate('/unity')}
             className="text-sm text-muted-foreground hover:text-primary transition-colors"
           >
-            Zurück zur Übersicht
+            <ArrowLeft className="h-4 w-4" />
           </Button>
         </div>
         <Separator className="my-4" />
