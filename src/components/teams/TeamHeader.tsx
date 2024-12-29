@@ -22,6 +22,16 @@ interface TeamMember {
   display_name: string;
 }
 
+interface TeamMemberResponse {
+  id: string;
+  role: string;
+  user_id: string;
+  profiles: {
+    display_name: string | null;
+    email: string | null;
+  } | null;
+}
+
 export function TeamHeader({ team }: TeamHeaderProps) {
   const navigate = useNavigate();
   const user = useUser();
@@ -43,13 +53,13 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: members } = useQuery({
     queryKey: ['team-members', team.id],
     queryFn: async () => {
-      const { data: membersData, error } = await supabase
+      const { data, error } = await supabase
         .from('team_members')
         .select(`
           id,
           role,
           user_id,
-          profiles:user_id (
+          profiles (
             display_name,
             email
           )
@@ -61,7 +71,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      return membersData?.map(member => ({
+      return (data as TeamMemberResponse[])?.map(member => ({
         id: member.id,
         role: member.role,
         user_id: member.user_id,
@@ -73,13 +83,13 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const { data: adminMembers } = useQuery({
     queryKey: ['team-admins', team.id],
     queryFn: async () => {
-      const { data: adminsData, error } = await supabase
+      const { data, error } = await supabase
         .from('team_members')
         .select(`
           id,
           role,
           user_id,
-          profiles:user_id (
+          profiles (
             display_name,
             email
           )
@@ -92,7 +102,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      return adminsData?.map(admin => ({
+      return (data as TeamMemberResponse[])?.map(admin => ({
         id: admin.id,
         role: admin.role,
         user_id: admin.user_id,
