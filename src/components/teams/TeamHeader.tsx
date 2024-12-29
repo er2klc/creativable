@@ -53,9 +53,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id, 
           role,
           user_id,
-          profiles:user_id (
-            email
-          )
+          profiles:profiles(email)
         `)
         .eq('team_id', team.id);
       
@@ -72,9 +70,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           id, 
           role,
           user_id,
-          profiles:user_id (
-            email
-          )
+          profiles:profiles(email)
         `)
         .eq('team_id', team.id)
         .in('role', ['admin', 'owner']);

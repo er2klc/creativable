@@ -26,22 +26,6 @@ const TeamDetail = () => {
     },
   });
 
-  const { data: teamStats } = useQuery({
-    queryKey: ['team-stats', teamId],
-    queryFn: async () => {
-      const { data: members } = await supabase
-        .from('team_members')
-        .select('role')
-        .eq('team_id', teamId);
-
-      return {
-        totalMembers: members?.length || 0,
-        admins: members?.filter(m => ['admin', 'owner'].includes(m.role)).length || 0,
-      };
-    },
-    enabled: !!teamId,
-  });
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -62,7 +46,7 @@ const TeamDetail = () => {
 
   return (
     <div className="space-y-6">
-      <TeamHeader team={team} teamStats={teamStats} />
+      <TeamHeader team={team} />
 
       <div className="container">
         <Tabs defaultValue="posts" className="w-full">
@@ -119,6 +103,6 @@ const TeamDetail = () => {
       </div>
     </div>
   );
-};
+}
 
 export default TeamDetail;
