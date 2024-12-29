@@ -4,10 +4,11 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Infinity, Users, LoaderCircle } from "lucide-react";
+import { Infinity, Users, LoaderCircle, Copy } from "lucide-react";
 import type { Team } from "@/integrations/supabase/types/teams";
 import { InviteTeamMemberDialog } from "@/components/teams/InviteTeamMemberDialog";
 import { CreateTeamDialog } from "@/components/teams/CreateTeamDialog";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const Unity = () => {
@@ -37,6 +38,11 @@ const Unity = () => {
       navigate("/auth");
     }
   }, [user, navigate]);
+
+  const copyJoinCode = async (joinCode: string) => {
+    await navigator.clipboard.writeText(joinCode);
+    toast.success("Beitritts-Code kopiert!");
+  };
 
   if (!user) return null;
 
@@ -82,11 +88,25 @@ const Unity = () => {
                   {team.description || 'Keine Beschreibung verfügbar'}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex justify-end">
-                <InviteTeamMemberDialog 
-                  teamId={team.id} 
-                  onInviteSent={refetch}
-                />
+              <CardContent className="space-y-4">
+                {team.join_code && (
+                  <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                    <code className="text-sm flex-1">Beitritts-Code: {team.join_code}</code>
+                    <Button 
+                      size="icon" 
+                      variant="outline" 
+                      onClick={() => copyJoinCode(team.join_code!)}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                <div className="flex justify-end">
+                  <InviteTeamMemberDialog 
+                    teamId={team.id} 
+                    onInviteSent={refetch}
+                  />
+                </div>
               </CardContent>
             </Card>
           ))

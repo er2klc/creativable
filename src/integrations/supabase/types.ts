@@ -589,6 +589,7 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          join_code: string | null
           max_members: number | null
           name: string
         }
@@ -597,6 +598,7 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          join_code?: string | null
           max_members?: number | null
           name: string
         }
@@ -605,6 +607,7 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          join_code?: string | null
           max_members?: number | null
           name?: string
         }
@@ -615,6 +618,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_join_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_teams: {
         Args: {
           uid: string
@@ -624,6 +631,7 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          join_code: string | null
           max_members: number | null
           name: string
         }[]

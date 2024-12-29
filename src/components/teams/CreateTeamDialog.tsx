@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Copy } from "lucide-react";
 
 interface CreateTeamDialogProps {
   onTeamCreated?: () => void;
@@ -17,6 +17,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [joinCode, setJoinCode] = useState<string | null>(null);
   const user = useUser();
 
   const handleCreate = async () => {
@@ -42,13 +43,10 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
       const { data: team, error: teamError } = await supabase
         .from("teams")
         .insert(teamData)
-        .select()
-        .maybeSingle();
+        .select('*, team_members(*)')
+        .single();
 
-      if (teamError) {
-        console.error("Team creation error:", teamError);
-        throw teamError;
-      }
+      if (teamError) throw teamError;
 
       if (!team) {
         throw new Error("Team wurde erstellt, aber keine Daten zurückgegeben");
@@ -62,15 +60,10 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           role: "owner",
         });
 
-      if (memberError) {
-        console.error("Team member creation error:", memberError);
-        throw memberError;
-      }
+      if (memberError) throw memberError;
 
+      setJoinCode(team.join_code);
       toast.success("Team erfolgreich erstellt");
-      setIsOpen(false);
-      setName("");
-      setDescription("");
       onTeamCreated?.();
     } catch (error: any) {
       console.error("Error creating team:", error);
@@ -86,6 +79,14 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
       setIsLoading(false);
       setName("");
       setDescription("");
+      setJoinCode(null);
+    }
+  };
+
+  const copyJoinCode = async () => {
+    if (joinCode) {
+      await navigator.clipboard.writeText(joinCode);
+      toast.success("Beitritts-Code kopiert!");
     }
   };
 
@@ -104,37 +105,60 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
             Erstellen Sie ein neues Team und laden Sie Mitglieder ein.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="name" className="text-sm font-medium">
-              Team Name
-            </label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Geben Sie einen Team-Namen ein"
-            />
+        {!joinCode ? (
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="name" className="text-sm font-medium">
+                Team Name
+              </label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Geben Sie einen Team-Namen ein"
+              />
+            </div>
+            <div>
+              <label htmlFor="description" className="text-sm font-medium">
+                Beschreibung
+              </label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Beschreiben Sie Ihr Team (optional)"
+              />
+            </div>
           </div>
-          <div>
-            <label htmlFor="description" className="text-sm font-medium">
-              Beschreibung
-            </label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Beschreiben Sie Ihr Team (optional)"
-            />
+        ) : (
+          <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="text-sm font-medium mb-2">Team Beitritts-Code:</p>
+              <div className="flex items-center gap-2">
+                <code className="bg-background p-2 rounded flex-1">{joinCode}</code>
+                <Button size="icon" variant="outline" onClick={copyJoinCode}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Teilen Sie diesen Code mit Ihren Teammitgliedern, damit sie beitreten können.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
         <DialogFooter>
-          <Button
-            onClick={handleCreate}
-            disabled={!name.trim() || isLoading}
-          >
-            {isLoading ? "Erstelle..." : "Team erstellen"}
-          </Button>
+          {!joinCode ? (
+            <Button
+              onClick={handleCreate}
+              disabled={!name.trim() || isLoading}
+            >
+              {isLoading ? "Erstelle..." : "Team erstellen"}
+            </Button>
+          ) : (
+            <Button onClick={() => handleOpenChange(false)}>
+              Schließen
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
