@@ -9,28 +9,51 @@ import { Infinity, Users } from "lucide-react";
 import type { Team } from "@/integrations/supabase/types/teams";
 import { InviteTeamMemberDialog } from "@/components/teams/InviteTeamMemberDialog";
 import { CreateTeamDialog } from "@/components/teams/CreateTeamDialog";
+import { toast } from "sonner";
 
 const Unity = () => {
   const navigate = useNavigate();
   const user = useUser();
 
-  const { data: teams, isLoading, refetch } = useQuery<Team[]>({
+  const { data: teams, isLoading, refetch } = useQuery({
     queryKey: ['teams'],
     queryFn: async () => {
       if (!user?.id) return [];
       
-      const { data, error } = await supabase
+      // First try to get teams where user is creator
+      const { data: ownedTeams, error: ownedError } = await supabase
         .from('teams')
         .select('*')
         .eq('created_by', user.id);
 
-      if (error) {
-        console.error("Error fetching teams:", error);
-        throw error;
+      if (ownedError) {
+        console.error("Error fetching owned teams:", ownedError);
+        toast.error("Fehler beim Laden der Teams");
+        throw ownedError;
       }
+
+      // Then get teams where user is a member
+      const { data: memberTeams, error: memberError } = await supabase
+        .from('teams')
+        .select('*')
+        .neq('created_by', user.id)
+        .exists(
+          'team_members',
+          { user_id: user.id }
+        );
+
+      if (memberError) {
+        console.error("Error fetching member teams:", memberError);
+        toast.error("Fehler beim Laden der Teams");
+        throw memberError;
+      }
+
+      // Combine and deduplicate teams
+      const allTeams = [...(ownedTeams || []), ...(memberTeams || [])];
+      const uniqueTeams = Array.from(new Map(allTeams.map(team => [team.id, team])).values());
       
-      console.log("Fetched teams:", data);
-      return data || [];
+      console.log("Fetched teams:", uniqueTeams);
+      return uniqueTeams;
     },
     enabled: !!user,
   });
