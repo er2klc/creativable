@@ -33,12 +33,12 @@ export function ContactTypeField({ form }: ContactTypeFieldProps) {
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <div className={`p-2 rounded-lg transition-colors ${
-                  currentTypes.includes("Partner") ? "bg-blue-100" : ""
+                  currentTypes.includes("Likely Partner") ? "bg-blue-100" : ""
                 }`}>
                   <Checkbox
-                    checked={currentTypes.includes("Partner")}
+                    checked={currentTypes.includes("Likely Partner")}
                     onCheckedChange={(checked) => 
-                      handleContactTypeChange("Partner", checked as boolean)
+                      handleContactTypeChange("Likely Partner", checked as boolean)
                     }
                     id="partner"
                   />
@@ -46,18 +46,18 @@ export function ContactTypeField({ form }: ContactTypeFieldProps) {
                     htmlFor="partner" 
                     className="ml-2 text-sm font-medium cursor-pointer"
                   >
-                    Partner
+                    Likely Partner
                   </label>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <div className={`p-2 rounded-lg transition-colors ${
-                  currentTypes.includes("Kunde") ? "bg-green-100" : ""
+                  currentTypes.includes("Likely Kunde") ? "bg-green-100" : ""
                 }`}>
                   <Checkbox
-                    checked={currentTypes.includes("Kunde")}
+                    checked={currentTypes.includes("Likely Kunde")}
                     onCheckedChange={(checked) => 
-                      handleContactTypeChange("Kunde", checked as boolean)
+                      handleContactTypeChange("Likely Kunde", checked as boolean)
                     }
                     id="kunde"
                   />
@@ -65,7 +65,7 @@ export function ContactTypeField({ form }: ContactTypeFieldProps) {
                     htmlFor="kunde" 
                     className="ml-2 text-sm font-medium cursor-pointer"
                   >
-                    Kunde
+                    Likely Kunde
                   </label>
                 </div>
               </div>
