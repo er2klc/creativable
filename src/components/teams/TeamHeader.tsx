@@ -52,10 +52,10 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
       const { data } = await supabase
         .from('team_members')
         .select(`
-          id, 
-          user_id, 
+          id,
+          user_id,
           role,
-          profiles:user_id (
+          profiles:profiles!team_members_user_id_fkey (
             id,
             email
           )
@@ -72,9 +72,9 @@ export function TeamHeader({ team, teamStats }: TeamHeaderProps) {
       const { data } = await supabase
         .from('team_members')
         .select(`
-          id, 
+          id,
           role,
-          profiles:user_id (
+          profiles:profiles!team_members_user_id_fkey (
             id,
             email
           )
