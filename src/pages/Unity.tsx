@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Infinity, Users, LoaderCircle } from "lucide-react";
@@ -20,10 +19,7 @@ const Unity = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      const { data, error } = await supabase
-        .from('teams')
-        .select('*')
-        .or(`created_by.eq.${user.id},id.in.(select team_id from team_members where user_id = '${user.id}')`);
+      const { data, error } = await supabase.rpc('get_user_teams', { uid: user.id });
 
       if (error) {
         console.error("Error loading teams:", error);

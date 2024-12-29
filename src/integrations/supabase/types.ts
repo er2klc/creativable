@@ -606,7 +606,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_teams: {
+        Args: {
+          uid: string
+        }
+        Returns: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          max_members: number | null
+          name: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
