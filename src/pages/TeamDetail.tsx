@@ -47,7 +47,7 @@ const TeamDetail = () => {
         <div className="flex items-center gap-2">
           <Infinity className="h-8 w-8 text-primary" />
           <div className="flex items-center gap-2">
-            <h1 className="text-3xl text-primary">
+            <h1 className="text-3xl font-semibold text-primary">
               {team.name}
             </h1>
             <TeamLogoUpload teamId={team.id} currentLogoUrl={team.logo_url} />
