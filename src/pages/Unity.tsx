@@ -21,38 +21,17 @@ const Unity = () => {
       if (!user?.id) return [];
       
       try {
-        // Get teams where user is creator
-        const { data: ownedTeams, error: ownedError } = await supabase
+        const { data: teams, error } = await supabase
           .from('teams')
-          .select('*')
-          .eq('created_by', user.id);
+          .select('*');
 
-        if (ownedError) throw ownedError;
-
-        // Get teams where user is a member
-        const { data: memberTeams, error: memberError } = await supabase
-          .from('team_members')
-          .select('team_id')
-          .eq('user_id', user.id);
-
-        if (memberError) throw memberError;
-
-        // If user is a member of any teams, get those team details
-        let memberTeamDetails = [];
-        if (memberTeams.length > 0) {
-          const { data: teamDetails, error: teamDetailsError } = await supabase
-            .from('teams')
-            .select('*')
-            .in('id', memberTeams.map(tm => tm.team_id));
-
-          if (teamDetailsError) throw teamDetailsError;
-          memberTeamDetails = teamDetails || [];
+        if (error) {
+          console.error("Error loading teams:", error);
+          toast.error("Fehler beim Laden der Teams");
+          return [];
         }
 
-        // Combine and remove duplicates
-        const allTeams = [...(ownedTeams || []), ...memberTeamDetails];
-        return Array.from(new Map(allTeams.map(team => [team.id, team])).values());
-
+        return teams || [];
       } catch (error: any) {
         console.error("Error loading teams:", error);
         toast.error("Fehler beim Laden der Teams");
@@ -104,7 +83,7 @@ const Unity = () => {
             </CardContent>
           </Card>
         ) : (
-          teams?.map((team) => (
+          teams?.map((team: Team) => (
             <Card key={team.id} className="w-full hover:shadow-md transition-shadow">
               <CardHeader>
                 <CardTitle>{team.name}</CardTitle>
