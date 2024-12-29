@@ -34,17 +34,31 @@ export const InviteTeamMemberDialog = ({ teamId, onInviteSent }: InviteTeamMembe
     }
 
     try {
+      console.log("Searching for:", query);
+
       const { data, error } = await supabase
         .from('profiles')
         .select('id, email')
-        .textSearch('email', query)
+        .ilike('email', `%${query}%`)
         .limit(5);
 
-      if (error) throw error;
-      setSearchResults(data || []);
+      if (error) {
+        console.error("Error searching users:", error);
+        throw error;
+      }
+
+      console.log("Search results:", data);
+
+      if (!data || data.length === 0) {
+        setSearchResults([]);
+        return;
+      }
+
+      setSearchResults(Array.isArray(data) ? data : []);
     } catch (error: any) {
       console.error("Error searching users:", error);
       setSearchResults([]);
+      toast.error("Fehler bei der Benutzersuche");
     }
   };
 
