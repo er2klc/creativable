@@ -13,12 +13,12 @@ export function TeamAdminList({ admins }: TeamAdminListProps) {
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
               <AvatarFallback>
-                {admin.profiles?.display_name?.substring(0, 2).toUpperCase() || '??'}
+                {admin.profiles?.email?.substring(0, 2).toUpperCase() || '??'}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
               <span className="text-sm font-medium">
-                {admin.profiles?.display_name || 'Unbekannter Benutzer'}
+                {admin.profiles?.email || 'Unbekannter Benutzer'}
               </span>
               <Badge variant={admin.role === 'owner' ? 'default' : 'secondary'} className="mt-1">
                 {admin.role === 'owner' ? 'Owner' : 'Admin'}
