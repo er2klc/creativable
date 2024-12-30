@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MessageSquare, Bell, Calendar, FolderOpen, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button"; // Add this import
+import { Button } from "@/components/ui/button";
 import { TeamHeader } from "@/components/teams/TeamHeader";
 import { PostList } from "@/components/teams/posts/PostList";
 import { CategoryList } from "@/components/teams/posts/CategoryList";

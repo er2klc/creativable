@@ -18,7 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -66,7 +66,7 @@ export function CreateNewsDialog({ teamId }: CreateNewsDialogProps) {
           Neue News
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Neue News erstellen</DialogTitle>
         </DialogHeader>
@@ -92,10 +92,10 @@ export function CreateNewsDialog({ teamId }: CreateNewsDialogProps) {
                 <FormItem>
                   <FormLabel>Inhalt</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="News Inhalt"
-                      className="min-h-[200px]"
-                      {...field}
+                    <RichTextEditor
+                      content={field.value}
+                      onChange={field.onChange}
+                      placeholder="News Inhalt..."
                     />
                   </FormControl>
                   <FormMessage />

@@ -51,7 +51,10 @@ export function NewsList({ teamId }: NewsListProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="whitespace-pre-wrap">{item.content}</p>
+            <div 
+              className="prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: item.content }} 
+            />
           </CardContent>
         </Card>
       ))}
