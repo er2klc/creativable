@@ -28,37 +28,32 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
 
     try {
       const cleanJoinCode = joinCode.trim().toUpperCase();
-      console.log("Searching for team with join code:", cleanJoinCode);
       
       // First, let's check if the team exists
       const { data: teams, error: searchError } = await supabase
         .from('teams')
         .select('*')
-        .eq('join_code', cleanJoinCode);
+        .eq('join_code', cleanJoinCode)
+        .single();
 
       if (searchError) {
         console.error("Team search error:", searchError);
-        throw new Error("Fehler beim Suchen des Teams");
-      }
-
-      console.log("Teams found:", teams);
-
-      if (!teams || teams.length === 0) {
-        console.error("No team found with join code:", cleanJoinCode);
         throw new Error("Ungültiger Beitritts-Code");
       }
 
-      const team = teams[0];
-      
+      if (!teams) {
+        throw new Error("Ungültiger Beitritts-Code");
+      }
+
       // Check if already a member
       const { data: existingMember, error: memberCheckError } = await supabase
         .from('team_members')
-        .select('id')
-        .eq('team_id', team.id)
+        .select('*')
+        .eq('team_id', teams.id)
         .eq('user_id', user.id)
-        .maybeSingle();
+        .single();
 
-      if (memberCheckError) {
+      if (memberCheckError && memberCheckError.code !== 'PGRST116') {
         console.error("Member check error:", memberCheckError);
         throw new Error("Fehler beim Überprüfen der Mitgliedschaft");
       }
@@ -71,10 +66,10 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
       const { error: joinError } = await supabase
         .from('team_members')
         .insert({
-          team_id: team.id,
+          team_id: teams.id,
           user_id: user.id,
           role: 'member',
-          invited_by: team.created_by
+          invited_by: teams.created_by
         });
 
       if (joinError) {
@@ -82,7 +77,7 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
         throw new Error("Fehler beim Beitreten des Teams");
       }
 
-      toast.success(`Team "${team.name}" erfolgreich beigetreten`);
+      toast.success(`Team "${teams.name}" erfolgreich beigetreten`);
       setIsOpen(false);
       setJoinCode("");
       onTeamJoined?.();
