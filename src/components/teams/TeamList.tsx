@@ -16,13 +16,15 @@ interface TeamListProps {
   onDelete: (teamId: string) => Promise<void>;
   onLeave: (teamId: string) => Promise<void>;
   onUpdateOrder?: (teamId: string, direction: 'up' | 'down') => Promise<void>;
+  isLoading?: boolean;
 }
 
 export const TeamList = ({ 
   teams,
   onDelete,
   onLeave,
-  onUpdateOrder
+  onUpdateOrder,
+  isLoading
 }: TeamListProps) => {
   const [copyingJoinCode, setCopyingJoinCode] = useState(false);
   const { toast } = useToast();
@@ -69,6 +71,10 @@ export const TeamList = ({
       console.error("Error leaving team:", error);
     }
   };
+
+  if (isLoading) {
+    return <div className="space-y-4">Loading...</div>;
+  }
 
   return (
     <div className="space-y-4">
