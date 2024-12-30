@@ -29,7 +29,7 @@ export const TeamCardActions = ({
       
       const { data, error } = await supabase
         .from("team_members")
-        .select("id")
+        .select("id, role")
         .eq("team_id", teamId)
         .eq("user_id", userId)
         .maybeSingle();
@@ -39,6 +39,8 @@ export const TeamCardActions = ({
     },
     enabled: !!userId && !!teamId,
   });
+
+  const isMember = !!teamMember;
 
   return (
     <div className="flex items-center gap-2">
@@ -59,7 +61,20 @@ export const TeamCardActions = ({
           <Copy className="h-4 w-4" />
         </Button>
       )}
-      {isOwner ? (
+      {isMember && !isOwner ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onLeave();
+          }}
+          className="h-8 w-8 text-destructive hover:text-destructive"
+          title="Team verlassen"
+        >
+          <LogOut className="h-4 w-4" />
+        </Button>
+      ) : isOwner && (
         <Button
           variant="ghost"
           size="icon"
@@ -72,21 +87,6 @@ export const TeamCardActions = ({
         >
           <Trash2 className="h-4 w-4" />
         </Button>
-      ) : (
-        teamMember && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onLeave();
-            }}
-            className="h-8 w-8 text-destructive hover:text-destructive"
-            title="Team verlassen"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
-        )
       )}
     </div>
   );
