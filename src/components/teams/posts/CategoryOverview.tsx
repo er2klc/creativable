@@ -29,7 +29,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
             created_at,
             created_by,
             team_post_comments (count),
-            creator:profiles!team_posts_created_by_fkey (
+            profiles (
               display_name
             )
           )
@@ -106,7 +106,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
                             addSuffix: true,
                             locale: de,
                           })}{" "}
-                          von {post.creator?.display_name}
+                          von {post.profiles?.display_name}
                         </div>
                       </div>
                       <div className="flex items-center gap-1 text-muted-foreground">
