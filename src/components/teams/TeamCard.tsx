@@ -2,7 +2,7 @@ import { type Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { TeamCardActions } from "./card/TeamCardActions";
 import { useNavigate } from "react-router-dom";
-import { Users, Shield, Crown, ArrowUpDown } from "lucide-react";
+import { Users, Shield, ArrowUpDown } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Button } from "@/components/ui/button";
 
@@ -59,15 +59,7 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode, onUpdateOrde
             )}
           </div>
           <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold">{team.name}</h3>
-              {isTeamOwner && (
-                <div className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
-                  <Crown className="h-3 w-3" />
-                  Owner
-                </div>
-              )}
-            </div>
+            <h3 className="text-lg font-semibold">{team.name}</h3>
             {team.description && (
               <p className="text-sm text-muted-foreground">{team.description}</p>
             )}
@@ -77,10 +69,15 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode, onUpdateOrde
                 {team.stats?.totalMembers || 0}
               </span>
               <span>•</span>
-              <span className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                {team.stats?.admins || 0}
-              </span>
+                <span>{team.stats?.admins || 0}</span>
+                {isTeamOwner && (
+                  <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                    Owner
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
