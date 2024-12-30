@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Plus, Calendar as CalendarIcon, FolderOpen as FolderOpenIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamHeader } from "@/components/teams/TeamHeader";
@@ -102,7 +102,8 @@ const TeamDetail = () => {
       <TeamHeader team={team} />
 
       <div className="container">
-        <TeamTabs>
+        <Tabs defaultValue="posts">
+          <TeamTabs />
           <TabsContent value="posts" className="mt-6">
             <div className="space-y-6">
               <PostsAndDiscussions categories={categories} teamId={team.id} />
@@ -171,7 +172,7 @@ const TeamDetail = () => {
               </CardContent>
             </Card>
           </TabsContent>
-        </TeamTabs>
+        </Tabs>
       </div>
     </div>
   );
