@@ -2,9 +2,9 @@ import { type Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { TeamCardActions } from "./card/TeamCardActions";
 import { useNavigate } from "react-router-dom";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Shield } from "lucide-react";
+import { Users, Shield, Crown, ArrowUpDown } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
+import { Button } from "@/components/ui/button";
 
 interface TeamCardProps {
   team: Tables<"teams"> & {
@@ -16,14 +16,14 @@ interface TeamCardProps {
   onDelete: (id: string) => void;
   onLeave: (id: string) => void;
   onCopyJoinCode: (code: string) => void;
+  onUpdateOrder?: (teamId: string, direction: 'up' | 'down') => void;
 }
 
-export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode }: TeamCardProps) => {
+export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode, onUpdateOrder }: TeamCardProps) => {
   const navigate = useNavigate();
   const user = useUser();
 
   const handleClick = (e: React.MouseEvent) => {
-    // Only navigate if the click wasn't on a button or dialog
     if ((e.target as HTMLElement).closest('button') || 
         (e.target as HTMLElement).closest('[role="dialog"]')) {
       return;
@@ -35,18 +35,21 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode }: TeamCardPr
 
   return (
     <Card
-      className="p-6 cursor-pointer hover:shadow-md transition-shadow"
+      className="p-6 cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden"
       onClick={handleClick}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="relative min-w-[64px] h-16 bg-gradient-to-r from-background to-transparent rounded-lg overflow-hidden">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="relative min-w-[120px] h-20 rounded-lg overflow-hidden">
             {team.logo_url ? (
-              <img 
-                src={team.logo_url} 
-                alt={team.name} 
-                className="w-full h-full object-cover"
-              />
+              <>
+                <img 
+                  src={team.logo_url} 
+                  alt={team.name} 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-background/80" />
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-muted">
                 <span className="text-xl font-semibold">
@@ -55,8 +58,16 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode }: TeamCardPr
               </div>
             )}
           </div>
-          <div>
-            <h3 className="text-lg font-semibold">{team.name}</h3>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold">{team.name}</h3>
+              {isTeamOwner && (
+                <div className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
+                  <Crown className="h-3 w-3" />
+                  Owner
+                </div>
+              )}
+            </div>
             {team.description && (
               <p className="text-sm text-muted-foreground">{team.description}</p>
             )}
@@ -73,14 +84,29 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode }: TeamCardPr
             </div>
           </div>
         </div>
-        <TeamCardActions
-          teamId={team.id}
-          joinCode={team.join_code}
-          onDelete={() => onDelete(team.id)}
-          onLeave={() => onLeave(team.id)}
-          onCopyJoinCode={onCopyJoinCode}
-          isOwner={isTeamOwner}
-        />
+        <div className="flex items-center gap-2">
+          {onUpdateOrder && (
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="h-8 w-8"
+              onClick={(e) => {
+                e.stopPropagation();
+                onUpdateOrder(team.id, 'up');
+              }}
+            >
+              <ArrowUpDown className="h-4 w-4" />
+            </Button>
+          )}
+          <TeamCardActions
+            teamId={team.id}
+            joinCode={team.join_code}
+            onDelete={() => onDelete(team.id)}
+            onLeave={() => onLeave(team.id)}
+            onCopyJoinCode={onCopyJoinCode}
+            isOwner={isTeamOwner}
+          />
+        </div>
       </div>
     </Card>
   );

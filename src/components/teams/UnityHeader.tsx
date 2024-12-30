@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CreateTeamDialog } from "./CreateTeamDialog";
 import { JoinTeamDialog } from "./JoinTeamDialog";
 import { Button } from "@/components/ui/button";
-import { Plus, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 
 interface UnityHeaderProps {
   onTeamCreated: () => Promise<void>;
