@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { TeamCardActions } from "./card/TeamCardActions";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Users, Shield } from "lucide-react";
 
 interface TeamCardProps {
   team: Tables<"teams"> & {
@@ -25,18 +26,10 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode }: TeamCardPr
 
   return (
     <Card
-      className="p-6 cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden"
+      className="p-6 cursor-pointer hover:shadow-md transition-shadow"
       onClick={handleClick}
     >
-      {/* Background diagonal gradient */}
-      <div 
-        className="absolute top-0 right-0 w-3/4 h-full transform rotate-[-15deg] translate-x-1/4 translate-y-[-10%] opacity-10 z-0"
-        style={{
-          background: "linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)"
-        }}
-      />
-      
-      <div className="flex items-center justify-between relative z-10">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {team.logo_url ? (
             <Avatar className="h-16 w-16">
@@ -54,9 +47,15 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode }: TeamCardPr
               <p className="text-sm text-muted-foreground">{team.description}</p>
             )}
             <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-              <span>{team.stats?.totalMembers || 0} Mitglieder</span>
+              <span className="flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                {team.stats?.totalMembers || 0}
+              </span>
               <span>•</span>
-              <span>{team.stats?.admins || 0} Admins</span>
+              <span className="flex items-center gap-1">
+                <Shield className="h-4 w-4" />
+                {team.stats?.admins || 0}
+              </span>
             </div>
           </div>
         </div>
