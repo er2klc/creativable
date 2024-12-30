@@ -93,6 +93,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
             teamId={team.id}
             isAdmin={isAdmin}
             isOwner={isOwner}
+            members={members}
           />
         </div>
         <Separator className="my-4" />
