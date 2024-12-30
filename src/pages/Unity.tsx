@@ -77,7 +77,8 @@ const Unity = () => {
       .eq('id', teamId);
 
     if (error) throw error;
-
+    
+    await refetch(); // Aktualisiere die Team-Liste
     toast.success('Team erfolgreich gelöscht!');
   } catch (err) {
     console.error('Fehler beim Löschen des Teams:', err.message);
