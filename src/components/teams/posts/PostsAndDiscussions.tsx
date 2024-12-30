@@ -22,11 +22,13 @@ export function PostsAndDiscussions({ categories, teamId }: PostsAndDiscussionsP
         return (
           <Card 
             key={category.id} 
-            className="group hover:shadow-lg transition-all duration-200 bg-white dark:bg-gray-800"
+            className="group hover:shadow-lg transition-all duration-200 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border-0 shadow-md"
           >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div>
-                <h3 className="text-xl font-semibold">{category.name}</h3>
+                <h3 className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  {category.name}
+                </h3>
                 {category.description && (
                   <p className="text-sm text-muted-foreground mt-1">
                     {category.description}
@@ -47,7 +49,7 @@ export function PostsAndDiscussions({ categories, teamId }: PostsAndDiscussionsP
                     <div
                       key={post.id}
                       onClick={() => navigate(`category/${category.slug}`)}
-                      className="flex items-start justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
+                      className="flex items-start justify-between p-3 rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-colors cursor-pointer shadow-sm"
                     >
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium truncate">{post.title}</h4>
@@ -66,9 +68,9 @@ export function PostsAndDiscussions({ categories, teamId }: PostsAndDiscussionsP
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground py-4">
-                  Noch keine Beiträge in dieser Kategorie
-                </p>
+                <div className="text-center text-muted-foreground py-8 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                  <p>Noch keine Beiträge in dieser Kategorie</p>
+                </div>
               )}
             </CardContent>
           </Card>

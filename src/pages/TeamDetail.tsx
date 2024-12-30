@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { TabsContent } from "@/components/ui/tabs";
-import { Plus } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, FolderOpen as FolderOpenIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamHeader } from "@/components/teams/TeamHeader";
 import { CreateCategoryDialog } from "@/components/teams/CreateCategoryDialog";
@@ -105,11 +105,6 @@ const TeamDetail = () => {
         <TeamTabs>
           <TabsContent value="posts" className="mt-6">
             <div className="space-y-6">
-              {isAdmin && (
-                <div className="flex justify-end">
-                  <CreateCategoryDialog teamId={team.id} />
-                </div>
-              )}
               <PostsAndDiscussions categories={categories} teamId={team.id} />
             </div>
           </TabsContent>
@@ -130,7 +125,7 @@ const TeamDetail = () => {
               <CardContent className="p-6">
                 {isAdmin ? (
                   <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                    <Calendar className="h-12 w-12 text-muted-foreground" />
+                    <CalendarIcon className="h-12 w-12 text-muted-foreground" />
                     <div className="text-center space-y-2">
                       <h3 className="font-semibold">Keine Termine vorhanden</h3>
                       <p className="text-sm text-muted-foreground max-w-sm">
@@ -156,7 +151,7 @@ const TeamDetail = () => {
               <CardContent className="p-6">
                 {isAdmin ? (
                   <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                    <FolderOpen className="h-12 w-12 text-muted-foreground" />
+                    <FolderOpenIcon className="h-12 w-12 text-muted-foreground" />
                     <div className="text-center space-y-2">
                       <h3 className="font-semibold">Keine Dateien vorhanden</h3>
                       <p className="text-sm text-muted-foreground max-w-sm">
