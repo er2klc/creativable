@@ -21,9 +21,9 @@ import {
   PanelLeft,
   FileText,
   Shield,
-  Instagram,
   Globe2,
   Infinity,
+  GraduationCap,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -31,10 +31,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 const APP_VERSION = "0.2";
 
-const navigationItems = [
+const personalItems = [
   { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
-  { title: "Unity", icon: Infinity, url: "/unity" },
-  { title: "Kontakt", icon: Users, url: "/leads" },
+  { title: "Kontakte", icon: Users, url: "/leads" },
   { 
     title: "Nachrichten", 
     icon: MessageSquare, 
@@ -42,6 +41,14 @@ const navigationItems = [
     badge: true 
   },
   { title: "Kalender", icon: Calendar, url: "/calendar" },
+];
+
+const teamItems = [
+  { title: "Unity", icon: Infinity, url: "/unity" },
+  { title: "Elevate", icon: GraduationCap, url: "/elevate" },
+];
+
+const analysisItems = [
   { title: "Berichte", icon: BarChart, url: "/reports" },
   { title: "Einstellungen", icon: Settings, url: "/settings" },
 ];
@@ -49,7 +56,7 @@ const navigationItems = [
 const legalItems = [
   { title: "Impressum", icon: FileText, url: "/impressum" },
   { title: "Datenschutz", icon: Shield, url: "/privacy-policy" },
-  { title: "Instagram Datenlöschung", icon: Instagram, url: "/auth/data-deletion/instagram" },
+  { title: "Socials Datenlöschung", icon: Globe2, url: "/auth/data-deletion/instagram" },
 ];
 
 const DashboardSidebar = () => {
@@ -79,11 +86,11 @@ const DashboardSidebar = () => {
       <SidebarContent>
         <SidebarGroup>
           <div className="flex items-center justify-between px-4 py-2">
-            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+            <SidebarGroupLabel>Persönlich</SidebarGroupLabel>
           </div>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => (
+              {personalItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <a href={item.url} className="flex items-center gap-3 relative">
@@ -94,6 +101,50 @@ const DashboardSidebar = () => {
                           {unreadCount}
                         </Badge>
                       )}
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        <SidebarGroup>
+          <div className="flex items-center justify-between px-4 py-2">
+            <SidebarGroupLabel>Teams & Gruppen</SidebarGroupLabel>
+          </div>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {teamItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <a href={item.url} className="flex items-center gap-3">
+                      <item.icon className="h-5 w-5" />
+                      <span>{item.title}</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        <SidebarGroup>
+          <div className="flex items-center justify-between px-4 py-2">
+            <SidebarGroupLabel>Analyse & Tools</SidebarGroupLabel>
+          </div>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {analysisItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <a href={item.url} className="flex items-center gap-3">
+                      <item.icon className="h-5 w-5" />
+                      <span>{item.title}</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
