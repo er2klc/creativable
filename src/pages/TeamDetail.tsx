@@ -6,12 +6,10 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Plus, Calendar as CalendarIcon, FolderOpen as FolderOpenIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamHeader } from "@/components/teams/TeamHeader";
-import { CreateCategoryDialog } from "@/components/teams/CreateCategoryDialog";
 import { CreateNewsDialog } from "@/components/teams/news/CreateNewsDialog";
 import { NewsList } from "@/components/teams/news/NewsList";
 import { useUser } from "@supabase/auth-helpers-react";
 import { TeamTabs } from "@/components/teams/TeamTabs";
-import { PostsAndDiscussions } from "@/components/teams/posts/PostsAndDiscussions";
 
 const TeamDetail = () => {
   const { teamSlug } = useParams();
@@ -53,30 +51,6 @@ const TeamDetail = () => {
     enabled: !!user?.id && !!team?.id,
   });
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ["team-categories", team?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("team_categories")
-        .select(`
-          *,
-          team_posts (
-            id,
-            title,
-            created_at,
-            created_by,
-            team_post_comments (count)
-          )
-        `)
-        .eq("team_id", team.id)
-        .order("order_index");
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!team?.id,
-  });
-
   const isAdmin = teamMember?.role === "admin" || teamMember?.role === "owner";
 
   if (isTeamLoading) {
@@ -103,75 +77,70 @@ const TeamDetail = () => {
 
       <div className="container">
         <Tabs defaultValue="posts">
-          <TeamTabs />
-          <TabsContent value="posts" className="mt-6">
-            <div className="space-y-6">
-              <PostsAndDiscussions categories={categories} teamId={team.id} />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="news" className="mt-6">
-            <div className="space-y-6">
-              {isAdmin && (
-                <div className="flex justify-end">
-                  <CreateNewsDialog teamId={team.id} />
-                </div>
-              )}
-              <NewsList teamId={team.id} />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="calendar" className="mt-6">
-            <Card>
-              <CardContent className="p-6">
-                {isAdmin ? (
-                  <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                    <CalendarIcon className="h-12 w-12 text-muted-foreground" />
-                    <div className="text-center space-y-2">
-                      <h3 className="font-semibold">Keine Termine vorhanden</h3>
-                      <p className="text-sm text-muted-foreground max-w-sm">
-                        Erstellen Sie einen Termin, um Ihr Team über anstehende Events zu informieren.
-                      </p>
-                    </div>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Termin erstellen
-                    </Button>
+          <TeamTabs isAdmin={isAdmin}>
+            <TabsContent value="news" className="mt-6">
+              <div className="space-y-6">
+                {isAdmin && (
+                  <div className="flex justify-end">
+                    <CreateNewsDialog teamId={team.id} />
                   </div>
-                ) : (
-                  <p className="text-center text-muted-foreground">
-                    Keine Termine vorhanden
-                  </p>
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                <NewsList teamId={team.id} />
+              </div>
+            </TabsContent>
 
-          <TabsContent value="files" className="mt-6">
-            <Card>
-              <CardContent className="p-6">
-                {isAdmin ? (
-                  <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                    <FolderOpenIcon className="h-12 w-12 text-muted-foreground" />
-                    <div className="text-center space-y-2">
-                      <h3 className="font-semibold">Keine Dateien vorhanden</h3>
-                      <p className="text-sm text-muted-foreground max-w-sm">
-                        Laden Sie Dateien hoch, um sie mit Ihrem Team zu teilen.
-                      </p>
+            <TabsContent value="calendar" className="mt-6">
+              <Card>
+                <CardContent className="p-6">
+                  {isAdmin ? (
+                    <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                      <CalendarIcon className="h-12 w-12 text-muted-foreground" />
+                      <div className="text-center space-y-2">
+                        <h3 className="font-semibold">Keine Termine vorhanden</h3>
+                        <p className="text-sm text-muted-foreground max-w-sm">
+                          Erstellen Sie einen Termin, um Ihr Team über anstehende Events zu informieren.
+                        </p>
+                      </div>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Termin erstellen
+                      </Button>
                     </div>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Dateien hochladen
-                    </Button>
-                  </div>
-                ) : (
-                  <p className="text-center text-muted-foreground">
-                    Keine Dateien vorhanden
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  ) : (
+                    <p className="text-center text-muted-foreground">
+                      Keine Termine vorhanden
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="files" className="mt-6">
+              <Card>
+                <CardContent className="p-6">
+                  {isAdmin ? (
+                    <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                      <FolderOpenIcon className="h-12 w-12 text-muted-foreground" />
+                      <div className="text-center space-y-2">
+                        <h3 className="font-semibold">Keine Dateien vorhanden</h3>
+                        <p className="text-sm text-muted-foreground max-w-sm">
+                          Laden Sie Dateien hoch, um sie mit Ihrem Team zu teilen.
+                        </p>
+                      </div>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Dateien hochladen
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-center text-muted-foreground">
+                      Keine Dateien vorhanden
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </TeamTabs>
         </Tabs>
       </div>
     </div>
