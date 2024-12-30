@@ -28,42 +28,46 @@ export function TeamHeaderTitle({
   adminMembers 
 }: TeamHeaderTitleProps) {
   return (
-    <div className="flex items-center gap-4">
-      {team.logo_url ? (
-        <Avatar className="h-12 w-12">
-          <AvatarImage src={team.logo_url} alt={team.name} />
-          <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-        </Avatar>
-      ) : (
-        <Avatar className="h-12 w-12">
-          <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-        </Avatar>
-      )}
+    <div className="flex items-center gap-6">
+      <Sheet>
+        <SheetTrigger asChild>
+          <button className="relative group">
+            {team.logo_url ? (
+              <Avatar className="h-20 w-20 cursor-pointer">
+                <AvatarImage src={team.logo_url} alt={team.name} />
+                <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+            ) : (
+              <Avatar className="h-20 w-20 cursor-pointer">
+                <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+            )}
+            {isAdmin && (
+              <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Image className="h-6 w-6 text-white" />
+              </div>
+            )}
+          </button>
+        </SheetTrigger>
+        {isAdmin && (
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Team Logo ändern</SheetTitle>
+              <SheetDescription>
+                Laden Sie ein neues Logo für Ihr Team hoch
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-6">
+              <TeamLogoUpload teamId={team.id} currentLogoUrl={team.logo_url} />
+            </div>
+          </SheetContent>
+        )}
+      </Sheet>
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-3xl font-semibold text-primary">
             {team.name}
           </h1>
-          {isAdmin && (
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Image className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Team Logo ändern</SheetTitle>
-                  <SheetDescription>
-                    Laden Sie ein neues Logo für Ihr Team hoch
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="mt-6">
-                  <TeamLogoUpload teamId={team.id} currentLogoUrl={team.logo_url} />
-                </div>
-              </SheetContent>
-            </Sheet>
-          )}
         </div>
         <div className="flex items-center gap-4 mt-1 text-muted-foreground">
           <Sheet>
