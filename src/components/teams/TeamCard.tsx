@@ -1,7 +1,7 @@
 import { Team } from "@/integrations/supabase/types/teams";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Crown, ChevronRight, Image } from "lucide-react";
+import { Users, Crown, Image } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
