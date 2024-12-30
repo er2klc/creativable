@@ -56,9 +56,9 @@ export const TeamCardActions = ({
   const isTeamOwner = teamMember?.role === 'owner';
 
   return (
-    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+    <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
       {isTeamOwner && (
-        <Crown className="h-4 w-4 text-yellow-500" />
+        <Crown className="h-6 w-6 text-yellow-500 mr-1" />
       )}
       {joinCode && (
         <Button

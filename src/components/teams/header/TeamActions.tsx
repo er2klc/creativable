@@ -13,7 +13,7 @@ export function TeamActions({ teamId, isAdmin }: TeamActionsProps) {
   if (!isAdmin) return null;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center justify-end w-full">
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="outline" size="sm">
