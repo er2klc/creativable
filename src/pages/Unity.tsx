@@ -29,28 +29,35 @@ const Unity = () => {
       // Get team statistics for each team
       const teamsWithStats = await Promise.all(
         teams.map(async (team) => {
-          const { data: members } = await supabase
-            .from('team_members')
-            .select(`
-              id,
-              role,
-              user:user_id (
-                display_name
-              )
-            `)
-            .eq('team_id', team.id)
-            .single();
+          try {
+            const { data: members, error: membersError } = await supabase
+              .from('team_members')
+              .select('role')
+              .eq('team_id', team.id);
 
-          const admins = members?.role === 'admin' || members?.role === 'owner' ? 1 : 0;
-          const totalMembers = members ? 1 : 0;
+            if (membersError) throw membersError;
 
-          return {
-            ...team,
-            stats: {
-              totalMembers,
-              admins
-            }
-          };
+            const admins = members?.filter(m => 
+              m.role === 'admin' || m.role === 'owner'
+            ).length || 0;
+
+            return {
+              ...team,
+              stats: {
+                totalMembers: members?.length || 0,
+                admins
+              }
+            };
+          } catch (error) {
+            console.error(`Error fetching stats for team ${team.id}:`, error);
+            return {
+              ...team,
+              stats: {
+                totalMembers: 0,
+                admins: 0
+              }
+            };
+          }
         })
       );
 
@@ -118,27 +125,11 @@ const Unity = () => {
 
   if (!user) return null;
 
-  const handleTeamCreated = async () => {
-    try {
-      await refetch();
-    } catch (error) {
-      console.error('Error refetching after team creation:', error);
-    }
-  };
-
-  const handleTeamJoined = async () => {
-    try {
-      await refetch();
-    } catch (error) {
-      console.error('Error refetching after team join:', error);
-    }
-  };
-
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <UnityHeader 
-        onTeamCreated={handleTeamCreated}
-        onTeamJoined={handleTeamJoined}
+        onTeamCreated={refetch}
+        onTeamJoined={refetch}
       />
       <TeamList
         isLoading={isLoading}
