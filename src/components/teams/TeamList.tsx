@@ -4,36 +4,34 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Tables } from "@/integrations/supabase/types";
 
-export const TeamList = () => {
-  const session = useSession();
-  const navigate = useNavigate();
+interface TeamWithStats extends Tables<"teams"> {
+  stats?: {
+    totalMembers: number;
+    admins: number;
+  };
+}
 
-  const { data: teams = [] } = useQuery({
-    queryKey: ["teams"],
-    queryFn: async () => {
-      const { data: teams, error } = await supabase
-        .rpc('get_user_teams', {
-          uid: session?.user?.id
-        });
+interface TeamListProps {
+  isLoading: boolean;
+  teams: TeamWithStats[];
+  onDelete: (teamId: string) => Promise<void>;
+  onLeave: (teamId: string) => Promise<void>;
+  onUpdateOrder?: (teamId: string, newIndex: number) => Promise<void>;
+}
 
-      if (error) throw error;
-      return teams;
-    },
-    enabled: !!session?.user?.id,
-  });
-
+export const TeamList = ({ 
+  isLoading, 
+  teams = [], 
+  onDelete, 
+  onLeave, 
+  onUpdateOrder 
+}: TeamListProps) => {
   const handleDelete = async (teamId: string) => {
     try {
-      const { error } = await supabase
-        .from("teams")
-        .delete()
-        .eq("id", teamId);
-
-      if (error) throw error;
-
+      await onDelete(teamId);
       toast.success("Team erfolgreich gelöscht");
-      navigate("/unity");
     } catch (error) {
       console.error("Error deleting team:", error);
       toast.error("Fehler beim Löschen des Teams");
@@ -42,16 +40,8 @@ export const TeamList = () => {
 
   const handleLeave = async (teamId: string) => {
     try {
-      const { error } = await supabase
-        .from("team_members")
-        .delete()
-        .eq("team_id", teamId)
-        .eq("user_id", session?.user?.id);
-
-      if (error) throw error;
-
+      await onLeave(teamId);
       toast.success("Team erfolgreich verlassen");
-      navigate("/unity");
     } catch (error) {
       console.error("Error leaving team:", error);
       toast.error("Fehler beim Verlassen des Teams");
