@@ -1,7 +1,7 @@
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, BarChart, Users, Settings, X, Plus } from "lucide-react";
+import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, BarChart, Users, Settings } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { SnapCard } from "./snap-cards/SnapCard";
+import { HiddenSnapCard } from "./snap-cards/HiddenSnapCard";
 
 interface TeamSnapsProps {
   isAdmin: boolean;
@@ -77,33 +77,12 @@ export const TeamSnaps = ({ isAdmin, isManaging, hiddenSnaps, setHiddenSnaps }: 
         <div className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {visibleRegularSnaps.map((snap) => (
-              <Card
+              <SnapCard
                 key={snap.id}
-                className={`relative overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group`}
-              >
-                {isManaging && (
-                  <button
-                    onClick={() => setHiddenSnaps([...hiddenSnaps, snap.id])}
-                    className="absolute top-2 right-2 z-10 p-1 rounded-full bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                )}
-                <div className={`absolute inset-0 opacity-10 bg-gradient-to-br ${snap.gradient}`} />
-                <div className="relative p-6 space-y-4">
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br shadow-lg ${snap.gradient}`}>
-                    <div className="text-white">
-                      {snap.icon}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">{snap.label}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {snap.description}
-                    </p>
-                  </div>
-                </div>
-              </Card>
+                snap={snap}
+                isManaging={isManaging}
+                onHide={(id) => setHiddenSnaps([...hiddenSnaps, id])}
+              />
             ))}
           </div>
         </div>
@@ -114,39 +93,13 @@ export const TeamSnaps = ({ isAdmin, isManaging, hiddenSnaps, setHiddenSnaps }: 
           <Separator className="my-6" />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {visibleAdminSnaps.map((snap) => (
-              <Card
+              <SnapCard
                 key={snap.id}
-                className={`relative overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group`}
-              >
-                <Badge 
-                  variant="secondary" 
-                  className="absolute top-2 right-2 z-10"
-                >
-                  Admin
-                </Badge>
-                {isManaging && (
-                  <button
-                    onClick={() => setHiddenSnaps([...hiddenSnaps, snap.id])}
-                    className="absolute top-2 right-16 z-10 p-1 rounded-full bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                )}
-                <div className={`absolute inset-0 opacity-10 bg-gradient-to-br ${snap.gradient}`} />
-                <div className="relative p-6 space-y-4">
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br shadow-lg ${snap.gradient}`}>
-                    <div className="text-white">
-                      {snap.icon}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">{snap.label}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {snap.description}
-                    </p>
-                  </div>
-                </div>
-              </Card>
+                snap={snap}
+                isManaging={isManaging}
+                isAdmin={true}
+                onHide={(id) => setHiddenSnaps([...hiddenSnaps, id])}
+              />
             ))}
           </div>
         </div>
@@ -156,37 +109,11 @@ export const TeamSnaps = ({ isAdmin, isManaging, hiddenSnaps, setHiddenSnaps }: 
         <div className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[...hiddenRegularSnaps, ...hiddenAdminSnaps].map((snap) => (
-              <Card
+              <HiddenSnapCard
                 key={snap.id}
-                className="relative overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group"
-                onClick={() => setHiddenSnaps(hiddenSnaps.filter(id => id !== snap.id))}
-              >
-                {snap.id === "members" && (
-                  <Badge 
-                    variant="secondary" 
-                    className="absolute top-2 right-2 z-10"
-                  >
-                    Admin
-                  </Badge>
-                )}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Plus className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <div className={`absolute inset-0 opacity-5 bg-gradient-to-br ${snap.gradient}`} />
-                <div className="relative p-6 space-y-4 opacity-50">
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br shadow-lg ${snap.gradient}`}>
-                    <div className="text-white">
-                      {snap.icon}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">{snap.label}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {snap.description}
-                    </p>
-                  </div>
-                </div>
-              </Card>
+                snap={snap}
+                onUnhide={(id) => setHiddenSnaps(hiddenSnaps.filter(s => s !== id))}
+              />
             ))}
           </div>
         </div>
