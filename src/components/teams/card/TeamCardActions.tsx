@@ -1,11 +1,5 @@
 import { useState } from "react";
-import { Copy, Trash2, LogOut, MoreVertical } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Copy, Trash2, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -49,53 +43,48 @@ export const TeamCardActions = ({
     enabled: !!userId && !!teamId,
   });
 
-  const handleAction = (action: () => void) => {
-    action();
-    setIsOpen(false);
-  };
-
   return (
     <div className="flex gap-2">
       {joinCode && (
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={(e) => {
             e.stopPropagation();
             onCopyJoinCode(joinCode, e);
           }}
-          className="flex items-center gap-2"
+          className="h-8 w-8"
+          title="Code kopieren"
         >
           <Copy className="h-4 w-4" />
-          Code kopieren
         </Button>
       )}
       {isOwner ? (
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
           }}
-          className="flex items-center gap-2 text-destructive hover:text-destructive"
+          className="h-8 w-8 text-destructive hover:text-destructive"
+          title="Team löschen"
         >
           <Trash2 className="h-4 w-4" />
-          Team löschen
         </Button>
       ) : (
         teamMember && (
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={(e) => {
               e.stopPropagation();
               onLeave();
             }}
-            className="flex items-center gap-2 text-destructive hover:text-destructive"
+            className="h-8 w-8 text-destructive hover:text-destructive"
+            title="Team verlassen"
           >
             <LogOut className="h-4 w-4" />
-            Team verlassen
           </Button>
         )
       )}
