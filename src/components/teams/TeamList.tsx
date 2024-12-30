@@ -1,20 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { type Tables } from "@/integrations/supabase/types";
 import { TeamCard } from "./TeamCard";
-import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import { Tables } from "@/integrations/supabase/types";
+import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/hooks/use-settings";
 
-interface TeamWithStats extends Tables<"teams"> {
+type TeamWithStats = Tables<"teams"> & {
   stats?: {
     totalMembers: number;
     admins: number;
   };
-}
+};
 
 interface TeamListProps {
-  isLoading: boolean;
   teams: TeamWithStats[];
   onDelete: (teamId: string) => Promise<void>;
   onLeave: (teamId: string) => Promise<void>;
@@ -22,43 +19,65 @@ interface TeamListProps {
 }
 
 export const TeamList = ({ 
-  isLoading, 
-  teams = [], 
-  onDelete, 
-  onLeave, 
-  onUpdateOrder 
+  teams,
+  onDelete,
+  onLeave,
+  onUpdateOrder
 }: TeamListProps) => {
+  const [copyingJoinCode, setCopyingJoinCode] = useState(false);
+  const { toast } = useToast();
+  const { settings } = useSettings();
+
+  const handleCopyJoinCode = async (joinCode: string) => {
+    if (copyingJoinCode) return;
+
+    try {
+      setCopyingJoinCode(true);
+      await navigator.clipboard.writeText(joinCode);
+      toast({
+        title: settings?.language === "en" ? "Join code copied!" : "Beitrittscode kopiert!",
+        description: settings?.language === "en" 
+          ? "Share this code with your team members"
+          : "Teilen Sie diesen Code mit Ihren Teammitgliedern",
+      });
+    } catch (error) {
+      console.error("Error copying join code:", error);
+      toast({
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description: settings?.language === "en"
+          ? "Failed to copy join code"
+          : "Beitrittscode konnte nicht kopiert werden",
+        variant: "destructive",
+      });
+    } finally {
+      setCopyingJoinCode(false);
+    }
+  };
+
   const handleDelete = async (teamId: string) => {
     try {
       await onDelete(teamId);
-      toast.success("Team erfolgreich gelöscht");
     } catch (error) {
       console.error("Error deleting team:", error);
-      toast.error("Fehler beim Löschen des Teams");
     }
   };
 
   const handleLeave = async (teamId: string) => {
     try {
       await onLeave(teamId);
-      toast.success("Team erfolgreich verlassen");
     } catch (error) {
       console.error("Error leaving team:", error);
-      toast.error("Fehler beim Verlassen des Teams");
     }
   };
 
-  const handleCopyJoinCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    toast.success("Team-Code kopiert");
-  };
-
   return (
-    <div className="grid gap-4">
-      {teams?.map((team) => (
+    <div className="space-y-4">
+      {teams.map((team, index) => (
         <TeamCard
           key={team.id}
           team={team}
+          isFirst={index === 0}
+          isLast={index === teams.length - 1}
           onDelete={handleDelete}
           onLeave={handleLeave}
           onCopyJoinCode={handleCopyJoinCode}
