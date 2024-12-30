@@ -32,13 +32,15 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
 
     try {
       // Find team by join code
-      const { data: team, error: teamError } = await supabase
+      const { data: teams, error: teamError } = await supabase
         .from('teams')
-        .select('id')
-        .eq('join_code', joinCode.trim())
-        .single();
+        .select('id, name')
+        .eq('join_code', joinCode.trim());
 
-      if (teamError) throw new Error("Ungültiger Beitritts-Code");
+      if (teamError) throw new Error("Fehler beim Suchen des Teams");
+      if (!teams || teams.length === 0) throw new Error("Ungültiger Beitritts-Code");
+
+      const team = teams[0];
 
       // Check if already a member
       const { data: existingMember, error: memberCheckError } = await supabase
@@ -60,9 +62,12 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
           role: 'member',
         });
 
-      if (joinError) throw joinError;
+      if (joinError) {
+        console.error("Join error:", joinError);
+        throw new Error("Fehler beim Beitreten des Teams");
+      }
 
-      toast.success("Team erfolgreich beigetreten");
+      toast.success(`Team "${team.name}" erfolgreich beigetreten`);
       setIsOpen(false);
       setJoinCode("");
       onTeamJoined?.();
