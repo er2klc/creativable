@@ -32,7 +32,7 @@ const Unity = () => {
           try {
             const { data: members, error: membersError } = await supabase
               .from('team_members')
-              .select('role, user_id')
+              .select('role, user_id, profiles:user_id(display_name)')
               .eq('team_id', team.id);
 
             if (membersError) throw membersError;
