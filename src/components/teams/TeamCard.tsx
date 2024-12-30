@@ -24,6 +24,7 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
   const navigate = useNavigate();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const copyJoinCode = async (joinCode: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -32,24 +33,36 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
   };
 
   const handleDelete = async () => {
+    if (!user || isProcessing) return;
+    
+    setIsProcessing(true);
     try {
       await onDelete(team.id);
       setShowDeleteDialog(false);
-      toast.success("Team erfolgreich gelöscht");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting team:', error);
-      toast.error("Fehler beim Löschen des Teams");
+      if (error?.message?.includes('policy')) {
+        toast.error("Sie haben keine Berechtigung, dieses Team zu löschen");
+      } else {
+        toast.error("Fehler beim Löschen des Teams");
+      }
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleLeave = async () => {
+    if (!user || isProcessing) return;
+
+    setIsProcessing(true);
     try {
       await onLeave(team.id);
       setShowLeaveDialog(false);
-      toast.success("Team erfolgreich verlassen");
     } catch (error) {
       console.error('Error leaving team:', error);
       toast.error("Fehler beim Verlassen des Teams");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -126,9 +139,13 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Löschen
+            <AlertDialogCancel disabled={isProcessing}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isProcessing}
+            >
+              {isProcessing ? 'Wird gelöscht...' : 'Löschen'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -143,9 +160,12 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLeave}>
-              Verlassen
+            <AlertDialogCancel disabled={isProcessing}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleLeave}
+              disabled={isProcessing}
+            >
+              {isProcessing ? 'Wird verlassen...' : 'Verlassen'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
