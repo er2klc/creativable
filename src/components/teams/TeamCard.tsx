@@ -2,7 +2,7 @@ import { type Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { TeamCardActions } from "./card/TeamCardActions";
 import { useNavigate } from "react-router-dom";
-import { Users, Shield, ArrowUpDown, Crown, ArrowUp, ArrowDown } from "lucide-react";
+import { Users, Shield, Crown, ArrowUp, ArrowDown } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Button } from "@/components/ui/button";
 
@@ -84,11 +84,11 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode, onUpdateOrde
         </div>
         <div className="flex items-center gap-2">
           {onUpdateOrder && (
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 bg-background/80 rounded p-1">
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="h-6 w-6"
+                className="h-6 w-6 hover:bg-accent"
                 onClick={(e) => {
                   e.stopPropagation();
                   onUpdateOrder(team.id, 'up');
@@ -100,7 +100,7 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode, onUpdateOrde
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="h-6 w-6"
+                className="h-6 w-6 hover:bg-accent"
                 onClick={(e) => {
                   e.stopPropagation();
                   onUpdateOrder(team.id, 'down');
