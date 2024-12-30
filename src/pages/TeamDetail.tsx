@@ -1,38 +1,27 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageSquare, Bell, Calendar, FolderOpen, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamHeader } from "@/components/teams/TeamHeader";
-import { CategoryOverview } from "@/components/teams/posts/CategoryOverview";
 import { CreateCategoryDialog } from "@/components/teams/CreateCategoryDialog";
 import { CreateNewsDialog } from "@/components/teams/news/CreateNewsDialog";
 import { NewsList } from "@/components/teams/news/NewsList";
 import { useUser } from "@supabase/auth-helpers-react";
+import { TeamTabs } from "@/components/teams/TeamTabs";
+import { PostsAndDiscussions } from "@/components/teams/posts/PostsAndDiscussions";
 
 const TeamDetail = () => {
   const { teamSlug } = useParams();
-  const navigate = useNavigate();
   const user = useUser();
 
-  // Debugging: Aktuelle Werte anzeigen
-  console.log("Params:", { teamSlug });
-  console.log("User ID:", user?.id);
-
-  // Team-Daten abfragen
   const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ["team", teamSlug],
     queryFn: async () => {
-      if (!user?.id || !teamSlug) {
-        console.error("Missing user ID or teamSlug");
-        return null;
-      }
+      if (!user?.id || !teamSlug) return null;
 
-      console.log("Fetching user teams for user ID:", user.id);
-
-      // Benutzerteams abfragen
       const { data: userTeams, error: userTeamsError } = await supabase.rpc("get_user_teams", { uid: user.id });
 
       if (userTeamsError) {
@@ -40,38 +29,16 @@ const TeamDetail = () => {
         return null;
       }
 
-      console.log("User Teams:", userTeams);
-
-      // Team mit passendem Slug suchen
-      const foundTeam = userTeams?.find((team) => team.slug === teamSlug);
-      if (foundTeam) {
-        console.log("Found Team from user teams:", foundTeam);
-        return foundTeam;
-      }
-
-      console.log("Team not found in user teams. Fetching directly from database.");
-
-      // Fallback: Direktabfrage aus der `teams`-Tabelle
-      const { data: directTeam, error: directError } = await supabase.from("teams").select("*").eq("slug", teamSlug).single();
-
-      if (directError) {
-        console.error("Error fetching team directly:", directError);
-        return null;
-      }
-
-      console.log("Found Team from direct query:", directTeam);
-      return directTeam;
+      const team = userTeams?.find((t) => t.slug === teamSlug);
+      return team || null;
     },
-    enabled: !!user?.id && !!teamSlug,
+    enabled: !!teamSlug && !!user?.id,
   });
 
-  // Teammitgliedschaft abfragen
-  const { data: teamMember, isLoading: isMemberLoading } = useQuery({
+  const { data: teamMember } = useQuery({
     queryKey: ["team-member", team?.id],
     queryFn: async () => {
       if (!user?.id || !team?.id) return null;
-
-      console.log("Fetching team member role for user:", user.id);
 
       const { data, error } = await supabase
         .from("team_members")
@@ -80,21 +47,39 @@ const TeamDetail = () => {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching team member role:", error);
-        return null;
-      }
-
-      console.log("Team Member Role:", data);
+      if (error) return null;
       return data;
     },
     enabled: !!user?.id && !!team?.id,
   });
 
-  const isLoading = isTeamLoading || isMemberLoading;
+  const { data: categories = [] } = useQuery({
+    queryKey: ["team-categories", team?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("team_categories")
+        .select(`
+          *,
+          team_posts (
+            id,
+            title,
+            created_at,
+            created_by,
+            team_post_comments (count)
+          )
+        `)
+        .eq("team_id", team.id)
+        .order("order_index");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!team?.id,
+  });
+
   const isAdmin = teamMember?.role === "admin" || teamMember?.role === "owner";
 
-  if (isLoading) {
+  if (isTeamLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -103,7 +88,6 @@ const TeamDetail = () => {
   }
 
   if (!team) {
-    console.error("Team not found for slug:", teamSlug);
     return (
       <Card>
         <CardContent className="p-6">
@@ -113,33 +97,12 @@ const TeamDetail = () => {
     );
   }
 
-  console.log("Final Team Data:", team);
-
   return (
     <div className="space-y-6">
       <TeamHeader team={team} />
 
       <div className="container">
-        <Tabs defaultValue="posts" className="w-full">
-          <TabsList className="w-full justify-start">
-            <TabsTrigger value="posts" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Beiträge & Diskussionen
-            </TabsTrigger>
-            <TabsTrigger value="news" className="flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              News & Updates
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Kalender
-            </TabsTrigger>
-            <TabsTrigger value="files" className="flex items-center gap-2">
-              <FolderOpen className="h-4 w-4" />
-              Dateien
-            </TabsTrigger>
-          </TabsList>
-
+        <TeamTabs>
           <TabsContent value="posts" className="mt-6">
             <div className="space-y-6">
               {isAdmin && (
@@ -147,7 +110,7 @@ const TeamDetail = () => {
                   <CreateCategoryDialog teamId={team.id} />
                 </div>
               )}
-              <CategoryOverview teamId={team.id} />
+              <PostsAndDiscussions categories={categories} teamId={team.id} />
             </div>
           </TabsContent>
 
@@ -213,7 +176,7 @@ const TeamDetail = () => {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+        </TeamTabs>
       </div>
     </div>
   );
