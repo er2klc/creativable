@@ -28,65 +28,45 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
 
     try {
       const cleanJoinCode = joinCode.trim().toUpperCase();
-      console.log("Searching for team with join code:", cleanJoinCode);
       
       // First, let's check if the team exists
       const { data: teams, error: searchError } = await supabase
         .from('teams')
         .select('*')
-        .eq('join_code', cleanJoinCode);
+        .eq('join_code', cleanJoinCode)
+        .maybeSingle();
 
-      if (searchError) {
-        console.error("Team search error:", searchError);
-        throw new Error("Fehler beim Suchen des Teams");
-      }
+      if (searchError) throw searchError;
+      if (!teams) throw new Error("Ungültiger Beitritts-Code");
 
-      console.log("Teams found:", teams);
-
-      if (!teams || teams.length === 0) {
-        console.error("No team found with join code:", cleanJoinCode);
-        throw new Error("Ungültiger Beitritts-Code");
-      }
-
-      const team = teams[0];
-      
       // Check if already a member
       const { data: existingMember, error: memberCheckError } = await supabase
         .from('team_members')
         .select('id')
-        .eq('team_id', team.id)
+        .eq('team_id', teams.id)
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (memberCheckError) {
-        console.error("Member check error:", memberCheckError);
-        throw new Error("Fehler beim Überprüfen der Mitgliedschaft");
-      }
-
-      if (existingMember) {
-        throw new Error("Sie sind bereits Mitglied dieses Teams");
-      }
+      if (memberCheckError) throw memberCheckError;
+      if (existingMember) throw new Error("Sie sind bereits Mitglied dieses Teams");
 
       // Join team
       const { error: joinError } = await supabase
         .from('team_members')
         .insert({
-          team_id: team.id,
+          team_id: teams.id,
           user_id: user.id,
           role: 'member',
-          invited_by: team.created_by
+          invited_by: teams.created_by
         });
 
-      if (joinError) {
-        console.error("Join error:", joinError);
-        throw new Error("Fehler beim Beitreten des Teams");
-      }
+      if (joinError) throw joinError;
 
-      toast.success(`Team "${team.name}" erfolgreich beigetreten`);
+      toast.success(`Team "${teams.name}" erfolgreich beigetreten`);
       setIsOpen(false);
       setJoinCode("");
       onTeamJoined?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Join team error:", error);
       toast.error(error instanceof Error ? error.message : "Ein unerwarteter Fehler ist aufgetreten");
     } finally {

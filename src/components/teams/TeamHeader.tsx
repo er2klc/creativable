@@ -47,7 +47,15 @@ export function TeamHeader({ team }: TeamHeaderProps) {
     queryFn: async () => {
       const { data: teamMembers, error: membersError } = await supabase
         .from('team_members')
-        .select('id, role, user_id')
+        .select(`
+          id,
+          role,
+          user_id,
+          profiles:user_id (
+            id,
+            display_name
+          )
+        `)
         .eq('team_id', team.id);
 
       if (membersError) {
@@ -55,23 +63,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      // Fetch display names for all members
-      const userIds = teamMembers.map(member => member.user_id);
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, display_name')
-        .in('id', userIds);
-
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        return teamMembers;
-      }
-
-      // Merge profiles with team members
-      return teamMembers.map(member => ({
-        ...member,
-        profiles: profiles.find(profile => profile.id === member.user_id)
-      }));
+      return teamMembers;
     },
     enabled: !!team.id,
   });
