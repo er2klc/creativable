@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import { CreateTeamForm } from "./create-team/CreateTeamForm";
 import { JoinCodeDisplay } from "./create-team/JoinCodeDisplay";
 
 interface CreateTeamDialogProps {
-  onTeamCreated?: () => void;
+  onTeamCreated?: () => Promise<void>;
 }
 
 export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
@@ -21,6 +21,15 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const user = useUser();
+
+  const resetState = () => {
+    setName("");
+    setDescription("");
+    setJoinCode(null);
+    setLogoFile(null);
+    setLogoPreview(null);
+    setIsLoading(false);
+  };
 
   const handleCreate = async () => {
     if (!user) {
@@ -38,12 +47,10 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
     try {
       let logoUrl = null;
 
-      // Handle logo upload first if present
       if (logoFile) {
         const fileExt = logoFile.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
 
-        // Upload to storage bucket
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('team-logos')
           .upload(fileName, logoFile, {
@@ -56,7 +63,6 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           throw uploadError;
         }
 
-        // Get the public URL after successful upload
         const { data } = supabase.storage
           .from('team-logos')
           .getPublicUrl(fileName);
@@ -64,7 +70,6 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
         logoUrl = data.publicUrl;
       }
 
-      // Create team with logo URL if available
       const { data: team, error: teamError } = await supabase
         .from('teams')
         .insert({
@@ -79,7 +84,6 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
 
       if (teamError) throw teamError;
 
-      // Add creator as team member with owner role
       const { error: memberError } = await supabase
         .from('team_members')
         .insert({
@@ -91,7 +95,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
       if (memberError) throw memberError;
 
       setJoinCode(team.join_code);
-      onTeamCreated?.();
+      await onTeamCreated?.();
       toast.success("Team erfolgreich erstellt");
     } catch (error: any) {
       console.error('Error in team creation:', error);
@@ -104,12 +108,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
-      setName("");
-      setDescription("");
-      setJoinCode(null);
-      setLogoFile(null);
-      setLogoPreview(null);
-      setIsLoading(false);
+      resetState();
     }
   };
 

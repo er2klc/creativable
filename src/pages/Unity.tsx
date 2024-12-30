@@ -12,7 +12,7 @@ const Unity = () => {
   const user = useUser();
   const queryClient = useQueryClient();
 
-  const { data: teamsWithStats = [], isLoading, refetch } = useQuery({
+  const { data: teamsWithStats = [], isLoading } = useQuery({
     queryKey: ['teams-with-stats'],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -82,8 +82,9 @@ const Unity = () => {
         return;
       }
 
-      // Invalidate the teams query cache
+      // Invalidate all team-related queries
       await queryClient.invalidateQueries({ queryKey: ['teams-with-stats'] });
+      await queryClient.invalidateQueries({ queryKey: ['team-members'] });
       toast.success('Team erfolgreich gelöscht');
     } catch (err: any) {
       console.error('Error in team deletion:', err);
@@ -108,8 +109,9 @@ const Unity = () => {
         return;
       }
 
-      // Invalidate the teams query cache
+      // Invalidate all team-related queries
       await queryClient.invalidateQueries({ queryKey: ['teams-with-stats'] });
+      await queryClient.invalidateQueries({ queryKey: ['team-members'] });
       toast.success("Team erfolgreich verlassen");
     } catch (error: any) {
       console.error('Error leaving team:', error);
@@ -143,6 +145,7 @@ const Unity = () => {
 
   const handleRefetch = async () => {
     await queryClient.invalidateQueries({ queryKey: ['teams-with-stats'] });
+    await queryClient.invalidateQueries({ queryKey: ['team-members'] });
   };
 
   return (
