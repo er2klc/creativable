@@ -548,6 +548,38 @@ export type Database = {
           },
         ]
       }
+      team_hidden_snaps: {
+        Row: {
+          created_at: string | null
+          hidden_by: string
+          id: string
+          snap_id: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          hidden_by: string
+          id?: string
+          snap_id: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string | null
+          hidden_by?: string
+          id?: string
+          snap_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_hidden_snaps_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           id: string

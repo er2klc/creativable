@@ -2,15 +2,65 @@ import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, BarChart, Users, Set
 import { Separator } from "@/components/ui/separator";
 import { SnapCard } from "./snap-cards/SnapCard";
 import { HiddenSnapCard } from "./snap-cards/HiddenSnapCard";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface TeamSnapsProps {
   isAdmin: boolean;
   isManaging: boolean;
-  hiddenSnaps: string[];
-  setHiddenSnaps: (snaps: string[]) => void;
+  teamId: string;
 }
 
-export const TeamSnaps = ({ isAdmin, isManaging, hiddenSnaps, setHiddenSnaps }: TeamSnapsProps) => {
+export const TeamSnaps = ({ isAdmin, isManaging, teamId }: TeamSnapsProps) => {
+  const session = useSession();
+  const queryClient = useQueryClient();
+
+  const { data: hiddenSnaps = [] } = useQuery({
+    queryKey: ["team-hidden-snaps", teamId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("team_hidden_snaps")
+        .select("snap_id")
+        .eq("team_id", teamId);
+
+      if (error) throw error;
+      return data.map(snap => snap.snap_id);
+    },
+  });
+
+  const hideSnapMutation = useMutation({
+    mutationFn: async (snapId: string) => {
+      const { error } = await supabase
+        .from("team_hidden_snaps")
+        .insert({
+          team_id: teamId,
+          snap_id: snapId,
+          hidden_by: session?.user?.id,
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team-hidden-snaps", teamId] });
+    },
+  });
+
+  const unhideSnapMutation = useMutation({
+    mutationFn: async (snapId: string) => {
+      const { error } = await supabase
+        .from("team_hidden_snaps")
+        .delete()
+        .eq("team_id", teamId)
+        .eq("snap_id", snapId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team-hidden-snaps", teamId] });
+    },
+  });
+
   const regularSnaps = [
     {
       id: "posts",
@@ -67,9 +117,8 @@ export const TeamSnaps = ({ isAdmin, isManaging, hiddenSnaps, setHiddenSnaps }: 
   ];
 
   const visibleRegularSnaps = regularSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
-  const visibleAdminSnaps = isAdmin ? adminSnaps.filter(snap => !hiddenSnaps.includes(snap.id)) : [];
+  const visibleAdminSnaps = isAdmin ? adminSnaps : [];
   const hiddenRegularSnaps = regularSnaps.filter(snap => hiddenSnaps.includes(snap.id));
-  const hiddenAdminSnaps = isAdmin ? adminSnaps.filter(snap => hiddenSnaps.includes(snap.id)) : [];
 
   return (
     <div className="space-y-8">
@@ -81,7 +130,8 @@ export const TeamSnaps = ({ isAdmin, isManaging, hiddenSnaps, setHiddenSnaps }: 
                 key={snap.id}
                 snap={snap}
                 isManaging={isManaging}
-                onHide={(id) => setHiddenSnaps([...hiddenSnaps, id])}
+                onHide={hideSnapMutation.mutate}
+                canHide={true}
               />
             ))}
           </div>
@@ -98,21 +148,21 @@ export const TeamSnaps = ({ isAdmin, isManaging, hiddenSnaps, setHiddenSnaps }: 
                 snap={snap}
                 isManaging={isManaging}
                 isAdmin={true}
-                onHide={(id) => setHiddenSnaps([...hiddenSnaps, id])}
+                canHide={false}
               />
             ))}
           </div>
         </div>
       )}
 
-      {isManaging && (hiddenRegularSnaps.length > 0 || hiddenAdminSnaps.length > 0) && (
+      {isManaging && hiddenRegularSnaps.length > 0 && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[...hiddenRegularSnaps, ...hiddenAdminSnaps].map((snap) => (
+            {hiddenRegularSnaps.map((snap) => (
               <HiddenSnapCard
                 key={snap.id}
                 snap={snap}
-                onUnhide={(id) => setHiddenSnaps(hiddenSnaps.filter(s => s !== id))}
+                onUnhide={unhideSnapMutation.mutate}
               />
             ))}
           </div>

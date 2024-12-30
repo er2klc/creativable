@@ -82,12 +82,13 @@ const TeamDetail = () => {
             <TeamHeader team={team} />
             {isAdmin && (
               <Button
-                variant="outline"
+                variant={isManaging ? "default" : "outline"}
                 size="sm"
                 onClick={() => setIsManaging(!isManaging)}
+                className="relative"
               >
                 <Grid className="h-4 w-4 mr-2" />
-                Snaps verwalten
+                {isManaging ? "Bearbeitung beenden" : "Snaps verwalten"}
               </Button>
             )}
           </div>
@@ -99,8 +100,7 @@ const TeamDetail = () => {
           <TeamSnaps 
             isAdmin={isAdmin}
             isManaging={isManaging}
-            hiddenSnaps={hiddenSnaps}
-            setHiddenSnaps={setHiddenSnaps}
+            teamId={team.id}
           />
 
           <TabsContent value="news" className="mt-6">

@@ -12,14 +12,17 @@ interface SnapCardProps {
   };
   isManaging?: boolean;
   isAdmin?: boolean;
+  canHide?: boolean;
   onHide?: (id: string) => void;
 }
 
-export const SnapCard = ({ snap, isManaging, isAdmin, onHide }: SnapCardProps) => {
+export const SnapCard = ({ snap, isManaging, isAdmin, canHide = true, onHide }: SnapCardProps) => {
   return (
     <Card
       key={snap.id}
-      className="relative overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group"
+      className={`relative overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group ${
+        isManaging ? 'ring-2 ring-primary/20' : ''
+      }`}
     >
       {isAdmin && (
         <Badge 
@@ -29,10 +32,13 @@ export const SnapCard = ({ snap, isManaging, isAdmin, onHide }: SnapCardProps) =
           Admin
         </Badge>
       )}
-      {isManaging && onHide && (
+      {isManaging && canHide && onHide && (
         <button
-          onClick={() => onHide(snap.id)}
-          className="absolute top-2 right-16 z-10 p-1 rounded-full bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={(e) => {
+            e.stopPropagation();
+            onHide(snap.id);
+          }}
+          className="absolute top-2 right-2 z-10 p-1 rounded-full bg-background/80 opacity-100 transition-opacity hover:bg-destructive/10"
         >
           <X className="h-4 w-4 text-muted-foreground" />
         </button>
