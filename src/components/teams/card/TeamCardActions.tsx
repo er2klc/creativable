@@ -2,6 +2,17 @@ import { Copy, Trash2, LogOut, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface TeamCardActionsProps {
   teamId: string;
@@ -41,10 +52,11 @@ export const TeamCardActions = ({
   });
 
   const isMember = !!teamMember;
+  const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
 
   return (
     <div className="flex items-center gap-2">
-      {isOwner && (
+      {isAdmin && (
         <Crown className="h-4 w-4 text-yellow-500" />
       )}
       {joinCode && (
@@ -75,18 +87,30 @@ export const TeamCardActions = ({
           <LogOut className="h-4 w-4" />
         </Button>
       ) : isOwner && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className="h-8 w-8 text-destructive hover:text-destructive"
-          title="Team löschen"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-destructive hover:text-destructive"
+              title="Team löschen"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Team löschen</AlertDialogTitle>
+              <AlertDialogDescription>
+                Sind Sie sicher, dass Sie dieses Team löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+              <AlertDialogAction onClick={onDelete}>Löschen</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );
