@@ -32,22 +32,19 @@ const Unity = () => {
           try {
             const { data: members, error: membersError } = await supabase
               .from('team_members')
-              .select('role, user_id, profiles:user_id(display_name)')
+              .select('role')
               .eq('team_id', team.id);
 
             if (membersError) throw membersError;
 
-            // Count admins (including owner) and total members
             const admins = members?.filter(m => 
               m.role === 'admin' || m.role === 'owner'
             ).length || 0;
 
-            const totalMembers = members?.length || 0;
-
             return {
               ...team,
               stats: {
-                totalMembers,
+                totalMembers: members?.length || 0,
                 admins
               }
             };
