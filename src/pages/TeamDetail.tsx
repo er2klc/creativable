@@ -29,23 +29,24 @@ const TeamDetail = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !!teamSlug,
   });
 
   const { data: teamMember } = useQuery({
-    queryKey: ['team-member-role', teamSlug],
+    queryKey: ['team-member-role', team?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
+      if (!user?.id || !team?.id) return null;
       const { data, error } = await supabase
         .from('team_members')
         .select('role')
-        .eq('team_slug', teamSlug)
+        .eq('team_id', team.id)
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!user && !!teamSlug,
+    enabled: !!user && !!team?.id,
   });
 
   const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
@@ -97,10 +98,10 @@ const TeamDetail = () => {
             <div className="space-y-6">
               {isAdmin && (
                 <div className="flex justify-end">
-                  <CreateCategoryDialog teamSlug={team.slug} />
+                  <CreateCategoryDialog teamId={team.id} />
                 </div>
               )}
-              <CategoryOverview teamSlug={team.slug} />
+              <CategoryOverview teamId={team.id} />
             </div>
           </TabsContent>
 
@@ -108,10 +109,10 @@ const TeamDetail = () => {
             <div className="space-y-6">
               {isAdmin && (
                 <div className="flex justify-end">
-                  <CreateNewsDialog teamSlug={team.slug} />
+                  <CreateNewsDialog teamId={team.id} />
                 </div>
               )}
-              <NewsList teamSlug={team.slug} />
+              <NewsList teamId={team.id} />
             </div>
           </TabsContent>
 
@@ -170,6 +171,6 @@ const TeamDetail = () => {
       </div>
     </div>
   );
-}
+};
 
 export default TeamDetail;

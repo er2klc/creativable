@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Copy, Trash2, LogOut } from "lucide-react";
+import { Copy, Trash2, LogOut, MoreVertical } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
