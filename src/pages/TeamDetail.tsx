@@ -1,16 +1,20 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, MessageSquare, Upload, Bell } from "lucide-react";
+import { MessageSquare, Bell, Calendar, FolderOpen, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamHeader } from "@/components/teams/TeamHeader";
 import { PostList } from "@/components/teams/posts/PostList";
 import { CategoryList } from "@/components/teams/posts/CategoryList";
+import { Button } from "@/components/ui/button";
+import { CreateCategoryDialog } from "@/components/teams/CreateCategoryDialog";
+import { useUser } from "@supabase/auth-helpers-react";
 
 const TeamDetail = () => {
   const { teamId } = useParams();
   const navigate = useNavigate();
+  const user = useUser();
 
   const { data: team, isLoading } = useQuery({
     queryKey: ['team', teamId],
@@ -25,6 +29,25 @@ const TeamDetail = () => {
       return data;
     },
   });
+
+  const { data: teamMember } = useQuery({
+    queryKey: ['team-member-role', teamId],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('team_id', teamId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !!teamId,
+  });
+
+  const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
 
   if (isLoading) {
     return (
@@ -50,7 +73,7 @@ const TeamDetail = () => {
 
       <div className="container">
         <Tabs defaultValue="posts" className="w-full">
-          <TabsList>
+          <TabsList className="w-full justify-start">
             <TabsTrigger value="posts" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               Beiträge & Diskussionen
@@ -64,14 +87,17 @@ const TeamDetail = () => {
               Kalender
             </TabsTrigger>
             <TabsTrigger value="files" className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
+              <FolderOpen className="h-4 w-4" />
               Dateien
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="posts" className="mt-6">
             <div className="space-y-6">
-              <CategoryList teamId={team.id} />
+              <div className="flex justify-between items-center">
+                <CategoryList teamId={team.id} />
+                {isAdmin && <CreateCategoryDialog teamId={team.id} />}
+              </div>
               <PostList teamId={team.id} />
             </div>
           </TabsContent>
@@ -79,7 +105,25 @@ const TeamDetail = () => {
           <TabsContent value="news" className="mt-6">
             <Card>
               <CardContent className="p-6">
-                <p>News & Updates werden hier angezeigt...</p>
+                {isAdmin ? (
+                  <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                    <Bell className="h-12 w-12 text-muted-foreground" />
+                    <div className="text-center space-y-2">
+                      <h3 className="font-semibold">Keine News vorhanden</h3>
+                      <p className="text-sm text-muted-foreground max-w-sm">
+                        Erstellen Sie eine News, um Ihr Team über wichtige Updates zu informieren.
+                      </p>
+                    </div>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      News erstellen
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground">
+                    Keine News vorhanden
+                  </p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -87,7 +131,25 @@ const TeamDetail = () => {
           <TabsContent value="calendar" className="mt-6">
             <Card>
               <CardContent className="p-6">
-                <p>Kalender wird hier implementiert...</p>
+                {isAdmin ? (
+                  <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                    <Calendar className="h-12 w-12 text-muted-foreground" />
+                    <div className="text-center space-y-2">
+                      <h3 className="font-semibold">Keine Termine vorhanden</h3>
+                      <p className="text-sm text-muted-foreground max-w-sm">
+                        Erstellen Sie einen Termin, um Ihr Team über anstehende Events zu informieren.
+                      </p>
+                    </div>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Termin erstellen
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground">
+                    Keine Termine vorhanden
+                  </p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -95,7 +157,25 @@ const TeamDetail = () => {
           <TabsContent value="files" className="mt-6">
             <Card>
               <CardContent className="p-6">
-                <p>Dateiverwaltung wird hier implementiert...</p>
+                {isAdmin ? (
+                  <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                    <FolderOpen className="h-12 w-12 text-muted-foreground" />
+                    <div className="text-center space-y-2">
+                      <h3 className="font-semibold">Keine Dateien vorhanden</h3>
+                      <p className="text-sm text-muted-foreground max-w-sm">
+                        Laden Sie Dateien hoch, um sie mit Ihrem Team zu teilen.
+                      </p>
+                    </div>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Dateien hochladen
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground">
+                    Keine Dateien vorhanden
+                  </p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
