@@ -71,15 +71,20 @@ const Unity = () => {
     if (!user) return;
 
     try {
+      console.log('Attempting to delete team:', teamId);
+      console.log('Current user:', user.id);
+      
       // First check if user is allowed to delete the team
-      const { data: team } = await supabase
+      const { data: teamData } = await supabase
         .from('teams')
-        .select('created_by')
+        .select('*, team_members!inner(*)')
         .eq('id', teamId)
         .single();
 
-      if (!team || team.created_by !== user.id) {
-        toast.error("Sie haben keine Berechtigung, dieses Team zu löschen");
+      console.log('Team data:', teamData);
+
+      if (!teamData) {
+        toast.error('Team nicht gefunden');
         return;
       }
 
@@ -88,17 +93,21 @@ const Unity = () => {
         .delete()
         .eq('id', teamId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting team:', error);
+        if (error.message?.includes('policy')) {
+          toast.error("Sie haben keine Berechtigung, dieses Team zu löschen");
+        } else {
+          toast.error("Fehler beim Löschen des Teams");
+        }
+        return;
+      }
 
       await refetch();
       toast.success('Team erfolgreich gelöscht');
     } catch (err: any) {
-      console.error('Fehler beim Löschen des Teams:', err);
-      if (err.message?.includes('foreign key')) {
-        toast.error('Das Team kann nicht gelöscht werden, da es noch andere Mitglieder hat');
-      } else {
-        toast.error('Fehler beim Löschen des Teams');
-      }
+      console.error('Error in team deletion:', err);
+      toast.error("Fehler beim Löschen des Teams");
     }
   };
 
