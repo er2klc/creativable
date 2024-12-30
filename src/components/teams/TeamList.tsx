@@ -2,7 +2,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Users } from "lucide-react";
 import { TeamCard } from "./TeamCard";
 import { Button } from "@/components/ui/button";
-import { Team } from "@/integrations/supabase/types/teams";
 
 interface TeamListProps {
   isLoading: boolean;

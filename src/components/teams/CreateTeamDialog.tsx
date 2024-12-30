@@ -47,10 +47,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
         .select()
         .single();
 
-      if (teamError) {
-        console.error('Error creating team:', teamError);
-        throw teamError;
-      }
+      if (teamError) throw teamError;
 
       // Add creator as team member with owner role
       const { error: memberError } = await supabase
@@ -61,59 +58,35 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           role: 'owner',
         });
 
-      if (memberError) {
-        console.error('Error adding team member:', memberError);
-        throw memberError;
-      }
+      if (memberError) throw memberError;
 
       // Handle logo upload if present
       if (logoFile && team.id) {
-        try {
-          const fileExt = logoFile.name.split('.').pop();
-          const fileName = `${team.id}-logo.${fileExt}`;
+        const fileExt = logoFile.name.split('.').pop();
+        const fileName = `${team.id}-logo.${fileExt}`;
 
-          console.log('Starting logo upload for team:', team.id);
-          console.log('File name:', fileName);
+        // Upload the file
+        const { error: uploadError } = await supabase.storage
+          .from('team-logos')
+          .upload(fileName, logoFile, {
+            upsert: true,
+            contentType: logoFile.type
+          });
 
-          // Upload the file
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('team-logos')
-            .upload(fileName, logoFile, {
-              upsert: true,
-              contentType: logoFile.type
-            });
+        if (uploadError) throw uploadError;
 
-          if (uploadError) {
-            console.error('Error uploading logo:', uploadError);
-            throw uploadError;
-          }
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('team-logos')
+          .getPublicUrl(fileName);
 
-          console.log('Logo uploaded successfully:', uploadData);
+        // Update team with logo URL
+        const { error: updateError } = await supabase
+          .from('teams')
+          .update({ logo_url: publicUrl })
+          .eq('id', team.id);
 
-          // Get public URL for the uploaded file
-          const { data: urlData } = await supabase.storage
-            .from('team-logos')
-            .getPublicUrl(fileName);
-
-          const publicUrl = urlData.publicUrl;
-          console.log('Got public URL:', publicUrl);
-
-          // Update team with logo URL
-          const { error: updateError } = await supabase
-            .from('teams')
-            .update({ logo_url: publicUrl })
-            .eq('id', team.id);
-
-          if (updateError) {
-            console.error('Error updating team with logo URL:', updateError);
-            throw updateError;
-          }
-
-          console.log('Team updated with logo URL successfully');
-        } catch (logoError) {
-          console.error('Logo upload process failed:', logoError);
-          toast.error("Logo konnte nicht hochgeladen werden, aber Team wurde erstellt");
-        }
+        if (updateError) throw updateError;
       }
 
       setJoinCode(team.join_code);

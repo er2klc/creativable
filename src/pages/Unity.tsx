@@ -16,7 +16,7 @@ const Unity = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      // Get teams using the RPC function to avoid policy issues
+      // Get teams using the RPC function
       const { data: teams, error } = await supabase
         .rpc('get_user_teams', { uid: user.id });
 
@@ -29,36 +29,24 @@ const Unity = () => {
       // Get stats for each team
       const teamsWithStats = await Promise.all(
         teams.map(async (team) => {
-          try {
-            // Simplified query to avoid policy recursion
-            const { count: totalMembers } = await supabase
-              .from('team_members')
-              .select('*', { count: 'exact', head: true })
-              .eq('team_id', team.id);
+          const { count: totalMembers } = await supabase
+            .from('team_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('team_id', team.id);
 
-            const { count: admins } = await supabase
-              .from('team_members')
-              .select('*', { count: 'exact', head: true })
-              .eq('team_id', team.id)
-              .in('role', ['admin', 'owner']);
+          const { count: admins } = await supabase
+            .from('team_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('team_id', team.id)
+            .in('role', ['admin', 'owner']);
 
-            return {
-              ...team,
-              stats: {
-                totalMembers: totalMembers || 0,
-                admins: admins || 0
-              }
-            };
-          } catch (error) {
-            console.error(`Error fetching stats for team ${team.id}:`, error);
-            return {
-              ...team,
-              stats: {
-                totalMembers: 0,
-                admins: 0
-              }
-            };
-          }
+          return {
+            ...team,
+            stats: {
+              totalMembers: totalMembers || 0,
+              admins: admins || 0
+            }
+          };
         })
       );
 
@@ -71,9 +59,6 @@ const Unity = () => {
     if (!user) return;
 
     try {
-      console.log('Attempting to delete team:', teamId);
-      
-      // Direct deletion without checking team data first
       const { error } = await supabase
         .from('teams')
         .delete()
@@ -101,14 +86,17 @@ const Unity = () => {
     if (!user) return;
 
     try {
-      // Direct deletion of team membership to avoid policy issues
       const { error } = await supabase
         .from('team_members')
         .delete()
         .eq('team_id', teamId)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error leaving team:', error);
+        toast.error("Fehler beim Verlassen des Teams");
+        return;
+      }
 
       await refetch();
       toast.success("Team erfolgreich verlassen");

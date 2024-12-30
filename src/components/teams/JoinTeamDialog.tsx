@@ -30,45 +30,48 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
       const cleanJoinCode = joinCode.trim().toUpperCase();
       
       // First, let's check if the team exists
-      const { data: teams, error: searchError } = await supabase
+      const { data: team, error: searchError } = await supabase
         .from('teams')
         .select('*')
         .eq('join_code', cleanJoinCode)
-        .maybeSingle();
+        .single();
 
-      if (searchError) throw searchError;
-      if (!teams) throw new Error("Ungültiger Beitritts-Code");
+      if (searchError || !team) {
+        toast.error("Ungültiger Beitritts-Code");
+        return;
+      }
 
       // Check if already a member
       const { data: existingMember, error: memberCheckError } = await supabase
         .from('team_members')
         .select('id')
-        .eq('team_id', teams.id)
+        .eq('team_id', team.id)
         .eq('user_id', user.id)
-        .maybeSingle();
+        .single();
 
-      if (memberCheckError) throw memberCheckError;
-      if (existingMember) throw new Error("Sie sind bereits Mitglied dieses Teams");
+      if (existingMember) {
+        toast.error("Sie sind bereits Mitglied dieses Teams");
+        return;
+      }
 
       // Join team
       const { error: joinError } = await supabase
         .from('team_members')
         .insert({
-          team_id: teams.id,
+          team_id: team.id,
           user_id: user.id,
-          role: 'member',
-          invited_by: teams.created_by
+          role: 'member'
         });
 
       if (joinError) throw joinError;
 
-      toast.success(`Team "${teams.name}" erfolgreich beigetreten`);
+      toast.success(`Team "${team.name}" erfolgreich beigetreten`);
       setIsOpen(false);
       setJoinCode("");
       onTeamJoined?.();
     } catch (error: any) {
       console.error("Join team error:", error);
-      toast.error(error instanceof Error ? error.message : "Ein unerwarteter Fehler ist aufgetreten");
+      toast.error("Fehler beim Beitreten des Teams");
     } finally {
       setIsLoading(false);
     }
