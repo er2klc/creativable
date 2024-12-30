@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UnityHeader } from "@/components/teams/UnityHeader";
@@ -10,6 +10,7 @@ import { TeamList } from "@/components/teams/TeamList";
 const Unity = () => {
   const navigate = useNavigate();
   const user = useUser();
+  const queryClient = useQueryClient();
 
   const { data: teamsWithStats = [], isLoading, refetch } = useQuery({
     queryKey: ['teams-with-stats'],
@@ -81,7 +82,8 @@ const Unity = () => {
         return;
       }
 
-      await refetch();
+      // Invalidate the teams query cache
+      await queryClient.invalidateQueries({ queryKey: ['teams-with-stats'] });
       toast.success('Team erfolgreich gelöscht');
     } catch (err: any) {
       console.error('Error in team deletion:', err);
@@ -106,7 +108,8 @@ const Unity = () => {
         return;
       }
 
-      await refetch();
+      // Invalidate the teams query cache
+      await queryClient.invalidateQueries({ queryKey: ['teams-with-stats'] });
       toast.success("Team erfolgreich verlassen");
     } catch (error: any) {
       console.error('Error leaving team:', error);
@@ -123,7 +126,7 @@ const Unity = () => {
 
       if (error) throw error;
 
-      await refetch();
+      await queryClient.invalidateQueries({ queryKey: ['teams-with-stats'] });
     } catch (error: any) {
       console.error('Error updating team order:', error);
       toast.error("Fehler beim Aktualisieren der Reihenfolge");
@@ -139,7 +142,7 @@ const Unity = () => {
   if (!user) return null;
 
   const handleRefetch = async () => {
-    await refetch();
+    await queryClient.invalidateQueries({ queryKey: ['teams-with-stats'] });
   };
 
   return (
