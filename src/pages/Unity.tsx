@@ -125,11 +125,15 @@ const Unity = () => {
 
   if (!user) return null;
 
+  const handleRefetch = async () => {
+    await refetch();
+  };
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <UnityHeader 
-        onTeamCreated={refetch}
-        onTeamJoined={refetch}
+        onTeamCreated={handleRefetch}
+        onTeamJoined={handleRefetch}
       />
       <TeamList
         isLoading={isLoading}
