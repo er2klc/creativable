@@ -84,11 +84,11 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode, onUpdateOrde
         </div>
         <div className="flex items-center gap-2">
           {onUpdateOrder && (
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 bg-background/80 rounded p-1">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 bg-accent/10 rounded-md p-1.5">
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="h-6 w-6 hover:bg-accent"
+                className="h-7 w-7 hover:bg-accent"
                 onClick={(e) => {
                   e.stopPropagation();
                   onUpdateOrder(team.id, 'up');
@@ -100,7 +100,7 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode, onUpdateOrde
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="h-6 w-6 hover:bg-accent"
+                className="h-7 w-7 hover:bg-accent"
                 onClick={(e) => {
                   e.stopPropagation();
                   onUpdateOrder(team.id, 'down');
