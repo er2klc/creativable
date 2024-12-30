@@ -36,6 +36,7 @@ const Unity = () => {
                 role,
                 user_id,
                 profiles:user_id (
+                  id,
                   display_name
                 )
               `)
