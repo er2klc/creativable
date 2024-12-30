@@ -44,19 +44,32 @@ export const TeamLogoUpload = ({
     reader.readAsDataURL(file);
 
     try {
+      console.log('Uploading logo for team:', teamId);
+      
       // Upload to Supabase Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${teamId}-logo.${fileExt}`;
-      const { error: uploadError } = await supabase.storage
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('team-logos')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { 
+          upsert: true,
+          contentType: file.type
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('Upload successful:', uploadData);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('team-logos')
         .getPublicUrl(fileName);
+
+      console.log('Public URL:', publicUrl);
 
       // Update team record
       const { error: updateError } = await supabase
@@ -64,7 +77,10 @@ export const TeamLogoUpload = ({
         .update({ logo_url: publicUrl })
         .eq('id', teamId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Update error:', updateError);
+        throw updateError;
+      }
 
       toast({
         title: "Logo updated",
