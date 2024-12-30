@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Plus, Calendar as CalendarIcon, FolderOpen as FolderOpenIcon, MessageSquare, Bell, Settings, BarChart, Users, X } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, FolderOpen as FolderOpenIcon, MessageSquare, Bell, Settings, BarChart, Users, X, Grid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamHeader } from "@/components/teams/TeamHeader";
 import { CreateNewsDialog } from "@/components/teams/news/CreateNewsDialog";
@@ -146,7 +146,8 @@ const TeamDetail = () => {
                 size="sm"
                 onClick={() => setIsManaging(!isManaging)}
               >
-                {isManaging ? "Fertig" : "Snaps verwalten"}
+                <Grid className="h-4 w-4 mr-2" />
+                Snaps verwalten
               </Button>
             )}
           </div>
