@@ -2,7 +2,7 @@ import { type Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { TeamCardActions } from "./card/TeamCardActions";
 import { useNavigate } from "react-router-dom";
-import { Users, Shield, ArrowUpDown } from "lucide-react";
+import { Users, Shield, ArrowUpDown, Crown } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Button } from "@/components/ui/button";
 
@@ -73,8 +73,9 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode, onUpdateOrde
                 <Shield className="h-4 w-4" />
                 <span>{team.stats?.admins || 0}</span>
                 {isTeamOwner && (
-                  <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-medium">
-                    Owner
+                  <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
+                    <Crown className="h-3 w-3" />
+                    Team Owner
                   </span>
                 )}
               </div>
