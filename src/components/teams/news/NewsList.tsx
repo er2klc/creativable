@@ -12,19 +12,30 @@ export function NewsList({ teamId }: NewsListProps) {
   const { data: news = [], isLoading } = useQuery({
     queryKey: ["team-news", teamId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: newsData, error } = await supabase
         .from("team_news")
-        .select(`
-          *,
-          profiles (
-            display_name
-          )
-        `)
-        .eq("team_id", teamId)
-        .order("created_at", { ascending: false });
+        .select("*")
+        .eq("team_id", teamId);
 
       if (error) throw error;
-      return data;
+
+      // Fetch creator information separately
+      const newsWithCreators = await Promise.all(
+        newsData.map(async (newsItem) => {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("display_name")
+            .eq("id", newsItem.created_by)
+            .single();
+
+          return {
+            ...newsItem,
+            creator_name: profileData?.display_name
+          };
+        })
+      );
+
+      return newsWithCreators;
     },
   });
 
@@ -55,7 +66,7 @@ export function NewsList({ teamId }: NewsListProps) {
                 addSuffix: true,
                 locale: de,
               })}{" "}
-              von {item.profiles?.display_name}
+              von {item.creator_name || "Unbekannt"}
             </div>
           </CardHeader>
           <CardContent>

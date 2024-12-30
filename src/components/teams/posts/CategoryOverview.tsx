@@ -28,10 +28,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
             title,
             created_at,
             created_by,
-            team_post_comments (count),
-            profiles (
-              display_name
-            )
+            team_post_comments (count)
           )
         `)
         .eq("team_id", teamId)
@@ -41,9 +38,34 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
         console.error("Error fetching categories:", categoriesError);
         throw categoriesError;
       }
+
+      // Fetch display names for post creators in a separate query
+      const postsWithCreators = await Promise.all(
+        categoriesData.map(async (category) => {
+          const postsWithCreatorInfo = await Promise.all(
+            (category.team_posts || []).map(async (post) => {
+              const { data: profileData } = await supabase
+                .from("profiles")
+                .select("display_name")
+                .eq("id", post.created_by)
+                .single();
+              
+              return {
+                ...post,
+                creator_name: profileData?.display_name
+              };
+            })
+          );
+
+          return {
+            ...category,
+            team_posts: postsWithCreatorInfo
+          };
+        })
+      );
       
-      console.log("Fetched categories:", categoriesData);
-      return categoriesData;
+      console.log("Fetched categories:", postsWithCreators);
+      return postsWithCreators;
     },
   });
 
@@ -106,7 +128,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
                             addSuffix: true,
                             locale: de,
                           })}{" "}
-                          von {post.profiles?.display_name}
+                          von {post.creator_name || "Unbekannt"}
                         </div>
                       </div>
                       <div className="flex items-center gap-1 text-muted-foreground">
