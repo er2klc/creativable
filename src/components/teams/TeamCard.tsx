@@ -40,16 +40,21 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode }: TeamCardPr
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          {team.logo_url ? (
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={team.logo_url} alt={team.name} />
-              <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
-          ) : (
-            <Avatar className="h-16 w-16">
-              <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
-          )}
+          <div className="relative min-w-[64px] h-16 bg-gradient-to-r from-background to-transparent rounded-lg overflow-hidden">
+            {team.logo_url ? (
+              <img 
+                src={team.logo_url} 
+                alt={team.name} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-muted">
+                <span className="text-xl font-semibold">
+                  {team.name.substring(0, 2).toUpperCase()}
+                </span>
+              </div>
+            )}
+          </div>
           <div>
             <h3 className="text-lg font-semibold">{team.name}</h3>
             {team.description && (
