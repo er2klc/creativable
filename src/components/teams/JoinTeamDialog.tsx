@@ -27,28 +27,29 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
     setIsLoading(true);
 
     try {
+      console.log("Searching for team with join code:", joinCode.trim());
+      
       // Find team by join code
       const { data: teams, error: teamError } = await supabase
         .from('teams')
-        .select('id, name')
-        .eq('join_code', joinCode.trim());
+        .select('id, name, created_by')
+        .eq('join_code', joinCode.trim())
+        .single();
 
       if (teamError) {
         console.error("Team search error:", teamError);
         throw new Error("Fehler beim Suchen des Teams");
       }
       
-      if (!teams || teams.length === 0) {
+      if (!teams) {
         throw new Error("Ungültiger Beitritts-Code");
       }
-
-      const team = teams[0];
 
       // Check if already a member
       const { data: existingMember, error: memberCheckError } = await supabase
         .from('team_members')
         .select('id')
-        .eq('team_id', team.id)
+        .eq('team_id', teams.id)
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -65,9 +66,10 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
       const { error: joinError } = await supabase
         .from('team_members')
         .insert({
-          team_id: team.id,
+          team_id: teams.id,
           user_id: user.id,
           role: 'member',
+          invited_by: teams.created_by
         });
 
       if (joinError) {
@@ -75,11 +77,12 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
         throw new Error("Fehler beim Beitreten des Teams");
       }
 
-      toast.success(`Team "${team.name}" erfolgreich beigetreten`);
+      toast.success(`Team "${teams.name}" erfolgreich beigetreten`);
       setIsOpen(false);
       setJoinCode("");
       onTeamJoined?.();
     } catch (error) {
+      console.error("Join team error:", error);
       toast.error(error instanceof Error ? error.message : "Ein unerwarteter Fehler ist aufgetreten");
     } finally {
       setIsLoading(false);
