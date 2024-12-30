@@ -29,7 +29,7 @@ const App = () => (
       <Route path="/changelog" element={<AppLayout><Changelog /></AppLayout>} />
       <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
       <Route path="/unity" element={<AppLayout><Unity /></AppLayout>} />
-      <Route path="/unity/team/:teamId" element={<AppLayout><TeamDetail /></AppLayout>} />
+      <Route path="/unity/team/:teamSlug" element={<AppLayout><TeamDetail /></AppLayout>} />
       <Route path="/leads" element={<AppLayout><Leads /></AppLayout>} />
       <Route path="/messages" element={<AppLayout><Messages /></AppLayout>} />
       <Route path="/settings" element={<AppLayout><Settings /></AppLayout>} />
