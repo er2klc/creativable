@@ -12,6 +12,23 @@ import { CreateNewsDialog } from "@/components/teams/news/CreateNewsDialog";
 import { NewsList } from "@/components/teams/news/NewsList";
 import { useUser } from "@supabase/auth-helpers-react";
 
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import TeamDetail from "./TeamDetail";
+
+const App = () => {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Route mit :teamSlug */}
+        <Route path="/teams/:teamSlug" element={<TeamDetail />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
+export default App;
+
+
 const TeamDetail = () => {
   const params = useParams();
   console.log('Params:', params);
