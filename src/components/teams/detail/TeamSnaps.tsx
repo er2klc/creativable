@@ -124,7 +124,7 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId }: TeamSnapsProps) => {
     <div className="space-y-8">
       {visibleRegularSnaps.length > 0 && (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
             {visibleRegularSnaps.map((snap) => (
               <SnapCard
                 key={snap.id}
@@ -141,7 +141,7 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId }: TeamSnapsProps) => {
       {isAdmin && visibleAdminSnaps.length > 0 && (
         <div className="space-y-4">
           <Separator className="my-6" />
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
             {visibleAdminSnaps.map((snap) => (
               <SnapCard
                 key={snap.id}
@@ -157,7 +157,7 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId }: TeamSnapsProps) => {
 
       {isManaging && hiddenRegularSnaps.length > 0 && (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
             {hiddenRegularSnaps.map((snap) => (
               <HiddenSnapCard
                 key={snap.id}
