@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, BarChart, Users, Settings, X } from "lucide-react";
+import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, BarChart, Users, Settings, X, Plus } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 interface TeamSnapsProps {
   isAdmin: boolean;
@@ -74,7 +75,6 @@ export const TeamSnaps = ({ isAdmin, isManaging, hiddenSnaps, setHiddenSnaps }: 
     <div className="space-y-8">
       {visibleRegularSnaps.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-2xl font-semibold">Snaps</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {visibleRegularSnaps.map((snap) => (
               <Card
@@ -111,7 +111,7 @@ export const TeamSnaps = ({ isAdmin, isManaging, hiddenSnaps, setHiddenSnaps }: 
 
       {isAdmin && visibleAdminSnaps.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-2xl font-semibold">Admin Snaps</h2>
+          <Separator className="my-6" />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {visibleAdminSnaps.map((snap) => (
               <Card
@@ -154,7 +154,6 @@ export const TeamSnaps = ({ isAdmin, isManaging, hiddenSnaps, setHiddenSnaps }: 
 
       {isManaging && (hiddenRegularSnaps.length > 0 || hiddenAdminSnaps.length > 0) && (
         <div className="space-y-4">
-          <h2 className="text-2xl font-semibold">Ausgeblendete Snaps</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[...hiddenRegularSnaps, ...hiddenAdminSnaps].map((snap) => (
               <Card
