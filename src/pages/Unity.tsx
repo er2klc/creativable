@@ -16,11 +16,9 @@ const Unity = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      // Get user's teams
+      // Get user's teams using the get_user_teams function
       const { data: teams, error } = await supabase
-        .from('teams')
-        .select('*')
-        .order('order_index', { ascending: true });
+        .rpc('get_user_teams', { uid: user.id });
 
       if (error) {
         console.error("Error loading teams:", error);
@@ -31,7 +29,7 @@ const Unity = () => {
       // Get team statistics for each team
       const teamsWithStats = await Promise.all(
         teams.map(async (team) => {
-          const { data: members, error: membersError } = await supabase
+          const { data: members } = await supabase
             .from('team_members')
             .select(`
               id,
@@ -40,18 +38,11 @@ const Unity = () => {
                 display_name
               )
             `)
-            .eq('team_id', team.id);
+            .eq('team_id', team.id)
+            .single();
 
-          if (membersError) {
-            console.error("Error loading team members:", membersError);
-            return {
-              ...team,
-              stats: { totalMembers: 0, admins: 0 }
-            };
-          }
-
-          const admins = members.filter(m => ['admin', 'owner'].includes(m.role)).length;
-          const totalMembers = members.length;
+          const admins = members?.role === 'admin' || members?.role === 'owner' ? 1 : 0;
+          const totalMembers = members ? 1 : 0;
 
           return {
             ...team,
