@@ -38,6 +38,7 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
 
       if (searchError || !team) {
         toast.error("Ungültiger Beitritts-Code");
+        setIsLoading(false);
         return;
       }
 
@@ -51,6 +52,7 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
 
       if (existingMember) {
         toast.error("Sie sind bereits Mitglied dieses Teams");
+        setIsLoading(false);
         return;
       }
 
@@ -77,8 +79,14 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
     }
   };
 
+  const handleClose = () => {
+    setIsOpen(false);
+    setJoinCode("");
+    setIsLoading(false);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Team beitreten</DialogTitle>
@@ -97,7 +105,7 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsOpen(false)}
+              onClick={handleClose}
               disabled={isLoading}
             >
               Abbrechen

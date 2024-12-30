@@ -4,6 +4,7 @@ import { TeamCardActions } from "./card/TeamCardActions";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, Shield } from "lucide-react";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface TeamCardProps {
   team: Tables<"teams"> & {
@@ -19,6 +20,7 @@ interface TeamCardProps {
 
 export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode }: TeamCardProps) => {
   const navigate = useNavigate();
+  const user = useUser();
 
   const handleClick = (e: React.MouseEvent) => {
     // Only navigate if the click wasn't on a button or dialog
@@ -28,6 +30,8 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode }: TeamCardPr
     }
     navigate(`/unity/team/${team.slug}`);
   };
+
+  const isTeamOwner = user?.id === team.created_by;
 
   return (
     <Card
@@ -70,7 +74,7 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode }: TeamCardPr
           onDelete={() => onDelete(team.id)}
           onLeave={() => onLeave(team.id)}
           onCopyJoinCode={onCopyJoinCode}
-          isOwner={team.created_by === team.created_by}
+          isOwner={isTeamOwner}
         />
       </div>
     </Card>
