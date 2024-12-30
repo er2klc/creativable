@@ -584,6 +584,47 @@ export type Database = {
           },
         ]
       }
+      team_news: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string
+          id: string
+          pinned: boolean | null
+          team_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by: string
+          id?: string
+          pinned?: boolean | null
+          team_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          pinned?: boolean | null
+          team_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_news_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_post_comments: {
         Row: {
           content: string

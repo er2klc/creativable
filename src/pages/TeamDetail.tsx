@@ -7,8 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamHeader } from "@/components/teams/TeamHeader";
 import { PostList } from "@/components/teams/posts/PostList";
 import { CategoryList } from "@/components/teams/posts/CategoryList";
-import { Button } from "@/components/ui/button";
 import { CreateCategoryDialog } from "@/components/teams/CreateCategoryDialog";
+import { CreateNewsDialog } from "@/components/teams/news/CreateNewsDialog";
+import { NewsList } from "@/components/teams/news/NewsList";
 import { useUser } from "@supabase/auth-helpers-react";
 
 const TeamDetail = () => {
@@ -103,29 +104,14 @@ const TeamDetail = () => {
           </TabsContent>
 
           <TabsContent value="news" className="mt-6">
-            <Card>
-              <CardContent className="p-6">
-                {isAdmin ? (
-                  <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                    <Bell className="h-12 w-12 text-muted-foreground" />
-                    <div className="text-center space-y-2">
-                      <h3 className="font-semibold">Keine News vorhanden</h3>
-                      <p className="text-sm text-muted-foreground max-w-sm">
-                        Erstellen Sie eine News, um Ihr Team über wichtige Updates zu informieren.
-                      </p>
-                    </div>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      News erstellen
-                    </Button>
-                  </div>
-                ) : (
-                  <p className="text-center text-muted-foreground">
-                    Keine News vorhanden
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              {isAdmin && (
+                <div className="flex justify-end">
+                  <CreateNewsDialog teamId={team.id} />
+                </div>
+              )}
+              <NewsList teamId={team.id} />
+            </div>
           </TabsContent>
 
           <TabsContent value="calendar" className="mt-6">
