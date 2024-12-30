@@ -53,10 +53,11 @@ export const TeamCardActions = ({
   });
 
   const isMember = !!teamMember;
+  const isTeamOwner = teamMember?.role === 'owner';
 
   return (
     <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-      {isOwner && (
+      {isTeamOwner && (
         <Crown className="h-4 w-4 text-yellow-500" />
       )}
       {joinCode && (
@@ -73,7 +74,7 @@ export const TeamCardActions = ({
           <Copy className="h-4 w-4" />
         </Button>
       )}
-      {isMember && !isOwner ? (
+      {isMember && !isTeamOwner ? (
         <Button
           variant="ghost"
           size="icon"
@@ -86,7 +87,7 @@ export const TeamCardActions = ({
         >
           <LogOut className="h-4 w-4" />
         </Button>
-      ) : isOwner && (
+      ) : isTeamOwner && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
