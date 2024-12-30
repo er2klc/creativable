@@ -16,7 +16,6 @@ const Unity = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      // Get user's teams using the get_user_teams function
       const { data: teams, error } = await supabase
         .rpc('get_user_teams', { uid: user.id });
 
@@ -26,7 +25,6 @@ const Unity = () => {
         return [];
       }
 
-      // Get team statistics for each team
       const teamsWithStats = await Promise.all(
         teams.map(async (team) => {
           try {
@@ -44,7 +42,6 @@ const Unity = () => {
 
             if (membersError) throw membersError;
 
-            // Count admins (including owner) and total members
             const admins = members?.filter(m => 
               m.role === 'admin' || m.role === 'owner'
             ).length || 0;
@@ -81,15 +78,18 @@ const Unity = () => {
       const { error } = await supabase
         .from('teams')
         .delete()
-        .eq('id', teamId);
+        .eq('id', teamId)
+        .throwOnError(); // This will throw if there's an error
 
-      if (error) throw error;
-      
       await refetch();
       toast.success('Team erfolgreich gelöscht!');
     } catch (err: any) {
       console.error('Fehler beim Löschen des Teams:', err.message);
-      toast.error('Fehler beim Löschen des Teams.');
+      if (err.message.includes('policy')) {
+        toast.error('Das Team kann nicht gelöscht werden, da es noch andere Mitglieder hat.');
+      } else {
+        toast.error('Fehler beim Löschen des Teams.');
+      }
     }
   };
 
@@ -99,9 +99,8 @@ const Unity = () => {
         .from('team_members')
         .delete()
         .eq('team_id', teamId)
-        .eq('user_id', user?.id);
-
-      if (error) throw error;
+        .eq('user_id', user?.id)
+        .throwOnError();
 
       await refetch();
       toast.success("Team erfolgreich verlassen");
@@ -116,9 +115,8 @@ const Unity = () => {
       const { error } = await supabase
         .from('teams')
         .update({ order_index: newIndex })
-        .eq('id', teamId);
-
-      if (error) throw error;
+        .eq('id', teamId)
+        .throwOnError();
 
       await refetch();
     } catch (error: any) {
