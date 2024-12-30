@@ -65,18 +65,25 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
         const fileExt = logoFile.name.split('.').pop();
         const fileName = `${team.id}.${fileExt}`;
 
-        const { error: uploadError, data: uploadData } = await supabase.storage
+        // Upload to storage bucket
+        const { error: uploadError } = await supabase.storage
           .from('team-logos')
           .upload(fileName, logoFile, {
             upsert: true,
             contentType: logoFile.type
           });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Logo upload error:', uploadError);
+          throw uploadError;
+        }
 
+        // Get the public URL
         const { data: { publicUrl } } = supabase.storage
           .from('team-logos')
           .getPublicUrl(fileName);
+
+        console.log('Logo public URL:', publicUrl);
 
         // Update team with logo URL
         const { error: updateError } = await supabase
@@ -84,7 +91,10 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           .update({ logo_url: publicUrl })
           .eq('id', team.id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Logo URL update error:', updateError);
+          throw updateError;
+        }
       }
 
       setJoinCode(team.join_code);
