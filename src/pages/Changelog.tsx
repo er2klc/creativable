@@ -11,19 +11,39 @@ const defaultChangelog = [
     date: "2024-12-31",
     changes: [
       {
+        title: "Unity Teams Plattform",
+        status: "completed" as const,
+        description: "Neue Teams-Plattform mit der Möglichkeit Teams zu erstellen und über Einladungscodes beizutreten"
+      },
+      {
+        title: "Team Management",
+        status: "completed" as const,
+        description: "Verwaltung von Teammitgliedern, Rollen (Admin, Mitglied) und Team-Einstellungen"
+      },
+      {
+        title: "Team Snaps Feature",
+        status: "in-progress" as const,
+        description: "Entwicklung einer Snaps-Funktion für Teams zur besseren visuellen Kommunikation"
+      },
+      {
+        title: "Elevate Plattform",
+        status: "planned" as const,
+        description: "Geplante Elevate-Plattform für erweiterte Teamfunktionen und Schulungen"
+      },
+      {
         title: "Navigation Restrukturierung",
         status: "completed" as const,
         description: "Verbesserte Navigation mit klarer Trennung in Persönlich, Teams & Gruppen, Analyse & Tools und Rechtliches"
       },
       {
-        title: "Optimierte Navigation",
+        title: "Team Kategorien",
         status: "completed" as const,
-        description: "Anpassung der Navigation für bessere Übersichtlichkeit ohne Scrolling"
+        description: "Möglichkeit Kategorien für Team-Diskussionen und Beiträge zu erstellen"
       },
       {
-        title: "Verbesserte Benutzerführung",
+        title: "Team News System",
         status: "completed" as const,
-        description: "Klarere Strukturierung der Hauptnavigation für intuitivere Bedienung"
+        description: "Integriertes Nachrichtensystem für wichtige Team-Ankündigungen"
       }
     ]
   },
