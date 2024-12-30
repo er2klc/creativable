@@ -55,8 +55,8 @@ export const TeamCardActions = ({
   const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
 
   return (
-    <div className="flex items-center gap-2">
-      {isAdmin && (
+    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+      {isOwner && (
         <Crown className="h-4 w-4 text-yellow-500" />
       )}
       {joinCode && (
@@ -107,7 +107,12 @@ export const TeamCardActions = ({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-              <AlertDialogAction onClick={onDelete}>Löschen</AlertDialogAction>
+              <AlertDialogAction onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}>
+                Löschen
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

@@ -20,7 +20,11 @@ interface TeamCardProps {
 export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode }: TeamCardProps) => {
   const navigate = useNavigate();
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    // Only navigate if the click wasn't on a button
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
     navigate(`/unity/team/${team.slug}`);
   };
 
