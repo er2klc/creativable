@@ -30,18 +30,18 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
       const cleanJoinCode = joinCode.trim().toUpperCase();
       
       // First, let's check if the team exists
-      const { data: teams, error: searchError } = await supabase
+      const { data: team, error: searchError } = await supabase
         .from('teams')
         .select('*')
         .eq('join_code', cleanJoinCode)
-        .single();
+        .maybeSingle();
 
       if (searchError) {
         console.error("Team search error:", searchError);
         throw new Error("Ungültiger Beitritts-Code");
       }
 
-      if (!teams) {
+      if (!team) {
         throw new Error("Ungültiger Beitritts-Code");
       }
 
@@ -49,11 +49,11 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
       const { data: existingMember, error: memberCheckError } = await supabase
         .from('team_members')
         .select('*')
-        .eq('team_id', teams.id)
+        .eq('team_id', team.id)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (memberCheckError && memberCheckError.code !== 'PGRST116') {
+      if (memberCheckError) {
         console.error("Member check error:", memberCheckError);
         throw new Error("Fehler beim Überprüfen der Mitgliedschaft");
       }
@@ -66,10 +66,10 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
       const { error: joinError } = await supabase
         .from('team_members')
         .insert({
-          team_id: teams.id,
+          team_id: team.id,
           user_id: user.id,
           role: 'member',
-          invited_by: teams.created_by
+          invited_by: team.created_by
         });
 
       if (joinError) {
@@ -77,7 +77,7 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
         throw new Error("Fehler beim Beitreten des Teams");
       }
 
-      toast.success(`Team "${teams.name}" erfolgreich beigetreten`);
+      toast.success(`Team "${team.name}" erfolgreich beigetreten`);
       setIsOpen(false);
       setJoinCode("");
       onTeamJoined?.();
