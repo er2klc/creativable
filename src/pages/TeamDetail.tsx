@@ -6,8 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { TeamHeader } from "@/components/teams/TeamHeader";
-import { PostList } from "@/components/teams/posts/PostList";
-import { CategoryList } from "@/components/teams/posts/CategoryList";
+import { CategoryOverview } from "@/components/teams/posts/CategoryOverview";
 import { CreateCategoryDialog } from "@/components/teams/CreateCategoryDialog";
 import { CreateNewsDialog } from "@/components/teams/news/CreateNewsDialog";
 import { NewsList } from "@/components/teams/news/NewsList";
@@ -96,11 +95,12 @@ const TeamDetail = () => {
 
           <TabsContent value="posts" className="mt-6">
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <CategoryList teamId={team.id} />
-                {isAdmin && <CreateCategoryDialog teamId={team.id} />}
-              </div>
-              <PostList teamId={team.id} />
+              {isAdmin && (
+                <div className="flex justify-end">
+                  <CreateCategoryDialog teamId={team.id} />
+                </div>
+              )}
+              <CategoryOverview teamId={team.id} />
             </div>
           </TabsContent>
 
