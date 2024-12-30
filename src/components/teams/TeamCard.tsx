@@ -39,7 +39,7 @@ export const TeamCard = ({
         (e.target as HTMLElement).closest('[role="dialog"]')) {
       return;
     }
-    navigate(`/unity/team/${team.slug}`);
+    navigate(`/unity/team/${team.id}`);
   };
 
   const isTeamOwner = user?.id === team.created_by;
