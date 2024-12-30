@@ -36,7 +36,7 @@ const Unity = () => {
             .select(`
               id,
               role,
-              profiles:user_id (
+              user:user_id (
                 display_name
               )
             `)
