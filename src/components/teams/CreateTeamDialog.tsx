@@ -36,6 +36,9 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
     setIsLoading(true);
 
     try {
+      console.log('Creating team with name:', name);
+      
+      // Create team
       const { data: team, error: teamError } = await supabase
         .from('teams')
         .insert({
@@ -46,18 +49,29 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
         .select()
         .single();
 
-      if (teamError) throw teamError;
+      if (teamError) {
+        console.error('Error creating team:', teamError);
+        throw teamError;
+      }
 
+      console.log('Team created:', team);
+
+      // Add creator as team member with owner role
       const { error: memberError } = await supabase
         .from('team_members')
         .insert({
           team_id: team.id,
           user_id: user.id,
           role: 'owner',
-        });
+        })
+        .single();
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error('Error adding team member:', memberError);
+        throw memberError;
+      }
 
+      // Handle logo upload if present
       if (logoFile && team.id) {
         const fileExt = logoFile.name.split('.').pop();
         const fileName = `${team.id}-logo.${fileExt}`;
@@ -66,7 +80,10 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           .from('team-logos')
           .upload(fileName, logoFile, { upsert: true });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Error uploading logo:', uploadError);
+          throw uploadError;
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from('team-logos')
@@ -75,16 +92,20 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
         const { error: updateError } = await supabase
           .from('teams')
           .update({ logo_url: publicUrl })
-          .eq('id', team.id);
+          .eq('id', team.id)
+          .single();
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Error updating team logo:', updateError);
+          throw updateError;
+        }
       }
 
       setJoinCode(team.join_code);
       onTeamCreated?.();
       toast.success("Team erfolgreich erstellt");
     } catch (error: any) {
-      console.error('Error creating team:', error);
+      console.error('Error in team creation:', error);
       toast.error("Fehler beim Erstellen des Teams");
     } finally {
       setIsLoading(false);
