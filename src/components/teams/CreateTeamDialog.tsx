@@ -63,10 +63,9 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
       // Handle logo upload if present
       if (logoFile && team.id) {
         const fileExt = logoFile.name.split('.').pop();
-        const fileName = `${team.id}-logo.${fileExt}`;
+        const fileName = `${team.id}.${fileExt}`;
 
-        // Upload the file
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError, data: uploadData } = await supabase.storage
           .from('team-logos')
           .upload(fileName, logoFile, {
             upsert: true,
@@ -75,7 +74,6 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
 
         if (uploadError) throw uploadError;
 
-        // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from('team-logos')
           .getPublicUrl(fileName);

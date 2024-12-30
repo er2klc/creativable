@@ -29,22 +29,28 @@ const Unity = () => {
       // Get stats for each team
       const teamsWithStats = await Promise.all(
         teams.map(async (team) => {
-          const { count: totalMembers } = await supabase
+          const { data: members, error: membersError } = await supabase
             .from('team_members')
-            .select('*', { count: 'exact', head: true })
+            .select('role')
             .eq('team_id', team.id);
 
-          const { count: admins } = await supabase
-            .from('team_members')
-            .select('*', { count: 'exact', head: true })
-            .eq('team_id', team.id)
-            .in('role', ['admin', 'owner']);
+          if (membersError) {
+            console.error("Error loading team members:", membersError);
+            return {
+              ...team,
+              stats: { totalMembers: 0, admins: 0 }
+            };
+          }
+
+          const admins = members.filter(m => 
+            m.role === 'admin' || m.role === 'owner'
+          ).length;
 
           return {
             ...team,
             stats: {
-              totalMembers: totalMembers || 0,
-              admins: admins || 0
+              totalMembers: members.length,
+              admins
             }
           };
         })
@@ -62,7 +68,8 @@ const Unity = () => {
       const { error } = await supabase
         .from('teams')
         .delete()
-        .eq('id', teamId);
+        .eq('id', teamId)
+        .single();
 
       if (error) {
         console.error('Error deleting team:', error);
@@ -90,7 +97,8 @@ const Unity = () => {
         .from('team_members')
         .delete()
         .eq('team_id', teamId)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .single();
 
       if (error) {
         console.error('Error leaving team:', error);
