@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TeamCardProps {
   team: Team;
@@ -40,6 +41,13 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
+      const { error } = await supabase
+        .from('teams')
+        .delete()
+        .eq('id', team.id);
+
+      if (error) throw error;
+      
       await onDelete(team.id);
       toast.success("Team erfolgreich gelöscht");
     } catch (error) {
@@ -51,6 +59,18 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
   const handleLeave = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
+      if (!user?.id) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from('team_members')
+        .delete()
+        .match({ 
+          team_id: team.id,
+          user_id: user.id 
+        });
+
+      if (error) throw error;
+
       await onLeave(team.id);
       toast.success("Team erfolgreich verlassen");
     } catch (error) {
@@ -120,7 +140,7 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Trash2 
-                    className="h-4 w-4 cursor-pointer hover:text-destructive transition-colors"
+                    className="h-4 w-4 cursor-pointer text-destructive hover:text-destructive/80 transition-colors"
                     onClick={(e) => e.stopPropagation()}
                   />
                 </AlertDialogTrigger>
@@ -148,7 +168,7 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <LogOut 
-                    className="h-4 w-4 cursor-pointer hover:text-primary transition-colors"
+                    className="h-4 w-4 cursor-pointer text-destructive hover:text-destructive/80 transition-colors"
                     onClick={(e) => e.stopPropagation()}
                   />
                 </AlertDialogTrigger>
