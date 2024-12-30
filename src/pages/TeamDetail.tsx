@@ -12,66 +12,57 @@ import { CreateNewsDialog } from "@/components/teams/news/CreateNewsDialog";
 import { NewsList } from "@/components/teams/news/NewsList";
 import { useUser } from "@supabase/auth-helpers-react";
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import TeamDetail from "./TeamDetail";
-
-const App = () => {
-  return (
-    <BrowserRouter>
-      <Routes>
-        {/* Route mit :teamSlug */}
-        <Route path="/unity/team/:teamSlug" element={<TeamDetail />} />
-      </Routes>
-    </BrowserRouter>
-  );
-};
-
-export default App;
-
-
 const TeamDetail = () => {
   const params = useParams();
-  console.log('Params:', params);
-  const { teamSlug } = useParams();
+  const { teamSlug } = useParams(); // Hier wird der Slug extrahiert
   const navigate = useNavigate();
   const user = useUser();
 
+  // Debug: Ausgabe der aktuellen Parameter
+  console.log("Params:", params);
+  console.log("TeamSlug:", teamSlug);
+
+  // Query zur Abfrage des Teams basierend auf dem Slug
   const { data: team, isLoading } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
-      console.log('Current user ID:', user?.id);
-      console.log('Fetching team with slug:', teamSlug);
-      console.log('TeamSlug aus Params1:', teamSlug);
-      
-      // First try to get all teams the user has access to
-      const { data: userTeams, error: userTeamsError } = await supabase
-        .rpc('get_user_teams', { uid: user?.id });
+      console.log("Fetching user ID:", user?.id);
+      console.log("Fetching team for slug:", teamSlug);
 
-      if (userTeamsError) {
-        console.error('Error loading user teams:', userTeamsError);
+      if (!user?.id || !teamSlug) {
+        console.error("Missing user ID or teamSlug");
         return null;
       }
 
-      console.log('User teams:', userTeams);
+      // Erst versuche, die Teams des Benutzers zu laden
+      const { data: userTeams, error: userTeamsError } = await supabase
+        .rpc("get_user_teams", { uid: user.id });
 
-      // Then find the team with matching slug
-      const team = userTeams?.find(t => t.slug === teamSlug);
-      console.log('Found team:', team);
+      if (userTeamsError) {
+        console.error("Error fetching user teams:", userTeamsError);
+        return null;
+      }
+
+      console.log("User Teams:", userTeams);
+
+      // Suche das Team basierend auf dem Slug
+      const team = userTeams?.find((t) => t.slug === teamSlug);
+      console.log("Found Team from userTeams:", team);
 
       if (!team) {
-        // If team not found through RPC, try direct query as fallback
+        // Fallback: Versuche, das Team direkt aus der Datenbank zu laden
         const { data: directTeam, error: directError } = await supabase
-          .from('teams')
-          .select('*')
-          .eq('slug', teamSlug)
+          .from("teams")
+          .select("*")
+          .eq("slug", teamSlug)
           .single();
 
         if (directError) {
-          console.error('Error in direct team query:', directError);
+          console.error("Error in direct team query:", directError);
           return null;
         }
 
-        console.log('Found team through direct query:', directTeam);
+        console.log("Found Team from direct query:", directTeam);
         return directTeam;
       }
 
@@ -80,25 +71,32 @@ const TeamDetail = () => {
     enabled: !!teamSlug && !!user?.id,
   });
 
+  // Query zur Abfrage der Team-Mitgliedschaft
   const { data: teamMember } = useQuery({
     queryKey: ['team-member-role', team?.id],
     queryFn: async () => {
       if (!user?.id || !team?.id) return null;
+
       const { data, error } = await supabase
-        .from('team_members')
-        .select('role')
-        .eq('team_id', team.id)
-        .eq('user_id', user.id)
+        .from("team_members")
+        .select("role")
+        .eq("team_id", team.id)
+        .eq("user_id", user.id)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching team member role:", error);
+        return null;
+      }
+
       return data;
     },
     enabled: !!user && !!team?.id,
   });
 
-  const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
+  const isAdmin = teamMember?.role === "admin" || teamMember?.role === "owner";
 
+  // Ladeanzeige
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -107,7 +105,9 @@ const TeamDetail = () => {
     );
   }
 
+  // Team nicht gefunden
   if (!team) {
+    console.error("Team not found for slug:", teamSlug);
     return (
       <Card>
         <CardContent className="p-6">
@@ -117,6 +117,10 @@ const TeamDetail = () => {
     );
   }
 
+  // Ausgabe der gefundenen Daten
+  console.log("Final Team Data:", team);
+
+  // Hauptansicht
   return (
     <div className="space-y-6">
       <TeamHeader team={team} />
