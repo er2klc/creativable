@@ -13,17 +13,17 @@ import { NewsList } from "@/components/teams/news/NewsList";
 import { useUser } from "@supabase/auth-helpers-react";
 
 const TeamDetail = () => {
-  const { teamId } = useParams();
+  const { teamSlug } = useParams();
   const navigate = useNavigate();
   const user = useUser();
 
   const { data: team, isLoading } = useQuery({
-    queryKey: ['team', teamId],
+    queryKey: ['team', teamSlug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('teams')
         .select('*')
-        .eq('id', teamId)
+        .eq('slug', teamSlug)
         .single();
 
       if (error) throw error;
@@ -32,20 +32,20 @@ const TeamDetail = () => {
   });
 
   const { data: teamMember } = useQuery({
-    queryKey: ['team-member-role', teamId],
+    queryKey: ['team-member-role', teamSlug],
     queryFn: async () => {
       if (!user?.id) return null;
       const { data, error } = await supabase
         .from('team_members')
         .select('role')
-        .eq('team_id', teamId)
+        .eq('team_slug', teamSlug)
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!user && !!teamId,
+    enabled: !!user && !!teamSlug,
   });
 
   const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
@@ -97,10 +97,10 @@ const TeamDetail = () => {
             <div className="space-y-6">
               {isAdmin && (
                 <div className="flex justify-end">
-                  <CreateCategoryDialog teamId={team.id} />
+                  <CreateCategoryDialog teamSlug={team.slug} />
                 </div>
               )}
-              <CategoryOverview teamId={team.id} />
+              <CategoryOverview teamSlug={team.slug} />
             </div>
           </TabsContent>
 
@@ -108,10 +108,10 @@ const TeamDetail = () => {
             <div className="space-y-6">
               {isAdmin && (
                 <div className="flex justify-end">
-                  <CreateNewsDialog teamId={team.id} />
+                  <CreateNewsDialog teamSlug={team.slug} />
                 </div>
               )}
-              <NewsList teamId={team.id} />
+              <NewsList teamSlug={team.slug} />
             </div>
           </TabsContent>
 

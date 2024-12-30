@@ -68,7 +68,7 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
     <>
       <Card 
         className="cursor-pointer hover:shadow-lg transition-all duration-300 group relative"
-        onClick={() => navigate(`/unity/team/${team.id}`)}
+        onClick={() => navigate(`/unity/team/${team.slug}`)}
       >
         <CardHeader className="space-y-6">
           <div className="flex items-start justify-between">

@@ -515,6 +515,7 @@ export type Database = {
           id: string
           name: string
           order_index: number
+          slug: string
           team_id: string
         }
         Insert: {
@@ -524,6 +525,7 @@ export type Database = {
           id?: string
           name: string
           order_index?: number
+          slug: string
           team_id: string
         }
         Update: {
@@ -533,6 +535,7 @@ export type Database = {
           id?: string
           name?: string
           order_index?: number
+          slug?: string
           team_id?: string
         }
         Relationships: [
@@ -725,6 +728,7 @@ export type Database = {
           max_members: number | null
           name: string
           order_index: number | null
+          slug: string
         }
         Insert: {
           created_at?: string | null
@@ -736,6 +740,7 @@ export type Database = {
           max_members?: number | null
           name: string
           order_index?: number | null
+          slug: string
         }
         Update: {
           created_at?: string | null
@@ -747,6 +752,7 @@ export type Database = {
           max_members?: number | null
           name?: string
           order_index?: number | null
+          slug?: string
         }
         Relationships: []
       }
@@ -757,6 +763,14 @@ export type Database = {
     Functions: {
       generate_join_code: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_unique_slug: {
+        Args: {
+          base_slug: string
+          table_name: string
+          existing_id?: string
+        }
         Returns: string
       }
       get_user_teams: {
@@ -773,6 +787,7 @@ export type Database = {
           max_members: number | null
           name: string
           order_index: number | null
+          slug: string
         }[]
       }
     }

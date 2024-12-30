@@ -17,8 +17,6 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["team-categories-with-posts", teamId],
     queryFn: async () => {
-      console.log("Fetching categories for team:", teamId);
-      
       const { data: categoriesData, error: categoriesError } = await supabase
         .from("team_categories")
         .select(`
@@ -34,10 +32,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
         .eq("team_id", teamId)
         .order("order_index");
 
-      if (categoriesError) {
-        console.error("Error fetching categories:", categoriesError);
-        throw categoriesError;
-      }
+      if (categoriesError) throw categoriesError;
 
       // Fetch display names for post creators in a separate query
       const postsWithCreators = await Promise.all(
@@ -64,7 +59,6 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
         })
       );
       
-      console.log("Fetched categories:", postsWithCreators);
       return postsWithCreators;
     },
   });
@@ -106,7 +100,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate(`category/${category.id}`)}
+                onClick={() => navigate(`category/${category.slug}`)}
                 className="opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -119,7 +113,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
                     <div
                       key={post.id}
                       className="flex items-start justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
-                      onClick={() => navigate(`category/${category.id}`)}
+                      onClick={() => navigate(`category/${category.slug}`)}
                     >
                       <div>
                         <h4 className="font-medium">{post.title}</h4>
@@ -141,7 +135,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
                     <Button
                       variant="ghost"
                       className="w-full text-muted-foreground"
-                      onClick={() => navigate(`category/${category.id}`)}
+                      onClick={() => navigate(`category/${category.slug}`)}
                     >
                       Alle {category.team_posts.length} Beiträge anzeigen
                     </Button>
