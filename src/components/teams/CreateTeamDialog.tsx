@@ -63,8 +63,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           team_id: team.id,
           user_id: user.id,
           role: 'owner',
-        })
-        .single();
+        });
 
       if (memberError) {
         console.error('Error adding team member:', memberError);
@@ -76,24 +75,32 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
         const fileExt = logoFile.name.split('.').pop();
         const fileName = `${team.id}-logo.${fileExt}`;
 
+        console.log('Uploading logo:', fileName);
+
         const { error: uploadError } = await supabase.storage
           .from('team-logos')
-          .upload(fileName, logoFile, { upsert: true });
+          .upload(fileName, logoFile, { 
+            upsert: true,
+            contentType: logoFile.type
+          });
 
         if (uploadError) {
           console.error('Error uploading logo:', uploadError);
           throw uploadError;
         }
 
+        console.log('Logo uploaded successfully');
+
         const { data: { publicUrl } } = supabase.storage
           .from('team-logos')
           .getPublicUrl(fileName);
 
+        console.log('Public URL:', publicUrl);
+
         const { error: updateError } = await supabase
           .from('teams')
           .update({ logo_url: publicUrl })
-          .eq('id', team.id)
-          .single();
+          .eq('id', team.id);
 
         if (updateError) {
           console.error('Error updating team logo:', updateError);
