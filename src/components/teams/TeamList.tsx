@@ -18,7 +18,7 @@ interface TeamListProps {
   teams: TeamWithStats[];
   onDelete: (teamId: string) => Promise<void>;
   onLeave: (teamId: string) => Promise<void>;
-  onUpdateOrder?: (teamId: string, newIndex: number) => Promise<void>;
+  onUpdateOrder?: (teamId: string, direction: 'up' | 'down') => Promise<void>;
 }
 
 export const TeamList = ({ 
@@ -62,6 +62,7 @@ export const TeamList = ({
           onDelete={handleDelete}
           onLeave={handleLeave}
           onCopyJoinCode={handleCopyJoinCode}
+          onUpdateOrder={onUpdateOrder}
         />
       ))}
     </div>
