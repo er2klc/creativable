@@ -30,18 +30,18 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
       console.log("Searching for team with join code:", joinCode.trim());
       
       // Find team by join code
-      const { data: teams, error: teamError } = await supabase
+      const { data: team, error: teamError } = await supabase
         .from('teams')
         .select('id, name, created_by')
         .eq('join_code', joinCode.trim())
-        .single();
+        .maybeSingle();
 
       if (teamError) {
         console.error("Team search error:", teamError);
         throw new Error("Fehler beim Suchen des Teams");
       }
       
-      if (!teams) {
+      if (!team) {
         throw new Error("Ungültiger Beitritts-Code");
       }
 
@@ -49,7 +49,7 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
       const { data: existingMember, error: memberCheckError } = await supabase
         .from('team_members')
         .select('id')
-        .eq('team_id', teams.id)
+        .eq('team_id', team.id)
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -66,10 +66,10 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
       const { error: joinError } = await supabase
         .from('team_members')
         .insert({
-          team_id: teams.id,
+          team_id: team.id,
           user_id: user.id,
           role: 'member',
-          invited_by: teams.created_by
+          invited_by: team.created_by
         });
 
       if (joinError) {
@@ -77,7 +77,7 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
         throw new Error("Fehler beim Beitreten des Teams");
       }
 
-      toast.success(`Team "${teams.name}" erfolgreich beigetreten`);
+      toast.success(`Team "${team.name}" erfolgreich beigetreten`);
       setIsOpen(false);
       setJoinCode("");
       onTeamJoined?.();
