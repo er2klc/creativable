@@ -35,7 +35,7 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode, onUpdateOrde
 
   return (
     <Card
-      className="p-6 cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden"
+      className="p-6 cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group"
       onClick={handleClick}
     >
       <div className="flex items-center justify-between">
@@ -84,17 +84,20 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode, onUpdateOrde
         </div>
         <div className="flex items-center gap-2">
           {onUpdateOrder && (
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="h-8 w-8"
-              onClick={(e) => {
-                e.stopPropagation();
-                onUpdateOrder(team.id, 'up');
-              }}
-            >
-              <ArrowUpDown className="h-4 w-4" />
-            </Button>
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-6 w-6"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUpdateOrder(team.id, 'up');
+                }}
+                title="Nach oben verschieben"
+              >
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </div>
           )}
           <TeamCardActions
             teamId={team.id}

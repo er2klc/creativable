@@ -1,4 +1,4 @@
-import { Crown, LogOut, Trash2, Copy } from "lucide-react";
+import { LogOut, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -57,9 +57,6 @@ export const TeamCardActions = ({
 
   return (
     <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-      {isTeamOwner && (
-        <Crown className="h-6 w-6 text-yellow-500 mr-1" />
-      )}
       {joinCode && (
         <Button
           variant="ghost"
