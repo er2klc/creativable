@@ -2,7 +2,7 @@ import { type Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { TeamCardActions } from "./card/TeamCardActions";
 import { useNavigate } from "react-router-dom";
-import { Users, Shield, ArrowUpDown, Crown } from "lucide-react";
+import { Users, Shield, ArrowUpDown, Crown, ArrowUp, ArrowDown } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Button } from "@/components/ui/button";
 
@@ -95,7 +95,19 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode, onUpdateOrde
                 }}
                 title="Nach oben verschieben"
               >
-                <ArrowUpDown className="h-4 w-4" />
+                <ArrowUp className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-6 w-6"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUpdateOrder(team.id, 'down');
+                }}
+                title="Nach unten verschieben"
+              >
+                <ArrowDown className="h-4 w-4" />
               </Button>
             </div>
           )}
