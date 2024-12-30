@@ -20,17 +20,19 @@ const TeamDetail = () => {
   const { data: team, isLoading } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, try to get the team by slug
+      const { data: teamData, error: teamError } = await supabase
         .from('teams')
         .select('*')
         .eq('slug', teamSlug)
         .single();
 
-      if (error) {
-        console.error('Error loading team:', error);
+      if (teamError) {
+        console.error('Error loading team by slug:', teamError);
         return null;
       }
-      return data;
+
+      return teamData;
     },
     enabled: !!teamSlug,
   });
