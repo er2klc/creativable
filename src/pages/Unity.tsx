@@ -16,7 +16,7 @@ const Unity = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      // Get user's teams using the get_user_teams function
+      // Get teams using the RPC function to avoid policy issues
       const { data: teams, error } = await supabase
         .rpc('get_user_teams', { uid: user.id });
 
@@ -26,29 +26,27 @@ const Unity = () => {
         return [];
       }
 
-      // Get team statistics for each team
+      // Get stats for each team
       const teamsWithStats = await Promise.all(
         teams.map(async (team) => {
           try {
-            const { data: members, error: membersError } = await supabase
+            // Simplified query to avoid policy recursion
+            const { count: totalMembers } = await supabase
               .from('team_members')
-              .select('role, user_id, profiles:user_id(display_name)')
+              .select('*', { count: 'exact', head: true })
               .eq('team_id', team.id);
 
-            if (membersError) throw membersError;
-
-            // Count admins (including owner) and total members
-            const admins = members?.filter(m => 
-              m.role === 'admin' || m.role === 'owner'
-            ).length || 0;
-
-            const totalMembers = members?.length || 0;
+            const { count: admins } = await supabase
+              .from('team_members')
+              .select('*', { count: 'exact', head: true })
+              .eq('team_id', team.id)
+              .in('role', ['admin', 'owner']);
 
             return {
               ...team,
               stats: {
-                totalMembers,
-                admins
+                totalMembers: totalMembers || 0,
+                admins: admins || 0
               }
             };
           } catch (error) {
@@ -69,30 +67,46 @@ const Unity = () => {
     enabled: !!user,
   });
 
- const handleDeleteTeam = async (teamId) => {
-  try {
-    const { error } = await supabase
-      .from('teams')
-      .delete()
-      .eq('id', teamId);
+  const handleDeleteTeam = async (teamId: string) => {
+    if (!user) return;
 
-    if (error) throw error;
-    
-    await refetch(); // Aktualisiere die Team-Liste
-    toast.success('Team erfolgreich gelöscht!');
-  } catch (err) {
-    console.error('Fehler beim Löschen des Teams:', err.message);
-    toast.error('Fehler beim Löschen des Teams.');
-  }
-};
+    try {
+      console.log('Attempting to delete team:', teamId);
+      
+      // Direct deletion without checking team data first
+      const { error } = await supabase
+        .from('teams')
+        .delete()
+        .eq('id', teamId);
+
+      if (error) {
+        console.error('Error deleting team:', error);
+        if (error.message?.includes('policy')) {
+          toast.error("Sie haben keine Berechtigung, dieses Team zu löschen");
+        } else {
+          toast.error("Fehler beim Löschen des Teams");
+        }
+        return;
+      }
+
+      await refetch();
+      toast.success('Team erfolgreich gelöscht');
+    } catch (err: any) {
+      console.error('Error in team deletion:', err);
+      toast.error("Fehler beim Löschen des Teams");
+    }
+  };
 
   const handleLeaveTeam = async (teamId: string) => {
+    if (!user) return;
+
     try {
+      // Direct deletion of team membership to avoid policy issues
       const { error } = await supabase
         .from('team_members')
         .delete()
         .eq('team_id', teamId)
-        .eq('user_id', user?.id);
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
