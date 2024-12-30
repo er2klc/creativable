@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Copy, Trash2, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,8 +22,6 @@ export const TeamCardActions = ({
   onLeave,
   onCopyJoinCode,
 }: TeamCardActionsProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-
   const { data: teamMember } = useQuery({
     queryKey: ["team-member", teamId, userId],
     queryFn: async () => {

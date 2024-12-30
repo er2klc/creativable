@@ -9,7 +9,7 @@ export const TeamList = () => {
   const session = useSession();
   const navigate = useNavigate();
 
-  const { data: teams, isLoading } = useQuery({
+  const { data: teams = [] } = useQuery({
     queryKey: ["teams"],
     queryFn: async () => {
       const { data: teams, error } = await supabase
@@ -62,8 +62,6 @@ export const TeamList = () => {
     navigator.clipboard.writeText(code);
     toast.success("Team-Code kopiert");
   };
-
-  if (isLoading) return <div>Loading...</div>;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
