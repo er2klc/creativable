@@ -14,7 +14,12 @@ export function NewsList({ teamId }: NewsListProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("team_news")
-        .select("*, profiles(display_name)")
+        .select(`
+          *,
+          profiles:created_by (
+            display_name
+          )
+        `)
         .eq("team_id", teamId)
         .order("created_at", { ascending: false });
 
