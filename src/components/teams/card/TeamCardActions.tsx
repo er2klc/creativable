@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreVertical, Copy, Trash2, LogOut } from "lucide-react";
+import { Copy, Trash2, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +61,7 @@ export const TeamCardActions = ({
           variant="ghost"
           className="h-8 w-8 p-0"
         >
+          <span className="sr-only">Team Aktionen öffnen</span>
           <MoreVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>

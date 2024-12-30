@@ -1,103 +1,63 @@
 import { useState } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-interface TeamCreationProps {
-  onSuccess: (joinCode: string) => void;
-  onError: (error: Error) => void;
-}
-
-interface CreateTeamData {
-  name: string;
-  description: string;
-  logoFile: File | null;
-}
-
-export const useTeamCreation = ({ onSuccess, onError }: TeamCreationProps) => {
+export function useTeamCreation() {
   const [isLoading, setIsLoading] = useState(false);
   const user = useUser();
+  const queryClient = useQueryClient();
 
-  const uploadLogo = async (teamId: string, logoFile: File): Promise<string | null> => {
-    const fileExt = logoFile.name.split('.').pop();
-    const filePath = `${teamId}/logo.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('team-logos')
-      .upload(filePath, logoFile);
-
-    if (uploadError) {
-      console.error("Error uploading logo:", uploadError);
-      throw uploadError;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('team-logos')
-      .getPublicUrl(filePath);
-
-    return publicUrl;
-  };
-
-  const handleCreate = async ({ name, description, logoFile }: CreateTeamData) => {
+  const createTeam = async (name: string, description: string) => {
     if (!user) {
-      throw new Error("Sie müssen eingeloggt sein, um ein Team zu erstellen");
-    }
-
-    if (!name.trim()) {
-      throw new Error("Bitte geben Sie einen Team-Namen ein");
+      toast.error("Sie müssen angemeldet sein, um ein Team zu erstellen");
+      return null;
     }
 
     setIsLoading(true);
-
     try {
-      // Create team
-      const { data: team, error: teamError } = await supabase
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      
+      const { data: team, error } = await supabase
         .from("teams")
         .insert({
-          name: name.trim(),
-          description: description.trim(),
+          name,
+          description,
           created_by: user.id,
+          slug
         })
-        .select('id, join_code')
+        .select()
         .single();
 
-      if (teamError) throw teamError;
+      if (error) throw error;
 
-      // Upload logo if exists
-      if (logoFile) {
-        const logoUrl = await uploadLogo(team.id, logoFile);
-        
-        const { error: updateError } = await supabase
-          .from("teams")
-          .update({ logo_url: logoUrl })
-          .eq('id', team.id)
-          .select();
-
-        if (updateError) throw updateError;
-      }
-
-      // Add creator as owner
+      // Create team member entry for creator
       const { error: memberError } = await supabase
         .from("team_members")
         .insert({
           team_id: team.id,
           user_id: user.id,
-          role: "owner",
-        })
-        .select();
+          role: "owner"
+        });
 
       if (memberError) throw memberError;
 
-      onSuccess(team.join_code);
+      await queryClient.invalidateQueries({ queryKey: ["teams"] });
+      
+      toast.success("Team erfolgreich erstellt!");
+      return team;
     } catch (error: any) {
       console.error("Error creating team:", error);
-      onError(error);
+      toast.error(error.message || "Fehler beim Erstellen des Teams");
+      return null;
     } finally {
       setIsLoading(false);
     }
   };
 
   return {
-    isLoading,
-    handleCreate,
+    createTeam,
+    isLoading
   };
-};
+}

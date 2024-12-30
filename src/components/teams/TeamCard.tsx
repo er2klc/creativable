@@ -1,4 +1,4 @@
-import { Team } from "@/integrations/supabase/types/teams";
+import { Team } from "@/integrations/supabase/types";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, Crown, Image } from "lucide-react";

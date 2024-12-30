@@ -1,112 +1,106 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { useUser } from "@supabase/auth-helpers-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface CreateCategoryDialogProps {
   teamId: string;
 }
 
-interface FormValues {
-  name: string;
-  description: string;
-}
-
 export function CreateCategoryDialog({ teamId }: CreateCategoryDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const user = useUser();
   const queryClient = useQueryClient();
-  const form = useForm<FormValues>();
 
-  const onSubmit = async (values: FormValues) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setIsLoading(true);
     try {
-      const { error } = await supabase.from("team_categories").insert({
-        team_id: teamId,
-        name: values.name,
-        description: values.description,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
-      });
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      
+      const { error } = await supabase
+        .from("team_categories")
+        .insert({
+          team_id: teamId,
+          name,
+          description,
+          created_by: user.id,
+          slug
+        });
 
       if (error) throw error;
 
       toast.success("Kategorie erfolgreich erstellt");
-      setOpen(false);
-      form.reset();
+      setIsOpen(false);
+      setName("");
+      setDescription("");
       queryClient.invalidateQueries({ queryKey: ["team-categories", teamId] });
     } catch (error: any) {
       console.error("Error creating category:", error);
-      toast.error("Fehler beim Erstellen der Kategorie");
+      toast.error(error.message || "Fehler beim Erstellen der Kategorie");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetTrigger asChild>
+        <Button variant="outline" size="sm">
           <Plus className="h-4 w-4 mr-2" />
-          Neue Kategorie
+          Kategorie erstellen
         </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Neue Kategorie erstellen</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Kategoriename" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+      </SheetTrigger>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Neue Kategorie</SheetTitle>
+          <SheetDescription>
+            Erstellen Sie eine neue Kategorie für Ihr Team
+          </SheetDescription>
+        </SheetHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Kategorie Name</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
             />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Beschreibung</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Beschreibung der Kategorie"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          </div>
+          <div>
+            <Label htmlFor="description">Beschreibung</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
             />
-            <div className="flex justify-end">
-              <Button type="submit">Erstellen</Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          </div>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Wird erstellt..." : "Erstellen"}
+          </Button>
+        </form>
+      </SheetContent>
+    </Sheet>
   );
 }
