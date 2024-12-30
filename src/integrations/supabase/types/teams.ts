@@ -8,6 +8,7 @@ export interface Team {
   join_code: string | null;
   logo_url: string | null;
   slug: string;
+  order_index?: number;
 }
 
 export interface TeamMember {

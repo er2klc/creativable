@@ -71,7 +71,8 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           name: name.trim(),
           description: description.trim() || null,
           created_by: user.id,
-          logo_url: logoUrl
+          logo_url: logoUrl,
+          slug: name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')
         })
         .select()
         .single();
