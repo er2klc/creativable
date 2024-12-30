@@ -32,7 +32,7 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
       // Find team by join code
       const { data: team, error: teamError } = await supabase
         .from('teams')
-        .select('id, name, created_by')
+        .select('*')
         .eq('join_code', joinCode.trim())
         .maybeSingle();
 
@@ -41,6 +41,8 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
         throw new Error("Fehler beim Suchen des Teams");
       }
       
+      console.log("Found team:", team);
+
       if (!team) {
         throw new Error("Ungültiger Beitritts-Code");
       }
