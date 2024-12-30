@@ -44,7 +44,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
 
         // Upload to storage bucket
-        const { error: uploadError } = await supabase.storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
           .from('team-logos')
           .upload(fileName, logoFile, {
             upsert: true,
@@ -56,12 +56,12 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           throw uploadError;
         }
 
-        // Get the public URL
-        const { data: { publicUrl } } = supabase.storage
+        // Get the public URL after successful upload
+        const { data } = supabase.storage
           .from('team-logos')
           .getPublicUrl(fileName);
 
-        logoUrl = publicUrl;
+        logoUrl = data.publicUrl;
       }
 
       // Create team with logo URL if available
