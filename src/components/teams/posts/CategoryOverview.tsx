@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 interface CategoryOverviewProps {
   teamId: string;
@@ -29,7 +29,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
             created_at,
             created_by,
             team_post_comments (count),
-            profiles:created_by (
+            creator:profiles!team_posts_created_by_fkey (
               display_name
             )
           )
@@ -106,7 +106,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
                             addSuffix: true,
                             locale: de,
                           })}{" "}
-                          von {post.profiles?.display_name}
+                          von {post.creator?.display_name}
                         </div>
                       </div>
                       <div className="flex items-center gap-1 text-muted-foreground">
