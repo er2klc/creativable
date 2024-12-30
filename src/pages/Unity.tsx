@@ -70,21 +70,25 @@ const Unity = () => {
   });
 
   const handleDeleteTeam = async (teamId: string) => {
-    try {
-      const { error: teamError } = await supabase
-        .from('teams')
-        .delete()
-        .eq('id', teamId);
+  try {
+    const { error: teamError } = await supabase
+      .from('teams')
+      .delete()
+      .eq('id', teamId);
 
-      if (teamError) throw teamError;
-
-      await refetch();
-      toast.success("Team erfolgreich gelöscht");
-    } catch (error: any) {
-      console.error('Error deleting team:', error);
-      toast.error("Fehler beim Löschen des Teams");
+    if (teamError) {
+      console.error("Error deleting team:", teamError);
+      toast.error(`Fehler beim Löschen des Teams: ${teamError.message}`);
+      return;
     }
-  };
+
+    await refetch();
+    toast.success("Team erfolgreich gelöscht");
+  } catch (error: any) {
+    console.error("Unexpected error:", error);
+    toast.error("Unerwarteter Fehler beim Löschen des Teams");
+  }
+};
 
   const handleLeaveTeam = async (teamId: string) => {
     try {
