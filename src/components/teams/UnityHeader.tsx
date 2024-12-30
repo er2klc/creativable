@@ -22,7 +22,7 @@ export const UnityHeader = ({ onTeamCreated, onTeamJoined }: UnityHeaderProps) =
         <Button 
           variant="outline" 
           onClick={() => setIsJoinDialogOpen(true)}
-          className="text-black"
+          
         >
           <UserPlus className="mr-2 h-4 w-4" />
           Team beitreten
