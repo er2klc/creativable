@@ -69,24 +69,19 @@ const Unity = () => {
     enabled: !!user,
   });
 
-  const handleDeleteTeam = async (teamId: string) => {
+ const handleDeleteTeam = async (teamId) => {
   try {
-    const { error: teamError } = await supabase
+    const { error } = await supabase
       .from('teams')
       .delete()
       .eq('id', teamId);
 
-    if (teamError) {
-      console.error("Error deleting team:", teamError);
-      toast.error(`Fehler beim Löschen des Teams: ${teamError.message}`);
-      return;
-    }
+    if (error) throw error;
 
-    await refetch();
-    toast.success("Team erfolgreich gelöscht");
-  } catch (error: any) {
-    console.error("Unexpected error:", error);
-    toast.error("Unerwarteter Fehler beim Löschen des Teams");
+    toast.success('Team erfolgreich gelöscht!');
+  } catch (err) {
+    console.error('Fehler beim Löschen des Teams:', err.message);
+    toast.error('Fehler beim Löschen des Teams.');
   }
 };
 
