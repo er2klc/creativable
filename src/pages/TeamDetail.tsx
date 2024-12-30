@@ -22,6 +22,7 @@ const TeamDetail = () => {
     queryFn: async () => {
       console.log('Current user ID:', user?.id);
       console.log('Fetching team with slug:', teamSlug);
+      console.log('TeamSlug aus Params1:', teamSlug);
       
       // First try to get all teams the user has access to
       const { data: userTeams, error: userTeamsError } = await supabase
