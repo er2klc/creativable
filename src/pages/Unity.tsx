@@ -16,7 +16,11 @@ const Unity = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      const { data: teams, error } = await supabase.rpc('get_user_teams', { uid: user.id });
+      // Get user's teams
+      const { data: teams, error } = await supabase
+        .from('teams')
+        .select('*')
+        .order('order_index', { ascending: true });
 
       if (error) {
         console.error("Error loading teams:", error);
@@ -24,12 +28,13 @@ const Unity = () => {
         return [];
       }
 
+      // Get team statistics for each team
       const teamsWithStats = await Promise.all(
         teams.map(async (team) => {
-          // Get all team members with their profile information
           const { data: members, error: membersError } = await supabase
             .from('team_members')
             .select(`
+              id,
               role,
               profiles:user_id (
                 display_name
@@ -45,9 +50,8 @@ const Unity = () => {
             };
           }
 
-          // Count admins (including owner) and total members
           const admins = members.filter(m => ['admin', 'owner'].includes(m.role)).length;
-          const totalMembers = members.length; // All members count, including admins
+          const totalMembers = members.length;
 
           return {
             ...team,
@@ -59,14 +63,13 @@ const Unity = () => {
         })
       );
 
-      return teamsWithStats.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+      return teamsWithStats;
     },
     enabled: !!user,
   });
 
   const handleDeleteTeam = async (teamId: string) => {
     try {
-      // Delete the team - the trigger will handle member deletion
       const { error: teamError } = await supabase
         .from('teams')
         .delete()
@@ -124,19 +127,11 @@ const Unity = () => {
 
   if (!user) return null;
 
-  const handleTeamCreated = async () => {
-    await refetch();
-  };
-
-  const handleTeamJoined = async () => {
-    await refetch();
-  };
-
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <UnityHeader 
-        onTeamCreated={handleTeamCreated}
-        onTeamJoined={handleTeamJoined}
+        onTeamCreated={refetch}
+        onTeamJoined={refetch}
       />
       <TeamList
         isLoading={isLoading}

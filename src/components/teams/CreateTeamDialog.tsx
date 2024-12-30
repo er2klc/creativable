@@ -22,16 +22,80 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
   const [joinCode, setJoinCode] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  
-  const { isLoading, handleCreate } = useTeamCreation({
-    onSuccess: (code) => {
-      setJoinCode(code);
-      onTeamCreated?.();
-    },
-    onError: (error) => {
-      toast.error(error.message || "Fehler beim Erstellen des Teams");
+  const [isLoading, setIsLoading] = useState(false);
+  const user = useUser();
+
+  const handleCreate = async () => {
+    if (!user) {
+      toast.error("Sie müssen eingeloggt sein, um ein Team zu erstellen");
+      return;
     }
-  });
+
+    if (!name.trim()) {
+      toast.error("Bitte geben Sie einen Team-Namen ein");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Create team
+      const { data: team, error: teamError } = await supabase
+        .from('teams')
+        .insert({
+          name: name.trim(),
+          description: description.trim() || null,
+          created_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (teamError) throw teamError;
+
+      // Add creator as owner
+      const { error: memberError } = await supabase
+        .from('team_members')
+        .insert({
+          team_id: team.id,
+          user_id: user.id,
+          role: 'owner',
+        });
+
+      if (memberError) throw memberError;
+
+      // Upload logo if provided
+      if (logoFile && team.id) {
+        const fileExt = logoFile.name.split('.').pop();
+        const fileName = `${team.id}-logo.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('team-logos')
+          .upload(fileName, logoFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('team-logos')
+          .getPublicUrl(fileName);
+
+        const { error: updateError } = await supabase
+          .from('teams')
+          .update({ logo_url: publicUrl })
+          .eq('id', team.id);
+
+        if (updateError) throw updateError;
+      }
+
+      setJoinCode(team.join_code);
+      onTeamCreated?.();
+      toast.success("Team erfolgreich erstellt");
+    } catch (error: any) {
+      console.error('Error creating team:', error);
+      toast.error("Fehler beim Erstellen des Teams");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -61,14 +125,6 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
       setLogoFile(null);
       setLogoPreview(null);
     }
-  };
-
-  const handleSubmit = async () => {
-    await handleCreate({
-      name,
-      description,
-      logoFile
-    });
   };
 
   return (
@@ -137,7 +193,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
         <DialogFooter>
           {!joinCode ? (
             <Button
-              onClick={handleSubmit}
+              onClick={handleCreate}
               disabled={!name.trim() || isLoading}
             >
               {isLoading ? "Erstelle..." : "Team erstellen"}
