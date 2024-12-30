@@ -20,7 +20,7 @@ const App = () => {
     <BrowserRouter>
       <Routes>
         {/* Route mit :teamSlug */}
-        <Route path="/teams/:teamSlug" element={<TeamDetail />} />
+        <Route path="/unity/team/:teamSlug" element={<TeamDetail />} />
       </Routes>
     </BrowserRouter>
   );
