@@ -127,11 +127,27 @@ const Unity = () => {
 
   if (!user) return null;
 
+  const handleTeamCreated = async () => {
+    try {
+      await refetch();
+    } catch (error) {
+      console.error('Error refetching after team creation:', error);
+    }
+  };
+
+  const handleTeamJoined = async () => {
+    try {
+      await refetch();
+    } catch (error) {
+      console.error('Error refetching after team join:', error);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <UnityHeader 
-        onTeamCreated={refetch}
-        onTeamJoined={refetch}
+        onTeamCreated={handleTeamCreated}
+        onTeamJoined={handleTeamJoined}
       />
       <TeamList
         isLoading={isLoading}
