@@ -14,17 +14,24 @@ interface CategoryOverviewProps {
 export function CategoryOverview({ teamId }: CategoryOverviewProps) {
   const navigate = useNavigate();
   
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], isLoading } = useQuery({
     queryKey: ["team-categories-with-posts", teamId],
     queryFn: async () => {
+      console.log("Fetching categories for team:", teamId);
+      
       const { data: categoriesData, error: categoriesError } = await supabase
         .from("team_categories")
         .select(`
           *,
-          posts:team_posts(
-            *,
-            profiles:created_by(display_name),
-            comments:team_post_comments(count)
+          team_posts (
+            id,
+            title,
+            created_at,
+            created_by,
+            team_post_comments (count),
+            profiles:created_by (
+              display_name
+            )
           )
         `)
         .eq("team_id", teamId)
@@ -40,10 +47,18 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
     },
   });
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
   if (!categories?.length) {
     return (
       <div className="text-center text-muted-foreground py-8">
-        Noch keine Kategorien vorhanden
+        Keine Kategorien gefunden
       </div>
     );
   }
@@ -51,7 +66,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
   return (
     <div className="space-y-6">
       {categories.map((category) => {
-        const topPosts = category.posts
+        const topPosts = category.team_posts
           ?.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
           .slice(0, 3) || [];
 
@@ -96,17 +111,17 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
                       </div>
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <MessageSquare className="h-4 w-4" />
-                        <span className="text-sm">{post.comments?.[0]?.count || 0}</span>
+                        <span className="text-sm">{post.team_post_comments?.[0]?.count || 0}</span>
                       </div>
                     </div>
                   ))}
-                  {category.posts?.length > 3 && (
+                  {category.team_posts?.length > 3 && (
                     <Button
                       variant="ghost"
                       className="w-full text-muted-foreground"
                       onClick={() => navigate(`category/${category.id}`)}
                     >
-                      Alle {category.posts.length} Beiträge anzeigen
+                      Alle {category.team_posts.length} Beiträge anzeigen
                     </Button>
                   )}
                 </div>
