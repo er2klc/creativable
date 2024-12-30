@@ -72,22 +72,8 @@ const Unity = () => {
 
     try {
       console.log('Attempting to delete team:', teamId);
-      console.log('Current user:', user.id);
       
-      // First check if user is allowed to delete the team
-      const { data: teamData } = await supabase
-        .from('teams')
-        .select('*, team_members!inner(*)')
-        .eq('id', teamId)
-        .single();
-
-      console.log('Team data:', teamData);
-
-      if (!teamData) {
-        toast.error('Team nicht gefunden');
-        return;
-      }
-
+      // Direct deletion without checking team data first
       const { error } = await supabase
         .from('teams')
         .delete()
