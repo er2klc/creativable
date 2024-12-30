@@ -26,7 +26,10 @@ const TeamDetail = () => {
         .eq('slug', teamSlug)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading team:', error);
+        return null;
+      }
       return data;
     },
     enabled: !!teamSlug,
