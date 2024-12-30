@@ -29,36 +29,20 @@ const Unity = () => {
       // Get team statistics for each team
       const teamsWithStats = await Promise.all(
         teams.map(async (team) => {
-          try {
-            const { data: members, error: membersError } = await supabase
-              .from('team_members')
-              .select(`
-                role,
-                user_id,
-                profiles:user_id (
-                  display_name
-                )
-              `)
-              .eq('team_id', team.id);
+          const { data: members, error: membersError } = await supabase
+            .from('team_members')
+            .select(`
+              id,
+              role,
+              user_id,
+              profiles:user_id (
+                display_name
+              )
+            `)
+            .eq('team_id', team.id);
 
-            if (membersError) throw membersError;
-
-            // Count admins (including owner) and total members
-            const admins = members?.filter(m => 
-              m.role === 'admin' || m.role === 'owner'
-            ).length || 0;
-
-            const totalMembers = members?.length || 0;
-
-            return {
-              ...team,
-              stats: {
-                totalMembers,
-                admins
-              }
-            };
-          } catch (error) {
-            console.error(`Error fetching stats for team ${team.id}:`, error);
+          if (membersError) {
+            console.error(`Error fetching stats for team ${team.id}:`, membersError);
             return {
               ...team,
               stats: {
@@ -67,6 +51,21 @@ const Unity = () => {
               }
             };
           }
+
+          // Count admins (including owner) and total members
+          const admins = members?.filter(m => 
+            m.role === 'admin' || m.role === 'owner'
+          ).length || 0;
+
+          const totalMembers = members?.length || 0;
+
+          return {
+            ...team,
+            stats: {
+              totalMembers,
+              admins
+            }
+          };
         })
       );
 
@@ -74,57 +73,6 @@ const Unity = () => {
     },
     enabled: !!user,
   });
-
-  const handleDeleteTeam = async (teamId: string) => {
-    try {
-      const { error } = await supabase
-        .from('teams')
-        .delete()
-        .eq('id', teamId);
-
-      if (error) throw error;
-      
-      await refetch();
-      toast.success('Team erfolgreich gelöscht!');
-    } catch (err: any) {
-      console.error('Fehler beim Löschen des Teams:', err.message);
-      toast.error('Fehler beim Löschen des Teams.');
-    }
-  };
-
-  const handleLeaveTeam = async (teamId: string) => {
-    try {
-      const { error } = await supabase
-        .from('team_members')
-        .delete()
-        .eq('team_id', teamId)
-        .eq('user_id', user?.id);
-
-      if (error) throw error;
-
-      await refetch();
-      toast.success("Team erfolgreich verlassen");
-    } catch (error: any) {
-      console.error('Error leaving team:', error);
-      toast.error("Fehler beim Verlassen des Teams");
-    }
-  };
-
-  const handleUpdateTeamOrder = async (teamId: string, newIndex: number) => {
-    try {
-      const { error } = await supabase
-        .from('teams')
-        .update({ order_index: newIndex })
-        .eq('id', teamId);
-
-      if (error) throw error;
-
-      await refetch();
-    } catch (error: any) {
-      console.error('Error updating team order:', error);
-      toast.error("Fehler beim Aktualisieren der Reihenfolge");
-    }
-  };
 
   useEffect(() => {
     if (!user) {
