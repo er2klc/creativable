@@ -20,6 +20,7 @@ const TeamDetail = () => {
   const { data: team, isLoading } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
+      console.log('Current user ID:', user?.id);
       console.log('Fetching team with slug:', teamSlug);
       
       // First try to get all teams the user has access to
@@ -37,7 +38,24 @@ const TeamDetail = () => {
       const team = userTeams?.find(t => t.slug === teamSlug);
       console.log('Found team:', team);
 
-      return team || null;
+      if (!team) {
+        // If team not found through RPC, try direct query as fallback
+        const { data: directTeam, error: directError } = await supabase
+          .from('teams')
+          .select('*')
+          .eq('slug', teamSlug)
+          .single();
+
+        if (directError) {
+          console.error('Error in direct team query:', directError);
+          return null;
+        }
+
+        console.log('Found team through direct query:', directTeam);
+        return directTeam;
+      }
+
+      return team;
     },
     enabled: !!teamSlug && !!user?.id,
   });
