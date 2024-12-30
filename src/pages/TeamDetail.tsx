@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Plus, Calendar as CalendarIcon, FolderOpen as FolderOpenIcon, MessageSquare, Bell, Settings, BarChart, Users } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, FolderOpen as FolderOpenIcon, MessageSquare, Bell, Settings, BarChart, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamHeader } from "@/components/teams/TeamHeader";
 import { CreateNewsDialog } from "@/components/teams/news/CreateNewsDialog";
@@ -80,7 +80,7 @@ const TeamDetail = () => {
     },
     {
       id: "files",
-      icon: <FolderOpen className="h-8 w-8" />,
+      icon: <FolderOpenIcon className="h-8 w-8" />,
       label: "Dateien",
       description: "Verwalten Sie gemeinsame Dokumente",
       gradient: "from-yellow-500 to-yellow-600",
