@@ -55,52 +55,50 @@ export const TeamCardActions = ({
   };
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+    <div className="flex gap-2">
+      {joinCode && (
         <Button
           variant="ghost"
-          className="h-8 w-8 p-0"
-        >
-          <span className="sr-only">Team Aktionen öffnen</span>
-          <MoreVertical className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[160px]">
-        {joinCode && (
-          <DropdownMenuItem onClick={(e) => {
+          size="sm"
+          onClick={(e) => {
             e.stopPropagation();
-            handleAction(() => onCopyJoinCode(joinCode, e));
-          }}>
-            <Copy className="mr-2 h-4 w-4" />
-            Code kopieren
-          </DropdownMenuItem>
-        )}
-        {isOwner ? (
-          <DropdownMenuItem
-            className="text-destructive focus:text-destructive"
+            onCopyJoinCode(joinCode, e);
+          }}
+          className="flex items-center gap-2"
+        >
+          <Copy className="h-4 w-4" />
+          Code kopieren
+        </Button>
+      )}
+      {isOwner ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="flex items-center gap-2 text-destructive hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+          Team löschen
+        </Button>
+      ) : (
+        teamMember && (
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              handleAction(onDelete);
+              onLeave();
             }}
+            className="flex items-center gap-2 text-destructive hover:text-destructive"
           >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Team löschen
-          </DropdownMenuItem>
-        ) : (
-          teamMember && (
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAction(onLeave);
-              }}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Team verlassen
-            </DropdownMenuItem>
-          )
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+            <LogOut className="h-4 w-4" />
+            Team verlassen
+          </Button>
+        )
+      )}
+    </div>
   );
 };
