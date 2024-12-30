@@ -1,14 +1,23 @@
-import { Trash2, UserMinus, Copy } from "lucide-react";
+import { useState } from "react";
+import { MoreVertical, Copy, Trash2, LogOut } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface TeamCardActionsProps {
   teamId: string;
   userId?: string;
   isOwner: boolean;
-  joinCode: string;
+  joinCode?: string;
   onDelete: () => void;
   onLeave: () => void;
-  onCopyJoinCode: (joinCode: string, e?: React.MouseEvent) => Promise<void>;
+  onCopyJoinCode: (code: string, e?: React.MouseEvent) => void;
 }
 
 export const TeamCardActions = ({
@@ -20,37 +29,77 @@ export const TeamCardActions = ({
   onLeave,
   onCopyJoinCode,
 }: TeamCardActionsProps) => {
-  if (!userId) return null;
+  const [isOpen, setIsOpen] = useState(false);
+
+  const { data: teamMember } = useQuery({
+    queryKey: ["team-member", teamId, userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      
+      const { data, error } = await supabase
+        .from("team_members")
+        .select("id")
+        .eq("team_id", teamId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId && !!teamId,
+  });
+
+  const handleAction = (action: () => void) => {
+    action();
+    setIsOpen(false);
+  };
 
   return (
-    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 hover:bg-primary/10"
-        onClick={(e) => onCopyJoinCode(joinCode, e)}
-      >
-        <Copy className="h-4 w-4" />
-      </Button>
-      {isOwner ? (
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
         <Button
           variant="ghost"
-          size="icon"
-          className="h-8 w-8 hover:bg-destructive/10 text-destructive"
-          onClick={onDelete}
+          className="h-8 w-8 p-0"
         >
-          <Trash2 className="h-4 w-4" />
+          <MoreVertical className="h-4 w-4" />
         </Button>
-      ) : (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 hover:bg-destructive/10 text-destructive"
-          onClick={onLeave}
-        >
-          <UserMinus className="h-4 w-4" />
-        </Button>
-      )}
-    </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-[160px]">
+        {joinCode && (
+          <DropdownMenuItem onClick={(e) => {
+            e.stopPropagation();
+            handleAction(() => onCopyJoinCode(joinCode, e));
+          }}>
+            <Copy className="mr-2 h-4 w-4" />
+            Code kopieren
+          </DropdownMenuItem>
+        )}
+        {isOwner ? (
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAction(onDelete);
+            }}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Team löschen
+          </DropdownMenuItem>
+        ) : (
+          teamMember && (
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAction(onLeave);
+              }}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Team verlassen
+            </DropdownMenuItem>
+          )
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
