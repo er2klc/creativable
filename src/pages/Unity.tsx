@@ -29,30 +29,13 @@ const Unity = () => {
       // Get team statistics for each team
       const teamsWithStats = await Promise.all(
         teams.map(async (team) => {
-          try {
-            const { data: members, error: membersError } = await supabase
-              .from('team_members')
-              .select('role, user_id, profiles:user_id(display_name)')
-              .eq('team_id', team.id);
+          const { data: members, error: membersError } = await supabase
+            .from('team_members')
+            .select('role')
+            .eq('team_id', team.id);
 
-            if (membersError) throw membersError;
-
-            // Count admins (including owner) and total members
-            const admins = members?.filter(m => 
-              m.role === 'admin' || m.role === 'owner'
-            ).length || 0;
-
-            const totalMembers = members?.length || 0;
-
-            return {
-              ...team,
-              stats: {
-                totalMembers,
-                admins
-              }
-            };
-          } catch (error) {
-            console.error(`Error fetching stats for team ${team.id}:`, error);
+          if (membersError) {
+            console.error(`Error fetching stats for team ${team.id}:`, membersError);
             return {
               ...team,
               stats: {
@@ -61,6 +44,21 @@ const Unity = () => {
               }
             };
           }
+
+          // Count admins (including owner) and total members
+          const admins = members?.filter(m => 
+            m.role === 'admin' || m.role === 'owner'
+          ).length || 0;
+
+          const totalMembers = members?.length || 0;
+
+          return {
+            ...team,
+            stats: {
+              totalMembers,
+              admins
+            }
+          };
         })
       );
 
