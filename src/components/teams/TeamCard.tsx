@@ -21,8 +21,9 @@ export const TeamCard = ({ team, onDelete, onLeave, onCopyJoinCode }: TeamCardPr
   const navigate = useNavigate();
 
   const handleClick = (e: React.MouseEvent) => {
-    // Only navigate if the click wasn't on a button
-    if ((e.target as HTMLElement).closest('button')) {
+    // Only navigate if the click wasn't on a button or dialog
+    if ((e.target as HTMLElement).closest('button') || 
+        (e.target as HTMLElement).closest('[role="dialog"]')) {
       return;
     }
     navigate(`/unity/team/${team.slug}`);

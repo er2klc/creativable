@@ -1,4 +1,4 @@
-import { Copy, Trash2, LogOut, Crown } from "lucide-react";
+import { Crown, LogOut, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -13,10 +13,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface TeamCardActionsProps {
   teamId: string;
-  userId?: string;
   isOwner: boolean;
   joinCode?: string;
   onDelete: () => void;
@@ -26,33 +26,33 @@ interface TeamCardActionsProps {
 
 export const TeamCardActions = ({
   teamId,
-  userId,
   isOwner,
   joinCode,
   onDelete,
   onLeave,
   onCopyJoinCode,
 }: TeamCardActionsProps) => {
+  const session = useSession();
+
   const { data: teamMember } = useQuery({
-    queryKey: ["team-member", teamId, userId],
+    queryKey: ["team-member", teamId, session?.user?.id],
     queryFn: async () => {
-      if (!userId) return null;
+      if (!session?.user?.id) return null;
       
       const { data, error } = await supabase
         .from("team_members")
         .select("id, role")
         .eq("team_id", teamId)
-        .eq("user_id", userId)
+        .eq("user_id", session.user.id)
         .maybeSingle();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!userId && !!teamId,
+    enabled: !!session?.user?.id && !!teamId,
   });
 
   const isMember = !!teamMember;
-  const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
 
   return (
     <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -98,7 +98,7 @@ export const TeamCardActions = ({
               <Trash2 className="h-4 w-4" />
             </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
             <AlertDialogHeader>
               <AlertDialogTitle>Team löschen</AlertDialogTitle>
               <AlertDialogDescription>
