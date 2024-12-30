@@ -548,7 +548,6 @@ export type Database = {
       team_members: {
         Row: {
           id: string
-          invited_by: string | null
           joined_at: string | null
           role: string
           team_id: string
@@ -556,7 +555,6 @@ export type Database = {
         }
         Insert: {
           id?: string
-          invited_by?: string | null
           joined_at?: string | null
           role?: string
           team_id: string
@@ -564,7 +562,6 @@ export type Database = {
         }
         Update: {
           id?: string
-          invited_by?: string | null
           joined_at?: string | null
           role?: string
           team_id?: string
