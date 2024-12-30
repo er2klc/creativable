@@ -1,4 +1,4 @@
-import { Copy, Trash2, LogOut } from "lucide-react";
+import { Copy, Trash2, LogOut, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -41,7 +41,10 @@ export const TeamCardActions = ({
   });
 
   return (
-    <div className="flex gap-2">
+    <div className="flex items-center gap-2">
+      {isOwner && (
+        <Crown className="h-4 w-4 text-yellow-500" />
+      )}
       {joinCode && (
         <Button
           variant="ghost"
