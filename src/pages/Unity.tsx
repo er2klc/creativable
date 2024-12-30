@@ -32,7 +32,13 @@ const Unity = () => {
           try {
             const { data: members, error: membersError } = await supabase
               .from('team_members')
-              .select('role, user_id, profiles:user_id(display_name)')
+              .select(`
+                role,
+                user_id,
+                profiles:user_id (
+                  display_name
+                )
+              `)
               .eq('team_id', team.id);
 
             if (membersError) throw membersError;
@@ -69,22 +75,22 @@ const Unity = () => {
     enabled: !!user,
   });
 
- const handleDeleteTeam = async (teamId) => {
-  try {
-    const { error } = await supabase
-      .from('teams')
-      .delete()
-      .eq('id', teamId);
+  const handleDeleteTeam = async (teamId: string) => {
+    try {
+      const { error } = await supabase
+        .from('teams')
+        .delete()
+        .eq('id', teamId);
 
-    if (error) throw error;
-    
-    await refetch(); // Aktualisiere die Team-Liste
-    toast.success('Team erfolgreich gelöscht!');
-  } catch (err) {
-    console.error('Fehler beim Löschen des Teams:', err.message);
-    toast.error('Fehler beim Löschen des Teams.');
-  }
-};
+      if (error) throw error;
+      
+      await refetch();
+      toast.success('Team erfolgreich gelöscht!');
+    } catch (err: any) {
+      console.error('Fehler beim Löschen des Teams:', err.message);
+      toast.error('Fehler beim Löschen des Teams.');
+    }
+  };
 
   const handleLeaveTeam = async (teamId: string) => {
     try {
