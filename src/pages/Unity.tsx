@@ -119,8 +119,17 @@ const Unity = () => {
     }
   };
 
-  const handleUpdateTeamOrder = async (teamId: string, newIndex: number) => {
+  const handleUpdateTeamOrder = async (teamId: string, direction: 'up' | 'down') => {
     try {
+      const currentTeam = teamsWithStats.find(t => t.id === teamId);
+      if (!currentTeam) return;
+
+      const currentIndex = teamsWithStats.findIndex(t => t.id === teamId);
+      const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+      // Don't proceed if we're trying to move beyond array bounds
+      if (newIndex < 0 || newIndex >= teamsWithStats.length) return;
+
       const { error } = await supabase
         .from('teams')
         .update({ order_index: newIndex })
