@@ -1,43 +1,82 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquare, Bell, Calendar, FolderOpen } from "lucide-react";
+import { MessageSquare, Bell, Calendar, FolderOpen, Users, Settings, BarChart } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface TeamTabsProps {
   children: React.ReactNode;
   defaultValue?: string;
+  isAdmin?: boolean;
 }
 
-export function TeamTabs({ children, defaultValue = "posts" }: TeamTabsProps) {
+export function TeamTabs({ children, defaultValue = "posts", isAdmin = false }: TeamTabsProps) {
+  const tabs = [
+    {
+      id: "posts",
+      icon: <MessageSquare className="h-6 w-6" />,
+      label: "Beiträge",
+      adminOnly: false,
+    },
+    {
+      id: "news",
+      icon: <Bell className="h-6 w-6" />,
+      label: "News",
+      adminOnly: false,
+    },
+    {
+      id: "calendar",
+      icon: <Calendar className="h-6 w-6" />,
+      label: "Kalender",
+      adminOnly: false,
+    },
+    {
+      id: "files",
+      icon: <FolderOpen className="h-6 w-6" />,
+      label: "Dateien",
+      adminOnly: false,
+    },
+    {
+      id: "members",
+      icon: <Users className="h-6 w-6" />,
+      label: "Mitglieder",
+      adminOnly: true,
+    },
+    {
+      id: "analytics",
+      icon: <BarChart className="h-6 w-6" />,
+      label: "Statistiken",
+      adminOnly: true,
+    },
+    {
+      id: "settings",
+      icon: <Settings className="h-6 w-6" />,
+      label: "Einstellungen",
+      adminOnly: true,
+    },
+  ];
+
+  const visibleTabs = tabs.filter(tab => !tab.adminOnly || isAdmin);
+
   return (
     <Tabs defaultValue={defaultValue} className="w-full">
-      <TabsList className="w-full justify-start bg-transparent space-x-4">
-        <TabsTrigger 
-          value="posts" 
-          className="data-[state=active]:bg-primary/10 rounded-2xl p-4 h-16 w-16 flex flex-col items-center gap-1 hover:bg-accent transition-colors"
-        >
-          <MessageSquare className="h-6 w-6" />
-          <span className="text-xs">Beiträge</span>
-        </TabsTrigger>
-        <TabsTrigger 
-          value="news" 
-          className="data-[state=active]:bg-primary/10 rounded-2xl p-4 h-16 w-16 flex flex-col items-center gap-1 hover:bg-accent transition-colors"
-        >
-          <Bell className="h-6 w-6" />
-          <span className="text-xs">News</span>
-        </TabsTrigger>
-        <TabsTrigger 
-          value="calendar" 
-          className="data-[state=active]:bg-primary/10 rounded-2xl p-4 h-16 w-16 flex flex-col items-center gap-1 hover:bg-accent transition-colors"
-        >
-          <Calendar className="h-6 w-6" />
-          <span className="text-xs">Kalender</span>
-        </TabsTrigger>
-        <TabsTrigger 
-          value="files" 
-          className="data-[state=active]:bg-primary/10 rounded-2xl p-4 h-16 w-16 flex flex-col items-center gap-1 hover:bg-accent transition-colors"
-        >
-          <FolderOpen className="h-6 w-6" />
-          <span className="text-xs">Dateien</span>
-        </TabsTrigger>
+      <TabsList className="grid grid-cols-4 md:grid-cols-7 gap-4 bg-transparent p-4">
+        {visibleTabs.map((tab) => (
+          <TabsTrigger
+            key={tab.id}
+            value={tab.id}
+            className={cn(
+              "flex flex-col items-center gap-2 p-4 rounded-xl transition-all",
+              "data-[state=active]:bg-primary/10 hover:bg-accent",
+              "min-h-[100px] aspect-square",
+              "border border-border shadow-sm",
+              "group"
+            )}
+          >
+            <div className="p-3 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 group-hover:from-primary/30 group-hover:to-primary/10 transition-colors">
+              {tab.icon}
+            </div>
+            <span className="text-xs font-medium">{tab.label}</span>
+          </TabsTrigger>
+        ))}
       </TabsList>
       {children}
     </Tabs>

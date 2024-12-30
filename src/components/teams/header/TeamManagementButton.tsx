@@ -4,12 +4,14 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { TeamMemberList } from "./TeamMemberList";
 
 interface TeamManagementButtonProps {
+  teamId: string;
+  isOwner: boolean;
   isAdmin: boolean;
   members: any[];
 }
 
-export function TeamManagementButton({ isAdmin, members }: TeamManagementButtonProps) {
-  if (!isAdmin) return null;
+export function TeamManagementButton({ teamId, isOwner, isAdmin, members }: TeamManagementButtonProps) {
+  if (!isAdmin && !isOwner) return null;
 
   return (
     <Sheet>

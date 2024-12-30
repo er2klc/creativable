@@ -33,18 +33,18 @@ export function TeamHeaderTitle({
         <SheetTrigger asChild>
           <button className="relative group">
             {team.logo_url ? (
-              <Avatar className="h-20 w-20 cursor-pointer">
-                <AvatarImage src={team.logo_url} alt={team.name} />
-                <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+              <Avatar className="h-32 w-32 cursor-pointer border-2 border-primary/20">
+                <AvatarImage src={team.logo_url} alt={team.name} className="object-cover" />
+                <AvatarFallback className="text-2xl">{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
             ) : (
-              <Avatar className="h-20 w-20 cursor-pointer">
-                <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+              <Avatar className="h-32 w-32 cursor-pointer border-2 border-primary/20">
+                <AvatarFallback className="text-2xl">{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
             )}
             {isAdmin && (
               <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Image className="h-6 w-6 text-white" />
+                <Image className="h-8 w-8 text-white" />
               </div>
             )}
           </button>
@@ -65,11 +65,11 @@ export function TeamHeaderTitle({
       </Sheet>
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-3xl font-semibold text-primary">
+          <h1 className="text-4xl font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             {team.name}
           </h1>
         </div>
-        <div className="flex items-center gap-4 mt-1 text-muted-foreground">
+        <div className="flex items-center gap-4 mt-2 text-muted-foreground">
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-1">
