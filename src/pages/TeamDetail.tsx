@@ -13,6 +13,8 @@ import { NewsList } from "@/components/teams/news/NewsList";
 import { useUser } from "@supabase/auth-helpers-react";
 
 const TeamDetail = () => {
+  const params = useParams();
+  console.log('Params:', params);
   const { teamSlug } = useParams();
   const navigate = useNavigate();
   const user = useUser();
