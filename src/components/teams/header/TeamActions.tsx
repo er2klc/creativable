@@ -1,5 +1,4 @@
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, Trash2, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -69,12 +68,9 @@ export function TeamActions({ teamId, isAdmin, isOwner }: TeamActionsProps) {
       {isOwner ? (
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button
-              variant="outline"
-              className="text-sm text-destructive hover:bg-destructive/10"
-            >
-              Team löschen
-            </Button>
+            <Trash2 
+              className="h-4 w-4 cursor-pointer hover:text-destructive transition-colors"
+            />
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -99,12 +95,9 @@ export function TeamActions({ teamId, isAdmin, isOwner }: TeamActionsProps) {
       ) : !isAdmin ? (
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button
-              variant="outline"
-              className="text-sm text-destructive hover:bg-destructive/10"
-            >
-              Team verlassen
-            </Button>
+            <LogOut 
+              className="h-4 w-4 cursor-pointer hover:text-primary transition-colors"
+            />
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -126,13 +119,10 @@ export function TeamActions({ teamId, isAdmin, isOwner }: TeamActionsProps) {
           </AlertDialogContent>
         </AlertDialog>
       ) : null}
-      <Button
-        variant="ghost"
+      <ArrowLeft 
+        className="h-4 w-4 cursor-pointer hover:text-primary transition-colors"
         onClick={() => navigate('/unity')}
-        className="text-sm text-muted-foreground hover:text-primary transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-      </Button>
+      />
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { Team } from "@/integrations/supabase/types/teams";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Copy, Trash2, Users, Crown, ChevronRight, Image, LogOut } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -42,8 +41,10 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
     e.stopPropagation();
     try {
       await onDelete(team.id);
+      toast.success("Team erfolgreich gelöscht");
     } catch (error) {
       console.error('Error in TeamCard delete:', error);
+      toast.error("Fehler beim Löschen des Teams");
     }
   };
 
@@ -51,12 +52,13 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
     e.stopPropagation();
     try {
       await onLeave(team.id);
+      toast.success("Team erfolgreich verlassen");
     } catch (error) {
       console.error('Error in TeamCard leave:', error);
+      toast.error("Fehler beim Verlassen des Teams");
     }
   };
 
-  // Only the team creator (owner) can delete the team
   const isOwner = team.created_by === user?.id;
 
   return (
@@ -109,26 +111,18 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
           </div>
           <div className="flex gap-2">
             {team.join_code && (
-              <Button
-                size="icon"
-                variant="ghost"
+              <Copy
+                className="h-4 w-4 cursor-pointer hover:text-primary transition-colors"
                 onClick={(e) => copyJoinCode(team.join_code!, e)}
-                className="h-8 w-8"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
+              />
             )}
             {isOwner ? (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                  <Trash2 
+                    className="h-4 w-4 cursor-pointer hover:text-destructive transition-colors"
                     onClick={(e) => e.stopPropagation()}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  />
                 </AlertDialogTrigger>
                 <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                   <AlertDialogHeader>
@@ -153,14 +147,10 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
             ) : (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8"
+                  <LogOut 
+                    className="h-4 w-4 cursor-pointer hover:text-primary transition-colors"
                     onClick={(e) => e.stopPropagation()}
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
+                  />
                 </AlertDialogTrigger>
                 <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                   <AlertDialogHeader>
@@ -182,13 +172,7 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <ChevronRight className="h-4 w-4" />
           </div>
         </div>
       </CardHeader>
