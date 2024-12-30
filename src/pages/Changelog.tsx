@@ -7,6 +7,27 @@ import { ChangelogItem } from "@/components/changelog/types";
 
 const defaultChangelog = [
   {
+    version: "0.3",
+    date: "2024-12-31",
+    changes: [
+      {
+        title: "Navigation Restrukturierung",
+        status: "completed" as const,
+        description: "Verbesserte Navigation mit klarer Trennung in Persönlich, Teams & Gruppen, Analyse & Tools und Rechtliches"
+      },
+      {
+        title: "Optimierte Navigation",
+        status: "completed" as const,
+        description: "Anpassung der Navigation für bessere Übersichtlichkeit ohne Scrolling"
+      },
+      {
+        title: "Verbesserte Benutzerführung",
+        status: "completed" as const,
+        description: "Klarere Strukturierung der Hauptnavigation für intuitivere Bedienung"
+      }
+    ]
+  },
+  {
     version: "0.2",
     date: "2024-12-29",
     changes: [
