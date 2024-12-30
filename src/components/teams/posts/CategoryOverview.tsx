@@ -23,24 +23,37 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
           *,
           posts:team_posts(
             *,
-            creator:created_by(display_name),
+            profiles:created_by(display_name),
             comments:team_post_comments(count)
           )
         `)
         .eq("team_id", teamId)
         .order("order_index");
 
-      if (categoriesError) throw categoriesError;
+      if (categoriesError) {
+        console.error("Error fetching categories:", categoriesError);
+        throw categoriesError;
+      }
+      
+      console.log("Fetched categories:", categoriesData);
       return categoriesData;
     },
   });
+
+  if (!categories?.length) {
+    return (
+      <div className="text-center text-muted-foreground py-8">
+        Noch keine Kategorien vorhanden
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {categories.map((category) => {
         const topPosts = category.posts
-          .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .slice(0, 3);
+          ?.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 3) || [];
 
         return (
           <Card key={category.id} className="group">
@@ -78,7 +91,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
                             addSuffix: true,
                             locale: de,
                           })}{" "}
-                          von {post.creator?.display_name}
+                          von {post.profiles?.display_name}
                         </div>
                       </div>
                       <div className="flex items-center gap-1 text-muted-foreground">
@@ -87,7 +100,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
                       </div>
                     </div>
                   ))}
-                  {category.posts.length > 3 && (
+                  {category.posts?.length > 3 && (
                     <Button
                       variant="ghost"
                       className="w-full text-muted-foreground"

@@ -16,7 +16,7 @@ export function NewsList({ teamId }: NewsListProps) {
         .from("team_news")
         .select(`
           *,
-          creator:created_by (
+          profiles:created_by (
             display_name
           )
         `)
@@ -47,7 +47,7 @@ export function NewsList({ teamId }: NewsListProps) {
                 addSuffix: true,
                 locale: de,
               })}{" "}
-              von {item.creator?.display_name}
+              von {item.profiles?.display_name}
             </div>
           </CardHeader>
           <CardContent>
