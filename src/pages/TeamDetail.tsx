@@ -22,21 +22,24 @@ const TeamDetail = () => {
     queryFn: async () => {
       console.log('Fetching team with slug:', teamSlug);
       
-      const { data: teamData, error: teamError } = await supabase
-        .from('teams')
-        .select('*')
-        .eq('slug', teamSlug)
-        .single();
+      // First try to get all teams the user has access to
+      const { data: userTeams, error: userTeamsError } = await supabase
+        .rpc('get_user_teams', { uid: user?.id });
 
-      if (teamError) {
-        console.error('Error loading team by slug:', teamError);
+      if (userTeamsError) {
+        console.error('Error loading user teams:', userTeamsError);
         return null;
       }
 
-      console.log('Found team:', teamData);
-      return teamData;
+      console.log('User teams:', userTeams);
+
+      // Then find the team with matching slug
+      const team = userTeams?.find(t => t.slug === teamSlug);
+      console.log('Found team:', team);
+
+      return team || null;
     },
-    enabled: !!teamSlug,
+    enabled: !!teamSlug && !!user?.id,
   });
 
   const { data: teamMember } = useQuery({
