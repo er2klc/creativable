@@ -1,30 +1,26 @@
 import { useState } from "react";
-import { useUser } from "@supabase/auth-helpers-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { UserPlus } from "lucide-react";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface JoinTeamDialogProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
   onTeamJoined?: () => void;
 }
 
-export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDialogProps) => {
   const [joinCode, setJoinCode] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const user = useUser();
 
-  const handleJoin = async () => {
+  const handleJoinTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!user) {
       toast.error("Sie müssen eingeloggt sein, um einem Team beizutreten");
-      return;
-    }
-
-    if (!joinCode.trim()) {
-      toast.error("Bitte geben Sie einen Beitritts-Code ein");
       return;
     }
 
@@ -37,8 +33,14 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
         .select('id, name')
         .eq('join_code', joinCode.trim());
 
-      if (teamError) throw new Error("Fehler beim Suchen des Teams");
-      if (!teams || teams.length === 0) throw new Error("Ungültiger Beitritts-Code");
+      if (teamError) {
+        console.error("Team search error:", teamError);
+        throw new Error("Fehler beim Suchen des Teams");
+      }
+      
+      if (!teams || teams.length === 0) {
+        throw new Error("Ungültiger Beitritts-Code");
+      }
 
       const team = teams[0];
 
@@ -50,8 +52,14 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (memberCheckError) throw new Error("Fehler beim Überprüfen der Mitgliedschaft");
-      if (existingMember) throw new Error("Sie sind bereits Mitglied dieses Teams");
+      if (memberCheckError) {
+        console.error("Member check error:", memberCheckError);
+        throw new Error("Fehler beim Überprüfen der Mitgliedschaft");
+      }
+
+      if (existingMember) {
+        throw new Error("Sie sind bereits Mitglied dieses Teams");
+      }
 
       // Join team
       const { error: joinError } = await supabase
@@ -71,9 +79,8 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
       setIsOpen(false);
       setJoinCode("");
       onTeamJoined?.();
-    } catch (error: any) {
-      console.error("Error joining team:", error);
-      toast.error(error.message || "Fehler beim Beitreten des Teams");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Ein unerwarteter Fehler ist aufgetreten");
     } finally {
       setIsLoading(false);
     }
@@ -81,39 +88,34 @@ export const JoinTeamDialog = ({ onTeamJoined }: JoinTeamDialogProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <UserPlus className="h-4 w-4 mr-2" />
-          Team beitreten
-        </Button>
-      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Team beitreten</DialogTitle>
           <DialogDescription>
-            Geben Sie den Beitritts-Code ein, um einem Team beizutreten.
+            Geben Sie den Beitritts-Code ein, um einem Team beizutreten
           </DialogDescription>
         </DialogHeader>
-        <div>
-          <label htmlFor="joinCode" className="text-sm font-medium">
-            Beitritts-Code
-          </label>
+        <form onSubmit={handleJoinTeam} className="space-y-4">
           <Input
-            id="joinCode"
+            placeholder="Beitritts-Code eingeben"
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value)}
-            placeholder="Geben Sie den Beitritts-Code ein"
             disabled={isLoading}
           />
-        </div>
-        <DialogFooter>
-          <Button
-            onClick={handleJoin}
-            disabled={!joinCode.trim() || isLoading}
-          >
-            {isLoading ? "Trete bei..." : "Beitreten"}
-          </Button>
-        </DialogFooter>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              disabled={isLoading}
+            >
+              Abbrechen
+            </Button>
+            <Button type="submit" disabled={!joinCode.trim() || isLoading}>
+              {isLoading ? "Beitritt läuft..." : "Beitreten"}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
