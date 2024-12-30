@@ -27,26 +27,29 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
     setIsLoading(true);
 
     try {
-      console.log("Searching for team with join code:", joinCode.trim());
+      const cleanJoinCode = joinCode.trim().toUpperCase();
+      console.log("Searching for team with join code:", cleanJoinCode);
       
-      // Find team by join code
-      const { data: team, error: teamError } = await supabase
+      // First, let's check if the team exists
+      const { data: teams, error: searchError } = await supabase
         .from('teams')
         .select('*')
-        .eq('join_code', joinCode.trim())
-        .maybeSingle();
+        .eq('join_code', cleanJoinCode);
 
-      if (teamError) {
-        console.error("Team search error:", teamError);
+      if (searchError) {
+        console.error("Team search error:", searchError);
         throw new Error("Fehler beim Suchen des Teams");
       }
-      
-      console.log("Found team:", team);
 
-      if (!team) {
+      console.log("Teams found:", teams);
+
+      if (!teams || teams.length === 0) {
+        console.error("No team found with join code:", cleanJoinCode);
         throw new Error("Ungültiger Beitritts-Code");
       }
 
+      const team = teams[0];
+      
       // Check if already a member
       const { data: existingMember, error: memberCheckError } = await supabase
         .from('team_members')
