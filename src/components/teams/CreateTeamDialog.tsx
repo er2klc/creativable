@@ -36,34 +36,12 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
     setIsLoading(true);
 
     try {
-      // Create team
-      const { data: team, error: teamError } = await supabase
-        .from('teams')
-        .insert({
-          name: name.trim(),
-          description: description.trim() || null,
-          created_by: user.id,
-        })
-        .select()
-        .single();
+      let logoUrl = null;
 
-      if (teamError) throw teamError;
-
-      // Add creator as team member with owner role
-      const { error: memberError } = await supabase
-        .from('team_members')
-        .insert({
-          team_id: team.id,
-          user_id: user.id,
-          role: 'owner',
-        });
-
-      if (memberError) throw memberError;
-
-      // Handle logo upload if present
-      if (logoFile && team.id) {
+      // Handle logo upload first if present
+      if (logoFile) {
         const fileExt = logoFile.name.split('.').pop();
-        const fileName = `${team.id}.${fileExt}`;
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
 
         // Upload to storage bucket
         const { error: uploadError } = await supabase.storage
@@ -83,26 +61,40 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           .from('team-logos')
           .getPublicUrl(fileName);
 
-        console.log('Logo public URL:', publicUrl);
-
-        // Update team with logo URL
-        const { error: updateError } = await supabase
-          .from('teams')
-          .update({ logo_url: publicUrl })
-          .eq('id', team.id);
-
-        if (updateError) {
-          console.error('Logo URL update error:', updateError);
-          throw updateError;
-        }
+        logoUrl = publicUrl;
       }
+
+      // Create team with logo URL if available
+      const { data: team, error: teamError } = await supabase
+        .from('teams')
+        .insert({
+          name: name.trim(),
+          description: description.trim() || null,
+          created_by: user.id,
+          logo_url: logoUrl
+        })
+        .select()
+        .single();
+
+      if (teamError) throw teamError;
+
+      // Add creator as team member with owner role
+      const { error: memberError } = await supabase
+        .from('team_members')
+        .insert({
+          team_id: team.id,
+          user_id: user.id,
+          role: 'owner',
+        });
+
+      if (memberError) throw memberError;
 
       setJoinCode(team.join_code);
       onTeamCreated?.();
       toast.success("Team erfolgreich erstellt");
     } catch (error: any) {
       console.error('Error in team creation:', error);
-      toast.error("Fehler beim Erstellen des Teams");
+      toast.error("Fehler beim Erstellen des Teams: " + (error.message || 'Unbekannter Fehler'));
     } finally {
       setIsLoading(false);
     }
