@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Infinity } from "lucide-react";
+import { Infinity, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreateTeamDialog } from "./CreateTeamDialog";
 import { JoinTeamDialog } from "./JoinTeamDialog";
@@ -19,7 +19,12 @@ export const UnityHeader = ({ onTeamCreated, onTeamJoined }: UnityHeaderProps) =
         <h1 className="text-3xl font-semibold text-primary">Unity</h1>
       </div>
       <div className="flex gap-2">
-        <Button onClick={() => setIsJoinDialogOpen(true)}>
+        <Button 
+          variant="outline" 
+          onClick={() => setIsJoinDialogOpen(true)}
+          className="text-white hover:text-primary"
+        >
+          <UserPlus className="mr-2 h-4 w-4" />
           Team beitreten
         </Button>
         <CreateTeamDialog onTeamCreated={onTeamCreated} />

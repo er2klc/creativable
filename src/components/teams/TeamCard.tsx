@@ -31,7 +31,7 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
 
   return (
     <Card 
-      className="cursor-pointer hover:shadow-lg transition-all duration-300 group"
+      className="cursor-pointer hover:shadow-lg transition-all duration-300 group relative"
       onClick={() => navigate(`/unity/team/${team.id}`)}
     >
       <CardHeader className="space-y-6">
@@ -77,18 +77,15 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
               </div>
             </div>
           </div>
-          <div className="flex gap-2">
-            <TeamCardActions
-              teamId={team.id}
-              userId={user?.id}
-              isOwner={isOwner}
-              joinCode={team.join_code}
-              onDelete={onDelete}
-              onLeave={onLeave}
-              onCopyJoinCode={copyJoinCode}
-            />
-            <ChevronRight className="h-4 w-4" />
-          </div>
+          <TeamCardActions
+            teamId={team.id}
+            userId={user?.id}
+            isOwner={isOwner}
+            joinCode={team.join_code}
+            onDelete={onDelete}
+            onLeave={onLeave}
+            onCopyJoinCode={copyJoinCode}
+          />
         </div>
       </CardHeader>
     </Card>
