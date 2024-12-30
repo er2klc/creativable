@@ -13,30 +13,27 @@ import { NewsList } from "@/components/teams/news/NewsList";
 import { useUser } from "@supabase/auth-helpers-react";
 
 const TeamDetail = () => {
-  const params = useParams();
-  const { teamSlug } = useParams(); // Hier wird der Slug extrahiert
+  const { teamSlug } = useParams();
   const navigate = useNavigate();
   const user = useUser();
 
-  // Debug: Ausgabe der aktuellen Parameter
-  console.log("Params:", params);
-  console.log("TeamSlug:", teamSlug);
+  // Debugging: Aktuelle Werte anzeigen
+  console.log("Params:", { teamSlug });
+  console.log("User ID:", user?.id);
 
-  // Query zur Abfrage des Teams basierend auf dem Slug
-  const { data: team, isLoading } = useQuery({
-    queryKey: ['team', teamSlug],
+  // Team-Daten abfragen
+  const { data: team, isLoading: isTeamLoading } = useQuery({
+    queryKey: ["team", teamSlug],
     queryFn: async () => {
-      console.log("Fetching user ID:", user?.id);
-      console.log("Fetching team for slug:", teamSlug);
-
       if (!user?.id || !teamSlug) {
         console.error("Missing user ID or teamSlug");
         return null;
       }
 
-      // Erst versuche, die Teams des Benutzers zu laden
-      const { data: userTeams, error: userTeamsError } = await supabase
-        .rpc("get_user_teams", { uid: user.id });
+      console.log("Fetching user teams for user ID:", user.id);
+
+      // Benutzerteams abfragen
+      const { data: userTeams, error: userTeamsError } = await supabase.rpc("get_user_teams", { uid: user.id });
 
       if (userTeamsError) {
         console.error("Error fetching user teams:", userTeamsError);
@@ -45,37 +42,36 @@ const TeamDetail = () => {
 
       console.log("User Teams:", userTeams);
 
-      // Suche das Team basierend auf dem Slug
-      const team = userTeams?.find((t) => t.slug === teamSlug);
-      console.log("Found Team from userTeams:", team);
-
-      if (!team) {
-        // Fallback: Versuche, das Team direkt aus der Datenbank zu laden
-        const { data: directTeam, error: directError } = await supabase
-          .from("teams")
-          .select("*")
-          .eq("slug", teamSlug)
-          .single();
-
-        if (directError) {
-          console.error("Error in direct team query:", directError);
-          return null;
-        }
-
-        console.log("Found Team from direct query:", directTeam);
-        return directTeam;
+      // Team mit passendem Slug suchen
+      const foundTeam = userTeams?.find((team) => team.slug === teamSlug);
+      if (foundTeam) {
+        console.log("Found Team from user teams:", foundTeam);
+        return foundTeam;
       }
 
-      return team;
+      console.log("Team not found in user teams. Fetching directly from database.");
+
+      // Fallback: Direktabfrage aus der `teams`-Tabelle
+      const { data: directTeam, error: directError } = await supabase.from("teams").select("*").eq("slug", teamSlug).single();
+
+      if (directError) {
+        console.error("Error fetching team directly:", directError);
+        return null;
+      }
+
+      console.log("Found Team from direct query:", directTeam);
+      return directTeam;
     },
-    enabled: !!teamSlug && !!user?.id,
+    enabled: !!user?.id && !!teamSlug,
   });
 
-  // Query zur Abfrage der Team-Mitgliedschaft
-  const { data: teamMember } = useQuery({
-    queryKey: ['team-member-role', team?.id],
+  // Teammitgliedschaft abfragen
+  const { data: teamMember, isLoading: isMemberLoading } = useQuery({
+    queryKey: ["team-member", team?.id],
     queryFn: async () => {
       if (!user?.id || !team?.id) return null;
+
+      console.log("Fetching team member role for user:", user.id);
 
       const { data, error } = await supabase
         .from("team_members")
@@ -89,14 +85,15 @@ const TeamDetail = () => {
         return null;
       }
 
+      console.log("Team Member Role:", data);
       return data;
     },
-    enabled: !!user && !!team?.id,
+    enabled: !!user?.id && !!team?.id,
   });
 
+  const isLoading = isTeamLoading || isMemberLoading;
   const isAdmin = teamMember?.role === "admin" || teamMember?.role === "owner";
 
-  // Ladeanzeige
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -105,7 +102,6 @@ const TeamDetail = () => {
     );
   }
 
-  // Team nicht gefunden
   if (!team) {
     console.error("Team not found for slug:", teamSlug);
     return (
@@ -117,10 +113,8 @@ const TeamDetail = () => {
     );
   }
 
-  // Ausgabe der gefundenen Daten
   console.log("Final Team Data:", team);
 
-  // Hauptansicht
   return (
     <div className="space-y-6">
       <TeamHeader team={team} />
