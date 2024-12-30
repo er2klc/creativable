@@ -41,11 +41,7 @@ export const TeamCard = ({ team, teamStats, onDelete, onLeave }: TeamCardProps) 
       setShowDeleteDialog(false);
     } catch (error: any) {
       console.error('Error deleting team:', error);
-      if (error?.message?.includes('policy')) {
-        toast.error("Sie haben keine Berechtigung, dieses Team zu löschen");
-      } else {
-        toast.error("Fehler beim Löschen des Teams");
-      }
+      toast.error("Fehler beim Löschen des Teams");
     } finally {
       setIsProcessing(false);
     }
