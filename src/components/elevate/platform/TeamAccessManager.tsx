@@ -35,11 +35,11 @@ export const TeamAccessManager = ({
   });
 
   const handleTeamToggle = (teamId: string) => {
-    setSelectedTeams(prev =>
-      prev.includes(teamId)
-        ? prev.filter(id => id !== teamId)
-        : [...prev, teamId]
-    );
+    const newSelectedTeams = selectedTeams.includes(teamId)
+      ? selectedTeams.filter(id => id !== teamId)
+      : [...selectedTeams, teamId];
+    
+    setSelectedTeams(newSelectedTeams);
   };
 
   return (
