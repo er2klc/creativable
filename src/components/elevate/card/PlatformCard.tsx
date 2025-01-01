@@ -11,9 +11,9 @@ interface PlatformCardProps {
 export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
   return (
     <Card className="group relative overflow-hidden min-h-[280px]">
-      <PlatformCardImage imageUrl={platform.image_url} />
+      <PlatformCardImage platform={platform} />
       <PlatformCardContent platform={platform} />
-      <PlatformCardActions platform={platform} onDelete={onDelete} />
+      <PlatformCardActions platform={platform} onDelete={() => onDelete(platform.id)} />
     </Card>
   );
 };
