@@ -14,15 +14,7 @@ const fetchPlatforms = async () => {
   }
 
   try {
-    const query = `
-      created_by.eq.${user.id},
-      id.in.(
-        select platform_id
-        from elevate_team_access eta
-        join team_members tm on tm.team_id = eta.team_id
-        where tm.user_id = '${user.id}'
-      )
-    `.replace(/\s+/g, ''); // Entferne alle Zeilenumbrüche und unnötige Leerzeichen
+    const query = `created_by.eq.${user.id},id.in.(select platform_id from elevate_team_access eta join team_members tm on tm.team_id = eta.team_id where tm.user_id = '${user.id}')`;
 
     const { data, error } = await supabase
       .from("elevate_platforms")
@@ -49,8 +41,6 @@ const fetchPlatforms = async () => {
     throw error;
   }
 };
-
-
 
 const Elevate = () => {
   const user = useUser();
@@ -79,8 +69,8 @@ const Elevate = () => {
   };
 
   if (error) {
-    console.error("[Debug] Fehler beim Laden der Module:", error);
-    toast.error("Fehler beim Laden der Module");
+    console.error("[Debug] Fehler beim Laden der Plattformen:", error);
+    toast.error("Fehler beim Laden der Plattformen");
   }
 
   const handlePlatformCreated = async () => {
