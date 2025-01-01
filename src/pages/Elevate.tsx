@@ -12,6 +12,20 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
+    // First get all team IDs the user is a member of
+    const { data: teamAccess, error: teamError } = await supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', userId);
+
+    if (teamError) {
+      console.error("[Debug] Fehler beim Laden der Team-Zugänge:", teamError);
+      throw teamError;
+    }
+
+    const teamIds = teamAccess?.map(ta => ta.team_id) || [];
+
+    // Then get platforms either created by user or accessible through teams
     const { data, error } = await supabase
       .from("elevate_platforms")
       .select(`
@@ -24,7 +38,7 @@ const fetchPlatforms = async (userId: string) => {
           )
         )
       `)
-      .or(`created_by.eq.${userId},id.in.(select platform_id from elevate_team_access eta join team_members tm on tm.team_id = eta.team_id where tm.user_id = '${userId}')`)
+      .or(`created_by.eq.${userId}${teamIds.length > 0 ? `,id.in.(select platform_id from elevate_team_access where team_id.in.(${teamIds.map(id => `'${id}'`).join(',')}))` : ''}`)
       .order('created_at', { ascending: false });
 
     if (error) {
