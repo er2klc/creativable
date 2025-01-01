@@ -16,104 +16,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const publicPaths = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram"];
     let subscription: any = null;
-    let retryCount = 0;
-    const maxRetries = 3;
     
     const setupAuth = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // Get initial session
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (sessionError) {
-          console.error("[Auth] Session error:", sessionError);
-          if (retryCount < maxRetries) {
-            retryCount++;
-            console.log(`[Auth] Retry attempt ${retryCount} of ${maxRetries}`);
-            setTimeout(setupAuth, 1000 * retryCount); // Exponential backoff
-            return;
-          }
-          await handleSessionError(sessionError, setIsAuthenticated, navigate, publicPaths, location.pathname);
-          return;
-        }
-
-        console.log("[Auth] Initial session check:", session?.user?.id);
-        
-        if (session) {
-          const { data: { user }, error: userError } = await supabase.auth.getUser();
-          
-          if (userError) {
-            console.error("[Auth] Invalid user detected:", userError);
-            if (retryCount < maxRetries) {
-              retryCount++;
-              console.log(`[Auth] Retry attempt ${retryCount} of ${maxRetries}`);
-              setTimeout(setupAuth, 1000 * retryCount);
-              return;
-            }
-            await handleSessionError(userError, setIsAuthenticated, navigate, publicPaths, location.pathname);
-            return;
-          }
-
-          if (!user) {
-            console.error("[Auth] No user found after successful session check");
-            toast.error("Authentifizierungsfehler. Bitte erneut anmelden.");
-            navigate("/auth");
-            return;
-          }
-
-          setUser(user);
+        if (session?.user) {
+          setUser(session.user);
           setIsAuthenticated(true);
           if (location.pathname === "/auth" || location.pathname === "/register") {
             navigate("/dashboard");
           }
         } else if (!publicPaths.includes(location.pathname)) {
-          console.log("[Auth] No session, redirecting to auth from:", location.pathname);
           navigate("/auth");
         }
 
+        // Set up auth state change listener
         const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           console.log("[Auth] Auth state changed:", event, session?.user?.id);
 
           if (event === "SIGNED_IN") {
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-            
-            if (userError || !user) {
-              console.error("[Auth] Invalid user after sign in:", userError);
-              await handleSessionError(userError, setIsAuthenticated, navigate, publicPaths, location.pathname);
-              return;
+            if (session?.user) {
+              setUser(session.user);
+              setIsAuthenticated(true);
+              navigate("/dashboard");
             }
-
-            setUser(user);
-            setIsAuthenticated(true);
-            console.log("[Auth] User signed in, redirecting to dashboard");
-            navigate("/dashboard");
           } else if (event === "SIGNED_OUT") {
             setUser(null);
             setIsAuthenticated(false);
-            console.log("[Auth] User signed out, redirecting to auth");
             navigate("/auth");
           } else if (event === "TOKEN_REFRESHED") {
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-            
-            if (userError || !user) {
-              console.error("[Auth] Invalid user after token refresh:", userError);
-              await handleSessionError(userError, setIsAuthenticated, navigate, publicPaths, location.pathname);
-              return;
+            if (session?.user) {
+              setUser(session.user);
+              setIsAuthenticated(true);
             }
-
-            setUser(user);
-            console.log("[Auth] Token refreshed for user:", session?.user?.id);
-            setIsAuthenticated(true);
           }
         });
 
         subscription = authSubscription;
       } catch (error: any) {
         console.error("[Auth] Setup error:", error);
-        if (retryCount < maxRetries) {
-          retryCount++;
-          console.log(`[Auth] Retry attempt ${retryCount} of ${maxRetries}`);
-          setTimeout(setupAuth, 1000 * retryCount);
-          return;
-        }
         await handleSessionError(error, setIsAuthenticated, navigate, publicPaths, location.pathname);
       } finally {
         setIsLoading(false);
@@ -125,7 +68,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Attempt to refresh the session periodically (every 10 minutes)
     const refreshInterval = setInterval(async () => {
       try {
-        await refreshSession();
+        const { data: { session }, error } = await supabase.auth.refreshSession();
+        if (error) throw error;
+        
+        if (session?.user) {
+          setUser(session.user);
+          setIsAuthenticated(true);
+        }
       } catch (error) {
         console.error("[Auth] Session refresh error:", error);
         if (!publicPaths.includes(location.pathname)) {
