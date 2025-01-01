@@ -41,10 +41,8 @@ export const AuthStateHandler = () => {
   useEffect(() => {
     let sessionRefreshInterval: NodeJS.Timeout | null = null;
     const currentPath = location.pathname;
-    const isOnPublicPath = isPublicPath(currentPath);
 
     console.log("[Auth] Current path:", currentPath);
-    console.log("[Auth] Is public path:", isOnPublicPath);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
       console.log("[Auth] State changed:", event, "Current path:", currentPath);
@@ -60,7 +58,7 @@ export const AuthStateHandler = () => {
             clearInterval(sessionRefreshInterval);
             sessionRefreshInterval = null;
           }
-          if (!isOnPublicPath) {
+          if (!isPublicPath(currentPath)) {
             console.log("[Auth] Redirecting to auth after sign-out");
             await safeNavigate("/auth");
           }
@@ -73,12 +71,12 @@ export const AuthStateHandler = () => {
       }
     });
 
-    // Only set up session refresh for non-public paths
-    if (!isOnPublicPath) {
+    // Only set up session refresh for authenticated paths
+    if (!isPublicPath(currentPath)) {
       sessionRefreshInterval = setInterval(async () => {
         try {
           const session = await refreshSession();
-          if (!session) {
+          if (!session && !isPublicPath(currentPath)) {
             console.log("[Auth] Session refresh failed - redirecting to auth");
             await safeNavigate("/auth");
           }
