@@ -49,6 +49,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
     try {
       let logoUrl = null;
 
+      // Logo hochladen
       if (logoFile) {
         const fileExt = logoFile.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
@@ -68,7 +69,8 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         logoUrl = publicUrl;
       }
 
-      const { error: platformError } = await supabase
+      // Plattform erstellen
+      const { data: platformData, error: platformError } = await supabase
         .from('elevate_platforms')
         .insert({
           name: name.trim(),
@@ -76,13 +78,16 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
           created_by: user.id,
           logo_url: logoUrl,
           linked_modules: selectedModules
-        });
+        })
+        .select()
+        .single(); // single() sorgt dafür, dass die Daten direkt zurückgegeben werden
 
       if (platformError) throw platformError;
 
+      // Team-Zugriffsrechte erstellen
       if (selectedTeams.length > 0) {
         const teamAccess = selectedTeams.map(teamId => ({
-          platform_id: platformError?.id,
+          platform_id: platformData.id, // Plattform-ID aus dem Insert-Ergebnis
           team_id: teamId,
           granted_by: user.id
         }));
@@ -97,12 +102,12 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       toast.success("Modul erfolgreich erstellt");
       setIsOpen(false);
       resetState();
-      
+
       if (onPlatformCreated) {
         await onPlatformCreated();
       }
     } catch (error: any) {
-      console.error('Error in module creation:', error);
+      console.error('Fehler beim Erstellen des Moduls:', error);
       toast.error("Fehler beim Erstellen des Moduls: " + (error.message || 'Unbekannter Fehler'));
     } finally {
       setIsLoading(false);
