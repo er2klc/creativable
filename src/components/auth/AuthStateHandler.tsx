@@ -44,10 +44,8 @@ export const AuthStateHandler = () => {
 
       try {
         if (event === "SIGNED_IN") {
-          if (isOnPublicPath) {
-            console.log("[Auth] Staying on public path:", location.pathname);
-          } else if (location.pathname === "/auth") {
-            console.log("[Auth] Redirecting to dashboard");
+          if (location.pathname === "/auth") {
+            console.log("[Auth] Redirecting to dashboard from auth page");
             await safeNavigate("/dashboard");
           }
         } else if (event === "SIGNED_OUT") {
