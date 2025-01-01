@@ -73,25 +73,38 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
 
   const handleSignOut = async () => {
     try {
+      // Clear local storage first
+      localStorage.clear();
+      
+      // Try to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
-      if (error) throw error;
+      if (error) {
+        // If we get a session_not_found error, we can still proceed with local cleanup
+        if (error.message.includes('session_not_found')) {
+          console.info('Session already expired, proceeding with cleanup');
+        } else {
+          throw error;
+        }
+      }
 
+      // Always show success message and redirect
       toast({
         title: "Erfolgreich abgemeldet",
         description: "Auf Wiedersehen!",
       });
 
-      // Clear any local storage items
-      localStorage.removeItem('dailyQuote');
-      localStorage.removeItem('dailyQuoteDate');
+      // Force navigation to auth page
+      navigate("/auth", { replace: true });
       
-      // Navigate after successful signout
-      navigate("/auth");
     } catch (error) {
       console.error("Logout error:", error);
       // Even if there's an error, try to redirect to auth
-      navigate("/auth");
+      toast({
+        title: "Abmeldung",
+        description: "Sie wurden aus Sicherheitsgründen abgemeldet.",
+      });
+      navigate("/auth", { replace: true });
     }
   };
 
