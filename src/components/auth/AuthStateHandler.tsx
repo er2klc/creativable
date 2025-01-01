@@ -12,7 +12,7 @@ export const AuthStateHandler = () => {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
-      console.log("[Auth] State changed:", event);
+      console.log("[Auth] State changed:", event, "Current path:", location.pathname);
 
       // Define public paths that don't require authentication
       const publicPaths = [
@@ -30,17 +30,21 @@ export const AuthStateHandler = () => {
       const isPublicPath = publicPaths.some(path => 
         location.pathname === path || location.pathname.startsWith(path + "/")
       );
+      
+      console.log("[Auth] Is public path:", isPublicPath, location.pathname);
 
       try {
         if (event === "SIGNED_IN") {
-          // Only redirect to dashboard if coming from auth page
           if (location.pathname === "/auth") {
             navigate("/dashboard");
+          } else if (isPublicPath) {
+            console.log("[Auth] Staying on public path:", location.pathname);
           }
         } else if (event === "SIGNED_OUT") {
-          // Only redirect to auth if not on a public path
           if (!isPublicPath) {
             navigate("/auth");
+          } else {
+            console.log("[Auth] Staying on public path after sign out:", location.pathname);
           }
         } else if (event === "TOKEN_REFRESHED") {
           console.log("[Auth] Token refreshed for user:", session?.user?.id);
@@ -50,10 +54,11 @@ export const AuthStateHandler = () => {
       }
     });
 
-    // Set up session refresh interval - every 2 minutes to prevent expiration
+    // Set up session refresh interval
     const refreshInterval = setInterval(async () => {
       try {
         const session = await refreshSession();
+        
         // Only redirect to auth if session refresh fails and we're not on a public path
         if (!session && !location.pathname.startsWith("/auth")) {
           const publicPaths = [
@@ -70,8 +75,12 @@ export const AuthStateHandler = () => {
             location.pathname === path || location.pathname.startsWith(path + "/")
           );
 
+          console.log("[Auth] Session refresh - Is public path:", isPublicPath, location.pathname);
+
           if (!isPublicPath) {
             navigate("/auth");
+          } else {
+            console.log("[Auth] Staying on public path after session refresh:", location.pathname);
           }
         }
       } catch (error) {
