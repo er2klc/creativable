@@ -17,7 +17,8 @@ const PUBLIC_PATHS = [
 const PROTECTED_NO_REDIRECT = [
   "/unity",
   "/elevate",
-  "/unity/team"
+  "/unity/team",
+  "/dashboard"
 ];
 
 export const AuthStateHandler = () => {
@@ -97,7 +98,6 @@ export const AuthStateHandler = () => {
 
     const setupAuth = async () => {
       try {
-        // Get initial session without redirecting immediately
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -105,7 +105,7 @@ export const AuthStateHandler = () => {
           return;
         }
 
-        // Only redirect if we're sure there's no session
+        // For protected routes, wait for session check before redirecting
         if (!session && !isPublicPath(currentPath) && !isProtectedNoRedirect(currentPath)) {
           console.log("[Auth] No session - redirecting to auth");
           navigate("/auth", { replace: true });
@@ -115,7 +115,7 @@ export const AuthStateHandler = () => {
         // Setup auth state change listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
 
-        // Setup session refresh
+        // Setup session refresh only if we have a session
         if (session) {
           sessionRefreshInterval = setInterval(async () => {
             try {
