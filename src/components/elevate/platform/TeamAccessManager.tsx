@@ -17,19 +17,22 @@ export const TeamAccessManager = ({
   const user = useUser();
 
   const { data: teams = [] } = useQuery({
-    queryKey: ['user-teams'],
+    queryKey: ['user-owned-teams'],
     queryFn: async () => {
       if (!user?.id) return [];
 
       const { data, error } = await supabase
-        .rpc('get_user_teams', { uid: user.id });
+        .from('team_members')
+        .select('team_id, teams:team_id(id, name)')
+        .eq('user_id', user.id)
+        .eq('role', 'owner');
 
       if (error) {
         console.error("Error loading teams:", error);
         return [];
       }
 
-      return data;
+      return data.map(member => member.teams);
     },
     enabled: !!user,
   });

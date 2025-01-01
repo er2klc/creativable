@@ -127,7 +127,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
           Modul erstellen
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Neues Ausbildungsmodul erstellen</DialogTitle>
           <DialogDescription>
