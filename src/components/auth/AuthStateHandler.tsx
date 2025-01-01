@@ -11,9 +11,6 @@ const PUBLIC_PATHS = [
   "/register",
   "/privacy-policy",
   "/changelog",
-  "/unity",
-  "/elevate",
-  "/unity/team",
   "/impressum"
 ];
 
