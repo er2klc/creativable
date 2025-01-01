@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { AuthContext } from "./auth/AuthContext";
 import { handleSessionError, refreshSession } from "./auth/auth-utils";
+import { toast } from "sonner";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
@@ -15,14 +16,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const publicPaths = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram"];
     let subscription: any = null;
+    let retryCount = 0;
+    const maxRetries = 3;
     
     const setupAuth = async () => {
       try {
-        // Initial session check
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           console.error("[Auth] Session error:", sessionError);
+          if (retryCount < maxRetries) {
+            retryCount++;
+            console.log(`[Auth] Retry attempt ${retryCount} of ${maxRetries}`);
+            setTimeout(setupAuth, 1000 * retryCount); // Exponential backoff
+            return;
+          }
           await handleSessionError(sessionError, setIsAuthenticated, navigate, publicPaths, location.pathname);
           return;
         }
@@ -30,12 +38,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("[Auth] Initial session check:", session?.user?.id);
         
         if (session) {
-          // Verify user exists
           const { data: { user }, error: userError } = await supabase.auth.getUser();
           
-          if (userError || !user) {
+          if (userError) {
             console.error("[Auth] Invalid user detected:", userError);
+            if (retryCount < maxRetries) {
+              retryCount++;
+              console.log(`[Auth] Retry attempt ${retryCount} of ${maxRetries}`);
+              setTimeout(setupAuth, 1000 * retryCount);
+              return;
+            }
             await handleSessionError(userError, setIsAuthenticated, navigate, publicPaths, location.pathname);
+            return;
+          }
+
+          if (!user) {
+            console.error("[Auth] No user found after successful session check");
+            toast.error("Authentifizierungsfehler. Bitte erneut anmelden.");
+            navigate("/auth");
             return;
           }
 
@@ -49,7 +69,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           navigate("/auth");
         }
 
-        // Setup auth state listener with automatic token refresh
         const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           console.log("[Auth] Auth state changed:", event, session?.user?.id);
 
@@ -72,7 +91,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.log("[Auth] User signed out, redirecting to auth");
             navigate("/auth");
           } else if (event === "TOKEN_REFRESHED") {
-            // Verify user still exists when token is refreshed
             const { data: { user }, error: userError } = await supabase.auth.getUser();
             
             if (userError || !user) {
@@ -90,22 +108,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         subscription = authSubscription;
       } catch (error: any) {
         console.error("[Auth] Setup error:", error);
+        if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`[Auth] Retry attempt ${retryCount} of ${maxRetries}`);
+          setTimeout(setupAuth, 1000 * retryCount);
+          return;
+        }
         await handleSessionError(error, setIsAuthenticated, navigate, publicPaths, location.pathname);
       } finally {
         setIsLoading(false);
       }
     };
 
+    setupAuth();
+
     // Attempt to refresh the session periodically (every 10 minutes)
     const refreshInterval = setInterval(async () => {
       try {
         await refreshSession();
       } catch (error) {
-        await handleSessionError(error, setIsAuthenticated, navigate, publicPaths, location.pathname);
+        console.error("[Auth] Session refresh error:", error);
+        if (!publicPaths.includes(location.pathname)) {
+          toast.error("Sitzung abgelaufen. Bitte erneut anmelden.");
+          navigate("/auth");
+        }
       }
-    }, 10 * 60 * 1000); // 10 minutes
-
-    setupAuth();
+    }, 10 * 60 * 1000);
 
     return () => {
       console.log("[Auth] Cleaning up auth listener");
