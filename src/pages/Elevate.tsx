@@ -14,14 +14,18 @@ const Elevate = () => {
       if (!user?.id) return [];
       
       try {
-        // Get platforms where user has direct access or team access
+        // First get the platforms
         const { data: platforms, error: platformsError } = await supabase
           .from('elevate_platforms')
           .select(`
             *,
-            elevate_team_access!inner(
+            elevate_team_access (
               team_id,
-              teams(*)
+              teams (
+                id,
+                name,
+                description
+              )
             )
           `)
           .or(`created_by.eq.${user.id},id.in.(
