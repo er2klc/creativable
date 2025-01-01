@@ -9,7 +9,8 @@ export const useSessionManagement = () => {
     console.error("[Auth] Session error:", error);
 
     if (error?.message?.includes("session_not_found") || 
-        error?.message?.includes("JWT expired")) {
+        error?.message?.includes("JWT expired") ||
+        error?.message?.includes("token is expired")) {
       console.error("[Auth] Session expired or not found, redirecting to login.");
       toast.error("Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.");
       await supabase.auth.signOut();

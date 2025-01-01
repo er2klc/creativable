@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     setupAuth();
 
-    // Refresh session every 4 minutes to prevent expiration
+    // Refresh session every 2 minutes to prevent expiration
     const refreshInterval = setInterval(async () => {
       try {
         const { data: { session }, error } = await supabase.auth.refreshSession();
@@ -85,7 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         console.error("[Auth] Session refresh error:", error);
       }
-    }, 4 * 60 * 1000); // 4 minutes
+    }, 2 * 60 * 1000); // 2 minutes
 
     return () => {
       console.log("[Auth] Cleaning up auth listener");

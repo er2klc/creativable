@@ -22,15 +22,22 @@ export const AuthStateHandler = () => {
       }
     });
 
-    // Set up session refresh interval
-    const refreshInterval = setInterval(refreshSession, 10 * 60 * 1000); // Every 10 minutes
+    // Set up session refresh interval - every 2 minutes to prevent expiration
+    const refreshInterval = setInterval(async () => {
+      try {
+        await refreshSession();
+      } catch (error) {
+        console.error("[Auth] Refresh error:", error);
+        handleSessionError(error);
+      }
+    }, 2 * 60 * 1000);
 
     return () => {
       console.log("[Auth] Cleaning up auth listener");
       subscription.unsubscribe();
       clearInterval(refreshInterval);
     };
-  }, [navigate, refreshSession]);
+  }, [navigate, refreshSession, handleSessionError]);
 
   return null;
 };
