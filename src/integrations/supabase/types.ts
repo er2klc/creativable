@@ -108,6 +108,13 @@ export type Database = {
             referencedRelation: "elevate_platforms"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "elevate_modules_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_platforms_access"
+            referencedColumns: ["platform_id"]
+          },
         ]
       }
       elevate_platforms: {
@@ -177,6 +184,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "elevate_team_access_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_platforms_access"
+            referencedColumns: ["platform_id"]
+          },
+          {
             foreignKeyName: "elevate_team_access_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
@@ -217,6 +231,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "elevate_platforms"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "elevate_user_access_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_platforms_access"
+            referencedColumns: ["platform_id"]
           },
         ]
       }
@@ -938,7 +959,12 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      elevate_platforms_access: {
+        Row: {
+          platform_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       generate_elevate_invite_code: {

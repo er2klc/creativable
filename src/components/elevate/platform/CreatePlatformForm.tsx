@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface CreatePlatformFormProps {
   name: string;
@@ -32,13 +33,18 @@ export const CreatePlatformForm = ({
   selectedModules,
   setSelectedModules
 }: CreatePlatformFormProps) => {
+  const user = useUser();
+
   const { data: existingModules = [] } = useQuery({
     queryKey: ['existing-modules'],
     queryFn: async () => {
       try {
+        if (!user?.id) return [];
+
         const { data, error } = await supabase
           .from('elevate_platforms')
           .select('id, name')
+          .eq('created_by', user.id) // Nur Module des eingeloggten Users
           .order('name');
 
         if (error) {
@@ -51,7 +57,8 @@ export const CreatePlatformForm = ({
         console.error('Unexpected error loading modules:', error);
         return [];
       }
-    }
+    },
+    enabled: !!user?.id
   });
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
