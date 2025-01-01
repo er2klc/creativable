@@ -20,11 +20,9 @@ const Elevate = () => {
           .select(`
             *,
             elevate_team_access (
-              team_id,
               teams (
                 id,
-                name,
-                description
+                name
               )
             )
           `)
@@ -48,10 +46,12 @@ const Elevate = () => {
             .eq('platform_id', platform.id);
 
           // Get total users count (team members)
+          const teamIds = platform.elevate_team_access?.map(ta => ta.teams?.id).filter(Boolean) || [];
+          
           const { count: teamMembersCount } = await supabase
             .from('team_members')
             .select('*', { count: 'exact', head: true })
-            .in('team_id', platform.elevate_team_access?.map(ta => ta.team_id) || []);
+            .in('team_id', teamIds);
 
           // Get direct user access count
           const { count: directUserCount } = await supabase
