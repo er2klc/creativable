@@ -3,8 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionManagement } from "@/hooks/auth/use-session-management";
 import { AuthChangeEvent } from "@supabase/supabase-js";
+import { toast } from "sonner";
 
-// Define strictly public paths only
 const PUBLIC_PATHS = [
   "/",
   "/auth",
@@ -14,7 +14,6 @@ const PUBLIC_PATHS = [
   "/impressum"
 ];
 
-// Define protected paths that should not redirect to dashboard
 const PROTECTED_NO_REDIRECT = [
   "/unity",
   "/elevate",
@@ -41,111 +40,86 @@ export const AuthStateHandler = () => {
     );
   };
 
-  const safeNavigate = async (path: string) => {
-    try {
-      await navigate(path);
-    } catch (error) {
-      console.error(`[Auth] Navigation to ${path} failed:`, error);
-    }
-  };
-
   useEffect(() => {
     let sessionRefreshInterval: NodeJS.Timeout | null = null;
     const currentPath = location.pathname;
 
-    console.log("[Auth] Current path:", currentPath);
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
-      console.log("[Auth] State changed:", event, "Current path:", currentPath);
-
+    const handleAuthChange = async (event: AuthChangeEvent, session: any) => {
       try {
+        console.log("[Auth] State changed:", event, session?.user?.id);
+
         if (event === "SIGNED_IN") {
-          if (currentPath === "/auth" && !isProtectedNoRedirect(currentPath)) {
-            console.log("[Auth] Redirecting to dashboard from auth page");
-            await safeNavigate("/dashboard");
+          if (currentPath === "/auth") {
+            await navigate("/dashboard");
           }
         } else if (event === "SIGNED_OUT") {
           if (sessionRefreshInterval) {
             clearInterval(sessionRefreshInterval);
             sessionRefreshInterval = null;
           }
+          
+          // Clear all auth-related local storage
+          localStorage.removeItem('dailyQuote');
+          localStorage.removeItem('dailyQuoteDate');
+          
           if (!isPublicPath(currentPath)) {
-            console.log("[Auth] Redirecting to auth after sign-out");
-            await safeNavigate("/auth");
+            toast.error("Ihre Sitzung wurde beendet. Bitte melden Sie sich erneut an.");
+            await navigate("/auth");
           }
-        } else if (event === "TOKEN_REFRESHED") {
-          console.log("[Auth] Token refreshed for user:", session?.user?.id);
         }
       } catch (error) {
         console.error("[Auth] Navigation error:", error);
         handleSessionError(error);
       }
-    });
+    };
 
-    // Initial session check with retry mechanism
-    const checkInitialSession = async (retryCount = 0) => {
+    const setupAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Get initial session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) {
-          if (retryCount < 3) {
-            console.log("[Auth] Retrying session check...");
-            setTimeout(() => checkInitialSession(retryCount + 1), 1000);
-            return;
-          }
-          console.error("[Auth] Session check error:", error);
-          handleSessionError(error);
-          return;
-        }
+        if (sessionError) throw sessionError;
 
         if (!session) {
           if (!isPublicPath(currentPath) && !isProtectedNoRedirect(currentPath)) {
-            console.log("[Auth] No session and not on public/protected path - redirecting to auth");
-            await safeNavigate("/auth");
+            console.log("[Auth] No session - redirecting to auth");
+            await navigate("/auth");
           }
           return;
         }
 
-        // Only redirect to dashboard if on auth page and not accessing protected routes
-        if (currentPath === "/auth" && !isProtectedNoRedirect(currentPath)) {
-          console.log("[Auth] Valid session on auth page - redirecting to dashboard");
-          await safeNavigate("/dashboard");
-        }
+        // Setup auth state change listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+
+        // Setup session refresh
+        sessionRefreshInterval = setInterval(async () => {
+          try {
+            const refreshedSession = await refreshSession();
+            if (!refreshedSession && !isPublicPath(currentPath)) {
+              toast.error("Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.");
+              await navigate("/auth");
+            }
+          } catch (error) {
+            console.error("[Auth] Session refresh error:", error);
+            handleSessionError(error);
+          }
+        }, 4 * 60 * 1000); // Refresh every 4 minutes
+
+        return () => {
+          console.log("[Auth] Cleaning up auth listener");
+          subscription.unsubscribe();
+          if (sessionRefreshInterval) {
+            clearInterval(sessionRefreshInterval);
+          }
+        };
       } catch (error) {
-        if (retryCount < 3) {
-          console.log("[Auth] Retrying after error...");
-          setTimeout(() => checkInitialSession(retryCount + 1), 1000);
-          return;
-        }
-        console.error("[Auth] Initial session check error:", error);
+        console.error("[Auth] Setup error:", error);
         handleSessionError(error);
       }
     };
 
-    checkInitialSession();
-
-    // Session refresh with improved error handling
-    sessionRefreshInterval = setInterval(async () => {
-      try {
-        const session = await refreshSession();
-        if (!session && !isPublicPath(currentPath) && !isProtectedNoRedirect(currentPath)) {
-          console.log("[Auth] Session refresh failed - redirecting to auth");
-          await safeNavigate("/auth");
-        }
-      } catch (error) {
-        console.error("[Auth] Refresh error:", error);
-        handleSessionError(error);
-      }
-    }, 2 * 60 * 1000);
-
-    return () => {
-      console.log("[Auth] Cleaning up auth listener");
-      subscription.unsubscribe();
-      if (sessionRefreshInterval) {
-        clearInterval(sessionRefreshInterval);
-      }
-    };
-  }, [navigate, refreshSession, handleSessionError, location.pathname]);
+    setupAuth();
+  }, [navigate, location.pathname, handleSessionError, refreshSession]);
 
   return null;
 };

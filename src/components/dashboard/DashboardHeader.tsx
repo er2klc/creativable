@@ -15,7 +15,6 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
   const { toast } = useToast();
   const [dailyQuote, setDailyQuote] = useState<string>("");
 
-  // Fetch user settings to get the name
   const { data: settings } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
@@ -76,10 +75,7 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
     try {
       const { error } = await supabase.auth.signOut();
       
-      if (error) {
-        console.error("Signout error:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Erfolgreich abgemeldet",
@@ -94,7 +90,7 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
       navigate("/auth");
     } catch (error) {
       console.error("Logout error:", error);
-      // Even if there's an error, we should try to redirect to auth
+      // Even if there's an error, try to redirect to auth
       navigate("/auth");
     }
   };
