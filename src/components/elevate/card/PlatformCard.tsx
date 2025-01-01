@@ -13,6 +13,7 @@ interface PlatformCardProps {
     created_by: string;
     logo_url: string | null;
     slug: string;
+    invite_code?: string;
     stats?: {
       totalTeams: number;
       totalUsers: number;
@@ -50,6 +51,7 @@ export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
             platformId={platform.id}
             onDelete={() => onDelete(platform.id)}
             isOwner={isPlatformOwner}
+            inviteCode={platform.invite_code}
           />
         </div>
       </div>

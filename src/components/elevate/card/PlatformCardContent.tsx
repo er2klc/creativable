@@ -1,4 +1,4 @@
-import { Building, Users } from "lucide-react";
+import { Building, Users, Crown } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 
 interface PlatformCardContentProps {
@@ -33,8 +33,9 @@ export const PlatformCardContent = ({ platform }: PlatformCardContentProps) => {
           <Users className="h-4 w-4" />
           <span>{platform.stats?.totalUsers || 0} Benutzer</span>
           {isPlatformOwner && (
-            <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-medium">
-              Owner
+            <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
+              <Crown className="h-3 w-3" />
+              Modul Owner
             </span>
           )}
         </div>

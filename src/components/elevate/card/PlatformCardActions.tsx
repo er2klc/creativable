@@ -1,10 +1,4 @@
-import { MoreHorizontal, Trash } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Copy, Edit, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -17,17 +11,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface PlatformCardActionsProps {
   platformId: string;
   onDelete: () => void;
   isOwner: boolean;
+  inviteCode?: string;
 }
 
 export const PlatformCardActions = ({
   platformId,
   onDelete,
   isOwner,
+  inviteCode,
 }: PlatformCardActionsProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -36,28 +33,58 @@ export const PlatformCardActions = ({
     setShowDeleteDialog(true);
   };
 
+  const handleCopyInviteCode = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!inviteCode) return;
+
+    try {
+      await navigator.clipboard.writeText(inviteCode);
+      toast.success("Einladungscode kopiert");
+    } catch (error) {
+      console.error("Error copying invite code:", error);
+      toast.error("Fehler beim Kopieren des Einladungscodes");
+    }
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Existing edit functionality can be implemented here
+    console.log("Edit platform:", platformId);
+  };
+
   if (!isOwner) return null;
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="h-8 w-8 p-0"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <span className="sr-only">Menü öffnen</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem className="text-destructive" onClick={handleDelete}>
-            <Trash className="h-4 w-4 mr-2" />
-            Löschen
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleEdit}
+          className="h-8 w-8"
+        >
+          <Edit className="h-4 w-4" />
+          <span className="sr-only">Modul bearbeiten</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleCopyInviteCode}
+          className="h-8 w-8"
+        >
+          <Copy className="h-4 w-4" />
+          <span className="sr-only">Einladungscode kopieren</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleDelete}
+          className="h-8 w-8 text-destructive hover:text-destructive"
+        >
+          <Trash className="h-4 w-4" />
+          <span className="sr-only">Modul löschen</span>
+        </Button>
+      </div>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
