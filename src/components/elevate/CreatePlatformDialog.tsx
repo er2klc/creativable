@@ -52,14 +52,17 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       if (logoFile) {
         const fileExt = logoFile.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const { error: uploadError, data: uploadData } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('team-logos')
           .upload(fileName, logoFile, {
             upsert: true,
             contentType: logoFile.type
           });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Logo upload error:', uploadError);
+          throw new Error('Fehler beim Hochladen des Logos');
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from('team-logos')
@@ -82,7 +85,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
 
       if (platformError) {
         console.error('Platform creation error:', platformError);
-        throw new Error(platformError.message);
+        throw new Error('Fehler beim Erstellen des Moduls');
       }
 
       if (selectedTeams.length > 0 && platformData) {
@@ -98,7 +101,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
 
         if (accessError) {
           console.error('Team access error:', accessError);
-          throw new Error(accessError.message);
+          throw new Error('Fehler beim Gewähren des Team-Zugriffs');
         }
       }
 
@@ -111,7 +114,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       }
     } catch (error: any) {
       console.error('Fehler beim Erstellen des Moduls:', error);
-      toast.error("Fehler beim Erstellen des Moduls: " + (error.message || 'Unbekannter Fehler'));
+      toast.error(error.message || 'Unbekannter Fehler beim Erstellen des Moduls');
     } finally {
       setIsLoading(false);
     }

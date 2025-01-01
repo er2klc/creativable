@@ -67,7 +67,6 @@ const Elevate = () => {
 
   if (error) {
     console.error("[Debug] Fehler beim Laden der Module:", error);
-    toast.error("Fehler beim Laden der Module");
   }
 
   const handlePlatformCreated = async () => {
