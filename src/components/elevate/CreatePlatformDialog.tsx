@@ -68,36 +68,39 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         logoUrl = publicUrl;
       }
 
-      const { data: platformData, error: platformError } = await supabase
-        .from('elevate_platforms')
+      // Create module using the default Elevate platform
+      const { data: moduleData, error: moduleError } = await supabase
+        .from('elevate_modules')
         .insert([{
-          name: name.trim(),
+          title: name.trim(),
           description: description.trim() || null,
           created_by: user.id,
-          logo_url: logoUrl,
-          linked_modules: selectedModules
+          platform_id: '00000000-0000-0000-0000-000000000000', // Default Elevate platform
+          order_index: 0
         }])
         .select()
         .single();
 
-      if (platformError) {
-        console.error('Platform creation error:', platformError);
+      if (moduleError) {
+        console.error('Module creation error:', moduleError);
         throw new Error('Fehler beim Erstellen des Moduls');
       }
 
-      if (selectedTeams.length > 0 && platformData) {
+      if (selectedTeams.length > 0 && moduleData) {
         const teamAccessPromises = selectedTeams.map(teamId => 
           supabase
             .from('elevate_team_access')
             .insert({
-              platform_id: platformData.id,
+              platform_id: '00000000-0000-0000-0000-000000000000', // Default Elevate platform
               team_id: teamId,
               granted_by: user.id
             })
         );
 
-        const results = await Promise.all(teamAccessPromises);
-        const errors = results.filter(result => result.error);
+        const results = await Promise.allSettled(teamAccessPromises);
+        const errors = results
+          .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+          .map(result => result.reason);
         
         if (errors.length > 0) {
           console.error('Team access errors:', errors);
