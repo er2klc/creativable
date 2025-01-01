@@ -72,6 +72,148 @@ export type Database = {
         }
         Relationships: []
       }
+      elevate_modules: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          order_index: number | null
+          platform_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          order_index?: number | null
+          platform_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          order_index?: number | null
+          platform_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevate_modules_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_platforms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elevate_platforms: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          invite_code: string | null
+          logo_url: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          invite_code?: string | null
+          logo_url?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          invite_code?: string | null
+          logo_url?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
+      elevate_team_access: {
+        Row: {
+          granted_at: string | null
+          granted_by: string
+          id: string
+          platform_id: string
+          team_id: string
+        }
+        Insert: {
+          granted_at?: string | null
+          granted_by: string
+          id?: string
+          platform_id: string
+          team_id: string
+        }
+        Update: {
+          granted_at?: string | null
+          granted_by?: string
+          id?: string
+          platform_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevate_team_access_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_platforms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "elevate_team_access_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elevate_user_access: {
+        Row: {
+          access_type: string
+          granted_at: string | null
+          granted_by: string
+          id: string
+          platform_id: string
+          user_id: string
+        }
+        Insert: {
+          access_type?: string
+          granted_at?: string | null
+          granted_by: string
+          id?: string
+          platform_id: string
+          user_id: string
+        }
+        Update: {
+          access_type?: string
+          granted_at?: string | null
+          granted_by?: string
+          id?: string
+          platform_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevate_user_access_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_platforms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       keywords: {
         Row: {
           created_at: string | null
@@ -793,6 +935,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_elevate_invite_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       generate_join_code: {
         Args: Record<PropertyKey, never>
         Returns: string
