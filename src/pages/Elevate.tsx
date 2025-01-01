@@ -14,6 +14,16 @@ const fetchPlatforms = async () => {
   }
 
   try {
+    const query = `
+      created_by.eq.${user.id},
+      id.in.(
+        select platform_id
+        from elevate_team_access eta
+        join team_members tm on tm.team_id = eta.team_id
+        where tm.user_id = '${user.id}'
+      )
+    `.replace(/\s+/g, ''); // Entferne alle Zeilenumbrüche und unnötige Leerzeichen
+
     const { data, error } = await supabase
       .from("elevate_platforms")
       .select(`
@@ -26,27 +36,20 @@ const fetchPlatforms = async () => {
           )
         )
       `)
-      .or(`
-        created_by.eq.${user.id},
-        id.in.(
-          select platform_id
-          from elevate_team_access eta
-          join team_members tm on tm.team_id = eta.team_id
-          where tm.user_id = '${user.id}'
-        )
-      `);
+      .or(query);
 
     if (error) {
-      console.error("[Debug] Fehler beim Laden der Module:", error);
+      console.error("[Debug] Fehler beim Laden der Plattformen:", error);
       throw error;
     }
 
     return data || [];
   } catch (error: any) {
-    console.error("[Debug] Fehler in fetchModule:", error);
+    console.error("[Debug] Fehler in fetchPlatforms:", error);
     throw error;
   }
 };
+
 
 
 const Elevate = () => {
