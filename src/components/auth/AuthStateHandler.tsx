@@ -15,13 +15,10 @@ export const AuthStateHandler = () => {
       console.log("[Auth] State changed:", event);
 
       if (event === "SIGNED_IN") {
-        // Check if we're already on a protected route
-        const protectedRoutes = ["/dashboard", "/settings", "/leads", "/messages"];
-        if (protectedRoutes.includes(location.pathname)) {
-          console.log("[Auth] Already on protected route:", location.pathname);
-          return;
+        // Only redirect to dashboard if coming from auth page
+        if (location.pathname === "/auth") {
+          navigate("/dashboard");
         }
-        navigate("/dashboard");
       } else if (event === "SIGNED_OUT") {
         navigate("/auth");
       } else if (event === "TOKEN_REFRESHED") {

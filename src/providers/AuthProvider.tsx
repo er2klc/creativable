@@ -40,11 +40,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(session.user);
           setIsAuthenticated(true);
           
-          // Only redirect to dashboard if we're on a public path
-          if (publicPaths.includes(location.pathname)) {
+          // Only redirect to dashboard if we're on auth page
+          if (location.pathname === "/auth") {
             navigate("/dashboard");
           }
-        } else if (!publicPaths.includes(location.pathname) && protectedPaths.includes(location.pathname)) {
+        } else if (protectedPaths.includes(location.pathname)) {
+          // Only redirect to auth if trying to access protected paths
           navigate("/auth");
         }
 
@@ -55,8 +56,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (session?.user) {
               setUser(session.user);
               setIsAuthenticated(true);
-              // Only redirect if we're on a public path
-              if (publicPaths.includes(location.pathname)) {
+              if (location.pathname === "/auth") {
                 navigate("/dashboard");
               }
             }
@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         subscription = authSubscription;
       } catch (error: any) {
         console.error("[Auth] Setup error:", error);
-        if (!publicPaths.includes(location.pathname)) {
+        if (protectedPaths.includes(location.pathname)) {
           toast.error("Sitzung abgelaufen. Bitte erneut anmelden.");
           navigate("/auth");
         }
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const { data: { session }, error } = await supabase.auth.refreshSession();
         if (error) {
           console.error("[Auth] Session refresh error:", error);
-          if (!publicPaths.includes(location.pathname)) {
+          if (protectedPaths.includes(location.pathname)) {
             toast.error("Sitzung abgelaufen. Bitte erneut anmelden.");
             navigate("/auth");
           }
