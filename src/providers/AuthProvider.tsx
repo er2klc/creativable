@@ -20,7 +20,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       "/privacy-policy", 
       "/auth/data-deletion/instagram",
       "/impressum",
-      "/changelog"
+      "/changelog",
+      "/unity",
+      "/elevate",
+      "/unity/team"
     ];
     
     const protectedPaths = [
