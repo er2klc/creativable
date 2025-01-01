@@ -12,21 +12,8 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // First get all team IDs the user is a member of
-    const { data: teamAccess, error: teamError } = await supabase
-      .from('team_members')
-      .select('team_id')
-      .eq('user_id', userId);
-
-    if (teamError) {
-      console.error("[Debug] Fehler beim Laden der Team-Zugänge:", teamError);
-      throw teamError;
-    }
-
-    const teamIds = teamAccess?.map(ta => ta.team_id) || [];
-
-    // Then get platforms either created by user or accessible through teams
-    const { data, error } = await supabase
+    // First get platforms created by the user
+    const { data: ownedPlatforms, error: ownedError } = await supabase
       .from("elevate_platforms")
       .select(`
         *,
@@ -38,15 +25,53 @@ const fetchPlatforms = async (userId: string) => {
           )
         )
       `)
-      .or(`created_by.eq.${userId}${teamIds.length > 0 ? `,id.in.(select platform_id from elevate_team_access where team_id.in.(${teamIds.map(id => `'${id}'`).join(',')}))` : ''}`)
+      .eq('created_by', userId)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error("[Debug] Fehler beim Laden der Module:", error);
-      throw error;
+    if (ownedError) {
+      console.error("[Debug] Fehler beim Laden der eigenen Module:", ownedError);
+      throw ownedError;
     }
 
-    return data || [];
+    // Then get platforms accessible through team membership
+    const { data: teamPlatforms, error: teamError } = await supabase
+      .from('elevate_team_access')
+      .select(`
+        platform: platform_id (
+          *,
+          elevate_team_access (
+            team_id,
+            teams (
+              id,
+              name
+            )
+          )
+        )
+      `)
+      .in('team_id', (
+        await supabase
+          .from('team_members')
+          .select('team_id')
+          .eq('user_id', userId)
+      ).data?.map(tm => tm.team_id) || []);
+
+    if (teamError) {
+      console.error("[Debug] Fehler beim Laden der Team-Module:", teamError);
+      throw teamError;
+    }
+
+    // Combine and deduplicate results
+    const allPlatforms = [
+      ...(ownedPlatforms || []),
+      ...(teamPlatforms?.map(tp => tp.platform).filter(Boolean) || [])
+    ];
+
+    // Remove duplicates based on platform id
+    const uniquePlatforms = Array.from(
+      new Map(allPlatforms.map(item => [item.id, item])).values()
+    );
+
+    return uniquePlatforms;
   } catch (error: any) {
     console.error("[Debug] Fehler in fetchPlatforms:", error);
     throw error;
