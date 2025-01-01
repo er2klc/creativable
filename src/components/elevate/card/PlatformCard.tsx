@@ -10,10 +10,15 @@ interface PlatformCardProps {
 
 export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
   return (
-    <Card className="group relative overflow-hidden min-h-[280px]">
-      <PlatformCardImage platform={platform} />
-      <PlatformCardContent platform={platform} />
-      <PlatformCardActions platform={platform} onDelete={() => onDelete(platform.id)} />
+    <Card className="group relative overflow-hidden min-h-[280px] bg-gradient-to-br from-gray-900 to-gray-800">
+      <div className="absolute inset-0 w-full h-full">
+        <PlatformCardImage platform={platform} />
+      </div>
+      <div className="relative z-10 h-full">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+        <PlatformCardContent platform={platform} />
+        <PlatformCardActions platformId={platform.id} onDelete={() => onDelete(platform.id)} />
+      </div>
     </Card>
   );
 };
