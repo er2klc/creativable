@@ -5,17 +5,13 @@ import { toast } from "sonner";
 import { ElevateHeader } from "@/components/elevate/ElevateHeader";
 import { PlatformList } from "@/components/elevate/PlatformList";
 
-const fetchPlatforms = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user?.id) {
+const fetchPlatforms = async (userId: string) => {
+  if (!userId) {
     console.log("[Debug] Kein Benutzer gefunden");
     return [];
   }
 
   try {
-    const query = `created_by.eq.${user.id},id.in.(select platform_id from elevate_team_access eta join team_members tm on tm.team_id = eta.team_id where tm.user_id = '${user.id}')`;
-
     const { data, error } = await supabase
       .from("elevate_platforms")
       .select(`
@@ -28,7 +24,8 @@ const fetchPlatforms = async () => {
           )
         )
       `)
-      .or(query);
+      .or(`created_by.eq.${userId},id.in.(select platform_id from elevate_team_access eta join team_members tm on tm.team_id = eta.team_id where tm.user_id = '${userId}')`)
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error("[Debug] Fehler beim Laden der Plattformen:", error);
@@ -47,7 +44,7 @@ const Elevate = () => {
 
   const { data: platforms = [], isLoading, error, refetch } = useQuery({
     queryKey: ["platforms", user?.id],
-    queryFn: fetchPlatforms,
+    queryFn: () => user?.id ? fetchPlatforms(user.id) : Promise.resolve([]),
     enabled: !!user?.id,
   });
 
