@@ -25,39 +25,38 @@ const Elevate = () => {
 
         if (error) {
           console.error("Error loading platforms:", error);
-          toast.error("Fehler beim Laden der Plattformen");
-          return [];
+          throw error;
         }
 
-        // Get stats for each platform
-        const platformsWithStats = await Promise.all(
-          platforms.map(async (platform) => {
-            const [{ data: teamAccess }, { data: userAccess }] = await Promise.all([
-              supabase
-                .from('elevate_team_access')
-                .select('team_id')
-                .eq('platform_id', platform.id),
-              supabase
-                .from('elevate_user_access')
-                .select('*')
-                .eq('platform_id', platform.id)
-            ]);
+        // Get stats for each platform separately to avoid response stream issues
+        const platformsWithStats = [];
+        
+        for (const platform of platforms) {
+          const [teamAccessResult, userAccessResult] = await Promise.all([
+            supabase
+              .from('elevate_team_access')
+              .select('team_id')
+              .eq('platform_id', platform.id),
+            supabase
+              .from('elevate_user_access')
+              .select('*')
+              .eq('platform_id', platform.id)
+          ]);
 
-            return {
-              ...platform,
-              stats: {
-                totalTeams: teamAccess?.length || 0,
-                totalUsers: userAccess?.length || 0
-              }
-            };
-          })
-        );
+          platformsWithStats.push({
+            ...platform,
+            stats: {
+              totalTeams: teamAccessResult.data?.length || 0,
+              totalUsers: userAccessResult.data?.length || 0
+            }
+          });
+        }
 
         return platformsWithStats;
       } catch (err: any) {
         console.error("Error in platform loading:", err);
         toast.error("Fehler beim Laden der Plattformen");
-        return [];
+        throw err;
       }
     },
     enabled: !!user,
