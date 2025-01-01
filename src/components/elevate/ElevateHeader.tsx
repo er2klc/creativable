@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Building2, LogIn } from "lucide-react";
 import { CreatePlatformDialog } from "./CreatePlatformDialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUser } from "@supabase/auth-helpers-react";
+import { useNavigate } from "react-router-dom";
 
 interface ElevateHeaderProps {
   onPlatformCreated?: () => Promise<void>;
@@ -17,49 +18,80 @@ export const ElevateHeader = ({ onPlatformCreated }: ElevateHeaderProps) => {
   const [inviteCode, setInviteCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const user = useUser();
+  const navigate = useNavigate();
+
+  // Prüfen, ob ein Benutzer eingeloggt ist
+  useEffect(() => {
+    if (!user) {
+      console.warn("[Debug] Kein Benutzer vorhanden, umleiten zur Login-Seite");
+      navigate("/auth");
+    } else {
+      console.log("[Debug] Benutzer gefunden:", user);
+    }
+  }, [user, navigate]);
 
   const handleJoinPlatform = async () => {
     if (!user) {
       toast.error("Sie müssen eingeloggt sein, um einem Modul beizutreten");
+      console.error("[Debug] Kein Benutzer eingeloggt");
       return;
     }
 
     if (!inviteCode.trim()) {
       toast.error("Bitte geben Sie einen Einladungscode ein");
+      console.error("[Debug] Kein Einladungscode eingegeben");
       return;
     }
 
     setIsJoining(true);
 
     try {
+      console.log("[Debug] Invitation Code:", inviteCode);
+
+      // Plattform-Abfrage mit Einladungscode
       const { data: platform, error: platformError } = await supabase
-        .from('elevate_platforms')
-        .select('id, name')
-        .eq('invite_code', inviteCode.trim())
+        .from("elevate_platforms")
+        .select("id, name")
+        .eq("invite_code", inviteCode.trim())
         .maybeSingle();
 
-      if (platformError) throw platformError;
+      if (platformError) {
+        console.error("[Debug] Fehler bei der Plattform-Abfrage:", platformError);
+        throw platformError;
+      }
+
       if (!platform) {
         toast.error("Ungültiger Einladungscode");
+        console.error("[Debug] Einladungscode ungültig oder Plattform nicht gefunden");
         return;
       }
 
+      console.log("[Debug] Plattform gefunden:", platform);
+
+      // Einfügen in elevate_user_access
       const { error: accessError } = await supabase
-        .from('elevate_user_access')
+        .from("elevate_user_access")
         .insert({
           platform_id: platform.id,
           user_id: user.id,
-          granted_by: user.id
+          granted_by: user.id,
         });
 
-      if (accessError) throw accessError;
+      if (accessError) {
+        console.error("[Debug] Fehler beim Einfügen in elevate_user_access:", accessError);
+        throw accessError;
+      }
 
       toast.success(`Sie sind dem Modul "${platform.name}" erfolgreich beigetreten`);
+      console.log("[Debug] Benutzer erfolgreich in elevate_user_access eingefügt");
+
+      // Reset der Dialog-Einstellungen und Neuladen der Plattformliste
       setIsJoinOpen(false);
       setInviteCode("");
       await onPlatformCreated?.();
+      console.log("[Debug] onPlatformCreated wurde erfolgreich aufgerufen");
     } catch (error: any) {
-      console.error('Error joining platform:', error);
+      console.error("[Debug] Fehler beim Beitreten des Moduls:", error);
       toast.error("Fehler beim Beitreten des Moduls");
     } finally {
       setIsJoining(false);
