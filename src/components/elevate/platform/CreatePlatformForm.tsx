@@ -96,7 +96,6 @@ export const CreatePlatformForm = ({
         />
       </div>
       <div className="space-y-2">
-        <Label>Modul Bild</Label>
         <TeamLogoUpload
           logoPreview={logoPreview}
           onLogoChange={handleLogoChange}
