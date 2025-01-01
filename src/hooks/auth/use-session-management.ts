@@ -8,8 +8,9 @@ export const useSessionManagement = () => {
   const handleSessionError = async (error: any) => {
     console.error("[Auth] Session error:", error);
 
-    if (error?.code === "session_not_found") {
-      console.error("[Auth] Session not found, redirecting to login.");
+    if (error?.message?.includes("session_not_found") || 
+        error?.message?.includes("JWT expired")) {
+      console.error("[Auth] Session expired or not found, redirecting to login.");
       toast.error("Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.");
       await supabase.auth.signOut();
       navigate("/auth");
@@ -22,13 +23,16 @@ export const useSessionManagement = () => {
 
   const refreshSession = async () => {
     try {
-      const { error } = await supabase.auth.refreshSession();
+      const { data: { session }, error } = await supabase.auth.refreshSession();
       if (error) {
         console.error("[Auth] Token refresh failed:", error);
         await handleSessionError(error);
+        return null;
       }
+      return session;
     } catch (error) {
       await handleSessionError(error);
+      return null;
     }
   };
 

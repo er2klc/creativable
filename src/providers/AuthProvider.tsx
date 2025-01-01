@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { AuthContext } from "./auth/AuthContext";
-import { handleSessionError, refreshSession } from "./auth/auth-utils";
 import { toast } from "sonner";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -19,7 +18,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     const setupAuth = async () => {
       try {
-        // Get initial session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
@@ -32,7 +30,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           navigate("/auth");
         }
 
-        // Set up auth state change listener
         const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           console.log("[Auth] Auth state changed:", event, session?.user?.id);
 
@@ -57,7 +54,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         subscription = authSubscription;
       } catch (error: any) {
         console.error("[Auth] Setup error:", error);
-        await handleSessionError(error, setIsAuthenticated, navigate, publicPaths, location.pathname);
+        if (!publicPaths.includes(location.pathname)) {
+          toast.error("Sitzung abgelaufen. Bitte erneut anmelden.");
+          navigate("/auth");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -65,11 +65,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     setupAuth();
 
-    // Attempt to refresh the session periodically (every 10 minutes)
+    // Refresh session every 4 minutes to prevent expiration
     const refreshInterval = setInterval(async () => {
       try {
         const { data: { session }, error } = await supabase.auth.refreshSession();
-        if (error) throw error;
+        if (error) {
+          console.error("[Auth] Session refresh error:", error);
+          if (!publicPaths.includes(location.pathname)) {
+            toast.error("Sitzung abgelaufen. Bitte erneut anmelden.");
+            navigate("/auth");
+          }
+          return;
+        }
         
         if (session?.user) {
           setUser(session.user);
@@ -77,12 +84,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error("[Auth] Session refresh error:", error);
-        if (!publicPaths.includes(location.pathname)) {
-          toast.error("Sitzung abgelaufen. Bitte erneut anmelden.");
-          navigate("/auth");
-        }
       }
-    }, 10 * 60 * 1000);
+    }, 4 * 60 * 1000); // 4 minutes
 
     return () => {
       console.log("[Auth] Cleaning up auth listener");
