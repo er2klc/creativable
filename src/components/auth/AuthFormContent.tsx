@@ -8,10 +8,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { LoginFormData } from "@/hooks/auth/use-login";
 import { RegistrationData } from "@/hooks/auth/use-registration";
+import { useAuth } from "@/hooks/use-auth";
 
 export const AuthFormContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const {
     isSignUp,
     setIsSignUp,
@@ -28,6 +30,12 @@ export const AuthFormContent = () => {
     cooldownRemaining,
     setFormData,
   } = useAuthForm();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     const state = location.state as { isSignUp?: boolean; initialEmail?: string } | null;
@@ -52,7 +60,6 @@ export const AuthFormContent = () => {
     setIsSignUp(!isSignUp);
     setRegistrationStep(1);
     if (!isSignUp) {
-      // Switching to registration
       setFormData({
         name: "",
         email: "",
@@ -61,7 +68,6 @@ export const AuthFormContent = () => {
         language: "Deutsch",
       } as RegistrationData);
     } else {
-      // Switching to login
       setFormData({
         email: "",
         password: "",
