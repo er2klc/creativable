@@ -15,11 +15,11 @@ export const PlatformCardImage = ({ platform }: PlatformCardImageProps) => {
         <img 
           src={imageUrl} 
           alt={platform.name} 
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
       ) : (
-        <div className="w-full h-full bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
-          <span className="text-4xl font-semibold text-gray-400">
+        <div className="w-full h-full bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 flex items-center justify-center">
+          <span className="text-6xl font-bold text-white/20">
             {platform.name.substring(0, 2).toUpperCase()}
           </span>
         </div>
