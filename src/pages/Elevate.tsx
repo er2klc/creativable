@@ -23,11 +23,14 @@ const Elevate = () => {
           .select('*')
           .order('created_at', { ascending: false });
 
-        if (platformsError) throw platformsError;
+        if (platformsError) {
+          console.error("Error in platform loading:", platformsError);
+          throw platformsError;
+        }
 
-        // Process each platform sequentially to avoid response stream issues
-        const results = await Promise.all(platforms.map(async (platform) => {
-          const [{ data: teamAccess }, { data: userAccess }] = await Promise.all([
+        const results = [];
+        for (const platform of platforms || []) {
+          const [teamAccessResult, userAccessResult] = await Promise.all([
             supabase
               .from('elevate_team_access')
               .select('team_id')
@@ -38,19 +41,20 @@ const Elevate = () => {
               .eq('platform_id', platform.id)
           ]);
 
-          return {
+          results.push({
             ...platform,
             stats: {
-              totalTeams: teamAccess?.length || 0,
-              totalUsers: userAccess?.length || 0
+              totalTeams: teamAccessResult.data?.length || 0,
+              totalUsers: userAccessResult.data?.length || 0
             }
-          };
-        }));
+          });
+        }
 
         return results;
       } catch (err: any) {
         console.error("Error in platform loading:", err);
-        throw new Error("Fehler beim Laden der Plattformen");
+        toast.error("Fehler beim Laden der Module");
+        throw new Error("Fehler beim Laden der Module");
       }
     },
     enabled: !!user,
@@ -69,18 +73,18 @@ const Elevate = () => {
       if (error) {
         console.error('Error deleting platform:', error);
         if (error.message?.includes('policy')) {
-          toast.error("Sie haben keine Berechtigung, diese Plattform zu löschen");
+          toast.error("Sie haben keine Berechtigung, dieses Modul zu löschen");
         } else {
-          toast.error("Fehler beim Löschen der Plattform");
+          toast.error("Fehler beim Löschen des Moduls");
         }
         return;
       }
 
       await queryClient.invalidateQueries({ queryKey: ['platforms-with-stats'] });
-      toast.success('Plattform erfolgreich gelöscht');
+      toast.success('Modul erfolgreich gelöscht');
     } catch (err: any) {
       console.error('Error in platform deletion:', err);
-      toast.error("Fehler beim Löschen der Plattform");
+      toast.error("Fehler beim Löschen des Moduls");
     }
   };
 

@@ -116,7 +116,9 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          image_url: string | null
           invite_code: string | null
+          linked_modules: string[] | null
           logo_url: string | null
           name: string
         }
@@ -125,7 +127,9 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          image_url?: string | null
           invite_code?: string | null
+          linked_modules?: string[] | null
           logo_url?: string | null
           name: string
         }
@@ -134,7 +138,9 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          image_url?: string | null
           invite_code?: string | null
+          linked_modules?: string[] | null
           logo_url?: string | null
           name?: string
         }
