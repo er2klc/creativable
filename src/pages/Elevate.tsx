@@ -101,9 +101,13 @@ const Elevate = () => {
     toast.error("Fehler beim Laden der Plattformen");
   }
 
+  const handlePlatformCreated = async () => {
+    await refetch();
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <ElevateHeader onPlatformCreated={refetch} />
+      <ElevateHeader onPlatformCreated={handlePlatformCreated} />
       <PlatformList
         platforms={platforms}
         isLoading={isLoading}
