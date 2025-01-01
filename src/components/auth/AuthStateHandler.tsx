@@ -41,9 +41,8 @@ export const AuthStateHandler = () => {
         if (event === "SIGNED_IN") {
           if (location.pathname === "/auth") {
             await navigate("/dashboard");
-          } else if (isPublicPath(location.pathname)) {
-            console.log("[Auth] Staying on public path:", location.pathname);
           }
+          // Remove the else condition to prevent unwanted redirects
         } else if (event === "SIGNED_OUT") {
           // Clear refresh interval on sign out
           if (sessionRefreshInterval) {
@@ -53,8 +52,6 @@ export const AuthStateHandler = () => {
 
           if (!isPublicPath(location.pathname)) {
             await navigate("/auth");
-          } else {
-            console.log("[Auth] Staying on public path after sign out:", location.pathname);
           }
         } else if (event === "TOKEN_REFRESHED") {
           console.log("[Auth] Token refreshed for user:", session?.user?.id);
