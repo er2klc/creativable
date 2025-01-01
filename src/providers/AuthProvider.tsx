@@ -20,9 +20,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       "/privacy-policy", 
       "/auth/data-deletion/instagram",
       "/impressum",
-      "/unity",
-      "/elevate",
       "/changelog"
+    ];
+    
+    const protectedPaths = [
+      "/dashboard",
+      "/settings",
+      "/leads",
+      "/messages"
     ];
     
     let subscription: any = null;
@@ -39,7 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (publicPaths.includes(location.pathname)) {
             navigate("/dashboard");
           }
-        } else if (!publicPaths.includes(location.pathname)) {
+        } else if (!publicPaths.includes(location.pathname) && protectedPaths.includes(location.pathname)) {
           navigate("/auth");
         }
 
