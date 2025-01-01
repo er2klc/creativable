@@ -50,28 +50,23 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       let logoUrl = null;
 
       if (logoFile) {
-        try {
-          const fileExt = logoFile.name.split('.').pop();
-          const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const fileExt = logoFile.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
 
-          const { error: uploadError, data: uploadData } = await supabase.storage
-            .from('team-logos')
-            .upload(fileName, logoFile, {
-              upsert: true,
-              contentType: logoFile.type
-            });
+        const { error: uploadError, data: uploadData } = await supabase.storage
+          .from('team-logos')
+          .upload(fileName, logoFile, {
+            upsert: true,
+            contentType: logoFile.type
+          });
 
-          if (uploadError) throw uploadError;
+        if (uploadError) throw uploadError;
 
-          const { data: publicUrlData } = supabase.storage
-            .from('team-logos')
-            .getPublicUrl(fileName);
+        const { data: publicUrlData } = supabase.storage
+          .from('team-logos')
+          .getPublicUrl(fileName);
 
-          logoUrl = publicUrlData.publicUrl;
-        } catch (uploadError) {
-          console.error('Error uploading logo:', uploadError);
-          throw new Error('Fehler beim Hochladen des Logos');
-        }
+        logoUrl = publicUrlData.publicUrl;
       }
 
       const { data: platform, error: platformError } = await supabase
@@ -86,7 +81,10 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         .select()
         .single();
 
-      if (platformError) throw platformError;
+      if (platformError) {
+        console.error('Platform creation error:', platformError);
+        throw platformError;
+      }
 
       if (selectedTeams.length > 0) {
         const teamAccess = selectedTeams.map(teamId => ({
@@ -99,10 +97,16 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
           .from('elevate_team_access')
           .insert(teamAccess);
 
-        if (accessError) throw accessError;
+        if (accessError) {
+          console.error('Team access error:', accessError);
+          throw accessError;
+        }
       }
 
-      await onPlatformCreated?.();
+      if (onPlatformCreated) {
+        await onPlatformCreated();
+      }
+      
       toast.success("Modul erfolgreich erstellt");
       setIsOpen(false);
       resetState();
