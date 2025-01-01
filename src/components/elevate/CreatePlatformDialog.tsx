@@ -86,7 +86,6 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
 
       if (platformError) throw platformError;
 
-      // Grant access to selected teams
       if (selectedTeams.length > 0) {
         const teamAccess = selectedTeams.map(teamId => ({
           platform_id: platform.id,
@@ -104,6 +103,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       await onPlatformCreated?.();
       toast.success("Modul erfolgreich erstellt");
       setIsOpen(false);
+      resetState();
     } catch (error: any) {
       console.error('Error in module creation:', error);
       toast.error("Fehler beim Erstellen des Moduls: " + (error.message || 'Unbekannter Fehler'));
