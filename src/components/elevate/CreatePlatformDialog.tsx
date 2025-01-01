@@ -54,10 +54,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const { error: uploadError } = await supabase.storage
           .from('team-logos')
-          .upload(fileName, logoFile, {
-            upsert: true,
-            contentType: logoFile.type
-          });
+          .upload(fileName, logoFile);
 
         if (uploadError) {
           console.error('Logo upload error:', uploadError);
@@ -73,13 +70,13 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
 
       const { data: platformData, error: platformError } = await supabase
         .from('elevate_platforms')
-        .insert({
+        .insert([{
           name: name.trim(),
           description: description.trim() || null,
           created_by: user.id,
           logo_url: logoUrl,
           linked_modules: selectedModules
-        })
+        }])
         .select()
         .single();
 
