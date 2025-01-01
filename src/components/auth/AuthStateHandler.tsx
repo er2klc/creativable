@@ -27,11 +27,9 @@ export const AuthStateHandler = () => {
   const { handleSessionError, refreshSession } = useSessionManagement();
 
   const isPublicPath = (pathname: string) => {
-    // Check if the current path exactly matches a public path
     if (PUBLIC_PATHS.includes(pathname)) {
       return true;
     }
-    // Check if the current path starts with any of the public paths
     return PUBLIC_PATHS.some(path => 
       pathname.startsWith(path + "/")
     );
@@ -84,31 +82,41 @@ export const AuthStateHandler = () => {
       }
     });
 
-    // Initial session check
-    const checkInitialSession = async () => {
+    // Initial session check with retry mechanism
+    const checkInitialSession = async (retryCount = 0) => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
+          if (retryCount < 3) {
+            console.log("[Auth] Retrying session check...");
+            setTimeout(() => checkInitialSession(retryCount + 1), 1000);
+            return;
+          }
           console.error("[Auth] Session check error:", error);
           handleSessionError(error);
           return;
         }
 
         if (!session) {
-          if (!isPublicPath(currentPath)) {
-            console.log("[Auth] No session and not on public path - redirecting to auth");
+          if (!isPublicPath(currentPath) && !isProtectedNoRedirect(currentPath)) {
+            console.log("[Auth] No session and not on public/protected path - redirecting to auth");
             await safeNavigate("/auth");
           }
           return;
         }
 
-        // If we're on auth page with valid session and not a protected no-redirect path
+        // Only redirect to dashboard if on auth page and not accessing protected routes
         if (currentPath === "/auth" && !isProtectedNoRedirect(currentPath)) {
           console.log("[Auth] Valid session on auth page - redirecting to dashboard");
           await safeNavigate("/dashboard");
         }
       } catch (error) {
+        if (retryCount < 3) {
+          console.log("[Auth] Retrying after error...");
+          setTimeout(() => checkInitialSession(retryCount + 1), 1000);
+          return;
+        }
         console.error("[Auth] Initial session check error:", error);
         handleSessionError(error);
       }
@@ -116,11 +124,11 @@ export const AuthStateHandler = () => {
 
     checkInitialSession();
 
-    // Set up session refresh interval
+    // Session refresh with improved error handling
     sessionRefreshInterval = setInterval(async () => {
       try {
         const session = await refreshSession();
-        if (!session && !isPublicPath(currentPath)) {
+        if (!session && !isPublicPath(currentPath) && !isProtectedNoRedirect(currentPath)) {
           console.log("[Auth] Session refresh failed - redirecting to auth");
           await safeNavigate("/auth");
         }
