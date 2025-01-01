@@ -1,11 +1,12 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionManagement } from "@/hooks/auth/use-session-management";
 import { AuthChangeEvent } from "@supabase/supabase-js";
 
 export const AuthStateHandler = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { handleSessionError, refreshSession } = useSessionManagement();
 
   useEffect(() => {
@@ -14,6 +15,12 @@ export const AuthStateHandler = () => {
       console.log("[Auth] State changed:", event);
 
       if (event === "SIGNED_IN") {
+        // Check if we're already on a protected route
+        const protectedRoutes = ["/unity", "/elevate", "/dashboard"];
+        if (protectedRoutes.includes(location.pathname)) {
+          console.log("[Auth] Already on protected route:", location.pathname);
+          return;
+        }
         navigate("/dashboard");
       } else if (event === "SIGNED_OUT") {
         navigate("/auth");
@@ -37,7 +44,7 @@ export const AuthStateHandler = () => {
       subscription.unsubscribe();
       clearInterval(refreshInterval);
     };
-  }, [navigate, refreshSession, handleSessionError]);
+  }, [navigate, refreshSession, handleSessionError, location.pathname]);
 
   return null;
 };

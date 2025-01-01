@@ -23,7 +23,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session?.user) {
           setUser(session.user);
           setIsAuthenticated(true);
-          if (location.pathname === "/auth" || location.pathname === "/register") {
+          
+          // Only redirect to dashboard if we're on a public path
+          if (publicPaths.includes(location.pathname)) {
             navigate("/dashboard");
           }
         } else if (!publicPaths.includes(location.pathname)) {
@@ -37,7 +39,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (session?.user) {
               setUser(session.user);
               setIsAuthenticated(true);
-              navigate("/dashboard");
+              // Only redirect if we're on a public path
+              if (publicPaths.includes(location.pathname)) {
+                navigate("/dashboard");
+              }
             }
           } else if (event === "SIGNED_OUT") {
             setUser(null);
