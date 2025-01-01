@@ -71,15 +71,19 @@ export const AuthStateHandler = () => {
       }
     });
 
-    // Initial session check only for auth page
+    // Initial session check
     const checkInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session && currentPath === "/auth") {
-        console.log("[Auth] No session on auth page");
+      
+      // Don't redirect if we have a session, regardless of the path
+      if (session) {
+        console.log("[Auth] Session exists, no redirect needed");
         return;
       }
+
+      // Only redirect to auth if not on a public path and no session exists
       if (!session && !isPublicPath(currentPath)) {
-        console.log("[Auth] No initial session - redirecting to auth");
+        console.log("[Auth] No session and not on public path - redirecting to auth");
         await safeNavigate("/auth");
       }
     };
