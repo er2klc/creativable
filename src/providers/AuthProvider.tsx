@@ -27,7 +27,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       "/dashboard",
       "/settings",
       "/leads",
-      "/messages"
+      "/messages",
+      "/calendar"
     ];
     
     let subscription: any = null;
@@ -40,13 +41,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(session.user);
           setIsAuthenticated(true);
           
-          // Only redirect to dashboard if we're on auth page
+          // Only redirect to dashboard if on auth page
           if (location.pathname === "/auth") {
             navigate("/dashboard");
           }
-        } else if (protectedPaths.includes(location.pathname)) {
+        } else {
           // Only redirect to auth if trying to access protected paths
-          navigate("/auth");
+          if (protectedPaths.includes(location.pathname)) {
+            navigate("/auth");
+          }
         }
 
         const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
