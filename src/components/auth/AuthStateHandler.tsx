@@ -97,7 +97,7 @@ export const AuthStateHandler = () => {
 
     const setupAuth = async () => {
       try {
-        // Get initial session
+        // Get initial session without redirecting immediately
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -105,11 +105,10 @@ export const AuthStateHandler = () => {
           return;
         }
 
-        if (!session) {
-          if (!isPublicPath(currentPath) && !isProtectedNoRedirect(currentPath)) {
-            console.log("[Auth] No session - redirecting to auth");
-            await navigate("/auth", { replace: true });
-          }
+        // Only redirect if we're sure there's no session
+        if (!session && !isPublicPath(currentPath) && !isProtectedNoRedirect(currentPath)) {
+          console.log("[Auth] No session - redirecting to auth");
+          navigate("/auth", { replace: true });
           return;
         }
 
@@ -117,17 +116,19 @@ export const AuthStateHandler = () => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
 
         // Setup session refresh
-        sessionRefreshInterval = setInterval(async () => {
-          try {
-            const refreshedSession = await refreshSession();
-            if (!refreshedSession && !isPublicPath(currentPath)) {
-              toast.error("Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.");
-              await navigate("/auth", { replace: true });
+        if (session) {
+          sessionRefreshInterval = setInterval(async () => {
+            try {
+              const refreshedSession = await refreshSession();
+              if (!refreshedSession && !isPublicPath(currentPath)) {
+                toast.error("Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.");
+                navigate("/auth", { replace: true });
+              }
+            } catch (error) {
+              await handleAuthError(error);
             }
-          } catch (error) {
-            await handleAuthError(error);
-          }
-        }, 4 * 60 * 1000); // Refresh every 4 minutes
+          }, 4 * 60 * 1000); // Refresh every 4 minutes
+        }
 
         return () => {
           console.log("[Auth] Cleaning up auth listener");
