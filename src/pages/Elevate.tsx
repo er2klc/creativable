@@ -18,24 +18,29 @@ const Elevate = () => {
       if (!user?.id) return [];
       
       try {
-        // Get platforms where user has access (either as creator or through team access)
+        // Get platforms where user has direct access or team access
         const { data: platforms, error: platformsError } = await supabase
           .from('elevate_platforms')
-          .select('*')
-          .or(`created_by.eq.${user.id},id.in.(
-            select platform_id from elevate_team_access eta 
-            join team_members tm on tm.team_id = eta.team_id 
-            where tm.user_id = '${user.id}'
-          )`)
-          .order('created_at', { ascending: false });
+          .select(`
+            *,
+            elevate_user_access!inner(user_id),
+            elevate_team_access!inner(
+              team_id,
+              teams!inner(*)
+            )
+          `)
+          .or(`created_by.eq.${user.id},elevate_user_access.user_id.eq.${user.id},elevate_team_access.team_id.in.(
+            select team_id from team_members 
+            where user_id = '${user.id}'
+          )`);
 
         if (platformsError) {
           console.error("Error in platform loading:", platformsError);
           throw platformsError;
         }
 
-        const results = [];
-        for (const platform of platforms || []) {
+        // Process platforms to include stats
+        const results = await Promise.all((platforms || []).map(async (platform) => {
           // Get teams that have access to this platform
           const { data: teamAccess, error: teamAccessError } = await supabase
             .from('elevate_team_access')
@@ -46,41 +51,41 @@ const Elevate = () => {
 
           // Get all users who have access through teams
           const teamUserCountPromises = teamAccess?.map(async (access) => {
-            const { data: teamMembers, error: teamMembersError } = await supabase
+            const { count: teamMemberCount, error: teamMembersError } = await supabase
               .from('team_members')
-              .select('user_id')
+              .select('*', { count: 'exact', head: true })
               .eq('team_id', access.team_id);
 
             if (teamMembersError) throw teamMembersError;
-            return teamMembers?.length || 0;
+            return teamMemberCount || 0;
           }) || [];
 
           const teamUserCounts = await Promise.all(teamUserCountPromises);
           const totalTeamUsers = teamUserCounts.reduce((sum, count) => sum + count, 0);
 
           // Get direct user access count
-          const { data: directUserAccess, error: userAccessError } = await supabase
+          const { count: directUserCount, error: userAccessError } = await supabase
             .from('elevate_user_access')
-            .select('user_id')
+            .select('*', { count: 'exact', head: true })
             .eq('platform_id', platform.id);
 
           if (userAccessError) throw userAccessError;
 
-          // Generate slug from name if not exists
+          // Generate slug from name
           const slug = platform.name
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/(^-|-$)/g, '');
 
-          results.push({
+          return {
             ...platform,
             slug,
             stats: {
               totalTeams: teamAccess?.length || 0,
-              totalUsers: totalTeamUsers + (directUserAccess?.length || 0)
+              totalUsers: totalTeamUsers + (directUserCount || 0)
             }
-          });
-        }
+          };
+        }));
 
         return results;
       } catch (err: any) {
