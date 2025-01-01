@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ElevateHeader } from "@/components/elevate/ElevateHeader";
 import { PlatformList } from "@/components/elevate/PlatformList";
 
+// Fetch platforms function
 const fetchPlatforms = async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.id) {
@@ -14,23 +15,32 @@ const fetchPlatforms = async () => {
   }
 
   try {
-    // Team-IDs abrufen
+    // Fetch team IDs for the current user
     const { data: teamIds, error: teamError } = await supabase
-      .from('team_members')
-      .select('team_id')
-      .eq('user_id', user.id);
+      .from("team_members")
+      .select("team_id")
+      .eq("user_id", user.id);
 
     if (teamError) {
       console.error("[Debug] Fehler beim Laden der Team-IDs:", teamError);
       throw teamError;
     }
 
-    const teamIdList = teamIds?.map(t => `${t.team_id}`) || [];
+    const teamIdList = teamIds?.map((t) => t.team_id) || [];
+    const teamIdConditions = teamIdList
+      .map((id) => `elevate_team_access.team_id.eq.${id}`)
+      .join(",");
 
-    // Plattformen, die vom Benutzer erstellt wurden
-    const { data: createdPlatforms, error: createdPlatformsError } = await supabase
-      .from('elevate_platforms')
-      .select(`
+    const queryCondition =
+      teamIdList.length > 0
+        ? `or=(created_by.eq.${user.id},${teamIdConditions})`
+        : `created_by.eq.${user.id}`;
+
+    // Fetch platforms with condition
+    const { data: platforms, error: platformsError } = await supabase
+      .from("elevate_platforms")
+      .select(
+        `
         *,
         elevate_team_access (
           team_id,
@@ -39,69 +49,28 @@ const fetchPlatforms = async () => {
             name
           )
         )
-      `)
-      .eq('created_by', user.id);
+      `
+      )
+      .or(queryCondition);
 
-    if (createdPlatformsError) {
-      console.error("[Debug] Fehler beim Laden der erstellten Plattformen:", createdPlatformsError);
-      throw createdPlatformsError;
+    if (platformsError) {
+      console.error("[Debug] Fehler beim Laden der Plattformen:", platformsError);
+      throw platformsError;
     }
 
-    // Plattformen basierend auf Team-Zugriff
-    const { data: teamPlatforms, error: teamPlatformsError } = await supabase
-      .from('elevate_platforms')
-      .select(`
-        *,
-        elevate_team_access (
-          team_id,
-          teams (
-            id,
-            name
-          )
-        )
-      `)
-      .in('elevate_team_access.team_id', teamIdList);
-
-    if (teamPlatformsError) {
-      console.error("[Debug] Fehler beim Laden der Team-Plattformen:", teamPlatformsError);
-      throw teamPlatformsError;
-    }
-
-    // Plattformen basierend auf Invite Codes
-    const { data: invitePlatforms, error: invitePlatformsError } = await supabase
-      .from('elevate_platforms')
-      .select(`
-        *,
-        elevate_user_access!inner (
-          user_id
-        )
-      `)
-      .eq('elevate_user_access.user_id', user.id);
-
-    if (invitePlatformsError) {
-      console.error("[Debug] Fehler beim Laden der Invite-Plattformen:", invitePlatformsError);
-      throw invitePlatformsError;
-    }
-
-    // Kombinieren und Deduplizieren
-    const combinedPlatforms = [...(createdPlatforms || []), ...(teamPlatforms || []), ...(invitePlatforms || [])];
-    const uniquePlatforms = Array.from(new Set(combinedPlatforms.map(p => p.id)))
-      .map(id => combinedPlatforms.find(p => p.id === id));
-
-    console.log("[Debug] Geladene Plattformen:", uniquePlatforms);
-    return uniquePlatforms || [];
+    console.log("[Debug] Geladene Plattformen:", platforms);
+    return platforms || [];
   } catch (err: any) {
     console.error("[Debug] Fehler in fetchPlatforms:", err.message || err);
     throw err;
   }
 };
 
-
 const Elevate = () => {
   const user = useUser();
 
   const { data: platforms = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['platforms', user?.id],
+    queryKey: ["platforms", user?.id],
     queryFn: fetchPlatforms,
     enabled: !!user?.id,
   });
@@ -109,22 +78,22 @@ const Elevate = () => {
   const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('elevate_platforms')
+        .from("elevate_platforms")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
 
       toast.success("Plattform erfolgreich gelöscht");
       refetch();
     } catch (error: any) {
-      console.error('[Debug] Error deleting platform:', error);
+      console.error("[Debug] Fehler beim Löschen der Plattform:", error);
       toast.error(error.message || "Fehler beim Löschen der Plattform");
     }
   };
 
   if (error) {
-    console.error("[Debug] Error loading platforms:", error);
+    console.error("[Debug] Fehler beim Laden der Plattformen:", error);
     toast.error("Fehler beim Laden der Plattformen");
   }
 
