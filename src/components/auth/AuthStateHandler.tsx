@@ -16,7 +16,7 @@ export const AuthStateHandler = () => {
 
       if (event === "SIGNED_IN") {
         // Check if we're already on a protected route
-        const protectedRoutes = ["/unity", "/elevate", "/dashboard"];
+        const protectedRoutes = ["/unity", "/elevate", "/dashboard", "/settings", "/leads", "/messages"];
         if (protectedRoutes.includes(location.pathname)) {
           console.log("[Auth] Already on protected route:", location.pathname);
           return;

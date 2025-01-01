@@ -13,7 +13,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const publicPaths = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram"];
+    const publicPaths = [
+      "/", 
+      "/auth", 
+      "/register", 
+      "/privacy-policy", 
+      "/auth/data-deletion/instagram",
+      "/impressum",
+      "/unity",
+      "/elevate",
+      "/changelog"
+    ];
+    
     let subscription: any = null;
     
     const setupAuth = async () => {
