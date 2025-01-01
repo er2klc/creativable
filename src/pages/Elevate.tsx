@@ -1,46 +1,22 @@
-import { useEffect, useState } from "react";
-import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
 import { ElevateHeader } from "@/components/elevate/ElevateHeader";
 import { PlatformList } from "@/components/elevate/PlatformList";
 
-// Fetch platforms function
 const fetchPlatforms = async () => {
   const { data: { user } } = await supabase.auth.getUser();
+
   if (!user?.id) {
     console.log("[Debug] Kein Benutzer gefunden");
     return [];
   }
 
   try {
-    // Fetch team IDs for the current user
-    const { data: teamIds, error: teamError } = await supabase
-      .from("team_members")
-      .select("team_id")
-      .eq("user_id", user.id);
-
-    if (teamError) {
-      console.error("[Debug] Fehler beim Laden der Team-IDs:", teamError);
-      throw teamError;
-    }
-
-    const teamIdList = teamIds?.map((t) => t.team_id) || [];
-    const teamIdConditions = teamIdList
-      .map((id) => `elevate_team_access.team_id.eq.${id}`)
-      .join(",");
-
-    const queryCondition =
-      teamIdList.length > 0
-        ? `or=(created_by.eq.${user.id},${teamIdConditions})`
-        : `created_by.eq.${user.id}`;
-
-    // Fetch platforms with condition
-    const { data: platforms, error: platformsError } = await supabase
+    const { data: platforms, error } = await supabase
       .from("elevate_platforms")
-      .select(
-        `
+      .select(`
         *,
         elevate_team_access (
           team_id,
@@ -49,13 +25,11 @@ const fetchPlatforms = async () => {
             name
           )
         )
-      `
-      )
-      .or(queryCondition);
+      `);
 
-    if (platformsError) {
-      console.error("[Debug] Fehler beim Laden der Plattformen:", platformsError);
-      throw platformsError;
+    if (error) {
+      console.error("[Debug] Fehler beim Laden der Plattformen:", error);
+      throw error;
     }
 
     console.log("[Debug] Geladene Plattformen:", platforms);
