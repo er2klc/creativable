@@ -22,7 +22,7 @@ export const PlatformList = ({ platforms, isLoading, onDelete }: PlatformListPro
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">
-          Keine Plattformen gefunden. Erstellen Sie eine neue Plattform, um loszulegen.
+          Keine Module gefunden. Erstellen Sie ein neues Modul oder treten Sie einem bestehenden bei.
         </p>
       </div>
     );

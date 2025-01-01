@@ -30,16 +30,18 @@ const Elevate = () => {
 
         const results = [];
         for (const platform of platforms || []) {
-          const [teamAccessResult, userAccessResult] = await Promise.all([
-            supabase
-              .from('elevate_team_access')
-              .select('team_id')
-              .eq('platform_id', platform.id),
-            supabase
-              .from('elevate_user_access')
-              .select('*')
-              .eq('platform_id', platform.id)
-          ]);
+          const teamAccessResult = await supabase
+            .from('elevate_team_access')
+            .select('team_id')
+            .eq('platform_id', platform.id);
+
+          const userAccessResult = await supabase
+            .from('elevate_user_access')
+            .select('*')
+            .eq('platform_id', platform.id);
+
+          if (teamAccessResult.error) throw teamAccessResult.error;
+          if (userAccessResult.error) throw userAccessResult.error;
 
           results.push({
             ...platform,
@@ -53,8 +55,7 @@ const Elevate = () => {
         return results;
       } catch (err: any) {
         console.error("Error in platform loading:", err);
-        toast.error("Fehler beim Laden der Module");
-        throw new Error("Fehler beim Laden der Module");
+        return [];
       }
     },
     enabled: !!user,

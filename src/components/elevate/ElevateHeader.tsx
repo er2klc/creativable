@@ -20,7 +20,7 @@ export const ElevateHeader = ({ onPlatformCreated }: ElevateHeaderProps) => {
 
   const handleJoinPlatform = async () => {
     if (!user) {
-      toast.error("Sie müssen eingeloggt sein, um einer Plattform beizutreten");
+      toast.error("Sie müssen eingeloggt sein, um einem Modul beizutreten");
       return;
     }
 
@@ -54,13 +54,13 @@ export const ElevateHeader = ({ onPlatformCreated }: ElevateHeaderProps) => {
 
       if (accessError) throw accessError;
 
-      toast.success(`Sie sind der Plattform "${platform.name}" erfolgreich beigetreten`);
+      toast.success(`Sie sind dem Modul "${platform.name}" erfolgreich beigetreten`);
       setIsJoinOpen(false);
       setInviteCode("");
       await onPlatformCreated?.();
     } catch (error: any) {
       console.error('Error joining platform:', error);
-      toast.error("Fehler beim Beitreten der Plattform");
+      toast.error("Fehler beim Beitreten des Moduls");
     } finally {
       setIsJoining(false);
     }
@@ -74,7 +74,7 @@ export const ElevateHeader = ({ onPlatformCreated }: ElevateHeaderProps) => {
           Elevate
         </h1>
         <p className="text-muted-foreground">
-          Verwalten Sie Ihre Ausbildungsplattformen
+          Verwalten Sie Ihre Ausbildungsmodule
         </p>
       </div>
       <div className="flex items-center gap-4">
@@ -82,14 +82,14 @@ export const ElevateHeader = ({ onPlatformCreated }: ElevateHeaderProps) => {
           <DialogTrigger asChild>
             <Button variant="outline">
               <LogIn className="h-4 w-4 mr-2" />
-              Plattform beitreten
+              Modul beitreten
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Einer Plattform beitreten</DialogTitle>
+              <DialogTitle>Einem Modul beitreten</DialogTitle>
               <DialogDescription>
-                Geben Sie den Einladungscode ein, um einer bestehenden Ausbildungsplattform beizutreten.
+                Geben Sie den Einladungscode ein, um einem bestehenden Ausbildungsmodul beizutreten.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">

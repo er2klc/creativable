@@ -33,7 +33,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
 
   const handleCreate = async () => {
     if (!user) {
-      toast.error("Sie müssen eingeloggt sein, um eine Plattform zu erstellen");
+      toast.error("Sie müssen eingeloggt sein, um ein Modul zu erstellen");
       return;
     }
 
@@ -99,11 +99,11 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       }
 
       await onPlatformCreated?.();
-      toast.success("Plattform erfolgreich erstellt");
+      toast.success("Modul erfolgreich erstellt");
       setIsOpen(false);
     } catch (error: any) {
       console.error('Error in platform creation:', error);
-      toast.error("Fehler beim Erstellen der Plattform: " + (error.message || 'Unbekannter Fehler'));
+      toast.error("Fehler beim Erstellen des Moduls: " + (error.message || 'Unbekannter Fehler'));
     } finally {
       setIsLoading(false);
     }
@@ -121,14 +121,14 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
-          Plattform erstellen
+          Modul erstellen
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Neue Ausbildungsplattform erstellen</DialogTitle>
+          <DialogTitle>Neues Ausbildungsmodul erstellen</DialogTitle>
           <DialogDescription>
-            Erstellen Sie eine neue Ausbildungsplattform und wählen Sie die Teams aus, die darauf Zugriff haben sollen.
+            Erstellen Sie ein neues Ausbildungsmodul und wählen Sie die Teams aus, die darauf Zugriff haben sollen.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
@@ -152,7 +152,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
             onClick={handleCreate}
             disabled={!name.trim() || isLoading}
           >
-            {isLoading ? "Erstelle..." : "Plattform erstellen"}
+            {isLoading ? "Erstelle..." : "Modul erstellen"}
           </Button>
         </DialogFooter>
       </DialogContent>
