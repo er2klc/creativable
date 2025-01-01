@@ -71,33 +71,33 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
 
       // Plattform erstellen
       const { data: platformData, error: platformError } = await supabase
-        .from('elevate_platforms')
-        .insert({
-          name: name.trim(),
-          description: description.trim() || null,
-          created_by: user.id,
-          logo_url: logoUrl,
-          linked_modules: selectedModules
-        })
-        .select()
-        .single(); // single() sorgt dafür, dass die Daten direkt zurückgegeben werden
+  .from('elevate_platforms')
+  .insert({
+    name: name.trim(),
+    description: description.trim() || null,
+    created_by: user.id,
+    logo_url: logoUrl,
+    linked_modules: selectedModules
+  })
+  .select()
+  .single(); // .single() sorgt dafür, dass die eingefügten Daten direkt zurückgegeben werden
 
-      if (platformError) throw platformError;
+if (platformError) throw platformError;
 
-      // Team-Zugriffsrechte erstellen
-      if (selectedTeams.length > 0) {
-        const teamAccess = selectedTeams.map(teamId => ({
-          platform_id: platformData.id, // Plattform-ID aus dem Insert-Ergebnis
-          team_id: teamId,
-          granted_by: user.id
-        }));
+if (selectedTeams.length > 0) {
+  const teamAccess = selectedTeams.map(teamId => ({
+    platform_id: platformData.id, // Verwende die ID aus den zurückgegebenen Daten
+    team_id: teamId,
+    granted_by: user.id
+  }));
 
-        const { error: accessError } = await supabase
-          .from('elevate_team_access')
-          .insert(teamAccess);
+  const { error: accessError } = await supabase
+    .from('elevate_team_access')
+    .insert(teamAccess);
 
-        if (accessError) throw accessError;
-      }
+  if (accessError) throw accessError;
+}
+
 
       toast.success("Modul erfolgreich erstellt");
       setIsOpen(false);
