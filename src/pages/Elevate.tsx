@@ -19,17 +19,17 @@ const Elevate = () => {
           .from('elevate_platforms')
           .select(`
             *,
-            elevate_team_access (
-              teams (
+            elevate_team_access!inner (
+              team_id,
+              teams!inner (
                 id,
                 name
               )
             )
           `)
-          .or(`created_by.eq.${user.id},id.in.(
-            select platform_id from elevate_team_access eta 
-            join team_members tm on tm.team_id = eta.team_id 
-            where tm.user_id = '${user.id}'
+          .or(`created_by.eq.${user.id},elevate_team_access.team_id.in.(
+            select team_id from team_members 
+            where user_id = '${user.id}'
           )`);
 
         if (platformsError) {
