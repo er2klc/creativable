@@ -52,16 +52,14 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       if (logoFile) {
         const fileExt = logoFile.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const uploadResult = await supabase.storage
+        const { error: uploadError, data: uploadData } = await supabase.storage
           .from('team-logos')
           .upload(fileName, logoFile, {
             upsert: true,
             contentType: logoFile.type
           });
 
-        if (uploadResult.error) {
-          throw uploadResult.error;
-        }
+        if (uploadError) throw uploadError;
 
         const { data: publicUrlData } = supabase.storage
           .from('team-logos')
@@ -70,7 +68,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         logoUrl = publicUrlData.publicUrl;
       }
 
-      const platformResult = await supabase
+      const { data: platform, error: platformError } = await supabase
         .from('elevate_platforms')
         .insert({
           name: name.trim(),
@@ -79,14 +77,10 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
           logo_url: logoUrl,
           linked_modules: selectedModules
         })
-        .select()
+        .select('*')
         .single();
 
-      if (platformResult.error) {
-        throw platformResult.error;
-      }
-
-      const platform = platformResult.data;
+      if (platformError) throw platformError;
 
       if (selectedTeams.length > 0) {
         const teamAccess = selectedTeams.map(teamId => ({
@@ -95,13 +89,11 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
           granted_by: user.id
         }));
 
-        const teamAccessResult = await supabase
+        const { error: accessError } = await supabase
           .from('elevate_team_access')
           .insert(teamAccess);
 
-        if (teamAccessResult.error) {
-          throw teamAccessResult.error;
-        }
+        if (accessError) throw accessError;
       }
 
       if (onPlatformCreated) {

@@ -14,7 +14,7 @@ const fetchPlatforms = async () => {
   }
 
   try {
-    const { data: platforms, error } = await supabase
+    const { data, error } = await supabase
       .from("elevate_platforms")
       .select(`
         *,
@@ -32,11 +32,10 @@ const fetchPlatforms = async () => {
       throw error;
     }
 
-    console.log("[Debug] Geladene Plattformen:", platforms);
-    return platforms || [];
-  } catch (err: any) {
-    console.error("[Debug] Fehler in fetchPlatforms:", err.message || err);
-    throw err;
+    return data || [];
+  } catch (error: any) {
+    console.error("[Debug] Fehler in fetchPlatforms:", error.message || error);
+    throw error;
   }
 };
 
