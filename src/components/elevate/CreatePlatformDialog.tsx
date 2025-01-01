@@ -17,6 +17,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +27,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
     setName("");
     setDescription("");
     setSelectedTeams([]);
+    setSelectedModules([]);
     setLogoFile(null);
     setLogoPreview(null);
     setIsLoading(false);
@@ -76,7 +78,8 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
           name: name.trim(),
           description: description.trim() || null,
           created_by: user.id,
-          logo_url: logoUrl
+          logo_url: logoUrl,
+          linked_modules: selectedModules
         })
         .select()
         .single();
@@ -102,7 +105,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       toast.success("Modul erfolgreich erstellt");
       setIsOpen(false);
     } catch (error: any) {
-      console.error('Error in platform creation:', error);
+      console.error('Error in module creation:', error);
       toast.error("Fehler beim Erstellen des Moduls: " + (error.message || 'Unbekannter Fehler'));
     } finally {
       setIsLoading(false);
@@ -141,6 +144,8 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
             setLogoFile={setLogoFile}
             logoPreview={logoPreview}
             setLogoPreview={setLogoPreview}
+            selectedModules={selectedModules}
+            setSelectedModules={setSelectedModules}
           />
           <TeamAccessManager
             selectedTeams={selectedTeams}

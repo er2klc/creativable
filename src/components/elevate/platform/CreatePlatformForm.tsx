@@ -2,6 +2,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CreatePlatformFormProps {
   name: string;
@@ -12,6 +16,8 @@ interface CreatePlatformFormProps {
   setLogoFile: (file: File | null) => void;
   logoPreview: string | null;
   setLogoPreview: (preview: string | null) => void;
+  selectedModules: string[];
+  setSelectedModules: (modules: string[]) => void;
 }
 
 export const CreatePlatformForm = ({
@@ -22,8 +28,27 @@ export const CreatePlatformForm = ({
   logoFile,
   setLogoFile,
   logoPreview,
-  setLogoPreview
+  setLogoPreview,
+  selectedModules,
+  setSelectedModules
 }: CreatePlatformFormProps) => {
+  const { data: existingModules = [] } = useQuery({
+    queryKey: ['existing-modules'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('elevate_platforms')
+        .select('id, name')
+        .order('name');
+
+      if (error) {
+        console.error('Error loading existing modules:', error);
+        return [];
+      }
+
+      return data;
+    }
+  });
+
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -42,15 +67,23 @@ export const CreatePlatformForm = ({
     setLogoPreview(null);
   };
 
+  const handleModuleToggle = (moduleId: string) => {
+    setSelectedModules(
+      selectedModules.includes(moduleId)
+        ? selectedModules.filter(id => id !== moduleId)
+        : [...selectedModules, moduleId]
+    );
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Name der Plattform</Label>
+        <Label htmlFor="name">Modulname</Label>
         <Input
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Geben Sie einen Namen ein"
+          placeholder="Geben Sie einen Modulnamen ein"
         />
       </div>
       <div className="space-y-2">
@@ -59,14 +92,44 @@ export const CreatePlatformForm = ({
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Beschreiben Sie Ihre Plattform (optional)"
+          placeholder="Beschreiben Sie Ihr Modul (optional)"
         />
       </div>
-      <TeamLogoUpload
-        logoPreview={logoPreview}
-        onLogoChange={handleLogoChange}
-        onLogoRemove={handleLogoRemove}
-      />
+      <div className="space-y-2">
+        <Label>Modul Bild</Label>
+        <TeamLogoUpload
+          logoPreview={logoPreview}
+          onLogoChange={handleLogoChange}
+          onLogoRemove={handleLogoRemove}
+        />
+      </div>
+      {existingModules.length > 0 && (
+        <div className="space-y-2">
+          <Label>Modulserie</Label>
+          <p className="text-sm text-muted-foreground">
+            Wählen Sie Module aus, die zu dieser Serie gehören sollen
+          </p>
+          <ScrollArea className="h-[200px] border rounded-md p-4">
+            <div className="space-y-4">
+              {existingModules.map((module) => (
+                <div key={module.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={module.id}
+                    checked={selectedModules.includes(module.id)}
+                    onCheckedChange={() => handleModuleToggle(module.id)}
+                  />
+                  <label
+                    htmlFor={module.id}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {module.name}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
     </div>
   );
 };
