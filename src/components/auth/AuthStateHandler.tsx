@@ -4,45 +4,55 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSessionManagement } from "@/hooks/auth/use-session-management";
 import { AuthChangeEvent } from "@supabase/supabase-js";
 
+// Define public paths outside to follow DRY principle
+const PUBLIC_PATHS = [
+  "/",
+  "/auth",
+  "/register",
+  "/privacy-policy",
+  "/changelog",
+  "/unity",
+  "/elevate",
+  "/unity/team",
+  "/impressum"
+];
+
 export const AuthStateHandler = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { handleSessionError, refreshSession } = useSessionManagement();
 
+  // Helper function to check if current path is public
+  const isPublicPath = (pathname: string) => {
+    return PUBLIC_PATHS.some(path => 
+      pathname === path || pathname.startsWith(path + "/")
+    );
+  };
+
   useEffect(() => {
+    let sessionRefreshInterval: NodeJS.Timeout | null = null;
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
       console.log("[Auth] State changed:", event, "Current path:", location.pathname);
-
-      // Define public paths that don't require authentication
-      const publicPaths = [
-        "/",
-        "/auth",
-        "/register",
-        "/privacy-policy",
-        "/changelog",
-        "/unity",
-        "/elevate",
-        "/unity/team",
-        "/impressum"
-      ];
-
-      const isPublicPath = publicPaths.some(path => 
-        location.pathname === path || location.pathname.startsWith(path + "/")
-      );
-      
-      console.log("[Auth] Is public path:", isPublicPath, location.pathname);
+      console.log("[Auth] Is public path:", isPublicPath(location.pathname), location.pathname);
 
       try {
         if (event === "SIGNED_IN") {
           if (location.pathname === "/auth") {
-            navigate("/dashboard");
-          } else if (isPublicPath) {
+            await navigate("/dashboard");
+          } else if (isPublicPath(location.pathname)) {
             console.log("[Auth] Staying on public path:", location.pathname);
           }
         } else if (event === "SIGNED_OUT") {
-          if (!isPublicPath) {
-            navigate("/auth");
+          // Clear refresh interval on sign out
+          if (sessionRefreshInterval) {
+            clearInterval(sessionRefreshInterval);
+            sessionRefreshInterval = null;
+          }
+
+          if (!isPublicPath(location.pathname)) {
+            await navigate("/auth");
           } else {
             console.log("[Auth] Staying on public path after sign out:", location.pathname);
           }
@@ -51,47 +61,46 @@ export const AuthStateHandler = () => {
         }
       } catch (error) {
         console.error("[Auth] Navigation error:", error);
+        // Attempt fallback navigation if needed
+        if (!isPublicPath(location.pathname)) {
+          try {
+            await navigate("/auth");
+          } catch (fallbackError) {
+            console.error("[Auth] Fallback navigation failed:", fallbackError);
+          }
+        }
       }
     });
 
-    // Set up session refresh interval
-    const refreshInterval = setInterval(async () => {
-      try {
-        const session = await refreshSession();
-        
-        // Only redirect to auth if session refresh fails and we're not on a public path
-        if (!session && !location.pathname.startsWith("/auth")) {
-          const publicPaths = [
-            "/",
-            "/privacy-policy",
-            "/changelog",
-            "/unity",
-            "/elevate",
-            "/unity/team",
-            "/impressum"
-          ];
+    // Only set up refresh interval if user is on a private path
+    if (!isPublicPath(location.pathname)) {
+      sessionRefreshInterval = setInterval(async () => {
+        try {
+          const session = await refreshSession();
           
-          const isPublicPath = publicPaths.some(path => 
-            location.pathname === path || location.pathname.startsWith(path + "/")
-          );
-
-          console.log("[Auth] Session refresh - Is public path:", isPublicPath, location.pathname);
-
-          if (!isPublicPath) {
-            navigate("/auth");
-          } else {
-            console.log("[Auth] Staying on public path after session refresh:", location.pathname);
+          if (!session && !isPublicPath(location.pathname)) {
+            console.log("[Auth] Session refresh failed - redirecting to auth");
+            await navigate("/auth");
+          }
+        } catch (error) {
+          console.error("[Auth] Refresh error:", error);
+          if (!isPublicPath(location.pathname)) {
+            try {
+              await navigate("/auth");
+            } catch (fallbackError) {
+              console.error("[Auth] Fallback navigation failed:", fallbackError);
+            }
           }
         }
-      } catch (error) {
-        console.error("[Auth] Refresh error:", error);
-      }
-    }, 2 * 60 * 1000);
+      }, 2 * 60 * 1000); // 2 minutes
+    }
 
     return () => {
       console.log("[Auth] Cleaning up auth listener");
       subscription.unsubscribe();
-      clearInterval(refreshInterval);
+      if (sessionRefreshInterval) {
+        clearInterval(sessionRefreshInterval);
+      }
     };
   }, [navigate, refreshSession, handleSessionError, location.pathname]);
 
