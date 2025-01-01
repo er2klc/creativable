@@ -28,7 +28,7 @@ const fetchPlatforms = async (userId: string) => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error("[Debug] Fehler beim Laden der Plattformen:", error);
+      console.error("[Debug] Fehler beim Laden der Module:", error);
       throw error;
     }
 
@@ -57,17 +57,17 @@ const Elevate = () => {
 
       if (error) throw error;
 
-      toast.success("Plattform erfolgreich gelöscht");
+      toast.success("Modul erfolgreich gelöscht");
       refetch();
     } catch (error: any) {
-      console.error("[Debug] Fehler beim Löschen der Plattform:", error);
-      toast.error(error.message || "Fehler beim Löschen der Plattform");
+      console.error("[Debug] Fehler beim Löschen des Moduls:", error);
+      toast.error(error.message || "Fehler beim Löschen des Moduls");
     }
   };
 
   if (error) {
-    console.error("[Debug] Fehler beim Laden der Plattformen:", error);
-    toast.error("Fehler beim Laden der Plattformen");
+    console.error("[Debug] Fehler beim Laden der Module:", error);
+    toast.error("Fehler beim Laden der Module");
   }
 
   const handlePlatformCreated = async () => {

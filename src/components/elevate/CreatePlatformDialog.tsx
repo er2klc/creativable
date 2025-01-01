@@ -52,7 +52,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       if (logoFile) {
         const fileExt = logoFile.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError, data: uploadData } = await supabase.storage
           .from('team-logos')
           .upload(fileName, logoFile, {
             upsert: true,
@@ -80,7 +80,10 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         .select()
         .single();
 
-      if (platformError) throw platformError;
+      if (platformError) {
+        console.error('Platform creation error:', platformError);
+        throw new Error(platformError.message);
+      }
 
       if (selectedTeams.length > 0 && platformData) {
         const teamAccess = selectedTeams.map(teamId => ({
@@ -93,7 +96,10 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
           .from('elevate_team_access')
           .insert(teamAccess);
 
-        if (accessError) throw accessError;
+        if (accessError) {
+          console.error('Team access error:', accessError);
+          throw new Error(accessError.message);
+        }
       }
 
       toast.success("Modul erfolgreich erstellt");
