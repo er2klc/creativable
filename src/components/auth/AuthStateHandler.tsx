@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSessionManagement } from "@/hooks/auth/use-session-management";
 import { AuthChangeEvent } from "@supabase/supabase-js";
 
-// Define public paths
+// Define public paths - removing Unity and Elevate as they should be protected
 const PUBLIC_PATHS = [
   "/",
   "/auth",
@@ -71,16 +71,16 @@ export const AuthStateHandler = () => {
       }
     });
 
-    // Check if user is authenticated for non-public paths
-    const checkAuth = async () => {
+    // Initial session check
+    const checkInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session && !isPublicPath(currentPath)) {
-        console.log("[Auth] No session found - redirecting to auth");
+        console.log("[Auth] No initial session - redirecting to auth");
         await safeNavigate("/auth");
       }
     };
 
-    checkAuth();
+    checkInitialSession();
 
     // Set up session refresh interval
     sessionRefreshInterval = setInterval(async () => {
