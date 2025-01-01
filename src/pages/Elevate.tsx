@@ -12,10 +12,25 @@ const Elevate = () => {
     queryKey: ["platforms"],
     queryFn: async () => {
       if (!user?.id) return [];
-      
+
       try {
+        // Schritt 1: Team-IDs abrufen
+        const { data: teamIds, error: teamError } = await supabase
+          .from("team_members")
+          .select("team_id")
+          .eq("user_id", user.id);
+
+        if (teamError) {
+          console.error("Error fetching team IDs:", teamError.message);
+          toast.error("Fehler beim Abrufen der Team-IDs");
+          throw teamError;
+        }
+
+        const teamIdList = teamIds?.map((team) => team.team_id) || [];
+
+        // Schritt 2: Plattformen abrufen
         const { data: platforms, error: platformsError } = await supabase
-          .from('elevate_platforms')
+          .from("elevate_platforms")
           .select(`
             *,
             elevate_team_access (
@@ -26,59 +41,61 @@ const Elevate = () => {
               )
             )
           `)
-          .or(`created_by.eq.${user.id},elevate_team_access.team_id.in.(select team_id from team_members where user_id=.${user.id})`);
+          .or(`created_by.eq.${user.id},elevate_team_access.team_id.in.(${teamIdList.join(",")})`);
 
         if (platformsError) {
-          console.error("Error in platform loading:", platformsError);
+          console.error("Error in platform loading:", platformsError.message);
+          toast.error("Fehler beim Laden der Plattformen");
           throw platformsError;
         }
 
-        // Process platforms to include stats and generate slugs
-        const processedPlatforms = await Promise.all((platforms || []).map(async (platform) => {
-          // Get teams count
-          const { count: teamCount } = await supabase
-            .from('elevate_team_access')
-            .select('*', { count: 'exact', head: true })
-            .eq('platform_id', platform.id);
+        // Schritt 3: Plattformen verarbeiten
+        const processedPlatforms = await Promise.all(
+          (platforms || []).map(async (platform) => {
+            // Team-Zugriffsanzahl abrufen
+            const { count: teamCount } = await supabase
+              .from("elevate_team_access")
+              .select("*", { count: "exact", head: true })
+              .eq("platform_id", platform.id);
 
-          // Get total users count (team members)
-          const teamIds = platform.elevate_team_access?.map(ta => ta.teams?.id).filter(Boolean) || [];
-          
-          const { count: teamMembersCount } = await supabase
-            .from('team_members')
-            .select('*', { count: 'exact', head: true })
-            .in('team_id', teamIds);
+            // Mitgliederanzahl abrufen
+            const teamIds = platform.elevate_team_access?.map((ta) => ta.teams?.id).filter(Boolean) || [];
+            const { count: teamMembersCount } = await supabase
+              .from("team_members")
+              .select("*", { count: "exact", head: true })
+              .in("team_id", teamIds);
 
-          // Get direct user access count
-          const { count: directUserCount } = await supabase
-            .from('elevate_user_access')
-            .select('*', { count: 'exact', head: true })
-            .eq('platform_id', platform.id);
+            // Direkter Benutzerzugriff abrufen
+            const { count: directUserCount } = await supabase
+              .from("elevate_user_access")
+              .select("*", { count: "exact", head: true })
+              .eq("platform_id", platform.id);
 
-          // Generate slug from name
-          const slug = platform.name
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/(^-|-$)/g, '');
+            // Slug aus Name generieren
+            const slug = `${platform.name
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/(^-|-$)/g, "")}-${platform.id}`;
 
-          return {
-            ...platform,
-            slug,
-            stats: {
-              totalTeams: teamCount || 0,
-              totalUsers: (teamMembersCount || 0) + (directUserCount || 0)
-            }
-          };
-        }));
+            return {
+              ...platform,
+              slug,
+              stats: {
+                totalTeams: teamCount || 0,
+                totalUsers: (teamMembersCount || 0) + (directUserCount || 0),
+              },
+            };
+          })
+        );
 
         return processedPlatforms;
       } catch (err: any) {
-        console.error("Error loading platforms:", err);
+        console.error("Error loading platforms:", err.message);
         toast.error("Fehler beim Laden der Plattformen");
         return [];
       }
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id, // Nur ausführen, wenn ein Benutzer vorhanden ist
   });
 
   const handleDelete = async (id: string) => {
@@ -86,9 +103,9 @@ const Elevate = () => {
 
     try {
       const { error } = await supabase
-        .from('elevate_platforms')
+        .from("elevate_platforms")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
       toast.success("Plattform erfolgreich gelöscht");
