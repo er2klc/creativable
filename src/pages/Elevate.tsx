@@ -18,9 +18,15 @@ const Elevate = () => {
       if (!user?.id) return [];
       
       try {
+        // Get platforms where user has access (either as creator or through team access)
         const { data: platforms, error: platformsError } = await supabase
           .from('elevate_platforms')
           .select('*')
+          .or(`created_by.eq.${user.id},id.in.(
+            select platform_id from elevate_team_access eta 
+            join team_members tm on tm.team_id = eta.team_id 
+            where tm.user_id = '${user.id}'
+          )`)
           .order('created_at', { ascending: false });
 
         if (platformsError) {
@@ -30,24 +36,48 @@ const Elevate = () => {
 
         const results = [];
         for (const platform of platforms || []) {
-          const teamAccessResult = await supabase
+          // Get teams that have access to this platform
+          const { data: teamAccess, error: teamAccessError } = await supabase
             .from('elevate_team_access')
-            .select('team_id')
+            .select('team_id, teams!inner(*)')
             .eq('platform_id', platform.id);
 
-          const userAccessResult = await supabase
+          if (teamAccessError) throw teamAccessError;
+
+          // Get all users who have access through teams
+          const teamUserCountPromises = teamAccess?.map(async (access) => {
+            const { data: teamMembers, error: teamMembersError } = await supabase
+              .from('team_members')
+              .select('user_id')
+              .eq('team_id', access.team_id);
+
+            if (teamMembersError) throw teamMembersError;
+            return teamMembers?.length || 0;
+          }) || [];
+
+          const teamUserCounts = await Promise.all(teamUserCountPromises);
+          const totalTeamUsers = teamUserCounts.reduce((sum, count) => sum + count, 0);
+
+          // Get direct user access count
+          const { data: directUserAccess, error: userAccessError } = await supabase
             .from('elevate_user_access')
-            .select('*')
+            .select('user_id')
             .eq('platform_id', platform.id);
 
-          if (teamAccessResult.error) throw teamAccessResult.error;
-          if (userAccessResult.error) throw userAccessResult.error;
+          if (userAccessError) throw userAccessError;
+
+          // Generate slug from name if not exists
+          const slug = platform.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
 
           results.push({
             ...platform,
+            slug,
             stats: {
-              totalTeams: teamAccessResult.data?.length || 0,
-              totalUsers: userAccessResult.data?.length || 0
+              totalTeams: teamAccess?.length || 0,
+              totalUsers: totalTeamUsers + (directUserAccess?.length || 0)
             }
           });
         }

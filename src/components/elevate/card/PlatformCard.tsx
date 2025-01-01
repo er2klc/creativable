@@ -12,6 +12,7 @@ interface PlatformCardProps {
     description: string | null;
     created_by: string;
     logo_url: string | null;
+    slug: string;
     stats?: {
       totalTeams: number;
       totalUsers: number;
@@ -29,7 +30,7 @@ export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
         (e.target as HTMLElement).closest('[role="dialog"]')) {
       return;
     }
-    navigate(`/elevate/platform/${platform.id}`);
+    navigate(`/elevate/platform/${platform.slug}`);
   };
 
   const isPlatformOwner = user?.id === platform.created_by;

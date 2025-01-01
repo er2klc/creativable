@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Unity from "./pages/Unity";
 import Elevate from "./pages/Elevate";
 import TeamDetail from "./pages/TeamDetail";
+import PlatformDetail from "./pages/PlatformDetail";
 import Leads from "./pages/Leads";
 import Messages from "./pages/Messages";
 import Settings from "./pages/Settings";
@@ -22,7 +23,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return null; // or a loading spinner if you prefer
+    return null;
   }
 
   if (!isAuthenticated) {
@@ -63,6 +64,11 @@ const App = () => (
       <Route path="/elevate" element={
         <ProtectedRoute>
           <AppLayout><Elevate /></AppLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/elevate/platform/:platformSlug" element={
+        <ProtectedRoute>
+          <AppLayout><PlatformDetail /></AppLayout>
         </ProtectedRoute>
       } />
       <Route path="/leads" element={
