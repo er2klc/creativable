@@ -40,11 +40,7 @@ export const CreatePlatformForm = ({
         .select('id, name')
         .order('name');
 
-      if (error) {
-        console.error('Error loading existing modules:', error);
-        throw error;
-      }
-
+      if (error) throw error;
       return data || [];
     }
   });

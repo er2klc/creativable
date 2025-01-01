@@ -60,10 +60,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
             contentType: logoFile.type
           });
 
-        if (uploadError) {
-          console.error('Logo upload error:', uploadError);
-          throw uploadError;
-        }
+        if (uploadError) throw uploadError;
 
         const { data } = supabase.storage
           .from('team-logos')
