@@ -42,10 +42,10 @@ export const CreatePlatformForm = ({
 
       if (error) {
         console.error('Error loading existing modules:', error);
-        return [];
+        throw error;
       }
 
-      return data;
+      return data || [];
     }
   });
 

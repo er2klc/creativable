@@ -53,7 +53,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         const fileExt = logoFile.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('team-logos')
           .upload(fileName, logoFile, {
             upsert: true,
