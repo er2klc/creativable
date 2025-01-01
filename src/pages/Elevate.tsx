@@ -19,7 +19,7 @@ const Elevate = () => {
           .from('elevate_platforms')
           .select(`
             *,
-            elevate_team_access(
+            elevate_team_access!inner(
               team_id,
               teams(*)
             )
@@ -35,31 +35,25 @@ const Elevate = () => {
           throw platformsError;
         }
 
-        // Process platforms to include stats
-        const results = await Promise.all((platforms || []).map(async (platform) => {
-          // Get teams that have access to this platform
-          const { count: teamCount, error: teamAccessError } = await supabase
+        // Process platforms to include stats and generate slugs
+        const processedPlatforms = await Promise.all((platforms || []).map(async (platform) => {
+          // Get teams count
+          const { count: teamCount } = await supabase
             .from('elevate_team_access')
             .select('*', { count: 'exact', head: true })
             .eq('platform_id', platform.id);
 
-          if (teamAccessError) throw teamAccessError;
-
-          // Get total users count (team members + direct access)
-          const { count: directUserCount, error: userAccessError } = await supabase
-            .from('elevate_user_access')
-            .select('*', { count: 'exact', head: true })
-            .eq('platform_id', platform.id);
-
-          if (userAccessError) throw userAccessError;
-
-          // Get team members count
-          const { count: teamMembersCount, error: teamMembersError } = await supabase
+          // Get total users count (team members)
+          const { count: teamMembersCount } = await supabase
             .from('team_members')
             .select('*', { count: 'exact', head: true })
             .in('team_id', platform.elevate_team_access?.map(ta => ta.team_id) || []);
 
-          if (teamMembersError) throw teamMembersError;
+          // Get direct user access count
+          const { count: directUserCount } = await supabase
+            .from('elevate_user_access')
+            .select('*', { count: 'exact', head: true })
+            .eq('platform_id', platform.id);
 
           // Generate slug from name
           const slug = platform.name
@@ -77,7 +71,7 @@ const Elevate = () => {
           };
         }));
 
-        return results;
+        return processedPlatforms;
       } catch (err: any) {
         console.error("Error loading platforms:", err);
         toast.error("Fehler beim Laden der Plattformen");
