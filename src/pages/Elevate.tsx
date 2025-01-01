@@ -1,19 +1,15 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useUser } from "@supabase/auth-helpers-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { ElevateHeader } from "@/components/elevate/ElevateHeader";
+import { useUser } from "@supabase/auth-helpers-react";
 import { PlatformList } from "@/components/elevate/PlatformList";
+import { ElevateHeader } from "@/components/elevate/ElevateHeader";
+import { toast } from "sonner";
 
 const Elevate = () => {
-  const navigate = useNavigate();
   const user = useUser();
-  const queryClient = useQueryClient();
 
-  const { data: platformsWithStats = [], isLoading } = useQuery({
-    queryKey: ['platforms-with-stats'],
+  const { data: platforms = [], isLoading } = useQuery({
+    queryKey: ["platforms"],
     queryFn: async () => {
       if (!user?.id) return [];
       
@@ -23,15 +19,15 @@ const Elevate = () => {
           .from('elevate_platforms')
           .select(`
             *,
-            elevate_user_access!inner(user_id),
-            elevate_team_access!inner(
+            elevate_team_access(
               team_id,
-              teams!inner(*)
+              teams(*)
             )
           `)
-          .or(`created_by.eq.${user.id},elevate_user_access.user_id.eq.${user.id},elevate_team_access.team_id.in.(
-            select team_id from team_members 
-            where user_id = '${user.id}'
+          .or(`created_by.eq.${user.id},id.in.(
+            select platform_id from elevate_team_access eta 
+            join team_members tm on tm.team_id = eta.team_id 
+            where tm.user_id = '${user.id}'
           )`);
 
         if (platformsError) {
@@ -42,34 +38,28 @@ const Elevate = () => {
         // Process platforms to include stats
         const results = await Promise.all((platforms || []).map(async (platform) => {
           // Get teams that have access to this platform
-          const { data: teamAccess, error: teamAccessError } = await supabase
+          const { count: teamCount, error: teamAccessError } = await supabase
             .from('elevate_team_access')
-            .select('team_id, teams!inner(*)')
+            .select('*', { count: 'exact', head: true })
             .eq('platform_id', platform.id);
 
           if (teamAccessError) throw teamAccessError;
 
-          // Get all users who have access through teams
-          const teamUserCountPromises = teamAccess?.map(async (access) => {
-            const { count: teamMemberCount, error: teamMembersError } = await supabase
-              .from('team_members')
-              .select('*', { count: 'exact', head: true })
-              .eq('team_id', access.team_id);
-
-            if (teamMembersError) throw teamMembersError;
-            return teamMemberCount || 0;
-          }) || [];
-
-          const teamUserCounts = await Promise.all(teamUserCountPromises);
-          const totalTeamUsers = teamUserCounts.reduce((sum, count) => sum + count, 0);
-
-          // Get direct user access count
+          // Get total users count (team members + direct access)
           const { count: directUserCount, error: userAccessError } = await supabase
             .from('elevate_user_access')
             .select('*', { count: 'exact', head: true })
             .eq('platform_id', platform.id);
 
           if (userAccessError) throw userAccessError;
+
+          // Get team members count
+          const { count: teamMembersCount, error: teamMembersError } = await supabase
+            .from('team_members')
+            .select('*', { count: 'exact', head: true })
+            .in('team_id', platform.elevate_team_access?.map(ta => ta.team_id) || []);
+
+          if (teamMembersError) throw teamMembersError;
 
           // Generate slug from name
           const slug = platform.name
@@ -81,70 +71,46 @@ const Elevate = () => {
             ...platform,
             slug,
             stats: {
-              totalTeams: teamAccess?.length || 0,
-              totalUsers: totalTeamUsers + (directUserCount || 0)
+              totalTeams: teamCount || 0,
+              totalUsers: (teamMembersCount || 0) + (directUserCount || 0)
             }
           };
         }));
 
         return results;
       } catch (err: any) {
-        console.error("Error in platform loading:", err);
+        console.error("Error loading platforms:", err);
+        toast.error("Fehler beim Laden der Plattformen");
         return [];
       }
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
-  const handleDeletePlatform = async (platformId: string) => {
-    if (!user) return;
+  const handleDelete = async (id: string) => {
+    if (!user?.id) return;
 
     try {
       const { error } = await supabase
         .from('elevate_platforms')
         .delete()
-        .eq('id', platformId)
-        .single();
+        .eq('id', id);
 
-      if (error) {
-        console.error('Error deleting platform:', error);
-        if (error.message?.includes('policy')) {
-          toast.error("Sie haben keine Berechtigung, dieses Modul zu löschen");
-        } else {
-          toast.error("Fehler beim Löschen des Moduls");
-        }
-        return;
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ['platforms-with-stats'] });
-      toast.success('Modul erfolgreich gelöscht');
-    } catch (err: any) {
-      console.error('Error in platform deletion:', err);
-      toast.error("Fehler beim Löschen des Moduls");
+      if (error) throw error;
+      toast.success("Plattform erfolgreich gelöscht");
+    } catch (err) {
+      console.error("Error deleting platform:", err);
+      toast.error("Fehler beim Löschen der Plattform");
     }
-  };
-
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-    }
-  }, [user, navigate]);
-
-  if (!user) return null;
-
-  const handleRefetch = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['platforms-with-stats'] });
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <ElevateHeader 
-        onPlatformCreated={handleRefetch}
-      />
+    <div className="container space-y-6">
+      <ElevateHeader />
       <PlatformList
+        platforms={platforms}
         isLoading={isLoading}
-        platforms={platformsWithStats}
-        onDelete={handleDeletePlatform}
+        onDelete={handleDelete}
       />
     </div>
   );
