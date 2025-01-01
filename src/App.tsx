@@ -15,7 +15,22 @@ import LinkedInCallback from "./pages/auth/callback/LinkedIn";
 import InstagramCallback from "./pages/auth/callback/Instagram";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import InstagramDataDeletion from "./pages/legal/InstagramDataDeletion";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return null; // or a loading spinner if you prefer
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 const App = () => (
   <AppProvider>
@@ -28,13 +43,43 @@ const App = () => (
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/auth/data-deletion/instagram" element={<InstagramDataDeletion />} />
       <Route path="/changelog" element={<AppLayout><Changelog /></AppLayout>} />
-      <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
-      <Route path="/unity" element={<AppLayout><Unity /></AppLayout>} />
-      <Route path="/unity/team/:teamSlug" element={<AppLayout><TeamDetail /></AppLayout>} />
-      <Route path="/elevate" element={<AppLayout><Elevate /></AppLayout>} />
-      <Route path="/leads" element={<AppLayout><Leads /></AppLayout>} />
-      <Route path="/messages" element={<AppLayout><Messages /></AppLayout>} />
-      <Route path="/settings" element={<AppLayout><Settings /></AppLayout>} />
+      
+      {/* Protected Routes */}
+      <Route path="/dashboard" element={
+        <ProtectedRoute>
+          <AppLayout><Dashboard /></AppLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/unity" element={
+        <ProtectedRoute>
+          <AppLayout><Unity /></AppLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/unity/team/:teamSlug" element={
+        <ProtectedRoute>
+          <AppLayout><TeamDetail /></AppLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/elevate" element={
+        <ProtectedRoute>
+          <AppLayout><Elevate /></AppLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/leads" element={
+        <ProtectedRoute>
+          <AppLayout><Leads /></AppLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/messages" element={
+        <ProtectedRoute>
+          <AppLayout><Messages /></AppLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/settings" element={
+        <ProtectedRoute>
+          <AppLayout><Settings /></AppLayout>
+        </ProtectedRoute>
+      } />
     </Routes>
   </AppProvider>
 );
