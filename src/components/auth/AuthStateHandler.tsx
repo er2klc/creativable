@@ -14,6 +14,23 @@ export const AuthStateHandler = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
       console.log("[Auth] State changed:", event);
 
+      // Define public paths that don't require authentication
+      const publicPaths = [
+        "/",
+        "/auth",
+        "/register",
+        "/privacy-policy",
+        "/changelog",
+        "/unity",
+        "/elevate",
+        "/unity/team",
+        "/impressum"
+      ];
+
+      const isPublicPath = publicPaths.some(path => 
+        location.pathname === path || location.pathname.startsWith(path + "/")
+      );
+
       try {
         if (event === "SIGNED_IN") {
           // Only redirect to dashboard if coming from auth page
@@ -21,13 +38,15 @@ export const AuthStateHandler = () => {
             navigate("/dashboard");
           }
         } else if (event === "SIGNED_OUT") {
-          navigate("/auth");
+          // Only redirect to auth if not on a public path
+          if (!isPublicPath) {
+            navigate("/auth");
+          }
         } else if (event === "TOKEN_REFRESHED") {
           console.log("[Auth] Token refreshed for user:", session?.user?.id);
         }
       } catch (error) {
         console.error("[Auth] Navigation error:", error);
-        // Don't redirect on error, just log it
       }
     });
 
@@ -35,16 +54,28 @@ export const AuthStateHandler = () => {
     const refreshInterval = setInterval(async () => {
       try {
         const session = await refreshSession();
-        if (!session && location.pathname !== "/auth") {
-          // Only redirect to auth if session refresh fails and we're not already on auth page
-          const publicPaths = ["/", "/privacy-policy", "/changelog", "/unity", "/elevate"];
-          if (!publicPaths.some(path => location.pathname.startsWith(path))) {
+        // Only redirect to auth if session refresh fails and we're not on a public path
+        if (!session && !location.pathname.startsWith("/auth")) {
+          const publicPaths = [
+            "/",
+            "/privacy-policy",
+            "/changelog",
+            "/unity",
+            "/elevate",
+            "/unity/team",
+            "/impressum"
+          ];
+          
+          const isPublicPath = publicPaths.some(path => 
+            location.pathname === path || location.pathname.startsWith(path + "/")
+          );
+
+          if (!isPublicPath) {
             navigate("/auth");
           }
         }
       } catch (error) {
         console.error("[Auth] Refresh error:", error);
-        // Don't redirect on network errors, let the user continue
       }
     }, 2 * 60 * 1000);
 
