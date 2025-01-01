@@ -18,21 +18,16 @@ const Elevate = () => {
       if (!user?.id) return [];
       
       try {
-        const { data: platforms, error } = await supabase
+        const { data: platforms, error: platformsError } = await supabase
           .from('elevate_platforms')
           .select('*')
           .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error("Error loading platforms:", error);
-          throw error;
-        }
+        if (platformsError) throw platformsError;
 
-        // Get stats for each platform separately to avoid response stream issues
-        const platformsWithStats = [];
-        
-        for (const platform of platforms) {
-          const [teamAccessResult, userAccessResult] = await Promise.all([
+        // Process each platform sequentially to avoid response stream issues
+        const results = await Promise.all(platforms.map(async (platform) => {
+          const [{ data: teamAccess }, { data: userAccess }] = await Promise.all([
             supabase
               .from('elevate_team_access')
               .select('team_id')
@@ -43,20 +38,19 @@ const Elevate = () => {
               .eq('platform_id', platform.id)
           ]);
 
-          platformsWithStats.push({
+          return {
             ...platform,
             stats: {
-              totalTeams: teamAccessResult.data?.length || 0,
-              totalUsers: userAccessResult.data?.length || 0
+              totalTeams: teamAccess?.length || 0,
+              totalUsers: userAccess?.length || 0
             }
-          });
-        }
+          };
+        }));
 
-        return platformsWithStats;
+        return results;
       } catch (err: any) {
         console.error("Error in platform loading:", err);
-        toast.error("Fehler beim Laden der Plattformen");
-        throw err;
+        throw new Error("Fehler beim Laden der Plattformen");
       }
     },
     enabled: !!user,
