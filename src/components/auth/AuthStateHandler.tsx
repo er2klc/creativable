@@ -40,6 +40,30 @@ export const AuthStateHandler = () => {
     );
   };
 
+  const handleAuthError = async (error: any) => {
+    console.error("[Auth] Error:", error);
+
+    // Clear all auth-related local storage
+    localStorage.clear();
+
+    // If it's a session not found error, handle it gracefully
+    if (error?.message?.includes("session_not_found") || 
+        error?.error?.message?.includes("session_not_found")) {
+      await supabase.auth.signOut();
+      if (!isPublicPath(location.pathname)) {
+        toast.error("Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.");
+        navigate("/auth", { replace: true });
+      }
+      return;
+    }
+
+    // For other errors, show a generic message
+    toast.error("Ein Fehler ist aufgetreten. Bitte melden Sie sich erneut an.");
+    if (!isPublicPath(location.pathname)) {
+      navigate("/auth", { replace: true });
+    }
+  };
+
   useEffect(() => {
     let sessionRefreshInterval: NodeJS.Timeout | null = null;
     const currentPath = location.pathname;
@@ -59,17 +83,15 @@ export const AuthStateHandler = () => {
           }
           
           // Clear all auth-related local storage
-          localStorage.removeItem('dailyQuote');
-          localStorage.removeItem('dailyQuoteDate');
+          localStorage.clear();
           
           if (!isPublicPath(currentPath)) {
             toast.error("Ihre Sitzung wurde beendet. Bitte melden Sie sich erneut an.");
-            await navigate("/auth");
+            await navigate("/auth", { replace: true });
           }
         }
       } catch (error) {
-        console.error("[Auth] Navigation error:", error);
-        handleSessionError(error);
+        await handleAuthError(error);
       }
     };
 
@@ -78,12 +100,15 @@ export const AuthStateHandler = () => {
         // Get initial session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (sessionError) throw sessionError;
+        if (sessionError) {
+          await handleAuthError(sessionError);
+          return;
+        }
 
         if (!session) {
           if (!isPublicPath(currentPath) && !isProtectedNoRedirect(currentPath)) {
             console.log("[Auth] No session - redirecting to auth");
-            await navigate("/auth");
+            await navigate("/auth", { replace: true });
           }
           return;
         }
@@ -97,11 +122,10 @@ export const AuthStateHandler = () => {
             const refreshedSession = await refreshSession();
             if (!refreshedSession && !isPublicPath(currentPath)) {
               toast.error("Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.");
-              await navigate("/auth");
+              await navigate("/auth", { replace: true });
             }
           } catch (error) {
-            console.error("[Auth] Session refresh error:", error);
-            handleSessionError(error);
+            await handleAuthError(error);
           }
         }, 4 * 60 * 1000); // Refresh every 4 minutes
 
@@ -113,8 +137,7 @@ export const AuthStateHandler = () => {
           }
         };
       } catch (error) {
-        console.error("[Auth] Setup error:", error);
-        handleSessionError(error);
+        await handleAuthError(error);
       }
     };
 
