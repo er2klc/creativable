@@ -14,23 +14,19 @@ const Elevate = () => {
       if (!user?.id) return [];
       
       try {
-        // First get the platforms
         const { data: platforms, error: platformsError } = await supabase
           .from('elevate_platforms')
           .select(`
             *,
-            elevate_team_access!inner (
+            elevate_team_access (
               team_id,
-              teams!inner (
+              teams (
                 id,
                 name
               )
             )
           `)
-          .or(`created_by.eq.${user.id},elevate_team_access.team_id.in.(
-            select team_id from team_members 
-            where user_id = '${user.id}'
-          )`);
+          .or(`created_by.eq.${user.id},elevate_team_access.team_id.in.(select team_id from team_members where user_id=.${user.id})`);
 
         if (platformsError) {
           console.error("Error in platform loading:", platformsError);
