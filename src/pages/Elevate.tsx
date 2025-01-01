@@ -5,13 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ElevateHeader } from "@/components/elevate/ElevateHeader";
 import { PlatformList } from "@/components/elevate/PlatformList";
-import { CreatePlatformDialog } from "@/components/elevate/CreatePlatformDialog";
 
 const fetchPlatforms = async () => {
   const user = await supabase.auth.getUser();
   if (!user?.data.user?.id) return [];
 
   try {
+    // Fetch team IDs for the current user
     const { data: teamIds } = await supabase
       .from('team_members')
       .select('team_id')
@@ -19,11 +19,12 @@ const fetchPlatforms = async () => {
 
     const teamIdList = teamIds?.map(t => t.team_id) || [];
 
+    // Fetch platforms with team access information
     const { data: platforms, error: platformsError } = await supabase
       .from('elevate_platforms')
       .select(`
         *,
-        elevate_team_access (
+        elevate_team_access!inner (
           team_id,
           teams (
             id,
@@ -31,23 +32,46 @@ const fetchPlatforms = async () => {
           )
         )
       `)
-      .or(`created_by.eq.${user.data.user.id},elevate_team_access.team_id.in.(${teamIdList.map(id => `"${id}"`).join(',')})`);
+      .or(
+        `created_by.eq.${user.data.user.id},elevate_team_access.team_id.in.(${teamIdList.join(',')})`
+      );
 
     if (platformsError) {
-      console.error("Error in platform loading:", platformsError);
+      console.error("[Debug] Error fetching platforms:", platformsError);
       throw platformsError;
     }
 
-    return platforms || [];
+    // Get platforms accessible via user_access (invite codes)
+    const { data: userAccessPlatforms, error: userAccessError } = await supabase
+      .from('elevate_platforms')
+      .select(`
+        *,
+        elevate_user_access!inner (
+          user_id
+        )
+      `)
+      .eq('elevate_user_access.user_id', user.data.user.id);
+
+    if (userAccessError) {
+      console.error("[Debug] Error fetching user access platforms:", userAccessError);
+      throw userAccessError;
+    }
+
+    // Combine and deduplicate platforms
+    const allPlatforms = [...(platforms || []), ...(userAccessPlatforms || [])];
+    const uniquePlatforms = Array.from(new Set(allPlatforms.map(p => p.id)))
+      .map(id => allPlatforms.find(p => p.id === id));
+
+    console.log("[Debug] Loaded platforms:", uniquePlatforms);
+    return uniquePlatforms || [];
   } catch (err: any) {
-    console.error("Error loading platforms:", err);
+    console.error("[Debug] Error in fetchPlatforms:", err);
     throw err;
   }
 };
 
 const Elevate = () => {
   const user = useUser();
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const { data: platforms = [], isLoading, error, refetch } = useQuery({
     queryKey: ['platforms', user?.id],
@@ -67,31 +91,23 @@ const Elevate = () => {
       toast.success("Plattform erfolgreich gelöscht");
       refetch();
     } catch (error: any) {
-      console.error('Error deleting platform:', error);
+      console.error('[Debug] Error deleting platform:', error);
       toast.error(error.message || "Fehler beim Löschen der Plattform");
     }
   };
 
   if (error) {
-    console.error("Error loading platforms:", error);
+    console.error("[Debug] Error loading platforms:", error);
     toast.error("Fehler beim Laden der Plattformen");
   }
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <ElevateHeader onCreateClick={() => setIsCreateDialogOpen(true)} />
+      <ElevateHeader onPlatformCreated={refetch} />
       <PlatformList
         platforms={platforms}
         isLoading={isLoading}
         onDelete={handleDelete}
-      />
-      <CreatePlatformDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        onSuccess={() => {
-          setIsCreateDialogOpen(false);
-          refetch();
-        }}
       />
     </div>
   );

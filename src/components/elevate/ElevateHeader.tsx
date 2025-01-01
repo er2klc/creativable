@@ -20,7 +20,6 @@ export const ElevateHeader = ({ onPlatformCreated }: ElevateHeaderProps) => {
   const user = useUser();
   const navigate = useNavigate();
 
-  // Prüfen, ob ein Benutzer eingeloggt ist
   useEffect(() => {
     if (!user) {
       console.warn("[Debug] Kein Benutzer vorhanden, umleiten zur Login-Seite");
@@ -48,7 +47,6 @@ export const ElevateHeader = ({ onPlatformCreated }: ElevateHeaderProps) => {
     try {
       console.log("[Debug] Invitation Code:", inviteCode);
 
-      // Plattform-Abfrage mit Einladungscode
       const { data: platform, error: platformError } = await supabase
         .from("elevate_platforms")
         .select("id, name")
@@ -68,7 +66,6 @@ export const ElevateHeader = ({ onPlatformCreated }: ElevateHeaderProps) => {
 
       console.log("[Debug] Plattform gefunden:", platform);
 
-      // Einfügen in elevate_user_access
       const { error: accessError } = await supabase
         .from("elevate_user_access")
         .insert({
@@ -85,7 +82,6 @@ export const ElevateHeader = ({ onPlatformCreated }: ElevateHeaderProps) => {
       toast.success(`Sie sind dem Modul "${platform.name}" erfolgreich beigetreten`);
       console.log("[Debug] Benutzer erfolgreich in elevate_user_access eingefügt");
 
-      // Reset der Dialog-Einstellungen und Neuladen der Plattformliste
       setIsJoinOpen(false);
       setInviteCode("");
       await onPlatformCreated?.();
@@ -105,9 +101,6 @@ export const ElevateHeader = ({ onPlatformCreated }: ElevateHeaderProps) => {
           <Building2 className="h-6 w-6" />
           Elevate
         </h1>
-        <p className="text-muted-foreground">
-          Verwalten Sie Ihre Ausbildungsmodule
-        </p>
       </div>
       <div className="flex items-center gap-4">
         <Dialog open={isJoinOpen} onOpenChange={setIsJoinOpen}>
