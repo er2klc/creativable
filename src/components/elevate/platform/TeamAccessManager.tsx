@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -12,7 +12,7 @@ interface TeamAccessManagerProps {
 
 export const TeamAccessManager = ({
   selectedTeams,
-  setSelectedTeams
+  setSelectedTeams,
 }: TeamAccessManagerProps) => {
   const user = useUser();
 
@@ -38,22 +38,26 @@ export const TeamAccessManager = ({
   });
 
   const handleTeamToggle = (teamId: string) => {
-    const newSelectedTeams = selectedTeams.includes(teamId)
-      ? selectedTeams.filter(id => id !== teamId)
-      : [...selectedTeams, teamId];
-    
-    setSelectedTeams(newSelectedTeams);
+    setSelectedTeams(
+      selectedTeams.includes(teamId)
+        ? selectedTeams.filter(id => id !== teamId)
+        : [...selectedTeams, teamId]
+    );
   };
+
+  if (teams.length === 0) {
+    return null;
+  }
 
   return (
     <div className="space-y-4">
       <div>
         <Label>Teams mit Zugriff</Label>
         <p className="text-sm text-muted-foreground">
-          Wählen Sie die Teams aus, die Zugriff auf diese Plattform haben sollen
+          Wählen Sie die Teams aus, die Zugriff auf dieses Modul haben sollen
         </p>
       </div>
-      <ScrollArea className="h-[200px] border rounded-md p-4">
+      <ScrollArea className="h-[200px] w-full rounded-md border p-4">
         <div className="space-y-4">
           {teams.map((team) => (
             <div key={team.id} className="flex items-center space-x-2">
