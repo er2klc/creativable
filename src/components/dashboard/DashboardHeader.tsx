@@ -74,22 +74,10 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
 
   const handleSignOut = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        console.log("No active session found during logout");
-        navigate("/");
-        return;
-      }
-
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        if (error.message.includes('user_not_found')) {
-          console.log("User not found during logout, clearing session anyway");
-          navigate("/");
-          return;
-        }
+        console.error("Signout error:", error);
         throw error;
       }
 
@@ -97,15 +85,17 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
         title: "Erfolgreich abgemeldet",
         description: "Auf Wiedersehen!",
       });
-      navigate("/");
+
+      // Clear any local storage items
+      localStorage.removeItem('dailyQuote');
+      localStorage.removeItem('dailyQuoteDate');
+      
+      // Navigate after successful signout
+      navigate("/auth");
     } catch (error) {
       console.error("Logout error:", error);
-      toast({
-        variant: "destructive",
-        title: "Fehler beim Abmelden",
-        description: "Bitte versuchen Sie es erneut.",
-      });
-      navigate("/");
+      // Even if there's an error, we should try to redirect to auth
+      navigate("/auth");
     }
   };
 
