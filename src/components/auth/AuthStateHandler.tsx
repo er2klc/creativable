@@ -14,6 +14,13 @@ const PUBLIC_PATHS = [
   "/impressum"
 ];
 
+// Define protected paths that should not redirect to dashboard
+const PROTECTED_NO_REDIRECT = [
+  "/unity",
+  "/elevate",
+  "/unity/team"
+];
+
 export const AuthStateHandler = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -27,6 +34,12 @@ export const AuthStateHandler = () => {
     // Check if the current path starts with any of the public paths
     return PUBLIC_PATHS.some(path => 
       pathname.startsWith(path + "/")
+    );
+  };
+
+  const isProtectedNoRedirect = (pathname: string) => {
+    return PROTECTED_NO_REDIRECT.some(path => 
+      pathname.startsWith(path)
     );
   };
 
@@ -75,16 +88,19 @@ export const AuthStateHandler = () => {
     const checkInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
-      // If we're on the auth page and have a session, redirect to dashboard
-      if (session && currentPath === "/auth") {
-        await safeNavigate("/dashboard");
+      if (!session) {
+        // Only redirect to auth if not on a public path
+        if (!isPublicPath(currentPath)) {
+          console.log("[Auth] No session and not on public path - redirecting to auth");
+          await safeNavigate("/auth");
+        }
         return;
       }
-      
-      // Only redirect to auth if not on a public path and no session exists
-      if (!session && !isPublicPath(currentPath)) {
-        console.log("[Auth] No session and not on public path - redirecting to auth");
-        await safeNavigate("/auth");
+
+      // If we're on auth page with valid session, redirect to dashboard
+      if (currentPath === "/auth") {
+        console.log("[Auth] Valid session on auth page - redirecting to dashboard");
+        await safeNavigate("/dashboard");
       }
     };
 
