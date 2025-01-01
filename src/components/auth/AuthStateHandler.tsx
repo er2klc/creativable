@@ -14,25 +14,37 @@ export const AuthStateHandler = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
       console.log("[Auth] State changed:", event);
 
-      if (event === "SIGNED_IN") {
-        // Only redirect to dashboard if coming from auth page
-        if (location.pathname === "/auth") {
-          navigate("/dashboard");
+      try {
+        if (event === "SIGNED_IN") {
+          // Only redirect to dashboard if coming from auth page
+          if (location.pathname === "/auth") {
+            navigate("/dashboard");
+          }
+        } else if (event === "SIGNED_OUT") {
+          navigate("/auth");
+        } else if (event === "TOKEN_REFRESHED") {
+          console.log("[Auth] Token refreshed for user:", session?.user?.id);
         }
-      } else if (event === "SIGNED_OUT") {
-        navigate("/auth");
-      } else if (event === "TOKEN_REFRESHED") {
-        console.log("[Auth] Token refreshed for user:", session?.user?.id);
+      } catch (error) {
+        console.error("[Auth] Navigation error:", error);
+        // Don't redirect on error, just log it
       }
     });
 
     // Set up session refresh interval - every 2 minutes to prevent expiration
     const refreshInterval = setInterval(async () => {
       try {
-        await refreshSession();
+        const session = await refreshSession();
+        if (!session && location.pathname !== "/auth") {
+          // Only redirect to auth if session refresh fails and we're not already on auth page
+          const publicPaths = ["/", "/privacy-policy", "/changelog", "/unity", "/elevate"];
+          if (!publicPaths.some(path => location.pathname.startsWith(path))) {
+            navigate("/auth");
+          }
+        }
       } catch (error) {
         console.error("[Auth] Refresh error:", error);
-        handleSessionError(error);
+        // Don't redirect on network errors, let the user continue
       }
     }, 2 * 60 * 1000);
 
