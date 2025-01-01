@@ -1,5 +1,6 @@
 import { Building, Users, Crown } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
+import { Progress } from "@/components/ui/progress";
 
 interface PlatformCardContentProps {
   platform: {
@@ -9,6 +10,7 @@ interface PlatformCardContentProps {
     stats?: {
       totalTeams: number;
       totalUsers: number;
+      progress?: number;
     };
   };
 }
@@ -16,6 +18,7 @@ interface PlatformCardContentProps {
 export const PlatformCardContent = ({ platform }: PlatformCardContentProps) => {
   const user = useUser();
   const isPlatformOwner = user?.id === platform.created_by;
+  const progress = platform.stats?.progress || 0;
 
   return (
     <div className="text-white">
@@ -23,7 +26,7 @@ export const PlatformCardContent = ({ platform }: PlatformCardContentProps) => {
       {platform.description && (
         <p className="text-sm text-white/80 mb-3">{platform.description}</p>
       )}
-      <div className="flex items-center gap-4 text-sm text-white/90">
+      <div className="flex items-center gap-4 text-sm text-white/90 mb-3">
         <span className="flex items-center gap-1">
           <Building className="h-4 w-4" />
           {platform.stats?.totalTeams || 0} Teams
@@ -39,6 +42,13 @@ export const PlatformCardContent = ({ platform }: PlatformCardContentProps) => {
             </span>
           )}
         </div>
+      </div>
+      <div className="space-y-1">
+        <div className="flex justify-between text-sm">
+          <span>Fortschritt</span>
+          <span>{progress}%</span>
+        </div>
+        <Progress value={progress} className="h-2" />
       </div>
     </div>
   );
