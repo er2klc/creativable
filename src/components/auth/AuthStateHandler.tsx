@@ -38,8 +38,8 @@ export const AuthStateHandler = () => {
       console.log("[Auth] Is public path:", isPublicPath(location.pathname), location.pathname);
 
       try {
-        if (event === "SIGNED_IN") {
-          if (location.pathname === "/auth") {
+        if (event === "SIGNED_IN" && location.pathname === "/auth") {
+          console.log("[Auth] Redirecting to dashboard");
             await navigate("/dashboard");
           }
           // Remove the else condition to prevent unwanted redirects
