@@ -52,15 +52,16 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       if (logoFile) {
         const fileExt = logoFile.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
-
-        const { error: uploadError, data: uploadData } = await supabase.storage
+        const uploadResult = await supabase.storage
           .from('team-logos')
           .upload(fileName, logoFile, {
             upsert: true,
             contentType: logoFile.type
           });
 
-        if (uploadError) throw uploadError;
+        if (uploadResult.error) {
+          throw uploadResult.error;
+        }
 
         const { data: publicUrlData } = supabase.storage
           .from('team-logos')
@@ -69,7 +70,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         logoUrl = publicUrlData.publicUrl;
       }
 
-      const { data: platform, error: platformError } = await supabase
+      const platformResult = await supabase
         .from('elevate_platforms')
         .insert({
           name: name.trim(),
@@ -81,10 +82,11 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         .select()
         .single();
 
-      if (platformError) {
-        console.error('Platform creation error:', platformError);
-        throw platformError;
+      if (platformResult.error) {
+        throw platformResult.error;
       }
+
+      const platform = platformResult.data;
 
       if (selectedTeams.length > 0) {
         const teamAccess = selectedTeams.map(teamId => ({
@@ -93,20 +95,19 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
           granted_by: user.id
         }));
 
-        const { error: accessError } = await supabase
+        const teamAccessResult = await supabase
           .from('elevate_team_access')
           .insert(teamAccess);
 
-        if (accessError) {
-          console.error('Team access error:', accessError);
-          throw accessError;
+        if (teamAccessResult.error) {
+          throw teamAccessResult.error;
         }
       }
 
       if (onPlatformCreated) {
         await onPlatformCreated();
       }
-      
+
       toast.success("Modul erfolgreich erstellt");
       setIsOpen(false);
       resetState();
