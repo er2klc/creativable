@@ -7,19 +7,16 @@ interface PlatformCardImageProps {
 
 export const PlatformCardImage = ({ platform }: PlatformCardImageProps) => {
   return (
-    <div className="relative min-w-[120px] h-20 rounded-lg overflow-hidden">
+    <div className="relative aspect-[21/9] w-full overflow-hidden">
       {platform.logo_url ? (
-        <>
-          <img 
-            src={platform.logo_url} 
-            alt={platform.name} 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-background/80" />
-        </>
+        <img 
+          src={platform.logo_url} 
+          alt={platform.name} 
+          className="w-full h-full object-cover"
+        />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-muted">
-          <span className="text-xl font-semibold">
+          <span className="text-4xl font-semibold text-muted-foreground">
             {platform.name.substring(0, 2).toUpperCase()}
           </span>
         </div>

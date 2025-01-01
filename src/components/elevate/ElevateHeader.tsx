@@ -101,6 +101,7 @@ export const ElevateHeader = ({ onPlatformCreated }: ElevateHeaderProps) => {
           <Building2 className="h-6 w-6" />
           Elevate
         </h1>
+        <p className="text-muted-foreground mt-1">Ausbildungsplattform</p>
       </div>
       <div className="flex items-center gap-4">
         <Dialog open={isJoinOpen} onOpenChange={setIsJoinOpen}>

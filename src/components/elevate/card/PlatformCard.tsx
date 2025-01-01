@@ -38,15 +38,17 @@ export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
 
   return (
     <Card
-      className="p-6 cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group"
+      className="relative overflow-hidden group cursor-pointer hover:shadow-md transition-shadow"
       onClick={handleClick}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4 flex-1">
-          <PlatformCardImage platform={platform} />
-          <PlatformCardContent platform={platform} />
+      <div className="relative">
+        <PlatformCardImage platform={platform} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/40 to-transparent">
+          <div className="absolute bottom-0 left-0 right-0 p-6">
+            <PlatformCardContent platform={platform} />
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="absolute top-4 right-4">
           <PlatformCardActions
             platformId={platform.id}
             onDelete={() => onDelete(platform.id)}

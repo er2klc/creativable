@@ -18,12 +18,12 @@ export const PlatformCardContent = ({ platform }: PlatformCardContentProps) => {
   const isPlatformOwner = user?.id === platform.created_by;
 
   return (
-    <div className="flex-1">
-      <h3 className="text-lg font-semibold">{platform.name}</h3>
+    <div className="text-white">
+      <h3 className="text-xl font-semibold mb-2">{platform.name}</h3>
       {platform.description && (
-        <p className="text-sm text-muted-foreground">{platform.description}</p>
+        <p className="text-sm text-white/80 mb-3">{platform.description}</p>
       )}
-      <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+      <div className="flex items-center gap-4 text-sm text-white/90">
         <span className="flex items-center gap-1">
           <Building className="h-4 w-4" />
           {platform.stats?.totalTeams || 0} Teams
