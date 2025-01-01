@@ -50,23 +50,28 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       let logoUrl = null;
 
       if (logoFile) {
-        const fileExt = logoFile.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        try {
+          const fileExt = logoFile.name.split('.').pop();
+          const fileName = `${crypto.randomUUID()}.${fileExt}`;
 
-        const { error: uploadError, data: uploadData } = await supabase.storage
-          .from('team-logos')
-          .upload(fileName, logoFile, {
-            upsert: true,
-            contentType: logoFile.type
-          });
+          const { error: uploadError, data: uploadData } = await supabase.storage
+            .from('team-logos')
+            .upload(fileName, logoFile, {
+              upsert: true,
+              contentType: logoFile.type
+            });
 
-        if (uploadError) throw uploadError;
+          if (uploadError) throw uploadError;
 
-        const { data: publicUrlData } = supabase.storage
-          .from('team-logos')
-          .getPublicUrl(fileName);
+          const { data: publicUrlData } = supabase.storage
+            .from('team-logos')
+            .getPublicUrl(fileName);
 
-        logoUrl = publicUrlData.publicUrl;
+          logoUrl = publicUrlData.publicUrl;
+        } catch (uploadError) {
+          console.error('Error uploading logo:', uploadError);
+          throw new Error('Fehler beim Hochladen des Logos');
+        }
       }
 
       const { data: platform, error: platformError } = await supabase

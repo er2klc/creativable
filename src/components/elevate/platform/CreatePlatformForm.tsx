@@ -35,17 +35,22 @@ export const CreatePlatformForm = ({
   const { data: existingModules = [] } = useQuery({
     queryKey: ['existing-modules'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('elevate_platforms')
-        .select('id, name')
-        .order('name');
+      try {
+        const { data, error } = await supabase
+          .from('elevate_platforms')
+          .select('id, name')
+          .order('name');
 
-      if (error) {
-        console.error('Error loading existing modules:', error);
+        if (error) {
+          console.error('Error loading existing modules:', error);
+          return [];
+        }
+
+        return data || [];
+      } catch (error) {
+        console.error('Unexpected error loading modules:', error);
         return [];
       }
-
-      return data || [];
     }
   });
 
