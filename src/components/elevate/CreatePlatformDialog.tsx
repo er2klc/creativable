@@ -82,7 +82,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
 
       if (platformError) throw platformError;
 
-      if (selectedTeams.length > 0) {
+      if (selectedTeams.length > 0 && platformData) {
         const teamAccess = selectedTeams.map(teamId => ({
           platform_id: platformData.id,
           team_id: teamId,
