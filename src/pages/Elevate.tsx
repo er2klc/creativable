@@ -19,12 +19,12 @@ const fetchPlatforms = async () => {
 
     const teamIdList = teamIds?.map(t => t.team_id) || [];
 
-    // Fetch platforms with team access information
+    // Fetch platforms based on team access and direct access
     const { data: platforms, error: platformsError } = await supabase
       .from('elevate_platforms')
       .select(`
         *,
-        elevate_team_access!inner (
+        elevate_team_access (
           team_id,
           teams (
             id,
@@ -32,9 +32,7 @@ const fetchPlatforms = async () => {
           )
         )
       `)
-      .or(
-        `created_by.eq.${user.data.user.id},elevate_team_access.team_id.in.(${teamIdList.join(',')})`
-      );
+      .or(`created_by.eq.${user.data.user.id},elevate_team_access.team_id.in.(${teamIdList.join(',')})`);
 
     if (platformsError) {
       console.error("[Debug] Error fetching platforms:", platformsError);
