@@ -130,13 +130,13 @@ export const TeamLogoUpload = ({
 
   return (
     <div className="space-y-4">
-      <Label>Team Logo</Label>
+      <Label>Modul Bild</Label>
       <div className="flex flex-col items-center gap-4">
         {logoPreview ? (
           <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-primary/20">
             <img
               src={logoPreview}
-              alt="Team logo preview"
+              alt="Modul Bild Vorschau"
               className="w-full h-full object-cover"
             />
             <Button
@@ -159,7 +159,7 @@ export const TeamLogoUpload = ({
             className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
           >
             <Upload className="h-4 w-4 mr-2" />
-            Logo hochladen
+            Bild hochladen
             <Input
               id="logo-upload"
               type="file"
