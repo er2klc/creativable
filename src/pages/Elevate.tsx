@@ -17,50 +17,48 @@ const Elevate = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      // Get platforms that the user has access to
-      const { data: platforms, error } = await supabase
-        .from('elevate_platforms')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const { data: platforms, error } = await supabase
+          .from('elevate_platforms')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Error loading platforms:", error);
+        if (error) {
+          console.error("Error loading platforms:", error);
+          toast.error("Fehler beim Laden der Plattformen");
+          return [];
+        }
+
+        // Get stats for each platform
+        const platformsWithStats = await Promise.all(
+          platforms.map(async (platform) => {
+            const [{ data: teamAccess }, { data: userAccess }] = await Promise.all([
+              supabase
+                .from('elevate_team_access')
+                .select('team_id')
+                .eq('platform_id', platform.id),
+              supabase
+                .from('elevate_user_access')
+                .select('*')
+                .eq('platform_id', platform.id)
+            ]);
+
+            return {
+              ...platform,
+              stats: {
+                totalTeams: teamAccess?.length || 0,
+                totalUsers: userAccess?.length || 0
+              }
+            };
+          })
+        );
+
+        return platformsWithStats;
+      } catch (err: any) {
+        console.error("Error in platform loading:", err);
         toast.error("Fehler beim Laden der Plattformen");
         return [];
       }
-
-      // Get stats for each platform
-      const platformsWithStats = await Promise.all(
-        platforms.map(async (platform) => {
-          const { data: teamAccess, error: teamError } = await supabase
-            .from('elevate_team_access')
-            .select('team_id')
-            .eq('platform_id', platform.id);
-
-          const { data: userAccess, error: userError } = await supabase
-            .from('elevate_user_access')
-            .select('*')
-            .eq('platform_id', platform.id);
-
-          if (teamError || userError) {
-            console.error("Error loading access stats:", teamError || userError);
-            return {
-              ...platform,
-              stats: { totalTeams: 0, totalUsers: 0 }
-            };
-          }
-
-          return {
-            ...platform,
-            stats: {
-              totalTeams: teamAccess?.length || 0,
-              totalUsers: userAccess?.length || 0
-            }
-          };
-        })
-      );
-
-      return platformsWithStats;
     },
     enabled: !!user,
   });
