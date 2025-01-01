@@ -9,28 +9,26 @@ import { PlatformList } from "@/components/elevate/PlatformList";
 const fetchPlatforms = async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.id) {
-    console.log("[Debug] No user found");
+    console.log("[Debug] Kein Benutzer gefunden");
     return [];
   }
 
   try {
-    // First fetch team IDs
+    // Team-IDs abrufen
     const { data: teamIds, error: teamError } = await supabase
       .from('team_members')
       .select('team_id')
       .eq('user_id', user.id);
 
     if (teamError) {
-      console.error("[Debug] Error fetching team IDs:", teamError);
+      console.error("[Debug] Fehler beim Laden der Team-IDs:", teamError);
       throw teamError;
     }
 
-    // Format team IDs properly for the query
-    const teamIdList = teamIds?.map(t => `'${t.team_id}'`) || [];
-    const teamIdClause = teamIdList.length > 0 ? `elevate_team_access.team_id.in.(${teamIdList.join(',')})` : 'false';
+    const teamIdList = teamIds?.map(t => `${t.team_id}`) || [];
 
-    // Fetch platforms with proper error handling
-    const { data: platforms, error: platformsError } = await supabase
+    // Plattformen, die vom Benutzer erstellt wurden
+    const { data: createdPlatforms, error: createdPlatformsError } = await supabase
       .from('elevate_platforms')
       .select(`
         *,
@@ -42,15 +40,35 @@ const fetchPlatforms = async () => {
           )
         )
       `)
-      .or(`created_by.eq.${user.id},${teamIdClause}`);
+      .eq('created_by', user.id);
 
-    if (platformsError) {
-      console.error("[Debug] Error fetching platforms:", platformsError);
-      throw platformsError;
+    if (createdPlatformsError) {
+      console.error("[Debug] Fehler beim Laden der erstellten Plattformen:", createdPlatformsError);
+      throw createdPlatformsError;
     }
 
-    // Get platforms accessible via user_access (invite codes)
-    const { data: userAccessPlatforms, error: userAccessError } = await supabase
+    // Plattformen basierend auf Team-Zugriff
+    const { data: teamPlatforms, error: teamPlatformsError } = await supabase
+      .from('elevate_platforms')
+      .select(`
+        *,
+        elevate_team_access (
+          team_id,
+          teams (
+            id,
+            name
+          )
+        )
+      `)
+      .in('elevate_team_access.team_id', teamIdList);
+
+    if (teamPlatformsError) {
+      console.error("[Debug] Fehler beim Laden der Team-Plattformen:", teamPlatformsError);
+      throw teamPlatformsError;
+    }
+
+    // Plattformen basierend auf Invite Codes
+    const { data: invitePlatforms, error: invitePlatformsError } = await supabase
       .from('elevate_platforms')
       .select(`
         *,
@@ -60,23 +78,24 @@ const fetchPlatforms = async () => {
       `)
       .eq('elevate_user_access.user_id', user.id);
 
-    if (userAccessError) {
-      console.error("[Debug] Error fetching user access platforms:", userAccessError);
-      throw userAccessError;
+    if (invitePlatformsError) {
+      console.error("[Debug] Fehler beim Laden der Invite-Plattformen:", invitePlatformsError);
+      throw invitePlatformsError;
     }
 
-    // Combine and deduplicate platforms
-    const allPlatforms = [...(platforms || []), ...(userAccessPlatforms || [])];
-    const uniquePlatforms = Array.from(new Set(allPlatforms.map(p => p.id)))
-      .map(id => allPlatforms.find(p => p.id === id));
+    // Kombinieren und Deduplizieren
+    const combinedPlatforms = [...(createdPlatforms || []), ...(teamPlatforms || []), ...(invitePlatforms || [])];
+    const uniquePlatforms = Array.from(new Set(combinedPlatforms.map(p => p.id)))
+      .map(id => combinedPlatforms.find(p => p.id === id));
 
-    console.log("[Debug] Loaded platforms:", uniquePlatforms);
+    console.log("[Debug] Geladene Plattformen:", uniquePlatforms);
     return uniquePlatforms || [];
   } catch (err: any) {
-    console.error("[Debug] Error in fetchPlatforms:", err);
+    console.error("[Debug] Fehler in fetchPlatforms:", err.message || err);
     throw err;
   }
 };
+
 
 const Elevate = () => {
   const user = useUser();
