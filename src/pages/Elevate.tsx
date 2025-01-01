@@ -25,7 +25,12 @@ const fetchPlatforms = async () => {
             name
           )
         )
-      `);
+      `)
+      .or(`created_by.eq.${user.id},id.in.(
+        select platform_id from elevate_team_access eta 
+        join team_members tm on tm.team_id = eta.team_id 
+        where tm.user_id = '${user.id}'
+      )`);
 
     if (error) {
       console.error("[Debug] Fehler beim Laden der Plattformen:", error);
@@ -34,7 +39,7 @@ const fetchPlatforms = async () => {
 
     return data || [];
   } catch (error: any) {
-    console.error("[Debug] Fehler in fetchPlatforms:", error.message || error);
+    console.error("[Debug] Fehler in fetchPlatforms:", error);
     throw error;
   }
 };

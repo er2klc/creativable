@@ -52,7 +52,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       if (logoFile) {
         const fileExt = logoFile.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const { error: uploadError, data: uploadData } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('team-logos')
           .upload(fileName, logoFile, {
             upsert: true,
@@ -61,14 +61,14 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
 
         if (uploadError) throw uploadError;
 
-        const { data: publicUrlData } = supabase.storage
+        const { data: { publicUrl } } = supabase.storage
           .from('team-logos')
           .getPublicUrl(fileName);
 
-        logoUrl = publicUrlData.publicUrl;
+        logoUrl = publicUrl;
       }
 
-      const { data: platform, error: platformError } = await supabase
+      const { error: platformError } = await supabase
         .from('elevate_platforms')
         .insert({
           name: name.trim(),
@@ -76,15 +76,13 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
           created_by: user.id,
           logo_url: logoUrl,
           linked_modules: selectedModules
-        })
-        .select('*')
-        .single();
+        });
 
       if (platformError) throw platformError;
 
       if (selectedTeams.length > 0) {
         const teamAccess = selectedTeams.map(teamId => ({
-          platform_id: platform.id,
+          platform_id: platformError?.id,
           team_id: teamId,
           granted_by: user.id
         }));
@@ -96,13 +94,13 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         if (accessError) throw accessError;
       }
 
-      if (onPlatformCreated) {
-        await onPlatformCreated();
-      }
-
       toast.success("Modul erfolgreich erstellt");
       setIsOpen(false);
       resetState();
+      
+      if (onPlatformCreated) {
+        await onPlatformCreated();
+      }
     } catch (error: any) {
       console.error('Error in module creation:', error);
       toast.error("Fehler beim Erstellen des Moduls: " + (error.message || 'Unbekannter Fehler'));
