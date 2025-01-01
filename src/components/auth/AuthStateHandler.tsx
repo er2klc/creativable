@@ -62,7 +62,7 @@ export const AuthStateHandler = () => {
 
       try {
         if (event === "SIGNED_IN") {
-          if (currentPath === "/auth") {
+          if (currentPath === "/auth" && !isProtectedNoRedirect(currentPath)) {
             console.log("[Auth] Redirecting to dashboard from auth page");
             await safeNavigate("/dashboard");
           }
@@ -86,21 +86,31 @@ export const AuthStateHandler = () => {
 
     // Initial session check
     const checkInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        // Only redirect to auth if not on a public path
-        if (!isPublicPath(currentPath)) {
-          console.log("[Auth] No session and not on public path - redirecting to auth");
-          await safeNavigate("/auth");
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("[Auth] Session check error:", error);
+          handleSessionError(error);
+          return;
         }
-        return;
-      }
 
-      // If we're on auth page with valid session, redirect to dashboard
-      if (currentPath === "/auth") {
-        console.log("[Auth] Valid session on auth page - redirecting to dashboard");
-        await safeNavigate("/dashboard");
+        if (!session) {
+          if (!isPublicPath(currentPath)) {
+            console.log("[Auth] No session and not on public path - redirecting to auth");
+            await safeNavigate("/auth");
+          }
+          return;
+        }
+
+        // If we're on auth page with valid session and not a protected no-redirect path
+        if (currentPath === "/auth" && !isProtectedNoRedirect(currentPath)) {
+          console.log("[Auth] Valid session on auth page - redirecting to dashboard");
+          await safeNavigate("/dashboard");
+        }
+      } catch (error) {
+        console.error("[Auth] Initial session check error:", error);
+        handleSessionError(error);
       }
     };
 
