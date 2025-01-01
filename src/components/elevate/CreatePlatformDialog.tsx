@@ -86,18 +86,21 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       }
 
       if (selectedTeams.length > 0 && platformData) {
-        const teamAccess = selectedTeams.map(teamId => ({
-          platform_id: platformData.id,
-          team_id: teamId,
-          granted_by: user.id
-        }));
+        const teamAccessPromises = selectedTeams.map(teamId => 
+          supabase
+            .from('elevate_team_access')
+            .insert({
+              platform_id: platformData.id,
+              team_id: teamId,
+              granted_by: user.id
+            })
+        );
 
-        const { error: accessError } = await supabase
-          .from('elevate_team_access')
-          .insert(teamAccess);
-
-        if (accessError) {
-          console.error('Team access error:', accessError);
+        const results = await Promise.all(teamAccessPromises);
+        const errors = results.filter(result => result.error);
+        
+        if (errors.length > 0) {
+          console.error('Team access errors:', errors);
           throw new Error('Fehler beim Gewähren des Team-Zugriffs');
         }
       }
