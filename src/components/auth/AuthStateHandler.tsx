@@ -71,21 +71,30 @@ export const AuthStateHandler = () => {
       }
     });
 
-    // Only set up session refresh for authenticated paths
-    if (!isPublicPath(currentPath)) {
-      sessionRefreshInterval = setInterval(async () => {
-        try {
-          const session = await refreshSession();
-          if (!session && !isPublicPath(currentPath)) {
-            console.log("[Auth] Session refresh failed - redirecting to auth");
-            await safeNavigate("/auth");
-          }
-        } catch (error) {
-          console.error("[Auth] Refresh error:", error);
-          handleSessionError(error);
+    // Check if user is authenticated for non-public paths
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session && !isPublicPath(currentPath)) {
+        console.log("[Auth] No session found - redirecting to auth");
+        await safeNavigate("/auth");
+      }
+    };
+
+    checkAuth();
+
+    // Set up session refresh interval
+    sessionRefreshInterval = setInterval(async () => {
+      try {
+        const session = await refreshSession();
+        if (!session && !isPublicPath(currentPath)) {
+          console.log("[Auth] Session refresh failed - redirecting to auth");
+          await safeNavigate("/auth");
         }
-      }, 2 * 60 * 1000);
-    }
+      } catch (error) {
+        console.error("[Auth] Refresh error:", error);
+        handleSessionError(error);
+      }
+    }, 2 * 60 * 1000);
 
     return () => {
       console.log("[Auth] Cleaning up auth listener");
