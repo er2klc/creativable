@@ -124,11 +124,7 @@ const PlatformDetail = () => {
           <Card key={module.id} className="p-6">
             <div className="flex items-start gap-4">
               <div className="bg-primary/10 p-3 rounded-lg">
-                {module.type === 'video' ? (
-                  <Video className="h-6 w-6 text-primary" />
-                ) : (
-                  <FileText className="h-6 w-6 text-primary" />
-                )}
+                <FileText className="h-6 w-6 text-primary" />
               </div>
               <div className="space-y-1 flex-1">
                 <h3 className="font-semibold">{module.title}</h3>
