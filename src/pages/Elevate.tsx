@@ -7,19 +7,29 @@ import { ElevateHeader } from "@/components/elevate/ElevateHeader";
 import { PlatformList } from "@/components/elevate/PlatformList";
 
 const fetchPlatforms = async () => {
-  const user = await supabase.auth.getUser();
-  if (!user?.data.user?.id) return [];
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.id) {
+    console.log("[Debug] No user found");
+    return [];
+  }
 
   try {
-    // Fetch team IDs for the current user
-    const { data: teamIds } = await supabase
+    // First fetch team IDs
+    const { data: teamIds, error: teamError } = await supabase
       .from('team_members')
       .select('team_id')
-      .eq('user_id', user.data.user.id);
+      .eq('user_id', user.id);
 
-    const teamIdList = teamIds?.map(t => t.team_id) || [];
+    if (teamError) {
+      console.error("[Debug] Error fetching team IDs:", teamError);
+      throw teamError;
+    }
 
-    // Fetch platforms based on team access and direct access
+    // Format team IDs properly for the query
+    const teamIdList = teamIds?.map(t => `'${t.team_id}'`) || [];
+    const teamIdClause = teamIdList.length > 0 ? `elevate_team_access.team_id.in.(${teamIdList.join(',')})` : 'false';
+
+    // Fetch platforms with proper error handling
     const { data: platforms, error: platformsError } = await supabase
       .from('elevate_platforms')
       .select(`
@@ -32,7 +42,7 @@ const fetchPlatforms = async () => {
           )
         )
       `)
-      .or(`created_by.eq.${user.data.user.id},elevate_team_access.team_id.in.(${teamIdList.join(',')})`);
+      .or(`created_by.eq.${user.id},${teamIdClause}`);
 
     if (platformsError) {
       console.error("[Debug] Error fetching platforms:", platformsError);
@@ -48,7 +58,7 @@ const fetchPlatforms = async () => {
           user_id
         )
       `)
-      .eq('elevate_user_access.user_id', user.data.user.id);
+      .eq('elevate_user_access.user_id', user.id);
 
     if (userAccessError) {
       console.error("[Debug] Error fetching user access platforms:", userAccessError);
