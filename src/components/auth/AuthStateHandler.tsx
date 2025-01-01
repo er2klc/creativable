@@ -22,8 +22,16 @@ export const AuthStateHandler = () => {
   const location = useLocation();
   const { handleSessionError, refreshSession } = useSessionManagement();
 
-  const isPublicPath = (pathname: string) => 
-    PUBLIC_PATHS.some(path => pathname === path || pathname.startsWith(path + "/"));
+  const isPublicPath = (pathname: string) => {
+    // Check if the current path exactly matches a public path
+    if (PUBLIC_PATHS.includes(pathname)) {
+      return true;
+    }
+    // Check if the current path starts with any of the public paths
+    return PUBLIC_PATHS.some(path => 
+      pathname.startsWith(path + "/")
+    );
+  };
 
   const safeNavigate = async (path: string) => {
     try {
@@ -35,16 +43,18 @@ export const AuthStateHandler = () => {
 
   useEffect(() => {
     let sessionRefreshInterval: NodeJS.Timeout | null = null;
-    const isOnPublicPath = isPublicPath(location.pathname);
+    const currentPath = location.pathname;
+    const isOnPublicPath = isPublicPath(currentPath);
 
-    // Set up auth state listener
+    console.log("[Auth] Current path:", currentPath);
+    console.log("[Auth] Is public path:", isOnPublicPath);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
-      console.log("[Auth] State changed:", event, "Current path:", location.pathname);
-      console.log("[Auth] Is public path:", isOnPublicPath);
+      console.log("[Auth] State changed:", event, "Current path:", currentPath);
 
       try {
         if (event === "SIGNED_IN") {
-          if (location.pathname === "/auth") {
+          if (currentPath === "/auth") {
             console.log("[Auth] Redirecting to dashboard from auth page");
             await safeNavigate("/dashboard");
           }
@@ -62,13 +72,11 @@ export const AuthStateHandler = () => {
         }
       } catch (error) {
         console.error("[Auth] Navigation error:", error);
-        if (!isOnPublicPath) {
-          await safeNavigate("/auth");
-        }
+        handleSessionError(error);
       }
     });
 
-    // Set up session refresh interval
+    // Only set up session refresh for non-public paths
     if (!isOnPublicPath) {
       sessionRefreshInterval = setInterval(async () => {
         try {
@@ -79,7 +87,7 @@ export const AuthStateHandler = () => {
           }
         } catch (error) {
           console.error("[Auth] Refresh error:", error);
-          await safeNavigate("/auth");
+          handleSessionError(error);
         }
       }, 2 * 60 * 1000);
     }
