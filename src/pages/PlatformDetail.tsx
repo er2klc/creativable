@@ -17,15 +17,21 @@ const PlatformDetail = () => {
       const { data, error } = await supabase
         .from('elevate_platforms')
         .select(`
-          *,
-          elevate_lerninhalte!elevate_platforms_id_fkey (
-            id,
-            title,
-            description,
-            video_url,
-            submodule_order
-          )
-        `)
+  *,
+  elevate_modules (
+    id,
+    title,
+    description,
+    elevate_lerninhalte (
+      id,
+      title,
+      description,
+      video_url,
+      submodule_order
+    )::jsonb[]
+  )
+`)
+
         .eq('slug', moduleSlug)
         .maybeSingle();
 
