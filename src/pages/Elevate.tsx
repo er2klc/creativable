@@ -12,7 +12,7 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    const { data: platforms, error: platformsError } = await supabase
+    const { data: platforms, error } = await supabase
       .from("elevate_platforms")
       .select(`
         *,
@@ -28,11 +28,12 @@ const fetchPlatforms = async (userId: string) => {
             team_members (user_id)
           )
         )
-      `);
+      `)
+      .or(`created_by.eq.${userId}`);
 
-    if (platformsError) {
-      console.error("[Debug] Fehler beim Laden der Plattformen:", platformsError);
-      throw platformsError;
+    if (error) {
+      console.error("[Debug] Fehler beim Laden der Plattformen:", error);
+      throw error;
     }
 
     return platforms?.map((platform) => {
