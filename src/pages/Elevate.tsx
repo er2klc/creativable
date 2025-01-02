@@ -12,16 +12,24 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // First, get all platform IDs the user has access to through teams
+    // First get team IDs for the user
+    const { data: teamMemberships, error: teamError } = await supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', userId);
+
+    if (teamError) {
+      console.error("[Debug] Fehler beim Laden der Team-Mitgliedschaften:", teamError);
+      throw teamError;
+    }
+
+    const teamIds = teamMemberships?.map(tm => tm.team_id) || [];
+
+    // Then get platform IDs from team access
     const { data: accessiblePlatforms, error: accessError } = await supabase
       .from('elevate_team_access')
       .select('platform_id')
-      .in('team_id', (
-        supabase
-          .from('team_members')
-          .select('team_id')
-          .eq('user_id', userId)
-      ));
+      .in('team_id', teamIds);
 
     if (accessError) {
       console.error("[Debug] Fehler beim Laden der zugänglichen Plattformen:", accessError);
