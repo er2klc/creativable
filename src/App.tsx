@@ -71,11 +71,6 @@ const App = () => (
           <AppLayout><PlatformDetail /></AppLayout>
         </ProtectedRoute>
       } />
-      <Route path="/elevate/platform/:platformSlug" element={
-        <ProtectedRoute>
-          <AppLayout><PlatformDetail /></AppLayout>
-        </ProtectedRoute>
-      } />
       <Route path="/leads" element={
         <ProtectedRoute>
           <AppLayout><Leads /></AppLayout>
