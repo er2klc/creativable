@@ -25,7 +25,11 @@ const fetchPlatforms = async (userId: string) => {
 
     console.log("[Debug] Geladene Team-IDs:", teamIds);
 
-    // Abfrage: Module, die der Benutzer erstellt hat
+    if (!teamIds || teamIds.length === 0) {
+      console.log("[Debug] Keine Teams gefunden");
+    }
+
+    // Abfrage: Module des Benutzers und der Teams
     const { data: modules, error: modulesError } = await supabase
       .from("elevate_modules")
       .select(`
@@ -40,7 +44,7 @@ const fetchPlatforms = async (userId: string) => {
             teams (
               id,
               name,
-              team_members (
+              team_members!inner (
                 user_id
               )
             )
@@ -60,6 +64,16 @@ const fetchPlatforms = async (userId: string) => {
     }
 
     console.log("[Debug] Geladene Module:", modules);
+
+    // Verarbeite Team-Module (zum Debuggen)
+    const teamModules = modules.filter(module => {
+      const accessTeams = module.elevate_platforms?.elevate_team_access || [];
+      return accessTeams.some(access => 
+        teamIds.some(team => team.team_id === access.team_id)
+      );
+    });
+
+    console.log("[Debug] Team-Module:", teamModules);
 
     // Verarbeite die Module, um Teams und Benutzerzahlen zu berechnen
     const platforms = modules.map(module => {
@@ -90,7 +104,7 @@ const fetchPlatforms = async (userId: string) => {
       };
     });
 
-    // Doppelte Einträge entfernen
+    // Entferne doppelte Plattformen
     const uniquePlatforms = Array.from(
       new Map(platforms.map(item => [item.id, item])).values()
     );
@@ -102,6 +116,7 @@ const fetchPlatforms = async (userId: string) => {
     throw error;
   }
 };
+
 
 const Elevate = () => {
   const user = useUser();
