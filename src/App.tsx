@@ -66,7 +66,7 @@ const App = () => (
           <AppLayout><Elevate /></AppLayout>
         </ProtectedRoute>
       } />
-      <Route path="/elevate/platform/:platformSlug" element={
+      <Route path="/elevate/modul/:moduleSlug" element={
         <ProtectedRoute>
           <AppLayout><PlatformDetail /></AppLayout>
         </ProtectedRoute>

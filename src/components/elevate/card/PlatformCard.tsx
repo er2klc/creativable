@@ -13,8 +13,7 @@ export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
   const navigate = useNavigate();
   
   const handleClick = () => {
-    const slug = platform.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    navigate(`/elevate/platform/${slug}`);
+    navigate(`/elevate/modul/${platform.slug}`);
   };
 
   return (

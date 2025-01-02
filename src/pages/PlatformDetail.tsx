@@ -5,11 +5,11 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const PlatformDetail = () => {
-  const { platformSlug } = useParams();
+  const { moduleSlug } = useParams();
   const user = useUser();
 
   const { data: platform, isLoading } = useQuery({
-    queryKey: ['platform', platformSlug],
+    queryKey: ['platform', moduleSlug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('elevate_platforms')
@@ -29,13 +29,13 @@ const PlatformDetail = () => {
             )
           )
         `)
-        .eq('name', platformSlug?.split('-').join(' '))
+        .eq('slug', moduleSlug)
         .maybeSingle();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!platformSlug && !!user
+    enabled: !!moduleSlug && !!user
   });
 
   if (isLoading) {
