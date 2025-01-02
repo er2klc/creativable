@@ -12,8 +12,7 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // First fetch user's own platforms
-    const { data: ownPlatforms, error: ownError } = await supabase
+    const { data: platforms, error } = await supabase
       .from("elevate_platforms")
       .select(`
         *,
@@ -23,51 +22,14 @@ const fetchPlatforms = async (userId: string) => {
           description,
           order_index
         )
-      `)
-      .eq('created_by', userId);
+      `);
 
-    if (ownError) {
-      console.error("[Debug] Error fetching own platforms:", ownError);
-      throw ownError;
+    if (error) {
+      console.error("[Debug] Error fetching platforms:", error);
+      throw error;
     }
 
-    // Then fetch platforms through team access
-    const { data: teamPlatforms, error: teamError } = await supabase
-      .from("elevate_platforms")
-      .select(`
-        *,
-        elevate_modules (
-          id,
-          title,
-          description,
-          order_index
-        )
-      `)
-      .in('id', (
-        await supabase
-          .from('elevate_team_access')
-          .select('platform_id')
-          .in('team_id', (
-            await supabase
-              .from('team_members')
-              .select('team_id')
-              .eq('user_id', userId)
-          ).data?.map(tm => tm.team_id) || []
-        ).data?.map(eta => eta.platform_id) || []
-      ));
-
-    if (teamError) {
-      console.error("[Debug] Error fetching team platforms:", teamError);
-      throw teamError;
-    }
-
-    // Combine and deduplicate platforms
-    const allPlatforms = [...(ownPlatforms || []), ...(teamPlatforms || [])];
-    const uniquePlatforms = Array.from(
-      new Map(allPlatforms.map(platform => [platform.id, platform])).values()
-    );
-
-    return uniquePlatforms.map(platform => ({
+    return (platforms || []).map(platform => ({
       ...platform,
       modules: platform.elevate_modules || [],
       stats: {
