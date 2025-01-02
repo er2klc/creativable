@@ -24,6 +24,9 @@ const fetchPlatforms = async (userId: string) => {
     }
 
     const teamIdArray = teamIds?.map(t => t.team_id) || [];
+    const teamIdsForQuery = teamIdArray.length > 0 
+      ? teamIdArray.map(id => `'${id}'`).join(',')
+      : 'null';
 
     // 2. Plattformen direkt mit allen benötigten Relationen abrufen
     const { data: platforms, error: platformsError } = await supabase
@@ -45,10 +48,7 @@ const fetchPlatforms = async (userId: string) => {
           )
         )
       `)
-      .or(`created_by.eq.${userId},id.in.(
-        select platform_id from elevate_team_access 
-        where team_id in (${teamIdArray.map(id => `'${id}'`).join(',')})
-      )`);
+      .or(`created_by.eq.${userId},id.in.(select platform_id from elevate_team_access where team_id in (${teamIdsForQuery}))`);
 
     if (platformsError) {
       console.error("[Debug] Fehler beim Laden der Plattformen:", platformsError);
