@@ -68,13 +68,31 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         logoUrl = publicUrl;
       }
 
+      // First create the platform
+      const { data: platformData, error: platformError } = await supabase
+        .from('elevate_platforms')
+        .insert([{
+          name: name.trim(),
+          description: description.trim() || null,
+          created_by: user.id,
+          logo_url: logoUrl
+        }])
+        .select()
+        .single();
+
+      if (platformError) {
+        console.error('Platform creation error:', platformError);
+        throw new Error('Fehler beim Erstellen der Plattform');
+      }
+
+      // Then create the module with the new platform ID
       const { data: moduleData, error: moduleError } = await supabase
         .from('elevate_modules')
         .insert([{
           title: name.trim(),
           description: description.trim() || null,
           created_by: user.id,
-          platform_id: '00000000-0000-0000-0000-000000000000',
+          platform_id: platformData.id,
           order_index: 0
         }])
         .select()
@@ -85,12 +103,12 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         throw new Error('Fehler beim Erstellen des Moduls');
       }
 
-      if (selectedTeams.length > 0 && moduleData) {
+      if (selectedTeams.length > 0 && platformData) {
         const teamAccessPromises = selectedTeams.map(teamId => 
           supabase
             .from('elevate_team_access')
             .insert({
-              platform_id: '00000000-0000-0000-0000-000000000000',
+              platform_id: platformData.id,
               team_id: teamId,
               granted_by: user.id
             })
