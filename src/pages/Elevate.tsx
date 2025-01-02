@@ -26,6 +26,12 @@ const fetchPlatforms = async (userId: string) => {
     const platformIds = teamIds?.map((t) => t.team_id) || [];
     console.log("[Debug] Geladene Team-IDs:", platformIds);
 
+    // Sicherstellen, dass die Plattform-IDs korrekt formatiert sind
+    const platformIdString =
+      platformIds.length > 0
+        ? `platform_id.in.(${platformIds.map((id) => `'${id}'`).join(",")})`
+        : "";
+
     // 2. Module abrufen
     const { data: modules, error: modulesError } = await supabase
       .from("elevate_modules")
@@ -50,9 +56,7 @@ const fetchPlatforms = async (userId: string) => {
         elevate_submodules (*)
       `)
       .or(
-        `created_by.eq.${userId},platform_id.in.(${platformIds
-          .map((id) => `'${id}'`)
-          .join(",")})`
+        `created_by.eq.${userId}${platformIdString ? `,${platformIdString}` : ""}`
       )
       .order("order_index", { ascending: true });
 
