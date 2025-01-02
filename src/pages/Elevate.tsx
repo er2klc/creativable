@@ -12,13 +12,10 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // Fetch platforms with a single query including all related data
+    // Fetch platforms and modules in a single query
     const { data: platforms, error } = await supabase
       .from("elevate_platforms")
-      .select(`
-        *,
-        elevate_modules (*)
-      `)
+      .select("*, elevate_modules(*)")
       .or(`created_by.eq.${userId}`);
 
     if (error) {
@@ -26,22 +23,28 @@ const fetchPlatforms = async (userId: string) => {
       throw error;
     }
 
-    // Fetch team access data separately to avoid stream reading issues
+    // Fetch team access data separately
     const enrichedPlatforms = await Promise.all(
       (platforms || []).map(async (platform) => {
-        const { data: teamAccess } = await supabase
+        // Separate query for team access to avoid stream reading issues
+        const { data: teamAccess, error: teamError } = await supabase
           .from("elevate_team_access")
-          .select(`
-            team_id,
-            teams (
-              id,
-              name,
-              team_members (
-                user_id
-              )
-            )
-          `)
+          .select("team_id, teams!inner(id, name, team_members(user_id))")
           .eq("platform_id", platform.id);
+
+        if (teamError) {
+          console.error("[Debug] Fehler beim Laden der Team-Zugänge:", teamError);
+          return {
+            ...platform,
+            modules: platform.elevate_modules || [],
+            team_access: [],
+            stats: {
+              totalTeams: 0,
+              totalUsers: 0,
+              progress: 0,
+            },
+          };
+        }
 
         return {
           ...platform,
