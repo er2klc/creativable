@@ -8,15 +8,10 @@ const PlatformDetail = () => {
   const { platformSlug } = useParams();
   const user = useUser();
 
-  // Convert URL slug back to the original name format
-  const decodedName = platformSlug
-    ?.replace(/-/g, ' ')
-    .replace(/\./g, '.');  // Preserve dots
-
   const { data: platform, isLoading } = useQuery({
     queryKey: ['platform', platformSlug],
     queryFn: async () => {
-      console.log('Searching for platform with name:', decodedName);
+      console.log('Searching for platform with slug:', platformSlug);
       
       const { data, error } = await supabase
         .from('elevate_platforms')
@@ -36,7 +31,7 @@ const PlatformDetail = () => {
             )
           )
         `)
-        .ilike('name', decodedName || '')
+        .eq('slug', platformSlug)
         .maybeSingle();
 
       if (error) {
