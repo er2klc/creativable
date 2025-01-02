@@ -34,17 +34,22 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
   };
 
   const createTeamAccess = async (platformId: string, teamId: string, userId: string) => {
-    const { error } = await supabase
-      .from('elevate_team_access')
-      .insert({
-        platform_id: platformId,
-        team_id: teamId,
-        granted_by: userId
-      });
+    try {
+      const { error } = await supabase
+        .from('elevate_team_access')
+        .insert({
+          platform_id: platformId,
+          team_id: teamId,
+          granted_by: userId
+        });
 
-    if (error) {
-      console.error('Team access error:', error);
-      throw new Error(`Fehler beim Erstellen des Team-Zugriffs für Team ${teamId}`);
+      if (error) {
+        console.error('Team access error:', error);
+        throw new Error(`Fehler beim Erstellen des Team-Zugriffs für Team ${teamId}`);
+      }
+    } catch (error) {
+      console.error('Team access creation error:', error);
+      throw error;
     }
   };
 
