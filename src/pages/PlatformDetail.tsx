@@ -11,8 +11,6 @@ const PlatformDetail = () => {
   const { data: platform, isLoading } = useQuery({
     queryKey: ['platform', platformSlug],
     queryFn: async () => {
-      console.log('Searching for platform with slug:', platformSlug);
-      
       const { data, error } = await supabase
         .from('elevate_platforms')
         .select(`
@@ -31,15 +29,10 @@ const PlatformDetail = () => {
             )
           )
         `)
-        .eq('slug', platformSlug)
+        .eq('name', platformSlug?.split('-').join(' '))
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching platform:', error);
-        throw error;
-      }
-      
-      console.log('Found platform:', data);
+      if (error) throw error;
       return data;
     },
     enabled: !!platformSlug && !!user
