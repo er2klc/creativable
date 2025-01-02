@@ -12,33 +12,7 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // First get team IDs for the user
-    const { data: teamMemberships, error: teamError } = await supabase
-      .from('team_members')
-      .select('team_id')
-      .eq('user_id', userId);
-
-    if (teamError) {
-      console.error("[Debug] Fehler beim Laden der Team-Mitgliedschaften:", teamError);
-      throw teamError;
-    }
-
-    const teamIds = teamMemberships?.map(tm => tm.team_id) || [];
-
-    // Then get platform IDs from team access
-    const { data: accessiblePlatforms, error: accessError } = await supabase
-      .from('elevate_team_access')
-      .select('platform_id')
-      .in('team_id', teamIds);
-
-    if (accessError) {
-      console.error("[Debug] Fehler beim Laden der zugänglichen Plattformen:", accessError);
-      throw accessError;
-    }
-
-    const platformIds = accessiblePlatforms?.map(p => p.platform_id) || [];
-
-    // Then fetch modules with all necessary relationships
+    // Fetch modules with all necessary relationships
     const { data: modules, error: modulesError } = await supabase
       .from("elevate_modules")
       .select(`
@@ -50,7 +24,7 @@ const fetchPlatforms = async (userId: string) => {
             teams (
               id,
               name,
-              team_members (
+              team_members!inner (
                 user_id
               )
             )
@@ -60,7 +34,7 @@ const fetchPlatforms = async (userId: string) => {
           *
         )
       `)
-      .or(`created_by.eq.${userId},platform_id.in.(${platformIds.join(',')})`)
+      .or(`created_by.eq.${userId}`)
       .order('module_order', { ascending: true });
 
     if (modulesError) {
@@ -72,21 +46,21 @@ const fetchPlatforms = async (userId: string) => {
 
     // Transform data
     const platforms = modules?.map(module => {
-      // Calculate unique teams
-      const uniqueTeams = new Set(
-        module.elevate_platforms.elevate_team_access?.filter(access => access.teams)
-          .map(access => access.team_id) || []
-      );
-
+      // Calculate unique teams and users
+      const teams = module.elevate_platforms.elevate_team_access || [];
+      const uniqueTeams = new Set(teams.map(access => access.team_id));
+      
       // Calculate total users across all teams
-      const totalUsers = module.elevate_platforms.elevate_team_access?.reduce((total, access) => {
-        if (!access.teams?.team_members) return total;
-        return total + access.teams.team_members.length;
-      }, 0) || 0;
+      const totalUsers = teams.reduce((total, access) => {
+        if (access.teams?.team_members) {
+          return total + access.teams.team_members.length;
+        }
+        return total;
+      }, 0);
 
       console.log("[Debug] Team Stats für Modul", module.title, {
         uniqueTeams: uniqueTeams.size,
-        totalUsers: totalUsers
+        totalUsers
       });
 
       return {
