@@ -12,7 +12,7 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    const { data: modules, error: modulesError } = await supabase
+    const { data: teamModules, error: teamModulesError } = await supabase
       .from("elevate_modules")
       .select(`
         *,
@@ -33,18 +33,18 @@ const fetchPlatforms = async (userId: string) => {
           *
         )
       `)
-      .or(`created_by.eq.${userId},platform_id.in.(select platform_id from elevate_team_access where team_id in (select team_id from team_members where user_id = '${userId}'))`)
+      .or(`created_by.eq.${userId},platform_id.in.(select platform_id from elevate_team_access eta join team_members tm on tm.team_id = eta.team_id where tm.user_id = '${userId}')`)
       .order('module_order', { ascending: true });
 
-    if (modulesError) {
-      console.error("[Debug] Fehler beim Laden der Module:", modulesError);
-      throw modulesError;
+    if (teamModulesError) {
+      console.error("[Debug] Fehler beim Laden der Module:", teamModulesError);
+      throw teamModulesError;
     }
 
-    console.log("[Debug] Geladene Module:", modules);
+    console.log("[Debug] Geladene Module:", teamModules);
 
     // Transform data
-    const platforms = modules?.map(module => {
+    const platforms = teamModules?.map(module => {
       // Calculate unique teams and users
       const teams = module.elevate_platforms.elevate_team_access || [];
       const uniqueTeams = new Set(teams.map(access => access.team_id));
