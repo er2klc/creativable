@@ -15,8 +15,8 @@ const PlatformDetail = () => {
     queryKey: ['platform', moduleSlug],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('elevate_platforms')
-        .select(`
+       .from('elevate_platforms')
+.select(`
   *,
   elevate_modules (
     id,
@@ -28,10 +28,9 @@ const PlatformDetail = () => {
       description,
       video_url,
       submodule_order
-    )::jsonb[]
+    )
   )
 `)
-
         .eq('slug', moduleSlug)
         .maybeSingle();
 
