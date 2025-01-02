@@ -33,6 +33,21 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
     setIsLoading(false);
   };
 
+  const createTeamAccess = async (platformId: string, teamId: string, userId: string) => {
+    const { error } = await supabase
+      .from('elevate_team_access')
+      .insert({
+        platform_id: platformId,
+        team_id: teamId,
+        granted_by: userId
+      });
+
+    if (error) {
+      console.error('Team access error:', error);
+      throw new Error(`Fehler beim Erstellen des Team-Zugriffs für Team ${teamId}`);
+    }
+  };
+
   const handleCreate = async () => {
     if (!user) {
       toast.error("Sie müssen eingeloggt sein, um ein Modul zu erstellen");
@@ -118,21 +133,10 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         throw new Error('Fehler beim Erstellen des Moduls');
       }
 
-      // Create team access entries if teams are selected
+      // Create team access entries sequentially
       if (selectedTeams.length > 0) {
         for (const teamId of selectedTeams) {
-          const { error: teamAccessError } = await supabase
-            .from('elevate_team_access')
-            .insert({
-              platform_id: platformData.id,
-              team_id: teamId,
-              granted_by: user.id
-            });
-
-          if (teamAccessError) {
-            console.error('Team access error:', teamAccessError);
-            throw new Error('Fehler beim Erstellen des Team-Zugriffs');
-          }
+          await createTeamAccess(platformData.id, teamId, user.id);
         }
       }
 
