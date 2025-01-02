@@ -25,10 +25,9 @@ const fetchPlatforms = async (userId: string) => {
 
     console.log("[Debug] Geladene Team-IDs:", teamIds);
 
-    // Plattform-IDs ohne zusätzliche Anführungszeichen
     const platformIds = teamIds?.map((t) => t.team_id) || [];
 
-    // Abfrage: Module abrufen
+    // Module abrufen
     const { data: modules, error: modulesError } = await supabase
       .from("elevate_modules")
       .select(`
@@ -52,9 +51,7 @@ const fetchPlatforms = async (userId: string) => {
         elevate_submodules (*)
       `)
       .or(
-        `created_by.eq.${userId},platform_id.in.(${platformIds
-          .map((id) => `'${id}'`)
-          .join(",")})`
+        `created_by.eq.${userId},platform_id.in.${JSON.stringify(platformIds)}`
       )
       .order("order_index", { ascending: true });
 
@@ -65,7 +62,7 @@ const fetchPlatforms = async (userId: string) => {
 
     console.log("[Debug] Geladene Module:", modules);
 
-    // Verarbeitung: Plattformen-Statistiken berechnen
+    // Plattformen verarbeiten
     const platforms = modules.map((module) => {
       const teams = module.elevate_platforms?.elevate_team_access || [];
       const uniqueTeams = new Set(teams.map((access) => access.team_id));
@@ -94,7 +91,7 @@ const fetchPlatforms = async (userId: string) => {
       };
     });
 
-    // Duplikate basierend auf der Plattform-ID entfernen
+    // Duplikate entfernen
     const uniquePlatforms = Array.from(
       new Map(platforms.map((item) => [item.id, item])).values()
     );
@@ -105,6 +102,7 @@ const fetchPlatforms = async (userId: string) => {
     throw error;
   }
 };
+
 
 
 
