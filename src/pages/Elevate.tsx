@@ -12,13 +12,23 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // First, get the team IDs for the user
-    const { data: teamIds } = await supabase
+    // First get team IDs for the user
+    const { data: teamMembers, error: teamError } = await supabase
       .from('team_members')
       .select('team_id')
       .eq('user_id', userId);
 
-    // Then fetch platforms where user is either owner or has team access
+    if (teamError) throw teamError;
+
+    // Get team access platforms
+    const { data: teamAccessPlatforms, error: accessError } = await supabase
+      .from('elevate_team_access')
+      .select('platform_id')
+      .in('team_id', teamMembers?.map(tm => tm.team_id) || []);
+
+    if (accessError) throw accessError;
+
+    // Combine user's own platforms and team access platforms
     const { data: platforms, error: platformsError } = await supabase
       .from("elevate_platforms")
       .select(`
@@ -38,7 +48,7 @@ const fetchPlatforms = async (userId: string) => {
       `)
       .or(
         `created_by.eq.${userId},id.in.(${
-          teamIds?.map(t => t.team_id).join(',') || 'null'
+          teamAccessPlatforms?.map(p => `'${p.platform_id}'`).join(',') || 'null'
         })`
       );
 
@@ -47,7 +57,6 @@ const fetchPlatforms = async (userId: string) => {
       throw platformsError;
     }
 
-    // Transform data
     return platforms?.map((platform) => {
       const teams = platform.elevate_team_access || [];
       const uniqueTeams = new Set(teams.map((access) => access.team_id));
