@@ -23,16 +23,21 @@ const fetchPlatforms = async (userId: string) => {
       throw teamError;
     }
 
-    const platformIds = teamIds?.map((t) => t.team_id) || [];
-    console.log("[Debug] Geladene Team-IDs:", platformIds);
+    // 2. Platform-IDs aus team_access abrufen
+    const { data: platformAccess, error: platformError } = await supabase
+      .from("elevate_team_access")
+      .select("platform_id")
+      .in("team_id", teamIds?.map(t => t.team_id) || []);
 
-    // Sicherstellen, dass die Plattform-IDs korrekt formatiert sind
-    const platformIdString =
-      platformIds.length > 0
-        ? `platform_id.in.(${platformIds.map((id) => `'${id}'`).join(",")})`
-        : "";
+    if (platformError) {
+      console.error("[Debug] Fehler beim Laden der Platform-IDs:", platformError);
+      throw platformError;
+    }
 
-    // 2. Module abrufen
+    const platformIds = platformAccess?.map(p => p.platform_id) || [];
+    console.log("[Debug] Platform IDs:", platformIds);
+
+    // 3. Module mit korrekter .in() Syntax abrufen
     const { data: modules, error: modulesError } = await supabase
       .from("elevate_modules")
       .select(`
@@ -55,9 +60,7 @@ const fetchPlatforms = async (userId: string) => {
         ),
         elevate_submodules (*)
       `)
-      .or(
-        `created_by.eq.${userId}${platformIdString ? `,${platformIdString}` : ""}`
-      )
+      .or(`created_by.eq.${userId},platform_id.in.(${platformIds.join(',')})`)
       .order("order_index", { ascending: true });
 
     if (modulesError) {
@@ -68,7 +71,7 @@ const fetchPlatforms = async (userId: string) => {
     console.log("[Debug] Geladene Module:", modules);
 
     // 3. Module zu Plattformen transformieren
-    const platforms = modules.map((module) => {
+    const platforms = modules?.map((module) => {
       const teams = module.elevate_platforms?.elevate_team_access || [];
       const uniqueTeams = new Set(teams.map((access) => access.team_id));
 
@@ -94,7 +97,7 @@ const fetchPlatforms = async (userId: string) => {
           progress: 0,
         },
       };
-    });
+    }) || [];
 
     // 4. Duplikate basierend auf Plattform-IDs entfernen
     const uniquePlatforms = Array.from(
