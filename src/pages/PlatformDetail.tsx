@@ -14,27 +14,34 @@ const PlatformDetail = () => {
   const { data: platform, isLoading } = useQuery({
     queryKey: ['platform', moduleSlug],
     queryFn: async () => {
+      console.log('Fetching platform data for slug:', moduleSlug);
+      
       const { data, error } = await supabase
-       .from('elevate_platforms')
-.select(`
-  *,
-  elevate_modules (
-    id,
-    title,
-    description,
-    elevate_lerninhalte (
-      id,
-      title,
-      description,
-      video_url,
-      submodule_order
-    )
-  )
-`)
+        .from('elevate_platforms')
+        .select(`
+          *,
+          elevate_modules!elevate_modules_platform_id_fkey (
+            id,
+            title,
+            description,
+            elevate_lerninhalte!elevate_lerninhalte_module_id_fkey (
+              id,
+              title,
+              description,
+              video_url,
+              submodule_order
+            )
+          )
+        `)
         .eq('slug', moduleSlug)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching platform:', error);
+        throw error;
+      }
+      
+      console.log('Fetched platform data:', data);
       return data;
     },
     enabled: !!moduleSlug && !!user
@@ -68,9 +75,12 @@ const PlatformDetail = () => {
     );
   }
 
-  const sortedSubmodules = platform.elevate_lerninhalte?.sort(
-    (a, b) => (a.submodule_order || 0) - (b.submodule_order || 0)
-  ) || [];
+  // Get all submodules from all modules and sort them
+  const sortedSubmodules = platform.elevate_modules
+    ?.flatMap(module => module.elevate_lerninhalte || [])
+    .sort((a, b) => (a.submodule_order || 0) - (b.submodule_order || 0)) || [];
+
+  console.log('Sorted submodules:', sortedSubmodules);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
