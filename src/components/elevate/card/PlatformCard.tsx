@@ -9,8 +9,8 @@ interface PlatformCardProps {
     id: string;
     name: string;
     description?: string;
-    image_url?: string;
-    logo_url?: string;
+    image_url?: string | null;
+    logo_url?: string | null;
     slug: string;
   };
   onDelete?: (id: string) => void;
@@ -30,10 +30,20 @@ export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
       className="overflow-hidden cursor-pointer transition-all hover:shadow-lg"
       onClick={handleClick}
     >
-      <PlatformCardImage imageUrl={platform.image_url} />
+      <PlatformCardImage 
+        imageUrl={platform.image_url}
+        logoUrl={platform.logo_url}
+        name={platform.name}
+      />
       <CardContent className="p-0">
         <PlatformCardContent platform={platform} />
-        <PlatformCardActions platform={platform} onDelete={onDelete} />
+        <PlatformCardActions 
+          platform={platform} 
+          onDelete={(e) => {
+            e.stopPropagation();
+            onDelete?.(platform.id);
+          }} 
+        />
       </CardContent>
     </Card>
   );
