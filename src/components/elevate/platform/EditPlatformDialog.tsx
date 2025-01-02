@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TeamAccessManager } from "./TeamAccessManager";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
 
 interface EditPlatformDialogProps {
   platformId: string;
@@ -19,6 +20,7 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   // Fetch platform data
   const { data: platform } = useQuery({
@@ -33,6 +35,7 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
       if (platform) {
         setName(platform.name);
         setDescription(platform.description || "");
+        setImageUrl(platform.image_url);
       }
       return platform;
     },
@@ -61,7 +64,11 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
       // Update platform details
       const { error: platformError } = await supabase
         .from('elevate_platforms')
-        .update({ name, description })
+        .update({ 
+          name, 
+          description,
+          image_url: imageUrl
+        })
         .eq('id', platformId);
 
       if (platformError) throw platformError;
@@ -111,9 +118,13 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
     }
   };
 
+  const handleTeamClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" onClick={handleTeamClick}>
         <DialogHeader>
           <DialogTitle>Plattform bearbeiten</DialogTitle>
         </DialogHeader>
@@ -136,6 +147,21 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
               placeholder="Beschreibung der Plattform"
             />
           </div>
+          <TeamLogoUpload
+            teamId={platformId}
+            currentLogoUrl={imageUrl}
+            onLogoChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  setImageUrl(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+              }
+            }}
+            onLogoRemove={() => setImageUrl(null)}
+          />
           <TeamAccessManager
             selectedTeams={selectedTeams}
             setSelectedTeams={setSelectedTeams}
