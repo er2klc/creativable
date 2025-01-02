@@ -12,22 +12,6 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // Erst die Team-IDs des Benutzers abrufen
-    const { data: teamMemberships } = await supabase
-      .from('team_members')
-      .select('team_id')
-      .eq('user_id', userId);
-
-    const teamIds = teamMemberships?.map(tm => tm.team_id) || [];
-
-    // Dann die Plattform-IDs aus team_access abrufen
-    const { data: teamAccess } = await supabase
-      .from('elevate_team_access')
-      .select('platform_id')
-      .in('team_id', teamIds);
-
-    const platformIds = teamAccess?.map(ta => ta.platform_id) || [];
-
     // Module mit allen notwendigen Beziehungen abrufen
     const { data: modules, error: modulesError } = await supabase
       .from("elevate_modules")
@@ -40,7 +24,7 @@ const fetchPlatforms = async (userId: string) => {
             teams (
               id,
               name,
-              team_members!inner (
+              team_members (
                 user_id
               )
             )
@@ -50,7 +34,11 @@ const fetchPlatforms = async (userId: string) => {
           *
         )
       `)
-      .or(`created_by.eq.${userId},platform_id.in.(${platformIds.map(id => `"${id}"`).join(',')})`)
+      .or(`created_by.eq.${userId},platform_id.in.(
+        select platform_id from elevate_team_access eta 
+        join team_members tm on tm.team_id = eta.team_id 
+        where tm.user_id = '${userId}'
+      )`)
       .order('module_order', { ascending: true });
 
     if (modulesError) {
@@ -60,16 +48,18 @@ const fetchPlatforms = async (userId: string) => {
 
     console.log("[Debug] Geladene Module:", modules);
 
-    // Daten in das erwartete Format transformieren
+    // Daten transformieren
     const platforms = modules?.map(module => {
       // Berechne die Anzahl der einzigartigen Teams
       const uniqueTeams = new Set(
-        module.elevate_platforms.elevate_team_access?.map(access => access.team_id) || []
+        module.elevate_platforms.elevate_team_access?.filter(access => access.teams)
+          .map(access => access.team_id) || []
       );
 
       // Berechne die Gesamtzahl der Benutzer über alle Teams
       const totalUsers = module.elevate_platforms.elevate_team_access?.reduce((total, access) => {
-        return total + (access.teams?.team_members?.length || 0);
+        if (!access.teams?.team_members) return total;
+        return total + access.teams.team_members.length;
       }, 0) || 0;
 
       console.log("[Debug] Team Stats für Modul", module.title, {
