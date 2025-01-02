@@ -12,47 +12,44 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // First fetch platforms
-    const { data: platforms, error: platformsError } = await supabase
+    // Fetch platforms with a single query including all related data
+    const { data: platforms, error } = await supabase
       .from("elevate_platforms")
-      .select("*")
+      .select(`
+        *,
+        elevate_modules (*)
+      `)
       .or(`created_by.eq.${userId}`);
 
-    if (platformsError) {
-      console.error("[Debug] Fehler beim Laden der Plattformen:", platformsError);
-      throw platformsError;
+    if (error) {
+      console.error("[Debug] Fehler beim Laden der Plattformen:", error);
+      throw error;
     }
 
-    // Then fetch related data for each platform
+    // Fetch team access data separately to avoid stream reading issues
     const enrichedPlatforms = await Promise.all(
       (platforms || []).map(async (platform) => {
-        const [modulesResponse, teamAccessResponse] = await Promise.all([
-          supabase
-            .from("elevate_modules")
-            .select("*")
-            .eq("platform_id", platform.id),
-          supabase
-            .from("elevate_team_access")
-            .select(`
-              team_id,
-              teams (
-                id,
-                name,
-                team_members (
-                  user_id
-                )
+        const { data: teamAccess } = await supabase
+          .from("elevate_team_access")
+          .select(`
+            team_id,
+            teams (
+              id,
+              name,
+              team_members (
+                user_id
               )
-            `)
-            .eq("platform_id", platform.id),
-        ]);
+            )
+          `)
+          .eq("platform_id", platform.id);
 
         return {
           ...platform,
-          modules: modulesResponse.data || [],
-          team_access: teamAccessResponse.data || [],
+          modules: platform.elevate_modules || [],
+          team_access: teamAccess || [],
           stats: {
-            totalTeams: teamAccessResponse.data?.length || 0,
-            totalUsers: teamAccessResponse.data?.reduce((total, access) => {
+            totalTeams: teamAccess?.length || 0,
+            totalUsers: teamAccess?.reduce((total, access) => {
               return total + (access.teams?.team_members?.length || 0);
             }, 0) || 0,
             progress: 0,
