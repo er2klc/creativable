@@ -14,30 +14,7 @@ const fetchPlatforms = async (userId: string) => {
   try {
     const { data, error } = await supabase
       .from("elevate_platforms")
-      .select(`
-        id,
-        name,
-        description,
-        created_at,
-        created_by,
-        logo_url,
-        image_url,
-        elevate_modules (
-          id,
-          title,
-          description,
-          order_index,
-          elevate_submodules (*)
-        ),
-        elevate_team_access (
-          team_id,
-          teams (
-            id,
-            name,
-            team_members (user_id)
-          )
-        )
-      `)
+      .select("*, elevate_modules!inner(*), elevate_team_access!inner(team_id, teams(id, name, team_members(user_id)))")
       .or(`created_by.eq.${userId}`);
 
     if (error) {
@@ -45,9 +22,7 @@ const fetchPlatforms = async (userId: string) => {
       throw error;
     }
 
-    if (!data) return [];
-
-    return data.map((platform) => ({
+    return data?.map((platform) => ({
       id: platform.id,
       name: platform.name,
       description: platform.description,
@@ -64,7 +39,7 @@ const fetchPlatforms = async (userId: string) => {
         }, 0) || 0,
         progress: 0,
       },
-    }));
+    })) || [];
   } catch (error: any) {
     console.error("[Debug] Fehler in fetchPlatforms:", error);
     throw error;
