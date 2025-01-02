@@ -12,67 +12,45 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // Erst die Team-IDs des Benutzers abrufen
-    const { data: teamMemberships } = await supabase
-      .from('team_members')
-      .select('team_id')
-      .eq('user_id', userId);
-
-    const teamIds = teamMemberships?.map(tm => tm.team_id) || [];
-
-    // Dann die Plattform-IDs aus team_access abrufen
-    const { data: teamAccess } = await supabase
-      .from('elevate_team_access')
-      .select('platform_id')
-      .in('team_id', teamIds);
-
-    const platformIds = teamAccess?.map(ta => ta.platform_id) || [];
-
-    // Module abrufen, die entweder vom Benutzer erstellt wurden oder zu denen er Team-Zugriff hat
-    const { data: modules, error: modulesError } = await supabase
-      .from("elevate_modules")
+    // Direkt die Plattformen abrufen
+    const { data: platforms, error } = await supabase
+      .from('elevate_platforms')
       .select(`
         *,
-        elevate_platforms!inner (
+        elevate_modules (
           *,
-          elevate_team_access (
-            team_id,
-            teams (
-              id,
-              name
-            )
-          )
+          elevate_submodules (*)
         ),
-        elevate_submodules (
-          *
+        elevate_team_access (
+          team_id,
+          teams (
+            id,
+            name
+          )
         )
       `)
-      .or(`created_by.eq.${userId},platform_id.in.(${platformIds.map(id => `"${id}"`).join(',')})`)
-      .order('module_order', { ascending: true });
+      .or(`created_by.eq.${userId},id.in.(
+        select platform_id from elevate_team_access eta
+        join team_members tm on tm.team_id = eta.team_id
+        where tm.user_id = '${userId}'
+      )`);
 
-    if (modulesError) {
-      console.error("[Debug] Fehler beim Laden der Module:", modulesError);
-      throw modulesError;
+    if (error) {
+      console.error("[Debug] Fehler beim Laden der Plattformen:", error);
+      throw error;
     }
 
-    // Daten in das erwartete Format transformieren
-    const platforms = modules?.map(module => ({
-      id: module.platform_id,
-      name: module.title,
-      description: module.description,
-      created_at: module.created_at,
-      created_by: module.created_by,
-      logo_url: module.elevate_platforms.logo_url,
-      team_access: module.elevate_platforms.elevate_team_access,
-      submodules: module.elevate_submodules
+    return platforms?.map(platform => ({
+      id: platform.id,
+      name: platform.name,
+      description: platform.description,
+      created_at: platform.created_at,
+      created_by: platform.created_by,
+      logo_url: platform.logo_url,
+      team_access: platform.elevate_team_access,
+      submodules: platform.elevate_modules?.[0]?.elevate_submodules || []
     })) || [];
 
-    // Duplikate basierend auf der Plattform-ID entfernen
-    const uniquePlatforms = Array.from(
-      new Map(platforms.map(item => [item.id, item])).values()
-    );
-
-    return uniquePlatforms;
   } catch (error: any) {
     console.error("[Debug] Fehler in fetchPlatforms:", error);
     throw error;
