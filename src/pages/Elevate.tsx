@@ -12,7 +12,6 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // Direkte Abfrage der Plattformen mit allen Relationen
     const { data: platforms, error: platformsError } = await supabase
       .from("elevate_platforms")
       .select(`
@@ -31,8 +30,7 @@ const fetchPlatforms = async (userId: string) => {
             )
           )
         )
-      `)
-      .or('created_by.eq.' + userId);
+      `);
 
     if (platformsError) {
       console.error("[Debug] Fehler beim Laden der Plattformen:", platformsError);
