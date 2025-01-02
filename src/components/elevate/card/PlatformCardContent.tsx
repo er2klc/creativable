@@ -21,20 +21,20 @@ export const PlatformCardContent = ({ platform }: PlatformCardContentProps) => {
   const progress = platform.stats?.progress || 0;
 
   return (
-    <div className="relative text-white space-y-4">
+    <div className="space-y-4">
       <div>
         <h3 className="text-xl font-semibold mb-2">{platform.name}</h3>
         {platform.description && (
-          <p className="text-sm text-white/80 line-clamp-2">{platform.description}</p>
+          <p className="text-sm text-gray-600 line-clamp-2">{platform.description}</p>
         )}
       </div>
       
-      <div className="flex items-center gap-4 text-sm text-white/90">
+      <div className="flex items-center gap-4 text-sm text-gray-600">
         <span className="flex items-center gap-1">
           <Building className="h-4 w-4" />
           {platform.stats?.totalTeams || 0} Teams
         </span>
-        <span className="text-white/40">•</span>
+        <span className="text-gray-300">•</span>
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4" />
           <span>{platform.stats?.totalUsers || 0} Benutzer</span>
@@ -52,7 +52,7 @@ export const PlatformCardContent = ({ platform }: PlatformCardContentProps) => {
           <span>Fortschritt</span>
           <span>{progress}%</span>
         </div>
-        <Progress value={progress} className="h-2 bg-white/20" />
+        <Progress value={progress} className="h-2" />
       </div>
     </div>
   );

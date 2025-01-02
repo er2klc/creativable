@@ -115,13 +115,11 @@ const Elevate = () => {
   return (
     <div className="container mx-auto py-6 space-y-6">
       <ElevateHeader onPlatformCreated={handlePlatformCreated} />
-      <div className="bg-gradient-to-br from-gray-900/95 via-gray-900 to-gray-900/95 rounded-lg p-8">
-        <PlatformList
-          platforms={platforms}
-          isLoading={isLoading}
-          onDelete={handleDelete}
-        />
-      </div>
+      <PlatformList
+        platforms={platforms}
+        isLoading={isLoading}
+        onDelete={handleDelete}
+      />
     </div>
   );
 };
