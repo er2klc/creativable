@@ -16,7 +16,7 @@ const fetchPlatforms = async (userId: string) => {
       .from("elevate_platforms")
       .select(`
         *,
-        elevate_modules (
+        elevate_modules!elevate_modules_platform_id_fkey (
           id,
           title,
           description,
