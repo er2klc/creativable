@@ -13,8 +13,12 @@ export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
   const navigate = useNavigate();
   
   const handleClick = () => {
-    const slug = platform.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    navigate(`/elevate/platform/${slug}`);
+    // Create a URL-safe slug that preserves dots and spaces
+    const slug = platform.name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s.]/g, '')
+      .replace(/\s+/g, '-');
+    navigate(`/elevate/modul/${slug}`);
   };
 
   return (

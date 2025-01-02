@@ -8,9 +8,18 @@ const PlatformDetail = () => {
   const { platformSlug } = useParams();
   const user = useUser();
 
+  // Convert URL slug back to the original name format
+  const decodedName = platformSlug
+    ?.split('-')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+    .replace(/\s\./g, '.'); // Restore dots that were next to spaces
+
   const { data: platform, isLoading } = useQuery({
     queryKey: ['platform', platformSlug],
     queryFn: async () => {
+      console.log('Searching for platform with name:', decodedName);
+      
       const { data, error } = await supabase
         .from('elevate_platforms')
         .select(`
@@ -29,10 +38,15 @@ const PlatformDetail = () => {
             )
           )
         `)
-        .eq('name', platformSlug?.split('-').join(' '))
+        .ilike('name', decodedName || '')
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching platform:', error);
+        throw error;
+      }
+      
+      console.log('Found platform:', data);
       return data;
     },
     enabled: !!platformSlug && !!user
