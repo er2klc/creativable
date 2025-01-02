@@ -10,10 +10,8 @@ const PlatformDetail = () => {
 
   // Convert URL slug back to the original name format
   const decodedName = platformSlug
-    ?.split('-')
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
-    .replace(/\s\./g, '.'); // Restore dots that were next to spaces
+    ?.replace(/-/g, ' ')
+    .replace(/\./g, '.');  // Preserve dots
 
   const { data: platform, isLoading } = useQuery({
     queryKey: ['platform', platformSlug],

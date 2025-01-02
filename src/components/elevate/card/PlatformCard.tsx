@@ -1,50 +1,35 @@
-import { Card } from "@/components/ui/card";
-import { PlatformCardContent } from "./PlatformCardContent";
-import { PlatformCardImage } from "./PlatformCardImage";
-import { PlatformCardActions } from "./PlatformCardActions";
 import { useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
+import { PlatformCardImage } from "./PlatformCardImage";
+import { PlatformCardContent } from "./PlatformCardContent";
+import { PlatformCardActions } from "./PlatformCardActions";
 
 interface PlatformCardProps {
   platform: any;
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
   const navigate = useNavigate();
   
   const handleClick = () => {
-    // Create a URL-safe slug that preserves dots and spaces
+    // Create a URL-safe slug while preserving dots and numbers
     const slug = platform.name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s.]/g, '')
-      .replace(/\s+/g, '-');
+      .replace(/\s+/g, '-')
+      .toLowerCase();
     navigate(`/elevate/modul/${slug}`);
   };
 
   return (
     <Card 
-      className="group overflow-hidden bg-[#222] cursor-pointer" 
+      className="overflow-hidden cursor-pointer transition-all hover:shadow-lg"
       onClick={handleClick}
     >
-      <div className="relative h-[240px]">
-        <PlatformCardImage platform={platform} />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#222]/95 to-transparent" />
-        <div className="absolute bottom-4 left-0 right-0 text-center">
-          <h3 className="text-xl font-orbitron text-white/90">{platform.name}</h3>
-        </div>
-        <PlatformCardActions 
-          platformId={platform.id}
-          inviteCode={platform.invite_code}
-          createdBy={platform.created_by}
-          onDelete={(e) => {
-            e.stopPropagation();
-            onDelete(platform.id);
-          }} 
-        />
-      </div>
-      <div className="p-6 bg-gradient-to-t from-[#333] to-[#222]">
+      <PlatformCardImage imageUrl={platform.image_url} />
+      <CardContent className="p-0">
         <PlatformCardContent platform={platform} />
-      </div>
+        <PlatformCardActions platform={platform} onDelete={onDelete} />
+      </CardContent>
     </Card>
   );
 };
