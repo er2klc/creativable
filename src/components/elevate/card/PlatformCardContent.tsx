@@ -28,7 +28,7 @@ export const PlatformCardContent = ({ platform }: PlatformCardContentProps) => {
         </p>
       )}
       
-      <div className="flex items-center gap-4 text-sm text-gray-300/90">
+      <div className="flex items-center gap-4 text-xs text-gray-300/90">
         <span className="flex items-center gap-1">
           <Building className="h-4 w-4" />
           {platform.stats?.totalTeams || 0} Teams
