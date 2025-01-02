@@ -12,12 +12,21 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    const { data: platforms, error } = await supabase
+    const { data, error } = await supabase
       .from("elevate_platforms")
       .select(`
-        *,
+        id,
+        name,
+        description,
+        created_at,
+        created_by,
+        logo_url,
+        image_url,
         elevate_modules (
-          *,
+          id,
+          title,
+          description,
+          order_index,
           elevate_submodules (*)
         ),
         elevate_team_access (
@@ -36,34 +45,26 @@ const fetchPlatforms = async (userId: string) => {
       throw error;
     }
 
-    return platforms?.map((platform) => {
-      const teams = platform.elevate_team_access || [];
-      const uniqueTeams = new Set(teams.map((access) => access.team_id));
+    if (!data) return [];
 
-      const totalUsers = teams.reduce((total, access) => {
-        if (access.teams?.team_members) {
-          return total + access.teams.team_members.length;
-        }
-        return total;
-      }, 0);
-
-      return {
-        id: platform.id,
-        name: platform.name,
-        description: platform.description,
-        created_at: platform.created_at,
-        created_by: platform.created_by,
-        logo_url: platform.logo_url,
-        image_url: platform.image_url,
-        team_access: platform.elevate_team_access,
-        modules: platform.elevate_modules,
-        stats: {
-          totalTeams: uniqueTeams.size,
-          totalUsers: totalUsers,
-          progress: 0,
-        },
-      };
-    }) || [];
+    return data.map((platform) => ({
+      id: platform.id,
+      name: platform.name,
+      description: platform.description,
+      created_at: platform.created_at,
+      created_by: platform.created_by,
+      logo_url: platform.logo_url,
+      image_url: platform.image_url,
+      team_access: platform.elevate_team_access,
+      modules: platform.elevate_modules,
+      stats: {
+        totalTeams: platform.elevate_team_access?.length || 0,
+        totalUsers: platform.elevate_team_access?.reduce((total, access) => {
+          return total + (access.teams?.team_members?.length || 0);
+        }, 0) || 0,
+        progress: 0,
+      },
+    }));
   } catch (error: any) {
     console.error("[Debug] Fehler in fetchPlatforms:", error);
     throw error;
