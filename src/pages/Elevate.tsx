@@ -14,7 +14,20 @@ const fetchPlatforms = async (userId: string) => {
   try {
     const { data, error } = await supabase
       .from("elevate_platforms")
-      .select("*, elevate_modules!inner(*), elevate_team_access!inner(team_id, teams(id, name, team_members(user_id)))")
+      .select(`
+        *,
+        elevate_modules (*),
+        elevate_team_access (
+          team_id,
+          teams (
+            id,
+            name,
+            team_members (
+              user_id
+            )
+          )
+        )
+      `)
       .or(`created_by.eq.${userId}`);
 
     if (error) {
