@@ -120,7 +120,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
 
       // Create team access entries sequentially
       if (selectedTeams.length > 0) {
-        for (const teamId of selectedTeams) {
+        const teamAccessPromises = selectedTeams.map(async (teamId) => {
           const { error: teamAccessError } = await supabase
             .from('elevate_team_access')
             .insert({
@@ -130,10 +130,17 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
             });
 
           if (teamAccessError) {
-            console.error('Team access error:', teamAccessError);
-            // Don't throw here, just log the error and continue
-            toast.error(`Fehler beim Hinzufügen des Teams ${teamId}`);
+            console.error('Team access error for team', teamId, ':', teamAccessError);
+            return { teamId, error: teamAccessError };
           }
+          return { teamId, error: null };
+        });
+
+        const results = await Promise.all(teamAccessPromises);
+        const failedTeams = results.filter(r => r.error);
+        
+        if (failedTeams.length > 0) {
+          console.error('Some team access entries failed:', failedTeams);
         }
       }
 
