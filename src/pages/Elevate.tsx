@@ -12,97 +12,34 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // Erst die Team-IDs des Benutzers abrufen
-    const { data: teamMemberships } = await supabase
-      .from('team_members')
-      .select('team_id')
-      .eq('user_id', userId);
-
-    const teamIds = teamMemberships?.map(tm => tm.team_id) || [];
-
-    // Dann die Plattform-IDs aus team_access abrufen
-    const { data: teamAccess } = await supabase
-      .from('elevate_team_access')
-      .select('platform_id')
-      .in('team_id', teamIds);
-
-    const platformIds = teamAccess?.map(ta => ta.platform_id) || [];
-
-    // Module abrufen, die entweder vom Benutzer erstellt wurden oder zu denen er Team-Zugriff hat
-    const { data: modules, error: modulesError } = await supabase
-      .from("elevate_modules")
+    const { data: platforms, error } = await supabase
+      .from("elevate_platforms")
       .select(`
         *,
-        elevate_platforms!inner (
-          *,
-          elevate_team_access!left (
-            team_id,
-            teams (
-              id,
-              name,
-              team_members!inner (
-                id
-              )
-            )
-          )
-        ),
-        elevate_submodules (
-          *
+        elevate_modules (
+          id,
+          title,
+          description,
+          order_index
         )
-      `)
-      .or(`created_by.eq.${userId},platform_id.in.(${platformIds.map(id => `"${id}"`).join(',')})`)
-      .order('module_order', { ascending: true });
+      `);
 
-    if (modulesError) {
-      console.error("[Debug] Fehler beim Laden der Module:", modulesError);
-      throw modulesError;
+    if (error) {
+      console.error("[Debug] Error fetching platforms:", error);
+      throw error;
     }
 
-    console.log("[Debug] Geladene Module:", modules);
-
-    // Daten in das erwartete Format transformieren
-    const platforms = modules?.map(module => {
-      // Berechne die Anzahl der einzigartigen Teams
-      const uniqueTeams = new Set(
-        module.elevate_platforms.elevate_team_access?.map(access => access.team_id) || []
-      );
-
-      // Berechne die Gesamtzahl der Benutzer über alle Teams
-      const totalUsers = module.elevate_platforms.elevate_team_access?.reduce((total, access) => {
-        return total + (access.teams?.team_members?.length || 0);
-      }, 0) || 0;
-
-      console.log("[Debug] Team Stats für Modul", module.title, {
-        uniqueTeams: uniqueTeams.size,
-        totalUsers: totalUsers
-      });
-
-      return {
-        id: module.platform_id,
-        name: module.title,
-        description: module.description,
-        created_at: module.created_at,
-        created_by: module.created_by,
-        logo_url: module.elevate_platforms.logo_url,
-        team_access: module.elevate_platforms.elevate_team_access,
-        submodules: module.elevate_submodules,
-        stats: {
-          totalTeams: uniqueTeams.size,
-          totalUsers: totalUsers,
-          progress: 0 // Behalten wir bei 0 für jetzt
-        }
-      };
-    }) || [];
-
-    // Duplikate basierend auf der Plattform-ID entfernen
-    const uniquePlatforms = Array.from(
-      new Map(platforms.map(item => [item.id, item])).values()
-    );
-
-    return uniquePlatforms;
-
-  } catch (error: any) {
-    console.error("[Debug] Fehler in fetchPlatforms:", error);
+    return (platforms || []).map(platform => ({
+      ...platform,
+      modules: platform.elevate_modules || [],
+      stats: {
+        totalTeams: 0,
+        totalUsers: 0,
+        progress: 0,
+      }
+    }));
+  } catch (error) {
+    console.error("[Debug] Error in fetchPlatforms:", error);
     throw error;
   }
 };
@@ -112,10 +49,10 @@ const Elevate = () => {
 
   const { data: platforms = [], isLoading, error, refetch } = useQuery({
     queryKey: ["platforms", user?.id],
-    queryFn: () => user?.id ? fetchPlatforms(user.id) : Promise.resolve([]),
+    queryFn: () => (user?.id ? fetchPlatforms(user.id) : Promise.resolve([])),
     enabled: !!user?.id,
-    staleTime: 0, // Immer neue Daten abrufen
-    gcTime: 0  // Cache deaktivieren (früher cacheTime)
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const handleDelete = async (id: string) => {
@@ -128,7 +65,7 @@ const Elevate = () => {
       if (error) throw error;
 
       toast.success("Modul erfolgreich gelöscht");
-      refetch(); // Daten nach dem Löschen neu laden
+      refetch();
     } catch (error: any) {
       console.error("[Debug] Fehler beim Löschen des Moduls:", error);
       toast.error(error.message || "Fehler beim Löschen des Moduls");
@@ -140,7 +77,7 @@ const Elevate = () => {
   }
 
   const handlePlatformCreated = async () => {
-    await refetch(); // Sofort neu laden nach Erstellung
+    await refetch();
   };
 
   return (

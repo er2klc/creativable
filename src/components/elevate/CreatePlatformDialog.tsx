@@ -33,6 +33,26 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
     setIsLoading(false);
   };
 
+  const createTeamAccess = async (platformId: string, teamId: string, userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('elevate_team_access')
+        .insert({
+          platform_id: platformId,
+          team_id: teamId,
+          granted_by: userId
+        });
+
+      if (error) {
+        console.error('Team access error:', error);
+        throw new Error(`Fehler beim Erstellen des Team-Zugriffs für Team ${teamId}`);
+      }
+    } catch (error) {
+      console.error('Team access creation error:', error);
+      throw error;
+    }
+  };
+
   const handleCreate = async () => {
     if (!user) {
       toast.error("Sie müssen eingeloggt sein, um ein Modul zu erstellen");
@@ -85,6 +105,21 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         throw new Error('Fehler beim Erstellen der Plattform');
       }
 
+      // Create user access entry for the creator
+      const { error: userAccessError } = await supabase
+        .from('elevate_user_access')
+        .insert([{
+          platform_id: platformData.id,
+          user_id: user.id,
+          access_type: 'owner',
+          granted_by: user.id
+        }]);
+
+      if (userAccessError) {
+        console.error('User access error:', userAccessError);
+        throw new Error('Fehler beim Erstellen des Benutzer-Zugriffs');
+      }
+
       // Then create the module with the new platform ID
       const { data: moduleData, error: moduleError } = await supabase
         .from('elevate_modules')
@@ -103,26 +138,10 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         throw new Error('Fehler beim Erstellen des Moduls');
       }
 
-      // Create team access entries if teams are selected
-      if (selectedTeams.length > 0 && platformData) {
-        try {
-          const { error: teamAccessError } = await supabase
-            .from('elevate_team_access')
-            .insert(
-              selectedTeams.map(teamId => ({
-                platform_id: platformData.id,
-                team_id: teamId,
-                granted_by: user.id
-              }))
-            );
-
-          if (teamAccessError) {
-            console.error('Team access error:', teamAccessError);
-            // Don't throw error here, just log it and continue
-          }
-        } catch (teamAccessError) {
-          console.error('Team access error:', teamAccessError);
-          // Don't throw error here, just log it and continue
+      // Create team access entries sequentially
+      if (selectedTeams.length > 0) {
+        for (const teamId of selectedTeams) {
+          await createTeamAccess(platformData.id, teamId, user.id);
         }
       }
 
@@ -130,6 +149,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       setIsOpen(false);
       resetState();
 
+      // Ensure we refresh the platform list
       if (onPlatformCreated) {
         await onPlatformCreated();
       }
