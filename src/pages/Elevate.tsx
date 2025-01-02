@@ -12,47 +12,56 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    const { data, error } = await supabase
+    // First fetch platforms
+    const { data: platforms, error: platformsError } = await supabase
       .from("elevate_platforms")
-      .select(`
-        *,
-        elevate_modules (*),
-        elevate_team_access (
-          team_id,
-          teams (
-            id,
-            name,
-            team_members (
-              user_id
-            )
-          )
-        )
-      `)
+      .select("*")
       .or(`created_by.eq.${userId}`);
 
-    if (error) {
-      console.error("[Debug] Fehler beim Laden der Plattformen:", error);
-      throw error;
+    if (platformsError) {
+      console.error("[Debug] Fehler beim Laden der Plattformen:", platformsError);
+      throw platformsError;
     }
 
-    return data?.map((platform) => ({
-      id: platform.id,
-      name: platform.name,
-      description: platform.description,
-      created_at: platform.created_at,
-      created_by: platform.created_by,
-      logo_url: platform.logo_url,
-      image_url: platform.image_url,
-      team_access: platform.elevate_team_access,
-      modules: platform.elevate_modules,
-      stats: {
-        totalTeams: platform.elevate_team_access?.length || 0,
-        totalUsers: platform.elevate_team_access?.reduce((total, access) => {
-          return total + (access.teams?.team_members?.length || 0);
-        }, 0) || 0,
-        progress: 0,
-      },
-    })) || [];
+    // Then fetch related data for each platform
+    const enrichedPlatforms = await Promise.all(
+      (platforms || []).map(async (platform) => {
+        const [modulesResponse, teamAccessResponse] = await Promise.all([
+          supabase
+            .from("elevate_modules")
+            .select("*")
+            .eq("platform_id", platform.id),
+          supabase
+            .from("elevate_team_access")
+            .select(`
+              team_id,
+              teams (
+                id,
+                name,
+                team_members (
+                  user_id
+                )
+              )
+            `)
+            .eq("platform_id", platform.id),
+        ]);
+
+        return {
+          ...platform,
+          modules: modulesResponse.data || [],
+          team_access: teamAccessResponse.data || [],
+          stats: {
+            totalTeams: teamAccessResponse.data?.length || 0,
+            totalUsers: teamAccessResponse.data?.reduce((total, access) => {
+              return total + (access.teams?.team_members?.length || 0);
+            }, 0) || 0,
+            progress: 0,
+          },
+        };
+      })
+    );
+
+    return enrichedPlatforms;
   } catch (error: any) {
     console.error("[Debug] Fehler in fetchPlatforms:", error);
     throw error;
