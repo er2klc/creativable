@@ -103,18 +103,22 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         throw new Error('Fehler beim Erstellen des Moduls');
       }
 
+      // Create team access entries
       if (selectedTeams.length > 0 && platformData) {
-        const teamAccessPromises = selectedTeams.map(teamId => 
-          supabase
-            .from('elevate_team_access')
-            .insert({
-              platform_id: platformData.id,
-              team_id: teamId,
-              granted_by: user.id
-            })
-        );
+        const teamAccessData = selectedTeams.map(teamId => ({
+          platform_id: platformData.id,
+          team_id: teamId,
+          granted_by: user.id
+        }));
 
-        await Promise.all(teamAccessPromises);
+        const { error: teamAccessError } = await supabase
+          .from('elevate_team_access')
+          .insert(teamAccessData);
+
+        if (teamAccessError) {
+          console.error('Team access error:', teamAccessError);
+          throw new Error('Fehler beim Gewähren des Team-Zugriffs');
+        }
       }
 
       toast.success("Modul erfolgreich erstellt");
