@@ -17,7 +17,11 @@ export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
         <div className="absolute bottom-4 left-0 right-0 text-center">
           <h3 className="text-xl font-orbitron text-white/90">{platform.name}</h3>
         </div>
-        <PlatformCardActions platformId={platform.id} onDelete={() => onDelete(platform.id)} />
+        <PlatformCardActions 
+          platformId={platform.id} 
+          createdBy={platform.created_by}
+          onDelete={() => onDelete(platform.id)} 
+        />
       </div>
       <div className="p-6 bg-gradient-to-t from-[#333] to-[#222]">
         <PlatformCardContent platform={platform} />
