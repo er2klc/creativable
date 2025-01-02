@@ -85,6 +85,21 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         throw new Error('Fehler beim Erstellen der Plattform');
       }
 
+      // Create user access entry for the creator
+      const { error: userAccessError } = await supabase
+        .from('elevate_user_access')
+        .insert([{
+          platform_id: platformData.id,
+          user_id: user.id,
+          access_type: 'owner',
+          granted_by: user.id
+        }]);
+
+      if (userAccessError) {
+        console.error('User access error:', userAccessError);
+        throw new Error('Fehler beim Erstellen des Benutzer-Zugriffs');
+      }
+
       // Then create the module with the new platform ID
       const { data: moduleData, error: moduleError } = await supabase
         .from('elevate_modules')
@@ -105,24 +120,19 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
 
       // Create team access entries if teams are selected
       if (selectedTeams.length > 0 && platformData) {
-        try {
-          const { error: teamAccessError } = await supabase
-            .from('elevate_team_access')
-            .insert(
-              selectedTeams.map(teamId => ({
-                platform_id: platformData.id,
-                team_id: teamId,
-                granted_by: user.id
-              }))
-            );
+        const teamAccessEntries = selectedTeams.map(teamId => ({
+          platform_id: platformData.id,
+          team_id: teamId,
+          granted_by: user.id
+        }));
 
-          if (teamAccessError) {
-            console.error('Team access error:', teamAccessError);
-            // Don't throw error here, just log it and continue
-          }
-        } catch (teamAccessError) {
+        const { error: teamAccessError } = await supabase
+          .from('elevate_team_access')
+          .insert(teamAccessEntries);
+
+        if (teamAccessError) {
           console.error('Team access error:', teamAccessError);
-          // Don't throw error here, just log it and continue
+          throw new Error('Fehler beim Erstellen des Team-Zugriffs');
         }
       }
 
