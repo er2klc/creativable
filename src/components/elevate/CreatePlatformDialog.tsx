@@ -85,6 +85,8 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         throw new Error('Fehler beim Erstellen der Plattform');
       }
 
+      console.log('Created platform:', platformData);
+
       // Create user access entry for the creator
       const { error: userAccessError } = await supabase
         .from('elevate_user_access')
@@ -118,9 +120,13 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         throw new Error('Fehler beim Erstellen des Moduls');
       }
 
+      console.log('Created module:', moduleData);
+
       // Create team access entries sequentially
       if (selectedTeams.length > 0) {
-        const teamAccessPromises = selectedTeams.map(async (teamId) => {
+        console.log('Creating team access entries for teams:', selectedTeams);
+        
+        for (const teamId of selectedTeams) {
           const { error: teamAccessError } = await supabase
             .from('elevate_team_access')
             .insert({
@@ -131,16 +137,11 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
 
           if (teamAccessError) {
             console.error('Team access error for team', teamId, ':', teamAccessError);
-            return { teamId, error: teamAccessError };
+            // We'll continue with other teams even if one fails
+            toast.error(`Fehler beim Gewähren des Zugriffs für Team ${teamId}`);
+          } else {
+            console.log('Successfully created team access for team:', teamId);
           }
-          return { teamId, error: null };
-        });
-
-        const results = await Promise.all(teamAccessPromises);
-        const failedTeams = results.filter(r => r.error);
-        
-        if (failedTeams.length > 0) {
-          console.error('Some team access entries failed:', failedTeams);
         }
       }
 
