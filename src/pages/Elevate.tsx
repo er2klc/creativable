@@ -12,7 +12,8 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    const { data: platforms, error } = await supabase
+    // First fetch user's own platforms
+    const { data: ownPlatforms, error: ownError } = await supabase
       .from("elevate_platforms")
       .select(`
         *,
@@ -23,18 +24,50 @@ const fetchPlatforms = async (userId: string) => {
           order_index
         )
       `)
-      .or(`created_by.eq.${userId},id.in.(
-        select platform_id from elevate_team_access eta 
-        join team_members tm on tm.team_id = eta.team_id 
-        where tm.user_id = '${userId}'
-      )`);
+      .eq('created_by', userId);
 
-    if (error) {
-      console.error("[Debug] Error fetching platforms:", error);
-      throw error;
+    if (ownError) {
+      console.error("[Debug] Error fetching own platforms:", ownError);
+      throw ownError;
     }
 
-    return platforms.map(platform => ({
+    // Then fetch platforms through team access
+    const { data: teamPlatforms, error: teamError } = await supabase
+      .from("elevate_platforms")
+      .select(`
+        *,
+        elevate_modules (
+          id,
+          title,
+          description,
+          order_index
+        )
+      `)
+      .in('id', (
+        await supabase
+          .from('elevate_team_access')
+          .select('platform_id')
+          .in('team_id', (
+            await supabase
+              .from('team_members')
+              .select('team_id')
+              .eq('user_id', userId)
+          ).data?.map(tm => tm.team_id) || []
+        ).data?.map(eta => eta.platform_id) || []
+      ));
+
+    if (teamError) {
+      console.error("[Debug] Error fetching team platforms:", teamError);
+      throw teamError;
+    }
+
+    // Combine and deduplicate platforms
+    const allPlatforms = [...(ownPlatforms || []), ...(teamPlatforms || [])];
+    const uniquePlatforms = Array.from(
+      new Map(allPlatforms.map(platform => [platform.id, platform])).values()
+    );
+
+    return uniquePlatforms.map(platform => ({
       ...platform,
       modules: platform.elevate_modules || [],
       stats: {
