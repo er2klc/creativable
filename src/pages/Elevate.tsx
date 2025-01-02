@@ -23,56 +23,41 @@ const fetchPlatforms = async (userId: string) => {
       throw teamError;
     }
 
-    // 2. Platform-IDs aus team_access abrufen
-    const { data: platformAccess, error: platformError } = await supabase
-      .from("elevate_team_access")
-      .select("platform_id")
-      .in("team_id", teamIds?.map(t => t.team_id) || []);
+    const teamIdArray = teamIds?.map(t => t.team_id) || [];
 
-    if (platformError) {
-      console.error("[Debug] Fehler beim Laden der Platform-IDs:", platformError);
-      throw platformError;
-    }
-
-    const platformIds = platformAccess?.map(p => p.platform_id) || [];
-    console.log("[Debug] Platform IDs:", platformIds);
-
-    // 3. Module mit korrekter .in() Syntax abrufen
-    const { data: modules, error: modulesError } = await supabase
-      .from("elevate_modules")
+    // 2. Plattformen direkt mit allen benötigten Relationen abrufen
+    const { data: platforms, error: platformsError } = await supabase
+      .from("elevate_platforms")
       .select(`
         *,
-        elevate_platforms!inner (
-          id,
-          name,
-          description,
-          logo_url,
-          elevate_team_access (
-            team_id,
-            teams (
-              id,
-              name,
-              team_members!inner (
-                user_id
-              )
+        elevate_modules (
+          *,
+          elevate_submodules (*)
+        ),
+        elevate_team_access (
+          team_id,
+          teams (
+            id,
+            name,
+            team_members (
+              user_id
             )
           )
-        ),
-        elevate_submodules (*)
+        )
       `)
-      .or(`created_by.eq.${userId},platform_id.in.(${platformIds.join(',')})`)
-      .order("order_index", { ascending: true });
+      .or(`created_by.eq.${userId},id.in.(
+        select platform_id from elevate_team_access 
+        where team_id in (${teamIdArray.map(id => `'${id}'`).join(',')})
+      )`);
 
-    if (modulesError) {
-      console.error("[Debug] Fehler beim Laden der Module:", modulesError);
-      throw modulesError;
+    if (platformsError) {
+      console.error("[Debug] Fehler beim Laden der Plattformen:", platformsError);
+      throw platformsError;
     }
 
-    console.log("[Debug] Geladene Module:", modules);
-
-    // 3. Module zu Plattformen transformieren
-    const platforms = modules?.map((module) => {
-      const teams = module.elevate_platforms?.elevate_team_access || [];
+    // 3. Daten transformieren
+    return platforms?.map((platform) => {
+      const teams = platform.elevate_team_access || [];
       const uniqueTeams = new Set(teams.map((access) => access.team_id));
 
       const totalUsers = teams.reduce((total, access) => {
@@ -83,14 +68,14 @@ const fetchPlatforms = async (userId: string) => {
       }, 0);
 
       return {
-        id: module.elevate_platforms.id,
-        name: module.elevate_platforms.name,
-        description: module.elevate_platforms.description,
-        created_at: module.created_at,
-        created_by: module.created_by,
-        logo_url: module.elevate_platforms.logo_url,
-        team_access: module.elevate_platforms.elevate_team_access,
-        submodules: module.elevate_submodules,
+        id: platform.id,
+        name: platform.name,
+        description: platform.description,
+        created_at: platform.created_at,
+        created_by: platform.created_by,
+        logo_url: platform.logo_url,
+        team_access: platform.elevate_team_access,
+        modules: platform.elevate_modules,
         stats: {
           totalTeams: uniqueTeams.size,
           totalUsers: totalUsers,
@@ -98,13 +83,6 @@ const fetchPlatforms = async (userId: string) => {
         },
       };
     }) || [];
-
-    // 4. Duplikate basierend auf Plattform-IDs entfernen
-    const uniquePlatforms = Array.from(
-      new Map(platforms.map((item) => [item.id, item])).values()
-    );
-
-    return uniquePlatforms;
   } catch (error: any) {
     console.error("[Debug] Fehler in fetchPlatforms:", error);
     throw error;
