@@ -5,7 +5,14 @@ import { PlatformCardContent } from "./PlatformCardContent";
 import { PlatformCardActions } from "./PlatformCardActions";
 
 interface PlatformCardProps {
-  platform: any;
+  platform: {
+    id: string;
+    name: string;
+    description?: string;
+    image_url?: string;
+    logo_url?: string;
+    slug: string;
+  };
   onDelete?: (id: string) => void;
 }
 
@@ -13,7 +20,9 @@ export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
   const navigate = useNavigate();
   
   const handleClick = () => {
-    navigate(`/elevate/modul/${platform.slug}`);
+    if (platform.slug) {
+      navigate(`/elevate/modul/${platform.slug}`);
+    }
   };
 
   return (
