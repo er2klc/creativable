@@ -12,7 +12,23 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // Get modules where user is creator or has team access
+    // Erst die Team-IDs des Benutzers abrufen
+    const { data: teamMemberships } = await supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', userId);
+
+    const teamIds = teamMemberships?.map(tm => tm.team_id) || [];
+
+    // Dann die Plattform-IDs aus team_access abrufen
+    const { data: teamAccess } = await supabase
+      .from('elevate_team_access')
+      .select('platform_id')
+      .in('team_id', teamIds);
+
+    const platformIds = teamAccess?.map(ta => ta.platform_id) || [];
+
+    // Module abrufen, die entweder vom Benutzer erstellt wurden oder zu denen er Team-Zugriff hat
     const { data: modules, error: modulesError } = await supabase
       .from("elevate_modules")
       .select(`
@@ -31,11 +47,7 @@ const fetchPlatforms = async (userId: string) => {
           *
         )
       `)
-      .or(`created_by.eq.${userId},elevate_platforms.id.in.(
-        select platform_id from elevate_team_access eta 
-        join team_members tm on tm.team_id = eta.team_id 
-        where tm.user_id = '${userId}'
-      )`)
+      .or(`created_by.eq.${userId},platform_id.in.(${platformIds.map(id => `"${id}"`).join(',')})`)
       .order('module_order', { ascending: true });
 
     if (modulesError) {
@@ -43,8 +55,8 @@ const fetchPlatforms = async (userId: string) => {
       throw modulesError;
     }
 
-    // Transform the data to match the existing platform structure
-    const platforms = modules.map(module => ({
+    // Daten in das erwartete Format transformieren
+    const platforms = modules?.map(module => ({
       id: module.platform_id,
       name: module.title,
       description: module.description,
@@ -53,9 +65,9 @@ const fetchPlatforms = async (userId: string) => {
       logo_url: module.elevate_platforms.logo_url,
       team_access: module.elevate_platforms.elevate_team_access,
       submodules: module.elevate_submodules
-    }));
+    })) || [];
 
-    // Remove duplicates based on platform id
+    // Duplikate basierend auf der Plattform-ID entfernen
     const uniquePlatforms = Array.from(
       new Map(platforms.map(item => [item.id, item])).values()
     );
