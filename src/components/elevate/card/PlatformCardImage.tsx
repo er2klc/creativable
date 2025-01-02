@@ -1,14 +1,14 @@
 interface PlatformCardImageProps {
   imageUrl?: string | null;
   logoUrl?: string | null;
-  name?: string;
+  name: string;
 }
 
-export const PlatformCardImage = ({ imageUrl, logoUrl, name = "" }: PlatformCardImageProps) => {
+export const PlatformCardImage = ({ imageUrl, logoUrl, name }: PlatformCardImageProps) => {
   const displayUrl = imageUrl || logoUrl;
   
   return (
-    <div className="relative w-full aspect-[16/9] overflow-hidden">
+    <div className="w-full h-full">
       {displayUrl ? (
         <img 
           src={displayUrl} 

@@ -8,10 +8,11 @@ interface PlatformCardProps {
   platform: {
     id: string;
     name: string;
-    description?: string;
+    description: string | null;
     image_url?: string | null;
     logo_url?: string | null;
     slug: string;
+    created_by: string;
   };
   onDelete?: (id: string) => void;
 }
@@ -38,11 +39,13 @@ export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
       <CardContent className="p-0">
         <PlatformCardContent platform={platform} />
         <PlatformCardActions 
-          platform={platform} 
+          platformId={platform.id}
+          inviteCode={platform.invite_code || ''}
+          createdBy={platform.created_by}
           onDelete={(e) => {
             e.stopPropagation();
             onDelete?.(platform.id);
-          }} 
+          }}
         />
       </CardContent>
     </Card>
