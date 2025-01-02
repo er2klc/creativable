@@ -29,6 +29,9 @@ const fetchPlatforms = async (userId: string) => {
       console.log("[Debug] Keine Teams gefunden");
     }
 
+    // Team-IDs korrekt formatieren
+    const formattedTeamIds = teamIds?.map((t) => `'${t.team_id}'`).join(",") || "";
+
     // Abfrage: Module des Benutzers und der Teams
     const { data: modules, error: modulesError } = await supabase
       .from("elevate_modules")
@@ -52,10 +55,9 @@ const fetchPlatforms = async (userId: string) => {
         ),
         elevate_submodules (*)
       `)
-      .or(`
-        created_by.eq.${userId},
-        platform_id.in.(${teamIds?.map(t => `'${t.team_id}'`).join(",") || "NULL"})
-      `)
+      .or(
+        `created_by.eq.${userId},platform_id.in.(${formattedTeamIds})`
+      )
       .order("order_index", { ascending: true });
 
     if (modulesError) {
@@ -65,20 +67,10 @@ const fetchPlatforms = async (userId: string) => {
 
     console.log("[Debug] Geladene Module:", modules);
 
-    // Verarbeite Team-Module (zum Debuggen)
-    const teamModules = modules.filter(module => {
-      const accessTeams = module.elevate_platforms?.elevate_team_access || [];
-      return accessTeams.some(access => 
-        teamIds.some(team => team.team_id === access.team_id)
-      );
-    });
-
-    console.log("[Debug] Team-Module:", teamModules);
-
     // Verarbeite die Module, um Teams und Benutzerzahlen zu berechnen
-    const platforms = modules.map(module => {
+    const platforms = modules.map((module) => {
       const teams = module.elevate_platforms?.elevate_team_access || [];
-      const uniqueTeams = new Set(teams.map(access => access.team_id));
+      const uniqueTeams = new Set(teams.map((access) => access.team_id));
 
       const totalUsers = teams.reduce((total, access) => {
         if (access.teams?.team_members) {
@@ -99,23 +91,23 @@ const fetchPlatforms = async (userId: string) => {
         stats: {
           totalTeams: uniqueTeams.size,
           totalUsers: totalUsers,
-          progress: 0
-        }
+          progress: 0,
+        },
       };
     });
 
     // Entferne doppelte Plattformen
     const uniquePlatforms = Array.from(
-      new Map(platforms.map(item => [item.id, item])).values()
+      new Map(platforms.map((item) => [item.id, item])).values()
     );
 
     return uniquePlatforms;
-
   } catch (error: any) {
     console.error("[Debug] Fehler in fetchPlatforms:", error);
     throw error;
   }
 };
+
 
 
 const Elevate = () => {
