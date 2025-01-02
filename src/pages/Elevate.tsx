@@ -12,7 +12,25 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // Module mit allen notwendigen Beziehungen abrufen
+    // First, get all platform IDs the user has access to through teams
+    const { data: accessiblePlatforms, error: accessError } = await supabase
+      .from('elevate_team_access')
+      .select('platform_id')
+      .in('team_id', (
+        supabase
+          .from('team_members')
+          .select('team_id')
+          .eq('user_id', userId)
+      ));
+
+    if (accessError) {
+      console.error("[Debug] Fehler beim Laden der zugänglichen Plattformen:", accessError);
+      throw accessError;
+    }
+
+    const platformIds = accessiblePlatforms?.map(p => p.platform_id) || [];
+
+    // Then fetch modules with all necessary relationships
     const { data: modules, error: modulesError } = await supabase
       .from("elevate_modules")
       .select(`
@@ -34,11 +52,7 @@ const fetchPlatforms = async (userId: string) => {
           *
         )
       `)
-      .or(`created_by.eq.${userId},platform_id.in.(
-        select platform_id from elevate_team_access eta 
-        join team_members tm on tm.team_id = eta.team_id 
-        where tm.user_id = '${userId}'
-      )`)
+      .or(`created_by.eq.${userId},platform_id.in.(${platformIds.join(',')})`)
       .order('module_order', { ascending: true });
 
     if (modulesError) {
@@ -48,15 +62,15 @@ const fetchPlatforms = async (userId: string) => {
 
     console.log("[Debug] Geladene Module:", modules);
 
-    // Daten transformieren
+    // Transform data
     const platforms = modules?.map(module => {
-      // Berechne die Anzahl der einzigartigen Teams
+      // Calculate unique teams
       const uniqueTeams = new Set(
         module.elevate_platforms.elevate_team_access?.filter(access => access.teams)
           .map(access => access.team_id) || []
       );
 
-      // Berechne die Gesamtzahl der Benutzer über alle Teams
+      // Calculate total users across all teams
       const totalUsers = module.elevate_platforms.elevate_team_access?.reduce((total, access) => {
         if (!access.teams?.team_members) return total;
         return total + access.teams.team_members.length;
@@ -84,7 +98,7 @@ const fetchPlatforms = async (userId: string) => {
       };
     }) || [];
 
-    // Duplikate basierend auf der Plattform-ID entfernen
+    // Remove duplicates based on platform ID
     const uniquePlatforms = Array.from(
       new Map(platforms.map(item => [item.id, item])).values()
     );
