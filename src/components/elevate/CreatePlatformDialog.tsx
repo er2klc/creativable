@@ -120,20 +120,22 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
 
       // Create team access entries if teams are selected
       if (selectedTeams.length > 0) {
-        // Important: Create individual entries for each team
-        for (const teamId of selectedTeams) {
-          const { error: teamAccessError } = await supabase
+        const teamAccessPromises = selectedTeams.map(teamId => 
+          supabase
             .from('elevate_team_access')
             .insert({
               platform_id: platformData.id,
               team_id: teamId,
               granted_by: user.id
-            });
+            })
+        );
 
-          if (teamAccessError) {
-            console.error(`Team access error for team ${teamId}:`, teamAccessError);
-            throw new Error('Fehler beim Erstellen des Team-Zugriffs');
-          }
+        const teamAccessResults = await Promise.all(teamAccessPromises);
+        const teamAccessErrors = teamAccessResults.filter(result => result.error);
+
+        if (teamAccessErrors.length > 0) {
+          console.error('Team access errors:', teamAccessErrors);
+          throw new Error('Fehler beim Erstellen des Team-Zugriffs');
         }
       }
 
