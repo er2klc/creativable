@@ -78,6 +78,7 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          module_order: number | null
           order_index: number | null
           platform_id: string
           title: string
@@ -87,6 +88,7 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          module_order?: number | null
           order_index?: number | null
           platform_id: string
           title: string
@@ -96,6 +98,7 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          module_order?: number | null
           order_index?: number | null
           platform_id?: string
           title?: string
@@ -152,6 +155,47 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      elevate_submodules: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          module_id: string | null
+          submodule_order: number | null
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          module_id?: string | null
+          submodule_order?: number | null
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          module_id?: string | null
+          submodule_order?: number | null
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevate_submodules_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_modules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       elevate_team_access: {
         Row: {

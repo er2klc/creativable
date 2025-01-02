@@ -12,32 +12,12 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // First get platforms created by the user
-    const { data: ownedPlatforms, error: ownedError } = await supabase
-      .from("elevate_platforms")
+    // Get modules where user is creator or has team access
+    const { data: modules, error: modulesError } = await supabase
+      .from("elevate_modules")
       .select(`
         *,
-        elevate_team_access (
-          team_id,
-          teams (
-            id,
-            name
-          )
-        )
-      `)
-      .eq('created_by', userId)
-      .order('created_at', { ascending: false });
-
-    if (ownedError) {
-      console.error("[Debug] Fehler beim Laden der eigenen Module:", ownedError);
-      throw ownedError;
-    }
-
-    // Then get platforms accessible through team membership
-    const { data: teamPlatforms, error: teamError } = await supabase
-      .from('elevate_team_access')
-      .select(`
-        platform: platform_id (
+        elevate_platforms!inner (
           *,
           elevate_team_access (
             team_id,
@@ -46,29 +26,38 @@ const fetchPlatforms = async (userId: string) => {
               name
             )
           )
+        ),
+        elevate_submodules (
+          *
         )
       `)
-      .in('team_id', (
-        await supabase
-          .from('team_members')
-          .select('team_id')
-          .eq('user_id', userId)
-      ).data?.map(tm => tm.team_id) || []);
+      .or(`created_by.eq.${userId},elevate_platforms.id.in.(
+        select platform_id from elevate_team_access eta 
+        join team_members tm on tm.team_id = eta.team_id 
+        where tm.user_id = '${userId}'
+      )`)
+      .order('module_order', { ascending: true });
 
-    if (teamError) {
-      console.error("[Debug] Fehler beim Laden der Team-Module:", teamError);
-      throw teamError;
+    if (modulesError) {
+      console.error("[Debug] Fehler beim Laden der Module:", modulesError);
+      throw modulesError;
     }
 
-    // Combine and deduplicate results
-    const allPlatforms = [
-      ...(ownedPlatforms || []),
-      ...(teamPlatforms?.map(tp => tp.platform).filter(Boolean) || [])
-    ];
+    // Transform the data to match the existing platform structure
+    const platforms = modules.map(module => ({
+      id: module.platform_id,
+      name: module.title,
+      description: module.description,
+      created_at: module.created_at,
+      created_by: module.created_by,
+      logo_url: module.elevate_platforms.logo_url,
+      team_access: module.elevate_platforms.elevate_team_access,
+      submodules: module.elevate_submodules
+    }));
 
     // Remove duplicates based on platform id
     const uniquePlatforms = Array.from(
-      new Map(allPlatforms.map(item => [item.id, item])).values()
+      new Map(platforms.map(item => [item.id, item])).values()
     );
 
     return uniquePlatforms;
