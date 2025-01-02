@@ -34,7 +34,11 @@ const fetchPlatforms = async (userId: string) => {
           *
         )
       `)
-      .or(`created_by.eq.${userId}`)
+      .or(`created_by.eq.${userId},platform_id.in.(
+        select platform_id from elevate_team_access eta 
+        join team_members tm on tm.team_id = eta.team_id 
+        where tm.user_id = '${userId}'
+      )`)
       .order('module_order', { ascending: true });
 
     if (modulesError) {
