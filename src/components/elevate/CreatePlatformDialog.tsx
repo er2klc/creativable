@@ -52,7 +52,7 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
       if (logoFile) {
         const fileExt = logoFile.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError, data: uploadData } = await supabase.storage
           .from('team-logos')
           .upload(fileName, logoFile);
 
@@ -68,14 +68,13 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         logoUrl = publicUrl;
       }
 
-      // Create module using the default Elevate platform
       const { data: moduleData, error: moduleError } = await supabase
         .from('elevate_modules')
         .insert([{
           title: name.trim(),
           description: description.trim() || null,
           created_by: user.id,
-          platform_id: '00000000-0000-0000-0000-000000000000', // Default Elevate platform
+          platform_id: '00000000-0000-0000-0000-000000000000',
           order_index: 0
         }])
         .select()
@@ -91,21 +90,13 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
           supabase
             .from('elevate_team_access')
             .insert({
-              platform_id: '00000000-0000-0000-0000-000000000000', // Default Elevate platform
+              platform_id: '00000000-0000-0000-0000-000000000000',
               team_id: teamId,
               granted_by: user.id
             })
         );
 
-        const results = await Promise.allSettled(teamAccessPromises);
-        const errors = results
-          .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
-          .map(result => result.reason);
-        
-        if (errors.length > 0) {
-          console.error('Team access errors:', errors);
-          throw new Error('Fehler beim Gewähren des Team-Zugriffs');
-        }
+        await Promise.all(teamAccessPromises);
       }
 
       toast.success("Modul erfolgreich erstellt");
