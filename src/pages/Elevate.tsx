@@ -12,42 +12,21 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // Abfrage: Alle Team-IDs, denen der Benutzer angehört
+    // Abfrage: Team-IDs des Benutzers
     const { data: teamIds, error: teamError } = await supabase
       .from("team_members")
       .select("team_id")
       .eq("user_id", userId);
- 
- console.log("[Debug] Geladene Team-IDs:", teamIds); // Log hinzugefügt
 
     if (teamError) {
       console.error("[Debug] Fehler beim Laden der Team-IDs:", teamError);
       throw teamError;
     }
 
-    // Abfrage: Alle Module, die vom Benutzer erstellt wurden
-    const { data: ownerModules, error: ownerError } = await supabase
-      .from("elevate_modules")
-      .select(`
-        *,
-        elevate_platforms!inner (
-          id,
-          name,
-          description,
-          logo_url
-        ),
-        elevate_submodules (*)
-      `)
-      .eq("created_by", userId)
-      .order("order_index", { ascending: true });
+    console.log("[Debug] Geladene Team-IDs:", teamIds);
 
-    if (ownerError) {
-      console.error("[Debug] Fehler beim Laden der Owner-Module:", ownerError);
-      throw ownerError;
-    }
-
-    // Abfrage: Alle Module, die über Team-Zugriff verfügbar sind
-    const { data: teamModules, error: teamModuleError } = await supabase
+    // Abfrage: Module, die der Benutzer erstellt hat
+    const { data: modules, error: modulesError } = await supabase
       .from("elevate_modules")
       .select(`
         *,
@@ -69,28 +48,21 @@ const fetchPlatforms = async (userId: string) => {
         ),
         elevate_submodules (*)
       `)
-      .in("platform_id", teamIds?.map(t => t.team_id) || [])
+      .or(`
+        created_by.eq.${userId},
+        platform_id.in.(${teamIds?.map(t => `'${t.team_id}'`).join(",") || "NULL"})
+      `)
       .order("order_index", { ascending: true });
-  
-    console.log("[Debug] Team-Module:", teamModules); // Log hinzugefügt
 
-    if (teamModuleError) {
-      console.error("[Debug] Fehler beim Laden der Team-Module:", teamModuleError);
-      throw teamModuleError;
+    if (modulesError) {
+      console.error("[Debug] Fehler beim Laden der Module:", modulesError);
+      throw modulesError;
     }
 
-    // Kombiniere Owner-Module und Team-Module
-    const modules = [...(ownerModules || []), ...(teamModules || [])];
+    console.log("[Debug] Geladene Module:", modules);
 
-    // Entferne doppelte Einträge basierend auf `platform_id`
-    const uniquePlatforms = Array.from(
-      new Map(
-        modules.map(module => [module.elevate_platforms.id, module])
-      ).values()
-    );
-
-    // Berechne Team- und Benutzer-Zahlen
-    const platforms = uniquePlatforms.map(module => {
+    // Verarbeite die Module, um Teams und Benutzerzahlen zu berechnen
+    const platforms = modules.map(module => {
       const teams = module.elevate_platforms?.elevate_team_access || [];
       const uniqueTeams = new Set(teams.map(access => access.team_id));
 
@@ -100,12 +72,6 @@ const fetchPlatforms = async (userId: string) => {
         }
         return total;
       }, 0);
-
-      console.log("[Debug] Plattform-Statistik:", {
-        platform: module.elevate_platforms.name,
-        uniqueTeams: uniqueTeams.size,
-        totalUsers
-      });
 
       return {
         id: module.elevate_platforms.id,
@@ -124,7 +90,13 @@ const fetchPlatforms = async (userId: string) => {
       };
     });
 
-    return platforms;
+    // Doppelte Einträge entfernen
+    const uniquePlatforms = Array.from(
+      new Map(platforms.map(item => [item.id, item])).values()
+    );
+
+    return uniquePlatforms;
+
   } catch (error: any) {
     console.error("[Debug] Fehler in fetchPlatforms:", error);
     throw error;
