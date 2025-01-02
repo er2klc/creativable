@@ -28,7 +28,7 @@ const fetchPlatforms = async (userId: string) => {
 
     const platformIds = teamAccess?.map(ta => ta.platform_id) || [];
 
-    // Module abrufen, die entweder vom Benutzer erstellt wurden oder zu denen er Team-Zugriff hat
+    // Module mit allen notwendigen Beziehungen abrufen
     const { data: modules, error: modulesError } = await supabase
       .from("elevate_modules")
       .select(`
@@ -40,8 +40,8 @@ const fetchPlatforms = async (userId: string) => {
             teams (
               id,
               name,
-              team_members (
-                id
+              team_members!inner (
+                user_id
               )
             )
           )
@@ -89,7 +89,7 @@ const fetchPlatforms = async (userId: string) => {
         stats: {
           totalTeams: uniqueTeams.size,
           totalUsers: totalUsers,
-          progress: 0 // Behalten wir bei 0 für jetzt
+          progress: 0
         }
       };
     }) || [];
@@ -114,8 +114,8 @@ const Elevate = () => {
     queryKey: ["platforms", user?.id],
     queryFn: () => user?.id ? fetchPlatforms(user.id) : Promise.resolve([]),
     enabled: !!user?.id,
-    staleTime: 0, // Immer neue Daten abrufen
-    gcTime: 0  // Cache deaktivieren (früher cacheTime)
+    staleTime: 0,
+    gcTime: 0
   });
 
   const handleDelete = async (id: string) => {
@@ -128,7 +128,7 @@ const Elevate = () => {
       if (error) throw error;
 
       toast.success("Modul erfolgreich gelöscht");
-      refetch(); // Daten nach dem Löschen neu laden
+      refetch();
     } catch (error: any) {
       console.error("[Debug] Fehler beim Löschen des Moduls:", error);
       toast.error(error.message || "Fehler beim Löschen des Moduls");
@@ -140,7 +140,7 @@ const Elevate = () => {
   }
 
   const handlePlatformCreated = async () => {
-    await refetch(); // Sofort neu laden nach Erstellung
+    await refetch();
   };
 
   return (
