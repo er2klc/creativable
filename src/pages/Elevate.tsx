@@ -30,10 +30,9 @@ const fetchPlatforms = async (userId: string) => {
           )
         ),
         elevate_submodules (
-          *
-        )
+          *)
       `)
-      .or(`created_by.eq.${userId},elevate_platforms.created_by.eq.${userId},elevate_platforms.id.in.(select platform_id from elevate_team_access where team_id in (select team_id from team_members where user_id = '${userId}'))`)
+      .or(`created_by.eq.${userId},elevate_platforms.id.in.(select platform_id from elevate_team_access where team_id in (select team_id from team_members where user_id = '${userId}'))`)
       .order('module_order', { ascending: true });
 
     if (modulesError) {
