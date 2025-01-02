@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PlatformDetail = () => {
   const { platformSlug } = useParams();
@@ -29,7 +30,7 @@ const PlatformDetail = () => {
           )
         `)
         .eq('name', platformSlug?.split('-').join(' '))
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -38,11 +39,29 @@ const PlatformDetail = () => {
   });
 
   if (isLoading) {
-    return <div>Laden...</div>;
+    return (
+      <div className="container mx-auto py-6 space-y-6">
+        <Skeleton className="h-12 w-1/3" />
+        <Skeleton className="h-24 w-full" />
+        <div className="grid gap-6">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </div>
+    );
   }
 
   if (!platform) {
-    return <div>Modul nicht gefunden</div>;
+    return (
+      <div className="container mx-auto py-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Modul nicht gefunden</h1>
+          <p className="mt-2 text-gray-600">
+            Das von Ihnen gesuchte Modul konnte nicht gefunden werden.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
