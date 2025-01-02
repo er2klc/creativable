@@ -12,23 +12,6 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // First get team IDs for the user
-    const { data: teamMembers, error: teamError } = await supabase
-      .from('team_members')
-      .select('team_id')
-      .eq('user_id', userId);
-
-    if (teamError) throw teamError;
-
-    // Get team access platforms
-    const { data: teamAccessPlatforms, error: accessError } = await supabase
-      .from('elevate_team_access')
-      .select('platform_id')
-      .in('team_id', teamMembers?.map(tm => tm.team_id) || []);
-
-    if (accessError) throw accessError;
-
-    // Combine user's own platforms and team access platforms
     const { data: platforms, error: platformsError } = await supabase
       .from("elevate_platforms")
       .select(`
@@ -45,12 +28,7 @@ const fetchPlatforms = async (userId: string) => {
             team_members (user_id)
           )
         )
-      `)
-      .or(
-        `created_by.eq.${userId},id.in.(${
-          teamAccessPlatforms?.map(p => `'${p.platform_id}'`).join(',') || 'null'
-        })`
-      );
+      `);
 
     if (platformsError) {
       console.error("[Debug] Fehler beim Laden der Plattformen:", platformsError);
