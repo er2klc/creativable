@@ -30,7 +30,14 @@ const fetchPlatforms = async (userId: string) => {
             )
           )
         )
-      `);
+      `)
+      .or(`created_by.eq.${userId},id.in.(
+        select platform_id from elevate_team_access 
+        where team_id in (
+          select team_id from team_members 
+          where user_id = '${userId}'
+        )
+      )`);
 
     if (platformsError) {
       console.error("[Debug] Fehler beim Laden der Plattformen:", platformsError);
