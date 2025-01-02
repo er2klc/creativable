@@ -88,7 +88,7 @@ const Elevate = () => {
     queryFn: () => user?.id ? fetchPlatforms(user.id) : Promise.resolve([]),
     enabled: !!user?.id,
     staleTime: 0, // Immer neue Daten abrufen
-    cacheTime: 0  // Cache deaktivieren
+    gcTime: 0  // Cache deaktivieren (früher cacheTime)
   });
 
   const handleDelete = async (id: string) => {
