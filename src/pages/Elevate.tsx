@@ -12,56 +12,56 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // Fetch platforms and modules in a single query
-    const { data: platforms, error } = await supabase
+    // First fetch platforms that the user created
+    const { data: ownedPlatforms, error: ownedError } = await supabase
       .from("elevate_platforms")
       .select("*, elevate_modules(*)")
-      .or(`created_by.eq.${userId}`);
+      .eq("created_by", userId);
 
-    if (error) {
-      console.error("[Debug] Fehler beim Laden der Plattformen:", error);
-      throw error;
+    if (ownedError) {
+      console.error("[Debug] Fehler beim Laden der eigenen Plattformen:", ownedError);
+      throw ownedError;
     }
 
-    // Fetch team access data separately
-    const enrichedPlatforms = await Promise.all(
-      (platforms || []).map(async (platform) => {
-        // Separate query for team access to avoid stream reading issues
-        const { data: teamAccess, error: teamError } = await supabase
-          .from("elevate_team_access")
-          .select("team_id, teams!inner(id, name, team_members(user_id))")
-          .eq("platform_id", platform.id);
+    // Then fetch platforms the user has access to through team membership
+    const { data: teamPlatforms, error: teamError } = await supabase
+      .from("elevate_team_access")
+      .select(`
+        platform_id,
+        platform:elevate_platforms(
+          *,
+          elevate_modules(*)
+        )
+      `)
+      .neq("platform_id", null);
 
-        if (teamError) {
-          console.error("[Debug] Fehler beim Laden der Team-Zugänge:", teamError);
-          return {
-            ...platform,
-            modules: platform.elevate_modules || [],
-            team_access: [],
-            stats: {
-              totalTeams: 0,
-              totalUsers: 0,
-              progress: 0,
-            },
-          };
-        }
+    if (teamError) {
+      console.error("[Debug] Fehler beim Laden der Team-Plattformen:", teamError);
+      throw teamError;
+    }
 
-        return {
-          ...platform,
-          modules: platform.elevate_modules || [],
-          team_access: teamAccess || [],
-          stats: {
-            totalTeams: teamAccess?.length || 0,
-            totalUsers: teamAccess?.reduce((total, access) => {
-              return total + (access.teams?.team_members?.length || 0);
-            }, 0) || 0,
-            progress: 0,
-          },
-        };
-      })
+    // Combine and deduplicate platforms
+    const teamPlatformsData = teamPlatforms
+      .map(tp => tp.platform)
+      .filter(p => p !== null);
+
+    const allPlatforms = [...(ownedPlatforms || []), ...teamPlatformsData];
+    const uniquePlatforms = Array.from(
+      new Map(allPlatforms.map(item => [item.id, item])).values()
     );
 
-    return enrichedPlatforms;
+    // Add stats for each platform
+    return uniquePlatforms.map(platform => ({
+      ...platform,
+      modules: platform.elevate_modules || [],
+      team_access: [],
+      stats: {
+        totalTeams: 0,
+        totalUsers: 0,
+        progress: 0,
+      }
+    }));
+
   } catch (error: any) {
     console.error("[Debug] Fehler in fetchPlatforms:", error);
     throw error;
