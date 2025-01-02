@@ -35,11 +35,14 @@ const fetchPlatforms = async (userId: string) => {
         *,
         elevate_platforms!inner (
           *,
-          elevate_team_access (
+          elevate_team_access!left (
             team_id,
             teams (
               id,
-              name
+              name,
+              team_members (
+                id
+              )
             )
           )
         ),
@@ -56,16 +59,33 @@ const fetchPlatforms = async (userId: string) => {
     }
 
     // Daten in das erwartete Format transformieren
-    const platforms = modules?.map(module => ({
-      id: module.platform_id,
-      name: module.title,
-      description: module.description,
-      created_at: module.created_at,
-      created_by: module.created_by,
-      logo_url: module.elevate_platforms.logo_url,
-      team_access: module.elevate_platforms.elevate_team_access,
-      submodules: module.elevate_submodules
-    })) || [];
+    const platforms = modules?.map(module => {
+      // Berechne die Anzahl der einzigartigen Teams
+      const uniqueTeams = new Set(
+        module.elevate_platforms.elevate_team_access?.map(access => access.team_id) || []
+      );
+
+      // Berechne die Gesamtzahl der Benutzer über alle Teams
+      const totalUsers = module.elevate_platforms.elevate_team_access?.reduce((total, access) => {
+        return total + (access.teams?.team_members?.length || 0);
+      }, 0) || 0;
+
+      return {
+        id: module.platform_id,
+        name: module.title,
+        description: module.description,
+        created_at: module.created_at,
+        created_by: module.created_by,
+        logo_url: module.elevate_platforms.logo_url,
+        team_access: module.elevate_platforms.elevate_team_access,
+        submodules: module.elevate_submodules,
+        stats: {
+          totalTeams: uniqueTeams.size,
+          totalUsers: totalUsers,
+          progress: 0 // Behalten wir bei 0 für jetzt
+        }
+      };
+    }) || [];
 
     // Duplikate basierend auf der Plattform-ID entfernen
     const uniquePlatforms = Array.from(
