@@ -29,8 +29,8 @@ const fetchPlatforms = async (userId: string) => {
       console.log("[Debug] Keine Teams gefunden");
     }
 
-    // Team-IDs korrekt formatieren
-    const formattedTeamIds = teamIds?.map((t) => `'${t.team_id}'`).join(",") || "";
+    // Team-IDs korrekt ohne zusätzliche Anführungszeichen formatieren
+    const formattedTeamIds = teamIds?.map((t) => t.team_id).join(",") || "";
 
     // Abfrage: Module des Benutzers und der Teams
     const { data: modules, error: modulesError } = await supabase
