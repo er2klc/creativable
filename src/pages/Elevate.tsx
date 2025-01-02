@@ -12,6 +12,13 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
+    // First, get the team IDs for the user
+    const { data: teamIds } = await supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', userId);
+
+    // Then fetch platforms where user is either owner or has team access
     const { data: platforms, error: platformsError } = await supabase
       .from("elevate_platforms")
       .select(`
@@ -25,26 +32,22 @@ const fetchPlatforms = async (userId: string) => {
           teams (
             id,
             name,
-            team_members (
-              user_id
-            )
+            team_members (user_id)
           )
         )
       `)
-      .or(`created_by.eq.${userId},id.in.(
-        select platform_id from elevate_team_access 
-        where team_id in (
-          select team_id from team_members 
-          where user_id = '${userId}'
-        )
-      )`);
+      .or(
+        `created_by.eq.${userId},id.in.(${
+          teamIds?.map(t => t.team_id).join(',') || 'null'
+        })`
+      );
 
     if (platformsError) {
       console.error("[Debug] Fehler beim Laden der Plattformen:", platformsError);
       throw platformsError;
     }
 
-    // Daten transformieren
+    // Transform data
     return platforms?.map((platform) => {
       const teams = platform.elevate_team_access || [];
       const uniqueTeams = new Set(teams.map((access) => access.team_id));
@@ -63,6 +66,7 @@ const fetchPlatforms = async (userId: string) => {
         created_at: platform.created_at,
         created_by: platform.created_by,
         logo_url: platform.logo_url,
+        image_url: platform.image_url,
         team_access: platform.elevate_team_access,
         modules: platform.elevate_modules,
         stats: {
