@@ -12,7 +12,6 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // Fetch modules with all necessary relationships
     const { data: modules, error: modulesError } = await supabase
       .from("elevate_modules")
       .select(`
@@ -34,11 +33,7 @@ const fetchPlatforms = async (userId: string) => {
           *
         )
       `)
-      .or(`created_by.eq.${userId},platform_id.in.(
-        select platform_id from elevate_team_access eta 
-        join team_members tm on tm.team_id = eta.team_id 
-        where tm.user_id = '${userId}'
-      )`)
+      .or('created_by.eq.' + userId + ',elevate_platforms.created_by.eq.' + userId)
       .order('module_order', { ascending: true });
 
     if (modulesError) {
