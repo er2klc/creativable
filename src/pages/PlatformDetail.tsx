@@ -18,7 +18,7 @@ const PlatformDetail = () => {
         .from('elevate_platforms')
         .select(`
           *,
-          elevate_submodules!elevate_platforms_id_fkey (
+          elevate_lerninhalte!elevate_platforms_id_fkey (
             id,
             title,
             description,
@@ -63,7 +63,7 @@ const PlatformDetail = () => {
     );
   }
 
-  const sortedSubmodules = platform.elevate_submodules?.sort(
+  const sortedSubmodules = platform.elevate_lerninhalte?.sort(
     (a, b) => (a.submodule_order || 0) - (b.submodule_order || 0)
   ) || [];
 
