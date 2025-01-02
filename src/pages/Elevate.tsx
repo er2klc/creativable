@@ -12,7 +12,20 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    const { data: teamModules, error: teamModulesError } = await supabase
+    // First get the team IDs for the user
+    const { data: teamIds } = await supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', userId);
+
+    // Get platform IDs that the user has access to through teams
+    const { data: platformIds } = await supabase
+      .from('elevate_team_access')
+      .select('platform_id')
+      .in('team_id', teamIds?.map(t => t.team_id) || []);
+
+    // Now fetch modules with the platform IDs
+    const { data: modules, error: modulesError } = await supabase
       .from("elevate_modules")
       .select(`
         *,
@@ -33,18 +46,18 @@ const fetchPlatforms = async (userId: string) => {
           *
         )
       `)
-      .or(`created_by.eq.${userId},platform_id.in.(select platform_id from elevate_team_access eta join team_members tm on tm.team_id = eta.team_id where tm.user_id = '${userId}')`)
+      .or(`created_by.eq.${userId},platform_id.in.(${platformIds?.map(p => p.platform_id).join(',') || ''})`)
       .order('module_order', { ascending: true });
 
-    if (teamModulesError) {
-      console.error("[Debug] Fehler beim Laden der Module:", teamModulesError);
-      throw teamModulesError;
+    if (modulesError) {
+      console.error("[Debug] Fehler beim Laden der Module:", modulesError);
+      throw modulesError;
     }
 
-    console.log("[Debug] Geladene Module:", teamModules);
+    console.log("[Debug] Geladene Module:", modules);
 
     // Transform data
-    const platforms = teamModules?.map(module => {
+    const platforms = modules?.map(module => {
       // Calculate unique teams and users
       const teams = module.elevate_platforms.elevate_team_access || [];
       const uniqueTeams = new Set(teams.map(access => access.team_id));
