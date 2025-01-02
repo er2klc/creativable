@@ -103,21 +103,21 @@ export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialog
         throw new Error('Fehler beim Erstellen des Moduls');
       }
 
-      // Create team access entries one by one to avoid the stream already read error
+      // Create team access entries
       if (selectedTeams.length > 0 && platformData) {
-        for (const teamId of selectedTeams) {
-          const { error: teamAccessError } = await supabase
-            .from('elevate_team_access')
-            .insert({
+        const { error: teamAccessError } = await supabase
+          .from('elevate_team_access')
+          .insert(
+            selectedTeams.map(teamId => ({
               platform_id: platformData.id,
               team_id: teamId,
               granted_by: user.id
-            });
+            }))
+          );
 
-          if (teamAccessError) {
-            console.error('Team access error:', teamAccessError);
-            throw new Error('Fehler beim Gewähren des Team-Zugriffs');
-          }
+        if (teamAccessError) {
+          console.error('Team access error:', teamAccessError);
+          throw new Error('Fehler beim Gewähren des Team-Zugriffs');
         }
       }
 
