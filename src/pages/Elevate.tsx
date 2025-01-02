@@ -12,23 +12,7 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // 1. Team-IDs abrufen
-    const { data: teamIds, error: teamError } = await supabase
-      .from("team_members")
-      .select("team_id")
-      .eq("user_id", userId);
-
-    if (teamError) {
-      console.error("[Debug] Fehler beim Laden der Team-IDs:", teamError);
-      throw teamError;
-    }
-
-    const teamIdArray = teamIds?.map(t => t.team_id) || [];
-    const teamIdsForQuery = teamIdArray.length > 0 
-      ? teamIdArray.map(id => `'${id}'`).join(',')
-      : 'null';
-
-    // 2. Plattformen direkt mit allen benötigten Relationen abrufen
+    // Direkte Abfrage der Plattformen mit allen Relationen
     const { data: platforms, error: platformsError } = await supabase
       .from("elevate_platforms")
       .select(`
@@ -48,14 +32,14 @@ const fetchPlatforms = async (userId: string) => {
           )
         )
       `)
-      .or(`created_by.eq.${userId},id.in.(select platform_id from elevate_team_access where team_id in (${teamIdsForQuery}))`);
+      .or('created_by.eq.' + userId);
 
     if (platformsError) {
       console.error("[Debug] Fehler beim Laden der Plattformen:", platformsError);
       throw platformsError;
     }
 
-    // 3. Daten transformieren
+    // Daten transformieren
     return platforms?.map((platform) => {
       const teams = platform.elevate_team_access || [];
       const uniqueTeams = new Set(teams.map((access) => access.team_id));
