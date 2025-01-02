@@ -35,12 +35,12 @@ const fetchPlatforms = async (userId: string) => {
         *,
         elevate_platforms!inner (
           *,
-          elevate_team_access!left (
+          elevate_team_access (
             team_id,
             teams (
               id,
               name,
-              team_members!inner (
+              team_members (
                 id
               )
             )
