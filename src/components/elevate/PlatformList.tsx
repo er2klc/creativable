@@ -10,8 +10,8 @@ interface PlatformListProps {
 export const PlatformList = ({ platforms, isLoading, onDelete }: PlatformListProps) => {
   if (isLoading) {
     return (
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3].map((i) => (
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+        {[1, 2].map((i) => (
           <Skeleton key={i} className="h-[280px] w-full" />
         ))}
       </div>
@@ -20,7 +20,7 @@ export const PlatformList = ({ platforms, isLoading, onDelete }: PlatformListPro
 
   if (platforms.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12 bg-gradient-to-br from-gray-900/95 via-gray-900 to-gray-900/95 rounded-lg p-8">
         <p className="text-muted-foreground">
           Keine Module gefunden. Erstellen Sie ein neues Modul oder treten Sie einem bestehenden bei.
         </p>
@@ -29,7 +29,7 @@ export const PlatformList = ({ platforms, isLoading, onDelete }: PlatformListPro
   }
 
   return (
-    <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
       {platforms.map((platform) => (
         <PlatformCard
           key={platform.id}
