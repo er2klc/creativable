@@ -40,7 +40,7 @@ const fetchPlatforms = async (userId: string) => {
             teams (
               id,
               name,
-              team_members (
+              team_members!inner (
                 id
               )
             )
@@ -58,6 +58,8 @@ const fetchPlatforms = async (userId: string) => {
       throw modulesError;
     }
 
+    console.log("[Debug] Geladene Module:", modules);
+
     // Daten in das erwartete Format transformieren
     const platforms = modules?.map(module => {
       // Berechne die Anzahl der einzigartigen Teams
@@ -69,6 +71,11 @@ const fetchPlatforms = async (userId: string) => {
       const totalUsers = module.elevate_platforms.elevate_team_access?.reduce((total, access) => {
         return total + (access.teams?.team_members?.length || 0);
       }, 0) || 0;
+
+      console.log("[Debug] Team Stats für Modul", module.title, {
+        uniqueTeams: uniqueTeams.size,
+        totalUsers: totalUsers
+      });
 
       return {
         id: module.platform_id,
