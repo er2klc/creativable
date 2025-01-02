@@ -11,7 +11,7 @@ interface PlatformCardProps {
 export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
   return (
     <Card className="group overflow-hidden bg-[#222]">
-      <div className="relative h-[200px]">
+      <div className="relative h-[240px]">
         <PlatformCardImage platform={platform} />
         <div className="absolute inset-0 bg-gradient-to-t from-[#222]/95 to-transparent" />
         <div className="absolute bottom-4 left-0 right-0 text-center">

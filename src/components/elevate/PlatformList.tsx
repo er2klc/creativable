@@ -10,9 +10,9 @@ interface PlatformListProps {
 export const PlatformList = ({ platforms, isLoading, onDelete }: PlatformListProps) => {
   if (isLoading) {
     return (
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-        {[1, 2].map((i) => (
-          <Skeleton key={i} className="h-[280px] w-full" />
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-[320px] w-full" />
         ))}
       </div>
     );
@@ -29,7 +29,7 @@ export const PlatformList = ({ platforms, isLoading, onDelete }: PlatformListPro
   }
 
   return (
-    <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+    <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {platforms.map((platform) => (
         <PlatformCard
           key={platform.id}
