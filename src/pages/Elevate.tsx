@@ -17,6 +17,8 @@ const fetchPlatforms = async (userId: string) => {
       .from("team_members")
       .select("team_id")
       .eq("user_id", userId);
+ 
+ console.log("[Debug] Geladene Team-IDs:", teamIds); // Log hinzugefügt
 
     if (teamError) {
       console.error("[Debug] Fehler beim Laden der Team-IDs:", teamError);
@@ -69,6 +71,8 @@ const fetchPlatforms = async (userId: string) => {
       `)
       .in("platform_id", teamIds?.map(t => t.team_id) || [])
       .order("order_index", { ascending: true });
+  
+    console.log("[Debug] Team-Module:", teamModules); // Log hinzugefügt
 
     if (teamModuleError) {
       console.error("[Debug] Fehler beim Laden der Team-Module:", teamModuleError);
