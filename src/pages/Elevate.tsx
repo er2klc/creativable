@@ -12,60 +12,39 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // First fetch platforms that the user created
-    const { data: ownedPlatforms, error: ownedError } = await supabase
+    const { data: platforms, error } = await supabase
       .from("elevate_platforms")
       .select(`
         *,
-        elevate_modules (*)
-      `)
-      .eq("created_by", userId);
-
-    if (ownedError) {
-      console.error("[Debug] Fehler beim Laden der eigenen Plattformen:", ownedError);
-      throw ownedError;
-    }
-
-    // Then fetch platforms the user has access to through team membership
-    const { data: accessiblePlatforms, error: accessError } = await supabase
-      .from("elevate_team_access")
-      .select(`
-        platform:elevate_platforms (
-          *,
-          elevate_modules (*)
+        elevate_modules (
+          id,
+          title,
+          description,
+          order_index
         )
       `)
-      .neq("platform_id", null);
+      .or(`created_by.eq.${userId},id.in.(
+        select platform_id from elevate_team_access eta 
+        join team_members tm on tm.team_id = eta.team_id 
+        where tm.user_id = '${userId}'
+      )`);
 
-    if (accessError) {
-      console.error("[Debug] Fehler beim Laden der Team-Plattformen:", accessError);
-      throw accessError;
+    if (error) {
+      console.error("[Debug] Error fetching platforms:", error);
+      throw error;
     }
 
-    // Extract platforms from team access and filter out nulls
-    const teamPlatforms = accessiblePlatforms
-      ?.map(item => item.platform)
-      .filter(platform => platform !== null) || [];
-
-    // Combine and deduplicate platforms
-    const allPlatforms = [...(ownedPlatforms || []), ...teamPlatforms];
-    const uniquePlatforms = Array.from(
-      new Map(allPlatforms.map(item => [item.id, item])).values()
-    );
-
-    return uniquePlatforms.map(platform => ({
+    return platforms.map(platform => ({
       ...platform,
       modules: platform.elevate_modules || [],
-      team_access: [],
       stats: {
         totalTeams: 0,
         totalUsers: 0,
         progress: 0,
       }
     }));
-
-  } catch (error: any) {
-    console.error("[Debug] Fehler in fetchPlatforms:", error);
+  } catch (error) {
+    console.error("[Debug] Error in fetchPlatforms:", error);
     throw error;
   }
 };
