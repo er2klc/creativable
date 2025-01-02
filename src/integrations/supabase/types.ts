@@ -131,6 +131,7 @@ export type Database = {
           linked_modules: string[] | null
           logo_url: string | null
           name: string
+          slug: string | null
         }
         Insert: {
           created_at?: string | null
@@ -142,6 +143,7 @@ export type Database = {
           linked_modules?: string[] | null
           logo_url?: string | null
           name: string
+          slug?: string | null
         }
         Update: {
           created_at?: string | null
@@ -153,6 +155,7 @@ export type Database = {
           linked_modules?: string[] | null
           logo_url?: string | null
           name?: string
+          slug?: string | null
         }
         Relationships: []
       }
