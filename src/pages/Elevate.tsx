@@ -12,7 +12,7 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // Abfrage: Team-IDs des Benutzers
+    // 1. Team-IDs abrufen
     const { data: teamIds, error: teamError } = await supabase
       .from("team_members")
       .select("team_id")
@@ -23,16 +23,10 @@ const fetchPlatforms = async (userId: string) => {
       throw teamError;
     }
 
-    console.log("[Debug] Geladene Team-IDs:", teamIds);
+    const platformIds = teamIds?.map((t) => t.team_id) || [];
+    console.log("[Debug] Geladene Team-IDs:", platformIds);
 
-    if (!teamIds || teamIds.length === 0) {
-      console.log("[Debug] Keine Teams gefunden");
-    }
-
-    // Team-IDs korrekt formatieren
-    const formattedTeamIds = teamIds?.map((t) => `'${t.team_id}'`).join(",") || "";
-
-    // Abfrage: Module des Benutzers und der Teams
+    // 2. Module abrufen
     const { data: modules, error: modulesError } = await supabase
       .from("elevate_modules")
       .select(`
@@ -56,7 +50,9 @@ const fetchPlatforms = async (userId: string) => {
         elevate_submodules (*)
       `)
       .or(
-        `created_by.eq.${userId},platform_id.in.(${formattedTeamIds})`
+        `created_by.eq.${userId},platform_id.in.(${platformIds
+          .map((id) => `'${id}'`)
+          .join(",")})`
       )
       .order("order_index", { ascending: true });
 
@@ -67,7 +63,7 @@ const fetchPlatforms = async (userId: string) => {
 
     console.log("[Debug] Geladene Module:", modules);
 
-    // Verarbeite die Module, um Teams und Benutzerzahlen zu berechnen
+    // 3. Module zu Plattformen transformieren
     const platforms = modules.map((module) => {
       const teams = module.elevate_platforms?.elevate_team_access || [];
       const uniqueTeams = new Set(teams.map((access) => access.team_id));
@@ -96,7 +92,7 @@ const fetchPlatforms = async (userId: string) => {
       };
     });
 
-    // Entferne doppelte Plattformen
+    // 4. Duplikate basierend auf Plattform-IDs entfernen
     const uniquePlatforms = Array.from(
       new Map(platforms.map((item) => [item.id, item])).values()
     );
@@ -108,17 +104,15 @@ const fetchPlatforms = async (userId: string) => {
   }
 };
 
-
-
 const Elevate = () => {
   const user = useUser();
 
   const { data: platforms = [], isLoading, error, refetch } = useQuery({
     queryKey: ["platforms", user?.id],
-    queryFn: () => user?.id ? fetchPlatforms(user.id) : Promise.resolve([]),
+    queryFn: () => (user?.id ? fetchPlatforms(user.id) : Promise.resolve([])),
     enabled: !!user?.id,
     staleTime: 0,
-    gcTime: 0
+    gcTime: 0,
   });
 
   const handleDelete = async (id: string) => {
