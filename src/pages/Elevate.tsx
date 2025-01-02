@@ -12,60 +12,84 @@ const fetchPlatforms = async (userId: string) => {
   }
 
   try {
-    // First get the team IDs for the user
-    const { data: teamIds } = await supabase
-      .from('team_members')
-      .select('team_id')
-      .eq('user_id', userId);
+    // Abfrage: Alle Team-IDs, denen der Benutzer angehört
+    const { data: teamIds, error: teamError } = await supabase
+      .from("team_members")
+      .select("team_id")
+      .eq("user_id", userId);
 
-    // Get platform IDs that the user has access to through teams
-    const { data: platformIds } = await supabase
-      .from('elevate_team_access')
-      .select('platform_id')
-      .in('team_id', teamIds?.map(t => t.team_id) || []);
+    if (teamError) {
+      console.error("[Debug] Fehler beim Laden der Team-IDs:", teamError);
+      throw teamError;
+    }
 
-    // Now fetch modules with the platform IDs
-    const { data: modules, error: modulesError } = await supabase
+    // Abfrage: Alle Module, die vom Benutzer erstellt wurden
+    const { data: ownerModules, error: ownerError } = await supabase
       .from("elevate_modules")
       .select(`
         *,
         elevate_platforms!inner (
-          *,
+          id,
+          name,
+          description,
+          logo_url
+        ),
+        elevate_submodules (*)
+      `)
+      .eq("created_by", userId)
+      .order("order_index", { ascending: true });
+
+    if (ownerError) {
+      console.error("[Debug] Fehler beim Laden der Owner-Module:", ownerError);
+      throw ownerError;
+    }
+
+    // Abfrage: Alle Module, die über Team-Zugriff verfügbar sind
+    const { data: teamModules, error: teamModuleError } = await supabase
+      .from("elevate_modules")
+      .select(`
+        *,
+        elevate_platforms!inner (
+          id,
+          name,
+          description,
+          logo_url,
           elevate_team_access (
             team_id,
             teams (
               id,
               name,
-              team_members!inner (
+              team_members (
                 user_id
               )
             )
           )
         ),
-        elevate_submodules (
-          *
-        )
+        elevate_submodules (*)
       `)
-      .or(`
-    created_by.eq.${userId},
-    elevate_platforms.elevate_team_access.team_id.in.(${teamIds?.map(t => t.team_id).join(',') || ''})
-  `)
-  .order('order_index', { ascending: true });
+      .in("platform_id", teamIds?.map(t => t.team_id) || [])
+      .order("order_index", { ascending: true });
 
-    if (modulesError) {
-      console.error("[Debug] Fehler beim Laden der Module:", modulesError);
-      throw modulesError;
+    if (teamModuleError) {
+      console.error("[Debug] Fehler beim Laden der Team-Module:", teamModuleError);
+      throw teamModuleError;
     }
 
-    console.log("[Debug] Geladene Module:", modules);
+    // Kombiniere Owner-Module und Team-Module
+    const modules = [...(ownerModules || []), ...(teamModules || [])];
 
-    // Transform data
-    const platforms = modules?.map(module => {
-      // Calculate unique teams and users
-      const teams = module.elevate_platforms.elevate_team_access || [];
+    // Entferne doppelte Einträge basierend auf `platform_id`
+    const uniquePlatforms = Array.from(
+      new Map(
+        modules.map(module => [module.elevate_platforms.id, module])
+      ).values()
+    );
+
+    // Berechne Team- und Benutzer-Zahlen
+    const platforms = uniquePlatforms.map(module => {
+      const teams = module.elevate_platforms?.elevate_team_access || [];
       const uniqueTeams = new Set(teams.map(access => access.team_id));
-      
-      // Calculate total users across all teams
+
       const totalUsers = teams.reduce((total, access) => {
         if (access.teams?.team_members) {
           return total + access.teams.team_members.length;
@@ -73,15 +97,16 @@ const fetchPlatforms = async (userId: string) => {
         return total;
       }, 0);
 
-      console.log("[Debug] Team Stats für Modul", module.title, {
+      console.log("[Debug] Plattform-Statistik:", {
+        platform: module.elevate_platforms.name,
         uniqueTeams: uniqueTeams.size,
         totalUsers
       });
 
       return {
-        id: module.platform_id,
-        name: module.title,
-        description: module.description,
+        id: module.elevate_platforms.id,
+        name: module.elevate_platforms.name,
+        description: module.elevate_platforms.description,
         created_at: module.created_at,
         created_by: module.created_by,
         logo_url: module.elevate_platforms.logo_url,
@@ -93,15 +118,9 @@ const fetchPlatforms = async (userId: string) => {
           progress: 0
         }
       };
-    }) || [];
+    });
 
-    // Remove duplicates based on platform ID
-    const uniquePlatforms = Array.from(
-      new Map(platforms.map(item => [item.id, item])).values()
-    );
-
-    return uniquePlatforms;
-
+    return platforms;
   } catch (error: any) {
     console.error("[Debug] Fehler in fetchPlatforms:", error);
     throw error;
