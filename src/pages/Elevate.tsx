@@ -46,8 +46,11 @@ const fetchPlatforms = async (userId: string) => {
           *
         )
       `)
-      .or(`created_by.eq.${userId},platform_id.in.(${platformIds?.map(p => p.platform_id).join(',') || ''})`)
-      .order('module_order', { ascending: true });
+      .or(`
+    created_by.eq.${userId},
+    elevate_platforms.elevate_team_access.team_id.in.(${teamIds?.map(t => t.team_id).join(',') || ''})
+  `)
+  .order('order_index', { ascending: true });
 
     if (modulesError) {
       console.error("[Debug] Fehler beim Laden der Module:", modulesError);
