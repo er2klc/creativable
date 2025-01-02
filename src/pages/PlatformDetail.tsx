@@ -18,7 +18,7 @@ const PlatformDetail = () => {
         .from('elevate_platforms')
         .select(`
           *,
-          elevate_submodules (
+          elevate_submodules!elevate_platforms_id_fkey (
             id,
             title,
             description,
