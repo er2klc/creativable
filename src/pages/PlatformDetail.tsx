@@ -51,6 +51,14 @@ const PlatformDetail = () => {
     enabled: !!moduleSlug && !!user
   });
 
+  const handleUnitChange = (unitId: string) => {
+    if (unitId === 'new') {
+      setIsDialogOpen(true);
+      return;
+    }
+    // No additional logic needed as the TabsContent component handles the switching
+  };
+
   const handleCreateUnit = async (data: {
     title: string;
     description: string;
@@ -187,7 +195,7 @@ const PlatformDetail = () => {
                 completed: isCompleted(unit.id)
               }))}
               activeUnit={sortedSubmodules[0]?.id}
-              onUnitChange={() => {}}
+              onUnitChange={handleUnitChange}
               isAdmin={isAdmin}
               onUnitDeleted={handleUnitDeleted}
               onCreateUnit={() => setIsDialogOpen(true)}
@@ -204,6 +212,23 @@ const PlatformDetail = () => {
                   savedProgress={parseFloat(localStorage.getItem(`video-progress-${submodule.id}`) || '0')}
                   isAdmin={isAdmin}
                   onDelete={handleUnitDeleted}
+                  onUpdate={async (data) => {
+                    try {
+                      const { error } = await supabase
+                        .from('elevate_lerninhalte')
+                        .update({
+                          title: data.title,
+                          description: data.description,
+                          video_url: data.videoUrl
+                        })
+                        .eq('id', submodule.id);
+
+                      if (error) throw error;
+                      await refetch();
+                    } catch (error) {
+                      console.error('Error updating learning unit:', error);
+                    }
+                  }}
                 />
               </TabsContent>
             ))}

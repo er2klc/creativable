@@ -18,7 +18,7 @@ interface LearningUnitContentProps {
   savedProgress?: number;
   isAdmin?: boolean;
   onDelete?: () => Promise<void>;
-  onUpdate?: (data: { description: string; videoUrl: string }) => Promise<void>;
+  onUpdate?: (data: { title: string; description: string; videoUrl: string }) => Promise<void>;
   documents?: { name: string; url: string }[];
 }
 
@@ -36,6 +36,7 @@ export const LearningUnitContent = ({
   documents = []
 }: LearningUnitContentProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(title);
   const [editedDescription, setEditedDescription] = useState(description || "");
   const [editedVideoUrl, setEditedVideoUrl] = useState(videoUrl || "");
   const [videoDuration, setVideoDuration] = useState<number>(0);
@@ -43,6 +44,7 @@ export const LearningUnitContent = ({
   const handleSaveEdit = async () => {
     if (onUpdate) {
       await onUpdate({
+        title: editedTitle,
         description: editedDescription,
         videoUrl: editedVideoUrl
       });
@@ -58,14 +60,24 @@ export const LearningUnitContent = ({
           <h3 className="text-2xl font-bold text-center flex-1">{title}</h3>
           <div className="flex items-center gap-2">
             {isAdmin && onDelete && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onDelete}
-                className="text-red-500 hover:text-red-600 hover:bg-red-50"
-              >
-                <Trash2 className="h-5 w-5" />
-              </Button>
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsEditDialogOpen(true)}
+                  className="text-primary hover:text-primary/80 hover:bg-primary/10"
+                >
+                  <Edit className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onDelete}
+                  className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+              </>
             )}
             <Button
               variant="ghost"
@@ -97,17 +109,7 @@ export const LearningUnitContent = ({
       <div className="grid grid-cols-12 gap-6">
         {/* Left Column: Description and Documents */}
         <div className="col-span-12 lg:col-span-5">
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 h-full relative">
-            {isAdmin && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-4 right-4"
-                onClick={() => setIsEditDialogOpen(true)}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            )}
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 h-full">
             <div className="prose max-w-none">
               <div dangerouslySetInnerHTML={{ __html: description || "" }} />
             </div>
@@ -137,17 +139,7 @@ export const LearningUnitContent = ({
         {/* Right Column: Video */}
         <div className="col-span-12 lg:col-span-7">
           {videoUrl && (
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 h-full relative">
-              {isAdmin && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-4 right-4 z-10"
-                  onClick={() => setIsEditDialogOpen(true)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-              )}
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 h-full">
               <VideoPlayer
                 videoUrl={videoUrl}
                 onProgress={onVideoProgress}
@@ -166,6 +158,15 @@ export const LearningUnitContent = ({
             <DialogTitle>Lerneinheit bearbeiten</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Titel</Label>
+              <Input
+                id="title"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                placeholder="Titel der Lerneinheit"
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="description">Beschreibung</Label>
               <RichTextEditor
