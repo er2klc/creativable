@@ -3,7 +3,7 @@ import { FileText, FileSpreadsheet, File } from "lucide-react";
 interface ContentDescriptionProps {
   title: string;
   description: string;
-  existingFiles: any[];
+  existingFiles: Array<{ file_name: string; file_path: string }>;
 }
 
 export const ContentDescription = ({
@@ -26,7 +26,7 @@ export const ContentDescription = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 border rounded-lg p-4 bg-white">
       <h2 className="text-2xl font-semibold">{title}</h2>
       <p className="text-gray-600 whitespace-pre-wrap">{description}</p>
       
@@ -41,7 +41,7 @@ export const ContentDescription = ({
                   href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/elevate-documents/${file.file_path}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-500 hover:text-blue-600 underline"
+                  className="text-blue-600 hover:text-blue-800 hover:underline"
                 >
                   {file.file_name}
                 </a>
