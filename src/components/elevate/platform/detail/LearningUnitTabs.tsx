@@ -1,7 +1,8 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, CheckCircle, BookOpen } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 
 interface LearningUnit {
   id: string;
@@ -30,7 +31,7 @@ export const LearningUnitTabs = ({
     <div className="relative mb-6 bg-gray-100 rounded-t-md">
       <div className="px-4 py-2 flex items-center gap-2 border-b border-gray-200">
         <BookOpen className="w-5 h-5 text-blue-500" />
-        <Progress value={progress} className="h-2 bg-gray-200" indicatorClassName="bg-blue-400" />
+        <Progress value={progress} className="h-2 bg-gray-200 flex-1" style={{ '--progress-background': 'rgb(59 130 246)' }} />
       </div>
       <Tabs 
         value={activeUnit} 
@@ -38,7 +39,7 @@ export const LearningUnitTabs = ({
         onValueChange={onUnitChange}
         defaultValue={units[0]?.id}
       >
-        <TabsList className="h-auto p-1 flex-wrap w-full justify-start bg-gray-200/50">
+        <TabsList className="h-auto p-1 flex-wrap w-full justify-start bg-gray-200/50 border-b border-gray-200">
           {units.map((unit, index) => (
             <>
               <TabsTrigger
@@ -52,7 +53,13 @@ export const LearningUnitTabs = ({
               >
                 <span className="font-medium">{index + 1}</span>
                 {unit.completed && (
-                  <CheckCircle className="w-3 h-3 ml-1 inline-block text-green-600" />
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="ml-1 p-0 h-5 hover:bg-green-100 text-green-600"
+                  >
+                    ✓
+                  </Button>
                 )}
               </TabsTrigger>
               {index < units.length - 1 && (
@@ -66,7 +73,7 @@ export const LearningUnitTabs = ({
               onClick={onCreateUnit}
               className="bg-primary/10 hover:bg-primary/20 text-primary data-[state=active]:bg-primary/20"
             >
-              <Plus className="w-5 h-5" />
+              +
             </TabsTrigger>
           )}
         </TabsList>
