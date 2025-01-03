@@ -148,9 +148,9 @@ export const LearningUnitContent = ({
 
   return (
     <div className="space-y-8 py-6 px-6 bg-gray-50">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-12 gap-8">
         {/* Top Row */}
-        <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
+        <div className="col-span-8 aspect-video w-full bg-black rounded-lg overflow-hidden">
           <VideoPlayer
             videoUrl={videoUrl}
             onProgress={onVideoProgress}
@@ -159,7 +159,7 @@ export const LearningUnitContent = ({
           />
         </div>
         
-        <div className="h-full">
+        <div className="col-span-4 h-full">
           <NotesSection
             notes={notes}
             onChange={setNotes}
@@ -168,7 +168,7 @@ export const LearningUnitContent = ({
         </div>
 
         {/* Bottom Row */}
-        <div>
+        <div className="col-span-8">
           <ContentDescription
             title={title}
             description={description}
@@ -176,7 +176,7 @@ export const LearningUnitContent = ({
           />
         </div>
         
-        <div>
+        <div className="col-span-4">
           <DocumentSection
             documents={existingFiles?.map(file => ({
               name: file.file_name,
