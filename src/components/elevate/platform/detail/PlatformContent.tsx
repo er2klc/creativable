@@ -53,6 +53,27 @@ export const PlatformContent = ({
     />;
   }
 
+  const handleEditUnit = async () => {
+    // Implementation will be handled by parent component
+    console.log("Edit unit:", activeUnitId);
+  };
+
+  const handleDeleteUnit = async () => {
+    try {
+      const { error } = await supabase
+        .from('elevate_lerninhalte')
+        .delete()
+        .eq('id', activeUnitId);
+
+      if (error) throw error;
+      await refetch();
+      toast.success("Lerneinheit erfolgreich gelöscht");
+    } catch (error) {
+      console.error('Error deleting learning unit:', error);
+      toast.error("Fehler beim Löschen der Lerneinheit");
+    }
+  };
+
   return (
     <>
       {activeUnit && (
@@ -62,8 +83,8 @@ export const PlatformContent = ({
           isCompleted={isCompleted(activeUnit.id)}
           onComplete={() => markAsCompleted(activeUnit.id, !isCompleted(activeUnit.id))}
           isAdmin={isAdmin}
-          onEdit={() => {/* Implement edit functionality */}}
-          onDelete={() => {/* Implement delete functionality */}}
+          onEdit={handleEditUnit}
+          onDelete={handleDeleteUnit}
           videoDuration={0}
           documentsCount={0}
           progress={progress}
