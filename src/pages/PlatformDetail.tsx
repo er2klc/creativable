@@ -18,6 +18,7 @@ const PlatformDetail = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeUnitId, setActiveUnitId] = useState<string>('');
   const { isCompleted, markAsCompleted } = useLearningProgress();
+  const [videoProgressMap, setVideoProgressMap] = useState<Record<string, number>>({});
 
   const { data: platform, isLoading, refetch } = useQuery({
     queryKey: ['platform', moduleSlug],
@@ -124,7 +125,7 @@ const PlatformDetail = () => {
   };
 
   const handleVideoProgress = async (lerninhalteId: string, progress: number) => {
-    setVideoProgress(prev => ({
+    setVideoProgressMap(prev => ({
       ...prev,
       [lerninhalteId]: progress
     }));

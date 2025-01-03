@@ -13,7 +13,6 @@ interface LearningUnitTabsProps {
   activeUnit: string;
   onUnitChange: (unitId: string) => void;
   isAdmin?: boolean;
-  onUnitDeleted?: () => Promise<void>;
   onCreateUnit?: () => void;
 }
 
@@ -26,8 +25,13 @@ export const LearningUnitTabs = ({
 }: LearningUnitTabsProps) => {
   return (
     <div className="relative mb-6 bg-muted rounded-md">
-      <Tabs defaultValue={activeUnit} className="w-full" onValueChange={onUnitChange}>
-        <TabsList className="h-auto p-1 flex-wrap w-full">
+      <Tabs 
+        value={activeUnit} 
+        className="w-full" 
+        onValueChange={onUnitChange}
+        defaultValue={units[0]?.id}
+      >
+        <TabsList className="h-auto p-1 flex-wrap w-full justify-start">
           {units.map((unit, index) => (
             <TabsTrigger
               key={unit.id}
