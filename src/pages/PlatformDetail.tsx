@@ -223,13 +223,13 @@ const PlatformDetailContent = () => {
             {sortedSubmodules.map((submodule) => (
               <TabsContent key={submodule.id} value={submodule.id}>
                 <LearningUnitContent
+                  id={submodule.id}
                   title={submodule.title}
                   description={submodule.description}
                   videoUrl={submodule.video_url}
                   isCompleted={isCompleted(submodule.id)}
                   onComplete={() => {
                     if (isCompleted(submodule.id)) {
-                      // Allow unchecking by passing false
                       markAsCompleted(submodule.id, false);
                     } else {
                       markAsCompleted(submodule.id);

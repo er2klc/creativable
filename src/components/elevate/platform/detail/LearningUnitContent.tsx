@@ -15,6 +15,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
 
 interface LearningUnitContentProps {
+  id: string;
   title: string;
   description: string | null;
   videoUrl: string | null;
@@ -26,10 +27,10 @@ interface LearningUnitContentProps {
   onDelete?: () => Promise<void>;
   onUpdate?: (data: { title: string; description: string; videoUrl: string }) => Promise<void>;
   documents?: { name: string; url: string }[];
-  id: string; // Add this to identify the learning unit
 }
 
 export const LearningUnitContent = ({
+  id,
   title,
   description,
   videoUrl,
@@ -41,7 +42,6 @@ export const LearningUnitContent = ({
   onDelete,
   onUpdate,
   documents = [],
-  id
 }: LearningUnitContentProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editedTitle, setEditedTitle] = useState(title);
@@ -116,9 +116,6 @@ export const LearningUnitContent = ({
         <div className="flex items-center justify-between">
           <div className="flex-1 text-center">
             <h3 className="text-2xl font-bold flex items-center justify-center gap-2">
-              {documents && documents.length > 0 && (
-                <FileText className="h-5 w-5 text-primary" />
-              )}
               {title}
             </h3>
           </div>
@@ -169,20 +166,19 @@ export const LearningUnitContent = ({
         </div>
       </div>
       
-      {/* Content Section */}
+      {/* Main Content Section */}
       <div className="grid grid-cols-12 gap-6">
-        {/* Left Column: Description and Documents */}
-        <div className="col-span-12 lg:col-span-5">
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 min-h-[400px] flex flex-col">
-            <div className="prose prose-sm max-w-none flex-grow">
-              <div dangerouslySetInnerHTML={{ __html: description || "" }} />
-            </div>
-            <DocumentSection documents={documents} />
-          </div>
+        {/* Left Column: Notes */}
+        <div className="col-span-12 lg:col-span-4">
+          <NotesSection
+            notes={notes}
+            onChange={setNotes}
+            onSave={saveNotes}
+          />
         </div>
         
-        {/* Right Column: Video and Notes */}
-        <div className="col-span-12 lg:col-span-7 space-y-6">
+        {/* Right Column: Video */}
+        <div className="col-span-12 lg:col-span-8">
           {videoUrl && (
             <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
               <VideoPlayer
@@ -193,13 +189,15 @@ export const LearningUnitContent = ({
               />
             </div>
           )}
-          
-          <NotesSection
-            notes={notes}
-            onChange={setNotes}
-            onSave={saveNotes}
-          />
         </div>
+      </div>
+
+      {/* Full Width Description and Documents Section */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div className="prose prose-sm max-w-none">
+          <div dangerouslySetInnerHTML={{ __html: description || "" }} />
+        </div>
+        <DocumentSection documents={documents} />
       </div>
 
       {/* Edit Dialog */}
