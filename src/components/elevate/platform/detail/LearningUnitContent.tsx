@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -85,6 +85,10 @@ export const LearningUnitContent = ({
       console.error('Error fetching documents:', error);
     }
   };
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [id]);
 
   return (
     <div className="space-y-8 py-6 px-6 bg-gray-50">
