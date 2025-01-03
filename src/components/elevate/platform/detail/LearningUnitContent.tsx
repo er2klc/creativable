@@ -1,13 +1,12 @@
-import { VideoPlayer } from "./VideoPlayer";
-import { useState, useEffect } from "react";
-import { NotesSection } from "./NotesSection";
+import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { EditUnitDialog } from "./EditUnitDialog";
-import { ContentDescription } from "./ContentDescription";
-import { DocumentSection } from "./DocumentSection";
+import { VideoSection } from "./content/VideoSection";
+import { NotesManager } from "./content/NotesManager";
+import { DescriptionSection } from "./content/DescriptionSection";
+import { DocumentManager } from "./content/DocumentManager";
 
 interface LearningUnitContentProps {
   id: string;
@@ -34,84 +33,10 @@ export const LearningUnitContent = ({
   isAdmin,
   onUpdate,
 }: LearningUnitContentProps) => {
-  const [notes, setNotes] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [videoDuration, setVideoDuration] = useState(0);
   const user = useUser();
-
-  const { data: savedNotes, refetch: refetchNotes } = useQuery({
-    queryKey: ['notes', id],
-    queryFn: async () => {
-      if (!user) return '';
-      
-      const { data, error } = await supabase
-        .from('elevate_lerninhalte_notes')
-        .select('content')
-        .eq('lerninhalte_id', id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data?.content || '';
-    },
-    enabled: !!user
-  });
-
-  const { data: existingFiles, refetch: refetchFiles } = useQuery({
-    queryKey: ['lerninhalte-documents', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('elevate_lerninhalte_documents')
-        .select('*')
-        .eq('lerninhalte_id', id);
-
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  useEffect(() => {
-    setNotes(savedNotes || '');
-  }, [savedNotes]);
-
-  const handleSaveNotes = async () => {
-    if (!user) {
-      toast.error('Sie müssen angemeldet sein, um Notizen zu speichern');
-      return;
-    }
-
-    try {
-      const { data: existingNote } = await supabase
-        .from('elevate_lerninhalte_notes')
-        .select()
-        .eq('lerninhalte_id', id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (existingNote) {
-        await supabase
-          .from('elevate_lerninhalte_notes')
-          .update({ content: notes })
-          .eq('lerninhalte_id', id)
-          .eq('user_id', user.id);
-      } else {
-        await supabase
-          .from('elevate_lerninhalte_notes')
-          .insert({ 
-            lerninhalte_id: id, 
-            content: notes,
-            user_id: user.id 
-          });
-      }
-
-      toast.success('Notizen erfolgreich gespeichert');
-      refetchNotes();
-    } catch (error) {
-      console.error('Error saving notes:', error);
-      toast.error('Fehler beim Speichern der Notizen');
-    }
-  };
 
   const handleUpdate = async (data: { title: string; description: string; videoUrl: string }) => {
     try {
@@ -138,7 +63,6 @@ export const LearningUnitContent = ({
 
       setIsEditing(false);
       setFiles([]);
-      refetchFiles();
       toast.success('Lerneinheit erfolgreich aktualisiert');
     } catch (error) {
       console.error('Error updating learning unit:', error);
@@ -149,41 +73,21 @@ export const LearningUnitContent = ({
   return (
     <div className="space-y-8 py-6 px-6 bg-gray-50">
       <div className="grid grid-cols-12 gap-8">
-        {/* Top Row */}
-        <div className="col-span-8 aspect-video w-full bg-black rounded-lg overflow-hidden">
-          <VideoPlayer
-            videoUrl={videoUrl}
-            onProgress={onVideoProgress}
-            savedProgress={savedProgress}
-            onDuration={(duration) => setVideoDuration(duration)}
-          />
-        </div>
+        <VideoSection
+          videoUrl={videoUrl}
+          onVideoProgress={onVideoProgress}
+          savedProgress={savedProgress}
+          onDuration={(duration) => setVideoDuration(duration)}
+        />
         
-        <div className="col-span-4 h-full">
-          <NotesSection
-            notes={notes}
-            onChange={setNotes}
-            onSave={handleSaveNotes}
-          />
-        </div>
+        <NotesManager lerninhalteId={id} />
 
-        {/* Bottom Row */}
-        <div className="col-span-8">
-          <ContentDescription
-            title={title}
-            description={description}
-            existingFiles={existingFiles}
-          />
-        </div>
+        <DescriptionSection
+          title={title}
+          description={description}
+        />
         
-        <div className="col-span-4">
-          <DocumentSection
-            documents={existingFiles?.map(file => ({
-              name: file.file_name,
-              url: supabase.storage.from('elevate-documents').getPublicUrl(file.file_path).data.publicUrl
-            })) || []}
-          />
-        </div>
+        <DocumentManager existingFiles={[]} />
       </div>
 
       <EditUnitDialog
@@ -193,7 +97,7 @@ export const LearningUnitContent = ({
         description={description}
         videoUrl={videoUrl}
         onUpdate={handleUpdate}
-        existingFiles={existingFiles}
+        existingFiles={[]}
         onFileRemove={async (index) => {
           if (existingFiles && existingFiles[index]) {
             try {
