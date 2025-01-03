@@ -80,7 +80,7 @@ export const PlatformDetailHeader = ({
             <CheckCircle2 className="h-4 w-4" />
             Abgeschlossen
           </Button>
-          {isAdmin && (
+          {isAdmin && onEdit && (
             <Button
               variant="ghost"
               size="sm"
@@ -90,7 +90,7 @@ export const PlatformDetailHeader = ({
               <Edit className="h-4 w-4" />
             </Button>
           )}
-          {isAdmin && (
+          {isAdmin && onDelete && (
             <Button
               variant="ghost"
               size="sm"
