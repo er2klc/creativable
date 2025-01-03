@@ -124,7 +124,7 @@ export const LearningUnitContent = ({
   };
 
   return (
-    <div className="space-y-8 py-6 px-6">
+    <div className="space-y-8 py-6 px-6 bg-gray-50">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
@@ -136,7 +136,7 @@ export const LearningUnitContent = ({
             />
           </div>
           
-          <div className="space-y-4 bg-white p-6 rounded-lg border">
+          <div className="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
             {isEditing ? (
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -145,7 +145,7 @@ export const LearningUnitContent = ({
                     id="title"
                     value={editedTitle}
                     onChange={(e) => setEditedTitle(e.target.value)}
-                    className="w-full"
+                    className="w-full bg-transparent border-gray-200"
                   />
                 </div>
                 <div className="space-y-2">
@@ -161,7 +161,7 @@ export const LearningUnitContent = ({
                     id="videoUrl"
                     value={editedVideoUrl}
                     onChange={(e) => setEditedVideoUrl(e.target.value)}
-                    className="w-full"
+                    className="w-full bg-transparent border-gray-200"
                   />
                 </div>
                 <div className="space-y-2">
@@ -184,13 +184,6 @@ export const LearningUnitContent = ({
                   className="prose prose-sm max-w-none"
                   dangerouslySetInnerHTML={{ __html: description }}
                 />
-                {isAdmin && (
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setIsEditing(true)}>
-                      Bearbeiten
-                    </Button>
-                  </div>
-                )}
               </>
             )}
           </div>

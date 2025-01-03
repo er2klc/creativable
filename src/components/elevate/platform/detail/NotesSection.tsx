@@ -30,7 +30,7 @@ export const NotesSection = ({ notes, onChange, onSave }: NotesSectionProps) => 
         value={notes}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Hier können Sie Ihre Notizen eingeben..."
-        className="flex-1 resize-none min-h-0"
+        className="flex-1 resize-none min-h-0 bg-transparent border-gray-200"
       />
     </div>
   );
