@@ -2,8 +2,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { SidebarContext } from "@/components/ui/sidebar";
-import { useContext } from "react";
+import { useSidebar } from "@/components/ui/sidebar";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -17,7 +16,7 @@ import {
 } from "lucide-react";
 
 export const DashboardSidebar = () => {
-  const { isOpen, setIsOpen } = useContext(SidebarContext);
+  const { state, openMobile, setOpenMobile } = useSidebar();
   const location = useLocation();
 
   const isActiveRoute = (path: string) => {
@@ -72,14 +71,14 @@ export const DashboardSidebar = () => {
         variant="ghost"
         size="icon"
         className="absolute right-4 top-4 z-50 md:hidden"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setOpenMobile(!openMobile)}
       >
-        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        {openMobile ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </Button>
       <div
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col bg-gray-900 duration-300 ease-in-out md:translate-x-0",
-          isOpen && "translate-x-0"
+          openMobile && "translate-x-0"
         )}
       >
         <div className="space-y-4 py-4">
