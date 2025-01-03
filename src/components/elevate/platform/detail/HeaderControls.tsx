@@ -63,7 +63,7 @@ export const HeaderControls = ({
         onClick={onComplete}
       >
         <CheckCircle2 className="h-5 w-5" />
-        {isCompleted ? 'Abgeschlossen' : 'Als abgeschlossen markieren'}
+        {isCompleted ? 'Abgeschlossen' : 'Abgeschlossen'}
       </Button>
     </div>
   );

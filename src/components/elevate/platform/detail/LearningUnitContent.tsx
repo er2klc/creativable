@@ -8,7 +8,6 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { EditUnitDialog } from "./EditUnitDialog";
 import { HeaderControls } from "./HeaderControls";
 import { ContentDescription } from "./ContentDescription";
-import { ContentHeaderControls } from "./ContentHeaderControls";
 
 interface LearningUnitContentProps {
   id: string;
@@ -170,7 +169,13 @@ export const LearningUnitContent = ({
               description={description}
               existingFiles={existingFiles}
             />
-            <ContentHeaderControls
+            <HeaderControls
+              id={id}
+              isCompleted={isCompleted}
+              onComplete={onComplete}
+              isAdmin={isAdmin}
+              onEdit={() => setIsEditing(true)}
+              onDelete={onDelete}
               videoDuration={videoDuration}
               documentsCount={existingFiles?.length || 0}
             />
