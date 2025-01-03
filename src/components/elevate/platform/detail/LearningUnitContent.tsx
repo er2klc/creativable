@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { EditUnitDialog } from "./EditUnitDialog";
+import { Button } from "@/components/ui/button";
 
 interface LearningUnitContentProps {
   id: string;
