@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PlatformDetailHeader } from "./PlatformDetailHeader";
 import { EmptyState } from "./EmptyState";
-import { UnitCreation } from "./UnitCreation";
+import { UnitCreation, handleCreateUnit } from "./UnitCreation";
 
 interface PlatformContentProps {
   platform: any;
@@ -42,13 +42,13 @@ export const PlatformContent = ({
     return <EmptyState 
       isAdmin={isAdmin} 
       onCreateUnit={async (data) => {
-        await UnitCreation({ 
+        await handleCreateUnit(
           platform, 
           sortedSubmodules, 
           refetch, 
-          isDialogOpen: true, 
-          setIsDialogOpen 
-        }).handleCreateUnit(data);
+          setIsDialogOpen,
+          data
+        );
       }} 
     />;
   }
