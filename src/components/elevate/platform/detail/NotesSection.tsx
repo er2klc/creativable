@@ -11,13 +11,18 @@ interface NotesSectionProps {
 
 export const NotesSection = ({ notes, onChange, onSave }: NotesSectionProps) => {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 h-full flex flex-col">
+    <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <Label className="flex items-center gap-2 text-lg font-semibold">
           <StickyNote className="h-5 w-5" />
           Notizen
         </Label>
-        <Button onClick={onSave} size="icon" variant="ghost">
+        <Button 
+          onClick={onSave} 
+          size="icon" 
+          variant="ghost"
+          className="h-8 w-8"
+        >
           <Save className="h-4 w-4" />
         </Button>
       </div>

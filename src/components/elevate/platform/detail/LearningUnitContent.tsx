@@ -1,22 +1,22 @@
-import { FileText, Clock, CheckCircle2, Trash2, Edit, Save } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { VideoPlayer } from "./VideoPlayer";
-import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { FileUpload } from "./FileUpload";
-import { DocumentSection } from "./DocumentSection";
+import { VideoPlayer } from "./VideoPlayer";
 import { NotesSection } from "./NotesSection";
+import { LearningDocuments } from "./LearningDocuments";
+import { LearningUnitHeader } from "./LearningUnitHeader";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface LearningUnitContentProps {
   id: string;
+  moduleTitle: string;
   title: string;
   description: string | null;
   videoUrl: string | null;
@@ -32,6 +32,7 @@ interface LearningUnitContentProps {
 
 export const LearningUnitContent = ({
   id,
+  moduleTitle,
   title,
   description,
   videoUrl,
@@ -110,56 +111,25 @@ export const LearningUnitContent = ({
     }
   };
 
+  const videoHeight = "400px";
+
   return (
     <div className="space-y-4">
-      {/* Header Section */}
-      <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-        <div className="flex flex-col items-center">
-          <h3 className="text-2xl font-bold text-center mb-2">{title}</h3>
-          <div className="flex items-center gap-4 text-muted-foreground">
-            {videoDuration > 0 && (
-              <span className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                ~{Math.round(videoDuration / 60)} Minuten
-              </span>
-            )}
-            {isAdmin && onDelete && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsEditDialogOpen(true)}
-                  className="text-primary hover:text-primary/80 hover:bg-primary/10"
-                >
-                  <Edit className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onDelete}
-                  className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="h-5 w-5" />
-                </Button>
-              </>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(isCompleted ? 'text-green-500' : 'text-gray-400')}
-              onClick={onComplete}
-            >
-              <CheckCircle2 className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      <LearningUnitHeader
+        moduleTitle={moduleTitle}
+        title={title}
+        isCompleted={isCompleted}
+        onComplete={onComplete}
+        isAdmin={isAdmin}
+        onEdit={() => setIsEditDialogOpen(true)}
+        onDelete={onDelete}
+        videoDuration={videoDuration}
+        documentsCount={documents.length}
+      />
       
-      {/* Main Content Section */}
       <div className="grid grid-cols-12 gap-6">
-        {/* Left Column: Notes */}
-        <div className="col-span-12 lg:col-span-4">
-          <div className="aspect-video"> {/* Match video aspect ratio */}
+        <div className="col-span-12 lg:col-span-4" style={{ height: videoHeight }}>
+          <div className="h-full bg-gray-50/50 rounded-xl shadow-sm p-6 border border-gray-100">
             <NotesSection
               notes={notes}
               onChange={setNotes}
@@ -168,10 +138,9 @@ export const LearningUnitContent = ({
           </div>
         </div>
         
-        {/* Right Column: Video */}
         <div className="col-span-12 lg:col-span-8">
           {videoUrl && (
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="bg-gray-50/50 rounded-xl shadow-sm p-6 border border-gray-100" style={{ height: videoHeight }}>
               <VideoPlayer
                 videoUrl={videoUrl}
                 onProgress={onVideoProgress}
@@ -183,18 +152,16 @@ export const LearningUnitContent = ({
         </div>
       </div>
 
-      {/* Full Width Description and Documents Section */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+      <div className="bg-gray-50/50 rounded-xl shadow-sm p-6 border border-gray-100">
         <div className="prose prose-sm max-w-none">
           <div dangerouslySetInnerHTML={{ __html: description || "" }} />
         </div>
-        <DocumentSection documents={documents} />
+        <LearningDocuments documents={documents} />
       </div>
 
-      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh]">
-          <ScrollArea className="h-full w-full pr-4">
+          <ScrollArea className="h-full max-h-[80vh] pr-4">
             <DialogHeader>
               <DialogTitle>Lerneinheit bearbeiten</DialogTitle>
             </DialogHeader>
@@ -237,7 +204,7 @@ export const LearningUnitContent = ({
                 />
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="mt-6">
               <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                 Abbrechen
               </Button>

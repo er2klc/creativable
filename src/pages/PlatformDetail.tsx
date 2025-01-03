@@ -230,6 +230,7 @@ const PlatformDetailContent = () => {
               <TabsContent key={submodule.id} value={submodule.id}>
                 <LearningUnitContent
                   id={submodule.id}
+                  moduleTitle={platform.name}
                   title={submodule.title}
                   description={submodule.description}
                   videoUrl={submodule.video_url}
