@@ -56,16 +56,16 @@ export const LearningUnitHeader = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {documentsCount > 0 && (
-            <div className="flex items-center gap-1 text-muted-foreground bg-white/50 px-2 py-1 rounded">
-              <FileText className="h-4 w-4" />
-              <span className="text-sm">{documentsCount}</span>
-            </div>
-          )}
           {videoDuration > 0 && (
             <div className="flex items-center gap-1 text-muted-foreground bg-white/50 px-2 py-1 rounded">
               <Clock className="h-4 w-4" />
               <span className="text-sm">~{Math.round(videoDuration / 60)} Min</span>
+            </div>
+          )}
+          {documentsCount > 0 && (
+            <div className="flex items-center gap-1 text-muted-foreground bg-white/50 px-2 py-1 rounded">
+              <FileText className="h-4 w-4" />
+              <span className="text-sm">{documentsCount}</span>
             </div>
           )}
           {isAdmin && onEdit && (
@@ -89,7 +89,7 @@ export const LearningUnitHeader = ({
             </Button>
           )}
           <Button
-            variant="outline"
+            variant={isCompleted ? "default" : "outline"}
             size="sm"
             className={cn(
               isCompleted ? 'bg-green-500 text-white hover:bg-green-600' : 'text-gray-400 hover:text-gray-500',
@@ -98,7 +98,7 @@ export const LearningUnitHeader = ({
             onClick={onComplete}
           >
             <CheckCircle2 className="h-5 w-5" />
-            {isCompleted ? 'Abgeschlossen' : 'Als abgeschlossen markieren'}
+            Abgeschlossen
           </Button>
         </div>
       </div>

@@ -1,31 +1,33 @@
 interface ContentDescriptionProps {
   title: string;
   description: string;
-  existingFiles?: any[];
+  existingFiles: any[];
 }
 
 export const ContentDescription = ({
   title,
   description,
-  existingFiles
+  existingFiles,
 }: ContentDescriptionProps) => {
   return (
-    <div className="space-y-6 bg-gray-50 p-6 rounded-lg border border-gray-200">
-      <div className="flex-1">
-        <h2 className="text-xl font-semibold mb-4">{title}</h2>
-        <div 
-          className="prose prose-sm max-w-none"
-          dangerouslySetInnerHTML={{ __html: description }}
-        />
-      </div>
+    <div className="space-y-4">
+      <h2 className="text-2xl font-semibold">{title}</h2>
+      <p className="text-gray-600 whitespace-pre-wrap">{description}</p>
       
       {existingFiles && existingFiles.length > 0 && (
-        <div className="mt-8 pt-6 border-t">
-          <h3 className="font-medium mb-4">Lerndokumente</h3>
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold mb-2">Lerndokumente</h3>
           <div className="space-y-2">
-            {existingFiles.map((file) => (
-              <div key={file.id} className="flex items-center p-2 bg-white rounded-lg">
-                <span className="text-sm">{file.file_name}</span>
+            {existingFiles.map((file, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <a
+                  href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/elevate-documents/${file.file_path}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:text-blue-600 underline"
+                >
+                  {file.file_name}
+                </a>
               </div>
             ))}
           </div>

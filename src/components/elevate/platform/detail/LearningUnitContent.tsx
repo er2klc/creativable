@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { EditUnitDialog } from "./EditUnitDialog";
-import { HeaderControls } from "./HeaderControls";
 import { ContentDescription } from "./ContentDescription";
 
 interface LearningUnitContentProps {
@@ -163,21 +162,11 @@ export const LearningUnitContent = ({
             />
           </div>
           
-          <div className="flex justify-between items-start">
+          <div>
             <ContentDescription
               title={title}
               description={description}
               existingFiles={existingFiles}
-            />
-            <HeaderControls
-              id={id}
-              isCompleted={isCompleted}
-              onComplete={onComplete}
-              isAdmin={isAdmin}
-              onEdit={() => setIsEditing(true)}
-              onDelete={onDelete}
-              videoDuration={videoDuration}
-              documentsCount={existingFiles?.length || 0}
             />
           </div>
         </div>
