@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PlatformDetailHeader } from "./PlatformDetailHeader";
 import { EmptyState } from "./EmptyState";
 import { UnitCreation, handleCreateUnit } from "./UnitCreation";
+import { EditUnitDialog } from "./EditUnitDialog";
 
 interface PlatformContentProps {
   platform: any;
@@ -34,6 +35,7 @@ export const PlatformContent = ({
 }: PlatformContentProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
 
   const activeUnit = sortedSubmodules.find(unit => unit.id === activeUnitId);
   const completedCount = sortedSubmodules.filter(unit => isCompleted(unit.id)).length;
@@ -167,6 +169,40 @@ export const PlatformContent = ({
         isDialogOpen={isDialogOpen}
         setIsDialogOpen={setIsDialogOpen}
       />
+
+      {activeUnit && (
+        <EditUnitDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          title={activeUnit.title}
+          description={activeUnit.description || ""}
+          videoUrl={activeUnit.video_url || ""}
+          onUpdate={async (data) => {
+            try {
+              const { error } = await supabase
+                .from('elevate_lerninhalte')
+                .update({
+                  title: data.title,
+                  description: data.description,
+                  video_url: data.videoUrl
+                })
+                .eq('id', activeUnit.id);
+
+              if (error) throw error;
+              await refetch();
+              setIsEditDialogOpen(false);
+              toast.success("Lerneinheit erfolgreich aktualisiert");
+            } catch (error) {
+              console.error('Error updating learning unit:', error);
+              toast.error("Fehler beim Aktualisieren der Lerneinheit");
+            }
+          }}
+          existingFiles={[]}
+          onFileRemove={() => {}}
+          onFilesSelected={setFiles}
+          files={files}
+        />
+      )}
     </>
   );
 };
