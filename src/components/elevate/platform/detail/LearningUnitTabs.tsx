@@ -28,17 +28,20 @@ export const LearningUnitTabs = ({
     <div className="relative mb-6 bg-muted rounded-md">
       <Tabs defaultValue={activeUnit} className="w-full" onValueChange={onUnitChange}>
         <TabsList className="h-auto p-1 flex-wrap w-full">
-          {units.map((unit) => (
+          {units.map((unit, index) => (
             <TabsTrigger
               key={unit.id}
               value={unit.id}
               className={cn(
-                "relative data-[state=active]:text-primary truncate max-w-[200px]",
+                "relative data-[state=active]:text-primary truncate max-w-[200px] text-left",
                 unit.completed && "text-green-600"
               )}
               title={unit.title}
             >
-              <span className="truncate">{unit.title}</span>
+              <span className="truncate">
+                <span className="mr-2 text-muted-foreground">{index + 1}.</span>
+                {unit.title}
+              </span>
               {unit.completed && (
                 <CheckCircle className="w-4 h-4 ml-2 shrink-0 inline-block text-green-600" />
               )}

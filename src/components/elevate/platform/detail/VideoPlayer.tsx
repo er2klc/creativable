@@ -11,9 +11,10 @@ interface VideoPlayerProps {
   videoUrl: string;
   onProgress: (progress: number) => void;
   savedProgress?: number;
+  onDuration?: (duration: number) => void;
 }
 
-export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0 }: VideoPlayerProps) => {
+export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuration }: VideoPlayerProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [player, setPlayer] = useState<any>(null);
   
@@ -35,6 +36,9 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0 }: VideoPl
           onReady: (event: any) => {
             if (savedProgress > 0) {
               event.target.seekTo(savedProgress);
+            }
+            if (onDuration) {
+              onDuration(event.target.getDuration());
             }
           },
           onStateChange: (event: any) => {
