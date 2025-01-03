@@ -1,15 +1,11 @@
 import { VideoPlayer } from "./VideoPlayer";
 import { useEffect, useState } from "react";
 import { NotesSection } from "./NotesSection";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { FileUpload } from "./FileUpload";
+import { EditUnitDialog } from "./EditUnitDialog";
 
 interface LearningUnitContentProps {
   id: string;
@@ -42,9 +38,6 @@ export const LearningUnitContent = ({
 }: LearningUnitContentProps) => {
   const [notes, setNotes] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [editedTitle, setEditedTitle] = useState(title);
-  const [editedDescription, setEditedDescription] = useState(description);
-  const [editedVideoUrl, setEditedVideoUrl] = useState(videoUrl);
   const [files, setFiles] = useState<File[]>([]);
   const user = useUser();
 
@@ -128,13 +121,9 @@ export const LearningUnitContent = ({
     }
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = async (data: { title: string; description: string; videoUrl: string }) => {
     try {
-      await onUpdate({
-        title: editedTitle,
-        description: editedDescription,
-        videoUrl: editedVideoUrl
-      });
+      await onUpdate(data);
 
       // Handle file uploads
       for (const file of files) {
@@ -213,97 +202,44 @@ export const LearningUnitContent = ({
           </div>
           
           <div className="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
-            {isEditing ? (
-              <div className="space-y-4">
+            <div className="flex justify-between items-start">
+              <h2 className="text-xl font-semibold">{title}</h2>
+              {isAdmin && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="text-primary hover:text-primary/80 hover:bg-primary/10"
+                >
+                  Bearbeiten
+                </Button>
+              )}
+            </div>
+            <div 
+              className="prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
+            {existingFiles && existingFiles.length > 0 && (
+              <div className="mt-4">
+                <h3 className="font-medium mb-2">Dokumente</h3>
                 <div className="space-y-2">
-                  <Label htmlFor="title">Titel</Label>
-                  <Input
-                    id="title"
-                    value={editedTitle}
-                    onChange={(e) => setEditedTitle(e.target.value)}
-                    className="w-full bg-transparent border-gray-200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Beschreibung</Label>
-                  <RichTextEditor
-                    content={editedDescription}
-                    onChange={setEditedDescription}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="videoUrl">Video URL</Label>
-                  <Input
-                    id="videoUrl"
-                    value={editedVideoUrl}
-                    onChange={(e) => setEditedVideoUrl(e.target.value)}
-                    className="w-full bg-transparent border-gray-200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Dokumente</Label>
-                  <FileUpload
-                    onFilesSelected={setFiles}
-                    files={[
-                      ...(existingFiles || []).map(f => new File([], f.file_name, { type: f.file_type })),
-                      ...files
-                    ]}
-                    onFileRemove={handleFileRemove}
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleUpdate}>Speichern</Button>
-                  <Button variant="outline" onClick={() => {
-                    setIsEditing(false);
-                    setEditedTitle(title);
-                    setEditedDescription(description);
-                    setEditedVideoUrl(videoUrl);
-                    setFiles([]);
-                  }}>Abbrechen</Button>
+                  {existingFiles.map((file, index) => (
+                    <div key={file.id} className="flex items-center justify-between p-2 bg-white rounded-lg">
+                      <span className="text-sm">{file.file_name}</span>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleFileRemove(index)}
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                        >
+                          Löschen
+                        </Button>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
-            ) : (
-              <>
-                <div className="flex justify-between items-start">
-                  <h2 className="text-xl font-semibold">{title}</h2>
-                  {isAdmin && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsEditing(true)}
-                      className="text-primary hover:text-primary/80 hover:bg-primary/10"
-                    >
-                      Bearbeiten
-                    </Button>
-                  )}
-                </div>
-                <div 
-                  className="prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: description }}
-                />
-                {existingFiles && existingFiles.length > 0 && (
-                  <div className="mt-4">
-                    <h3 className="font-medium mb-2">Dokumente</h3>
-                    <div className="space-y-2">
-                      {existingFiles.map((file, index) => (
-                        <div key={file.id} className="flex items-center justify-between p-2 bg-white rounded-lg">
-                          <span className="text-sm">{file.file_name}</span>
-                          {isAdmin && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleFileRemove(index)}
-                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                            >
-                              Löschen
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
             )}
           </div>
         </div>
@@ -316,6 +252,19 @@ export const LearningUnitContent = ({
           />
         </div>
       </div>
+
+      <EditUnitDialog
+        open={isEditing}
+        onOpenChange={setIsEditing}
+        title={title}
+        description={description}
+        videoUrl={videoUrl}
+        onUpdate={handleUpdate}
+        existingFiles={existingFiles}
+        onFileRemove={handleFileRemove}
+        onFilesSelected={setFiles}
+        files={files}
+      />
     </div>
   );
 };
