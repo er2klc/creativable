@@ -54,10 +54,6 @@ export const PlatformContent = ({
     />;
   }
 
-  const handleEditUnit = async () => {
-    setIsEditDialogOpen(true);
-  };
-
   const handleDeleteUnit = async () => {
     try {
       // First delete related notes
@@ -101,7 +97,7 @@ export const PlatformContent = ({
           isCompleted={isCompleted(activeUnit.id)}
           onComplete={() => markAsCompleted(activeUnit.id, !isCompleted(activeUnit.id))}
           isAdmin={isAdmin}
-          onEdit={handleEditUnit}
+          onEdit={() => setIsEditDialogOpen(true)}
           onDelete={handleDeleteUnit}
           videoDuration={0}
           documentsCount={0}
@@ -151,6 +147,7 @@ export const PlatformContent = ({
 
                     if (error) throw error;
                     await refetch();
+                    setIsEditDialogOpen(false);
                     toast.success("Lerneinheit erfolgreich aktualisiert");
                   } catch (error) {
                     console.error('Error updating learning unit:', error);
