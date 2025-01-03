@@ -37,7 +37,7 @@ export const PlatformDetailHeader = ({
               Modul
             </span>
             <span className="font-medium">
-              {moduleTitle}
+              {moduleTitle} A
             </span>
           </div>
           
