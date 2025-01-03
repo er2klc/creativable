@@ -7,25 +7,32 @@ export const useLearningProgress = () => {
   const user = useUser();
   const queryClient = useQueryClient();
 
-  const { data: completedUnits = [] } = useQuery({
+  const { data: completedUnits = [], isError } = useQuery({
     queryKey: ['learning-progress', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('elevate_user_progress')
         .select('lerninhalte_id')
         .eq('user_id', user.id)
         .eq('completed', true);
+
+      if (error) {
+        console.error('Error fetching learning progress:', error);
+        throw error;
+      }
       
       return data?.map(item => item.lerninhalte_id) || [];
     },
     enabled: !!user?.id,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     gcTime: 1000 * 60 * 15, // Keep unused data for 15 minutes
+    retry: 2,
   });
 
   const isCompleted = (lerninhalteId: string) => {
+    if (isError) return false;
     return completedUnits.includes(lerninhalteId);
   };
 
@@ -54,7 +61,16 @@ export const useLearningProgress = () => {
         if (error) throw error;
       }
 
-      // Invalidate and refetch the query
+      // Optimistically update the cache
+      queryClient.setQueryData(['learning-progress', user.id], (old: string[] = []) => {
+        if (completed) {
+          return [...new Set([...old, lerninhalteId])];
+        } else {
+          return old.filter(id => id !== lerninhalteId);
+        }
+      });
+
+      // Then invalidate to ensure data consistency
       await queryClient.invalidateQueries({
         queryKey: ['learning-progress', user.id]
       });

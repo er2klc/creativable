@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,7 +12,27 @@ import { CreateUnitDialog } from "@/components/elevate/platform/detail/CreateUni
 import { LearningUnitContent } from "@/components/elevate/platform/detail/LearningUnitContent";
 import { useLearningProgress } from "@/hooks/use-learning-progress";
 
-const PlatformDetail = () => {
+// Create a new QueryClient instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// Wrap the actual component to provide the QueryClient
+const PlatformDetailWrapper = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <PlatformDetailContent />
+    </QueryClientProvider>
+  );
+};
+
+// Main component content
+const PlatformDetailContent = () => {
   const { moduleSlug } = useParams();
   const user = useUser();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -254,4 +274,4 @@ const PlatformDetail = () => {
   );
 };
 
-export default PlatformDetail;
+export default PlatformDetailWrapper;
