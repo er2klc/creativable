@@ -2,11 +2,12 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { LearningUnitTabs } from "./LearningUnitTabs";
 import { LearningUnitContent } from "./LearningUnitContent";
-import { CreateUnitDialog } from "./CreateUnitDialog";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PlatformDetailHeader } from "./PlatformDetailHeader";
+import { EmptyState } from "./EmptyState";
+import { UnitCreation } from "./UnitCreation";
 
 interface PlatformContentProps {
   platform: any;
@@ -33,81 +34,21 @@ export const PlatformContent = ({
 }: PlatformContentProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleCreateUnit = async (data: {
-    title: string;
-    description: string;
-    videoUrl: string;
-    files: File[];
-  }) => {
-    try {
-      const { data: lerninhalte, error: unitError } = await supabase
-        .from('elevate_lerninhalte')
-        .insert({
-          module_id: platform?.elevate_modules?.[0]?.id,
-          title: data.title,
-          description: data.description,
-          video_url: data.videoUrl,
-          created_by: platform.created_by,
-          submodule_order: sortedSubmodules.length
-        })
-        .select()
-        .single();
-
-      if (unitError) throw unitError;
-
-      for (const file of data.files) {
-        const filePath = `${lerninhalte.id}/${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('elevate-documents')
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { error: docError } = await supabase
-          .from('elevate_lerninhalte_documents')
-          .insert({
-            lerninhalte_id: lerninhalte.id,
-            file_name: file.name,
-            file_path: filePath,
-            file_type: file.type,
-            created_by: platform.created_by
-          });
-
-        if (docError) throw docError;
-      }
-
-      toast.success("Neue Lerneinheit erfolgreich erstellt");
-      setIsDialogOpen(false);
-      await refetch();
-    } catch (error) {
-      console.error('Error creating learning unit:', error);
-      toast.error("Fehler beim Erstellen der Lerneinheit");
-    }
-  };
-
   const activeUnit = sortedSubmodules.find(unit => unit.id === activeUnitId);
   const completedCount = sortedSubmodules.filter(unit => isCompleted(unit.id)).length;
   const progress = (completedCount / sortedSubmodules.length) * 100;
 
   if (sortedSubmodules.length === 0) {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-lg text-center space-y-4">
-        <h3 className="text-xl font-semibold mb-2">Keine Lerneinheiten verfügbar</h3>
-        <p className="text-muted-foreground">
-          Für dieses Modul wurden noch keine Lerneinheiten erstellt.
-        </p>
-        {isAdmin && (
-          <Button onClick={() => setIsDialogOpen(true)} className="mt-4">
-            Erste Lerneinheit erstellen
-          </Button>
-        )}
-        <CreateUnitDialog
-          open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          onSubmit={handleCreateUnit}
-        />
-      </div>
-    );
+    return <EmptyState isAdmin={isAdmin} onCreateUnit={async (data) => {
+      const unitCreation = new UnitCreation({ 
+        platform, 
+        sortedSubmodules, 
+        refetch, 
+        isDialogOpen: true, 
+        setIsDialogOpen: setIsDialogOpen 
+      });
+      await unitCreation.handleCreateUnit(data);
+    }} />;
   }
 
   return (
@@ -195,10 +136,12 @@ export const PlatformContent = ({
         </Tabs>
       </div>
 
-      <CreateUnitDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onSubmit={handleCreateUnit}
+      <UnitCreation
+        platform={platform}
+        sortedSubmodules={sortedSubmodules}
+        refetch={refetch}
+        isDialogOpen={isDialogOpen}
+        setIsDialogOpen={setIsDialogOpen}
       />
     </>
   );
