@@ -1,4 +1,5 @@
 import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { LearningUnitTabs } from "./LearningUnitTabs";
 import { LearningUnitContent } from "./LearningUnitContent";
 import { CreateUnitDialog } from "./CreateUnitDialog";
