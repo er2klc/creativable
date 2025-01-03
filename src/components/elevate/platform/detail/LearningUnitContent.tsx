@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { EditUnitDialog } from "./EditUnitDialog";
-import { Button } from "@/components/ui/button";
+import { HeaderControls } from "./HeaderControls";
 
 interface LearningUnitContentProps {
   id: string;
@@ -40,6 +40,7 @@ export const LearningUnitContent = ({
   const [notes, setNotes] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
+  const [videoDuration, setVideoDuration] = useState(0);
   const user = useUser();
 
   const { data: savedNotes, refetch: refetchNotes } = useQuery({
@@ -76,13 +77,6 @@ export const LearningUnitContent = ({
   useEffect(() => {
     setNotes(savedNotes || '');
   }, [savedNotes]);
-
-  useEffect(() => {
-    const progress = parseFloat(localStorage.getItem(`video-progress-${id}`) || '0');
-    if (progress > 0) {
-      onVideoProgress(progress);
-    }
-  }, [id, onVideoProgress]);
 
   const handleSaveNotes = async () => {
     if (!user) {
@@ -161,14 +155,12 @@ export const LearningUnitContent = ({
       try {
         const fileToDelete = existingFiles[index];
         
-        // Delete from storage
         const { error: storageError } = await supabase.storage
           .from('elevate-documents')
           .remove([fileToDelete.file_path]);
 
         if (storageError) throw storageError;
 
-        // Delete from database
         const { error: dbError } = await supabase
           .from('elevate_lerninhalte_documents')
           .delete()
@@ -198,23 +190,23 @@ export const LearningUnitContent = ({
               videoUrl={videoUrl}
               onProgress={onVideoProgress}
               savedProgress={savedProgress}
-              onDuration={(duration) => console.log('Video duration:', duration)}
+              onDuration={(duration) => setVideoDuration(duration)}
             />
           </div>
           
           <div className="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
             <div className="flex justify-between items-start">
               <h2 className="text-xl font-semibold">{title}</h2>
-              {isAdmin && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
-                  className="text-primary hover:text-primary/80 hover:bg-primary/10"
-                >
-                  Bearbeiten
-                </Button>
-              )}
+              <HeaderControls
+                id={id}
+                isCompleted={isCompleted}
+                onComplete={onComplete}
+                isAdmin={isAdmin}
+                onEdit={() => setIsEditing(true)}
+                onDelete={onDelete}
+                videoDuration={videoDuration}
+                documentsCount={existingFiles?.length || 0}
+              />
             </div>
             <div 
               className="prose prose-sm max-w-none"
