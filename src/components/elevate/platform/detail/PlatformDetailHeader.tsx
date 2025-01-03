@@ -68,6 +68,18 @@ export const PlatformDetailHeader = ({
               <span className="text-sm">{documentsCount}</span>
             </div>
           )}
+          <Button
+            variant={isCompleted ? "default" : "outline"}
+            size="sm"
+            className={cn(
+              isCompleted ? 'bg-green-500 text-white hover:bg-green-600' : 'text-gray-400 hover:text-gray-500',
+              'flex items-center gap-2'
+            )}
+            onClick={onComplete}
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            Abgeschlossen
+          </Button>
           {isAdmin && onEdit && (
             <Button
               variant="ghost"
@@ -88,18 +100,6 @@ export const PlatformDetailHeader = ({
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
-          <Button
-            variant={isCompleted ? "default" : "outline"}
-            size="sm"
-            className={cn(
-              isCompleted ? 'bg-green-500 text-white hover:bg-green-600' : 'text-gray-400 hover:text-gray-500',
-              'flex items-center gap-2'
-            )}
-            onClick={onComplete}
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            Abgeschlossen
-          </Button>
         </div>
       </div>
 
