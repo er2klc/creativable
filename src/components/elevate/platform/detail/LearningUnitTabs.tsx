@@ -24,30 +24,27 @@ export const LearningUnitTabs = ({
   onCreateUnit
 }: LearningUnitTabsProps) => {
   return (
-    <div className="relative mb-6 bg-muted rounded-md">
+    <div className="relative mb-6 bg-gray-100 rounded-t-md">
       <Tabs 
         value={activeUnit} 
         className="w-full" 
         onValueChange={onUnitChange}
         defaultValue={units[0]?.id}
       >
-        <TabsList className="h-auto p-1 flex-wrap w-full justify-start">
+        <TabsList className="h-auto p-1 flex-wrap w-full justify-start bg-gray-200/50">
           {units.map((unit, index) => (
             <TabsTrigger
               key={unit.id}
               value={unit.id}
               className={cn(
-                "relative data-[state=active]:text-primary truncate max-w-[200px] text-left",
+                "relative data-[state=active]:text-primary data-[state=active]:bg-white min-w-[3rem]",
                 unit.completed && "text-green-600"
               )}
               title={unit.title}
             >
-              <span className="truncate">
-                <span className="mr-2 text-muted-foreground">{index + 1}.</span>
-                {unit.title}
-              </span>
+              <span className="font-medium">{index + 1}</span>
               {unit.completed && (
-                <CheckCircle className="w-4 h-4 ml-2 shrink-0 inline-block text-green-600" />
+                <CheckCircle className="w-3 h-3 ml-1 inline-block text-green-600" />
               )}
             </TabsTrigger>
           ))}

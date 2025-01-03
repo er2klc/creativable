@@ -130,62 +130,64 @@ export const PlatformContent = ({
           isAdmin={isAdmin}
           onEdit={() => {/* Implement edit functionality */}}
           onDelete={() => {/* Implement delete functionality */}}
-          videoDuration={0} // Add actual video duration
-          documentsCount={0} // Add actual documents count
+          videoDuration={0}
+          documentsCount={0}
           progress={progress}
         />
       )}
 
-      <Tabs value={activeUnitId} onValueChange={handleUnitChange} className="w-full">
-        <LearningUnitTabs
-          units={sortedSubmodules.map(unit => ({
-            id: unit.id,
-            title: unit.title,
-            completed: isCompleted(unit.id)
-          }))}
-          activeUnit={activeUnitId}
-          onUnitChange={handleUnitChange}
-          isAdmin={isAdmin}
-          onCreateUnit={() => setIsDialogOpen(true)}
-        />
+      <div className="bg-gray-50 rounded-lg">
+        <Tabs value={activeUnitId} onValueChange={handleUnitChange} className="w-full">
+          <LearningUnitTabs
+            units={sortedSubmodules.map(unit => ({
+              id: unit.id,
+              title: unit.title,
+              completed: isCompleted(unit.id)
+            }))}
+            activeUnit={activeUnitId}
+            onUnitChange={handleUnitChange}
+            isAdmin={isAdmin}
+            onCreateUnit={() => setIsDialogOpen(true)}
+          />
 
-        {sortedSubmodules.map((submodule) => (
-          <TabsContent key={submodule.id} value={submodule.id}>
-            <LearningUnitContent
-              id={submodule.id}
-              moduleTitle={platform.name}
-              title={submodule.title}
-              description={submodule.description}
-              videoUrl={submodule.video_url}
-              isCompleted={isCompleted(submodule.id)}
-              onComplete={() => markAsCompleted(submodule.id, !isCompleted(submodule.id))}
-              onVideoProgress={(progress) => handleVideoProgress(submodule.id, progress)}
-              savedProgress={parseFloat(localStorage.getItem(`video-progress-${submodule.id}`) || '0')}
-              isAdmin={isAdmin}
-              onDelete={handleUnitDeleted}
-              onUpdate={async (data) => {
-                try {
-                  const { error } = await supabase
-                    .from('elevate_lerninhalte')
-                    .update({
-                      title: data.title,
-                      description: data.description,
-                      video_url: data.videoUrl
-                    })
-                    .eq('id', submodule.id);
+          {sortedSubmodules.map((submodule) => (
+            <TabsContent key={submodule.id} value={submodule.id} className="bg-white rounded-b-lg">
+              <LearningUnitContent
+                id={submodule.id}
+                moduleTitle={platform.name}
+                title={submodule.title}
+                description={submodule.description}
+                videoUrl={submodule.video_url}
+                isCompleted={isCompleted(submodule.id)}
+                onComplete={() => markAsCompleted(submodule.id, !isCompleted(submodule.id))}
+                onVideoProgress={(progress) => handleVideoProgress(submodule.id, progress)}
+                savedProgress={parseFloat(localStorage.getItem(`video-progress-${submodule.id}`) || '0')}
+                isAdmin={isAdmin}
+                onDelete={handleUnitDeleted}
+                onUpdate={async (data) => {
+                  try {
+                    const { error } = await supabase
+                      .from('elevate_lerninhalte')
+                      .update({
+                        title: data.title,
+                        description: data.description,
+                        video_url: data.videoUrl
+                      })
+                      .eq('id', submodule.id);
 
-                  if (error) throw error;
-                  await refetch();
-                  toast.success("Lerneinheit erfolgreich aktualisiert");
-                } catch (error) {
-                  console.error('Error updating learning unit:', error);
-                  toast.error("Fehler beim Aktualisieren der Lerneinheit");
-                }
-              }}
-            />
-          </TabsContent>
-        ))}
-      </Tabs>
+                    if (error) throw error;
+                    await refetch();
+                    toast.success("Lerneinheit erfolgreich aktualisiert");
+                  } catch (error) {
+                    console.error('Error updating learning unit:', error);
+                    toast.error("Fehler beim Aktualisieren der Lerneinheit");
+                  }
+                }}
+              />
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
 
       <CreateUnitDialog
         open={isDialogOpen}

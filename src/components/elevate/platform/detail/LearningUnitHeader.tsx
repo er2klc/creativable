@@ -98,7 +98,7 @@ export const LearningUnitHeader = ({
 
       <div className="flex items-center gap-4 bg-slate-50/80 p-2 rounded-lg">
         <div className="flex-1">
-          <Progress value={progress} className="h-2" />
+          <Progress value={progress} className="h-2 bg-gray-200 [&>[data-role=progress]]:bg-blue-500" />
         </div>
         <span className="text-sm font-medium bg-white px-2 py-1 rounded">
           {Math.round(progress)}%

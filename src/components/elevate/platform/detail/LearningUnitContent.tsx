@@ -120,7 +120,7 @@ export const LearningUnitContent = ({
   };
 
   return (
-    <div className="space-y-8 py-6">
+    <div className="space-y-8 py-6 px-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
@@ -135,23 +135,39 @@ export const LearningUnitContent = ({
           <div className="space-y-4 bg-white p-6 rounded-lg border">
             {isEditing ? (
               <div className="space-y-4">
-                <input
-                  type="text"
-                  value={editedTitle}
-                  onChange={(e) => setEditedTitle(e.target.value)}
-                  className="w-full p-2 border rounded"
-                />
-                <textarea
-                  value={editedDescription}
-                  onChange={(e) => setEditedDescription(e.target.value)}
-                  className="w-full p-2 border rounded min-h-[100px]"
-                />
-                <input
-                  type="text"
-                  value={editedVideoUrl}
-                  onChange={(e) => setEditedVideoUrl(e.target.value)}
-                  className="w-full p-2 border rounded"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="title">Titel</Label>
+                  <Input
+                    id="title"
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Beschreibung</Label>
+                  <RichTextEditor
+                    content={editedDescription}
+                    onChange={setEditedDescription}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="videoUrl">Video URL</Label>
+                  <Input
+                    id="videoUrl"
+                    value={editedVideoUrl}
+                    onChange={(e) => setEditedVideoUrl(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Dokumente</Label>
+                  <FileUpload
+                    onFilesSelected={(files) => console.log('Files selected:', files)}
+                    files={[]}
+                    onFileRemove={(index) => console.log('Remove file at index:', index)}
+                  />
+                </div>
                 <div className="flex gap-2">
                   <Button onClick={handleUpdate}>Speichern</Button>
                   <Button variant="outline" onClick={() => setIsEditing(false)}>Abbrechen</Button>
@@ -160,7 +176,10 @@ export const LearningUnitContent = ({
             ) : (
               <>
                 <h2 className="text-xl font-semibold">{title}</h2>
-                <p className="text-muted-foreground whitespace-pre-wrap">{description}</p>
+                <div 
+                  className="prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: description }}
+                />
                 {isAdmin && (
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={() => setIsEditing(true)}>
