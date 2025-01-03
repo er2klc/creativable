@@ -73,7 +73,13 @@ export const PlatformDetailHeader = ({
           <span className="text-sm font-medium">Fortschritt</span>
         </div>
         <div className="flex-1">
-          <Progress value={progress} className="h-2 bg-gray-200 [&>[data-role=progress]]:bg-blue-500" />
+          <Progress 
+            value={progress} 
+            className="h-2 bg-gray-200" 
+            style={{ 
+              '--progress-foreground': 'hsl(142.68deg 71.3% 45.1%)'
+            } as React.CSSProperties}
+          />
         </div>
         <span className="text-sm font-medium bg-white px-2 py-1 rounded">
           {Math.round(progress)}%
