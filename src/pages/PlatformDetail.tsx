@@ -1,31 +1,28 @@
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Plus, CheckCircle2, FileText, Video, Clock } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Progress } from "@/components/ui/progress";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
+import { PlatformHeader } from "@/components/elevate/platform/detail/PlatformHeader";
+import { LearningUnitTabs } from "@/components/elevate/platform/detail/LearningUnitTabs";
+import { CreateUnitDialog } from "@/components/elevate/platform/detail/CreateUnitDialog";
+import { VideoPlayer } from "@/components/elevate/platform/detail/VideoPlayer";
 
 const PlatformDetail = () => {
   const { moduleSlug } = useParams();
   const user = useUser();
+  const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newDescription, setNewDescription] = useState("");
-  const [newVideoUrl, setNewVideoUrl] = useState("");
+  const [videoProgress, setVideoProgress] = useState<Record<string, number>>({});
 
   const { data: platform, isLoading } = useQuery({
     queryKey: ['platform', moduleSlug],
     queryFn: async () => {
-      console.log('Fetching platform data for slug:', moduleSlug);
-      
       const { data, error } = await supabase
         .from('elevate_platforms')
         .select(`
@@ -50,75 +47,75 @@ const PlatformDetail = () => {
         console.error('Error fetching platform:', error);
         throw error;
       }
-      
-      console.log('Fetched platform data:', data);
       return data;
     },
     enabled: !!moduleSlug && !!user
   });
 
-  const { data: userProgress } = useQuery({
-    queryKey: ['userProgress', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('elevate_user_progress')
-        .select('*')
-        .eq('user_id', user?.id);
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user
-  });
-
-  const handleCreateLerneinheit = async () => {
-    if (!user || !platform?.elevate_modules?.[0]?.id) return;
-
+  const handleCreateUnit = async (data: {
+    title: string;
+    description: string;
+    videoUrl: string;
+    files: File[];
+  }) => {
     try {
-      const { error } = await supabase
+      const { data: lerninhalte, error: unitError } = await supabase
         .from('elevate_lerninhalte')
         .insert({
-          module_id: platform.elevate_modules[0].id,
-          title: newTitle,
-          description: newDescription,
-          video_url: newVideoUrl,
-          created_by: user.id,
+          module_id: platform?.elevate_modules?.[0]?.id,
+          title: data.title,
+          description: data.description,
+          video_url: data.videoUrl,
+          created_by: user?.id,
           submodule_order: sortedSubmodules.length
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (unitError) throw unitError;
+
+      for (const file of data.files) {
+        const filePath = `${lerninhalte.id}/${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('elevate-documents')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { error: docError } = await supabase
+          .from('elevate_lerninhalte_documents')
+          .insert({
+            lerninhalte_id: lerninhalte.id,
+            file_name: file.name,
+            file_path: filePath,
+            file_type: file.type,
+            created_by: user?.id
+          });
+
+        if (docError) throw docError;
+      }
 
       toast.success("Neue Lerneinheit erfolgreich erstellt");
       setIsDialogOpen(false);
-      setNewTitle("");
-      setNewDescription("");
-      setNewVideoUrl("");
+      queryClient.invalidateQueries({ queryKey: ['platform', moduleSlug] });
     } catch (error) {
-      console.error('Error creating Lerneinheit:', error);
+      console.error('Error creating learning unit:', error);
       toast.error("Fehler beim Erstellen der Lerneinheit");
     }
   };
 
-  const markAsCompleted = async (lerninhalteId: string) => {
-    try {
-      const { error } = await supabase
-        .from('elevate_user_progress')
-        .upsert({
-          user_id: user?.id,
-          lerninhalte_id: lerninhalteId,
-          completed: true,
-          completed_at: new Date().toISOString()
-        });
+  const handleVideoProgress = async (lerninhalteId: string, progress: number) => {
+    setVideoProgress(prev => ({
+      ...prev,
+      [lerninhalteId]: progress
+    }));
 
-      if (error) throw error;
-      toast.success("Lerneinheit als erledigt markiert");
-    } catch (error) {
-      console.error('Error marking as completed:', error);
-      toast.error("Fehler beim Markieren als erledigt");
+    if (progress >= 95 && !isCompleted(lerninhalteId)) {
+      await markAsCompleted(lerninhalteId);
     }
-  };
 
-  const isAdmin = platform?.created_by === user?.id;
+    localStorage.setItem(`video-progress-${lerninhalteId}`, progress.toString());
+  };
 
   if (isLoading) {
     return (
@@ -150,92 +147,31 @@ const PlatformDetail = () => {
     ?.flatMap(module => module.elevate_lerninhalte || [])
     .sort((a, b) => (a.submodule_order || 0) - (b.submodule_order || 0)) || [];
 
-  const isCompleted = (lerninhalteId: string) => {
-    return userProgress?.some(
-      progress => progress.lerninhalte_id === lerninhalteId && progress.completed
-    );
-  };
-
   const completedCount = sortedSubmodules.filter(submodule => 
     isCompleted(submodule.id)
   ).length;
 
-  const progressPercentage = sortedSubmodules.length > 0
-    ? (completedCount / sortedSubmodules.length) * 100
-    : 0;
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="container mx-auto py-8">
-        {/* Header Section */}
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
-          <div className="flex justify-between items-start gap-8">
-            <div className="space-y-4">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                {platform.name}
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-2xl">
-                {platform.description}
-              </p>
-              <div className="flex items-center gap-4">
-                <div className="flex-1 max-w-md">
-                  <Progress value={progressPercentage} className="h-3" />
-                </div>
-                <span className="text-sm font-medium">
-                  {completedCount} von {sortedSubmodules.length} abgeschlossen
-                </span>
-              </div>
-            </div>
-            {isAdmin && (
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Neue Lerneinheit
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Neue Lerneinheit erstellen</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Titel</label>
-                      <Input
-                        placeholder="Titel der Lerneinheit"
-                        value={newTitle}
-                        onChange={(e) => setNewTitle(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Beschreibung</label>
-                      <Textarea
-                        placeholder="Beschreibung der Lerneinheit"
-                        value={newDescription}
-                        onChange={(e) => setNewDescription(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Video URL</label>
-                      <Input
-                        placeholder="https://youtube.com/..."
-                        value={newVideoUrl}
-                        onChange={(e) => setNewVideoUrl(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={handleCreateLerneinheit}>
-                      Lerneinheit erstellen
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
+        <div className="flex justify-between items-start mb-8">
+          <PlatformHeader
+            name={platform.name}
+            description={platform.description}
+            completedCount={completedCount}
+            totalCount={sortedSubmodules.length}
+          />
+          {isAdmin && (
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Neue Lerneinheit
+            </Button>
+          )}
         </div>
 
-        {/* Content Section */}
         {sortedSubmodules.length === 0 ? (
           <div className="bg-white p-6 rounded-lg shadow-lg text-center">
             <h3 className="text-xl font-semibold mb-2">Keine Lerneinheiten verfügbar</h3>
@@ -245,31 +181,21 @@ const PlatformDetail = () => {
           </div>
         ) : (
           <Tabs defaultValue={sortedSubmodules[0]?.id} className="w-full">
-            <TabsList className="w-full justify-start bg-white p-1 rounded-lg mb-6">
-              {sortedSubmodules.map((submodule, index) => (
-                <TabsTrigger 
-                  key={submodule.id} 
-                  value={submodule.id}
-                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground relative py-2 px-4"
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="w-6 h-6 flex items-center justify-center rounded-full bg-primary/10">
-                      {index + 1}
-                    </span>
-                    {submodule.title}
-                  </span>
-                  {isCompleted(submodule.id) && (
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  )}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            <LearningUnitTabs
+              units={sortedSubmodules.map(unit => ({
+                id: unit.id,
+                title: unit.title,
+                completed: isCompleted(unit.id)
+              }))}
+              activeUnit={sortedSubmodules[0]?.id}
+              onUnitChange={() => {}}
+            />
             {sortedSubmodules.map((submodule) => (
               <TabsContent key={submodule.id} value={submodule.id}>
                 <div className="bg-white p-8 rounded-xl shadow-sm space-y-6">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-2xl font-bold mb-2">{submodule.title}</h3>
+                    <div className="space-y-4">
+                      <h3 className="text-2xl font-bold">{submodule.title}</h3>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         {submodule.video_url && (
                           <span className="flex items-center gap-1">
@@ -288,23 +214,21 @@ const PlatformDetail = () => {
                       </div>
                     </div>
                     <Button
-                      variant={isCompleted(submodule.id) ? "secondary" : "default"}
+                      variant="ghost"
+                      size="icon"
+                      className={`${isCompleted(submodule.id) ? 'text-green-500' : 'text-gray-400'}`}
                       onClick={() => markAsCompleted(submodule.id)}
-                      className="flex items-center gap-2"
                     >
-                      <CheckCircle2 className="h-4 w-4" />
-                      {isCompleted(submodule.id) ? "Erledigt" : "Als erledigt markieren"}
+                      <CheckCircle2 className="h-5 w-5" />
                     </Button>
                   </div>
                   
                   {submodule.video_url && (
-                    <div className="aspect-video rounded-lg overflow-hidden bg-black">
-                      <iframe
-                        src={submodule.video_url.replace('watch?v=', 'embed/')}
-                        className="w-full h-full"
-                        allowFullScreen
-                      />
-                    </div>
+                    <VideoPlayer
+                      videoUrl={submodule.video_url}
+                      onProgress={(progress) => handleVideoProgress(submodule.id, progress)}
+                      savedProgress={parseFloat(localStorage.getItem(`video-progress-${submodule.id}`) || '0')}
+                    />
                   )}
                   
                   <div className="prose max-w-none">
@@ -317,6 +241,12 @@ const PlatformDetail = () => {
             ))}
           </Tabs>
         )}
+
+        <CreateUnitDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          onSubmit={handleCreateUnit}
+        />
       </div>
     </div>
   );
