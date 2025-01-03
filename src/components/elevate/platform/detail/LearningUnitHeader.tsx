@@ -29,10 +29,10 @@ export const LearningUnitHeader = ({
   progress = 0,
 }: LearningUnitHeaderProps) => {
   return (
-    <div className="w-full space-y-4 border-b border-border/40 pb-4">
+    <div className="w-full space-y-4 pb-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-start">
+        <div className="flex items-center gap-6">
+          <div className="flex flex-col items-start bg-slate-50 px-4 py-2 rounded-lg">
             <span className="text-sm text-muted-foreground">
               Modul
             </span>
@@ -40,14 +40,22 @@ export const LearningUnitHeader = ({
               {moduleTitle}
             </span>
           </div>
-          <div className="h-12 w-px bg-border/40" />
-          <div className="flex flex-col items-start">
-            <span className="text-sm text-muted-foreground">
-              Lerneinheit
-            </span>
-            <span className="font-semibold text-primary">
-              {title}
-            </span>
+          
+          <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-lg">
+            <div className="flex flex-col items-start">
+              <span className="text-sm text-muted-foreground">
+                Lerneinheit
+              </span>
+              <span className="font-semibold text-primary">
+                {title}
+              </span>
+            </div>
+            {videoDuration > 0 && (
+              <div className="flex items-center gap-1 text-muted-foreground ml-3">
+                <Clock className="h-4 w-4" />
+                <span className="text-sm">~{Math.round(videoDuration / 60)} Min</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -78,7 +86,7 @@ export const LearningUnitHeader = ({
             className={cn(isCompleted ? 'text-green-500' : 'text-gray-400')}
             onClick={onComplete}
           >
-            <CheckCircle2 className="h-5 w-5" />
+            <CheckCircle2 className="h-6 w-6" />
           </Button>
         </div>
       </div>
@@ -87,13 +95,7 @@ export const LearningUnitHeader = ({
         <div className="flex-1">
           <Progress value={progress} className="h-2" />
         </div>
-        <div className="flex items-center gap-4 text-muted-foreground text-sm whitespace-nowrap">
-          {videoDuration > 0 && (
-            <span className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              ~{Math.round(videoDuration / 60)} Min
-            </span>
-          )}
+        <div className="flex items-center gap-2 text-muted-foreground text-sm whitespace-nowrap">
           {documentsCount > 0 && (
             <span className="flex items-center gap-2">
               <FileText className="h-4 w-4" />

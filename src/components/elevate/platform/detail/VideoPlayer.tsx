@@ -107,7 +107,7 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
   };
 
   return (
-    <div className="aspect-video rounded-lg overflow-hidden bg-black">
+    <div className="aspect-video w-full max-w-full rounded-lg overflow-hidden bg-black">
       <div ref={iframeRef} className="w-full h-full" />
     </div>
   );
