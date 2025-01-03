@@ -9,7 +9,7 @@ import { useState } from "react";
 import { PlatformHeader } from "@/components/elevate/platform/detail/PlatformHeader";
 import { LearningUnitTabs } from "@/components/elevate/platform/detail/LearningUnitTabs";
 import { CreateUnitDialog } from "@/components/elevate/platform/detail/CreateUnitDialog";
-import { VideoPlayer } from "@/components/elevate/platform/detail/VideoPlayer";
+import { LearningUnitContent } from "@/components/elevate/platform/detail/LearningUnitContent";
 import { useLearningProgress } from "@/hooks/use-learning-progress";
 
 const PlatformDetail = () => {
@@ -103,19 +103,6 @@ const PlatformDetail = () => {
     }
   };
 
-  const handleVideoProgress = async (lerninhalteId: string, progress: number) => {
-    setVideoProgress(prev => ({
-      ...prev,
-      [lerninhalteId]: progress
-    }));
-
-    if (progress >= 95 && !isCompleted(lerninhalteId)) {
-      await markAsCompleted(lerninhalteId);
-    }
-
-    localStorage.setItem(`video-progress-${lerninhalteId}`, progress.toString());
-  };
-
   if (isLoading) {
     return (
       <div className="container mx-auto py-6 space-y-6">
@@ -152,6 +139,19 @@ const PlatformDetail = () => {
 
   const isAdmin = user?.id === platform.created_by;
 
+  const handleVideoProgress = async (lerninhalteId: string, progress: number) => {
+    setVideoProgress(prev => ({
+      ...prev,
+      [lerninhalteId]: progress
+    }));
+
+    if (progress >= 95 && !isCompleted(lerninhalteId)) {
+      await markAsCompleted(lerninhalteId);
+    }
+
+    localStorage.setItem(`video-progress-${lerninhalteId}`, progress.toString());
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="container mx-auto py-8">
@@ -186,51 +186,15 @@ const PlatformDetail = () => {
             />
             {sortedSubmodules.map((submodule) => (
               <TabsContent key={submodule.id} value={submodule.id}>
-                <div className="bg-white p-8 rounded-xl shadow-sm space-y-6">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-4">
-                      <h3 className="text-2xl font-bold">{submodule.title}</h3>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        {submodule.video_url && (
-                          <span className="flex items-center gap-1">
-                            <Video className="h-4 w-4" />
-                            Video verfügbar
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          ~15 Minuten
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <FileText className="h-4 w-4" />
-                          Lernmaterial
-                        </span>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={`${isCompleted(submodule.id) ? 'text-green-500' : 'text-gray-400'}`}
-                      onClick={() => markAsCompleted(submodule.id)}
-                    >
-                      <CheckCircle2 className="h-5 w-5" />
-                    </Button>
-                  </div>
-                  
-                  {submodule.video_url && (
-                    <VideoPlayer
-                      videoUrl={submodule.video_url}
-                      onProgress={(progress) => handleVideoProgress(submodule.id, progress)}
-                      savedProgress={parseFloat(localStorage.getItem(`video-progress-${submodule.id}`) || '0')}
-                    />
-                  )}
-                  
-                  <div className="prose max-w-none">
-                    <p className="text-muted-foreground whitespace-pre-wrap">
-                      {submodule.description}
-                    </p>
-                  </div>
-                </div>
+                <LearningUnitContent
+                  title={submodule.title}
+                  description={submodule.description}
+                  videoUrl={submodule.video_url}
+                  isCompleted={isCompleted(submodule.id)}
+                  onComplete={() => markAsCompleted(submodule.id)}
+                  onVideoProgress={(progress) => handleVideoProgress(submodule.id, progress)}
+                  savedProgress={parseFloat(localStorage.getItem(`video-progress-${submodule.id}`) || '0')}
+                />
               </TabsContent>
             ))}
           </Tabs>
