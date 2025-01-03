@@ -4,10 +4,9 @@ import { VideoPlayer } from "./VideoPlayer";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Editor } from "@/components/ui/rich-text-editor";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 interface LearningUnitContentProps {
   title: string;
@@ -169,7 +168,7 @@ export const LearningUnitContent = ({
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="description">Beschreibung</Label>
-              <Editor
+              <RichTextEditor
                 content={editedDescription}
                 onChange={setEditedDescription}
               />
