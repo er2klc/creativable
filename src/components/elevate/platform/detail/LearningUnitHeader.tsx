@@ -1,4 +1,4 @@
-import { Edit, Trash2, CheckCircle2, Clock, FileText } from "lucide-react";
+import { Edit, Trash2, CheckCircle2, Clock, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
@@ -83,26 +83,25 @@ export const LearningUnitHeader = ({
           <Button
             variant="ghost"
             size="icon"
-            className={cn(isCompleted ? 'text-green-500' : 'text-gray-400')}
+            className={cn(
+              isCompleted ? 'text-green-500' : 'text-gray-400',
+              'hover:bg-green-50'
+            )}
             onClick={onComplete}
           >
-            <CheckCircle2 className="h-6 w-6" />
+            <CheckCircle2 className="h-7 w-7" />
           </Button>
         </div>
       </div>
 
       <div className="flex items-center gap-4">
+        <Percent className="h-4 w-4 text-muted-foreground" />
         <div className="flex-1">
           <Progress value={progress} className="h-2" />
         </div>
-        <div className="flex items-center gap-2 text-muted-foreground text-sm whitespace-nowrap">
-          {documentsCount > 0 && (
-            <span className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              {documentsCount}
-            </span>
-          )}
-        </div>
+        <span className="text-sm text-muted-foreground whitespace-nowrap">
+          {Math.round(progress)}%
+        </span>
       </div>
     </div>
   );

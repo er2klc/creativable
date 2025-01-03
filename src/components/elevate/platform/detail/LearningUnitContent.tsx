@@ -1,5 +1,6 @@
 import { VideoPlayer } from "./VideoPlayer";
 import { useEffect } from "react";
+import { NotesSection } from "./NotesSection";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,7 +35,6 @@ export const LearningUnitContent = ({
   onUpdate,
 }: LearningUnitContentProps) => {
   useEffect(() => {
-    // Load video progress from local storage
     const progress = parseFloat(localStorage.getItem(`video-progress-${id}`) || '0');
     if (progress > 0) {
       onVideoProgress(progress);
@@ -43,43 +43,28 @@ export const LearningUnitContent = ({
 
   return (
     <div className="space-y-8 py-6">
-      <div className="max-w-full">
-        <VideoPlayer
-          videoUrl={videoUrl}
-          onProgress={onVideoProgress}
-          savedProgress={savedProgress}
-          onDuration={(duration) => console.log('Video duration:', duration)}
-        />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <div className="aspect-video w-full">
+            <VideoPlayer
+              videoUrl={videoUrl}
+              onProgress={onVideoProgress}
+              savedProgress={savedProgress}
+              onDuration={(duration) => console.log('Video duration:', duration)}
+            />
+          </div>
+        </div>
+        <div className="lg:col-span-1">
+          <NotesSection
+            notes=""
+            onChange={() => {}}
+            onSave={() => {}}
+          />
+        </div>
       </div>
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">{title}</h2>
         <p className="text-muted-foreground">{description}</p>
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={onComplete}
-            className={isCompleted ? 'text-green-500' : 'text-gray-400'}
-          >
-            {isCompleted ? 'Abgeschlossen' : 'Abschließen'}
-          </Button>
-          {isAdmin && (
-            <>
-              <Button
-                variant="ghost"
-                onClick={() => onUpdate({ title, description, videoUrl })}
-              >
-                Bearbeiten
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={onDelete}
-                className="text-red-500 hover:text-red-600"
-              >
-                Löschen
-              </Button>
-            </>
-          )}
-        </div>
       </div>
     </div>
   );
