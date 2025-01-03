@@ -1,7 +1,7 @@
-import { Edit, Trash2, CheckCircle2, Clock, FileText, ChevronRight, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronRight, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { HeaderControls } from "./HeaderControls";
 
 interface PlatformDetailHeaderProps {
   moduleTitle: string;
@@ -55,52 +55,16 @@ export const PlatformDetailHeader = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {videoDuration > 0 && (
-            <div className="flex items-center gap-1 text-muted-foreground bg-white/50 px-3 py-1.5 rounded-md border">
-              <Clock className="h-4 w-4" />
-              <span className="text-sm">~{Math.round(videoDuration / 60)} Min</span>
-            </div>
-          )}
-          {documentsCount > 0 && (
-            <div className="flex items-center gap-1 text-muted-foreground bg-white/50 px-3 py-1.5 rounded-md border">
-              <FileText className="h-4 w-4" />
-              <span className="text-sm">{documentsCount}</span>
-            </div>
-          )}
-          <Button
-            variant={isCompleted ? "default" : "outline"}
-            size="sm"
-            className={cn(
-              isCompleted ? 'bg-green-500 text-white hover:bg-green-600' : 'text-gray-400 hover:text-gray-500',
-              'flex items-center gap-2'
-            )}
-            onClick={onComplete}
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            {isCompleted ? 'Abgeschlossen' : 'Abschließen'}
-          </Button>
-          {isAdmin && onEdit && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onEdit}
-              className="text-primary hover:text-primary/80 hover:bg-primary/10"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-          )}
-          {isAdmin && onDelete && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onDelete}
-              className="text-red-500 hover:text-red-600 hover:bg-red-50"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        <HeaderControls
+          id=""
+          isCompleted={isCompleted}
+          onComplete={onComplete}
+          isAdmin={isAdmin || false}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          videoDuration={videoDuration}
+          documentsCount={documentsCount}
+        />
       </div>
 
       <div className="flex items-center gap-4 bg-slate-50/80 p-2 rounded-lg">
