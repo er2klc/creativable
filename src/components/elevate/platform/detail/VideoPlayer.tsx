@@ -1,12 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-declare global {
-  interface Window {
-    onYouTubeIframeAPIReady: () => void;
-    YT: any;
-  }
-}
-
 interface VideoPlayerProps {
   videoUrl: string;
   onProgress: (progress: number) => void;
@@ -26,12 +19,20 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
     firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
     // Extract video ID from URL
-    const videoId = videoUrl.split('v=')[1];
+    const videoId = videoUrl.includes('v=') 
+      ? videoUrl.split('v=')[1].split('&')[0]
+      : videoUrl.split('/').pop();
     
     // Initialize player when API is ready
     window.onYouTubeIframeAPIReady = () => {
       const newPlayer = new window.YT.Player(iframeRef.current, {
         videoId,
+        playerVars: {
+          autoplay: 0,
+          modestbranding: 1,
+          rel: 0,
+          origin: window.location.origin
+        },
         events: {
           onReady: (event: any) => {
             if (savedProgress > 0) {
@@ -45,6 +46,9 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
             if (event.data === window.YT.PlayerState.PLAYING) {
               startTracking(event.target);
             }
+          },
+          onError: (event: any) => {
+            console.error('YouTube Player Error:', event.data);
           }
         }
       });

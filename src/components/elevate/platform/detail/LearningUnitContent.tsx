@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { FileUpload } from "../detail/FileUpload";
+import { FileUpload } from "./FileUpload";
+import { DocumentSection } from "./DocumentSection";
 
 interface LearningUnitContentProps {
   title: string;
@@ -59,7 +60,12 @@ export const LearningUnitContent = ({
       {/* Header Section */}
       <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
         <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-center flex-1">{title}</h3>
+          <h3 className="text-2xl font-bold text-center flex-1 flex items-center gap-2">
+            {documents && documents.length > 0 && (
+              <FileText className="h-5 w-5 text-primary" />
+            )}
+            {title}
+          </h3>
           <div className="flex items-center gap-2">
             {isAdmin && onDelete && (
               <>
@@ -111,30 +117,11 @@ export const LearningUnitContent = ({
       <div className="grid grid-cols-12 gap-6">
         {/* Left Column: Description and Documents */}
         <div className="col-span-12 lg:col-span-5">
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 min-h-[400px]">
-            <div className="prose prose-sm max-w-none whitespace-pre-wrap h-full">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 min-h-[400px] flex flex-col">
+            <div className="prose prose-sm max-w-none flex-grow">
               <div dangerouslySetInnerHTML={{ __html: description || "" }} />
             </div>
-            {documents.length > 0 && (
-              <div className="mt-6">
-                <h4 className="font-semibold mb-2">Dokumente</h4>
-                <ul className="space-y-2">
-                  {documents.map((doc, index) => (
-                    <li key={index}>
-                      <a
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline flex items-center gap-2"
-                      >
-                        <FileText className="h-4 w-4" />
-                        {doc.name}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <DocumentSection documents={documents} />
           </div>
         </div>
         

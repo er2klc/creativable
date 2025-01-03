@@ -1,10 +1,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { FileUpload } from "./FileUpload";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 interface CreateUnitDialogProps {
   open: boolean;
@@ -58,11 +58,9 @@ export const CreateUnitDialog = ({
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Beschreibung</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Beschreibung der Lerneinheit"
+            <RichTextEditor
+              content={description}
+              onChange={setDescription}
             />
           </div>
           <div className="space-y-2">
