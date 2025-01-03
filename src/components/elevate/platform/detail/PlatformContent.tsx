@@ -1,13 +1,11 @@
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { LearningUnitTabs } from "./LearningUnitTabs";
 import { LearningUnitContent } from "./LearningUnitContent";
-import { LearningUnitHeader } from "./LearningUnitHeader";
-import { Button } from "@/components/ui/button";
 import { CreateUnitDialog } from "./CreateUnitDialog";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { RefetchOptions, QueryObserverResult } from "@tanstack/react-query";
+import { PlatformDetailHeader } from "./PlatformDetailHeader";
 
 interface PlatformContentProps {
   platform: any;
@@ -18,7 +16,7 @@ interface PlatformContentProps {
   isCompleted: (id: string) => boolean;
   markAsCompleted: (id: string, completed?: boolean) => Promise<void>;
   handleVideoProgress: (lerninhalteId: string, progress: number) => void;
-  refetch: (options?: RefetchOptions | undefined) => Promise<QueryObserverResult<any, Error>>;
+  refetch: () => Promise<any>;
 }
 
 export const PlatformContent = ({
@@ -86,13 +84,9 @@ export const PlatformContent = ({
     }
   };
 
-  const handleUnitDeleted = async () => {
-    try {
-      await refetch();
-    } catch (error) {
-      console.error('Error refetching after unit deletion:', error);
-    }
-  };
+  const activeUnit = sortedSubmodules.find(unit => unit.id === activeUnitId);
+  const completedCount = sortedSubmodules.filter(unit => isCompleted(unit.id)).length;
+  const progress = (completedCount / sortedSubmodules.length) * 100;
 
   if (sortedSubmodules.length === 0) {
     return (
@@ -115,14 +109,10 @@ export const PlatformContent = ({
     );
   }
 
-  const activeUnit = sortedSubmodules.find(unit => unit.id === activeUnitId);
-  const completedCount = sortedSubmodules.filter(unit => isCompleted(unit.id)).length;
-  const progress = (completedCount / sortedSubmodules.length) * 100;
-
   return (
     <>
       {activeUnit && (
-        <LearningUnitHeader
+        <PlatformDetailHeader
           moduleTitle={platform.name}
           title={activeUnit.title}
           isCompleted={isCompleted(activeUnit.id)}
@@ -164,7 +154,21 @@ export const PlatformContent = ({
                 onVideoProgress={(progress) => handleVideoProgress(submodule.id, progress)}
                 savedProgress={parseFloat(localStorage.getItem(`video-progress-${submodule.id}`) || '0')}
                 isAdmin={isAdmin}
-                onDelete={handleUnitDeleted}
+                onDelete={async () => {
+                  try {
+                    const { error } = await supabase
+                      .from('elevate_lerninhalte')
+                      .delete()
+                      .eq('id', submodule.id);
+
+                    if (error) throw error;
+                    await refetch();
+                    toast.success("Lerneinheit erfolgreich gelöscht");
+                  } catch (error) {
+                    console.error('Error deleting learning unit:', error);
+                    toast.error("Fehler beim Löschen der Lerneinheit");
+                  }
+                }}
                 onUpdate={async (data) => {
                   try {
                     const { error } = await supabase

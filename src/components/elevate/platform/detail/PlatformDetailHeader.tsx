@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 
-interface LearningUnitHeaderProps {
+interface PlatformDetailHeaderProps {
   moduleTitle: string;
   title: string;
   isCompleted: boolean;
@@ -16,7 +16,7 @@ interface LearningUnitHeaderProps {
   progress?: number;
 }
 
-export const LearningUnitHeader = ({
+export const PlatformDetailHeader = ({
   moduleTitle,
   title,
   isCompleted,
@@ -27,7 +27,7 @@ export const LearningUnitHeader = ({
   videoDuration,
   documentsCount,
   progress = 0,
-}: LearningUnitHeaderProps) => {
+}: PlatformDetailHeaderProps) => {
   return (
     <div className="w-full space-y-4 pb-4">
       <div className="flex items-center justify-between">
