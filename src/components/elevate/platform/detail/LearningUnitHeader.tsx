@@ -1,6 +1,7 @@
 import { Edit, Trash2, CheckCircle2, Clock, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 
 interface LearningUnitHeaderProps {
   moduleTitle: string;
@@ -12,6 +13,7 @@ interface LearningUnitHeaderProps {
   onDelete?: () => void;
   videoDuration?: number;
   documentsCount: number;
+  progress?: number;
 }
 
 export const LearningUnitHeader = ({
@@ -24,11 +26,11 @@ export const LearningUnitHeader = ({
   onDelete,
   videoDuration,
   documentsCount,
+  progress = 0,
 }: LearningUnitHeaderProps) => {
   return (
-    <div className="w-full space-y-4 mb-8">
-      {/* Title Section */}
-      <div className="flex items-center justify-between border-b border-border/40 pb-4">
+    <div className="w-full space-y-4 border-b border-border/40 pb-4">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-start">
             <span className="text-sm text-muted-foreground">
@@ -81,20 +83,24 @@ export const LearningUnitHeader = ({
         </div>
       </div>
 
-      {/* Progress Indicators */}
-      <div className="flex items-center gap-6 text-muted-foreground text-sm">
-        {videoDuration > 0 && (
-          <span className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            ~{Math.round(videoDuration / 60)} Minuten
-          </span>
-        )}
-        {documentsCount > 0 && (
-          <span className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            {documentsCount} {documentsCount === 1 ? 'Dokument' : 'Dokumente'}
-          </span>
-        )}
+      <div className="flex items-center gap-4">
+        <div className="flex-1">
+          <Progress value={progress} className="h-2" />
+        </div>
+        <div className="flex items-center gap-4 text-muted-foreground text-sm whitespace-nowrap">
+          {videoDuration > 0 && (
+            <span className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              ~{Math.round(videoDuration / 60)} Min
+            </span>
+          )}
+          {documentsCount > 0 && (
+            <span className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              {documentsCount}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
