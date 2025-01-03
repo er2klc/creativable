@@ -1,5 +1,34 @@
 import { useEffect, useRef, useState } from "react";
 
+// Declare YouTube IFrame API types
+declare global {
+  interface Window {
+    onYouTubeIframeAPIReady: () => void;
+    YT: {
+      Player: new (
+        elementId: HTMLElement | string,
+        config: {
+          videoId: string;
+          playerVars?: {
+            autoplay?: number;
+            modestbranding?: number;
+            rel?: number;
+            origin?: string;
+          };
+          events?: {
+            onReady?: (event: { target: any }) => void;
+            onStateChange?: (event: { data: number; target: any }) => void;
+            onError?: (event: { data: number }) => void;
+          };
+        }
+      ) => void;
+      PlayerState: {
+        PLAYING: number;
+      };
+    };
+  }
+}
+
 interface VideoPlayerProps {
   videoUrl: string;
   onProgress: (progress: number) => void;
