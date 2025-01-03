@@ -10,14 +10,19 @@ export const useLearningProgress = () => {
   const { data: completedUnits = [] } = useQuery({
     queryKey: ['learning-progress', user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
+      
       const { data } = await supabase
         .from('elevate_user_progress')
         .select('lerninhalte_id')
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .eq('completed', true);
+      
       return data?.map(item => item.lerninhalte_id) || [];
     },
-    enabled: !!user,
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    gcTime: 1000 * 60 * 15, // Keep unused data for 15 minutes
   });
 
   const isCompleted = (lerninhalteId: string) => {
@@ -25,7 +30,7 @@ export const useLearningProgress = () => {
   };
 
   const markAsCompleted = async (lerninhalteId: string, completed: boolean = true) => {
-    if (!user) return;
+    if (!user?.id) return;
 
     try {
       if (completed) {
@@ -40,7 +45,6 @@ export const useLearningProgress = () => {
 
         if (error) throw error;
       } else {
-        // Delete the progress entry to mark as uncompleted
         const { error } = await supabase
           .from('elevate_user_progress')
           .delete()
@@ -50,8 +54,16 @@ export const useLearningProgress = () => {
         if (error) throw error;
       }
 
-      await queryClient.invalidateQueries({ queryKey: ['learning-progress', user.id] });
-      toast.success(completed ? "Lerneinheit als abgeschlossen markiert" : "Lerneinheit als nicht abgeschlossen markiert");
+      // Invalidate and refetch the query
+      await queryClient.invalidateQueries({
+        queryKey: ['learning-progress', user.id]
+      });
+      
+      toast.success(
+        completed 
+          ? "Lerneinheit als abgeschlossen markiert" 
+          : "Lerneinheit als nicht abgeschlossen markiert"
+      );
     } catch (error) {
       console.error('Error updating progress:', error);
       toast.error("Fehler beim Aktualisieren des Fortschritts");
@@ -61,5 +73,6 @@ export const useLearningProgress = () => {
   return {
     isCompleted,
     markAsCompleted,
+    completedUnits,
   };
 };
