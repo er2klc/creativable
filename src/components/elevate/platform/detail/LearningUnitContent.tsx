@@ -120,7 +120,6 @@ export const LearningUnitContent = ({
     try {
       await onUpdate(data);
 
-      // Handle file uploads
       for (const file of files) {
         const filePath = `${id}/${file.name}`;
         const { error: uploadError } = await supabase.storage
