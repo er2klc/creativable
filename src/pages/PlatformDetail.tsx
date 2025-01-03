@@ -153,7 +153,11 @@ const PlatformDetail = () => {
   };
 
   const handleUnitDeleted = async () => {
-    await refetch();
+    try {
+      await refetch();
+    } catch (error) {
+      console.error('Error refetching after unit deletion:', error);
+    }
   };
 
   return (

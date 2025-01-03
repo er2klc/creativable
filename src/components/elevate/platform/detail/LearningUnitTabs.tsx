@@ -25,9 +25,9 @@ export const LearningUnitTabs = ({
   onCreateUnit
 }: LearningUnitTabsProps) => {
   return (
-    <div className="relative mb-6">
+    <div className="relative mb-6 bg-muted rounded-md">
       <Tabs defaultValue={activeUnit} className="w-full" onValueChange={onUnitChange}>
-        <TabsList className="h-auto p-1 flex-wrap">
+        <TabsList className="h-auto p-1 flex-wrap w-full">
           {units.map((unit) => (
             <TabsTrigger
               key={unit.id}
