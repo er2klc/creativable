@@ -1,5 +1,5 @@
 import { VideoPlayer } from "./VideoPlayer";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { NotesSection } from "./NotesSection";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { EditUnitDialog } from "./EditUnitDialog";
 import { HeaderControls } from "./HeaderControls";
+import { ContentDescription } from "./ContentDescription";
+import { ContentHeaderControls } from "./ContentHeaderControls";
 
 interface LearningUnitContentProps {
   id: string;
@@ -149,37 +151,6 @@ export const LearningUnitContent = ({
     }
   };
 
-  const handleFileRemove = async (index: number) => {
-    if (existingFiles && existingFiles[index]) {
-      try {
-        const fileToDelete = existingFiles[index];
-        
-        const { error: storageError } = await supabase.storage
-          .from('elevate-documents')
-          .remove([fileToDelete.file_path]);
-
-        if (storageError) throw storageError;
-
-        const { error: dbError } = await supabase
-          .from('elevate_lerninhalte_documents')
-          .delete()
-          .eq('id', fileToDelete.id);
-
-        if (dbError) throw dbError;
-
-        refetchFiles();
-        toast.success('Datei erfolgreich gelöscht');
-      } catch (error) {
-        console.error('Error deleting file:', error);
-        toast.error('Fehler beim Löschen der Datei');
-      }
-    } else {
-      const newFiles = [...files];
-      newFiles.splice(index, 1);
-      setFiles(newFiles);
-    }
-  };
-
   return (
     <div className="space-y-8 py-6 px-6 bg-gray-50">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -193,39 +164,16 @@ export const LearningUnitContent = ({
             />
           </div>
           
-          <div className="space-y-6 bg-gray-50 p-6 rounded-lg border border-gray-200">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h2 className="text-xl font-semibold mb-4">{title}</h2>
-                <div 
-                  className="prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: description }}
-                />
-              </div>
-              <HeaderControls
-                id={id}
-                isCompleted={isCompleted}
-                onComplete={onComplete}
-                isAdmin={isAdmin}
-                onEdit={() => setIsEditing(true)}
-                onDelete={onDelete}
-                videoDuration={videoDuration}
-                documentsCount={existingFiles?.length || 0}
-              />
-            </div>
-            
-            {existingFiles && existingFiles.length > 0 && (
-              <div className="mt-8 pt-6 border-t">
-                <h3 className="font-medium mb-4">Lerndokumente</h3>
-                <div className="space-y-2">
-                  {existingFiles.map((file) => (
-                    <div key={file.id} className="flex items-center p-2 bg-white rounded-lg">
-                      <span className="text-sm">{file.file_name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          <div className="flex justify-between items-start">
+            <ContentDescription
+              title={title}
+              description={description}
+              existingFiles={existingFiles}
+            />
+            <ContentHeaderControls
+              videoDuration={videoDuration}
+              documentsCount={existingFiles?.length || 0}
+            />
           </div>
         </div>
         
@@ -246,7 +194,36 @@ export const LearningUnitContent = ({
         videoUrl={videoUrl}
         onUpdate={handleUpdate}
         existingFiles={existingFiles}
-        onFileRemove={handleFileRemove}
+        onFileRemove={async (index) => {
+          if (existingFiles && existingFiles[index]) {
+            try {
+              const fileToDelete = existingFiles[index];
+              
+              const { error: storageError } = await supabase.storage
+                .from('elevate-documents')
+                .remove([fileToDelete.file_path]);
+
+              if (storageError) throw storageError;
+
+              const { error: dbError } = await supabase
+                .from('elevate_lerninhalte_documents')
+                .delete()
+                .eq('id', fileToDelete.id);
+
+              if (dbError) throw dbError;
+
+              refetchFiles();
+              toast.success('Datei erfolgreich gelöscht');
+            } catch (error) {
+              console.error('Error deleting file:', error);
+              toast.error('Fehler beim Löschen der Datei');
+            }
+          } else {
+            const newFiles = [...files];
+            newFiles.splice(index, 1);
+            setFiles(newFiles);
+          }
+        }}
         onFilesSelected={setFiles}
         files={files}
       />
