@@ -1,5 +1,5 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen } from "lucide-react";
+import { BookOpen, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -30,8 +30,8 @@ export const LearningUnitTabs = ({
   return (
     <div className="relative mb-6 bg-gray-100 rounded-t-md">
       <div className="px-4 py-2 flex items-center gap-2 border-b border-gray-200">
-        <BookOpen className="w-5 h-5 text-blue-500" />
-        <Progress value={progress} className="h-2 bg-gray-200 flex-1" />
+        <TrendingUp className="w-5 h-5 text-blue-500" />
+        <Progress value={progress} className="h-2 flex-1 bg-gray-200 [&>[data-role=progress]]:bg-blue-400" />
       </div>
       <Tabs 
         value={activeUnit} 
