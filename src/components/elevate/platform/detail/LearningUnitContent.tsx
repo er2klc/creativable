@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
 import { EditUnitDialog } from "./EditUnitDialog";
 import { ContentDescription } from "./ContentDescription";
+import { LearningUnitHeader } from "./LearningUnitHeader";
 
 interface LearningUnitContentProps {
   id: string;
@@ -151,6 +152,19 @@ export const LearningUnitContent = ({
 
   return (
     <div className="space-y-8 py-6 px-6 bg-gray-50">
+      <LearningUnitHeader
+        moduleTitle={moduleTitle}
+        title={title}
+        isCompleted={isCompleted}
+        onComplete={onComplete}
+        isAdmin={isAdmin}
+        onEdit={() => setIsEditing(true)}
+        onDelete={onDelete}
+        videoDuration={videoDuration}
+        documentsCount={existingFiles?.length || 0}
+        progress={savedProgress || 0}
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
@@ -166,7 +180,7 @@ export const LearningUnitContent = ({
             <ContentDescription
               title={title}
               description={description}
-              existingFiles={existingFiles}
+              existingFiles={existingFiles || []}
             />
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { Edit, Trash2, CheckCircle2, Clock, ChevronRight, FileText, TrendingUp } from "lucide-react";
+import { Edit, Trash2, CheckCircle2, Clock, ChevronRight, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
@@ -105,7 +105,6 @@ export const LearningUnitHeader = ({
 
       <div className="flex items-center gap-4 bg-slate-50/80 p-2 rounded-lg">
         <div className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-blue-500" />
           <span className="text-sm font-medium">Fortschritt</span>
         </div>
         <div className="flex-1">
