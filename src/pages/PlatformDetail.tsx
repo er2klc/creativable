@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useState } from "react";
-import { PlatformHeader } from "@/components/elevate/platform/detail/PlatformHeader";
+import { SimplePlatformHeader } from "@/components/elevate/platform/detail/SimplePlatformHeader";
 import { LearningUnitTabs } from "@/components/elevate/platform/detail/LearningUnitTabs";
 import { CreateUnitDialog } from "@/components/elevate/platform/detail/CreateUnitDialog";
 import { LearningUnitContent } from "@/components/elevate/platform/detail/LearningUnitContent";
@@ -16,7 +16,7 @@ const PlatformDetail = () => {
   const { moduleSlug } = useParams();
   const user = useUser();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [videoProgress, setVideoProgress] = useState<Record<string, number>>({});
+  const [activeUnitId, setActiveUnitId] = useState<string>('');
   const { isCompleted, markAsCompleted } = useLearningProgress();
 
   const { data: platform, isLoading, refetch } = useQuery({
@@ -42,21 +42,33 @@ const PlatformDetail = () => {
         .eq('slug', moduleSlug)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching platform:', error);
-        throw error;
-      }
+      if (error) throw error;
       return data;
     },
     enabled: !!moduleSlug && !!user
   });
+
+  const sortedSubmodules = platform?.elevate_modules
+    ?.flatMap(module => module.elevate_lerninhalte || [])
+    .sort((a, b) => (a.submodule_order || 0) - (b.submodule_order || 0)) || [];
+
+  // Set initial active unit when data loads
+  if (sortedSubmodules.length > 0 && !activeUnitId) {
+    setActiveUnitId(sortedSubmodules[0].id);
+  }
+
+  const completedCount = sortedSubmodules.filter(submodule => 
+    isCompleted(submodule.id)
+  ).length;
+
+  const isAdmin = user?.id === platform?.created_by;
 
   const handleUnitChange = (unitId: string) => {
     if (unitId === 'new') {
       setIsDialogOpen(true);
       return;
     }
-    // No additional logic needed as the TabsContent component handles the switching
+    setActiveUnitId(unitId);
   };
 
   const handleCreateUnit = async (data: {
@@ -111,6 +123,27 @@ const PlatformDetail = () => {
     }
   };
 
+  const handleVideoProgress = async (lerninhalteId: string, progress: number) => {
+    setVideoProgress(prev => ({
+      ...prev,
+      [lerninhalteId]: progress
+    }));
+
+    if (progress >= 95 && !isCompleted(lerninhalteId)) {
+      await markAsCompleted(lerninhalteId);
+    }
+
+    localStorage.setItem(`video-progress-${lerninhalteId}`, progress.toString());
+  };
+
+  const handleUnitDeleted = async () => {
+    try {
+      await refetch();
+    } catch (error) {
+      console.error('Error refetching after unit deletion:', error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-6 space-y-6">
@@ -137,46 +170,13 @@ const PlatformDetail = () => {
     );
   }
 
-  const sortedSubmodules = platform.elevate_modules
-    ?.flatMap(module => module.elevate_lerninhalte || [])
-    .sort((a, b) => (a.submodule_order || 0) - (b.submodule_order || 0)) || [];
-
-  const completedCount = sortedSubmodules.filter(submodule => 
-    isCompleted(submodule.id)
-  ).length;
-
-  const isAdmin = user?.id === platform.created_by;
-
-  const handleVideoProgress = async (lerninhalteId: string, progress: number) => {
-    setVideoProgress(prev => ({
-      ...prev,
-      [lerninhalteId]: progress
-    }));
-
-    if (progress >= 95 && !isCompleted(lerninhalteId)) {
-      await markAsCompleted(lerninhalteId);
-    }
-
-    localStorage.setItem(`video-progress-${lerninhalteId}`, progress.toString());
-  };
-
-  const handleUnitDeleted = async () => {
-    try {
-      await refetch();
-    } catch (error) {
-      console.error('Error refetching after unit deletion:', error);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8">
-        <PlatformHeader
+        <SimplePlatformHeader
           name={platform.name}
           completedCount={completedCount}
           totalCount={sortedSubmodules.length}
-          isAdmin={isAdmin}
-          onCreateUnit={() => setIsDialogOpen(true)}
         />
 
         {sortedSubmodules.length === 0 ? (
@@ -187,17 +187,16 @@ const PlatformDetail = () => {
             </p>
           </div>
         ) : (
-          <Tabs defaultValue={sortedSubmodules[0]?.id} className="w-full">
+          <Tabs value={activeUnitId} onValueChange={handleUnitChange} className="w-full">
             <LearningUnitTabs
               units={sortedSubmodules.map(unit => ({
                 id: unit.id,
                 title: unit.title,
                 completed: isCompleted(unit.id)
               }))}
-              activeUnit={sortedSubmodules[0]?.id}
+              activeUnit={activeUnitId}
               onUnitChange={handleUnitChange}
               isAdmin={isAdmin}
-              onUnitDeleted={handleUnitDeleted}
               onCreateUnit={() => setIsDialogOpen(true)}
             />
             {sortedSubmodules.map((submodule) => (
@@ -225,8 +224,10 @@ const PlatformDetail = () => {
 
                       if (error) throw error;
                       await refetch();
+                      toast.success("Lerneinheit erfolgreich aktualisiert");
                     } catch (error) {
                       console.error('Error updating learning unit:', error);
+                      toast.error("Fehler beim Aktualisieren der Lerneinheit");
                     }
                   }}
                 />
