@@ -3,8 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Plus, CheckCircle2, FileText, Video, Clock } from "lucide-react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -21,7 +19,7 @@ const PlatformDetail = () => {
   const [videoProgress, setVideoProgress] = useState<Record<string, number>>({});
   const { isCompleted, markAsCompleted } = useLearningProgress();
 
-  const { data: platform, isLoading } = useQuery({
+  const { data: platform, isLoading, refetch } = useQuery({
     queryKey: ['platform', moduleSlug],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -98,6 +96,7 @@ const PlatformDetail = () => {
 
       toast.success("Neue Lerneinheit erfolgreich erstellt");
       setIsDialogOpen(false);
+      refetch();
     } catch (error) {
       console.error('Error creating learning unit:', error);
       toast.error("Fehler beim Erstellen der Lerneinheit");
@@ -156,23 +155,14 @@ const PlatformDetail = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="container mx-auto py-8">
-        <div className="flex justify-between items-start mb-8">
-          <PlatformHeader
-            name={platform.name}
-            description={platform.description}
-            completedCount={completedCount}
-            totalCount={sortedSubmodules.length}
-          />
-          {isAdmin && (
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Neue Lerneinheit
-            </Button>
-          )}
-        </div>
+        <PlatformHeader
+          name={platform.name}
+          description={platform.description}
+          completedCount={completedCount}
+          totalCount={sortedSubmodules.length}
+          isAdmin={isAdmin}
+          onCreateUnit={() => setIsDialogOpen(true)}
+        />
 
         {sortedSubmodules.length === 0 ? (
           <div className="bg-white p-6 rounded-lg shadow-lg text-center">
@@ -191,6 +181,8 @@ const PlatformDetail = () => {
               }))}
               activeUnit={sortedSubmodules[0]?.id}
               onUnitChange={() => {}}
+              isAdmin={isAdmin}
+              onUnitDeleted={() => refetch()}
             />
             {sortedSubmodules.map((submodule) => (
               <TabsContent key={submodule.id} value={submodule.id}>

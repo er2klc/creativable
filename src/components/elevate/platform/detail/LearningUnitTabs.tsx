@@ -1,5 +1,6 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2 } from "lucide-react";
+import { DeleteUnitButton } from "./DeleteUnitButton";
 
 interface LearningUnit {
   id: string;
@@ -11,12 +12,16 @@ interface LearningUnitTabsProps {
   units: LearningUnit[];
   activeUnit: string;
   onUnitChange: (unitId: string) => void;
+  isAdmin?: boolean;
+  onUnitDeleted?: () => void;
 }
 
 export const LearningUnitTabs = ({ 
   units, 
   activeUnit, 
-  onUnitChange 
+  onUnitChange,
+  isAdmin,
+  onUnitDeleted
 }: LearningUnitTabsProps) => {
   return (
     <TabsList className="w-full justify-start bg-white/50 backdrop-blur-sm p-1 rounded-lg mb-6 border">
@@ -33,9 +38,17 @@ export const LearningUnitTabs = ({
             </span>
             {unit.title}
           </span>
-          {unit.completed && (
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-          )}
+          <div className="flex items-center gap-1">
+            {unit.completed && (
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            )}
+            {isAdmin && (
+              <DeleteUnitButton 
+                lerninhalteId={unit.id}
+                onDelete={() => onUnitDeleted?.()}
+              />
+            )}
+          </div>
         </TabsTrigger>
       ))}
     </TabsList>
