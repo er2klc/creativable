@@ -11,6 +11,7 @@ import { LearningUnitTabs } from "@/components/elevate/platform/detail/LearningU
 import { CreateUnitDialog } from "@/components/elevate/platform/detail/CreateUnitDialog";
 import { LearningUnitContent } from "@/components/elevate/platform/detail/LearningUnitContent";
 import { useLearningProgress } from "@/hooks/use-learning-progress";
+import { Button } from "@/components/ui/button";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient({

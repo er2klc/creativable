@@ -1,4 +1,4 @@
-import { Video, Clock, FileText, CheckCircle2, Trash2, Edit } from "lucide-react";
+import { FileText, Clock, CheckCircle2, Trash2, Edit, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VideoPlayer } from "./VideoPlayer";
 import { cn } from "@/lib/utils";
@@ -67,7 +67,7 @@ export const LearningUnitContent = ({
       .select('content')
       .eq('lerninhalte_id', id)
       .eq('user_id', user.id)
-      .maybeSingle(); // Changed from .single() to .maybeSingle()
+      .maybeSingle();
 
     if (error) {
       console.error('Error loading notes:', error);
@@ -114,19 +114,15 @@ export const LearningUnitContent = ({
     <div className="space-y-4">
       {/* Header Section */}
       <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-        <div className="flex items-center justify-between">
-          <div className="flex-1 text-center">
-            <h3 className="text-2xl font-bold flex items-center justify-center gap-2">
-              {title}
-              {videoDuration > 0 && (
-                <span className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  ~{Math.round(videoDuration / 60)} Minuten
-                </span>
-              )}
-            </h3>
-          </div>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center">
+          <h3 className="text-2xl font-bold text-center mb-2">{title}</h3>
+          <div className="flex items-center gap-4 text-muted-foreground">
+            {videoDuration > 0 && (
+              <span className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                ~{Math.round(videoDuration / 60)} Minuten
+              </span>
+            )}
             {isAdmin && onDelete && (
               <>
                 <Button
@@ -163,7 +159,7 @@ export const LearningUnitContent = ({
       <div className="grid grid-cols-12 gap-6">
         {/* Left Column: Notes */}
         <div className="col-span-12 lg:col-span-4">
-          <div className="h-[400px]"> {/* Fixed height to match video */}
+          <div className="aspect-video"> {/* Match video aspect ratio */}
             <NotesSection
               notes={notes}
               onChange={setNotes}
@@ -175,7 +171,7 @@ export const LearningUnitContent = ({
         {/* Right Column: Video */}
         <div className="col-span-12 lg:col-span-8">
           {videoUrl && (
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 h-[400px]">
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
               <VideoPlayer
                 videoUrl={videoUrl}
                 onProgress={onVideoProgress}
@@ -192,21 +188,13 @@ export const LearningUnitContent = ({
         <div className="prose prose-sm max-w-none">
           <div dangerouslySetInnerHTML={{ __html: description || "" }} />
         </div>
-        {documents.length > 0 && (
-          <div className="mt-4 pt-4 border-t">
-            <h4 className="font-semibold mb-2 flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Dokumente
-            </h4>
-            <DocumentSection documents={documents} />
-          </div>
-        )}
+        <DocumentSection documents={documents} />
       </div>
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-          <ScrollArea className="h-full w-full">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh]">
+          <ScrollArea className="h-full w-full pr-4">
             <DialogHeader>
               <DialogTitle>Lerneinheit bearbeiten</DialogTitle>
             </DialogHeader>

@@ -1,4 +1,4 @@
-import { FileText } from "lucide-react";
+import { FileText, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Document {
@@ -28,6 +28,13 @@ export const DocumentSection = ({ documents }: DocumentSectionProps) => {
     }
   };
 
+  const getFileIcon = (fileName: string) => {
+    if (fileName.match(/\.(xlsx|xls|csv)$/i)) {
+      return <FileSpreadsheet className="h-4 w-4" />;
+    }
+    return <FileText className="h-4 w-4" />;
+  };
+
   return (
     <div className="mt-6 border-t pt-4">
       <h4 className="font-semibold mb-2 flex items-center gap-2">
@@ -42,8 +49,8 @@ export const DocumentSection = ({ documents }: DocumentSectionProps) => {
               className="w-full justify-start text-primary hover:text-primary/80"
               onClick={() => handleDocumentClick(doc.url, doc.name)}
             >
-              <FileText className="h-4 w-4 mr-2" />
-              {doc.name}
+              {getFileIcon(doc.name)}
+              <span className="ml-2">{doc.name}</span>
             </Button>
           </li>
         ))}
