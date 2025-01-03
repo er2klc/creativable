@@ -53,9 +53,9 @@ export const LearningUnitContent = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header Section */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+      <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
         <div className="flex items-center justify-between">
           <h3 className="text-2xl font-bold text-center flex-1">{title}</h3>
           <div className="flex items-center gap-2">
@@ -89,7 +89,7 @@ export const LearningUnitContent = ({
             </Button>
           </div>
         </div>
-        <div className="flex items-center justify-center gap-6 mt-4 text-sm text-muted-foreground">
+        <div className="flex items-center justify-center gap-6 mt-2 text-sm text-muted-foreground">
           {videoDuration > 0 && (
             <span className="flex items-center gap-1">
               <Clock className="h-4 w-4" />
@@ -110,7 +110,7 @@ export const LearningUnitContent = ({
         {/* Left Column: Description and Documents */}
         <div className="col-span-12 lg:col-span-5">
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 h-full">
-            <div className="prose max-w-none">
+            <div className="prose max-w-none whitespace-pre-wrap">
               <div dangerouslySetInnerHTML={{ __html: description || "" }} />
             </div>
             {documents.length > 0 && (

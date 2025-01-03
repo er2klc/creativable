@@ -1,5 +1,5 @@
 import { Progress } from "@/components/ui/progress";
-import { Trophy, BookOpen, GraduationCap } from "lucide-react";
+import { Trophy, BookOpen } from "lucide-react";
 
 interface SimplePlatformHeaderProps {
   name: string;
@@ -15,7 +15,7 @@ export const SimplePlatformHeader = ({
   const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
-    <div className="w-full space-y-6 mb-6">
+    <div className="w-full space-y-4 mb-6">
       <h1 className="text-3xl font-bold text-center">{name}</h1>
       
       {/* Separator Line */}
@@ -34,18 +34,16 @@ export const SimplePlatformHeader = ({
           
           <Progress 
             value={progressPercentage} 
-            className="h-2 bg-muted/30"
-            // Using a gradient for the progress bar to make it more engaging
+            className="h-2 border border-border"
+            // Only color the completed portion
             style={{
-              backgroundImage: progressPercentage > 0 
-                ? 'linear-gradient(to right, #3b82f6, #60a5fa)'
-                : undefined
+              backgroundColor: 'transparent'
             }}
           />
           
           {/* End Icon */}
           <div className="absolute -right-6 top-1/2 -translate-y-1/2">
-            <Trophy className="w-5 h-5 text-yellow-500" />
+            <Trophy className="w-5 h-5 text-green-500" />
           </div>
         </div>
       </div>
