@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,13 +12,14 @@ import { PlatformHeader } from "@/components/elevate/platform/detail/PlatformHea
 import { LearningUnitTabs } from "@/components/elevate/platform/detail/LearningUnitTabs";
 import { CreateUnitDialog } from "@/components/elevate/platform/detail/CreateUnitDialog";
 import { VideoPlayer } from "@/components/elevate/platform/detail/VideoPlayer";
+import { useLearningProgress } from "@/hooks/use-learning-progress";
 
 const PlatformDetail = () => {
   const { moduleSlug } = useParams();
   const user = useUser();
-  const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [videoProgress, setVideoProgress] = useState<Record<string, number>>({});
+  const { isCompleted, markAsCompleted } = useLearningProgress();
 
   const { data: platform, isLoading } = useQuery({
     queryKey: ['platform', moduleSlug],
@@ -97,7 +98,6 @@ const PlatformDetail = () => {
 
       toast.success("Neue Lerneinheit erfolgreich erstellt");
       setIsDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['platform', moduleSlug] });
     } catch (error) {
       console.error('Error creating learning unit:', error);
       toast.error("Fehler beim Erstellen der Lerneinheit");
@@ -150,6 +150,8 @@ const PlatformDetail = () => {
   const completedCount = sortedSubmodules.filter(submodule => 
     isCompleted(submodule.id)
   ).length;
+
+  const isAdmin = user?.id === platform.created_by;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">

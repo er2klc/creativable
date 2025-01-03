@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
+declare global {
+  interface Window {
+    onYouTubeIframeAPIReady: () => void;
+    YT: any;
+  }
+}
+
 interface VideoPlayerProps {
   videoUrl: string;
   onProgress: (progress: number) => void;
@@ -22,7 +29,7 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0 }: VideoPl
     
     // Initialize player when API is ready
     window.onYouTubeIframeAPIReady = () => {
-      const newPlayer = new (window as any).YT.Player(iframeRef.current, {
+      const newPlayer = new window.YT.Player(iframeRef.current, {
         videoId,
         events: {
           onReady: (event: any) => {
@@ -31,7 +38,7 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0 }: VideoPl
             }
           },
           onStateChange: (event: any) => {
-            if (event.data === (window as any).YT.PlayerState.PLAYING) {
+            if (event.data === window.YT.PlayerState.PLAYING) {
               startTracking(event.target);
             }
           }
