@@ -72,6 +72,99 @@ export type Database = {
         }
         Relationships: []
       }
+      elevate_lerninhalte: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          module_id: string | null
+          submodule_order: number | null
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          module_id?: string | null
+          submodule_order?: number | null
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          module_id?: string | null
+          submodule_order?: number | null
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevate_lerninhalte_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_module"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_module_id"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elevate_lerninhalte_documents: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          file_name: string
+          file_path: string
+          file_type: string | null
+          id: string
+          lerninhalte_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          file_name: string
+          file_path: string
+          file_type?: string | null
+          id?: string
+          lerninhalte_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          file_name?: string
+          file_path?: string
+          file_type?: string | null
+          id?: string
+          lerninhalte_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevate_lerninhalte_documents_lerninhalte_id_fkey"
+            columns: ["lerninhalte_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_lerninhalte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       elevate_modules: {
         Row: {
           created_at: string | null
@@ -159,47 +252,6 @@ export type Database = {
         }
         Relationships: []
       }
-      elevate_submodules: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          description: string | null
-          id: string
-          module_id: string | null
-          submodule_order: number | null
-          title: string
-          video_url: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          module_id?: string | null
-          submodule_order?: number | null
-          title: string
-          video_url?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          module_id?: string | null
-          submodule_order?: number | null
-          title?: string
-          video_url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "elevate_submodules_module_id_fkey"
-            columns: ["module_id"]
-            isOneToOne: false
-            referencedRelation: "elevate_modules"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       elevate_team_access: {
         Row: {
           granted_at: string | null
@@ -285,6 +337,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "elevate_platforms_access"
             referencedColumns: ["platform_id"]
+          },
+        ]
+      }
+      elevate_user_progress: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          lerninhalte_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          lerninhalte_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          lerninhalte_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevate_user_progress_lerninhalte_id_fkey"
+            columns: ["lerninhalte_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_lerninhalte"
+            referencedColumns: ["id"]
           },
         ]
       }

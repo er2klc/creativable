@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, CheckCircle2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 const PlatformDetail = () => {
   const { moduleSlug } = useParams();
@@ -47,6 +48,39 @@ const PlatformDetail = () => {
     enabled: !!moduleSlug && !!user
   });
 
+  const { data: userProgress } = useQuery({
+    queryKey: ['userProgress', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('elevate_user_progress')
+        .select('*')
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user
+  });
+
+  const markAsCompleted = async (lerninhalteId: string) => {
+    try {
+      const { error } = await supabase
+        .from('elevate_user_progress')
+        .upsert({
+          user_id: user?.id,
+          lerninhalte_id: lerninhalteId,
+          completed: true,
+          completed_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+      toast.success("Lerneinheit als erledigt markiert");
+    } catch (error) {
+      console.error('Error marking as completed:', error);
+      toast.error("Fehler beim Markieren als erledigt");
+    }
+  };
+
   const isAdmin = platform?.created_by === user?.id;
 
   if (isLoading) {
@@ -82,6 +116,12 @@ const PlatformDetail = () => {
 
   console.log('Sorted submodules:', sortedSubmodules);
 
+  const isCompleted = (lerninhalteId: string) => {
+    return userProgress?.some(
+      progress => progress.lerninhalte_id === lerninhalteId && progress.completed
+    );
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -107,15 +147,32 @@ const PlatformDetail = () => {
         <Tabs defaultValue={sortedSubmodules[0]?.id} className="w-full">
           <TabsList className="w-full justify-start">
             {sortedSubmodules.map((submodule) => (
-              <TabsTrigger key={submodule.id} value={submodule.id}>
+              <TabsTrigger 
+                key={submodule.id} 
+                value={submodule.id}
+                className="flex items-center gap-2"
+              >
                 {submodule.title}
+                {isCompleted(submodule.id) && (
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                )}
               </TabsTrigger>
             ))}
           </TabsList>
           {sortedSubmodules.map((submodule) => (
             <TabsContent key={submodule.id} value={submodule.id} className="mt-6">
               <div className="bg-card p-6 rounded-lg shadow-lg">
-                <h3 className="text-xl font-semibold mb-4">{submodule.title}</h3>
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-semibold">{submodule.title}</h3>
+                  <Button
+                    variant={isCompleted(submodule.id) ? "secondary" : "default"}
+                    onClick={() => markAsCompleted(submodule.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    {isCompleted(submodule.id) ? "Erledigt" : "Als erledigt markieren"}
+                  </Button>
+                </div>
                 {submodule.video_url && (
                   <div className="aspect-video mb-4">
                     <iframe
