@@ -96,7 +96,7 @@ const PlatformDetail = () => {
 
       toast.success("Neue Lerneinheit erfolgreich erstellt");
       setIsDialogOpen(false);
-      refetch();
+      await refetch();
     } catch (error) {
       console.error('Error creating learning unit:', error);
       toast.error("Fehler beim Erstellen der Lerneinheit");
@@ -152,12 +152,15 @@ const PlatformDetail = () => {
     localStorage.setItem(`video-progress-${lerninhalteId}`, progress.toString());
   };
 
+  const handleUnitDeleted = async () => {
+    await refetch();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="container mx-auto py-8">
         <PlatformHeader
           name={platform.name}
-          description={platform.description}
           completedCount={completedCount}
           totalCount={sortedSubmodules.length}
           isAdmin={isAdmin}
@@ -182,7 +185,8 @@ const PlatformDetail = () => {
               activeUnit={sortedSubmodules[0]?.id}
               onUnitChange={() => {}}
               isAdmin={isAdmin}
-              onUnitDeleted={() => refetch()}
+              onUnitDeleted={handleUnitDeleted}
+              onCreateUnit={() => setIsDialogOpen(true)}
             />
             {sortedSubmodules.map((submodule) => (
               <TabsContent key={submodule.id} value={submodule.id}>
@@ -194,6 +198,8 @@ const PlatformDetail = () => {
                   onComplete={() => markAsCompleted(submodule.id)}
                   onVideoProgress={(progress) => handleVideoProgress(submodule.id, progress)}
                   savedProgress={parseFloat(localStorage.getItem(`video-progress-${submodule.id}`) || '0')}
+                  isAdmin={isAdmin}
+                  onDelete={handleUnitDeleted}
                 />
               </TabsContent>
             ))}

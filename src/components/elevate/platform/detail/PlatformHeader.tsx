@@ -5,12 +5,16 @@ interface PlatformHeaderProps {
   name: string;
   completedCount: number;
   totalCount: number;
+  isAdmin?: boolean;
+  onCreateUnit?: () => void;
 }
 
 export const PlatformHeader = ({ 
   name,
   completedCount, 
-  totalCount
+  totalCount,
+  isAdmin,
+  onCreateUnit
 }: PlatformHeaderProps) => {
   const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
