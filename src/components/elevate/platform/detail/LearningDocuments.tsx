@@ -1,4 +1,4 @@
-import { FileText, FileSpreadsheet, FilePdf } from "lucide-react";
+import { FileText, FileSpreadsheet, File } from "lucide-react";
 
 interface Document {
   name: string;
@@ -17,11 +17,12 @@ export const LearningDocuments = ({ documents }: LearningDocumentsProps) => {
     switch (extension) {
       case 'xlsx':
       case 'xls':
-        return <FileSpreadsheet className="h-5 w-5" />;
+      case 'csv':
+        return <FileSpreadsheet className="h-5 w-5 text-green-600" />;
       case 'pdf':
-        return <FilePdf className="h-5 w-5" />;
+        return <File className="h-5 w-5 text-red-600" />;
       default:
-        return <FileText className="h-5 w-5" />;
+        return <FileText className="h-5 w-5 text-gray-600" />;
     }
   };
 
