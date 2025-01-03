@@ -38,7 +38,7 @@ export const HeaderControls = ({
       <Button
         variant={isCompleted ? "default" : "outline"}
         size="sm"
-        className="flex items-center gap-2"
+        className={`flex items-center gap-2 ${isCompleted ? 'bg-[hsl(142.68deg_71.3%_45.1%)] hover:bg-[hsl(142.68deg_71.3%_40.1%)]' : ''}`}
         onClick={onComplete}
       >
         <CheckCircle2 className="h-4 w-4" />

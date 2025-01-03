@@ -36,7 +36,7 @@ export const DocumentSection = ({ documents }: DocumentSectionProps) => {
   };
 
   return (
-    <div className="mt-6 border-t pt-4">
+    <div className="mt-6">
       <h4 className="font-semibold mb-2 flex items-center gap-2">
         <FileText className="h-4 w-4" />
         Lerndokumente
