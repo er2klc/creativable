@@ -60,12 +60,30 @@ export const PlatformContent = ({
 
   const handleDeleteUnit = async () => {
     try {
+      // First delete related notes
+      const { error: notesError } = await supabase
+        .from('elevate_lerninhalte_notes')
+        .delete()
+        .eq('lerninhalte_id', activeUnitId);
+
+      if (notesError) throw notesError;
+
+      // Then delete related documents
+      const { error: docsError } = await supabase
+        .from('elevate_lerninhalte_documents')
+        .delete()
+        .eq('lerninhalte_id', activeUnitId);
+
+      if (docsError) throw docsError;
+
+      // Finally delete the learning unit
       const { error } = await supabase
         .from('elevate_lerninhalte')
         .delete()
         .eq('id', activeUnitId);
 
       if (error) throw error;
+
       await refetch();
       toast.success("Lerneinheit erfolgreich gelöscht");
     } catch (error) {
@@ -119,21 +137,7 @@ export const PlatformContent = ({
                 onVideoProgress={(progress) => handleVideoProgress(submodule.id, progress)}
                 savedProgress={parseFloat(localStorage.getItem(`video-progress-${submodule.id}`) || '0')}
                 isAdmin={isAdmin}
-                onDelete={async () => {
-                  try {
-                    const { error } = await supabase
-                      .from('elevate_lerninhalte')
-                      .delete()
-                      .eq('id', submodule.id);
-
-                    if (error) throw error;
-                    await refetch();
-                    toast.success("Lerneinheit erfolgreich gelöscht");
-                  } catch (error) {
-                    console.error('Error deleting learning unit:', error);
-                    toast.error("Fehler beim Löschen der Lerneinheit");
-                  }
-                }}
+                onDelete={handleDeleteUnit}
                 onUpdate={async (data) => {
                   try {
                     const { error } = await supabase
