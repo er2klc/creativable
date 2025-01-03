@@ -39,16 +39,18 @@ export const PlatformContent = ({
   const progress = (completedCount / sortedSubmodules.length) * 100;
 
   if (sortedSubmodules.length === 0) {
-    return <EmptyState isAdmin={isAdmin} onCreateUnit={async (data) => {
-      const unitCreation = new UnitCreation({ 
-        platform, 
-        sortedSubmodules, 
-        refetch, 
-        isDialogOpen: true, 
-        setIsDialogOpen: setIsDialogOpen 
-      });
-      await unitCreation.handleCreateUnit(data);
-    }} />;
+    return <EmptyState 
+      isAdmin={isAdmin} 
+      onCreateUnit={async (data) => {
+        await UnitCreation({ 
+          platform, 
+          sortedSubmodules, 
+          refetch, 
+          isDialogOpen: true, 
+          setIsDialogOpen 
+        }).handleCreateUnit(data);
+      }} 
+    />;
   }
 
   return (
