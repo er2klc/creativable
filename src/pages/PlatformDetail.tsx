@@ -207,7 +207,14 @@ const PlatformDetail = () => {
                   description={submodule.description}
                   videoUrl={submodule.video_url}
                   isCompleted={isCompleted(submodule.id)}
-                  onComplete={() => markAsCompleted(submodule.id)}
+                  onComplete={() => {
+                    if (isCompleted(submodule.id)) {
+                      // Allow unchecking by passing false
+                      markAsCompleted(submodule.id, false);
+                    } else {
+                      markAsCompleted(submodule.id);
+                    }
+                  }}
                   onVideoProgress={(progress) => handleVideoProgress(submodule.id, progress)}
                   savedProgress={parseFloat(localStorage.getItem(`video-progress-${submodule.id}`) || '0')}
                   isAdmin={isAdmin}

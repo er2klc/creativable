@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { FileUpload } from "../detail/FileUpload";
 
 interface LearningUnitContentProps {
   title: string;
@@ -40,6 +41,7 @@ export const LearningUnitContent = ({
   const [editedDescription, setEditedDescription] = useState(description || "");
   const [editedVideoUrl, setEditedVideoUrl] = useState(videoUrl || "");
   const [videoDuration, setVideoDuration] = useState<number>(0);
+  const [files, setFiles] = useState<File[]>([]);
 
   const handleSaveEdit = async () => {
     if (onUpdate) {
@@ -109,8 +111,8 @@ export const LearningUnitContent = ({
       <div className="grid grid-cols-12 gap-6">
         {/* Left Column: Description and Documents */}
         <div className="col-span-12 lg:col-span-5">
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 h-full">
-            <div className="prose max-w-none whitespace-pre-wrap">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 min-h-[400px]">
+            <div className="prose prose-sm max-w-none whitespace-pre-wrap h-full">
               <div dangerouslySetInnerHTML={{ __html: description || "" }} />
             </div>
             {documents.length > 0 && (
@@ -181,6 +183,18 @@ export const LearningUnitContent = ({
                 value={editedVideoUrl}
                 onChange={(e) => setEditedVideoUrl(e.target.value)}
                 placeholder="https://youtube.com/..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Dokumente</Label>
+              <FileUpload
+                files={files}
+                onFilesSelected={setFiles}
+                onFileRemove={(index) => {
+                  const newFiles = [...files];
+                  newFiles.splice(index, 1);
+                  setFiles(newFiles);
+                }}
               />
             </div>
           </div>

@@ -1,68 +1,65 @@
-import { useState, useEffect } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export const useLearningProgress = () => {
   const user = useUser();
-  const [completedUnits, setCompletedUnits] = useState<string[]>([]);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (user) {
-      loadCompletedUnits();
-    }
-  }, [user]);
-
-  const loadCompletedUnits = async () => {
-    try {
-      const { data, error } = await supabase
+  const { data: completedUnits = [] } = useQuery({
+    queryKey: ['learning-progress', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
         .from('elevate_user_progress')
         .select('lerninhalte_id')
         .eq('user_id', user?.id)
         .eq('completed', true);
-
-      if (error) throw error;
-
-      setCompletedUnits(data.map(item => item.lerninhalte_id));
-    } catch (error) {
-      console.error('Error loading completed units:', error);
-    }
-  };
+      return data?.map(item => item.lerninhalte_id) || [];
+    },
+    enabled: !!user,
+  });
 
   const isCompleted = (lerninhalteId: string) => {
     return completedUnits.includes(lerninhalteId);
   };
 
-  const markAsCompleted = async (lerninhalteId: string) => {
+  const markAsCompleted = async (lerninhalteId: string, completed: boolean = true) => {
     if (!user) return;
-    
+
     try {
-      const { error } = await supabase
-        .from('elevate_user_progress')
-        .upsert({
-          user_id: user.id,
-          lerninhalte_id: lerninhalteId,
-          completed: true,
-          completed_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,lerninhalte_id'
-        });
+      if (completed) {
+        const { error } = await supabase
+          .from('elevate_user_progress')
+          .upsert({
+            user_id: user.id,
+            lerninhalte_id: lerninhalteId,
+            completed: true,
+            completed_at: new Date().toISOString()
+          });
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Delete the progress entry to mark as uncompleted
+        const { error } = await supabase
+          .from('elevate_user_progress')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('lerninhalte_id', lerninhalteId);
 
-      if (!completedUnits.includes(lerninhalteId)) {
-        setCompletedUnits(prev => [...prev, lerninhalteId]);
-        toast.success("Lerneinheit als erledigt markiert");
+        if (error) throw error;
       }
+
+      await queryClient.invalidateQueries({ queryKey: ['learning-progress', user.id] });
+      toast.success(completed ? "Lerneinheit als abgeschlossen markiert" : "Lerneinheit als nicht abgeschlossen markiert");
     } catch (error) {
-      console.error('Error marking unit as completed:', error);
-      toast.error("Fehler beim Markieren der Lerneinheit");
+      console.error('Error updating progress:', error);
+      toast.error("Fehler beim Aktualisieren des Fortschritts");
     }
   };
 
   return {
     isCompleted,
     markAsCompleted,
-    completedUnits
   };
 };
