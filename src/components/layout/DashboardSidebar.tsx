@@ -1,119 +1,183 @@
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { useSidebar } from "@/components/ui/sidebar";
-import { Link, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Users2,
-  GraduationCap,
-  TrendingUp,
-  MessageSquare,
+import { 
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarSeparator,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { 
+  LayoutGrid, 
+  Users, 
+  MessageSquare, 
+  Calendar, 
+  BarChart, 
   Settings,
-  Menu,
-  X,
+  FileText,
+  Shield,
+  Globe2,
+  Infinity,
+  GraduationCap,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+const APP_VERSION = "0.3";
+
+const personalItems = [
+  { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
+  { title: "Kontakte", icon: Users, url: "/leads" },
+  { 
+    title: "Nachrichten", 
+    icon: MessageSquare, 
+    url: "/messages",
+    badge: true 
+  },
+  { title: "Kalender", icon: Calendar, url: "/calendar" },
+];
+
+const teamItems = [
+  { title: "Unity", icon: Infinity, url: "/unity" },
+  { title: "Elevate", icon: GraduationCap, url: "/elevate" },
+];
+
+const analysisItems = [
+  { title: "Berichte", icon: BarChart, url: "/reports" },
+  { title: "Einstellungen", icon: Settings, url: "/settings" },
+];
+
+const legalItems = [
+  { title: "Impressum", icon: FileText, url: "/impressum" },
+  { title: "Datenschutz", icon: Shield, url: "/privacy-policy" },
+  { title: "Socials Datenlöschung", icon: Globe2, url: "/auth/data-deletion/instagram" },
+];
 
 export const DashboardSidebar = () => {
-  const { state, openMobile, setOpenMobile } = useSidebar();
-  const location = useLocation();
+  // Query for unread messages count
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['unread-messages-count'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
 
-  const isActiveRoute = (path: string) => {
-    if (path === "/") {
-      return location.pathname === path;
-    }
-    return location.pathname.startsWith(path);
-  };
+      const { count } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
 
-  const navigation = [
-    {
-      name: "Dashboard",
-      href: "/dashboard",
-      icon: LayoutDashboard,
-      version: "0.4",
+      return count || 0;
     },
-    {
-      name: "Unity",
-      href: "/unity",
-      icon: Users2,
-      version: "0.4",
-    },
-    {
-      name: "Elevate",
-      href: "/elevate",
-      icon: GraduationCap,
-      version: "0.4",
-    },
-    {
-      name: "Leads",
-      href: "/leads",
-      icon: TrendingUp,
-      version: "0.4",
-    },
-    {
-      name: "Messages",
-      href: "/messages",
-      icon: MessageSquare,
-      version: "0.4",
-    },
-    {
-      name: "Settings",
-      href: "/settings",
-      icon: Settings,
-      version: "0.4",
-    },
-  ];
-
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+  
   return (
-    <>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute right-4 top-4 z-50 md:hidden"
-        onClick={() => setOpenMobile(!openMobile)}
-      >
-        {openMobile ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-      </Button>
-      <div
-        className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col bg-gray-900 duration-300 ease-in-out md:translate-x-0",
-          openMobile && "translate-x-0"
-        )}
-      >
-        <div className="space-y-4 py-4">
-          <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight text-white">
-              Overview
-            </h2>
-            <div className="space-y-1">
-              <ScrollArea className="h-[300px] px-1">
-                {navigation.map((item) => (
-                  <Link key={item.href} to={item.href}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        "w-full justify-start hover:bg-gray-800/50",
-                        isActiveRoute(item.href)
-                          ? "bg-gray-800/90 text-white"
-                          : "text-gray-400"
-                      )}
-                    >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {item.name}
-                      <span className="ml-auto text-xs text-gray-400">
-                        v{item.version}
-                      </span>
-                    </Button>
-                  </Link>
-                ))}
-              </ScrollArea>
+    <Sidebar>
+      <SidebarContent className="flex flex-col h-full">
+        <div className="flex-1 overflow-y-auto">
+          <SidebarGroup>
+            <div className="flex items-center justify-between px-4 py-1.5">
+              <SidebarGroupLabel>Persönlich</SidebarGroupLabel>
             </div>
-          </div>
-          <Separator className="mx-3 bg-gray-800" />
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {personalItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <a href={item.url} className="flex items-center gap-3 relative">
+                        <item.icon className="h-5 w-5" />
+                        <span>{item.title}</span>
+                        {item.badge && unreadCount > 0 && (
+                          <Badge variant="destructive" className="absolute right-0 -top-1">
+                            {unreadCount}
+                          </Badge>
+                        )}
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarSeparator className="my-1" />
+
+          <SidebarGroup>
+            <div className="flex items-center justify-between px-4 py-1.5">
+              <SidebarGroupLabel>Teams & Gruppen</SidebarGroupLabel>
+            </div>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {teamItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <a href={item.url} className="flex items-center gap-3">
+                        <item.icon className="h-5 w-5" />
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarSeparator className="my-1" />
+
+          <SidebarGroup>
+            <div className="flex items-center justify-between px-4 py-1.5">
+              <SidebarGroupLabel>Analyse & Tools</SidebarGroupLabel>
+            </div>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {analysisItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <a href={item.url} className="flex items-center gap-3">
+                        <item.icon className="h-5 w-5" />
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarSeparator className="my-1" />
+
+          <SidebarGroup>
+            <div className="flex items-center justify-between px-4 py-1.5">
+              <SidebarGroupLabel>Rechtliches</SidebarGroupLabel>
+            </div>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {legalItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <a href={item.url} className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground">
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         </div>
-      </div>
-    </>
+
+        <div className="px-4 py-2 text-sm text-muted-foreground border-t">
+          <a href="/changelog" className="hover:text-foreground">
+            Version {APP_VERSION}
+          </a>
+        </div>
+      </SidebarContent>
+    </Sidebar>
   );
 };
