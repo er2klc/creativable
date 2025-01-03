@@ -7,6 +7,7 @@ import { CreateUnitDialog } from "./CreateUnitDialog";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { RefetchOptions, QueryObserverResult } from "@tanstack/react-query";
 
 interface PlatformContentProps {
   platform: any;
@@ -17,7 +18,7 @@ interface PlatformContentProps {
   isCompleted: (id: string) => boolean;
   markAsCompleted: (id: string, completed?: boolean) => Promise<void>;
   handleVideoProgress: (lerninhalteId: string, progress: number) => void;
-  refetch: () => Promise<void>;
+  refetch: (options?: RefetchOptions | undefined) => Promise<QueryObserverResult<any, Error>>;
 }
 
 export const PlatformContent = ({
