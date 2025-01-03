@@ -48,9 +48,9 @@ export const LearningUnitContent = ({
         .from('elevate_lerninhalte_notes')
         .select('content')
         .eq('lerninhalte_id', id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       return data?.content || '';
     }
   });
@@ -72,7 +72,7 @@ export const LearningUnitContent = ({
         .from('elevate_lerninhalte_notes')
         .select()
         .eq('lerninhalte_id', id)
-        .single();
+        .maybeSingle();
 
       if (existingNote) {
         await supabase
