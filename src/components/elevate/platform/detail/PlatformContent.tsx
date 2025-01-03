@@ -33,6 +33,7 @@ export const PlatformContent = ({
   refetch,
 }: PlatformContentProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const activeUnit = sortedSubmodules.find(unit => unit.id === activeUnitId);
   const completedCount = sortedSubmodules.filter(unit => isCompleted(unit.id)).length;
@@ -54,8 +55,7 @@ export const PlatformContent = ({
   }
 
   const handleEditUnit = async () => {
-    // Implementation will be handled by parent component
-    console.log("Edit unit:", activeUnitId);
+    setIsEditDialogOpen(true);
   };
 
   const handleDeleteUnit = async () => {
