@@ -7,10 +7,29 @@ interface FileUploadProps {
   onFileRemove: (index: number) => void;
 }
 
+const ALLOWED_FILE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'application/pdf',
+  'text/csv',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // xlsx
+  'application/vnd.ms-excel', // xls
+  'application/msword', // doc
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+];
+
 export const FileUpload = ({ onFilesSelected, files, onFileRemove }: FileUploadProps) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      onFilesSelected(Array.from(e.target.files));
+      const selectedFiles = Array.from(e.target.files).filter(file => 
+        ALLOWED_FILE_TYPES.includes(file.type)
+      );
+      
+      if (selectedFiles.length !== Array.from(e.target.files).length) {
+        alert("Einige Dateien wurden nicht hinzugefügt, da sie nicht unterstützt werden. Erlaubte Formate: JPG, PNG, PDF, CSV, Excel, Word");
+      }
+      
+      onFilesSelected(selectedFiles);
     }
   };
 
@@ -23,11 +42,15 @@ export const FileUpload = ({ onFilesSelected, files, onFileRemove }: FileUploadP
             <p className="mb-2 text-sm text-gray-500">
               <span className="font-semibold">Klicken</span> oder Dateien hierher ziehen
             </p>
+            <p className="text-xs text-gray-500">
+              JPG, PNG, PDF, CSV, Excel, Word
+            </p>
           </div>
           <input
             type="file"
             className="hidden"
             multiple
+            accept=".jpg,.jpeg,.png,.pdf,.csv,.xlsx,.xls,.doc,.docx"
             onChange={handleFileChange}
           />
         </label>

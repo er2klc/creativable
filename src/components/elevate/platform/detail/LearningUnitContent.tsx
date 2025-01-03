@@ -2,13 +2,17 @@ import { Video, Clock, FileText, CheckCircle2, Trash2, Edit } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { VideoPlayer } from "./VideoPlayer";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { FileUpload } from "./FileUpload";
 import { DocumentSection } from "./DocumentSection";
+import { NotesSection } from "./NotesSection";
+import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@supabase/auth-helpers-react";
+import { toast } from "sonner";
 
 interface LearningUnitContentProps {
   title: string;
@@ -22,6 +26,7 @@ interface LearningUnitContentProps {
   onDelete?: () => Promise<void>;
   onUpdate?: (data: { title: string; description: string; videoUrl: string }) => Promise<void>;
   documents?: { name: string; url: string }[];
+  id: string; // Add this to identify the learning unit
 }
 
 export const LearningUnitContent = ({
@@ -35,7 +40,8 @@ export const LearningUnitContent = ({
   isAdmin,
   onDelete,
   onUpdate,
-  documents = []
+  documents = [],
+  id
 }: LearningUnitContentProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editedTitle, setEditedTitle] = useState(title);
@@ -43,6 +49,54 @@ export const LearningUnitContent = ({
   const [editedVideoUrl, setEditedVideoUrl] = useState(videoUrl || "");
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [files, setFiles] = useState<File[]>([]);
+  const [notes, setNotes] = useState("");
+  const user = useUser();
+
+  useEffect(() => {
+    if (user && id) {
+      loadNotes();
+    }
+  }, [user, id]);
+
+  const loadNotes = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('elevate_lerninhalte_notes')
+      .select('content')
+      .eq('lerninhalte_id', id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (error) {
+      console.error('Error loading notes:', error);
+      return;
+    }
+
+    if (data) {
+      setNotes(data.content);
+    }
+  };
+
+  const saveNotes = async () => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('elevate_lerninhalte_notes')
+      .upsert({
+        lerninhalte_id: id,
+        user_id: user.id,
+        content: notes
+      });
+
+    if (error) {
+      console.error('Error saving notes:', error);
+      toast.error("Fehler beim Speichern der Notizen");
+      return;
+    }
+
+    toast.success("Notizen erfolgreich gespeichert");
+  };
 
   const handleSaveEdit = async () => {
     if (onUpdate) {
@@ -60,12 +114,14 @@ export const LearningUnitContent = ({
       {/* Header Section */}
       <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
         <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-center flex-1 flex items-center gap-2">
-            {documents && documents.length > 0 && (
-              <FileText className="h-5 w-5 text-primary" />
-            )}
-            {title}
-          </h3>
+          <div className="flex-1 text-center">
+            <h3 className="text-2xl font-bold flex items-center justify-center gap-2">
+              {documents && documents.length > 0 && (
+                <FileText className="h-5 w-5 text-primary" />
+              )}
+              {title}
+            </h3>
+          </div>
           <div className="flex items-center gap-2">
             {isAdmin && onDelete && (
               <>
@@ -125,10 +181,10 @@ export const LearningUnitContent = ({
           </div>
         </div>
         
-        {/* Right Column: Video */}
-        <div className="col-span-12 lg:col-span-7">
+        {/* Right Column: Video and Notes */}
+        <div className="col-span-12 lg:col-span-7 space-y-6">
           {videoUrl && (
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 h-full">
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
               <VideoPlayer
                 videoUrl={videoUrl}
                 onProgress={onVideoProgress}
@@ -137,6 +193,12 @@ export const LearningUnitContent = ({
               />
             </div>
           )}
+          
+          <NotesSection
+            notes={notes}
+            onChange={setNotes}
+            onSave={saveNotes}
+          />
         </div>
       </div>
 
