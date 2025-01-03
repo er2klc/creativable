@@ -1,4 +1,4 @@
-import { Edit, Trash2, CheckCircle2, Clock, ChevronRight, FileText, TrendingUp } from "lucide-react";
+import { Edit, Trash2, CheckCircle2, Clock, FileText, ChevronRight, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
