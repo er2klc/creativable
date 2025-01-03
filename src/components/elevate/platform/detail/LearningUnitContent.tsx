@@ -6,6 +6,10 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@supabase/auth-helpers-react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { FileUpload } from "./FileUpload";
 
 interface LearningUnitContentProps {
   id: string;
