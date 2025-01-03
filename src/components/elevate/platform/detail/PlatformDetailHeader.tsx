@@ -78,7 +78,7 @@ export const PlatformDetailHeader = ({
             onClick={onComplete}
           >
             <CheckCircle2 className="h-4 w-4" />
-            Abgeschlossen
+            {isCompleted ? 'Abgeschlossen' : 'Abschließen'}
           </Button>
           {isAdmin && onEdit && (
             <Button
