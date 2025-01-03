@@ -1,4 +1,4 @@
-import { Edit, Trash2, CheckCircle2, Clock, Percent } from "lucide-react";
+import { Edit, Trash2, CheckCircle2, Clock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
@@ -31,8 +31,8 @@ export const LearningUnitHeader = ({
   return (
     <div className="w-full space-y-4 pb-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <div className="flex flex-col items-start bg-slate-50 px-4 py-2 rounded-lg">
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col items-start bg-slate-50/80 px-4 py-2 rounded-lg">
             <span className="text-sm text-muted-foreground">
               Modul
             </span>
@@ -41,7 +41,9 @@ export const LearningUnitHeader = ({
             </span>
           </div>
           
-          <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-lg">
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          
+          <div className="flex items-center gap-2 bg-blue-50/80 px-4 py-2 rounded-lg">
             <div className="flex flex-col items-start">
               <span className="text-sm text-muted-foreground">
                 Lerneinheit
@@ -51,7 +53,7 @@ export const LearningUnitHeader = ({
               </span>
             </div>
             {videoDuration > 0 && (
-              <div className="flex items-center gap-1 text-muted-foreground ml-3">
+              <div className="flex items-center gap-1 text-muted-foreground ml-3 bg-white/50 px-2 py-1 rounded">
                 <Clock className="h-4 w-4" />
                 <span className="text-sm">~{Math.round(videoDuration / 60)} Min</span>
               </div>
@@ -94,12 +96,11 @@ export const LearningUnitHeader = ({
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <Percent className="h-4 w-4 text-muted-foreground" />
+      <div className="flex items-center gap-4 bg-slate-50/80 p-2 rounded-lg">
         <div className="flex-1">
           <Progress value={progress} className="h-2" />
         </div>
-        <span className="text-sm text-muted-foreground whitespace-nowrap">
+        <span className="text-sm font-medium bg-white px-2 py-1 rounded">
           {Math.round(progress)}%
         </span>
       </div>
