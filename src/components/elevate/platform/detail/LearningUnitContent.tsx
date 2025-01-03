@@ -148,42 +148,35 @@ export const LearningUnitContent = ({
 
   return (
     <div className="space-y-8 py-6 px-6 bg-gray-50">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Video and Notes Section */}
-        <div className="lg:col-span-8 space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className="lg:col-span-8">
-              <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
-                <VideoPlayer
-                  videoUrl={videoUrl}
-                  onProgress={onVideoProgress}
-                  savedProgress={savedProgress}
-                  onDuration={(duration) => setVideoDuration(duration)}
-                />
-              </div>
-            </div>
-            
-            <div className="lg:col-span-4 h-full">
-              <div className="h-full">
-                <NotesSection
-                  notes={notes}
-                  onChange={setNotes}
-                  onSave={handleSaveNotes}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <ContentDescription
-              title={title}
-              description={description}
-            />
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Top Row */}
+        <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
+          <VideoPlayer
+            videoUrl={videoUrl}
+            onProgress={onVideoProgress}
+            savedProgress={savedProgress}
+            onDuration={(duration) => setVideoDuration(duration)}
+          />
         </div>
         
-        {/* Documents Section */}
-        <div className="lg:col-span-4">
+        <div className="h-full">
+          <NotesSection
+            notes={notes}
+            onChange={setNotes}
+            onSave={handleSaveNotes}
+          />
+        </div>
+
+        {/* Bottom Row */}
+        <div>
+          <ContentDescription
+            title={title}
+            description={description}
+            existingFiles={existingFiles}
+          />
+        </div>
+        
+        <div>
           <DocumentSection
             documents={existingFiles?.map(file => ({
               name: file.file_name,

@@ -11,7 +11,7 @@ interface NotesSectionProps {
 
 export const NotesSection = ({ notes, onChange, onSave }: NotesSectionProps) => {
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col border rounded-lg p-4 bg-white">
       <div className="flex items-center justify-between mb-4">
         <Label className="flex items-center gap-2 text-lg font-semibold">
           <StickyNote className="h-5 w-5" />
