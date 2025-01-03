@@ -105,8 +105,7 @@ export const LearningUnitContent = ({
         <DescriptionSection
           title={title}
           description={description}
-          onEdit={() => setIsEditing(true)}
-          isAdmin={isAdmin}
+          existingFiles={documents}
         />
         
         <DocumentManager existingFiles={documents} />
