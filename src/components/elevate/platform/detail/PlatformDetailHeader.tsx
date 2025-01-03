@@ -1,4 +1,4 @@
-import { ChevronRight, TrendingUp } from "lucide-react";
+import { ChevronRight, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { HeaderControls } from "./HeaderControls";
@@ -69,7 +69,7 @@ export const PlatformDetailHeader = ({
 
       <div className="flex items-center gap-4 bg-slate-50/80 p-2 rounded-lg">
         <div className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-blue-500" />
+          <Trophy className="h-5 w-5 text-blue-500" />
           <span className="text-sm font-medium">Fortschritt</span>
         </div>
         <div className="flex-1">
@@ -77,7 +77,7 @@ export const PlatformDetailHeader = ({
             value={progress} 
             className="h-2 bg-gray-200" 
             style={{ 
-              '--progress-foreground': 'hsl(142.68deg 71.3% 45.1%)'
+              '--progress-foreground': '#3b82f6'
             } as React.CSSProperties}
           />
         </div>

@@ -39,7 +39,7 @@ export const LearningUnitTabs = ({
               value={unit.id}
               className={cn(
                 "relative data-[state=active]:text-primary data-[state=active]:bg-white min-w-[3rem]",
-                unit.completed && "text-green-600"
+                unit.completed && "text-green-600 bg-green-50"
               )}
               title={unit.title}
             >
