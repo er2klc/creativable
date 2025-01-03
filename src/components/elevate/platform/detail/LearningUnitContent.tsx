@@ -66,7 +66,7 @@ export const LearningUnitContent = ({
       .select('content')
       .eq('lerninhalte_id', id)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle(); // Changed from .single() to .maybeSingle()
 
     if (error) {
       console.error('Error loading notes:', error);
