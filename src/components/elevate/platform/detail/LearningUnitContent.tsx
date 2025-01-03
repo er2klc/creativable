@@ -37,6 +37,7 @@ export const LearningUnitContent = ({
   const [files, setFiles] = useState<File[]>([]);
   const [videoDuration, setVideoDuration] = useState(0);
   const user = useUser();
+  const [documents, setDocuments] = useState<Array<{ file_name: string; file_path: string }>>([]);
 
   const handleUpdate = async (data: { title: string; description: string; videoUrl: string }) => {
     try {
@@ -64,9 +65,24 @@ export const LearningUnitContent = ({
       setIsEditing(false);
       setFiles([]);
       toast.success('Lerneinheit erfolgreich aktualisiert');
+      fetchDocuments();
     } catch (error) {
       console.error('Error updating learning unit:', error);
       toast.error('Fehler beim Aktualisieren der Lerneinheit');
+    }
+  };
+
+  const fetchDocuments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('elevate_lerninhalte_documents')
+        .select('*')
+        .eq('lerninhalte_id', id);
+
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
     }
   };
 
@@ -87,7 +103,7 @@ export const LearningUnitContent = ({
           description={description}
         />
         
-        <DocumentManager existingFiles={[]} />
+        <DocumentManager existingFiles={documents} />
       </div>
 
       <EditUnitDialog
@@ -97,11 +113,11 @@ export const LearningUnitContent = ({
         description={description}
         videoUrl={videoUrl}
         onUpdate={handleUpdate}
-        existingFiles={[]}
+        existingFiles={documents}
         onFileRemove={async (index) => {
-          if (existingFiles && existingFiles[index]) {
+          if (documents && documents[index]) {
             try {
-              const fileToDelete = existingFiles[index];
+              const fileToDelete = documents[index];
               
               const { error: storageError } = await supabase.storage
                 .from('elevate-documents')
@@ -116,7 +132,7 @@ export const LearningUnitContent = ({
 
               if (dbError) throw dbError;
 
-              refetchFiles();
+              fetchDocuments();
               toast.success('Datei erfolgreich gelöscht');
             } catch (error) {
               console.error('Error deleting file:', error);

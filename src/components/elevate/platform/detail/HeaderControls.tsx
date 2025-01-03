@@ -13,7 +13,6 @@ interface HeaderControlsProps {
 }
 
 export const HeaderControls = ({
-  id,
   isCompleted,
   onComplete,
   isAdmin,
@@ -36,35 +35,35 @@ export const HeaderControls = ({
           <span className="text-sm">{documentsCount}</span>
         </div>
       )}
-      {isAdmin && (
-        <>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onEdit}
-            className="text-primary hover:text-primary/80 hover:bg-primary/10"
-          >
-            <Edit className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onDelete}
-            className="text-red-500 hover:text-red-600 hover:bg-red-50"
-          >
-            <Trash2 className="h-5 w-5" />
-          </Button>
-        </>
-      )}
       <Button
         variant={isCompleted ? "default" : "outline"}
         size="sm"
         className="flex items-center gap-2"
         onClick={onComplete}
       >
-        <CheckCircle2 className="h-5 w-5" />
-        {isCompleted ? 'Abgeschlossen' : 'Abgeschlossen'}
+        <CheckCircle2 className="h-4 w-4" />
+        {isCompleted ? 'Abgeschlossen' : 'Abschließen'}
       </Button>
+      {isAdmin && (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onEdit}
+            className="text-primary hover:text-primary/80 hover:bg-primary/10"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onDelete}
+            className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </>
+      )}
     </div>
   );
 };
