@@ -196,7 +196,13 @@ export const LearningUnitContent = ({
           
           <div className="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
             <div className="flex justify-between items-start">
-              <h2 className="text-xl font-semibold">{title}</h2>
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold">{title}</h2>
+                <div 
+                  className="prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: description }}
+                />
+              </div>
               <HeaderControls
                 id={id}
                 isCompleted={isCompleted}
@@ -208,27 +214,14 @@ export const LearningUnitContent = ({
                 documentsCount={existingFiles?.length || 0}
               />
             </div>
-            <div 
-              className="prose prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: description }}
-            />
+            
             {existingFiles && existingFiles.length > 0 && (
               <div className="mt-4">
                 <h3 className="font-medium mb-2">Dokumente</h3>
                 <div className="space-y-2">
-                  {existingFiles.map((file, index) => (
+                  {existingFiles.map((file) => (
                     <div key={file.id} className="flex items-center justify-between p-2 bg-white rounded-lg">
                       <span className="text-sm">{file.file_name}</span>
-                      {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleFileRemove(index)}
-                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                        >
-                          Löschen
-                        </Button>
-                      )}
                     </div>
                   ))}
                 </div>

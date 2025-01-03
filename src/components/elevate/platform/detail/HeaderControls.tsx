@@ -1,7 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Clock, FileText, CheckCircle2 } from "lucide-react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 interface HeaderControlsProps {
   id: string;
