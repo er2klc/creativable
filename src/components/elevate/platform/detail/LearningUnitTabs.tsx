@@ -31,7 +31,7 @@ export const LearningUnitTabs = ({
     <div className="relative mb-6 bg-gray-100 rounded-t-md">
       <div className="px-4 py-2 flex items-center gap-2 border-b border-gray-200">
         <BookOpen className="w-5 h-5 text-blue-500" />
-        <Progress value={progress} className="h-2 bg-gray-200 flex-1" style={{ '--progress-background': 'rgb(59 130 246)' }} />
+        <Progress value={progress} className="h-2 bg-gray-200 flex-1" style={{ backgroundColor: 'rgb(229 231 235)', '--tw-bg-opacity': '1' }} />
       </div>
       <Tabs 
         value={activeUnit} 

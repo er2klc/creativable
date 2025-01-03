@@ -148,6 +148,7 @@ export const PlatformContent = ({
             onUnitChange={handleUnitChange}
             isAdmin={isAdmin}
             onCreateUnit={() => setIsDialogOpen(true)}
+            progress={progress}
           />
 
           {sortedSubmodules.map((submodule) => (
