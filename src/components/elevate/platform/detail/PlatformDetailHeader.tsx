@@ -34,7 +34,7 @@ export const PlatformDetailHeader = ({
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-start bg-slate-50/80 px-4 py-2 rounded-lg">
             <span className="text-sm text-muted-foreground">
-              Modul
+              ModulA
             </span>
             <span className="font-medium">
               {moduleTitle} A
