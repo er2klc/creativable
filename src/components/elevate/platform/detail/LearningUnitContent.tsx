@@ -13,6 +13,7 @@ import { NotesSection } from "./NotesSection";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface LearningUnitContentProps {
   id: string;
@@ -117,6 +118,12 @@ export const LearningUnitContent = ({
           <div className="flex-1 text-center">
             <h3 className="text-2xl font-bold flex items-center justify-center gap-2">
               {title}
+              {videoDuration > 0 && (
+                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  ~{Math.round(videoDuration / 60)} Minuten
+                </span>
+              )}
             </h3>
           </div>
           <div className="flex items-center gap-2">
@@ -150,37 +157,25 @@ export const LearningUnitContent = ({
             </Button>
           </div>
         </div>
-        <div className="flex items-center justify-center gap-6 mt-2 text-sm text-muted-foreground">
-          {videoDuration > 0 && (
-            <span className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              ~{Math.round(videoDuration / 60)} Minuten
-            </span>
-          )}
-          {documents.length > 0 && (
-            <span className="flex items-center gap-1">
-              <FileText className="h-4 w-4" />
-              {documents.length} {documents.length === 1 ? 'Dokument' : 'Dokumente'}
-            </span>
-          )}
-        </div>
       </div>
       
       {/* Main Content Section */}
       <div className="grid grid-cols-12 gap-6">
         {/* Left Column: Notes */}
         <div className="col-span-12 lg:col-span-4">
-          <NotesSection
-            notes={notes}
-            onChange={setNotes}
-            onSave={saveNotes}
-          />
+          <div className="h-[400px]"> {/* Fixed height to match video */}
+            <NotesSection
+              notes={notes}
+              onChange={setNotes}
+              onSave={saveNotes}
+            />
+          </div>
         </div>
         
         {/* Right Column: Video */}
         <div className="col-span-12 lg:col-span-8">
           {videoUrl && (
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 h-[400px]">
               <VideoPlayer
                 videoUrl={videoUrl}
                 onProgress={onVideoProgress}
@@ -197,62 +192,72 @@ export const LearningUnitContent = ({
         <div className="prose prose-sm max-w-none">
           <div dangerouslySetInnerHTML={{ __html: description || "" }} />
         </div>
-        <DocumentSection documents={documents} />
+        {documents.length > 0 && (
+          <div className="mt-4 pt-4 border-t">
+            <h4 className="font-semibold mb-2 flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Dokumente
+            </h4>
+            <DocumentSection documents={documents} />
+          </div>
+        )}
       </div>
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[800px]">
-          <DialogHeader>
-            <DialogTitle>Lerneinheit bearbeiten</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Titel</Label>
-              <Input
-                id="title"
-                value={editedTitle}
-                onChange={(e) => setEditedTitle(e.target.value)}
-                placeholder="Titel der Lerneinheit"
-              />
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <ScrollArea className="h-full w-full">
+            <DialogHeader>
+              <DialogTitle>Lerneinheit bearbeiten</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Titel</Label>
+                <Input
+                  id="title"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  placeholder="Titel der Lerneinheit"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Beschreibung</Label>
+                <RichTextEditor
+                  content={editedDescription}
+                  onChange={setEditedDescription}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="videoUrl">Video URL</Label>
+                <Input
+                  id="videoUrl"
+                  value={editedVideoUrl}
+                  onChange={(e) => setEditedVideoUrl(e.target.value)}
+                  placeholder="https://youtube.com/..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Dokumente</Label>
+                <FileUpload
+                  files={files}
+                  onFilesSelected={setFiles}
+                  onFileRemove={(index) => {
+                    const newFiles = [...files];
+                    newFiles.splice(index, 1);
+                    setFiles(newFiles);
+                  }}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Beschreibung</Label>
-              <RichTextEditor
-                content={editedDescription}
-                onChange={setEditedDescription}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="videoUrl">Video URL</Label>
-              <Input
-                id="videoUrl"
-                value={editedVideoUrl}
-                onChange={(e) => setEditedVideoUrl(e.target.value)}
-                placeholder="https://youtube.com/..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Dokumente</Label>
-              <FileUpload
-                files={files}
-                onFilesSelected={setFiles}
-                onFileRemove={(index) => {
-                  const newFiles = [...files];
-                  newFiles.splice(index, 1);
-                  setFiles(newFiles);
-                }}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Abbrechen
-            </Button>
-            <Button onClick={handleSaveEdit}>
-              Speichern
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Abbrechen
+              </Button>
+              <Button onClick={handleSaveEdit}>
+                Speichern
+              </Button>
+            </DialogFooter>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>

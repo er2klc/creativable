@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { FileText, X } from "lucide-react";
+import { FileText, X, FileSpreadsheet } from "lucide-react";
 
 interface FileUploadProps {
   onFilesSelected: (files: File[]) => void;
@@ -33,6 +33,13 @@ export const FileUpload = ({ onFilesSelected, files, onFileRemove }: FileUploadP
     }
   };
 
+  const getFileIcon = (fileType: string) => {
+    if (fileType.includes('spreadsheet') || fileType.includes('excel')) {
+      return <FileSpreadsheet className="w-4 h-4 text-green-600" />;
+    }
+    return <FileText className="w-4 h-4 text-gray-400" />;
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-center w-full">
@@ -64,7 +71,7 @@ export const FileUpload = ({ onFilesSelected, files, onFileRemove }: FileUploadP
               className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
             >
               <div className="flex items-center space-x-2">
-                <FileText className="w-4 h-4 text-gray-400" />
+                {getFileIcon(file.type)}
                 <span className="text-sm text-gray-700">{file.name}</span>
               </div>
               <Button

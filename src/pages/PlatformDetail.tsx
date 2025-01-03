@@ -201,11 +201,16 @@ const PlatformDetailContent = () => {
         />
 
         {sortedSubmodules.length === 0 ? (
-          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center space-y-4">
             <h3 className="text-xl font-semibold mb-2">Keine Lerneinheiten verfügbar</h3>
             <p className="text-muted-foreground">
               Für dieses Modul wurden noch keine Lerneinheiten erstellt.
             </p>
+            {isAdmin && (
+              <Button onClick={() => setIsDialogOpen(true)} className="mt-4">
+                Erste Lerneinheit erstellen
+              </Button>
+            )}
           </div>
         ) : (
           <Tabs value={activeUnitId} onValueChange={handleUnitChange} className="w-full">
