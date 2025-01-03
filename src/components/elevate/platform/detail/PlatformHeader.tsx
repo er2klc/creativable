@@ -3,14 +3,12 @@ import { BarChart2, CheckCircle2 } from "lucide-react";
 
 interface PlatformHeaderProps {
   name: string;
-  description: string | null;
   completedCount: number;
   totalCount: number;
 }
 
 export const PlatformHeader = ({ 
-  name, 
-  description, 
+  name,
   completedCount, 
   totalCount
 }: PlatformHeaderProps) => {
@@ -25,11 +23,6 @@ export const PlatformHeader = ({
               {name}
             </h1>
           </div>
-          {description && (
-            <p className="text-lg text-muted-foreground max-w-2xl">
-              {description}
-            </p>
-          )}
           <div className="flex items-center gap-4">
             <BarChart2 className="h-5 w-5 text-primary" />
             <div className="flex-1 max-w-md">
