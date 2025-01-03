@@ -1,23 +1,18 @@
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { Plus, BarChart2, CheckCircle2 } from "lucide-react";
+import { BarChart2, CheckCircle2 } from "lucide-react";
 
 interface PlatformHeaderProps {
   name: string;
   description: string | null;
   completedCount: number;
   totalCount: number;
-  isAdmin?: boolean;
-  onCreateUnit?: () => void;
 }
 
 export const PlatformHeader = ({ 
   name, 
   description, 
   completedCount, 
-  totalCount,
-  isAdmin,
-  onCreateUnit
+  totalCount
 }: PlatformHeaderProps) => {
   const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
@@ -29,16 +24,6 @@ export const PlatformHeader = ({
             <h1 className="text-4xl font-orbitron bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
               {name}
             </h1>
-            {isAdmin && (
-              <Button
-                onClick={onCreateUnit}
-                size="sm"
-                className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Neue Lerneinheit
-              </Button>
-            )}
           </div>
           {description && (
             <p className="text-lg text-muted-foreground max-w-2xl">

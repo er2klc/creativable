@@ -1,6 +1,7 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2 } from "lucide-react";
-import { DeleteUnitButton } from "./DeleteUnitButton";
+import { Button } from "@/components/ui/button";
+import { Plus, CheckCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LearningUnit {
   id: string;
@@ -13,44 +14,51 @@ interface LearningUnitTabsProps {
   activeUnit: string;
   onUnitChange: (unitId: string) => void;
   isAdmin?: boolean;
-  onUnitDeleted?: () => void;
+  onUnitDeleted?: () => Promise<void>;
+  onCreateUnit?: () => void;
 }
 
-export const LearningUnitTabs = ({ 
-  units, 
-  activeUnit, 
+export const LearningUnitTabs = ({
+  units,
+  activeUnit,
   onUnitChange,
   isAdmin,
-  onUnitDeleted
+  onUnitDeleted,
+  onCreateUnit
 }: LearningUnitTabsProps) => {
   return (
-    <TabsList className="w-full justify-start bg-white/50 backdrop-blur-sm p-1 rounded-lg mb-6 border">
-      {units.map((unit, index) => (
-        <TabsTrigger
-          key={unit.id}
-          value={unit.id}
-          className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary relative py-2 px-4"
-          onClick={() => onUnitChange(unit.id)}
-        >
-          <span className="flex items-center gap-2">
-            <span className="w-6 h-6 flex items-center justify-center rounded-full bg-primary/5 text-primary">
-              {index + 1}
-            </span>
-            {unit.title}
-          </span>
-          <div className="flex items-center gap-1">
-            {unit.completed && (
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-            )}
-            {isAdmin && (
-              <DeleteUnitButton 
-                lerninhalteId={unit.id}
-                onDelete={() => onUnitDeleted?.()}
-              />
-            )}
-          </div>
-        </TabsTrigger>
-      ))}
-    </TabsList>
+    <div className="relative">
+      <Tabs defaultValue={activeUnit} className="w-full" onValueChange={onUnitChange}>
+        <div className="flex items-center justify-between mb-4">
+          <TabsList className="h-auto p-1 flex-wrap">
+            {units.map((unit) => (
+              <TabsTrigger
+                key={unit.id}
+                value={unit.id}
+                className={cn(
+                  "relative data-[state=active]:text-primary",
+                  unit.completed && "text-green-600"
+                )}
+              >
+                {unit.title}
+                {unit.completed && (
+                  <CheckCircle className="w-4 h-4 ml-2 inline-block text-green-600" />
+                )}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {isAdmin && (
+            <Button
+              onClick={onCreateUnit}
+              size="sm"
+              className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Neue Lerneinheit
+            </Button>
+          )}
+        </div>
+      </Tabs>
+    </div>
   );
 };
