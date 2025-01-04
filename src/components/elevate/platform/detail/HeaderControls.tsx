@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Clock, FileText, CheckCircle2 } from "lucide-react";
+import { Edit, Trash2, FileText, CheckCircle2 } from "lucide-react";
 
 interface HeaderControlsProps {
   id: string;
@@ -8,7 +8,6 @@ interface HeaderControlsProps {
   isAdmin: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
-  videoDuration?: number;
   documentsCount: number;
 }
 
@@ -18,17 +17,10 @@ export const HeaderControls = ({
   isAdmin,
   onEdit,
   onDelete,
-  videoDuration,
   documentsCount
 }: HeaderControlsProps) => {
   return (
     <div className="flex items-center gap-2">
-      {videoDuration && videoDuration > 0 && (
-        <div className="flex items-center gap-1 text-muted-foreground bg-white/50 px-2 py-1 rounded">
-          <Clock className="h-4 w-4" />
-          <span className="text-sm">{Math.ceil(videoDuration / 60)} Min</span>
-        </div>
-      )}
       {documentsCount > 0 && (
         <div className="flex items-center gap-1 text-muted-foreground bg-white/50 px-2 py-1 rounded">
           <FileText className="h-4 w-4" />

@@ -1,13 +1,16 @@
+import { useState } from "react";
 import { FileText, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { DocumentPreview } from "./DocumentPreview";
 
 interface Document {
   name: string;
   url: string;
   id?: string;
   file_path?: string;
+  file_type?: string;
 }
 
 interface DocumentSectionProps {
@@ -17,18 +20,18 @@ interface DocumentSectionProps {
 }
 
 export const DocumentSection = ({ documents, isAdmin = false, onDocumentDeleted }: DocumentSectionProps) => {
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+
   const handleDelete = async (document: Document) => {
     if (!document.id || !document.file_path) return;
     
     try {
-      // Delete from storage
       const { error: storageError } = await supabase.storage
         .from('elevate-documents')
         .remove([document.file_path]);
 
       if (storageError) throw storageError;
 
-      // Delete from database
       const { error: dbError } = await supabase
         .from('elevate_lerninhalte_documents')
         .delete()
@@ -52,15 +55,13 @@ export const DocumentSection = ({ documents, isAdmin = false, onDocumentDeleted 
       <div className="space-y-2">
         {documents.map((doc, index) => (
           <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-            <a
-              href={doc.url}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => setSelectedDocument(doc)}
               className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900"
             >
               <FileText className="h-4 w-4" />
               <span>{doc.name}</span>
-            </a>
+            </button>
             {isAdmin && (
               <Button
                 variant="ghost"
@@ -74,6 +75,12 @@ export const DocumentSection = ({ documents, isAdmin = false, onDocumentDeleted 
           </div>
         ))}
       </div>
+
+      <DocumentPreview
+        open={!!selectedDocument}
+        onOpenChange={(open) => !open && setSelectedDocument(null)}
+        document={selectedDocument || { name: "", url: "" }}
+      />
     </div>
   );
 };
