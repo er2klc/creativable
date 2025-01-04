@@ -24,7 +24,6 @@ export const DocumentManager = ({
   return (
     <div className="col-span-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Dokumente</h3>
         {isAdmin && (
           <Button
             variant="ghost"

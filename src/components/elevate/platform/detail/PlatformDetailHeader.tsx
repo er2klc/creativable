@@ -9,7 +9,6 @@ interface PlatformDetailHeaderProps {
   isCompleted: boolean;
   onComplete: () => void;
   isAdmin?: boolean;
-  onEdit?: () => void;
   onDelete?: () => void;
   videoDuration?: number;
   documentsCount: number;
@@ -22,7 +21,6 @@ export const PlatformDetailHeader = ({
   isCompleted,
   onComplete,
   isAdmin,
-  onEdit,
   onDelete,
   documentsCount,
   progress = 0,
@@ -59,7 +57,6 @@ export const PlatformDetailHeader = ({
           isCompleted={isCompleted}
           onComplete={onComplete}
           isAdmin={isAdmin || false}
-          onEdit={onEdit}
           onDelete={onDelete}
           documentsCount={documentsCount}
         />
