@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
-// Declare YouTube IFrame API types
 declare global {
   interface Window {
     onYouTubeIframeAPIReady: () => void;
     YT: {
       Player: new (
-        elementId: HTMLElement | string,
+        elementId: string,
         config: {
           videoId: string;
           playerVars?: {
@@ -17,7 +16,7 @@ declare global {
           };
           events?: {
             onReady?: (event: { target: any }) => void;
-            onStateChange?: (event: { data: number; target: any }) => void;
+            onStateChange?: (event: { data: number }) => void;
             onError?: (event: { data: number }) => void;
           };
         }
@@ -37,76 +36,85 @@ interface VideoPlayerProps {
 }
 
 export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuration }: VideoPlayerProps) => {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [player, setPlayer] = useState<any>(null);
-  
+  const playerRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isAPILoaded, setIsAPILoaded] = useState(false);
+
   useEffect(() => {
     // Load YouTube API
-    const tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+
+      window.onYouTubeIframeAPIReady = () => {
+        setIsAPILoaded(true);
+      };
+    } else {
+      setIsAPILoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAPILoaded || !containerRef.current) return;
 
     // Extract video ID from URL
     const videoId = videoUrl.includes('v=') 
       ? videoUrl.split('v=')[1].split('&')[0]
       : videoUrl.split('/').pop();
-    
-    // Initialize player when API is ready
-    window.onYouTubeIframeAPIReady = () => {
-      const newPlayer = new window.YT.Player(iframeRef.current, {
-        videoId,
-        playerVars: {
-          autoplay: 0,
-          modestbranding: 1,
-          rel: 0,
-          origin: window.location.origin
+
+    if (!videoId) return;
+
+    // Initialize player
+    playerRef.current = new window.YT.Player(containerRef.current, {
+      videoId,
+      playerVars: {
+        autoplay: 0,
+        modestbranding: 1,
+        rel: 0,
+        origin: window.location.origin
+      },
+      events: {
+        onReady: (event) => {
+          const duration = event.target.getDuration();
+          if (onDuration && duration > 0) {
+            onDuration(duration);
+          }
+          if (savedProgress > 0) {
+            event.target.seekTo(savedProgress);
+          }
         },
-        events: {
-          onReady: (event: any) => {
-            if (savedProgress > 0) {
-              event.target.seekTo(savedProgress);
-            }
-            // Get and set duration as soon as the player is ready
-            const duration = event.target.getDuration();
-            if (onDuration && duration > 0) {
-              onDuration(duration);
-            }
-          },
-          onStateChange: (event: any) => {
-            if (event.data === window.YT.PlayerState.PLAYING) {
-              startTracking(event.target);
-            }
-          },
-          onError: (event: any) => {
-            console.error('YouTube Player Error:', event.data);
+        onStateChange: (event) => {
+          if (event.data === window.YT.PlayerState.PLAYING) {
+            startTracking(event.target);
           }
         }
-      });
-      setPlayer(newPlayer);
-    };
+      }
+    });
 
     return () => {
-      if (player) {
-        player.destroy();
+      if (playerRef.current) {
+        playerRef.current.destroy();
       }
     };
-  }, [videoUrl]);
+  }, [videoUrl, isAPILoaded]);
 
   const startTracking = (player: any) => {
     const trackProgress = setInterval(() => {
+      if (!player) return;
+
       const currentTime = player.getCurrentTime();
       const duration = player.getDuration();
-      const progress = (currentTime / duration) * 100;
-      onProgress(progress);
       
-      // Update duration while playing (in case it wasn't available when player was ready)
-      if (onDuration && duration > 0) {
-        onDuration(duration);
-      }
-      
-      if (progress >= 100) {
-        clearInterval(trackProgress);
+      if (duration > 0) {
+        const progress = (currentTime / duration) * 100;
+        onProgress(progress);
+        
+        // Update duration while playing
+        if (onDuration) {
+          onDuration(duration);
+        }
       }
     }, 1000);
 
@@ -114,8 +122,6 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
   };
 
   return (
-    <div className="aspect-video w-full max-w-full rounded-lg overflow-hidden bg-black">
-      <div ref={iframeRef} className="w-full h-full" />
-    </div>
+    <div ref={containerRef} className="w-full h-full" />
   );
 };
