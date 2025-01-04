@@ -1,119 +1,97 @@
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useChat } from "ai/react";
-import { Bot, SendHorizontal, User } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
-interface ChatDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
+export function ChatDialog({ open, onOpenChange }) {
+  const [sessionToken, setSessionToken] = useState(null);
+  const [apiKey, setApiKey] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef(null);
 
-export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
-  const [sessionToken, setSessionToken] = useState<string | null>(null);
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const fetchMessages = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${process.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+          "X-OpenAI-Key": apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ messages }),
+      });
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
-    headers: {
-      Authorization: `Bearer ${sessionToken}`,
-      'X-OpenAI-Key': apiKey || '',
-    },
-    onResponse: (response) => {
-      console.log("Chat response received:", response);
-    },
-    onFinish: () => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      if (!response.ok) {
+        throw new Error("Chat request failed");
       }
-    },
-    onError: (error) => {
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let result = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        result += chunk;
+        setMessages((prev) => [...prev, { role: "assistant", content: chunk }]);
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      }
+    } catch (error) {
       console.error("Chat error:", error);
-      toast.error("Fehler beim Senden der Nachricht.");
-    },
-  });
+      toast.error("Fehler beim Abrufen der Antwort.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setMessages([...messages, { role: "user", content: input }]);
+    setInput("");
+    fetchMessages();
+  };
 
   useEffect(() => {
     const setupChat = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          toast.error("Bitte melden Sie sich an.");
-          return;
-        }
-
-        setSessionToken(session.access_token);
-
-        const { data: chatbotSettings } = await supabase
-          .from('chatbot_settings')
-          .select('openai_api_key')
-          .eq('user_id', session.user.id)
-          .single();
-
-        if (chatbotSettings?.openai_api_key) {
-          setApiKey(chatbotSettings.openai_api_key);
-        } else {
-          toast.error("Bitte fügen Sie einen OpenAI API Key hinzu.");
-        }
-      } catch (error) {
-        toast.error("Fehler beim Einrichten des Chats.");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Bitte melden Sie sich an.");
+        return;
       }
+
+      setSessionToken(session.access_token);
+      const { data: chatbotSettings } = await supabase
+        .from("chatbot_settings")
+        .select("openai_api_key")
+        .eq("user_id", session.user.id)
+        .single();
+
+      setApiKey(chatbotSettings?.openai_api_key);
     };
 
     if (open) setupChat();
   }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={() => onOpenChange(false)}>
-      <DialogContent>
-        <DialogTitle>Chat mit KI-Assistent</DialogTitle>
-        <DialogDescription>
-          Ich helfe Ihnen gerne bei Ihren Fragen und Anliegen.
-        </DialogDescription>
-        <div className="flex flex-col h-[600px]">
-          <ScrollArea className="flex-1" ref={scrollRef}>
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div key={message.id} className={cn(
-                  "flex gap-3 text-sm",
-                  message.role === "user" && "justify-end"
-                )}>
-                  {message.role === "assistant" && (
-                    <Avatar className="h-8 w-8"><AvatarFallback><Bot /></AvatarFallback></Avatar>
-                  )}
-                  <div className={cn(
-                    "rounded-lg px-3 py-2 max-w-[80%]",
-                    message.role === "user" ? "bg-primary text-white" : "bg-gray-200"
-                  )}>
-                    {message.content}
-                  </div>
-                  {message.role === "user" && (
-                    <Avatar className="h-8 w-8"><AvatarFallback><User /></AvatarFallback></Avatar>
-                  )}
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-          <form onSubmit={handleSubmit} className="flex items-center gap-2">
-            <Input
-              placeholder="Schreibe eine Nachricht..."
-              value={input}
-              onChange={handleInputChange}
-              disabled={isLoading}
-            />
-            <Button type="submit" disabled={isLoading}>
-              <SendHorizontal />
-            </Button>
-          </form>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <div>
+      {/* Chat UI */}
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          disabled={isLoading}
+        />
+        <button type="submit" disabled={isLoading}>
+          Senden
+        </button>
+      </form>
+    </div>
   );
 }
