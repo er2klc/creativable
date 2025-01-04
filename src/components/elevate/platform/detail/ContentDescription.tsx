@@ -29,7 +29,7 @@ export const ContentDescription = ({
     <div className="space-y-4 border rounded-lg p-4 bg-white h-full">
       <h2 className="text-2xl font-semibold">{title}</h2>
       <div 
-        className="text-gray-600 prose prose-sm max-w-none"
+        className="text-gray-600 max-w-none"
         dangerouslySetInnerHTML={{ __html: description }}
       />
     </div>
