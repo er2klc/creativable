@@ -29,16 +29,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const userId = user.id;
 
     // OpenAI API Key aus der settings-Tabelle abrufen
-    const { data: settings, error: settingsError } = await supabase
-      .from("settings")
-      .select("openai_api_key")
-      .eq("user_id", userId)
-      .single();
+    // OpenAI API Key aus der settings-Tabelle abrufen
+const { data: settings, error: settingsError } = await supabase
+  .from("settings")
+  .select("openai_api_key")
+  .eq("user_id", userId)
+  .single();
 
-    if (settingsError || !settings?.openai_api_key) {
-      console.error("Settings error:", settingsError?.message || "No API key found");
-      return res.status(400).json({ error: "No OpenAI API Key found for the user" });
-    }
+if (settingsError || !settings?.openai_api_key) {
+  console.error("Settings error:", settingsError?.message || "No API key found");
+  return res.status(400).json({ error: "No OpenAI API Key found for the user" });
+}
+
+console.log("OpenAI API Key geladen:", settings.openai_api_key);
+
 
     const openaiKey = settings.openai_api_key;
 
