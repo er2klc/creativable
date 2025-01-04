@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { handleChatRequest } from "@/api/chat";
 
 interface ChatDialogProps {
   open: boolean;
@@ -29,17 +30,18 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   }, []);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: '/api/chat',
-    body: {
-      openaiKey: settings?.openai_api_key,
-      sessionToken
-    },
-    headers: {
-      'Authorization': `Bearer ${sessionToken}`
-    },
-    onError: (error) => {
-      console.error('Chat error:', error);
-      toast.error("Fehler beim Senden der Nachricht. Bitte stellen Sie sicher, dass Sie einen gültigen OpenAI API-Key in den Einstellungen hinterlegt haben.");
+    api: async (messages) => {
+      try {
+        if (!settings?.openai_api_key) {
+          throw new Error("OpenAI API Key fehlt");
+        }
+        const response = await handleChatRequest(messages, settings.openai_api_key, sessionToken || '');
+        return response;
+      } catch (error: any) {
+        console.error('Chat error:', error);
+        toast.error("Fehler beim Senden der Nachricht. Bitte stellen Sie sicher, dass Sie einen gültigen OpenAI API-Key in den Einstellungen hinterlegt haben.");
+        throw error;
+      }
     }
   });
 
