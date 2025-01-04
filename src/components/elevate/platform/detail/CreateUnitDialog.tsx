@@ -28,40 +28,13 @@ export const CreateUnitDialog = ({
   const [files, setFiles] = useState<File[]>([]);
 
   const handleSubmit = async () => {
-    const convertedFiles = [];
-    
-    // Process each file to ensure unique names
-    for (const file of files) {
-      const fileType = file.type.toLowerCase();
-      const fileName = file.name.toLowerCase();
-      const timestamp = new Date().getTime();
+    const timestamp = new Date().getTime();
+    const convertedFiles = files.map(file => {
       const uniqueFileName = `${timestamp}-${file.name}`;
-      
-      // Create a new File object with the unique name
-      const uniqueFile = new File([file], uniqueFileName, {
+      return new File([file], uniqueFileName, {
         type: file.type
       });
-      
-      if (
-        fileType.includes('sheet') || 
-        fileType.includes('excel') ||
-        fileName.endsWith('.xlsx') ||
-        fileName.endsWith('.xls') ||
-        fileType.includes('word') ||
-        fileName.endsWith('.docx') ||
-        fileName.endsWith('.doc')
-      ) {
-        convertedFiles.push({
-          file: uniqueFile,
-          needsConversion: true
-        });
-      } else {
-        convertedFiles.push({
-          file: uniqueFile,
-          needsConversion: false
-        });
-      }
-    }
+    });
     
     // Preserve line breaks by replacing them with <br> tags
     const formattedDescription = description.replace(/\n/g, '<br>');
@@ -70,7 +43,7 @@ export const CreateUnitDialog = ({
       title,
       description: formattedDescription,
       videoUrl,
-      files: convertedFiles.map(f => f.file)
+      files: convertedFiles
     });
     
     setTitle("");
@@ -96,16 +69,15 @@ export const CreateUnitDialog = ({
             />
           </div>
           <div className="space-y-2">
-  <Label htmlFor="description">Beschreibung</Label>
-  <RichTextEditor
-    content={description}
-    onChange={setDescription}
-  />
-  <p className="text-sm text-muted-foreground">
-    Hinweis: Drücken Sie <strong>Shift+Enter</strong>, um einen Zeilenumbruch einzufügen.
-  </p>
-</div>
-
+            <Label htmlFor="description">Beschreibung</Label>
+            <RichTextEditor
+              content={description}
+              onChange={setDescription}
+            />
+            <p className="text-sm text-muted-foreground">
+              Hinweis: Drücken Sie <strong>Shift+Enter</strong>, um einen Zeilenumbruch einzufügen.
+            </p>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="videoUrl">Video URL</Label>
             <Input
