@@ -1,13 +1,11 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { FileUpload } from "./FileUpload";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useUser } from "@supabase/auth-helpers-react";
+import { FileUpload } from "./FileUpload";
+import { DialogHeader } from "./dialog/DialogHeader";
+import { UnitForm } from "./dialog/UnitForm";
+import { DialogFooter } from "./dialog/DialogFooter";
 
 interface EditUnitDialogProps {
   open: boolean;
@@ -41,7 +39,6 @@ export const EditUnitDialog = ({
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localFiles, setLocalFiles] = useState<any[]>([]);
-  const user = useUser();
 
   useEffect(() => {
     if (open) {
@@ -99,7 +96,6 @@ export const EditUnitDialog = ({
             file_name: file.name,
             file_path: filePath,
             file_type: file.type,
-            created_by: user?.id,
             preview_file_path: previewFilePath
           });
 
@@ -117,7 +113,6 @@ export const EditUnitDialog = ({
       });
       
       onOpenChange(false);
-      toast.success('Änderungen erfolgreich gespeichert');
 
     } catch (error) {
       console.error('Error updating unit:', error);
@@ -147,7 +142,6 @@ export const EditUnitDialog = ({
 
         onFileRemove(index);
         setLocalFiles(prev => prev.filter((_, i) => i !== index));
-        toast.success('Datei erfolgreich gelöscht');
       } catch (error) {
         console.error('Error deleting file:', error);
         toast.error('Fehler beim Löschen der Datei');
@@ -163,37 +157,17 @@ export const EditUnitDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Lerneinheit bearbeiten</DialogTitle>
-        </DialogHeader>
+        <DialogHeader />
         <div className="space-y-4">
+          <UnitForm
+            title={title}
+            setTitle={setTitle}
+            description={description}
+            setDescription={setDescription}
+            videoUrl={videoUrl}
+            setVideoUrl={setVideoUrl}
+          />
           <div className="space-y-2">
-            <Label htmlFor="title">Titel</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Beschreibung</Label>
-            <RichTextEditor
-              content={description}
-              onChange={setDescription}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="videoUrl">Video URL</Label>
-            <Input
-              id="videoUrl"
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Dokumente</Label>
             <FileUpload
               onFilesSelected={onFilesSelected}
               files={files}
@@ -201,17 +175,11 @@ export const EditUnitDialog = ({
               onFileRemove={handleFileRemove}
             />
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Abbrechen
-            </Button>
-            <Button 
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Wird gespeichert...' : 'Speichern'}
-            </Button>
-          </div>
+          <DialogFooter
+            onCancel={() => onOpenChange(false)}
+            onSave={handleSubmit}
+            isSubmitting={isSubmitting}
+          />
         </div>
       </DialogContent>
     </Dialog>

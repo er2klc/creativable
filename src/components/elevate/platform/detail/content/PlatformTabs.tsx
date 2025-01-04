@@ -78,7 +78,6 @@ export const PlatformTabs = ({
                 if (error) throw error;
                 await refetch();
                 setIsEditDialogOpen(false);
-                toast.success("Lerneinheit erfolgreich aktualisiert");
               } catch (error) {
                 console.error('Error updating learning unit:', error);
                 toast.error("Fehler beim Aktualisieren der Lerneinheit");
