@@ -1,9 +1,17 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export const handleChatRequest = async (messages: any, sessionToken: string) => {
+export default async function handler(req: any, res: any) {
+  if (req.method !== "POST") {
+    res.setHeader("Allow", ["POST"]);
+    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+  }
+
   try {
+    const { messages } = req.body;
+    const sessionToken = req.headers["authorization"]?.replace("Bearer ", "");
+
     if (!sessionToken) {
-      throw new Error("No session token provided");
+      return res.status(400).json({ error: "No session token provided" });
     }
 
     // Authentifizierung prüfen
@@ -14,7 +22,7 @@ export const handleChatRequest = async (messages: any, sessionToken: string) => 
 
     if (authError || !user) {
       console.error("Authentication error:", authError?.message || "No user found");
-      throw new Error("Unauthorized");
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
     const userId = user.id;
@@ -29,7 +37,7 @@ export const handleChatRequest = async (messages: any, sessionToken: string) => 
 
     if (settingsError || !settings?.openai_api_key) {
       console.error("Settings error:", settingsError?.message || "No API key found");
-      throw new Error("No OpenAI API Key found for the user");
+      return res.status(400).json({ error: "No OpenAI API Key found for the user" });
     }
 
     console.log("OpenAI API Key geladen:", settings.openai_api_key);
@@ -48,9 +56,9 @@ export const handleChatRequest = async (messages: any, sessionToken: string) => 
       throw new Error(error.message);
     }
 
-    return data;
+    return res.status(200).json(data);
   } catch (error: any) {
     console.error("API Error:", error.message);
-    throw error;
+    return res.status(500).json({ error: error.message });
   }
-};
+}
