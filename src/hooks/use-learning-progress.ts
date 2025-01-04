@@ -26,8 +26,8 @@ export const useLearningProgress = () => {
       return data?.map(item => item.lerninhalte_id) || [];
     },
     enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    gcTime: 1000 * 60 * 15, // Keep unused data for 15 minutes
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 15,
     retry: 2,
   });
 
@@ -40,28 +40,40 @@ export const useLearningProgress = () => {
     if (!user?.id) return;
 
     try {
-      if (completed) {
+      // Prüfen ob bereits ein Eintrag existiert
+      const { data: existingProgress } = await supabase
+        .from('elevate_user_progress')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('lerninhalte_id', lerninhalteId)
+        .maybeSingle();
+
+      if (existingProgress) {
+        // Update existierenden Eintrag
         const { error } = await supabase
           .from('elevate_user_progress')
-          .upsert({
-            user_id: user.id,
-            lerninhalte_id: lerninhalteId,
-            completed: true,
-            completed_at: new Date().toISOString()
-          });
+          .update({
+            completed,
+            completed_at: completed ? new Date().toISOString() : null
+          })
+          .eq('id', existingProgress.id);
 
         if (error) throw error;
       } else {
+        // Erstelle neuen Eintrag
         const { error } = await supabase
           .from('elevate_user_progress')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('lerninhalte_id', lerninhalteId);
+          .insert({
+            user_id: user.id,
+            lerninhalte_id: lerninhalteId,
+            completed,
+            completed_at: completed ? new Date().toISOString() : null
+          });
 
         if (error) throw error;
       }
 
-      // Optimistically update the cache
+      // Optimistisches Update des Cache
       queryClient.setQueryData(['learning-progress', user.id], (old: string[] = []) => {
         if (completed) {
           return [...new Set([...old, lerninhalteId])];
@@ -70,7 +82,7 @@ export const useLearningProgress = () => {
         }
       });
 
-      // Then invalidate to ensure data consistency
+      // Dann invalidieren um Daten-Konsistenz sicherzustellen
       await queryClient.invalidateQueries({
         queryKey: ['learning-progress', user.id]
       });
@@ -83,6 +95,7 @@ export const useLearningProgress = () => {
     } catch (error) {
       console.error('Error updating progress:', error);
       toast.error("Fehler beim Aktualisieren des Fortschritts");
+      throw error;
     }
   };
 
