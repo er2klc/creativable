@@ -40,7 +40,7 @@ export const EditUnitDialog = ({
   const [description, setDescription] = useState(initialDescription || '');
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [localFiles, setLocalFiles] = useState<any[]>(existingFiles || []);
+  const [localFiles, setLocalFiles] = useState<any[]>([]);
   const user = useUser();
 
   useEffect(() => {
@@ -56,6 +56,7 @@ export const EditUnitDialog = ({
     try {
       setIsSubmitting(true);
 
+      // Upload new files
       for (const file of files) {
         const filePath = `${crypto.randomUUID()}-${file.name}`;
         
@@ -102,10 +103,33 @@ export const EditUnitDialog = ({
     }
   };
 
-  const handleFileRemove = (index: number) => {
+  const handleFileRemove = async (index: number) => {
     if (index < localFiles.length) {
-      onFileRemove(index);
-      setLocalFiles(prev => prev.filter((_, i) => i !== index));
+      try {
+        const fileToDelete = localFiles[index];
+        
+        // Delete from storage
+        const { error: storageError } = await supabase.storage
+          .from('elevate-documents')
+          .remove([fileToDelete.file_path]);
+
+        if (storageError) throw storageError;
+
+        // Delete from database
+        const { error: dbError } = await supabase
+          .from('elevate_lerninhalte_documents')
+          .delete()
+          .eq('id', fileToDelete.id);
+
+        if (dbError) throw dbError;
+
+        onFileRemove(index);
+        setLocalFiles(prev => prev.filter((_, i) => i !== index));
+        toast.success('Datei erfolgreich gelöscht');
+      } catch (error) {
+        console.error('Error deleting file:', error);
+        toast.error('Fehler beim Löschen der Datei');
+      }
     } else {
       const newFileIndex = index - localFiles.length;
       const newFiles = [...files];

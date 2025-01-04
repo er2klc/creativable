@@ -6,8 +6,8 @@ interface HeaderControlsProps {
   isCompleted: boolean;
   onComplete: () => void;
   isAdmin: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   videoDuration?: number;
   documentsCount: number;
 }
