@@ -1,17 +1,11 @@
-import { Edit } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ContentDescription } from "../ContentDescription";
+import { DocumentSection } from "../DocumentSection";
 
 interface DescriptionSectionProps {
   title: string;
   description: string;
-  existingFiles?: Array<{
-    file_name: string;
-    file_path: string;
-  }>;
-  isAdmin?: boolean;
-  onDocumentDeleted?: () => Promise<void>;
-  onEdit?: () => void;
+  existingFiles: Array<{ id: string; file_name: string; file_path: string; file_type: string }>;
+  isAdmin: boolean;
+  onDocumentDeleted: () => void;
 }
 
 export const DescriptionSection = ({
@@ -20,25 +14,25 @@ export const DescriptionSection = ({
   existingFiles,
   isAdmin,
   onDocumentDeleted,
-  onEdit,
 }: DescriptionSectionProps) => {
   return (
-    <div className="col-span-8 relative">
-      {isAdmin && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onEdit}
-          className="absolute top-2 right-2 text-primary hover:text-primary/80 hover:bg-primary/10"
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
+    <div className="col-span-8 space-y-6">
+      <div className="space-y-4">
+        <h2 className="text-2xl font-semibold">{title}</h2>
+        <div className="prose max-w-none">
+          {description?.split('\n').map((paragraph, index) => (
+            <p key={index}>{paragraph}</p>
+          ))}
+        </div>
+      </div>
+
+      {existingFiles && existingFiles.length > 0 && (
+        <DocumentSection
+          documents={existingFiles}
+          isAdmin={isAdmin}
+          onDocumentDeleted={onDocumentDeleted}
+        />
       )}
-      <ContentDescription
-        title={title}
-        description={description}
-        existingFiles={existingFiles}
-      />
     </div>
   );
 };

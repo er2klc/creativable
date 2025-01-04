@@ -1,6 +1,7 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Pencil } from "lucide-react";
 
 interface LearningUnit {
   id: string;
@@ -14,6 +15,7 @@ interface LearningUnitTabsProps {
   onUnitChange: (unitId: string) => void;
   isAdmin?: boolean;
   onCreateUnit?: () => void;
+  onEditUnit?: () => void;
   progress: number;
 }
 
@@ -23,6 +25,8 @@ export const LearningUnitTabs = ({
   onUnitChange,
   isAdmin,
   onCreateUnit,
+  onEditUnit,
+  progress,
 }: LearningUnitTabsProps) => {
   return (
     <Tabs 
@@ -59,14 +63,28 @@ export const LearningUnitTabs = ({
             )}
           </>
         ))}
-        {isAdmin && onCreateUnit && (
-          <TabsTrigger
-            value="new"
-            onClick={onCreateUnit}
-            className="bg-primary/10 hover:bg-primary/20 text-primary data-[state=active]:bg-primary/20"
-          >
-            +
-          </TabsTrigger>
+        {isAdmin && (
+          <>
+            {onCreateUnit && (
+              <TabsTrigger
+                value="new"
+                onClick={onCreateUnit}
+                className="bg-primary/10 hover:bg-primary/20 text-primary data-[state=active]:bg-primary/20"
+              >
+                +
+              </TabsTrigger>
+            )}
+            {onEditUnit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onEditUnit}
+                className="ml-2"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+          </>
         )}
       </TabsList>
     </Tabs>

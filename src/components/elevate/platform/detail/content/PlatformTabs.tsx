@@ -47,6 +47,7 @@ export const PlatformTabs = ({
         onUnitChange={handleUnitChange}
         isAdmin={isAdmin}
         onCreateUnit={() => setIsDialogOpen(true)}
+        onEditUnit={() => setIsEditDialogOpen(true)}
         progress={progress}
       />
 

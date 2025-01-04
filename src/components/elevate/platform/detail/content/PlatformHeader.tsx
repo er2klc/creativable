@@ -7,7 +7,6 @@ interface PlatformHeaderProps {
   isCompleted: (id: string) => boolean;
   markAsCompleted: (id: string, completed?: boolean) => Promise<void>;
   handleDeleteUnit: () => Promise<void>;
-  setIsEditDialogOpen: (open: boolean) => void;
   progress: number;
   videoDuration: number;
   documentsCount: number;
@@ -20,7 +19,6 @@ export const PlatformHeader = ({
   isCompleted,
   markAsCompleted,
   handleDeleteUnit,
-  setIsEditDialogOpen,
   progress,
   videoDuration,
   documentsCount
@@ -34,7 +32,6 @@ export const PlatformHeader = ({
       isCompleted={isCompleted(activeUnit.id)}
       onComplete={() => markAsCompleted(activeUnit.id, !isCompleted(activeUnit.id))}
       isAdmin={isAdmin}
-      onEdit={() => setIsEditDialogOpen(true)}
       onDelete={handleDeleteUnit}
       videoDuration={videoDuration}
       documentsCount={documentsCount}
