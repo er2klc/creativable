@@ -67,8 +67,10 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
             if (savedProgress > 0) {
               event.target.seekTo(savedProgress);
             }
-            if (onDuration) {
-              onDuration(event.target.getDuration());
+            // Get and set duration as soon as the player is ready
+            const duration = event.target.getDuration();
+            if (onDuration && duration > 0) {
+              onDuration(duration);
             }
           },
           onStateChange: (event: any) => {
@@ -97,6 +99,11 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
       const duration = player.getDuration();
       const progress = (currentTime / duration) * 100;
       onProgress(progress);
+      
+      // Update duration while playing (in case it wasn't available when player was ready)
+      if (onDuration && duration > 0) {
+        onDuration(duration);
+      }
       
       if (progress >= 100) {
         clearInterval(trackProgress);
