@@ -30,10 +30,17 @@ export const CreateUnitDialog = ({
   const handleSubmit = async () => {
     const convertedFiles = [];
     
-    // Convert XLSX and DOCX files to PDF
+    // Process each file to ensure unique names
     for (const file of files) {
       const fileType = file.type.toLowerCase();
       const fileName = file.name.toLowerCase();
+      const timestamp = new Date().getTime();
+      const uniqueFileName = `${timestamp}-${file.name}`;
+      
+      // Create a new File object with the unique name
+      const uniqueFile = new File([file], uniqueFileName, {
+        type: file.type
+      });
       
       if (
         fileType.includes('sheet') || 
@@ -44,15 +51,13 @@ export const CreateUnitDialog = ({
         fileName.endsWith('.docx') ||
         fileName.endsWith('.doc')
       ) {
-        // Store original file for conversion
         convertedFiles.push({
-          file,
+          file: uniqueFile,
           needsConversion: true
         });
       } else {
-        // Keep other files as is
         convertedFiles.push({
-          file,
+          file: uniqueFile,
           needsConversion: false
         });
       }
