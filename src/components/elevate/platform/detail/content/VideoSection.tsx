@@ -22,8 +22,8 @@ export const VideoSection = ({
   }
 
   return (
-    <div className="col-span-8 w-full">
-      <div className="aspect-video w-full h-full bg-black rounded-lg overflow-hidden">
+    <div className="col-span-8 aspect-video w-full">
+      <div className="w-full h-full bg-black rounded-lg overflow-hidden">
         <VideoPlayer
           key={videoUrl}
           videoUrl={videoUrl}

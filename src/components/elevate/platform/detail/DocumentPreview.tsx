@@ -37,7 +37,6 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
         </div>
       );
     } else {
-      // For Excel files and other non-previewable formats
       return (
         <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
           <p className="text-muted-foreground">Vorschau nicht verfügbar für {document.name}</p>
@@ -54,7 +53,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-full p-0">
+      <DialogContent className="max-w-5xl w-full p-0" hideClose>
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-semibold">{document.name}</h3>
           <Button asChild variant="outline" size="sm">
