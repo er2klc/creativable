@@ -52,8 +52,6 @@ serve(async (req) => {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          let buffer = '';
-          
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
@@ -61,10 +59,8 @@ serve(async (req) => {
               break;
             }
 
-            buffer += decoder.decode(value, { stream: true });
-            
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
 
             for (const line of lines) {
               const trimmedLine = line.trim();
