@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useChat } from "ai/react";
 import { Bot, SendHorizontal, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 interface ChatDialogProps {
   open: boolean;
@@ -15,11 +17,22 @@ interface ChatDialogProps {
 
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const { settings } = useSettings();
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSessionToken(session?.access_token || null);
+    };
+    getSession();
+  }, []);
+
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: 'https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/ai-chat',
     headers: {
-      'Authorization': `Bearer ${settings?.openai_api_key || ''}`,
+      'Authorization': `Bearer ${sessionToken}`,
       'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFncWFpdHhsbXh6dHF5aHBjamF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ4NjgxMjEsImV4cCI6MjA1MDQ0NDEyMX0.rhw4HkZkSMWYOiNRHhQJwNYEk86ZsMEkORRel1aQJY4',
+      'OpenAI-Key': settings?.openai_api_key || ''
     }
   });
 
