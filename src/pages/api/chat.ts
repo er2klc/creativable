@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export async function POST(req: Request) {
   try {
-    const { messages, openaiKey } = await req.json();
+    const { messages, openaiKey, sessionToken } = await req.json();
 
     if (!openaiKey) {
       return new Response(JSON.stringify({ error: "OpenAI API Key fehlt" }), {
@@ -16,7 +16,8 @@ export async function POST(req: Request) {
     const { data, error } = await supabase.functions.invoke('ai-chat', {
       body: { messages },
       headers: {
-        'OpenAI-Key': openaiKey
+        'OpenAI-Key': openaiKey,
+        'Authorization': `Bearer ${sessionToken}`
       }
     });
 
