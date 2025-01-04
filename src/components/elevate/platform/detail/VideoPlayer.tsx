@@ -39,9 +39,15 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
   const playerRef = useRef<any>(null);
   const [isAPILoaded, setIsAPILoaded] = useState(false);
   const playerId = 'youtube-player';
+  const savedProgressRef = useRef(savedProgress);
+  const onDurationRef = useRef(onDuration);
 
   useEffect(() => {
-    // Load YouTube API
+    savedProgressRef.current = savedProgress;
+    onDurationRef.current = onDuration;
+  }, [savedProgress, onDuration]);
+
+  useEffect(() => {
     if (!window.YT) {
       const tag = document.createElement('script');
       tag.src = "https://www.youtube.com/iframe_api";
@@ -59,14 +65,16 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
   useEffect(() => {
     if (!isAPILoaded) return;
 
-    // Extract video ID from URL
     const videoId = videoUrl.includes('v=') 
       ? videoUrl.split('v=')[1].split('&')[0]
       : videoUrl.split('/').pop();
 
     if (!videoId) return;
 
-    // Initialize player
+    if (playerRef.current) {
+      playerRef.current.destroy();
+    }
+
     playerRef.current = new window.YT.Player(playerId, {
       videoId,
       playerVars: {
@@ -78,11 +86,11 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
       events: {
         onReady: (event) => {
           const duration = event.target.getDuration();
-          if (onDuration && duration > 0) {
-            onDuration(duration);
+          if (onDurationRef.current && duration > 0) {
+            onDurationRef.current(duration);
           }
-          if (savedProgress > 0) {
-            event.target.seekTo(savedProgress);
+          if (savedProgressRef.current > 0) {
+            event.target.seekTo(savedProgressRef.current);
           }
         },
         onStateChange: (event) => {
@@ -98,7 +106,7 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
         playerRef.current.destroy();
       }
     };
-  }, [videoUrl, isAPILoaded, savedProgress, onDuration]);
+  }, [videoUrl, isAPILoaded]);
 
   const startTracking = (player: any) => {
     const trackProgress = setInterval(() => {
@@ -111,9 +119,8 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
         const progress = (currentTime / duration) * 100;
         onProgress(progress);
         
-        // Update duration while playing
-        if (onDuration) {
-          onDuration(duration);
+        if (onDurationRef.current) {
+          onDurationRef.current(duration);
         }
       }
     }, 1000);
