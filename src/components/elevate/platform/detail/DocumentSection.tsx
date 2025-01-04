@@ -1,60 +1,79 @@
-import { FileText, FileSpreadsheet } from "lucide-react";
+import { FileText, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Document {
   name: string;
   url: string;
+  id?: string;
+  file_path?: string;
 }
 
 interface DocumentSectionProps {
   documents: Document[];
+  isAdmin?: boolean;
+  onDocumentDeleted?: () => void;
 }
 
-export const DocumentSection = ({ documents }: DocumentSectionProps) => {
-  if (documents.length === 0) return null;
+export const DocumentSection = ({ documents, isAdmin = false, onDocumentDeleted }: DocumentSectionProps) => {
+  const handleDelete = async (document: Document) => {
+    if (!document.id || !document.file_path) return;
+    
+    try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('elevate-documents')
+        .remove([document.file_path]);
 
-  const handleDocumentClick = (url: string, name: string) => {
-    // For PDFs and images, open in new tab
-    if (url.match(/\.(pdf|jpg|jpeg|png)$/i)) {
-      window.open(url, '_blank');
-    } else {
-      // For other files, trigger download
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
+      if (storageError) throw storageError;
 
-  const getFileIcon = (fileName: string) => {
-    if (fileName.match(/\.(xlsx|xls|csv)$/i)) {
-      return <FileSpreadsheet className="h-4 w-4" />;
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('elevate_lerninhalte_documents')
+        .delete()
+        .eq('id', document.id);
+
+      if (dbError) throw dbError;
+
+      toast.success('Dokument erfolgreich gelöscht');
+      if (onDocumentDeleted) {
+        onDocumentDeleted();
+      }
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast.error('Fehler beim Löschen des Dokuments');
     }
-    return <FileText className="h-4 w-4" />;
   };
 
   return (
-    <div className="mt-6">
-      <h4 className="font-semibold mb-2 flex items-center gap-2">
-        <FileText className="h-4 w-4" />
-        Lerndokumente
-      </h4>
-      <ul className="space-y-2">
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Dokumente</h3>
+      <div className="space-y-2">
         {documents.map((doc, index) => (
-          <li key={index}>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-primary hover:text-primary/80"
-              onClick={() => handleDocumentClick(doc.url, doc.name)}
+          <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+            <a
+              href={doc.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900"
             >
-              {getFileIcon(doc.name)}
-              <span className="ml-2">{doc.name}</span>
-            </Button>
-          </li>
+              <FileText className="h-4 w-4" />
+              <span>{doc.name}</span>
+            </a>
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDelete(doc)}
+                className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 };

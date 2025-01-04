@@ -87,9 +87,15 @@ export const LearningUnitContent = ({
           title={title}
           description={description}
           existingFiles={documents}
+          isAdmin={isAdmin}
+          onDocumentDeleted={fetchDocuments}
         />
         
-        <DocumentManager existingFiles={documents} />
+        <DocumentManager 
+          existingFiles={documents}
+          isAdmin={isAdmin}
+          onDocumentDeleted={fetchDocuments}
+        />
       </div>
 
       <EditUnitDialog

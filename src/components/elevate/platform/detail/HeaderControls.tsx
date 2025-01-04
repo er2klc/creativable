@@ -23,7 +23,7 @@ export const HeaderControls = ({
 }: HeaderControlsProps) => {
   return (
     <div className="flex items-center gap-2">
-      {videoDuration > 0 && (
+      {videoDuration && videoDuration > 0 && (
         <div className="flex items-center gap-1 text-muted-foreground bg-white/50 px-2 py-1 rounded">
           <Clock className="h-4 w-4" />
           <span className="text-sm">~{Math.round(videoDuration / 60)} Min</span>
