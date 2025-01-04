@@ -16,7 +16,7 @@ declare global {
           };
           events?: {
             onReady?: (event: { target: any }) => void;
-            onStateChange?: (event: { data: number }) => void;
+            onStateChange?: (event: { target: any; data: number }) => void;
             onError?: (event: { data: number }) => void;
           };
         }
@@ -37,8 +37,8 @@ interface VideoPlayerProps {
 
 export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuration }: VideoPlayerProps) => {
   const playerRef = useRef<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [isAPILoaded, setIsAPILoaded] = useState(false);
+  const playerId = 'youtube-player';
 
   useEffect(() => {
     // Load YouTube API
@@ -57,7 +57,7 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
   }, []);
 
   useEffect(() => {
-    if (!isAPILoaded || !containerRef.current) return;
+    if (!isAPILoaded) return;
 
     // Extract video ID from URL
     const videoId = videoUrl.includes('v=') 
@@ -67,7 +67,7 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
     if (!videoId) return;
 
     // Initialize player
-    playerRef.current = new window.YT.Player(containerRef.current, {
+    playerRef.current = new window.YT.Player(playerId, {
       videoId,
       playerVars: {
         autoplay: 0,
@@ -98,7 +98,7 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
         playerRef.current.destroy();
       }
     };
-  }, [videoUrl, isAPILoaded]);
+  }, [videoUrl, isAPILoaded, savedProgress, onDuration]);
 
   const startTracking = (player: any) => {
     const trackProgress = setInterval(() => {
@@ -122,6 +122,6 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
   };
 
   return (
-    <div ref={containerRef} className="w-full h-full" />
+    <div id={playerId} className="w-full h-full" />
   );
 };
