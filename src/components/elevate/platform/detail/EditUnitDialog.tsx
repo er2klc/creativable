@@ -59,7 +59,6 @@ export const EditUnitDialog = ({
       // Upload new files
       for (const file of files) {
         const timestamp = new Date().getTime();
-        const fileExt = file.name.split('.').pop();
         const uniqueFileName = `${timestamp}-${file.name}`;
         const filePath = `${id}/${uniqueFileName}`;
         
@@ -71,6 +70,25 @@ export const EditUnitDialog = ({
           console.error('Error uploading file:', uploadError);
           toast.error(`Fehler beim Hochladen der Datei ${file.name}`);
           continue;
+        }
+
+        // If it's an Excel file, try to convert it to PDF
+        const fileType = file.type.toLowerCase();
+        const fileName = file.name.toLowerCase();
+        if (
+          fileType.includes('sheet') || 
+          fileType.includes('excel') ||
+          fileName.endsWith('.xlsx') ||
+          fileName.endsWith('.xls')
+        ) {
+          const { data: conversionData, error: conversionError } = await supabase.functions
+            .invoke('convert-to-pdf', {
+              body: { filePath, fileType }
+            });
+
+          if (conversionError) {
+            console.error('Error converting file:', conversionError);
+          }
         }
 
         const { error: dbError } = await supabase
@@ -100,7 +118,11 @@ export const EditUnitDialog = ({
       });
       
       onOpenChange(false);
+      // Only show one success message
       toast.success('Änderungen erfolgreich gespeichert');
+
+      // Force a refresh of the documents list
+      window.location.reload();
     } catch (error) {
       console.error('Error updating unit:', error);
       toast.error('Fehler beim Speichern der Änderungen');

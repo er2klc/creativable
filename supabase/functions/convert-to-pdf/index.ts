@@ -29,6 +29,7 @@ serve(async (req) => {
     }
 
     // For now, we'll just return the original file URL
+    // In a production environment, you would integrate with a PDF conversion service here
     const { data: { publicUrl } } = supabase.storage
       .from('elevate-documents')
       .getPublicUrl(filePath)
