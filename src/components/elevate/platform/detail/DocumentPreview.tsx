@@ -17,25 +17,7 @@ interface DocumentPreviewProps {
 }
 
 export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPreviewProps) => {
-  const [isConverting, setIsConverting] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-
-  const handleConversion = async (filePath: string, fileType: string) => {
-    setIsConverting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('convert-to-pdf', {
-        body: { filePath, fileType }
-      });
-
-      if (error) throw error;
-      setPdfUrl(data.publicUrl);
-    } catch (error) {
-      console.error('Error converting file:', error);
-      toast.error('Fehler bei der Konvertierung der Datei');
-    } finally {
-      setIsConverting(false);
-    }
-  };
+  const [isLoading, setIsLoading] = useState(false);
 
   const renderPreview = () => {
     const fileType = document.file_type?.toLowerCase() || document.name.split('.').pop()?.toLowerCase();
@@ -60,64 +42,16 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
           />
         </div>
       );
-    } else if (
-      fileType?.includes('sheet') ||
-      fileType?.includes('excel') ||
-      fileType?.match(/^(xlsx|xls|csv)$/) ||
-      document.name.match(/\.(xlsx|xls|csv)$/) ||
-      fileType?.match(/^(doc|docx)$/) ||
-      fileType?.includes('word')
-    ) {
-      if (isConverting) {
-        return (
-          <div className="flex flex-col items-center justify-center h-[80vh]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-            <p className="mt-4 text-gray-600">Dokument wird konvertiert...</p>
-          </div>
-        );
-      }
-
-      if (pdfUrl) {
-        return (
-          <div className="w-full h-[80vh]">
-            <iframe
-              src={`${pdfUrl}#toolbar=0&view=FitH`}
-              className="w-full h-full"
-              title={document.name}
-            />
-          </div>
-        );
-      }
-
-      return (
-        <div className="flex flex-col h-[80vh]">
-          <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            {fileType?.includes('excel') || fileType?.match(/^(xlsx|xls|csv)$/) ? (
-              <FileSpreadsheet className="h-16 w-16 text-green-600 mb-4" />
-            ) : (
-              <FileText className="h-16 w-16 text-blue-600 mb-4" />
-            )}
-            <p className="text-lg font-medium mb-2">{document.name}</p>
-            <Button 
-              onClick={() => handleConversion(document.file_path || '', fileType || '')}
-              className="mb-4"
-            >
-              Als PDF anzeigen
-            </Button>
-            <Button asChild variant="outline">
-              <a href={document.url} download target="_blank" rel="noopener noreferrer">
-                <Download className="h-4 w-4 mr-2" />
-                Original herunterladen
-              </a>
-            </Button>
-          </div>
-        </div>
-      );
     } else {
       return (
         <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
-          <p className="text-muted-foreground">Vorschau nicht verfügbar für {document.name}</p>
-          <Button asChild>
+          {fileType?.includes('sheet') || fileType?.match(/^(xlsx|xls|csv)$/) ? (
+            <FileSpreadsheet className="h-16 w-16 text-green-600 mb-4" />
+          ) : (
+            <FileText className="h-16 w-16 text-blue-600 mb-4" />
+          )}
+          <p className="text-lg font-medium mb-2">{document.name}</p>
+          <Button asChild variant="outline">
             <a href={document.url} download target="_blank" rel="noopener noreferrer">
               <Download className="h-4 w-4 mr-2" />
               Herunterladen

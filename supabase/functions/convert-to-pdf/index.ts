@@ -7,21 +7,19 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
     const { filePath, fileType } = await req.json()
-    
-    // Initialize Supabase client
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Download the original file
+    // Get the file from storage
     const { data: fileData, error: downloadError } = await supabase.storage
       .from('elevate-documents')
       .download(filePath)
@@ -30,8 +28,7 @@ serve(async (req) => {
       throw new Error(`Error downloading file: ${downloadError.message}`)
     }
 
-    // For now, we'll just return the original file URL since we can't convert in Edge Function
-    // In a production environment, you would want to use a dedicated service for file conversion
+    // For now, we'll just return the original file URL
     const { data: { publicUrl } } = supabase.storage
       .from('elevate-documents')
       .getPublicUrl(filePath)
@@ -39,27 +36,26 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: "File conversion is not supported in Edge Functions. Please use a dedicated conversion service.",
-        originalUrl: publicUrl
+        publicUrl
       }),
       { 
         headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       }
     )
   } catch (error) {
     console.error('Error:', error)
     return new Response(
       JSON.stringify({ 
-        success: false, 
+        success: false,
         error: error.message 
       }),
       { 
         headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
         },
         status: 500
       }
