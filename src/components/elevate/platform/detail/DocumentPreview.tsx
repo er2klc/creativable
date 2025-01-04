@@ -1,8 +1,6 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface DocumentPreviewProps {
   open: boolean;
