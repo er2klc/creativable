@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { handleChatRequest } from "@/api/chat";
 
 interface ChatDialogProps {
   open: boolean;
@@ -29,10 +30,11 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   }, []);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: "/api/chat",
-    body: {
-      settings,
-      sessionToken
+    api: async (messages) => {
+      if (!settings?.openai_api_key || !sessionToken) {
+        throw new Error("OpenAI API Key oder Session Token fehlt");
+      }
+      return handleChatRequest(messages, settings.openai_api_key, sessionToken);
     },
     onError: (error) => {
       console.error('Chat error:', error);
