@@ -28,10 +28,10 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       setSessionToken(session.access_token);
 
       const { data, error } = await supabase
-        .from<'chatbot_settings', Tables['chatbot_settings']['Row']>('chatbot_settings')
+        .from('chatbot_settings')
         .select('openai_api_key')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching API key:", error);
