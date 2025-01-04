@@ -43,12 +43,15 @@ export const EditUnitDialog = ({
   const [localFiles, setLocalFiles] = useState<any[]>([]);
   const user = useUser();
 
-  // Update localFiles when existingFiles changes or dialog opens
+  // Reset form when dialog opens
   useEffect(() => {
-    if (open && existingFiles) {
-      setLocalFiles(existingFiles);
+    if (open) {
+      setTitle(initialTitle);
+      setDescription(initialDescription || '');
+      setVideoUrl(initialVideoUrl);
+      setLocalFiles(existingFiles || []);
     }
-  }, [open, existingFiles]);
+  }, [open, initialTitle, initialDescription, initialVideoUrl, existingFiles]);
 
   const handleSubmit = async () => {
     try {
@@ -92,12 +95,12 @@ export const EditUnitDialog = ({
       }
 
       // Update the local files state with new uploads
-      setLocalFiles([...localFiles, ...uploadedFiles]);
+      setLocalFiles(prev => [...prev, ...uploadedFiles]);
 
       // Then update the unit details
       await onUpdate({ 
         title, 
-        description: description || '', // Ensure description is never undefined
+        description, 
         videoUrl 
       });
       
@@ -108,6 +111,20 @@ export const EditUnitDialog = ({
       toast.error('Fehler beim Speichern der Änderungen');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleFileRemove = (index: number) => {
+    if (index < localFiles.length) {
+      // Remove existing file
+      onFileRemove(index);
+      setLocalFiles(prev => prev.filter((_, i) => i !== index));
+    } else {
+      // Remove new file
+      const newFileIndex = index - localFiles.length;
+      const newFiles = [...files];
+      newFiles.splice(newFileIndex, 1);
+      onFilesSelected(newFiles);
     }
   };
 
@@ -148,10 +165,13 @@ export const EditUnitDialog = ({
             <FileUpload
               onFilesSelected={onFilesSelected}
               files={[
-                ...(localFiles || []).map(f => new File([], f.file_name, { type: f.file_type })),
+                ...(localFiles || []).map(f => ({
+                  name: f.file_name,
+                  type: f.file_type
+                })),
                 ...files
               ]}
-              onFileRemove={onFileRemove}
+              onFileRemove={handleFileRemove}
             />
           </div>
           <div className="flex justify-end gap-2">
