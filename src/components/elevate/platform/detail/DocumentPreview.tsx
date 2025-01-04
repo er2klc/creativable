@@ -19,8 +19,24 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
   const previewUrl = document.preview_url || document.url;
 
   const renderPreview = () => {
-    if (fileType?.includes('pdf') || 
-        ((fileType?.includes('sheet') || fileType?.match(/^(xlsx|xls|docx|doc)$/)) && document.preview_url)) {
+    // Handle Office documents (xlsx and docx)
+    if (fileType?.match(/^(xlsx|docx)$/)) {
+      const encodedUrl = encodeURIComponent(document.url);
+      const officePreviewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}`;
+      
+      return (
+        <div className="w-full h-[80vh]">
+          <iframe
+            src={officePreviewUrl}
+            className="w-full h-full"
+            title={document.name}
+            frameBorder="0"
+          />
+        </div>
+      );
+    }
+    // Handle PDFs
+    else if (fileType?.includes('pdf')) {
       return (
         <div className="w-full h-[80vh]">
           <iframe
@@ -30,7 +46,9 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
           />
         </div>
       );
-    } else if (fileType?.match(/^(jpg|jpeg|png|gif|webp)$/)) {
+    }
+    // Handle images
+    else if (fileType?.match(/^(jpg|jpeg|png|gif|webp)$/)) {
       return (
         <div className="flex justify-center items-center h-[80vh] overflow-auto">
           <img
@@ -40,7 +58,9 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
           />
         </div>
       );
-    } else {
+    }
+    // Default download view for other file types
+    else {
       return (
         <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
           {fileType?.includes('sheet') || fileType?.match(/^(xlsx|xls|csv)$/) ? (
