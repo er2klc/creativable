@@ -55,6 +55,23 @@ export const EditUnitDialog = ({
           toast.error(`Fehler beim Hochladen der Datei ${file.name}`);
           return;
         }
+
+        // After successful upload, insert the document record
+        const { error: dbError } = await supabase
+          .from('elevate_lerninhalte_documents')
+          .insert({
+            lerninhalte_id: id,
+            file_name: file.name,
+            file_path: filePath,
+            file_type: file.type,
+            created_by: user?.id
+          });
+
+        if (dbError) {
+          console.error('Error saving document record:', dbError);
+          toast.error(`Fehler beim Speichern der Datei ${file.name}`);
+          return;
+        }
       }
 
       // Then update the unit details

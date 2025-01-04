@@ -37,7 +37,7 @@ export const LearningUnitContent = ({
   const [files, setFiles] = useState<File[]>([]);
   const [videoDuration, setVideoDuration] = useState(0);
   const user = useUser();
-  const [documents, setDocuments] = useState<Array<{ id: string; file_name: string; file_path: string }>>([]);
+  const [documents, setDocuments] = useState<Array<{ id: string; file_name: string; file_path: string; file_type: string }>>([]);
 
   const handleUpdate = async (data: { title: string; description: string; videoUrl: string }) => {
     try {
