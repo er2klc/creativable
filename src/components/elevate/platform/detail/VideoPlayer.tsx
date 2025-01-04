@@ -90,6 +90,11 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
     // Create a new container for the player
     const playerContainer = document.createElement('div');
     playerContainer.id = playerId;
+    playerContainer.style.position = 'absolute';
+    playerContainer.style.top = '0';
+    playerContainer.style.left = '0';
+    playerContainer.style.width = '100%';
+    playerContainer.style.height = '100%';
     
     // Clear the container and append the new element
     if (containerRef.current) {
@@ -182,6 +187,6 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
   };
 
   return (
-    <div ref={containerRef} className="w-full h-full" />
+    <div ref={containerRef} className="w-full h-full relative" style={{ position: 'relative', paddingTop: '56.25%' }} />
   );
 };
