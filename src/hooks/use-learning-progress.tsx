@@ -87,7 +87,7 @@ export const useLearningProgress = () => {
       if (completed && !hasShownCompletionToast) {
         hasShownCompletionToast = true;
         toast("Lerneinheit als abgeschlossen markiert", {
-          icon: Trophy
+          icon: <Trophy />
         });
       }
     } catch (error) {
