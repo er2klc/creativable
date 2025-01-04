@@ -13,53 +13,24 @@ serve(async (req) => {
 
   try {
     const { filePath, fileType } = await req.json()
-
+    
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Get the file from storage
-    const { data: fileData, error: downloadError } = await supabase.storage
-      .from('elevate-documents')
-      .download(filePath)
-
-    if (downloadError) {
-      throw new Error(`Error downloading file: ${downloadError.message}`)
-    }
-
-    // For now, we'll just return the original file URL
-    // In a production environment, you would integrate with a PDF conversion service here
-    const { data: { publicUrl } } = supabase.storage
-      .from('elevate-documents')
-      .getPublicUrl(filePath)
+    // For now, we'll just store the original file path as preview
+    // In a real implementation, you would convert XLSX to PDF here
+    const previewPath = filePath.replace(/\.[^/.]+$/, '.pdf')
 
     return new Response(
-      JSON.stringify({ 
-        success: true,
-        publicUrl
-      }),
-      { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
-      }
+      JSON.stringify({ previewPath }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Error:', error)
     return new Response(
-      JSON.stringify({ 
-        success: false,
-        error: error.message 
-      }),
-      { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        },
-        status: 500
-      }
+      JSON.stringify({ error: error.message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }
 })

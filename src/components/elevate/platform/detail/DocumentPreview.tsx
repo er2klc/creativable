@@ -2,8 +2,6 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 interface DocumentPreviewProps {
   open: boolean;
@@ -12,21 +10,23 @@ interface DocumentPreviewProps {
     name: string;
     url: string;
     file_type?: string;
-    file_path?: string;
+    preview_url?: string;
   };
 }
 
 export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPreviewProps) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const fileType = document.file_type?.toLowerCase() || document.name.split('.').pop()?.toLowerCase();
+  const previewUrl = document.preview_url || document.url;
 
   const renderPreview = () => {
-    const fileType = document.file_type?.toLowerCase() || document.name.split('.').pop()?.toLowerCase();
-
-    if (fileType?.includes('pdf')) {
+    if (fileType?.includes('pdf') || 
+        fileType?.includes('sheet') || 
+        fileType?.includes('excel') ||
+        fileType?.match(/^(xlsx|xls)$/)) {
       return (
         <div className="w-full h-[80vh]">
           <iframe
-            src={`${document.url}#toolbar=0&view=FitH`}
+            src={`${previewUrl}#toolbar=0&view=FitH`}
             className="w-full h-full"
             title={document.name}
           />

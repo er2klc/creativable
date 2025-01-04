@@ -72,9 +72,10 @@ export const EditUnitDialog = ({
           continue;
         }
 
-        // If it's an Excel file, try to convert it to PDF
+        let previewFilePath = null;
         const fileType = file.type.toLowerCase();
         const fileName = file.name.toLowerCase();
+        
         if (
           fileType.includes('sheet') || 
           fileType.includes('excel') ||
@@ -86,8 +87,8 @@ export const EditUnitDialog = ({
               body: { filePath, fileType }
             });
 
-          if (conversionError) {
-            console.error('Error converting file:', conversionError);
+          if (!conversionError && conversionData?.previewPath) {
+            previewFilePath = conversionData.previewPath;
           }
         }
 
@@ -98,7 +99,8 @@ export const EditUnitDialog = ({
             file_name: file.name,
             file_path: filePath,
             file_type: file.type,
-            created_by: user?.id
+            created_by: user?.id,
+            preview_file_path: previewFilePath
           });
 
         if (dbError) {
@@ -108,21 +110,15 @@ export const EditUnitDialog = ({
         }
       }
 
-      // Preserve line breaks by replacing them with <br> tags
-      const formattedDescription = description.replace(/\n/g, '<br>');
-
       await onUpdate({ 
         title, 
-        description: formattedDescription,
+        description,
         videoUrl 
       });
       
       onOpenChange(false);
-      // Only show one success message
       toast.success('Änderungen erfolgreich gespeichert');
 
-      // Force a refresh of the documents list
-      window.location.reload();
     } catch (error) {
       console.error('Error updating unit:', error);
       toast.error('Fehler beim Speichern der Änderungen');
@@ -136,14 +132,12 @@ export const EditUnitDialog = ({
       try {
         const fileToDelete = localFiles[index];
         
-        // Delete from storage
         const { error: storageError } = await supabase.storage
           .from('elevate-documents')
           .remove([fileToDelete.file_path]);
 
         if (storageError) throw storageError;
 
-        // Delete from database
         const { error: dbError } = await supabase
           .from('elevate_lerninhalte_documents')
           .delete()

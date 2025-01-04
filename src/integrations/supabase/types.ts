@@ -136,6 +136,7 @@ export type Database = {
           file_type: string | null
           id: string
           lerninhalte_id: string | null
+          preview_file_path: string | null
         }
         Insert: {
           created_at?: string | null
@@ -145,6 +146,7 @@ export type Database = {
           file_type?: string | null
           id?: string
           lerninhalte_id?: string | null
+          preview_file_path?: string | null
         }
         Update: {
           created_at?: string | null
@@ -154,6 +156,7 @@ export type Database = {
           file_type?: string | null
           id?: string
           lerninhalte_id?: string | null
+          preview_file_path?: string | null
         }
         Relationships: [
           {
