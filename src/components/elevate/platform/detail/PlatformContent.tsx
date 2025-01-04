@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PlatformHeader } from "./content/PlatformHeader";
@@ -39,7 +39,7 @@ export const PlatformContent = ({
   const progress = (completedCount / sortedSubmodules.length) * 100;
 
   // Fetch documents count when activeUnit changes
-  useState(() => {
+  useEffect(() => {
     const fetchDocumentsCount = async () => {
       if (activeUnitId) {
         const { data: documents } = await supabase
@@ -52,15 +52,6 @@ export const PlatformContent = ({
     };
     fetchDocumentsCount();
   }, [activeUnitId]);
-
-  if (sortedSubmodules.length === 0) {
-    return (
-      <EmptyState 
-        isAdmin={isAdmin} 
-        onCreateUnit={handleCreateUnit}
-      />
-    );
-  }
 
   const handleCreateUnit = async (data: {
     title: string;
@@ -113,6 +104,15 @@ export const PlatformContent = ({
       toast.error("Fehler beim Erstellen der Lerneinheit");
     }
   };
+
+  if (sortedSubmodules.length === 0) {
+    return (
+      <EmptyState 
+        isAdmin={isAdmin} 
+        onCreateUnit={handleCreateUnit}
+      />
+    );
+  }
 
   return (
     <>
