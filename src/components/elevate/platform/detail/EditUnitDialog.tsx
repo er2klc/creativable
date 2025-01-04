@@ -105,7 +105,7 @@ export const EditUnitDialog = ({
           continue;
         }
       }
-
+      const formattedDescription = description.replace(/\n/g, '<br>');
       await onUpdate({ 
         title, 
         description,
