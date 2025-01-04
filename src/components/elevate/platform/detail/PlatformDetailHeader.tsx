@@ -24,7 +24,6 @@ export const PlatformDetailHeader = ({
   isAdmin,
   onEdit,
   onDelete,
-  videoDuration,
   documentsCount,
   progress = 0,
 }: PlatformDetailHeaderProps) => {
@@ -62,7 +61,6 @@ export const PlatformDetailHeader = ({
           isAdmin={isAdmin || false}
           onEdit={onEdit}
           onDelete={onDelete}
-          videoDuration={videoDuration}
           documentsCount={documentsCount}
         />
       </div>
