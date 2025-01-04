@@ -86,6 +86,15 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     }
   }, [open]);
 
+  // Auto-scroll when messages change
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  if (!open) return null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">

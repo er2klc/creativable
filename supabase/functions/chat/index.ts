@@ -6,7 +6,6 @@ import { corsHeaders } from '../_shared/cors.ts'
 console.log('Chat Function started')
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -17,7 +16,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     )
 
-    // Authentifizierung überprüfen
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       throw new Error('No authorization header')
@@ -31,16 +29,34 @@ serve(async (req) => {
       throw new Error('Not authenticated')
     }
 
-    // Get OpenAI API key from headers
     const openaiKey = req.headers.get('X-OpenAI-Key')
     if (!openaiKey) {
       throw new Error('No OpenAI API key provided')
     }
 
-    // Request Body parsen
     const { messages } = await req.json()
     
     console.log('Processing chat request for user:', user.id)
+
+    // Fetch user settings and context
+    const { data: settings } = await supabaseClient
+      .from('settings')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    // Build system message with user context
+    const systemMessage = {
+      role: 'system',
+      content: `Du bist ein hilfreicher Assistent für ${settings?.company_name || 'das Unternehmen'}. 
+                Nutze folgende Informationen über das Unternehmen:
+                ${settings?.business_description || ''}
+                Produkte/Services: ${settings?.products_services || ''}
+                Zielgruppe: ${settings?.target_audience || ''}
+                USP: ${settings?.usp || ''}
+                Antworte kurz und präzise auf Deutsch.`
+    }
+
     console.log('Sending request to OpenAI API with messages:', messages)
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -51,13 +67,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content: 'Du bist ein hilfreicher Assistent. Antworte kurz und präzise auf Deutsch.'
-          },
-          ...messages
-        ],
+        messages: [systemMessage, ...messages],
         stream: true,
       }),
     })
@@ -70,7 +80,6 @@ serve(async (req) => {
 
     console.log('OpenAI API response status:', response.status)
 
-    // Transform the response into a proper SSE stream
     const transformStream = new TransformStream({
       async transform(chunk, controller) {
         try {
