@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import type { Tables } from "@/integrations/supabase/types/tables";
 
 interface ChatDialogProps {
   open: boolean;
@@ -19,6 +18,7 @@ interface ChatDialogProps {
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
   useEffect(() => {
     const setupChat = async () => {
@@ -47,7 +47,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   }, [open]);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
+    api: `${supabaseUrl}/functions/v1/chat`,
     headers: {
       Authorization: `Bearer ${sessionToken}`,
       'X-OpenAI-Key': apiKey || '',
