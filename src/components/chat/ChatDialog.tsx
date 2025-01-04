@@ -26,6 +26,12 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       Authorization: `Bearer ${sessionToken}`,
       'X-OpenAI-Key': apiKey || '',
     },
+    onResponse: (response) => {
+      console.log("Chat response received:", response);
+    },
+    onFinish: (message) => {
+      console.log("Chat message finished:", message);
+    },
     onError: (error) => {
       console.error("Chat error:", error);
       toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
@@ -100,7 +106,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
                   )}
                   <div
                     className={cn(
-                      "rounded-lg px-3 py-2 max-w-[85%] text-sm",
+                      "rounded-lg px-3 py-2 max-w-[85%] text-sm whitespace-pre-wrap",
                       message.role === "user"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted"
@@ -131,7 +137,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
               )}
             </div>
           </ScrollArea>
-          <form onSubmit={handleSubmit} className="flex items-center gap-2">
+          <form onSubmit={handleSubmit} className="flex items-center gap-2 mt-4">
             <Input
               placeholder="Schreibe eine Nachricht..."
               value={input}
