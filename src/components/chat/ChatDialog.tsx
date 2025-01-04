@@ -29,7 +29,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   }, []);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
+    api: `${supabase.supabaseUrl}/functions/v1/chat`,
     headers: {
       Authorization: `Bearer ${sessionToken}`
     },
