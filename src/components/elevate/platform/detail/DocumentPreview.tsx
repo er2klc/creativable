@@ -26,8 +26,39 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
       const workbook = XLSX.read(arrayBuffer, { type: "array" });
       const firstSheetName = workbook.SheetNames[0];
       const firstSheet = workbook.Sheets[firstSheetName];
-      const html = XLSX.utils.sheet_to_html(firstSheet);
-      setExcelPreview(html);
+      
+      // Add custom styling to the HTML output
+      const html = XLSX.utils.sheet_to_html(firstSheet, {
+        id: "excel-preview-table",
+        editable: false
+      });
+      
+      // Enhance the HTML with additional styling
+      const styledHtml = `
+        <style>
+          #excel-preview-table {
+            border-collapse: collapse;
+            width: 100%;
+            background: white;
+            font-family: Arial, sans-serif;
+          }
+          #excel-preview-table td, #excel-preview-table th {
+            border: 1px solid #e2e8f0;
+            padding: 8px;
+            text-align: left;
+          }
+          #excel-preview-table tr:nth-child(even) {
+            background-color: #f8fafc;
+          }
+          #excel-preview-table th {
+            background-color: #f1f5f9;
+            font-weight: bold;
+          }
+        </style>
+        ${html}
+      `;
+      
+      setExcelPreview(styledHtml);
     } catch (error) {
       console.error('Error loading Excel preview:', error);
       setExcelPreview(null);
@@ -88,7 +119,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
               <p className="text-muted-foreground">Lade Excel-Vorschau...</p>
             </div>
           ) : excelPreview ? (
-            <div className="flex-1 overflow-auto p-4">
+            <div className="flex-1 overflow-auto p-4 bg-white">
               <div dangerouslySetInnerHTML={{ __html: excelPreview }} />
             </div>
           ) : (
