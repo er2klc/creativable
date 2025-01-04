@@ -11,6 +11,7 @@ interface Document {
   id?: string;
   file_path?: string;
   file_type?: string;
+  preview_file_path?: string;
 }
 
 interface DocumentSectionProps {
@@ -56,7 +57,12 @@ export const DocumentSection = ({ documents, isAdmin = false, onDocumentDeleted 
         {documents.map((doc, index) => (
           <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
             <button
-              onClick={() => setSelectedDocument(doc)}
+              onClick={() => setSelectedDocument({
+                ...doc,
+                preview_url: doc.preview_file_path 
+                  ? supabase.storage.from('elevate-documents').getPublicUrl(doc.preview_file_path).data.publicUrl
+                  : undefined
+              })}
               className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900"
             >
               <FileText className="h-4 w-4" />
