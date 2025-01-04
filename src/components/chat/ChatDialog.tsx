@@ -29,6 +29,13 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     getSession();
   }, []);
 
+  useEffect(() => {
+    console.log("Settings in ChatButton:", settings);
+    if (settings?.openai_api_key) {
+      console.log("OpenAI API Key:", settings.openai_api_key);
+    }
+  }, [settings]);
+
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: async (messages) => {
       if (!sessionToken) {
@@ -42,7 +49,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     },
   });
 
-  if (!settings || settings.openai_api_key === null || settings.openai_api_key === '') {
+  if (!settings || !settings.openai_api_key) {
     return null;
   }
 

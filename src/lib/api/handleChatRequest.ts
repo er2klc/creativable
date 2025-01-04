@@ -33,13 +33,12 @@ export const handleChatRequest = async (messages: any, sessionToken: string) => 
     }
 
     console.log("OpenAI API Key geladen:", settings.openai_api_key);
-    const openaiKey = settings.openai_api_key;
 
     // Anfrage an die Supabase-Funktion "ai-chat" weiterleiten
     const { data, error } = await supabase.functions.invoke("ai-chat", {
       body: { messages },
       headers: {
-        Authorization: `Bearer ${openaiKey}`,
+        Authorization: `Bearer ${settings.openai_api_key}`,
       },
     });
 
