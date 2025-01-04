@@ -43,28 +43,38 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
   useEffect(() => {
     const setupChat = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          console.error("No session found");
+          toast.error("Bitte melden Sie sich an");
+          return;
+        }
 
-      setSessionToken(session.access_token);
+        setSessionToken(session.access_token);
 
-      const { data, error } = await supabase
-        .from('chatbot_settings')
-        .select('openai_api_key')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
+        const { data: chatbotSettings, error: chatbotError } = await supabase
+          .from('chatbot_settings')
+          .select('openai_api_key')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching API key:", error);
-        return;
-      }
+        if (chatbotError) {
+          console.error("Error fetching chatbot settings:", chatbotError);
+          toast.error("Fehler beim Laden der Chat-Einstellungen");
+          return;
+        }
 
-      if (data?.openai_api_key) {
-        console.log("✅ OpenAI API Key found");
-        setApiKey(data.openai_api_key);
-      } else {
-        console.warn("⚠️ No OpenAI API Key found");
-        toast.error("Bitte fügen Sie einen OpenAI API Key in den Einstellungen hinzu");
+        if (chatbotSettings?.openai_api_key) {
+          console.log("✅ OpenAI API Key found in chatbot_settings");
+          setApiKey(chatbotSettings.openai_api_key);
+        } else {
+          console.warn("⚠️ No OpenAI API Key found in chatbot_settings");
+          toast.error("Bitte fügen Sie einen OpenAI API Key in den Chat-Einstellungen hinzu");
+        }
+      } catch (error) {
+        console.error("Error in setupChat:", error);
+        toast.error("Fehler beim Einrichten des Chats");
       }
     };
 
