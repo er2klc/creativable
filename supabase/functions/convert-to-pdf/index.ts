@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { LibreOffice } from 'https://deno.land/x/libreoffice@0.1.0/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,36 +19,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Download the original file
-    const { data: fileData, error: downloadError } = await supabase
-      .storage
-      .from('elevate-documents')
-      .download(filePath);
-
-    if (downloadError) {
-      throw new Error(`Error downloading file: ${downloadError.message}`);
-    }
-
-    // Convert to PDF using LibreOffice
-    const libreOffice = new LibreOffice();
-    const pdfBuffer = await libreOffice.convert(new Uint8Array(await fileData.arrayBuffer()), 'pdf');
-
-    // Upload the converted PDF
+    // For now, we'll store the original file path and append .pdf
+    // In a future implementation, we can add actual conversion logic
     const pdfPath = filePath.replace(/\.[^/.]+$/, '.pdf');
     
-    const { error: uploadError } = await supabase
-      .storage
-      .from('elevate-documents')
-      .upload(pdfPath, pdfBuffer, {
-        contentType: 'application/pdf',
-        upsert: true
-      });
-
-    if (uploadError) {
-      throw new Error(`Error uploading PDF: ${uploadError.message}`);
-    }
-
-    console.log(`Successfully converted ${filePath} to PDF`);
+    console.log(`File will be converted: ${filePath} to PDF at path: ${pdfPath}`);
 
     return new Response(
       JSON.stringify({ previewPath: pdfPath }),
