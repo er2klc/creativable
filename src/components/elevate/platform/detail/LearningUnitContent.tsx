@@ -32,6 +32,8 @@ export const LearningUnitContent = ({
   savedProgress,
   isAdmin,
   onUpdate,
+  isCompleted,
+  onComplete,
 }: LearningUnitContentProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
