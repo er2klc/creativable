@@ -51,6 +51,11 @@ export const DocumentSection = ({ documents, isAdmin = false, onDocumentDeleted 
     }
   };
 
+  // If no documents exist, don't render anything
+  if (!documents || documents.length === 0) {
+    return null;
+  }
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Lerndokumente</h3>
