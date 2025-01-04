@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, ZoomIn, ZoomOut } from "lucide-react";
+import { Download } from "lucide-react";
 
 interface DocumentPreviewProps {
   open: boolean;
@@ -14,27 +13,16 @@ interface DocumentPreviewProps {
 }
 
 export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPreviewProps) => {
-  const [scale, setScale] = useState(1);
-
-  const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.25, 3));
-  const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.25, 0.5));
-
   const renderPreview = () => {
     const fileType = document.file_type?.toLowerCase() || document.name.split('.').pop()?.toLowerCase();
 
     if (fileType?.includes('pdf')) {
       return (
-        <div className="w-full h-[80vh] overflow-hidden">
+        <div className="w-full h-[80vh]">
           <iframe
             src={`${document.url}#toolbar=0&view=FitH`}
             className="w-full h-full"
             title={document.name}
-            style={{ 
-              transform: `scale(${scale})`,
-              transformOrigin: 'top center',
-              width: `${100 / scale}%`,
-              height: `${100 / scale}%`
-            }}
           />
         </div>
       );
@@ -44,8 +32,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
           <img
             src={document.url}
             alt={document.name}
-            style={{ transform: `scale(${scale})`, transformOrigin: 'center' }}
-            className="max-w-full max-h-full object-contain transition-transform duration-200"
+            className="max-w-full max-h-full object-contain"
           />
         </div>
       );
@@ -69,19 +56,11 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
       <DialogContent className="max-w-5xl w-full p-0">
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-semibold">{document.name}</h3>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleZoomOut}>
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleZoomIn}>
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <a href={document.url} download target="_blank" rel="noopener noreferrer">
-                <Download className="h-4 w-4" />
-              </a>
-            </Button>
-          </div>
+          <Button asChild variant="outline" size="sm">
+            <a href={document.url} download target="_blank" rel="noopener noreferrer">
+              <Download className="h-4 w-4" />
+            </a>
+          </Button>
         </div>
         <div className="p-4">
           {renderPreview()}

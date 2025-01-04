@@ -22,14 +22,16 @@ export const VideoSection = ({
   }
 
   return (
-    <div className="col-span-8 aspect-video w-full bg-black rounded-lg overflow-hidden">
-      <VideoPlayer
-        key={videoUrl} // Add key to force remount on URL change
-        videoUrl={videoUrl}
-        onProgress={onVideoProgress}
-        savedProgress={savedProgress}
-        onDuration={onDuration}
-      />
+    <div className="col-span-8 w-full h-full">
+      <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
+        <VideoPlayer
+          key={videoUrl}
+          videoUrl={videoUrl}
+          onProgress={onVideoProgress}
+          savedProgress={savedProgress}
+          onDuration={onDuration}
+        />
+      </div>
     </div>
   );
 };
