@@ -112,7 +112,7 @@ serve(async (req) => {
                     controller.enqueue(encoder.encode(`data: ${streamData}\n\n`))
                   }
                 } catch (error) {
-                  console.warn('Skipping invalid chunk:', line)
+                  console.warn('Invalid JSON in chunk:', line)
                   continue
                 }
               }
