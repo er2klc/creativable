@@ -1,4 +1,6 @@
 import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { LearningUnitTabs } from "../LearningUnitTabs";
 import { LearningUnitContent } from "../LearningUnitContent";
 
