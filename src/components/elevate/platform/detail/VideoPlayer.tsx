@@ -41,6 +41,7 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
   const playerId = 'youtube-player';
   const savedProgressRef = useRef(savedProgress);
   const onDurationRef = useRef(onDuration);
+  const trackingIntervalRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     savedProgressRef.current = savedProgress;
@@ -71,7 +72,11 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
 
     if (!videoId) return;
 
+    // Cleanup existing player and interval
     if (playerRef.current) {
+      if (trackingIntervalRef.current) {
+        clearInterval(trackingIntervalRef.current);
+      }
       playerRef.current.destroy();
     }
 
@@ -102,6 +107,9 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
     });
 
     return () => {
+      if (trackingIntervalRef.current) {
+        clearInterval(trackingIntervalRef.current);
+      }
       if (playerRef.current) {
         playerRef.current.destroy();
       }
@@ -109,7 +117,11 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
   }, [videoUrl, isAPILoaded]);
 
   const startTracking = (player: any) => {
-    const trackProgress = setInterval(() => {
+    if (trackingIntervalRef.current) {
+      clearInterval(trackingIntervalRef.current);
+    }
+
+    trackingIntervalRef.current = setInterval(() => {
       if (!player) return;
 
       const currentTime = player.getCurrentTime();
@@ -125,7 +137,11 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
       }
     }, 1000);
 
-    return () => clearInterval(trackProgress);
+    return () => {
+      if (trackingIntervalRef.current) {
+        clearInterval(trackingIntervalRef.current);
+      }
+    };
   };
 
   return (
