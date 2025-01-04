@@ -6,17 +6,22 @@ import { PDFDocument, rgb } from 'npm:pdf-lib@1.17.1'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204
+    })
   }
 
   try {
+    console.log('Starting file conversion process...')
     const { filePath, fileType } = await req.json()
-    console.log('Converting file:', filePath, fileType)
+    console.log('Received request for file:', filePath, 'of type:', fileType)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -24,6 +29,7 @@ serve(async (req) => {
     )
 
     // Download the original file
+    console.log('Downloading file from storage...')
     const { data: fileData, error: downloadError } = await supabase
       .storage
       .from('elevate-documents')
@@ -35,6 +41,7 @@ serve(async (req) => {
     }
 
     // Convert Excel to PDF
+    console.log('Converting file to PDF...')
     const workbook = new ExcelJS.Workbook()
     const arrayBuffer = await fileData.arrayBuffer()
     await workbook.xlsx.load(arrayBuffer)
@@ -86,6 +93,7 @@ serve(async (req) => {
     }
 
     // Save the PDF
+    console.log('Saving PDF...')
     const pdfBytes = await pdfDoc.save()
     const previewPath = filePath.replace(/\.[^/.]+$/, '.pdf')
 
@@ -105,6 +113,7 @@ serve(async (req) => {
       throw new Error(`Error uploading PDF preview: ${uploadError.message}`)
     }
 
+    console.log('Conversion completed successfully')
     return new Response(
       JSON.stringify({ 
         success: true,
@@ -129,8 +138,8 @@ serve(async (req) => {
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/json' 
-        }, 
-        status: 500 
+        },
+        status: 500
       }
     )
   }
