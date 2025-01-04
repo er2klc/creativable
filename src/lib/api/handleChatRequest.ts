@@ -25,7 +25,7 @@ export const handleChatRequest = async (messages: any, sessionToken: string) => 
       .from("settings")
       .select("openai_api_key")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
 
     console.log("Settings query result:", settings, settingsError);
 
