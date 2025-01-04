@@ -34,6 +34,9 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     },
     onFinish: (message) => {
       console.log("Chat message finished:", message);
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
     },
     onError: (error) => {
       console.error("Chat error:", error);
@@ -82,15 +85,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       setupChat();
     }
   }, [open]);
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  if (!open) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
