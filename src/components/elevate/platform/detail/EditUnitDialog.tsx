@@ -43,7 +43,6 @@ export const EditUnitDialog = ({
   const [localFiles, setLocalFiles] = useState<any[]>(existingFiles || []);
   const user = useUser();
 
-  // Update local state when dialog opens or props change
   useEffect(() => {
     if (open) {
       setTitle(initialTitle);
