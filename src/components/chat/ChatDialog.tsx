@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types/tables";
 
 interface ChatDialogProps {
   open: boolean;
@@ -26,9 +27,8 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
       setSessionToken(session.access_token);
 
-      // Hole den API Key aus den ChatBot Settings
       const { data, error } = await supabase
-        .from('chatbot_settings')
+        .from<'chatbot_settings', Tables['chatbot_settings']['Row']>('chatbot_settings')
         .select('openai_api_key')
         .eq('user_id', session.user.id)
         .single();

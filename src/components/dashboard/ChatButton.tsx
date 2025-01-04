@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types/tables";
 
 export const ChatButton = () => {
   const [open, setOpen] = useState(false);
@@ -23,7 +24,7 @@ export const ChatButton = () => {
       if (!session) return;
 
       const { data, error } = await supabase
-        .from('chatbot_settings')
+        .from<'chatbot_settings', Tables['chatbot_settings']['Row']>('chatbot_settings')
         .select('openai_api_key')
         .eq('user_id', session.user.id)
         .single();
@@ -60,7 +61,7 @@ export const ChatButton = () => {
       if (!session) throw new Error("No session");
 
       const { error } = await supabase
-        .from('chatbot_settings')
+        .from<'chatbot_settings', Tables['chatbot_settings']['Row']>('chatbot_settings')
         .upsert({ 
           user_id: session.user.id,
           openai_api_key: apiKey
