@@ -58,7 +58,7 @@ export const EditUnitDialog = ({
 
       // Upload new files
       for (const file of files) {
-        const filePath = `${crypto.randomUUID()}-${file.name}`;
+        const filePath = `${id}/${file.name}`;
         
         const { error: uploadError } = await supabase.storage
           .from('elevate-documents')
@@ -87,9 +87,12 @@ export const EditUnitDialog = ({
         }
       }
 
+      // Preserve line breaks by replacing them with <br> tags
+      const formattedDescription = description.replace(/\n/g, '<br>');
+
       await onUpdate({ 
         title, 
-        description: description.replace(/\n/g, '<br>'), 
+        description: formattedDescription,
         videoUrl 
       });
       
