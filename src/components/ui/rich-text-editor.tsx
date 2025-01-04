@@ -23,7 +23,8 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     extensions: [StarterKit],
     content,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      const html = editor.getHTML();
+      onChange(html);
     },
     editorProps: {
       attributes: {
