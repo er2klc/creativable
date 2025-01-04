@@ -73,12 +73,11 @@ export const PlatformDetailHeader = ({
           <span className="text-sm font-medium">Fortschritt</span>
         </div>
         <div className="flex-1">
-          <Progress 
-            value={progress} 
-            className="h-2 bg-gray-200 [&>[data-role='progress']]:bg-blue-500"
-            style={{ 
-              '--progress-foreground': '#3b82f6'
-            } as React.CSSProperties}
+          value={progress} 
+  className="h-2 bg-gray-200 [&>[data-role='progress']]:bg-blue-500"
+  style={{ 
+    '--progress-foreground': '#3b82f6' // Entspricht text-blue-500
+  } as React.CSSProperties}
           />
         </div>
         <span className="text-sm font-medium bg-white px-2 py-1 rounded">
