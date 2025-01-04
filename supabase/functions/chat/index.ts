@@ -97,10 +97,10 @@ serve(async (req) => {
 
             for (const line of lines) {
               if (line.trim() === '') continue
-              if (line.trim() === 'data: [DONE]') {
-                controller.enqueue(encoder.encode('data: [DONE]\n\n'))
-                continue
-              }
+             if (line.trim() === 'data: [DONE]') {
+  controller.close(); // Beende den Stream
+  break; // Verlasse die Schleife
+}
 
               if (line.startsWith('data: ')) {
                 try {
