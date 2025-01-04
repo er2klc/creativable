@@ -26,9 +26,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       Authorization: `Bearer ${sessionToken}`,
       'X-OpenAI-Key': apiKey || '',
     },
-    body: {
-      model: 'gpt-3.5-turbo',
-    },
     onResponse: (response) => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -58,7 +55,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
         setSessionToken(session.access_token);
 
-        // Fetch API key from chatbot_settings instead of settings
         const { data: chatbotSettings, error: chatbotError } = await supabase
           .from('chatbot_settings')
           .select('openai_api_key')
@@ -96,6 +92,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   }, [messages]);
 
   const handleClose = () => {
+    // Just minimize the chat instead of clearing it
     onOpenChange(false);
   };
 
