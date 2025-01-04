@@ -5,6 +5,7 @@ import { corsHeaders } from '../_shared/cors.ts'
 console.log('Chat Function started')
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -29,18 +30,11 @@ serve(async (req) => {
       throw new Error('Not authenticated')
     }
 
-    // OpenAI API Key aus den ChatBot Settings holen
-    const { data: settings, error: settingsError } = await supabaseClient
-      .from('chatbot_settings')
-      .select('openai_api_key')
-      .eq('user_id', user.id)
-      .single()
-
-    if (settingsError || !settings?.openai_api_key) {
-      throw new Error('No OpenAI API key found')
+    // Get OpenAI API key from headers
+    const openaiKey = req.headers.get('X-OpenAI-Key')
+    if (!openaiKey) {
+      throw new Error('No OpenAI API key provided')
     }
-
-    const openaiKey = settings.openai_api_key
 
     // Request Body parsen
     const { messages } = await req.json()
@@ -60,6 +54,8 @@ serve(async (req) => {
     })
 
     if (!response.ok) {
+      const error = await response.json()
+      console.error('OpenAI API error:', error)
       throw new Error('Failed to get response from OpenAI')
     }
 
