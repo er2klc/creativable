@@ -15,18 +15,17 @@ interface ChatDialogProps {
 
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const { settings } = useSettings();
-
-  // Only render the dialog if we have an API key
-  if (!settings || settings.openai_api_key === null || settings.openai_api_key === '') {
-    return null;
-  }
-
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: "/api/chat",
     headers: {
-      'Authorization': `Bearer ${settings.openai_api_key}`
+      'Authorization': `Bearer ${settings?.openai_api_key || ''}`
     }
   });
+
+  // Only render the dialog content if we have an API key
+  if (!settings || settings.openai_api_key === null || settings.openai_api_key === '') {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
