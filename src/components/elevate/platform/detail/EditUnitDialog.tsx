@@ -7,6 +7,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface EditUnitDialogProps {
   open: boolean;
@@ -19,6 +20,7 @@ interface EditUnitDialogProps {
   onFileRemove: (index: number) => void;
   onFilesSelected: (files: File[]) => void;
   files: File[];
+  id: string; // Add the id prop
 }
 
 export const EditUnitDialog = ({
@@ -32,11 +34,13 @@ export const EditUnitDialog = ({
   onFileRemove,
   onFilesSelected,
   files,
+  id, // Add id to destructuring
 }: EditUnitDialogProps) => {
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useUser(); // Add useUser hook
 
   const handleSubmit = async () => {
     try {
