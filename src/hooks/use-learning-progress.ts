@@ -2,10 +2,12 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Trophy } from "lucide-react";
 
 export const useLearningProgress = () => {
   const user = useUser();
   const queryClient = useQueryClient();
+  let hasShownCompletionToast = false;
 
   const { data: completedUnits = [], isError } = useQuery({
     queryKey: ['learning-progress', user?.id],
@@ -37,10 +39,9 @@ export const useLearningProgress = () => {
   };
 
   const markAsCompleted = async (lerninhalteId: string, completed: boolean = true) => {
-    if (!user?.id) return;
+    if (!user?.id || hasShownCompletionToast) return;
 
     try {
-      // Prüfen ob bereits ein Eintrag existiert
       const { data: existingProgress } = await supabase
         .from('elevate_user_progress')
         .select('id')
@@ -49,7 +50,6 @@ export const useLearningProgress = () => {
         .maybeSingle();
 
       if (existingProgress) {
-        // Update existierenden Eintrag
         const { error } = await supabase
           .from('elevate_user_progress')
           .update({
@@ -60,7 +60,6 @@ export const useLearningProgress = () => {
 
         if (error) throw error;
       } else {
-        // Erstelle neuen Eintrag
         const { error } = await supabase
           .from('elevate_user_progress')
           .insert({
@@ -73,7 +72,6 @@ export const useLearningProgress = () => {
         if (error) throw error;
       }
 
-      // Optimistisches Update des Cache
       queryClient.setQueryData(['learning-progress', user.id], (old: string[] = []) => {
         if (completed) {
           return [...new Set([...old, lerninhalteId])];
@@ -82,16 +80,16 @@ export const useLearningProgress = () => {
         }
       });
 
-      // Dann invalidieren um Daten-Konsistenz sicherzustellen
       await queryClient.invalidateQueries({
         queryKey: ['learning-progress', user.id]
       });
       
-      toast.success(
-        completed 
-          ? "Lerneinheit als abgeschlossen markiert" 
-          : "Lerneinheit als nicht abgeschlossen markiert"
-      );
+      if (completed && !hasShownCompletionToast) {
+        hasShownCompletionToast = true;
+        toast("Lerneinheit als abgeschlossen markiert", {
+          icon: <Trophy className="h-5 w-5 text-yellow-500" />
+        });
+      }
     } catch (error) {
       console.error('Error updating progress:', error);
       toast.error("Fehler beim Aktualisieren des Fortschritts");

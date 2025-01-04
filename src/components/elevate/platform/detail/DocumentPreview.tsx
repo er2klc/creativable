@@ -27,13 +27,11 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
       const firstSheetName = workbook.SheetNames[0];
       const firstSheet = workbook.Sheets[firstSheetName];
       
-      // Add custom styling to the HTML output
       const html = XLSX.utils.sheet_to_html(firstSheet, {
         id: "excel-preview-table",
         editable: false
       });
       
-      // Enhance the HTML with additional styling
       const styledHtml = `
         <style>
           #excel-preview-table {
@@ -114,6 +112,12 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
     ) {
       return (
         <div className="flex flex-col h-[80vh]">
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+            <p className="text-sm text-yellow-700">
+              Für die Vorschau wurde {document.name} in ein lesbares Format konvertiert. 
+              Bitte laden Sie die Original-Datei herunter, um sie zu bearbeiten.
+            </p>
+          </div>
           {isLoadingExcel ? (
             <div className="flex-1 flex items-center justify-center">
               <p className="text-muted-foreground">Lade Excel-Vorschau...</p>
@@ -139,16 +143,24 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
       );
     } else if (fileType?.match(/^(doc|docx)$/) || fileType?.includes('word')) {
       return (
-        <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
-          <FileText className="h-16 w-16 text-blue-600 mb-4" />
-          <p className="text-lg font-medium mb-2">{document.name}</p>
-          <p className="text-muted-foreground mb-4">Word-Dokument</p>
-          <Button asChild>
-            <a href={document.url} download target="_blank" rel="noopener noreferrer">
-              <Download className="h-4 w-4 mr-2" />
-              Herunterladen
-            </a>
-          </Button>
+        <div className="flex flex-col h-[80vh]">
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+            <p className="text-sm text-yellow-700">
+              Word-Dokumente können nur heruntergeladen werden. 
+              Bitte laden Sie die Datei herunter, um sie anzuzeigen oder zu bearbeiten.
+            </p>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            <FileText className="h-16 w-16 text-blue-600 mb-4" />
+            <p className="text-lg font-medium mb-2">{document.name}</p>
+            <p className="text-muted-foreground mb-4">Word-Dokument</p>
+            <Button asChild>
+              <a href={document.url} download target="_blank" rel="noopener noreferrer">
+                <Download className="h-4 w-4 mr-2" />
+                Herunterladen
+              </a>
+            </Button>
+          </div>
         </div>
       );
     } else {
