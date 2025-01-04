@@ -1,13 +1,13 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { ExcelJS } from 'npm:exceljs@4.4.0'
-import { PDFDocument, rgb } from 'npm:pdf-lib@1.17.1'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import ExcelJS from 'npm:exceljs@4.4.0';
+import { PDFDocument, rgb } from 'npm:pdf-lib@1.17.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Content-Type': 'application/json'
+  'Content-Type': 'application/json',
 };
 
 serve(async (req) => {
@@ -16,7 +16,7 @@ serve(async (req) => {
     console.log('Handling OPTIONS request');
     return new Response(null, { 
       headers: corsHeaders,
-      status: 200
+      status: 200,
     });
   }
 
@@ -54,7 +54,7 @@ serve(async (req) => {
     
     // Process each worksheet
     for (const worksheet of workbook.worksheets) {
-      const page = pdfDoc.addPage();
+      let page = pdfDoc.addPage();
       const { width, height } = page.getSize();
       const fontSize = 12;
       
@@ -108,7 +108,7 @@ serve(async (req) => {
       .from('elevate-documents')
       .upload(previewPath, pdfBytes, {
         contentType: 'application/pdf',
-        upsert: true
+        upsert: true,
       });
 
     if (uploadError) {
@@ -120,10 +120,10 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        previewPath 
+        previewPath,
       }),
       { 
-        headers: corsHeaders
+        headers: corsHeaders,
       }
     );
 
@@ -132,11 +132,11 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: error.message 
+        error: error.message,
       }),
       { 
         headers: corsHeaders,
-        status: 500
+        status: 500,
       }
     );
   }
