@@ -17,10 +17,10 @@ interface ChatDialogProps {
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const { settings } = useSettings();
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: `${supabase.functions.url}/ai-chat`,
+    api: `${process.env.SUPABASE_URL || 'https://agqaitxlmxztqyhpcjau.supabase.co'}/functions/v1/ai-chat`,
     headers: {
       'Authorization': `Bearer ${settings?.openai_api_key || ''}`,
-      'apikey': supabase.supabaseKey || '',
+      'apikey': process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFncWFpdHhsbXh6dHF5aHBjamF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ4NjgxMjEsImV4cCI6MjA1MDQ0NDEyMX0.rhw4HkZkSMWYOiNRHhQJwNYEk86ZsMEkORRel1aQJY4',
     }
   });
 
