@@ -106,7 +106,10 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ previewPath }),
+      JSON.stringify({ 
+        success: true,
+        previewPath 
+      }),
       { 
         headers: { 
           ...corsHeaders, 
@@ -118,7 +121,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in convert-to-pdf function:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false,
+        error: error.message 
+      }),
       { 
         headers: { 
           ...corsHeaders, 
