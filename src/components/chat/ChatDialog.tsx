@@ -29,13 +29,13 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   }, []);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: '/api/chat',
+    api: window.location.origin + '/api/chat',
     body: {
       openaiKey: settings?.openai_api_key
     },
     onError: (error) => {
       console.error('Chat error:', error);
-      toast.error("Fehler beim Senden der Nachricht");
+      toast.error("Fehler beim Senden der Nachricht. Bitte stellen Sie sicher, dass Sie einen gültigen OpenAI API-Key in den Einstellungen hinterlegt haben.");
     }
   });
 
