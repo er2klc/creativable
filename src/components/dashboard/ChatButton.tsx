@@ -1,25 +1,51 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatDialog } from "@/components/chat/ChatDialog";
-import { useSettings } from "@/hooks/use-settings";
-import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const ChatButton = () => {
   const [open, setOpen] = useState(false);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
-  const { settings, updateSettings } = useSettings();
   const [apiKey, setApiKey] = useState("");
+  const [hasApiKey, setHasApiKey] = useState(false);
+
+  useEffect(() => {
+    checkApiKey();
+  }, []);
+
+  const checkApiKey = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data, error } = await supabase
+        .from('chatbot_settings')
+        .select('openai_api_key')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error) throw error;
+      setHasApiKey(!!data?.openai_api_key);
+      
+      if (data?.openai_api_key) {
+        console.info("✅ OpenAI API Key ist vorhanden");
+      } else {
+        console.warn("⚠️ OpenAI API Key fehlt");
+      }
+    } catch (error) {
+      console.error("Error checking API key:", error);
+    }
+  };
 
   const handleClick = () => {
-    if (!settings?.openai_api_key) {
-      console.warn("⚠️ OpenAI API Key fehlt");
+    if (!hasApiKey) {
       setShowApiKeyDialog(true);
       return;
     }
-    console.info("✅ OpenAI API Key ist vorhanden");
     setOpen(true);
   };
 
@@ -30,9 +56,21 @@ export const ChatButton = () => {
     }
 
     try {
-      await updateSettings.mutateAsync({ openai_api_key: apiKey });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+
+      const { error } = await supabase
+        .from('chatbot_settings')
+        .upsert({ 
+          user_id: session.user.id,
+          openai_api_key: apiKey
+        });
+
+      if (error) throw error;
+
       setShowApiKeyDialog(false);
       setOpen(true);
+      setHasApiKey(true);
       toast.success("API Key wurde gespeichert");
       console.info("✅ OpenAI API Key wurde erfolgreich gespeichert");
     } catch (error) {

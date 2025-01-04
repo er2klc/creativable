@@ -1,5 +1,4 @@
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { useSettings } from "@/hooks/use-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,21 +16,41 @@ interface ChatDialogProps {
 }
 
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
-  const { settings } = useSettings();
   const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState<string | null>(null);
 
   useEffect(() => {
-    const getSession = async () => {
+    const setupChat = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setSessionToken(session?.access_token || null);
+      if (!session) return;
+
+      setSessionToken(session.access_token);
+
+      // Hole den API Key aus den ChatBot Settings
+      const { data, error } = await supabase
+        .from('chatbot_settings')
+        .select('openai_api_key')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching API key:", error);
+        return;
+      }
+
+      setApiKey(data?.openai_api_key || null);
     };
-    getSession();
-  }, []);
+
+    if (open) {
+      setupChat();
+    }
+  }, [open]);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/chat",
     headers: {
-      Authorization: `Bearer ${sessionToken}`
+      Authorization: `Bearer ${sessionToken}`,
+      'X-OpenAI-Key': apiKey || '',
     },
     onError: (error) => {
       console.error("Chat error:", error);
@@ -44,9 +63,9 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogTitle className="sr-only">Chat</DialogTitle>
-        <DialogDescription className="sr-only">
-          Chat mit unserem AI Assistenten
+        <DialogTitle>Chat mit KI-Assistent</DialogTitle>
+        <DialogDescription>
+          Ich helfe Ihnen gerne bei Ihren Fragen und Anliegen.
         </DialogDescription>
         <div className="flex flex-col h-[600px]">
           <ScrollArea className="flex-1 pr-4">
