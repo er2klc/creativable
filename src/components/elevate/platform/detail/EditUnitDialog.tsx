@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { FileUpload } from "./FileUpload";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface EditUnitDialogProps {
   open: boolean;
@@ -34,10 +36,38 @@ export const EditUnitDialog = ({
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    await onUpdate({ title, description, videoUrl });
-    onOpenChange(false);
+    try {
+      setIsSubmitting(true);
+
+      // First upload any new files
+      for (const file of files) {
+        const filePath = `${crypto.randomUUID()}-${file.name}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('elevate-documents')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error('Error uploading file:', uploadError);
+          toast.error(`Fehler beim Hochladen der Datei ${file.name}`);
+          return;
+        }
+      }
+
+      // Then update the unit details
+      await onUpdate({ title, description, videoUrl });
+      
+      onOpenChange(false);
+      toast.success('Änderungen erfolgreich gespeichert');
+    } catch (error) {
+      console.error('Error updating unit:', error);
+      toast.error('Fehler beim Speichern der Änderungen');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -87,8 +117,11 @@ export const EditUnitDialog = ({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Abbrechen
             </Button>
-            <Button onClick={handleSubmit}>
-              Speichern
+            <Button 
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Wird gespeichert...' : 'Speichern'}
             </Button>
           </div>
         </div>
