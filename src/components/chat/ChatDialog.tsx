@@ -30,7 +30,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      console.log("Chat response received:", response);
+      console.log("Chat response received");
     },
     onFinish: () => {
       if (scrollRef.current) {

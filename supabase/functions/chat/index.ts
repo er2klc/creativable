@@ -87,7 +87,10 @@ serve(async (req) => {
 
         for (const line of lines) {
           if (line.trim() === '') continue
-          if (line.trim() === 'data: [DONE]') return
+          if (line.trim() === 'data: [DONE]') {
+            controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'))
+            return
+          }
 
           if (line.startsWith('data: ')) {
             try {
@@ -95,7 +98,8 @@ serve(async (req) => {
               const content = json.choices[0]?.delta?.content
               if (content) {
                 console.log('Streaming content:', content)
-                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`))
+                const streamData = JSON.stringify({ content })
+                controller.enqueue(new TextEncoder().encode(`data: ${streamData}\n\n`))
               }
             } catch (error) {
               console.error('Error parsing JSON:', error)
