@@ -24,12 +24,19 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
 
     if (fileType?.includes('pdf')) {
       return (
-        <iframe
-          src={`${document.url}#toolbar=0&zoom=${scale}`}
-          className="w-full h-[80vh]"
-          title={document.name}
-          style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}
-        />
+        <div className="w-full h-[80vh] overflow-hidden">
+          <iframe
+            src={`${document.url}#toolbar=0&view=FitH`}
+            className="w-full h-full"
+            title={document.name}
+            style={{ 
+              transform: `scale(${scale})`,
+              transformOrigin: 'top center',
+              width: `${100 / scale}%`,
+              height: `${100 / scale}%`
+            }}
+          />
+        </div>
       );
     } else if (fileType?.match(/^(jpg|jpeg|png|gif|webp)$/)) {
       return (
@@ -38,7 +45,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
             src={document.url}
             alt={document.name}
             style={{ transform: `scale(${scale})`, transformOrigin: 'center' }}
-            className="max-w-full h-auto object-contain transition-transform duration-200"
+            className="max-w-full max-h-full object-contain transition-transform duration-200"
           />
         </div>
       );

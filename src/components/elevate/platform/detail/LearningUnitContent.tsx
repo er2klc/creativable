@@ -71,12 +71,23 @@ export const LearningUnitContent = ({
     fetchDocuments();
   }, [id]);
 
+  const handleVideoProgress = async (progress: number) => {
+    try {
+      onVideoProgress(progress);
+      if (progress >= 95 && !isCompleted) {
+        await onComplete();
+      }
+    } catch (error) {
+      console.error('Error updating progress:', error);
+    }
+  };
+
   return (
     <div className="space-y-8 py-6 px-6 bg-gray-50">
       <div className="grid grid-cols-12 gap-8">
         <VideoSection
           videoUrl={videoUrl}
-          onVideoProgress={onVideoProgress}
+          onVideoProgress={handleVideoProgress}
           savedProgress={savedProgress}
           onDuration={(duration) => setVideoDuration(duration)}
         />
