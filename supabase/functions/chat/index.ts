@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -41,7 +40,6 @@ serve(async (req) => {
       throw new Error('Failed to get response from OpenAI');
     }
 
-    // Transform the response into a readable stream
     const reader = response.body?.getReader();
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
@@ -61,32 +59,34 @@ serve(async (req) => {
             // Decode the chunk and add it to our buffer
             buffer += decoder.decode(value, { stream: true });
             
-            // Split on double newlines, which denote complete SSE messages
-            const parts = buffer.split('\n\n');
-            buffer = parts.pop() || ''; // Keep the last incomplete chunk in the buffer
+            // Process line by line instead of splitting on double newlines
+            const lines = buffer.split('\n');
+            // Keep any incomplete line in the buffer
+            buffer = lines.pop() || '';
 
-            for (const part of parts) {
-              if (part.trim() === '') continue;
-              if (part.includes('data: [DONE]')) {
+            for (const line of lines) {
+              const trimmedLine = line.trim();
+              if (!trimmedLine) continue;
+              
+              if (trimmedLine === 'data: [DONE]') {
                 controller.close();
                 return;
               }
 
-              // Only process lines starting with 'data: '
-              const lines = part.split('\n');
-              for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                  try {
-                    const json = JSON.parse(line.slice(6));
-                    const content = json.choices?.[0]?.delta?.content;
-                    if (content) {
-                      console.log('Streaming content:', content);
-                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
-                    }
-                  } catch (error) {
-                    console.warn('Invalid JSON in line:', line);
-                    continue;
+              if (trimmedLine.startsWith('data: ')) {
+                try {
+                  const jsonStr = trimmedLine.slice(6); // Remove 'data: ' prefix
+                  const json = JSON.parse(jsonStr);
+                  const content = json.choices?.[0]?.delta?.content;
+                  
+                  if (content) {
+                    console.log('Processing content chunk:', content);
+                    // Send a properly formatted SSE message
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
                   }
+                } catch (error) {
+                  console.warn('Invalid JSON in line:', trimmedLine, error);
+                  continue;
                 }
               }
             }
