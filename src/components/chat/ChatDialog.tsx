@@ -29,14 +29,31 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   }, []);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: "/api/chat",
-    body: {
-      openaiKey: settings?.openai_api_key,
-      sessionToken: sessionToken || ''
-    },
-    onError: (error) => {
-      console.error('Chat error:', error);
-      toast.error("Fehler beim Senden der Nachricht. Bitte stellen Sie sicher, dass Sie einen gültigen OpenAI API-Key in den Einstellungen hinterlegt haben.");
+    api: async (messages) => {
+      try {
+        if (!settings?.openai_api_key) {
+          throw new Error("OpenAI API Key fehlt");
+        }
+
+        const { data, error } = await supabase.functions.invoke('ai-chat', {
+          body: { messages },
+          headers: {
+            'OpenAI-Key': settings.openai_api_key,
+            'Authorization': `Bearer ${sessionToken}`
+          }
+        });
+
+        if (error) {
+          console.error('Supabase function error:', error);
+          throw error;
+        }
+
+        return data;
+      } catch (error: any) {
+        console.error('Chat error:', error);
+        toast.error("Fehler beim Senden der Nachricht. Bitte stellen Sie sicher, dass Sie einen gültigen OpenAI API-Key in den Einstellungen hinterlegt haben.");
+        throw error;
+      }
     }
   });
 
