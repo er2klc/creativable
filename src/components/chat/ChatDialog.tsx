@@ -29,14 +29,12 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     getSession();
   }, []);
 
-  useEffect(() => {
-    console.log("Geladene Einstellungen:", settings);
-  }, [settings]);
-
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: "/api/chat",
-    body: {
-      sessionToken,
+    api: async (messages) => {
+      if (!sessionToken) {
+        throw new Error("Session Token fehlt");
+      }
+      return handleChatRequest(messages, sessionToken);
     },
     onError: (error) => {
       console.error("Chat error:", error);
@@ -44,7 +42,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     },
   });
 
-  // Only render the dialog content if we have an API key
   if (!settings || settings.openai_api_key === null || settings.openai_api_key === '') {
     return null;
   }
