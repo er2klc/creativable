@@ -7,7 +7,7 @@ interface DescriptionSectionProps {
   description: string;
   existingFiles: any[];
   isAdmin: boolean;
-  onDocumentDeleted: () => void;
+  onDocumentDeleted: () => void | Promise<void>;  // Updated type to accept both void and Promise<void>
   onEdit: () => void;
 }
 
