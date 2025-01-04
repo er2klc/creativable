@@ -58,7 +58,10 @@ export const EditUnitDialog = ({
 
       // Upload new files
       for (const file of files) {
-        const filePath = `${id}/${file.name}`;
+        const timestamp = new Date().getTime();
+        const fileExt = file.name.split('.').pop();
+        const uniqueFileName = `${timestamp}-${file.name}`;
+        const filePath = `${id}/${uniqueFileName}`;
         
         const { error: uploadError } = await supabase.storage
           .from('elevate-documents')
