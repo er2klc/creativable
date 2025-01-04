@@ -1,4 +1,5 @@
 import { PlatformDetailHeader } from "../PlatformDetailHeader";
+import { Dispatch, SetStateAction } from "react";
 
 interface PlatformHeaderProps {
   platform: any;
@@ -7,7 +8,7 @@ interface PlatformHeaderProps {
   isCompleted: (id: string) => boolean;
   markAsCompleted: (id: string, completed?: boolean) => Promise<void>;
   handleDeleteUnit: () => Promise<void>;
-  setIsEditDialogOpen: (open: boolean) => void;
+  setIsEditDialogOpen: Dispatch<SetStateAction<boolean>>;
   progress: number;
   videoDuration: number;
   documentsCount: number;

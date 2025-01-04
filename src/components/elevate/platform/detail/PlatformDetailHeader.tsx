@@ -1,18 +1,14 @@
-import { ChevronRight, Trophy } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Progress } from "@/components/ui/progress";
-import { HeaderControls } from "./HeaderControls";
-
 interface PlatformDetailHeaderProps {
   moduleTitle: string;
   title: string;
   isCompleted: boolean;
   onComplete: () => void;
-  isAdmin?: boolean;
-  onDelete?: () => void;
-  videoDuration?: number;
+  isAdmin: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+  videoDuration: number;
   documentsCount: number;
-  progress?: number;
+  progress: number;
 }
 
 export const PlatformDetailHeader = ({
@@ -21,61 +17,40 @@ export const PlatformDetailHeader = ({
   isCompleted,
   onComplete,
   isAdmin,
+  onEdit,
   onDelete,
+  videoDuration,
   documentsCount,
-  progress = 0,
+  progress
 }: PlatformDetailHeaderProps) => {
   return (
-    <div className="w-full space-y-4 pb-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex flex-col items-start bg-slate-50/80 px-4 py-2 rounded-lg">
-            <span className="text-sm text-muted-foreground">
-              Modul
-            </span>
-            <span className="font-medium">
-              {moduleTitle}
-            </span>
-          </div>
-          
-          <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          
-          <div className="flex items-center gap-2 bg-blue-50/80 px-4 py-2 rounded-lg">
-            <div className="flex flex-col items-start">
-              <span className="text-sm text-muted-foreground">
-                Lerneinheit
-              </span>
-              <span className="font-semibold text-primary">
-                {title}
-              </span>
-            </div>
+    <div className="flex items-center justify-between">
+      <div>
+        <h1 className="text-xl font-bold">{moduleTitle}</h1>
+        <h2 className="text-lg">{title}</h2>
+        <div className="flex items-center">
+          <span className={`text-sm ${isCompleted ? 'text-green-600' : 'text-red-600'}`}>
+            {isCompleted ? 'Abgeschlossen' : 'Nicht abgeschlossen'}
+          </span>
+          <div className="ml-2">
+            <progress value={progress} max="100" className="w-full" />
           </div>
         </div>
-
-        <HeaderControls
-          id=""
-          isCompleted={isCompleted}
-          onComplete={onComplete}
-          isAdmin={isAdmin || false}
-          onDelete={onDelete}
-          documentsCount={documentsCount}
-        />
       </div>
-
-      <div className="flex items-center gap-4 bg-slate-50/80 p-2 rounded-lg">
-        <div className="flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-blue-500" />
-          <span className="text-sm font-medium">Fortschritt</span>
-        </div>
-        <div className="flex-1">
-          <Progress 
-            value={progress} 
-            className="relative w-full overflow-hidden rounded-full h-2 bg-gray-200 [&>[data-state=complete]]:bg-blue-500 [&>[data-state=indeterminate]]:bg-blue-500"
-          />
-        </div>
-        <span className="text-sm font-medium bg-white px-2 py-1 rounded">
-          {Math.round(progress)}%
-        </span>
+      <div className="flex space-x-2">
+        {isAdmin && (
+          <>
+            <button onClick={onEdit} className="text-blue-600 hover:underline">Bearbeiten</button>
+            <button onClick={onDelete} className="text-red-600 hover:underline">Löschen</button>
+          </>
+        )}
+        <button onClick={onComplete} className={`text-${isCompleted ? 'red' : 'green'}-600 hover:underline`}>
+          {isCompleted ? 'Wieder öffnen' : 'Abschließen'}
+        </button>
+      </div>
+      <div className="text-sm">
+        {videoDuration > 0 && <span>Dauer: {videoDuration} Minuten</span>}
+        {documentsCount > 0 && <span className="ml-2">Dokumente: {documentsCount}</span>}
       </div>
     </div>
   );
