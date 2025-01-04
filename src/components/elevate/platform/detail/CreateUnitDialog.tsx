@@ -100,10 +100,11 @@ export const CreateUnitDialog = ({
             <RichTextEditor
               content={description}
               onChange={setDescription}
-               <p className="text-sm text-muted-foreground">
+               />
+              <p className="text-sm text-muted-foreground">
                 Hinweis: Drücken Sie <strong>Shift+Enter</strong>, um einen Zeilenumbruch einzufügen.
               </p>
-            />
+            
           </div>
           <div className="space-y-2">
             <Label htmlFor="videoUrl">Video URL</Label>
