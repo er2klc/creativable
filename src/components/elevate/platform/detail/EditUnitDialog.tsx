@@ -20,7 +20,7 @@ interface EditUnitDialogProps {
   onFileRemove: (index: number) => void;
   onFilesSelected: (files: File[]) => void;
   files: File[];
-  id: string; // Add the id prop
+  id: string;
 }
 
 export const EditUnitDialog = ({
@@ -34,13 +34,13 @@ export const EditUnitDialog = ({
   onFileRemove,
   onFilesSelected,
   files,
-  id, // Add id to destructuring
+  id,
 }: EditUnitDialogProps) => {
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const user = useUser(); // Add useUser hook
+  const user = useUser();
 
   const handleSubmit = async () => {
     try {
@@ -50,14 +50,14 @@ export const EditUnitDialog = ({
       for (const file of files) {
         const filePath = `${crypto.randomUUID()}-${file.name}`;
         
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError, data } = await supabase.storage
           .from('elevate-documents')
           .upload(filePath, file);
 
         if (uploadError) {
           console.error('Error uploading file:', uploadError);
           toast.error(`Fehler beim Hochladen der Datei ${file.name}`);
-          return;
+          continue;
         }
 
         // After successful upload, insert the document record
@@ -74,7 +74,7 @@ export const EditUnitDialog = ({
         if (dbError) {
           console.error('Error saving document record:', dbError);
           toast.error(`Fehler beim Speichern der Datei ${file.name}`);
-          return;
+          continue;
         }
       }
 

@@ -201,6 +201,7 @@ export const PlatformContent = ({
           onFileRemove={() => {}}
           onFilesSelected={setFiles}
           files={files}
+          id={activeUnit.id}
         />
       )}
     </>

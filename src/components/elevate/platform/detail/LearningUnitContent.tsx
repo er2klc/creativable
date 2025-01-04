@@ -151,6 +151,7 @@ export const LearningUnitContent = ({
         }}
         onFilesSelected={setFiles}
         files={files}
+        id={id}
       />
     </div>
   );
