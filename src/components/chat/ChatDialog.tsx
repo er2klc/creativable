@@ -21,10 +21,9 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
+    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`, // Hier ändern wir den Endpoint
     headers: {
-      Authorization: `Bearer ${sessionToken}`,
-      'X-OpenAI-Key': apiKey || '',
+      'x-openai-key': apiKey || '',
     },
     onResponse: (response) => {
       if (!response.ok) {
@@ -55,7 +54,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
         setSessionToken(session.access_token);
         
-        // Fetch API key from chatbot_settings instead of settings
         const { data: chatbotSettings, error: chatbotError } = await supabase
           .from('chatbot_settings')
           .select('openai_api_key')
@@ -93,7 +91,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   }, [messages]);
 
   const handleClose = () => {
-    // Just minimize the chat instead of clearing it
     onOpenChange(false);
   };
 
