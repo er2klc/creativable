@@ -27,7 +27,37 @@ export const CreateUnitDialog = ({
   const [videoUrl, setVideoUrl] = useState("");
   const [files, setFiles] = useState<File[]>([]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    const convertedFiles = [];
+    
+    // Convert XLSX and DOCX files to PDF
+    for (const file of files) {
+      const fileType = file.type.toLowerCase();
+      const fileName = file.name.toLowerCase();
+      
+      if (
+        fileType.includes('sheet') || 
+        fileType.includes('excel') ||
+        fileName.endsWith('.xlsx') ||
+        fileName.endsWith('.xls') ||
+        fileType.includes('word') ||
+        fileName.endsWith('.docx') ||
+        fileName.endsWith('.doc')
+      ) {
+        // Store original file for conversion
+        convertedFiles.push({
+          file,
+          needsConversion: true
+        });
+      } else {
+        // Keep other files as is
+        convertedFiles.push({
+          file,
+          needsConversion: false
+        });
+      }
+    }
+    
     // Preserve line breaks by replacing them with <br> tags
     const formattedDescription = description.replace(/\n/g, '<br>');
     
@@ -35,8 +65,9 @@ export const CreateUnitDialog = ({
       title,
       description: formattedDescription,
       videoUrl,
-      files
+      files: convertedFiles.map(f => f.file)
     });
+    
     setTitle("");
     setDescription("");
     setVideoUrl("");

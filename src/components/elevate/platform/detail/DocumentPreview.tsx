@@ -1,6 +1,9 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DocumentPreviewProps {
   open: boolean;
@@ -9,10 +12,31 @@ interface DocumentPreviewProps {
     name: string;
     url: string;
     file_type?: string;
+    file_path?: string;
   };
 }
 
 export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPreviewProps) => {
+  const [isConverting, setIsConverting] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+
+  const handleConversion = async (filePath: string, fileType: string) => {
+    setIsConverting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('convert-to-pdf', {
+        body: { filePath, fileType }
+      });
+
+      if (error) throw error;
+      setPdfUrl(data.publicUrl);
+    } catch (error) {
+      console.error('Error converting file:', error);
+      toast.error('Fehler bei der Konvertierung der Datei');
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
   const renderPreview = () => {
     const fileType = document.file_type?.toLowerCase() || document.name.split('.').pop()?.toLowerCase();
 
@@ -40,46 +64,50 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
       fileType?.includes('sheet') ||
       fileType?.includes('excel') ||
       fileType?.match(/^(xlsx|xls|csv)$/) ||
-      document.name.match(/\.(xlsx|xls|csv)$/)
+      document.name.match(/\.(xlsx|xls|csv)$/) ||
+      fileType?.match(/^(doc|docx)$/) ||
+      fileType?.includes('word')
     ) {
+      if (isConverting) {
+        return (
+          <div className="flex flex-col items-center justify-center h-[80vh]">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+            <p className="mt-4 text-gray-600">Dokument wird konvertiert...</p>
+          </div>
+        );
+      }
+
+      if (pdfUrl) {
+        return (
+          <div className="w-full h-[80vh]">
+            <iframe
+              src={`${pdfUrl}#toolbar=0&view=FitH`}
+              className="w-full h-full"
+              title={document.name}
+            />
+          </div>
+        );
+      }
+
       return (
         <div className="flex flex-col h-[80vh]">
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-            <p className="text-sm text-yellow-700">
-              Excel-Dateien können nur heruntergeladen werden. 
-              Bitte laden Sie die Datei herunter, um sie anzuzeigen oder zu bearbeiten.
-            </p>
-          </div>
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <FileSpreadsheet className="h-16 w-16 text-green-600 mb-4" />
+            {fileType?.includes('excel') || fileType?.match(/^(xlsx|xls|csv)$/) ? (
+              <FileSpreadsheet className="h-16 w-16 text-green-600 mb-4" />
+            ) : (
+              <FileText className="h-16 w-16 text-blue-600 mb-4" />
+            )}
             <p className="text-lg font-medium mb-2">{document.name}</p>
-            <p className="text-muted-foreground mb-4">Excel-Datei</p>
-            <Button asChild>
-              <a href={document.url} download target="_blank" rel="noopener noreferrer">
-                <Download className="h-4 w-4 mr-2" />
-                Herunterladen
-              </a>
+            <Button 
+              onClick={() => handleConversion(document.file_path || '', fileType || '')}
+              className="mb-4"
+            >
+              Als PDF anzeigen
             </Button>
-          </div>
-        </div>
-      );
-    } else if (fileType?.match(/^(doc|docx)$/) || fileType?.includes('word')) {
-      return (
-        <div className="flex flex-col h-[80vh]">
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-            <p className="text-sm text-yellow-700">
-              Word-Dokumente können nur heruntergeladen werden. 
-              Bitte laden Sie die Datei herunter, um sie anzuzeigen oder zu bearbeiten.
-            </p>
-          </div>
-          <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <FileText className="h-16 w-16 text-blue-600 mb-4" />
-            <p className="text-lg font-medium mb-2">{document.name}</p>
-            <p className="text-muted-foreground mb-4">Word-Dokument</p>
-            <Button asChild>
+            <Button asChild variant="outline">
               <a href={document.url} download target="_blank" rel="noopener noreferrer">
                 <Download className="h-4 w-4 mr-2" />
-                Herunterladen
+                Original herunterladen
               </a>
             </Button>
           </div>
