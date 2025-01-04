@@ -38,6 +38,7 @@ export const LearningUnitContent = ({
   const [isEditing, setIsEditing] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [videoDuration, setVideoDuration] = useState(0);
+  const [hasCompletedNotification, setHasCompletedNotification] = useState(false);
   const user = useUser();
   const [documents, setDocuments] = useState<Array<{ id: string; file_name: string; file_path: string; file_type: string }>>([]);
 
@@ -76,7 +77,8 @@ export const LearningUnitContent = ({
   const handleVideoProgress = async (progress: number) => {
     try {
       onVideoProgress(progress);
-      if (progress >= 95 && !isCompleted) {
+      if (progress >= 95 && !isCompleted && !hasCompletedNotification) {
+        setHasCompletedNotification(true);
         await onComplete();
       }
     } catch (error) {
