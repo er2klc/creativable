@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { handleChatRequest } from "@/lib/api/handleChatRequest";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -8,7 +8,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { messages, sessionToken } = req.body;
+    const { messages } = req.body;
+    const sessionToken = req.headers.authorization?.replace("Bearer ", "") || req.body.sessionToken;
 
     if (!sessionToken) {
       return res.status(400).json({ error: "No session token provided" });

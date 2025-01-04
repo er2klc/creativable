@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { handleChatRequest } from "@/lib/api/handleChatRequest";
 
 interface ChatDialogProps {
   open: boolean;
@@ -37,11 +36,9 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   }, [settings]);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: async (messages) => {
-      if (!sessionToken) {
-        throw new Error("Session Token fehlt");
-      }
-      return handleChatRequest(messages, sessionToken);
+    api: "/api/chat",
+    body: {
+      sessionToken
     },
     onError: (error) => {
       console.error("Chat error:", error);
