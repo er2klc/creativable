@@ -20,6 +20,18 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [apiKey, setApiKey] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
+    headers: {
+      Authorization: `Bearer ${sessionToken}`,
+      'X-OpenAI-Key': apiKey || '',
+    },
+    onError: (error) => {
+      console.error("Chat error:", error);
+      toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
+    },
+  });
+
   useEffect(() => {
     const setupChat = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -58,18 +70,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
-
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
-    headers: {
-      Authorization: `Bearer ${sessionToken}`,
-      'X-OpenAI-Key': apiKey || '',
-    },
-    onError: (error) => {
-      console.error("Chat error:", error);
-      toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
-    },
-  });
 
   if (!open) return null;
 
