@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -8,6 +7,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -15,6 +15,7 @@ serve(async (req) => {
   try {
     const openaiApiKey = req.headers.get('x-openai-key');
     if (!openaiApiKey) {
+      console.error('OpenAI API Key missing');
       throw new Error('OpenAI API Key is required');
     }
 
@@ -48,6 +49,8 @@ serve(async (req) => {
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          let buffer = '';
+          
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
@@ -55,28 +58,35 @@ serve(async (req) => {
               break;
             }
 
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
+            // Decode the chunk and add it to our buffer
+            buffer += decoder.decode(value, { stream: true });
+            
+            // Split on double newlines, which denote complete SSE messages
+            const parts = buffer.split('\n\n');
+            buffer = parts.pop() || ''; // Keep the last incomplete chunk in the buffer
 
-            for (const line of lines) {
-              if (line.trim() === '') continue;
-              if (line.trim() === 'data: [DONE]') {
+            for (const part of parts) {
+              if (part.trim() === '') continue;
+              if (part.includes('data: [DONE]')) {
                 controller.close();
-                break;
+                return;
               }
 
-              if (line.startsWith('data: ')) {
-                try {
-                  const json = JSON.parse(line.slice(6));
-                  const content = json.choices[0]?.delta?.content;
-                  if (content) {
-                    console.log('Streaming content:', content);
-                    const streamData = JSON.stringify({ content });
-                    controller.enqueue(encoder.encode(`data: ${streamData}\n\n`));
+              // Only process lines starting with 'data: '
+              const lines = part.split('\n');
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  try {
+                    const json = JSON.parse(line.slice(6));
+                    const content = json.choices?.[0]?.delta?.content;
+                    if (content) {
+                      console.log('Streaming content:', content);
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+                    }
+                  } catch (error) {
+                    console.warn('Invalid JSON in line:', line);
+                    continue;
                   }
-                } catch (error) {
-                  console.warn('Invalid JSON in chunk:', line);
-                  continue;
                 }
               }
             }
