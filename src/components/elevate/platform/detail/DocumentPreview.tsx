@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, FileSpreadsheet, FileText } from "lucide-react";
 
 interface DocumentPreviewProps {
   open: boolean;
@@ -36,6 +36,25 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
           />
         </div>
       );
+    } else if (fileType?.match(/^(xlsx|xls|csv|doc|docx)$/)) {
+      const isExcel = fileType?.match(/^(xlsx|xls|csv)$/);
+      const icon = isExcel ? <FileSpreadsheet className="h-16 w-16 text-green-600 mb-4" /> : <FileText className="h-16 w-16 text-blue-600 mb-4" />;
+      
+      return (
+        <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
+          {icon}
+          <p className="text-lg font-medium mb-2">{document.name}</p>
+          <p className="text-muted-foreground mb-4">
+            {isExcel ? 'Excel-Datei' : 'Word-Dokument'}
+          </p>
+          <Button asChild>
+            <a href={document.url} download target="_blank" rel="noopener noreferrer">
+              <Download className="h-4 w-4 mr-2" />
+              Herunterladen
+            </a>
+          </Button>
+        </div>
+      );
     } else {
       return (
         <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
@@ -53,7 +72,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-full p-0">
+      <DialogContent className="max-w-5xl w-full p-0" hideClose>
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-semibold">{document.name}</h3>
           <Button asChild variant="outline" size="sm">

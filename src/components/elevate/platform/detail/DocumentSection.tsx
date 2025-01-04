@@ -52,7 +52,7 @@ export const DocumentSection = ({ documents, isAdmin = false, onDocumentDeleted 
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Dokumente</h3>
-      <div className="space-y-2">
+      <div className="space-y-1"> {/* Changed from space-y-2 to space-y-1 */}
         {documents.map((doc, index) => (
           <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
             <button

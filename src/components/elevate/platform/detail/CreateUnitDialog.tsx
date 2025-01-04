@@ -28,9 +28,12 @@ export const CreateUnitDialog = ({
   const [files, setFiles] = useState<File[]>([]);
 
   const handleSubmit = () => {
+    // Preserve line breaks by replacing them with <br> tags
+    const formattedDescription = description.replace(/\n/g, '<br>');
+    
     onSubmit({
       title,
-      description,
+      description: formattedDescription,
       videoUrl,
       files
     });
