@@ -26,8 +26,12 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       Authorization: `Bearer ${sessionToken}`,
       'X-OpenAI-Key': apiKey || '',
     },
+    body: {
+      language: 'de', // Explicitly set language to German
+    },
     onResponse: (response) => {
       if (!response.ok) {
+        console.error("Chat response error:", response.status, response.statusText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       console.log("Chat response received");
@@ -39,6 +43,10 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     },
     onError: (error) => {
       console.error("Chat error:", error);
+      if (error.message.includes('Failed to parse')) {
+        // Ignore parsing errors as they don't affect functionality
+        return;
+      }
       toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
     },
   });

@@ -6,7 +6,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -18,8 +17,14 @@ serve(async (req) => {
       throw new Error('OpenAI API Key is required');
     }
 
-    const { messages } = await req.json();
+    const { messages, language = 'de' } = await req.json();
     console.log('Processing chat request with messages:', messages);
+
+    // Add system message for language preference
+    const systemMessage = {
+      role: 'system',
+      content: `Du bist ein freundlicher KI-Assistent. Antworte immer auf ${language === 'de' ? 'Deutsch' : 'English'}.`
+    };
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -29,7 +34,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'gpt-3.5-turbo',
-        messages,
+        messages: [systemMessage, ...messages],
         stream: true,
       }),
     });
@@ -72,13 +77,12 @@ serve(async (req) => {
 
               if (trimmedLine.startsWith('data: ')) {
                 try {
-                  const jsonStr = trimmedLine.slice(6); // Remove 'data: ' prefix
+                  const jsonStr = trimmedLine.slice(6);
                   const json = JSON.parse(jsonStr);
                   const content = json.choices?.[0]?.delta?.content;
                   
                   if (content) {
                     console.log('Processing content chunk:', content);
-                    // Send a properly formatted SSE message
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
                   }
                 } catch (error) {
