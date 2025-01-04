@@ -37,7 +37,12 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         return;
       }
 
-      setApiKey(data?.openai_api_key || null);
+      if (data?.openai_api_key) {
+        console.log("✅ OpenAI API Key found");
+        setApiKey(data.openai_api_key);
+      } else {
+        console.warn("⚠️ No OpenAI API Key found");
+      }
     };
 
     if (open) {

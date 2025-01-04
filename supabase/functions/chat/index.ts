@@ -38,8 +38,9 @@ serve(async (req) => {
 
     // Request Body parsen
     const { messages } = await req.json()
+    
+    console.log('Sending request to OpenAI API with messages:', messages)
 
-    console.log('Sending request to OpenAI API...')
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -59,6 +60,8 @@ serve(async (req) => {
       throw new Error('Failed to get response from OpenAI')
     }
 
+    console.log('OpenAI API response status:', response.status)
+
     // Transform the response into a proper SSE stream
     const transformStream = new TransformStream({
       async transform(chunk, controller) {
@@ -70,12 +73,14 @@ serve(async (req) => {
             if (line.startsWith('data: ')) {
               const data = line.slice(6)
               if (data === '[DONE]') {
+                console.log('Stream completed')
                 return
               }
               try {
                 const json = JSON.parse(data)
                 const content = json.choices[0]?.delta?.content
                 if (content) {
+                  console.log('Streaming content:', content)
                   controller.enqueue(`data: ${JSON.stringify({ content })}\n\n`)
                 }
               } catch (error) {
