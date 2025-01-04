@@ -1,14 +1,10 @@
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { LearningUnitTabs } from "./LearningUnitTabs";
-import { LearningUnitContent } from "./LearningUnitContent";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { PlatformDetailHeader } from "./PlatformDetailHeader";
+import { PlatformHeader } from "./content/PlatformHeader";
+import { PlatformTabs } from "./content/PlatformTabs";
+import { DialogManager } from "./content/DialogManager";
 import { EmptyState } from "./EmptyState";
-import { UnitCreation, handleCreateUnit } from "./UnitCreation";
-import { EditUnitDialog } from "./EditUnitDialog";
 
 interface PlatformContentProps {
   platform: any;
@@ -35,30 +31,31 @@ export const PlatformContent = ({
 }: PlatformContentProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [files, setFiles] = useState<File[]>([]);
+  const [videoDuration, setVideoDuration] = useState(0);
 
   const activeUnit = sortedSubmodules.find(unit => unit.id === activeUnitId);
   const completedCount = sortedSubmodules.filter(unit => isCompleted(unit.id)).length;
   const progress = (completedCount / sortedSubmodules.length) * 100;
 
   if (sortedSubmodules.length === 0) {
-    return <EmptyState 
-      isAdmin={isAdmin} 
-      onCreateUnit={async (data) => {
-        await handleCreateUnit(
-          platform, 
-          sortedSubmodules, 
-          refetch, 
-          setIsDialogOpen,
-          data
-        );
-      }} 
-    />;
+    return (
+      <EmptyState 
+        isAdmin={isAdmin} 
+        onCreateUnit={async (data) => {
+          await handleCreateUnit(
+            platform, 
+            sortedSubmodules, 
+            refetch, 
+            setIsDialogOpen,
+            data
+          );
+        }} 
+      />
+    );
   }
 
   const handleDeleteUnit = async () => {
     try {
-      // First delete related notes
       const { error: notesError } = await supabase
         .from('elevate_lerninhalte_notes')
         .delete()
@@ -66,7 +63,6 @@ export const PlatformContent = ({
 
       if (notesError) throw notesError;
 
-      // Then delete related documents
       const { error: docsError } = await supabase
         .from('elevate_lerninhalte_documents')
         .delete()
@@ -74,7 +70,6 @@ export const PlatformContent = ({
 
       if (docsError) throw docsError;
 
-      // Finally delete the learning unit
       const { error } = await supabase
         .from('elevate_lerninhalte')
         .delete()
@@ -92,118 +87,47 @@ export const PlatformContent = ({
 
   return (
     <>
-      {activeUnit && (
-        <PlatformDetailHeader
-          moduleTitle={platform.name}
-          title={activeUnit.title}
-          isCompleted={isCompleted(activeUnit.id)}
-          onComplete={() => markAsCompleted(activeUnit.id, !isCompleted(activeUnit.id))}
-          isAdmin={isAdmin}
-          onEdit={() => setIsEditDialogOpen(true)}
-          onDelete={handleDeleteUnit}
-          videoDuration={0}
-          documentsCount={0}
-          progress={progress}
-        />
-      )}
+      <PlatformHeader
+        platform={platform}
+        activeUnit={activeUnit}
+        isAdmin={isAdmin}
+        isCompleted={isCompleted}
+        markAsCompleted={markAsCompleted}
+        handleDeleteUnit={handleDeleteUnit}
+        setIsEditDialogOpen={setIsEditDialogOpen}
+        progress={progress}
+        videoDuration={videoDuration}
+        documentsCount={2}
+      />
 
       <div className="bg-gray-50 rounded-lg">
-        <Tabs value={activeUnitId} onValueChange={handleUnitChange} className="w-full">
-          <LearningUnitTabs
-            units={sortedSubmodules.map(unit => ({
-              id: unit.id,
-              title: unit.title,
-              completed: isCompleted(unit.id)
-            }))}
-            activeUnit={activeUnitId}
-            onUnitChange={handleUnitChange}
-            isAdmin={isAdmin}
-            onCreateUnit={() => setIsDialogOpen(true)}
-            progress={progress}
-          />
-
-          {sortedSubmodules.map((submodule) => (
-            <TabsContent key={submodule.id} value={submodule.id} className="bg-white rounded-b-lg">
-              <LearningUnitContent
-                id={submodule.id}
-                moduleTitle={platform.name}
-                title={submodule.title}
-                description={submodule.description}
-                videoUrl={submodule.video_url}
-                isCompleted={isCompleted(submodule.id)}
-                onComplete={() => markAsCompleted(submodule.id, !isCompleted(submodule.id))}
-                onVideoProgress={(progress) => handleVideoProgress(submodule.id, progress)}
-                savedProgress={parseFloat(localStorage.getItem(`video-progress-${submodule.id}`) || '0')}
-                isAdmin={isAdmin}
-                onDelete={handleDeleteUnit}
-                onUpdate={async (data) => {
-                  try {
-                    const { error } = await supabase
-                      .from('elevate_lerninhalte')
-                      .update({
-                        title: data.title,
-                        description: data.description,
-                        video_url: data.videoUrl
-                      })
-                      .eq('id', submodule.id);
-
-                    if (error) throw error;
-                    await refetch();
-                    setIsEditDialogOpen(false);
-                    toast.success("Lerneinheit erfolgreich aktualisiert");
-                  } catch (error) {
-                    console.error('Error updating learning unit:', error);
-                    toast.error("Fehler beim Aktualisieren der Lerneinheit");
-                  }
-                }}
-              />
-            </TabsContent>
-          ))}
-        </Tabs>
+        <PlatformTabs
+          sortedSubmodules={sortedSubmodules}
+          activeUnitId={activeUnitId}
+          handleUnitChange={handleUnitChange}
+          isAdmin={isAdmin}
+          setIsDialogOpen={setIsDialogOpen}
+          isCompleted={isCompleted}
+          markAsCompleted={markAsCompleted}
+          handleVideoProgress={handleVideoProgress}
+          platform={platform}
+          handleDeleteUnit={handleDeleteUnit}
+          refetch={refetch}
+          setIsEditDialogOpen={setIsEditDialogOpen}
+          progress={progress}
+        />
       </div>
 
-      <UnitCreation
+      <DialogManager
         platform={platform}
         sortedSubmodules={sortedSubmodules}
         refetch={refetch}
         isDialogOpen={isDialogOpen}
         setIsDialogOpen={setIsDialogOpen}
+        isEditDialogOpen={isEditDialogOpen}
+        setIsEditDialogOpen={setIsEditDialogOpen}
+        activeUnit={activeUnit}
       />
-
-      {activeUnit && (
-        <EditUnitDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          title={activeUnit.title}
-          description={activeUnit.description || ""}
-          videoUrl={activeUnit.video_url || ""}
-          onUpdate={async (data) => {
-            try {
-              const { error } = await supabase
-                .from('elevate_lerninhalte')
-                .update({
-                  title: data.title,
-                  description: data.description,
-                  video_url: data.videoUrl
-                })
-                .eq('id', activeUnit.id);
-
-              if (error) throw error;
-              await refetch();
-              setIsEditDialogOpen(false);
-              toast.success("Lerneinheit erfolgreich aktualisiert");
-            } catch (error) {
-              console.error('Error updating learning unit:', error);
-              toast.error("Fehler beim Aktualisieren der Lerneinheit");
-            }
-          }}
-          existingFiles={[]}
-          onFileRemove={() => {}}
-          onFilesSelected={setFiles}
-          files={files}
-          id={activeUnit.id}
-        />
-      )}
     </>
   );
 };
