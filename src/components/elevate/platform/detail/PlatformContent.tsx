@@ -32,6 +32,35 @@ export const PlatformContent = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [videoDuration, setVideoDuration] = useState(0);
+  const [documentsCount, setDocumentsCount] = useState(0);
+
+  const activeUnit = sortedSubmodules.find(unit => unit.id === activeUnitId);
+  const completedCount = sortedSubmodules.filter(unit => isCompleted(unit.id)).length;
+  const progress = (completedCount / sortedSubmodules.length) * 100;
+
+  // Fetch documents count when activeUnit changes
+  useState(() => {
+    const fetchDocumentsCount = async () => {
+      if (activeUnitId) {
+        const { data: documents } = await supabase
+          .from('elevate_lerninhalte_documents')
+          .select('*')
+          .eq('lerninhalte_id', activeUnitId);
+        
+        setDocumentsCount(documents?.length || 0);
+      }
+    };
+    fetchDocumentsCount();
+  }, [activeUnitId]);
+
+  if (sortedSubmodules.length === 0) {
+    return (
+      <EmptyState 
+        isAdmin={isAdmin} 
+        onCreateUnit={handleCreateUnit}
+      />
+    );
+  }
 
   const handleCreateUnit = async (data: {
     title: string;
@@ -85,19 +114,6 @@ export const PlatformContent = ({
     }
   };
 
-  const activeUnit = sortedSubmodules.find(unit => unit.id === activeUnitId);
-  const completedCount = sortedSubmodules.filter(unit => isCompleted(unit.id)).length;
-  const progress = (completedCount / sortedSubmodules.length) * 100;
-
-  if (sortedSubmodules.length === 0) {
-    return (
-      <EmptyState 
-        isAdmin={isAdmin} 
-        onCreateUnit={handleCreateUnit}
-      />
-    );
-  }
-
   return (
     <>
       <PlatformHeader
@@ -139,7 +155,7 @@ export const PlatformContent = ({
         setIsEditDialogOpen={setIsEditDialogOpen}
         progress={progress}
         videoDuration={videoDuration}
-        documentsCount={2}
+        documentsCount={documentsCount}
       />
 
       <div className="bg-gray-50 rounded-lg">
