@@ -20,7 +20,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
 
   const renderPreview = () => {
     if (fileType?.includes('pdf') || 
-        (fileType?.includes('sheet') || fileType?.match(/^(xlsx|xls)$/)) && document.preview_url) {
+        ((fileType?.includes('sheet') || fileType?.match(/^(xlsx|xls|docx|doc)$/)) && document.preview_url)) {
       return (
         <div className="w-full h-[80vh]">
           <iframe

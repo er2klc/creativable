@@ -77,7 +77,9 @@ export const EditUnitDialog = ({
           fileType.includes('sheet') || 
           fileType.includes('excel') ||
           fileName.endsWith('.xlsx') ||
-          fileName.endsWith('.xls')
+          fileName.endsWith('.xls') ||
+          fileName.endsWith('.docx') ||
+          fileName.endsWith('.doc')
         ) {
           const { data: conversionData, error: conversionError } = await supabase.functions
             .invoke('convert-to-pdf', {
@@ -86,6 +88,9 @@ export const EditUnitDialog = ({
 
           if (!conversionError && conversionData?.previewPath) {
             previewFilePath = conversionData.previewPath;
+          } else {
+            console.error('Error converting file:', conversionError);
+            toast.error(`Fehler bei der Konvertierung der Datei ${file.name}`);
           }
         }
 
@@ -105,7 +110,7 @@ export const EditUnitDialog = ({
           continue;
         }
       }
-      const formattedDescription = description.replace(/\n/g, '<br>');
+
       await onUpdate({ 
         title, 
         description,
@@ -132,6 +137,13 @@ export const EditUnitDialog = ({
           .remove([fileToDelete.file_path]);
 
         if (storageError) throw storageError;
+
+        // Also remove the preview file if it exists
+        if (fileToDelete.preview_file_path) {
+          await supabase.storage
+            .from('elevate-documents')
+            .remove([fileToDelete.preview_file_path]);
+        }
 
         const { error: dbError } = await supabase
           .from('elevate_lerninhalte_documents')
