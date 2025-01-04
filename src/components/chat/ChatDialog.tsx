@@ -27,13 +27,12 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       'X-OpenAI-Key': apiKey || '',
     },
     onResponse: (response) => {
-      console.log("Chat response received:", response);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      console.log("Chat response received:", response);
     },
-    onFinish: (message) => {
-      console.log("Chat message finished:", message);
+    onFinish: () => {
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }

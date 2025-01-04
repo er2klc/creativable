@@ -82,33 +82,27 @@ serve(async (req) => {
 
     const transformStream = new TransformStream({
       async transform(chunk, controller) {
-        try {
-          const text = new TextDecoder().decode(chunk)
-          const lines = text.split('\n')
+        const text = new TextDecoder().decode(chunk)
+        const lines = text.split('\n')
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6)
-              if (data === '[DONE]') {
-                console.log('Stream completed')
-                return
+        for (const line of lines) {
+          if (line.trim() === '') continue
+          if (line.trim() === 'data: [DONE]') return
+
+          if (line.startsWith('data: ')) {
+            try {
+              const json = JSON.parse(line.slice(6))
+              const content = json.choices[0]?.delta?.content
+              if (content) {
+                console.log('Streaming content:', content)
+                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`))
               }
-              try {
-                const json = JSON.parse(data)
-                const content = json.choices[0]?.delta?.content
-                if (content) {
-                  console.log('Streaming content:', content)
-                  controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`))
-                }
-              } catch (error) {
-                console.error('Error parsing JSON:', error)
-              }
+            } catch (error) {
+              console.error('Error parsing JSON:', error)
             }
           }
-        } catch (error) {
-          console.error('Error in transform:', error)
         }
-      },
+      }
     })
 
     const headers = {
