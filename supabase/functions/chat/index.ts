@@ -7,10 +7,7 @@ console.log('Chat Function started')
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: {
-      ...corsHeaders,
-      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-openai-key'
-    }})
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
