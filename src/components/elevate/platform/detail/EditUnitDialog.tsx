@@ -40,6 +40,7 @@ export const EditUnitDialog = ({
   const [description, setDescription] = useState(initialDescription);
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [localFiles, setLocalFiles] = useState<any[]>(existingFiles);
   const user = useUser();
 
   const handleSubmit = async () => {
@@ -47,10 +48,11 @@ export const EditUnitDialog = ({
       setIsSubmitting(true);
 
       // First upload any new files
+      const uploadedFiles = [];
       for (const file of files) {
         const filePath = `${crypto.randomUUID()}-${file.name}`;
         
-        const { error: uploadError, data } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('elevate-documents')
           .upload(filePath, file);
 
@@ -61,7 +63,7 @@ export const EditUnitDialog = ({
         }
 
         // After successful upload, insert the document record
-        const { error: dbError } = await supabase
+        const { error: dbError, data: newDoc } = await supabase
           .from('elevate_lerninhalte_documents')
           .insert({
             lerninhalte_id: id,
@@ -69,17 +71,28 @@ export const EditUnitDialog = ({
             file_path: filePath,
             file_type: file.type,
             created_by: user?.id
-          });
+          })
+          .select()
+          .single();
 
         if (dbError) {
           console.error('Error saving document record:', dbError);
           toast.error(`Fehler beim Speichern der Datei ${file.name}`);
           continue;
         }
+
+        uploadedFiles.push(newDoc);
       }
 
+      // Update the local files state with new uploads
+      setLocalFiles([...localFiles, ...uploadedFiles]);
+
       // Then update the unit details
-      await onUpdate({ title, description, videoUrl });
+      await onUpdate({ 
+        title, 
+        description: description || '', // Ensure description is never undefined
+        videoUrl 
+      });
       
       onOpenChange(false);
       toast.success('Änderungen erfolgreich gespeichert');
@@ -128,7 +141,7 @@ export const EditUnitDialog = ({
             <FileUpload
               onFilesSelected={onFilesSelected}
               files={[
-                ...(existingFiles || []).map(f => new File([], f.file_name, { type: f.file_type })),
+                ...(localFiles || []).map(f => new File([], f.file_name, { type: f.file_type })),
                 ...files
               ]}
               onFileRemove={onFileRemove}
