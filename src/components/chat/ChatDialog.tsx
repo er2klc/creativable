@@ -29,20 +29,20 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     getSession();
   }, []);
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-  api: "/api/chat",
-  body: async (messages) => {
-    if (!settings?.openai_api_key || !sessionToken) {
-      throw new Error("OpenAI API Key oder Session Token fehlt");
-    }
-    return { messages, openaiKey: settings.openai_api_key, sessionToken };
-  },
-  onError: (error) => {
-    console.error("Chat error:", error);
-    toast.error("Fehler beim Senden der Nachricht. Überprüfe den API-Key.");
-  },
-});
+  useEffect(() => {
+    console.log("Geladene Einstellungen:", settings);
+  }, [settings]);
 
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+    api: "/api/chat",
+    body: {
+      sessionToken,
+    },
+    onError: (error) => {
+      console.error("Chat error:", error);
+      toast.error("Fehler beim Senden der Nachricht. Überprüfe den API-Key.");
+    },
+  });
 
   // Only render the dialog content if we have an API key
   if (!settings || settings.openai_api_key === null || settings.openai_api_key === '') {
