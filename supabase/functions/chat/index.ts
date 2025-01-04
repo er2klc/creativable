@@ -35,26 +35,30 @@ serve(async (req) => {
     }
 
     const { messages } = await req.json();
+
     console.log('Processing chat request for user:', user.id);
 
+    // Fetch user settings and context
     const { data: settings } = await supabaseClient
       .from('settings')
       .select('*')
       .eq('user_id', user.id)
       .single();
 
+    // Build system message with user context
     const systemMessage = {
       role: 'system',
-      content: `Du bist ein hilfreicher Assistent für ${settings?.company_name || 'das Unternehmen'}. 
-                Nutze folgende Informationen über das Unternehmen:
+      content: `You are an assistant for ${settings?.company_name || 'the company'}.
+                Use this information about the company:
                 ${settings?.business_description || ''}
-                Produkte/Services: ${settings?.products_services || ''}
-                Zielgruppe: ${settings?.target_audience || ''}
+                Products/Services: ${settings?.products_services || ''}
+                Target Audience: ${settings?.target_audience || ''}
                 USP: ${settings?.usp || ''}
-                Antworte kurz und präzise auf Deutsch.`,
+                Respond concisely in German.`,
     };
 
     console.log('Sending request to OpenAI API');
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -109,6 +113,7 @@ serve(async (req) => {
                   }
                 } catch (error) {
                   console.warn('Invalid JSON in chunk:', line, error);
+                  continue;
                 }
               }
             }
