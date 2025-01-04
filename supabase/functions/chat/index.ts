@@ -42,6 +42,7 @@ serve(async (req) => {
       throw new Error('No OpenAI API key found');
     }
 
+    console.log('Sending request to OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -61,7 +62,7 @@ serve(async (req) => {
       throw new Error('Failed to get response from OpenAI');
     }
 
-    // Transform the response into a proper stream
+    // Transform the response into a proper SSE stream
     const transformStream = new TransformStream({
       async transform(chunk, controller) {
         try {
@@ -74,7 +75,15 @@ serve(async (req) => {
               if (data === '[DONE]') {
                 return;
               }
-              controller.enqueue(line + '\n');
+              try {
+                const json = JSON.parse(data);
+                const content = json.choices[0]?.delta?.content;
+                if (content) {
+                  controller.enqueue(`data: ${JSON.stringify({ content })}\n\n`);
+                }
+              } catch (error) {
+                console.error('Error parsing JSON:', error);
+              }
             }
           }
         } catch (error) {
