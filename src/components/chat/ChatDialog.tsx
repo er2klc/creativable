@@ -28,6 +28,9 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     },
     onResponse: (response) => {
       console.log("Chat response received:", response);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
     },
     onFinish: (message) => {
       console.log("Chat message finished:", message);
