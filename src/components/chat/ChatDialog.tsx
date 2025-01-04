@@ -37,8 +37,8 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: "/api/chat",
-    body: {
-      sessionToken
+    headers: {
+      Authorization: `Bearer ${sessionToken}`
     },
     onError: (error) => {
       console.error("Chat error:", error);

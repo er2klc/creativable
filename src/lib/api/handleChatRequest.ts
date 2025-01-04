@@ -22,15 +22,12 @@ export const handleChatRequest = async (messages: any, sessionToken: string) => 
 
     // OpenAI API Key aus der settings-Tabelle abrufen
     const { data: settings, error: settingsError } = await supabase
-  .from("settings")
-  .select("openai_api_key")
-  .eq("user_id", userId)
-  .single();
+      .from("settings")
+      .select("openai_api_key")
+      .eq("user_id", userId)
+      .single();
 
-console.log("User ID:", userId);
-console.log("Supabase Settings Error:", settingsError);
-console.log("Supabase Settings Data:", settings);
-
+    console.log("Settings query result:", settings, settingsError);
 
     if (settingsError || !settings?.openai_api_key) {
       console.error("Settings error:", settingsError?.message || "No API key found");

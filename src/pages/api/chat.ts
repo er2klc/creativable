@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const { messages } = req.body;
-    const sessionToken = req.headers.authorization?.replace("Bearer ", "") || req.body.sessionToken;
+    const sessionToken = req.headers.authorization?.replace("Bearer ", "");
 
     if (!sessionToken) {
       return res.status(400).json({ error: "No session token provided" });
