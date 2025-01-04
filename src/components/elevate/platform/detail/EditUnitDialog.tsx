@@ -40,9 +40,10 @@ export const EditUnitDialog = ({
   const [description, setDescription] = useState(initialDescription || '');
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [localFiles, setLocalFiles] = useState<any[]>([]);
+  const [localFiles, setLocalFiles] = useState<any[]>(existingFiles || []);
   const user = useUser();
 
+  // Update local state when dialog opens or props change
   useEffect(() => {
     if (open) {
       setTitle(initialTitle);
@@ -69,7 +70,7 @@ export const EditUnitDialog = ({
           continue;
         }
 
-        const { error: dbError, data: newDoc } = await supabase
+        const { error: dbError } = await supabase
           .from('elevate_lerninhalte_documents')
           .insert({
             lerninhalte_id: id,
@@ -77,17 +78,13 @@ export const EditUnitDialog = ({
             file_path: filePath,
             file_type: file.type,
             created_by: user?.id
-          })
-          .select()
-          .single();
+          });
 
         if (dbError) {
           console.error('Error saving document record:', dbError);
           toast.error(`Fehler beim Speichern der Datei ${file.name}`);
           continue;
         }
-
-        setLocalFiles(prev => [...prev, newDoc]);
       }
 
       await onUpdate({ 

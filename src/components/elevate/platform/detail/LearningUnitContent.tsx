@@ -42,26 +42,6 @@ export const LearningUnitContent = ({
   const handleUpdate = async (data: { title: string; description: string; videoUrl: string }) => {
     try {
       await onUpdate(data);
-
-      for (const file of files) {
-        const filePath = `${id}/${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('elevate-documents')
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        await supabase
-          .from('elevate_lerninhalte_documents')
-          .insert({
-            lerninhalte_id: id,
-            file_name: file.name,
-            file_path: filePath,
-            file_type: file.type,
-            created_by: user?.id
-          });
-      }
-
       setIsEditing(false);
       setFiles([]);
       toast.success('Lerneinheit erfolgreich aktualisiert');
@@ -80,6 +60,7 @@ export const LearningUnitContent = ({
         .eq('lerninhalte_id', id);
 
       if (error) throw error;
+      console.log('Fetched documents:', data);
       setDocuments(data || []);
     } catch (error) {
       console.error('Error fetching documents:', error);
@@ -145,7 +126,7 @@ export const LearningUnitContent = ({
             }
           } else {
             const newFiles = [...files];
-            newFiles.splice(index, 1);
+            newFiles.splice(index - (documents?.length || 0), 1);
             setFiles(newFiles);
           }
         }}
