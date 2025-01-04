@@ -66,7 +66,7 @@ serve(async (req) => {
         Authorization: `Bearer ${openaiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o',
         messages: [systemMessage, ...messages],
         stream: true,
       }),
