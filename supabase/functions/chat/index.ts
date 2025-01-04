@@ -56,12 +56,9 @@ serve(async (req) => {
               break;
             }
 
-            // Decode the chunk and add it to our buffer
             buffer += decoder.decode(value, { stream: true });
             
-            // Process line by line instead of splitting on double newlines
             const lines = buffer.split('\n');
-            // Keep any incomplete line in the buffer
             buffer = lines.pop() || '';
 
             for (const line of lines) {
