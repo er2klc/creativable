@@ -7,7 +7,7 @@ import { useChat } from "ai/react";
 import { Bot, SendHorizontal, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
 interface ChatDialogProps {
@@ -18,6 +18,7 @@ interface ChatDialogProps {
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const setupChat = async () => {
@@ -42,6 +43,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         setApiKey(data.openai_api_key);
       } else {
         console.warn("⚠️ No OpenAI API Key found");
+        toast.error("Bitte fügen Sie einen OpenAI API Key in den Einstellungen hinzu");
       }
     };
 
@@ -49,6 +51,13 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       setupChat();
     }
   }, [open]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
@@ -72,7 +81,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
           Ich helfe Ihnen gerne bei Ihren Fragen und Anliegen.
         </DialogDescription>
         <div className="flex flex-col h-[600px]">
-          <ScrollArea className="flex-1 pr-4">
+          <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
             <div className="space-y-4 mb-4">
               {messages.map((message) => (
                 <div
@@ -108,6 +117,18 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
                   )}
                 </div>
               ))}
+              {isLoading && (
+                <div className="flex gap-3 text-slate-600 text-sm mb-4">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>
+                      <Bot className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="bg-muted rounded-lg px-3 py-2">
+                    Denke nach...
+                  </div>
+                </div>
+              )}
             </div>
           </ScrollArea>
           <form onSubmit={handleSubmit} className="flex items-center gap-2">
@@ -115,6 +136,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
               placeholder="Schreibe eine Nachricht..."
               value={input}
               onChange={handleInputChange}
+              disabled={isLoading}
             />
             <Button type="submit" size="icon" disabled={isLoading}>
               <SendHorizontal className="h-4 w-4" />

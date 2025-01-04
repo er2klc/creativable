@@ -1,4 +1,4 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -39,6 +39,7 @@ serve(async (req) => {
     // Request Body parsen
     const { messages } = await req.json()
     
+    console.log('Processing chat request for user:', user.id)
     console.log('Sending request to OpenAI API with messages:', messages)
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -49,7 +50,13 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'gpt-4',
-        messages,
+        messages: [
+          {
+            role: 'system',
+            content: 'Du bist ein hilfreicher Assistent. Antworte kurz und präzise auf Deutsch.'
+          },
+          ...messages
+        ],
         stream: true,
       }),
     })
