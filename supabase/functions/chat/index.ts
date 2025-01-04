@@ -49,14 +49,22 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages,
+        temperature: 0.7,
+        max_tokens: 1000,
       }),
     });
 
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('OpenAI API error:', error);
+      throw new Error('Failed to get response from OpenAI');
+    }
+
     const data = await response.json();
 
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify({ content: data.choices[0].message.content }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
