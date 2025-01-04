@@ -9,12 +9,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const { messages } = req.body;
-    const openaiKey = req.headers["authorization"]?.replace("Bearer ", "");
+    const sessionToken = req.headers["authorization"]?.replace("Bearer ", "");
 
-    if (!openaiKey) {
-      return res.status(400).json({ error: "No OpenAI API Key provided" });
+    if (!sessionToken) {
+      return res.status(400).json({ error: "No session token provided" });
     }
 
+    // Authentifizierung prüfen
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(sessionToken);
+
+    if (authError || !user) {
+      console.error("Authentication error:", authError?.message || "No user found");
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const userId = user.id;
+
+    // OpenAI API Key aus der settings-Tabelle abrufen
+    const { data: settings, error: settingsError } = await supabase
+      .from("settings")
+      .select("openai_api_key")
+      .eq("user_id", userId)
+      .single();
+
+    if (settingsError || !settings?.openai_api_key) {
+      console.error("Settings error:", settingsError?.message || "No API key found");
+      return res.status(400).json({ error: "No OpenAI API Key found for the user" });
+    }
+
+    const openaiKey = settings.openai_api_key;
+
+    // Anfrage an die Supabase-Funktion "ai-chat" weiterleiten
     const { data, error } = await supabase.functions.invoke("ai-chat", {
       body: { messages },
       headers: {
