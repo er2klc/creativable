@@ -13,7 +13,7 @@ export const ChatButton = () => {
 
   const handleClick = () => {
     console.log("OpenAI API Key:", settings?.openai_api_key); // Debug log
-    if (!settings?.openai_api_key) {
+    if (!settings || settings.openai_api_key === null || settings.openai_api_key === '') {
       toast.error("OpenAI API Key fehlt");
       return;
     }

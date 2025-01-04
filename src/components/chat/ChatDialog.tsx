@@ -17,7 +17,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const { settings } = useSettings();
 
   // Only render the dialog if we have an API key
-  if (!settings?.openai_api_key) {
+  if (!settings || settings.openai_api_key === null || settings.openai_api_key === '') {
     return null;
   }
 
