@@ -54,7 +54,8 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         }
 
         setSessionToken(session.access_token);
-
+        
+        // Fetch API key from chatbot_settings instead of settings
         const { data: chatbotSettings, error: chatbotError } = await supabase
           .from('chatbot_settings')
           .select('openai_api_key')
