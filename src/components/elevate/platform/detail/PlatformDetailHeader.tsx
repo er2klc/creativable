@@ -75,7 +75,7 @@ export const PlatformDetailHeader = ({
         <div className="flex-1">
           <Progress 
             value={progress} 
-            className="h-2 bg-gray-200" 
+            className="h-2 bg-gray-200 [&>[data-role='progress']]:bg-blue-500"
             style={{ 
               '--progress-foreground': '#3b82f6'
             } as React.CSSProperties}
