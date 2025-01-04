@@ -24,7 +24,14 @@ export const useSettings = () => {
         .maybeSingle();
 
       if (error) {
+        console.error("Error fetching settings:", error);
         throw error;
+      }
+
+      if (data?.openai_api_key) {
+        console.info("✅ OpenAI API Key is set and loaded successfully");
+      } else {
+        console.warn("⚠️ OpenAI API Key is not set");
       }
 
       // If no settings exist, create initial settings
@@ -78,6 +85,10 @@ export const useSettings = () => {
 
       if (error) {
         throw error;
+      }
+
+      if (newSettings.openai_api_key) {
+        console.info("✅ OpenAI API Key updated successfully");
       }
 
       return data;
