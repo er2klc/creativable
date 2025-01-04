@@ -6,7 +6,6 @@ import { EditUnitDialog } from "./EditUnitDialog";
 import { VideoSection } from "./content/VideoSection";
 import { NotesManager } from "./content/NotesManager";
 import { DescriptionSection } from "./content/DescriptionSection";
-import { DocumentManager } from "./content/DocumentManager";
 
 interface LearningUnitContentProps {
   id: string;
@@ -104,14 +103,6 @@ export const LearningUnitContent = ({
           existingFiles={documents}
           isAdmin={isAdmin}
           onDocumentDeleted={fetchDocuments}
-          onEdit={() => setIsEditing(true)}
-        />
-        
-        <DocumentManager 
-          existingFiles={documents}
-          isAdmin={isAdmin}
-          onDocumentDeleted={fetchDocuments}
-          onAddDocument={() => setIsEditing(true)}
         />
       </div>
 
