@@ -11,7 +11,7 @@ export const ChatButton = () => {
 
   const handleClick = () => {
     if (!settings?.openai_api_key) {
-      toast.error("Bitte API Key in den Einstellungen speichern");
+      toast.error("OpenAI API Key fehlt");
       return;
     }
     setOpen(true);
