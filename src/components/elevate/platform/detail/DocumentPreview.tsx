@@ -53,7 +53,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-full p-0" hideClose>
+      <DialogContent className="max-w-5xl w-full p-0">
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-semibold">{document.name}</h3>
           <Button asChild variant="outline" size="sm">
