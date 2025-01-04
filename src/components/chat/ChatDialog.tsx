@@ -28,15 +28,8 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     getSession();
   }, []);
 
-  useEffect(() => {
-    console.log("Settings in ChatButton:", settings);
-    if (settings?.openai_api_key) {
-      console.log("OpenAI API Key:", settings.openai_api_key);
-    }
-  }, [settings]);
-
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: "/api/chat",
+    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
     headers: {
       Authorization: `Bearer ${sessionToken}`
     },
