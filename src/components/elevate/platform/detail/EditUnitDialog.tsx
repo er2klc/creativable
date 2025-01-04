@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FileUpload } from "./FileUpload";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -37,11 +37,18 @@ export const EditUnitDialog = ({
   id,
 }: EditUnitDialogProps) => {
   const [title, setTitle] = useState(initialTitle);
-  const [description, setDescription] = useState(initialDescription);
+  const [description, setDescription] = useState(initialDescription || '');
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [localFiles, setLocalFiles] = useState<any[]>(existingFiles);
+  const [localFiles, setLocalFiles] = useState<any[]>([]);
   const user = useUser();
+
+  // Update localFiles when existingFiles changes or dialog opens
+  useEffect(() => {
+    if (open && existingFiles) {
+      setLocalFiles(existingFiles);
+    }
+  }, [open, existingFiles]);
 
   const handleSubmit = async () => {
     try {
