@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useChat } from "ai/react";
 import { Bot, SendHorizontal, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 
 interface ChatDialogProps {
   open: boolean;
@@ -17,10 +16,10 @@ interface ChatDialogProps {
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const { settings } = useSettings();
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: `${process.env.SUPABASE_URL || 'https://agqaitxlmxztqyhpcjau.supabase.co'}/functions/v1/ai-chat`,
+    api: 'https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/ai-chat',
     headers: {
       'Authorization': `Bearer ${settings?.openai_api_key || ''}`,
-      'apikey': process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFncWFpdHhsbXh6dHF5aHBjamF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ4NjgxMjEsImV4cCI6MjA1MDQ0NDEyMX0.rhw4HkZkSMWYOiNRHhQJwNYEk86ZsMEkORRel1aQJY4',
+      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFncWFpdHhsbXh6dHF5aHBjamF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ4NjgxMjEsImV4cCI6MjA1MDQ0NDEyMX0.rhw4HkZkSMWYOiNRHhQJwNYEk86ZsMEkORRel1aQJY4',
     }
   });
 
