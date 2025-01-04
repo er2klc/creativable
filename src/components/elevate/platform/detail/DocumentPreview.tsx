@@ -36,17 +36,31 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
           />
         </div>
       );
-    } else if (fileType?.match(/^(xlsx|xls|csv|doc|docx)$/)) {
-      const isExcel = fileType?.match(/^(xlsx|xls|csv)$/);
-      const icon = isExcel ? <FileSpreadsheet className="h-16 w-16 text-green-600 mb-4" /> : <FileText className="h-16 w-16 text-blue-600 mb-4" />;
-      
+    } else if (
+      fileType?.includes('sheet') || // Matches spreadsheetml.sheet
+      fileType?.includes('excel') || // Matches ms-excel
+      fileType?.match(/^(xlsx|xls|csv)$/) || // Matches file extensions
+      document.name.match(/\.(xlsx|xls|csv)$/) // Backup check on filename
+    ) {
       return (
         <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
-          {icon}
+          <FileSpreadsheet className="h-16 w-16 text-green-600 mb-4" />
           <p className="text-lg font-medium mb-2">{document.name}</p>
-          <p className="text-muted-foreground mb-4">
-            {isExcel ? 'Excel-Datei' : 'Word-Dokument'}
-          </p>
+          <p className="text-muted-foreground mb-4">Excel-Datei</p>
+          <Button asChild>
+            <a href={document.url} download target="_blank" rel="noopener noreferrer">
+              <Download className="h-4 w-4 mr-2" />
+              Herunterladen
+            </a>
+          </Button>
+        </div>
+      );
+    } else if (fileType?.match(/^(doc|docx)$/) || fileType?.includes('word')) {
+      return (
+        <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
+          <FileText className="h-16 w-16 text-blue-600 mb-4" />
+          <p className="text-lg font-medium mb-2">{document.name}</p>
+          <p className="text-muted-foreground mb-4">Word-Dokument</p>
           <Button asChild>
             <a href={document.url} download target="_blank" rel="noopener noreferrer">
               <Download className="h-4 w-4 mr-2" />
