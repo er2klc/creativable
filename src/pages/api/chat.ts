@@ -1,15 +1,6 @@
-import { NextRequest } from 'next/server';
 import { supabase } from "@/integrations/supabase/client";
 
-export const config = {
-  runtime: 'edge',
-};
-
-export default async function handler(req: NextRequest) {
-  if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
-  }
-
+export async function POST(req: Request) {
   try {
     const { messages, settings, sessionToken } = await req.json();
 
