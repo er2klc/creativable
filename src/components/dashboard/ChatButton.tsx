@@ -34,6 +34,7 @@ export const ChatButton = () => {
       setShowApiKeyDialog(false);
       setOpen(true);
       toast.success("API Key wurde gespeichert");
+      console.info("✅ OpenAI API Key wurde erfolgreich gespeichert");
     } catch (error) {
       console.error("Error saving API key:", error);
       toast.error("Fehler beim Speichern des API Keys");
