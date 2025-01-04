@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { LibreOfficeWeb } from 'https://esm.sh/libreoffice-web@0.1.6'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,35 +30,17 @@ serve(async (req) => {
       throw new Error(`Error downloading file: ${downloadError.message}`)
     }
 
-    // Convert to PDF using LibreOffice Web
-    const libreOffice = new LibreOfficeWeb()
-    const pdfBuffer = await libreOffice.convert(await fileData.arrayBuffer(), 'pdf')
-
-    // Generate new PDF file path
-    const pdfPath = filePath.replace(/\.(xlsx|docx)$/i, '.pdf')
-
-    // Upload the converted PDF
-    const { error: uploadError } = await supabase.storage
-      .from('elevate-documents')
-      .upload(pdfPath, pdfBuffer, {
-        contentType: 'application/pdf',
-        upsert: true
-      })
-
-    if (uploadError) {
-      throw new Error(`Error uploading PDF: ${uploadError.message}`)
-    }
-
-    // Get the public URL of the PDF
+    // For now, we'll just return the original file URL since we can't convert in Edge Function
+    // In a production environment, you would want to use a dedicated service for file conversion
     const { data: { publicUrl } } = supabase.storage
       .from('elevate-documents')
-      .getPublicUrl(pdfPath)
+      .getPublicUrl(filePath)
 
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        pdfPath,
-        publicUrl
+        success: true,
+        message: "File conversion is not supported in Edge Functions. Please use a dedicated conversion service.",
+        originalUrl: publicUrl
       }),
       { 
         headers: { 
@@ -69,7 +50,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Conversion error:', error)
+    console.error('Error:', error)
     return new Response(
       JSON.stringify({ 
         success: false, 
