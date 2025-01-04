@@ -28,16 +28,17 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
           src={`${document.url}#toolbar=0&zoom=${scale}`}
           className="w-full h-[80vh]"
           title={document.name}
+          style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}
         />
       );
     } else if (fileType?.match(/^(jpg|jpeg|png|gif|webp)$/)) {
       return (
-        <div className="flex justify-center">
+        <div className="flex justify-center items-center h-[80vh] overflow-auto">
           <img
             src={document.url}
             alt={document.name}
             style={{ transform: `scale(${scale})`, transformOrigin: 'center' }}
-            className="max-h-[80vh] transition-transform duration-200"
+            className="max-w-full h-auto object-contain transition-transform duration-200"
           />
         </div>
       );
@@ -58,8 +59,8 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-full">
-        <div className="flex justify-between items-center mb-4">
+      <DialogContent className="max-w-5xl w-full p-0">
+        <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-semibold">{document.name}</h3>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleZoomOut}>
@@ -75,7 +76,9 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
             </Button>
           </div>
         </div>
-        {renderPreview()}
+        <div className="p-4">
+          {renderPreview()}
+        </div>
       </DialogContent>
     </Dialog>
   );
