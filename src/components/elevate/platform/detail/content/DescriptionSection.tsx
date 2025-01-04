@@ -1,17 +1,14 @@
-import { Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ContentDescription } from "../ContentDescription";
+import { Edit } from "lucide-react";
+import { DocumentManager } from "./DocumentManager";
 
 interface DescriptionSectionProps {
   title: string;
   description: string;
-  existingFiles?: Array<{
-    file_name: string;
-    file_path: string;
-  }>;
-  isAdmin?: boolean;
-  onDocumentDeleted?: () => Promise<void>;
-  onEdit?: () => void;
+  existingFiles: any[];
+  isAdmin: boolean;
+  onDocumentDeleted: () => void;
+  onEdit: () => void;
 }
 
 export const DescriptionSection = ({
@@ -23,21 +20,31 @@ export const DescriptionSection = ({
   onEdit,
 }: DescriptionSectionProps) => {
   return (
-    <div className="col-span-8 relative">
-      {isAdmin && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onEdit}
-          className="absolute top-2 right-2 text-primary hover:text-primary/80 hover:bg-primary/10"
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
-      )}
-      <ContentDescription
-        title={title}
-        description={description}
+    <div className="col-span-8 space-y-4">
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
+          <div 
+            className="text-sm text-muted-foreground"
+            dangerouslySetInnerHTML={{ __html: description }}
+          />
+        </div>
+        {isAdmin && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onEdit}
+            className="text-primary hover:text-primary/80 hover:bg-primary/10"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+      <DocumentManager
         existingFiles={existingFiles}
+        isAdmin={isAdmin}
+        onDocumentDeleted={onDocumentDeleted}
+        onAddDocument={onEdit}
       />
     </div>
   );
