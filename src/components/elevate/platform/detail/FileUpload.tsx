@@ -4,6 +4,7 @@ import { FileText, X, FileSpreadsheet } from "lucide-react";
 interface FileUploadProps {
   onFilesSelected: (files: File[]) => void;
   files: File[];
+  existingFiles?: any[];
   onFileRemove: (index: number) => void;
 }
 
@@ -18,7 +19,7 @@ const ALLOWED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
 ];
 
-export const FileUpload = ({ onFilesSelected, files, onFileRemove }: FileUploadProps) => {
+export const FileUpload = ({ onFilesSelected, files, existingFiles = [], onFileRemove }: FileUploadProps) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files).filter(file => 
@@ -63,11 +64,30 @@ export const FileUpload = ({ onFilesSelected, files, onFileRemove }: FileUploadP
         </label>
       </div>
       
-      {files.length > 0 && (
+      {(existingFiles.length > 0 || files.length > 0) && (
         <div className="space-y-2">
+          {existingFiles.map((file, index) => (
+            <div
+              key={`existing-${index}`}
+              className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+            >
+              <div className="flex items-center space-x-2">
+                {getFileIcon(file.file_type)}
+                <span className="text-sm text-gray-700">{file.file_name}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onFileRemove(index)}
+                className="hover:bg-gray-200"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
           {files.map((file, index) => (
             <div
-              key={index}
+              key={`new-${index}`}
               className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
             >
               <div className="flex items-center space-x-2">
@@ -77,7 +97,7 @@ export const FileUpload = ({ onFilesSelected, files, onFileRemove }: FileUploadP
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onFileRemove(index)}
+                onClick={() => onFileRemove(existingFiles.length + index)}
                 className="hover:bg-gray-200"
               >
                 <X className="w-4 h-4" />

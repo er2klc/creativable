@@ -164,13 +164,8 @@ export const EditUnitDialog = ({
             <Label>Dokumente</Label>
             <FileUpload
               onFilesSelected={onFilesSelected}
-              files={[
-                ...(localFiles || []).map(f => ({
-                  name: f.file_name,
-                  type: f.file_type
-                })),
-                ...files
-              ]}
+              files={files}
+              existingFiles={localFiles}
               onFileRemove={handleFileRemove}
             />
           </div>
