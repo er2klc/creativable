@@ -39,9 +39,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     },
   });
 
-  if (!settings || !settings.openai_api_key) {
-    return null;
-  }
+  if (!open) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
