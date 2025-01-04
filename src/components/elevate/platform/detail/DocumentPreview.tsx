@@ -37,9 +37,10 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
         </div>
       );
     } else {
+      // For Excel files and other non-previewable formats
       return (
         <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
-          <p className="text-muted-foreground">Vorschau nicht verfügbar</p>
+          <p className="text-muted-foreground">Vorschau nicht verfügbar für {document.name}</p>
           <Button asChild>
             <a href={document.url} download target="_blank" rel="noopener noreferrer">
               <Download className="h-4 w-4 mr-2" />
