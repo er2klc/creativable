@@ -91,10 +91,13 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     }
   }, [messages]);
 
-  if (!open) return null;
+  const handleClose = () => {
+    // Just minimize the chat instead of clearing it
+    onOpenChange(false);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogTitle>Chat mit KI-Assistent</DialogTitle>
         <DialogDescription>
