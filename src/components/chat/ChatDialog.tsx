@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useSettings } from "@/hooks/use-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Bot, SendHorizontal, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface ChatDialogProps {
   open: boolean;
@@ -28,11 +29,13 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   }, []);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: 'https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/ai-chat',
-    headers: {
-      'Authorization': `Bearer ${sessionToken}`,
-      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFncWFpdHhsbXh6dHF5aHBjamF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ4NjgxMjEsImV4cCI6MjA1MDQ0NDEyMX0.rhw4HkZkSMWYOiNRHhQJwNYEk86ZsMEkORRel1aQJY4',
-      'OpenAI-Key': settings?.openai_api_key || ''
+    api: '/api/chat',
+    body: {
+      openaiKey: settings?.openai_api_key
+    },
+    onError: (error) => {
+      console.error('Chat error:', error);
+      toast.error("Fehler beim Senden der Nachricht");
     }
   });
 
@@ -44,6 +47,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
+        <DialogTitle className="sr-only">Chat</DialogTitle>
         <div className="flex flex-col h-[600px]">
           <ScrollArea className="flex-1 pr-4">
             <div className="space-y-4 mb-4">
