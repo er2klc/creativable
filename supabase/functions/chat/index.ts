@@ -98,7 +98,7 @@ serve(async (req) => {
                 const content = json.choices[0]?.delta?.content
                 if (content) {
                   console.log('Streaming content:', content)
-                  controller.enqueue(`data: ${JSON.stringify({ content })}\n\n`)
+                  controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`))
                 }
               } catch (error) {
                 console.error('Error parsing JSON:', error)
