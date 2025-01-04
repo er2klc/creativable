@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useChat } from "ai/react";
 import { Bot, SendHorizontal, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ChatDialogProps {
   open: boolean;
@@ -16,9 +17,10 @@ interface ChatDialogProps {
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const { settings } = useSettings();
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: "/api/chat",
+    api: `${supabase.functions.url}/ai-chat`,
     headers: {
-      'Authorization': `Bearer ${settings?.openai_api_key || ''}`
+      'Authorization': `Bearer ${settings?.openai_api_key || ''}`,
+      'apikey': supabase.supabaseKey || '',
     }
   });
 

@@ -13,12 +13,36 @@ serve(async (req) => {
   }
 
   try {
-    const { message, userId } = await req.json();
+    const { messages } = await req.json();
+    const currentMessage = messages[messages.length - 1].content;
+
+    // Get authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+    const openaiApiKey = authHeader.replace('Bearer ', '');
 
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get user data from auth header
+    const apikey = req.headers.get('apikey');
+    const authorization = req.headers.get('authorization');
+    
+    let userId;
+    if (apikey && authorization) {
+      const authClient = createClient(supabaseUrl, apikey);
+      const { data: { user }, error: userError } = await authClient.auth.getUser(authorization.replace('Bearer ', ''));
+      if (userError) throw userError;
+      userId = user?.id;
+    }
+
+    if (!userId) {
+      throw new Error('No user found');
+    }
 
     // Fetch user data
     const [
@@ -44,11 +68,13 @@ serve(async (req) => {
       modules: modulesResult.data || []
     };
 
+    console.log('Sending request to OpenAI with context:', context);
+
     // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Authorization': `Bearer ${openaiApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -63,20 +89,25 @@ serve(async (req) => {
             - Their teams and collaborations: ${JSON.stringify(context.teams)}
             - Their learning progress: ${JSON.stringify(context.modules)}
             
-            Use this information to provide personalized and contextual responses. Always be helpful and professional.`
+            Use this information to provide personalized and contextual responses. Always be helpful and professional.
+            Respond in German language.
+            Start your first message with: "Hallo! Ich bin dein KI-Assistent und habe Zugriff auf deine Daten. Wie kann ich dir helfen?"
+            `
           },
-          {
-            role: 'user',
-            content: message
-          }
+          ...messages
         ],
       }),
     });
 
     const data = await response.json();
-    return new Response(JSON.stringify({ response: data.choices[0].message.content }), {
+    
+    return new Response(JSON.stringify({ 
+      role: "assistant",
+      content: data.choices[0].message.content 
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+
   } catch (error) {
     console.error('Error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
