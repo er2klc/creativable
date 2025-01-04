@@ -21,9 +21,10 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`, // Hier ändern wir den Endpoint
+    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
     headers: {
-      'x-openai-key': apiKey || '',
+      Authorization: `Bearer ${sessionToken}`,
+      'X-OpenAI-Key': apiKey || '',
     },
     onResponse: (response) => {
       if (!response.ok) {
