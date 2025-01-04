@@ -43,7 +43,6 @@ export const EditUnitDialog = ({
   const [localFiles, setLocalFiles] = useState<any[]>([]);
   const user = useUser();
 
-  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
       setTitle(initialTitle);
@@ -57,8 +56,6 @@ export const EditUnitDialog = ({
     try {
       setIsSubmitting(true);
 
-      // First upload any new files
-      const uploadedFiles = [];
       for (const file of files) {
         const filePath = `${crypto.randomUUID()}-${file.name}`;
         
@@ -72,7 +69,6 @@ export const EditUnitDialog = ({
           continue;
         }
 
-        // After successful upload, insert the document record
         const { error: dbError, data: newDoc } = await supabase
           .from('elevate_lerninhalte_documents')
           .insert({
@@ -91,13 +87,9 @@ export const EditUnitDialog = ({
           continue;
         }
 
-        uploadedFiles.push(newDoc);
+        setLocalFiles(prev => [...prev, newDoc]);
       }
 
-      // Update the local files state with new uploads
-      setLocalFiles(prev => [...prev, ...uploadedFiles]);
-
-      // Then update the unit details
       await onUpdate({ 
         title, 
         description, 
@@ -116,11 +108,9 @@ export const EditUnitDialog = ({
 
   const handleFileRemove = (index: number) => {
     if (index < localFiles.length) {
-      // Remove existing file
       onFileRemove(index);
       setLocalFiles(prev => prev.filter((_, i) => i !== index));
     } else {
-      // Remove new file
       const newFileIndex = index - localFiles.length;
       const newFiles = [...files];
       newFiles.splice(newFileIndex, 1);

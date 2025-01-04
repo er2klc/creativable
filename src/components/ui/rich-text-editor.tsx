@@ -27,7 +27,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none min-h-[150px] focus:outline-none',
+        class: 'prose prose-sm max-w-none min-h-[150px] focus:outline-none p-2',
       },
     },
   });
