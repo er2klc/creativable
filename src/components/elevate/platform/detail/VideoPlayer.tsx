@@ -37,6 +37,7 @@ interface VideoPlayerProps {
 
 export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuration }: VideoPlayerProps) => {
   const playerRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isAPILoaded, setIsAPILoaded] = useState(false);
   const playerId = 'youtube-player';
   const savedProgressRef = useRef(savedProgress);
@@ -61,10 +62,24 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
     } else {
       setIsAPILoaded(true);
     }
+
+    // Cleanup function
+    return () => {
+      if (trackingIntervalRef.current) {
+        clearInterval(trackingIntervalRef.current);
+      }
+      if (playerRef.current) {
+        try {
+          playerRef.current.destroy();
+        } catch (error) {
+          console.error('Error destroying player:', error);
+        }
+      }
+    };
   }, []);
 
   useEffect(() => {
-    if (!isAPILoaded) return;
+    if (!isAPILoaded || !containerRef.current) return;
 
     const videoId = videoUrl.includes('v=') 
       ? videoUrl.split('v=')[1].split('&')[0]
@@ -72,46 +87,68 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
 
     if (!videoId) return;
 
+    // Create a new container for the player
+    const playerContainer = document.createElement('div');
+    playerContainer.id = playerId;
+    
+    // Clear the container and append the new element
+    if (containerRef.current) {
+      containerRef.current.innerHTML = '';
+      containerRef.current.appendChild(playerContainer);
+    }
+
     // Cleanup existing player and interval
     if (playerRef.current) {
       if (trackingIntervalRef.current) {
         clearInterval(trackingIntervalRef.current);
       }
-      playerRef.current.destroy();
+      try {
+        playerRef.current.destroy();
+      } catch (error) {
+        console.error('Error destroying player:', error);
+      }
     }
 
-    playerRef.current = new window.YT.Player(playerId, {
-      videoId,
-      playerVars: {
-        autoplay: 0,
-        modestbranding: 1,
-        rel: 0,
-        origin: window.location.origin
-      },
-      events: {
-        onReady: (event) => {
-          const duration = event.target.getDuration();
-          if (onDurationRef.current && duration > 0) {
-            onDurationRef.current(duration);
-          }
-          if (savedProgressRef.current > 0) {
-            event.target.seekTo(savedProgressRef.current);
-          }
+    try {
+      playerRef.current = new window.YT.Player(playerId, {
+        videoId,
+        playerVars: {
+          autoplay: 0,
+          modestbranding: 1,
+          rel: 0,
+          origin: window.location.origin
         },
-        onStateChange: (event) => {
-          if (event.data === window.YT.PlayerState.PLAYING) {
-            startTracking(event.target);
+        events: {
+          onReady: (event) => {
+            const duration = event.target.getDuration();
+            if (onDurationRef.current && duration > 0) {
+              onDurationRef.current(duration);
+            }
+            if (savedProgressRef.current > 0) {
+              event.target.seekTo(savedProgressRef.current);
+            }
+          },
+          onStateChange: (event) => {
+            if (event.data === window.YT.PlayerState.PLAYING) {
+              startTracking(event.target);
+            }
           }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.error('Error creating YouTube player:', error);
+    }
 
     return () => {
       if (trackingIntervalRef.current) {
         clearInterval(trackingIntervalRef.current);
       }
       if (playerRef.current) {
-        playerRef.current.destroy();
+        try {
+          playerRef.current.destroy();
+        } catch (error) {
+          console.error('Error destroying player:', error);
+        }
       }
     };
   }, [videoUrl, isAPILoaded]);
@@ -145,6 +182,6 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
   };
 
   return (
-    <div id={playerId} className="w-full h-full" />
+    <div ref={containerRef} className="w-full h-full" />
   );
 };
