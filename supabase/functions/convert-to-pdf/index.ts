@@ -7,14 +7,16 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+  'Content-Type': 'application/json'
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS request');
     return new Response(null, { 
       headers: corsHeaders,
-      status: 204
+      status: 200
     });
   }
 
@@ -121,10 +123,7 @@ serve(async (req) => {
         previewPath 
       }),
       { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
+        headers: corsHeaders
       }
     );
 
@@ -136,10 +135,7 @@ serve(async (req) => {
         error: error.message 
       }),
       { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        },
+        headers: corsHeaders,
         status: 500
       }
     );
