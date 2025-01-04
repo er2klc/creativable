@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types/tables";
 
 interface ChatDialogProps {
   open: boolean;
