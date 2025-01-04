@@ -47,7 +47,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   }, [open]);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/chat",
+    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
     headers: {
       Authorization: `Bearer ${sessionToken}`,
       'X-OpenAI-Key': apiKey || '',

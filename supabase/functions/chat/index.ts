@@ -7,7 +7,10 @@ console.log('Chat Function started')
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: {
+      ...corsHeaders,
+      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-openai-key'
+    }})
   }
 
   try {
@@ -89,14 +92,14 @@ serve(async (req) => {
       },
     })
 
-    return new Response(response.body?.pipeThrough(transformStream), {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-      },
-    })
+    const headers = {
+      ...corsHeaders,
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    }
+
+    return new Response(response.body?.pipeThrough(transformStream), { headers })
   } catch (error) {
     console.error('Error in chat function:', error)
     return new Response(JSON.stringify({ error: error.message }), {
