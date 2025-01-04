@@ -89,7 +89,7 @@ export const EditUnitDialog = ({
 
       await onUpdate({ 
         title, 
-        description, 
+        description: description.replace(/\n/g, '<br>'), 
         videoUrl 
       });
       
