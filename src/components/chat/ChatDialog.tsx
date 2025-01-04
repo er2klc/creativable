@@ -18,7 +18,6 @@ interface ChatDialogProps {
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
   useEffect(() => {
     const setupChat = async () => {
@@ -47,7 +46,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   }, [open]);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: `${supabaseUrl}/functions/v1/chat`,
+    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
     headers: {
       Authorization: `Bearer ${sessionToken}`,
       'X-OpenAI-Key': apiKey || '',
