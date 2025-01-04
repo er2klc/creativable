@@ -61,14 +61,48 @@ serve(async (req) => {
       throw new Error('Failed to get response from OpenAI');
     }
 
-    return new Response(response.body, {
-      headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
+    // Transform the response into a proper stream
+    const transformStream = new TransformStream({
+      async transform(chunk, controller) {
+        try {
+          const text = new TextDecoder().decode(chunk);
+          const lines = text.split('\n').filter(line => line.trim() !== '');
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                return;
+              }
+              controller.enqueue(line + '\n');
+            }
+          }
+        } catch (error) {
+          console.error('Error transforming stream:', error);
+          controller.error(error);
+        }
+      }
     });
+
+    return new Response(
+      response.body?.pipeThrough(transformStream),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: error.message }), 
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
