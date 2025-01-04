@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useSettings } from "@/hooks/use-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,13 +29,13 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   }, []);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: `${supabase.supabaseUrl}/functions/v1/chat`,
+    api: `${supabase.config.supabaseUrl}/functions/v1/chat`,
     headers: {
       Authorization: `Bearer ${sessionToken}`
     },
     onError: (error) => {
       console.error("Chat error:", error);
-      toast.error("Fehler beim Senden der Nachricht. Überprüfe den API-Key.");
+      toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
     },
   });
 
@@ -47,6 +47,9 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogTitle className="sr-only">Chat</DialogTitle>
+        <DialogDescription className="sr-only">
+          Chat mit unserem AI Assistenten
+        </DialogDescription>
         <div className="flex flex-col h-[600px]">
           <ScrollArea className="flex-1 pr-4">
             <div className="space-y-4 mb-4">
