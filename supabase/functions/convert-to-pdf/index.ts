@@ -15,47 +15,48 @@ serve(async (req) => {
     return new Response(null, { 
       headers: corsHeaders,
       status: 204
-    })
+    });
   }
 
   try {
-    console.log('Starting file conversion process...')
-    const { filePath, fileType } = await req.json()
-    console.log('Received request for file:', filePath, 'of type:', fileType)
+    console.log('Starting file conversion process...');
+    const { filePath, fileType } = await req.json();
+    console.log('Received request for file:', filePath, 'of type:', fileType);
 
+    // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    );
 
     // Download the original file
-    console.log('Downloading file from storage...')
+    console.log('Downloading file from storage...');
     const { data: fileData, error: downloadError } = await supabase
       .storage
       .from('elevate-documents')
-      .download(filePath)
+      .download(filePath);
 
     if (downloadError) {
-      console.error('Error downloading file:', downloadError)
-      throw new Error(`Error downloading file: ${downloadError.message}`)
+      console.error('Error downloading file:', downloadError);
+      throw new Error(`Error downloading file: ${downloadError.message}`);
     }
 
     // Convert Excel to PDF
-    console.log('Converting file to PDF...')
-    const workbook = new ExcelJS.Workbook()
-    const arrayBuffer = await fileData.arrayBuffer()
-    await workbook.xlsx.load(arrayBuffer)
+    console.log('Converting file to PDF...');
+    const workbook = new ExcelJS.Workbook();
+    const arrayBuffer = await fileData.arrayBuffer();
+    await workbook.xlsx.load(arrayBuffer);
 
     // Create a new PDF document
-    const pdfDoc = await PDFDocument.create()
+    const pdfDoc = await PDFDocument.create();
     
     // Process each worksheet
     for (const worksheet of workbook.worksheets) {
-      const page = pdfDoc.addPage()
-      const { width, height } = page.getSize()
-      const fontSize = 12
+      const page = pdfDoc.addPage();
+      const { width, height } = page.getSize();
+      const fontSize = 12;
       
-      let yOffset = height - 50
+      let yOffset = height - 50;
 
       // Add worksheet name as title
       page.drawText(worksheet.name, {
@@ -63,12 +64,12 @@ serve(async (req) => {
         y: yOffset,
         size: fontSize + 4,
         color: rgb(0, 0, 0),
-      })
-      yOffset -= 30
+      });
+      yOffset -= 30;
 
       // Process each row
       worksheet.eachRow((row, rowNumber) => {
-        let xOffset = 50
+        let xOffset = 50;
         
         row.eachCell((cell, colNumber) => {
           if (yOffset > 50) { // Ensure we don't write below the page
@@ -78,26 +79,26 @@ serve(async (req) => {
               y: yOffset,
               size: fontSize,
               color: rgb(0, 0, 0),
-            })
+            });
           }
-          xOffset += 100 // Move to next column
-        })
+          xOffset += 100; // Move to next column
+        });
         
-        yOffset -= 20 // Move to next row
+        yOffset -= 20; // Move to next row
         if (yOffset <= 50) {
           // Add new page if needed
-          page = pdfDoc.addPage()
-          yOffset = height - 50
+          page = pdfDoc.addPage();
+          yOffset = height - 50;
         }
-      })
+      });
     }
 
     // Save the PDF
-    console.log('Saving PDF...')
-    const pdfBytes = await pdfDoc.save()
-    const previewPath = filePath.replace(/\.[^/.]+$/, '.pdf')
+    console.log('Saving PDF...');
+    const pdfBytes = await pdfDoc.save();
+    const previewPath = filePath.replace(/\.[^/.]+$/, '.pdf');
 
-    console.log('Uploading preview to:', previewPath)
+    console.log('Uploading preview to:', previewPath);
 
     // Upload the PDF preview
     const { error: uploadError } = await supabase
@@ -106,14 +107,14 @@ serve(async (req) => {
       .upload(previewPath, pdfBytes, {
         contentType: 'application/pdf',
         upsert: true
-      })
+      });
 
     if (uploadError) {
-      console.error('Error uploading PDF preview:', uploadError)
-      throw new Error(`Error uploading PDF preview: ${uploadError.message}`)
+      console.error('Error uploading PDF preview:', uploadError);
+      throw new Error(`Error uploading PDF preview: ${uploadError.message}`);
     }
 
-    console.log('Conversion completed successfully')
+    console.log('Conversion completed successfully');
     return new Response(
       JSON.stringify({ 
         success: true,
@@ -125,10 +126,10 @@ serve(async (req) => {
           'Content-Type': 'application/json' 
         } 
       }
-    )
+    );
 
   } catch (error) {
-    console.error('Error in convert-to-pdf function:', error)
+    console.error('Error in convert-to-pdf function:', error);
     return new Response(
       JSON.stringify({ 
         success: false,
@@ -141,6 +142,6 @@ serve(async (req) => {
         },
         status: 500
       }
-    )
+    );
   }
-})
+});
