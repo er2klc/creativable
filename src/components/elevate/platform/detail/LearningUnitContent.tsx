@@ -104,12 +104,14 @@ export const LearningUnitContent = ({
           existingFiles={documents}
           isAdmin={isAdmin}
           onDocumentDeleted={fetchDocuments}
+          onEdit={() => setIsEditing(true)}
         />
         
         <DocumentManager 
           existingFiles={documents}
           isAdmin={isAdmin}
           onDocumentDeleted={fetchDocuments}
+          onAddDocument={() => setIsEditing(true)}
         />
       </div>
 

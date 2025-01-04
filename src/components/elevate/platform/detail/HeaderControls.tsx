@@ -1,12 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, FileText, CheckCircle2 } from "lucide-react";
+import { Trash2, FileText, CheckCircle2 } from "lucide-react";
 
 interface HeaderControlsProps {
   id: string;
   isCompleted: boolean;
   onComplete: () => void;
   isAdmin: boolean;
-  onEdit?: () => void;
   onDelete?: () => void;
   documentsCount: number;
 }
@@ -15,7 +14,6 @@ export const HeaderControls = ({
   isCompleted,
   onComplete,
   isAdmin,
-  onEdit,
   onDelete,
   documentsCount
 }: HeaderControlsProps) => {
@@ -37,24 +35,14 @@ export const HeaderControls = ({
         {isCompleted ? 'Abgeschlossen' : 'Abschließen'}
       </Button>
       {isAdmin && (
-        <>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onEdit}
-            className="text-primary hover:text-primary/80 hover:bg-primary/10"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onDelete}
-            className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onDelete}
+          className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       )}
     </div>
   );
