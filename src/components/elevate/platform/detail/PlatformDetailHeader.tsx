@@ -72,14 +72,11 @@ export const PlatformDetailHeader = ({
           <Trophy className="h-5 w-5 text-blue-500" />
           <span className="text-sm font-medium">Fortschritt</span>
         </div>
-         <div className="flex-1">
+        <div className="flex-1">
           <Progress 
-  value={progress} 
-  className="relative w-full overflow-hidden rounded-full h-2 bg-gray-200"
-  style={{
-    '--progress-foreground': '#3b82f6' // Für zusätzliche Sicherheit
-  } as React.CSSProperties}
-/>
+            value={progress} 
+            className="relative w-full overflow-hidden rounded-full h-2 bg-gray-200 [&>[data-state=complete]]:bg-blue-500 [&>[data-state=indeterminate]]:bg-blue-500"
+          />
         </div>
         <span className="text-sm font-medium bg-white px-2 py-1 rounded">
           {Math.round(progress)}%
