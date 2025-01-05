@@ -32,7 +32,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: [systemMessage, ...messages],
         stream: true,
       }),
@@ -44,7 +44,6 @@ serve(async (req) => {
       throw new Error('Failed to get response from OpenAI');
     }
 
-    // Create a transform stream to process the response
     const transformStream = new TransformStream({
       async transform(chunk, controller) {
         const text = new TextDecoder().decode(chunk);
@@ -85,7 +84,6 @@ serve(async (req) => {
       }
     });
 
-    // Pipe the response through our transform stream
     const readableStream = response.body
       .pipeThrough(new TextDecoderStream())
       .pipeThrough(transformStream);
