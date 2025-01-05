@@ -30,6 +30,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     body: {
       language: 'de',
     },
+    partialMessages: true,
     onResponse: (response) => {
       if (!response.ok) {
         console.error("Chat response error:", response.status, response.statusText);
@@ -39,7 +40,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       setIsThinking(true);
     },
     onFinish: () => {
-      console.log("Chat stream finished");
       setIsThinking(false);
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
