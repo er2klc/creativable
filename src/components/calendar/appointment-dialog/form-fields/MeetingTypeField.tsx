@@ -19,17 +19,15 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown, Phone, MapPin, Video, Users, BarChart, RefreshCw } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UseFormReturn } from "react-hook-form";
 
 const MEETING_TYPES = [
-  { value: "phone_call", label: "Telefongespräch", icon: <Phone className="h-4 w-4" /> },
-  { value: "on_site", label: "Vor-Ort-Termin", icon: <MapPin className="h-4 w-4" /> },
-  { value: "zoom", label: "Zoom Meeting", icon: <Video className="h-4 w-4" /> },
-  { value: "initial_meeting", label: "Erstgespräch", icon: <Users className="h-4 w-4" /> },
-  { value: "presentation", label: "Präsentation", icon: <BarChart className="h-4 w-4" /> },
-  { value: "follow_up", label: "Folgetermin", icon: <RefreshCw className="h-4 w-4" /> }
+  { value: "meeting", label: "Meeting" },
+  { value: "call", label: "Telefonat" },
+  { value: "video_call", label: "Video Call" },
+  { value: "follow_up", label: "Follow-up" },
 ];
 
 interface MeetingTypeFieldProps {
@@ -63,10 +61,7 @@ export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
                   )}
                 >
                   {field.value ? (
-                    <div className="flex items-center gap-2">
-                      {MEETING_TYPES.find(type => type.value === field.value)?.icon}
-                      {MEETING_TYPES.find(type => type.value === field.value)?.label}
-                    </div>
+                    MEETING_TYPES.find(type => type.value === field.value)?.label
                   ) : (
                     "Wähle eine Terminart"
                   )}
@@ -92,16 +87,13 @@ export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
                         setOpen(false);
                       }}
                     >
-                      <div className="flex items-center gap-2">
-                        {type.icon}
-                        {type.label}
-                        <Check
-                          className={cn(
-                            "ml-auto h-4 w-4",
-                            type.value === field.value ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                      </div>
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          type.value === field.value ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {type.label}
                     </CommandItem>
                   ))}
                 </CommandGroup>
