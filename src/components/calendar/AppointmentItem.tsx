@@ -1,7 +1,8 @@
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw } from "lucide-react";
+import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AppointmentItemProps {
   appointment: any;
@@ -72,10 +73,12 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       }}
       {...(isDraggable ? { ...listeners, ...attributes } : {})}
       className={cn(
-        "p-2 mb-1 rounded hover:opacity-80",
+        "p-2 mb-1 rounded hover:opacity-80 relative",
         "transition-colors duration-200 space-y-1",
         appointment.isRecurring && "border-l-4 border-primary",
-        appointment.isTeamEvent && "border border-gray-200"
+        appointment.isTeamEvent && "border border-gray-200",
+        !appointment.isTeamEvent && "text-black",
+        appointment.completed && "bg-opacity-50"
       )}
       onClick={(e) => {
         // Only trigger onClick for personal appointments or if explicitly allowed
@@ -106,6 +109,25 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         <Clock className="h-3 w-3" />
         <span>{timeString}</span>
       </div>
+
+      {/* Completed indicator */}
+      {!appointment.isTeamEvent && appointment.completed && (
+        <div className="absolute bottom-1 right-1">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-4 w-4 p-0 hover:bg-transparent"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (appointment.onComplete) {
+                appointment.onComplete(!appointment.completed);
+              }
+            }}
+          >
+            <Check className="h-3 w-3 text-green-600" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

@@ -78,7 +78,6 @@ export const TeamCalendarView = ({ teamId, isAdmin, onBack }: TeamCalendarViewPr
 
         <CalendarGrid
           currentDate={currentDate}
-          appointments={events}
           getDayAppointments={getDayEvents}
           onDateClick={handleDateClick}
           onAppointmentClick={handleEventClick}

@@ -3,21 +3,20 @@ import { cn } from "@/lib/utils";
 import { AppointmentItem } from "./AppointmentItem";
 import { DragOverlay, useDroppable } from "@dnd-kit/core";
 import { useMemo } from "react";
+import { Appointment } from "./types/calendar";
 
 interface CalendarGridProps {
   currentDate: Date;
-  appointments: any[];
-  getDayAppointments: (date: Date) => any[];
+  getDayAppointments: (date: Date) => Appointment[];
   onDateClick: (date: Date) => void;
-  onAppointmentClick: (e: React.MouseEvent, appointment: any) => void;
+  onAppointmentClick: (e: React.MouseEvent, appointment: Appointment) => void;
   activeId: string | null;
   overDate: string | null;
-  draggedAppointment: any;
+  draggedAppointment: Appointment | null;
 }
 
 export const CalendarGrid = ({
   currentDate,
-  appointments,
   getDayAppointments,
   onDateClick,
   onAppointmentClick,
@@ -25,7 +24,6 @@ export const CalendarGrid = ({
   overDate,
   draggedAppointment,
 }: CalendarGridProps) => {
-  // Calculate days once and memoize the result
   const days = useMemo(() => 
     eachDayOfInterval({
       start: startOfMonth(currentDate),
