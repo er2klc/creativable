@@ -24,7 +24,6 @@ export const ColorField = ({ form }: ColorFieldProps) => {
               type="color"
               {...field}
               className="h-10 w-full"
-              defaultValue="#FEF7CD"
             />
           </FormControl>
         </FormItem>

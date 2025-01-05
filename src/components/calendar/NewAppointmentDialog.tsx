@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -100,6 +101,9 @@ export const NewAppointmentDialog = ({
             {selectedDate &&
               format(selectedDate, "dd. MMMM yyyy", { locale: de })}
           </DialogTitle>
+          <DialogDescription>
+            Fülle die folgenden Felder aus, um {appointmentToEdit ? "den Termin zu aktualisieren" : "einen neuen Termin zu erstellen"}.
+          </DialogDescription>
         </DialogHeader>
 
         <AppointmentForm 

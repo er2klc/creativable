@@ -25,7 +25,7 @@ interface ContactFieldProps {
 export const ContactField = ({ form }: ContactFieldProps) => {
   const [searchValue, setSearchValue] = useState("");
 
-  const { data: leads } = useQuery({
+  const { data: leads = [] } = useQuery({
     queryKey: ["leads", searchValue],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
