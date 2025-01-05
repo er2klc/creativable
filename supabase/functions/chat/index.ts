@@ -17,11 +17,11 @@ serve(async (req) => {
       throw new Error("OpenAI API Key is required");
     }
 
-    // Parse request body
+    // Lese die eingehenden Nachrichten aus der Anfrage
     const { messages, language = "de" } = await req.json();
     console.log("Processing chat request with messages:", messages);
 
-    // Define the system message
+    // Systemnachricht hinzufügen
     const systemMessage = {
       role: "system",
       content: `Du bist ein freundlicher KI-Assistent. Antworte immer auf ${
@@ -29,7 +29,6 @@ serve(async (req) => {
       }.`,
     };
 
-    // Fetch response from OpenAI API
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -53,24 +52,21 @@ serve(async (req) => {
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
-    let accumulatedContent = "";
-    let lastChunk = "";
+    // Akkumulieren der vollständigen Antwort
+    let fullContent = "";
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
           while (true) {
             const { done, value } = await reader.read();
-
             if (done) {
-              // Check if we need to send the final accumulated message
-              if (lastChunk !== accumulatedContent) {
-                const finalMessage = {
-                  role: "assistant",
-                  content: accumulatedContent,
-                };
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
-              }
+              // Wenn der Stream abgeschlossen ist, die gesamte Nachricht senden
+              const finalMessage = {
+                role: "assistant",
+                content: fullContent,
+              };
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
               controller.close();
               break;
             }
@@ -89,20 +85,11 @@ serve(async (req) => {
                   const content = json.choices?.[0]?.delta?.content;
 
                   if (content) {
-                    accumulatedContent += content;
-                    if (lastChunk !== accumulatedContent) {
-                      lastChunk = accumulatedContent;
-                      const partialMessage = {
-                        role: "assistant",
-                        content: accumulatedContent,
-                      };
-                      controller.enqueue(
-                        encoder.encode(`data: ${JSON.stringify(partialMessage)}\n\n`)
-                      );
-                    }
+                    fullContent += content; // Sammeln des Inhalts
                   }
                 } catch (error) {
                   console.warn("Invalid JSON in line:", trimmedLine, error);
+                  continue;
                 }
               }
             }
