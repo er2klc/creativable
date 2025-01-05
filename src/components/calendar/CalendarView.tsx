@@ -8,10 +8,11 @@ import { CalendarHeader } from "./CalendarHeader";
 import { CalendarGrid } from "./CalendarGrid";
 import { NewAppointmentDialog } from "./NewAppointmentDialog";
 import { Switch } from "@/components/ui/switch";
+import { Appointment } from "./types/calendar";
 
 export const CalendarView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [showTeamEvents, setShowTeamEvents] = useState(true);
 
   const {

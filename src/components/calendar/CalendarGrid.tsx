@@ -24,7 +24,6 @@ export const CalendarGrid = ({
   overDate,
   draggedAppointment,
 }: CalendarGridProps) => {
-  // Calculate days once and memoize the result
   const days = useMemo(() => 
     eachDayOfInterval({
       start: startOfMonth(currentDate),
