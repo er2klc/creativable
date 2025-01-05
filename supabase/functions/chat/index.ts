@@ -80,7 +80,6 @@ serve(async (req) => {
                   if (content) {
                     accumulatedContent += content;
                     const message = {
-                      id: Date.now().toString(),
                       role: "assistant",
                       content: accumulatedContent,
                     };
