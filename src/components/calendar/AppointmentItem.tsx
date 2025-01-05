@@ -1,7 +1,7 @@
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Users, Infinity, Video, Phone, MapPin, BarChart, RefreshCw } from "lucide-react";
+import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw } from "lucide-react";
 
 interface AppointmentItemProps {
   appointment: any;
@@ -52,7 +52,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       case 'zoom':
         return <Video className="h-3 w-3" />;
       case 'initial_meeting':
-        return <Users className="h-3 w-3" />;
+        return <Infinity className="h-3 w-3" />;
       case 'presentation':
         return <BarChart className="h-3 w-3" />;
       case 'follow_up':
@@ -88,7 +88,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         {appointment.isAdminEvent ? (
           <Infinity className="h-4 w-4 text-primary" />
         ) : appointment.isTeamEvent ? (
-          <Users className="h-3 w-3" />
+          <Infinity className="h-4 w-4" />
         ) : (
           getMeetingTypeIcon()
         )}

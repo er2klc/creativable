@@ -8,10 +8,12 @@ import { usePersonalCalendar } from "./hooks/usePersonalCalendar";
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarGrid } from "./CalendarGrid";
 import { NewAppointmentDialog } from "./NewAppointmentDialog";
+import { Switch } from "@/components/ui/switch";
 
 export const CalendarView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [showTeamEvents, setShowTeamEvents] = useState(true);
   const queryClient = useQueryClient();
 
   const {
@@ -84,7 +86,11 @@ export const CalendarView = () => {
   });
 
   const getDayAppointments = (date: Date) => {
-    return [...appointments, ...teamAppointments].filter(
+    const allAppointments = [...appointments];
+    if (showTeamEvents) {
+      allAppointments.push(...teamAppointments);
+    }
+    return allAppointments.filter(
       (appointment) => format(new Date(appointment.due_date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
     );
   };
@@ -103,11 +109,20 @@ export const CalendarView = () => {
       onDragOver={handleDragOver}
     >
       <div className="space-y-4">
-        <CalendarHeader 
-          currentDate={currentDate}
-          onDateChange={setCurrentDate}
-          onMonthChange={handleMonthChange}
-        />
+        <div className="flex items-center justify-between">
+          <CalendarHeader 
+            currentDate={currentDate}
+            onDateChange={setCurrentDate}
+            onMonthChange={handleMonthChange}
+          />
+          <div className="flex items-center gap-2">
+            <span className="text-sm">Team Events</span>
+            <Switch
+              checked={showTeamEvents}
+              onCheckedChange={setShowTeamEvents}
+            />
+          </div>
+        </div>
 
         <CalendarGrid
           currentDate={currentDate}
