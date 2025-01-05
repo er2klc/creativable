@@ -39,12 +39,14 @@ export const NewAppointmentDialog = ({
   appointmentToEdit,
 }: NewAppointmentDialogProps) => {
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate || new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // Update selectedDate when initialSelectedDate changes
+  // Update selectedDate when initialSelectedDate or open changes
   useEffect(() => {
-    setSelectedDate(initialSelectedDate || new Date());
-  }, [initialSelectedDate]);
+    if (open) {
+      setSelectedDate(initialSelectedDate);
+    }
+  }, [initialSelectedDate, open]);
 
   const createAppointment = useMutation({
     mutationFn: async (values: any) => {

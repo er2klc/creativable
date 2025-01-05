@@ -78,6 +78,7 @@ export const CalendarView = () => {
         isTeamEvent: true,
         isAdminEvent: event.is_admin_only,
         color: `${event.color || "#FEF7CD"}80`,
+        isRecurring: event.recurring_pattern !== 'none'
       }));
     },
   });
