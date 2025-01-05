@@ -21,7 +21,7 @@ export const CalendarHeader = ({ currentDate, onDateChange }: CalendarHeaderProp
   };
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center gap-2">
       <h2 className="text-xl font-semibold">
         {format(currentDate, "MMMM yyyy", { locale: de })}
       </h2>

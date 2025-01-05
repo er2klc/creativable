@@ -88,7 +88,7 @@ export const CalendarView = () => {
   const getDayAppointments = (date: Date) => {
     const allAppointments = [...appointments];
     if (showTeamEvents) {
-      allAppointments.push(...teamAppointments);
+      allAppointments.push(...(teamAppointments || []));
     }
     return allAppointments.filter(
       (appointment) => format(new Date(appointment.due_date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
@@ -110,13 +110,15 @@ export const CalendarView = () => {
     >
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <CalendarHeader 
-            currentDate={currentDate}
-            onDateChange={setCurrentDate}
-            onMonthChange={handleMonthChange}
-          />
+          <div className="flex-1">
+            <CalendarHeader 
+              currentDate={currentDate}
+              onDateChange={setCurrentDate}
+              onMonthChange={handleMonthChange}
+            />
+          </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm">Team Events</span>
+            <span className="text-sm">Team Termine</span>
             <Switch
               checked={showTeamEvents}
               onCheckedChange={setShowTeamEvents}
