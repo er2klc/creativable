@@ -70,7 +70,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       style={{
         ...style,
         backgroundColor: appointment.color || "#FEF7CD",
-        cursor: isDraggable ? 'pointer' : 'default'
+        cursor: isDraggable ? 'grab' : 'default'
       }}
       {...(isDraggable ? { ...listeners, ...attributes } : {})}
       className={cn(
@@ -115,27 +115,11 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       {/* Status indicator */}
       {!appointment.isTeamEvent && (appointment.completed || appointment.cancelled) && (
         <div className="absolute bottom-1 right-1">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-4 w-4 p-0 hover:bg-transparent"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (appointment.onComplete) {
-                if (appointment.cancelled) {
-                  appointment.onCancel?.(false);
-                } else {
-                  appointment.onComplete(!appointment.completed);
-                }
-              }
-            }}
-          >
-            {appointment.cancelled ? (
-              <X className="h-3 w-3 text-red-600" />
-            ) : (
-              <Check className="h-3 w-3 text-green-600" />
-            )}
-          </Button>
+          {appointment.cancelled ? (
+            <X className="h-3 w-3 text-red-600" />
+          ) : (
+            <Check className="h-3 w-3 text-green-600" />
+          )}
         </div>
       )}
 
