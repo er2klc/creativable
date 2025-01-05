@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   FormControl,
   FormField,
@@ -7,20 +6,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
 
 const MEETING_TYPES = [
@@ -37,60 +28,28 @@ interface MeetingTypeFieldProps {
 }
 
 export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
-  const [open, setOpen] = useState(false);
-  const selectedType = MEETING_TYPES.find(type => type.value === form.getValues("meeting_type"));
-
   return (
     <FormField
       control={form.control}
       name="meeting_type"
       rules={{ required: "Bitte wähle eine Terminart aus" }}
       render={({ field }) => (
-        <FormItem className="flex flex-col">
+        <FormItem>
           <FormLabel>Terminart</FormLabel>
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <FormControl>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  className={cn(
-                    "w-full justify-between",
-                    !field.value && "text-muted-foreground"
-                  )}
-                >
-                  {selectedType?.label || "Wähle eine Terminart"}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </FormControl>
-            </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Suche Terminart..." />
-                <CommandEmpty>Keine Terminart gefunden.</CommandEmpty>
-                <CommandGroup>
-                  {MEETING_TYPES.map((type) => (
-                    <CommandItem
-                      key={type.value}
-                      value={type.label}
-                      onSelect={() => {
-                        form.setValue("meeting_type", type.value as MeetingType);
-                        setOpen(false);
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          type.value === field.value ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      {type.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <FormControl>
+              <SelectTrigger>
+                <SelectValue placeholder="Wähle eine Terminart" />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              {MEETING_TYPES.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <FormMessage />
         </FormItem>
       )}
