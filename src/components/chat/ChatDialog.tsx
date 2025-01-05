@@ -21,7 +21,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [isThinking, setIsThinking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { messages, input, handleInputChange, handleSubmit } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
     api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
     headers: {
       Authorization: `Bearer ${sessionToken}`,
@@ -81,8 +81,16 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
     if (open) {
       setupChat();
+      // Add initial welcome message
+      setMessages([
+        {
+          id: "welcome",
+          role: "assistant",
+          content: "Hallo! Ich bin dein MLM Assistant. Wie kann ich dir heute helfen?"
+        }
+      ]);
     }
-  }, [open]);
+  }, [open, setMessages]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -138,7 +146,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
                   )}
                 </div>
               ))}
-              {isThinking && !messages.length && (
+              {isThinking && (
                 <div className="flex gap-3 text-slate-600 text-sm mb-4">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback>
