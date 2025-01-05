@@ -24,6 +24,11 @@ export const CalendarGrid = ({
   overDate,
   draggedAppointment,
 }: CalendarGridProps) => {
+  const days = eachDayOfInterval({
+    start: startOfMonth(currentDate),
+    end: endOfMonth(currentDate),
+  });
+
   return (
     <>
       <div className="grid grid-cols-7 gap-px bg-muted">
@@ -36,10 +41,7 @@ export const CalendarGrid = ({
           </div>
         ))}
 
-        {eachDayOfInterval({
-          start: startOfMonth(currentDate),
-          end: endOfMonth(currentDate),
-        }).map((day) => {
+        {days.map((day) => {
           const dayAppointments = getDayAppointments(day);
           const dateStr = format(day, "yyyy-MM-dd");
           const isOver = overDate === dateStr;
