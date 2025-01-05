@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 interface CalendarHeaderProps {
   currentDate: Date;
   onDateChange: (date: Date) => void;
+  onMonthChange?: (direction: 'prev' | 'next') => void;
 }
 
 export const CalendarHeader = ({ currentDate, onDateChange }: CalendarHeaderProps) => {

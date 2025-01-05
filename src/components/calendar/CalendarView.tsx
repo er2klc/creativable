@@ -104,7 +104,6 @@ export const CalendarView = () => {
         <CalendarHeader 
           currentDate={currentDate}
           onDateChange={setCurrentDate}
-          draggedAppointment={draggedAppointment}
           onMonthChange={handleMonthChange}
         />
 
