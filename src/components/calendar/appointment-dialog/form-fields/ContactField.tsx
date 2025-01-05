@@ -29,12 +29,12 @@ export const ContactField = ({ form }: ContactFieldProps) => {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
-  const { data: leads = [] } = useQuery({
+  const { data: leads = [], error, isLoading } = useQuery({
     queryKey: ["leads", searchValue],
     queryFn: async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return [];
+        if (!user) throw new Error("Benutzer nicht authentifiziert");
 
         const { data, error } = await supabase
           .from("leads")
@@ -51,6 +51,10 @@ export const ContactField = ({ form }: ContactFieldProps) => {
       }
     },
   });
+
+  if (error) {
+    console.error("Fehler beim Laden der Kontakte:", error);
+  }
 
   return (
     <FormField
@@ -72,40 +76,44 @@ export const ContactField = ({ form }: ContactFieldProps) => {
                   )}
                 >
                   {field.value
-                    ? leads.find((lead) => lead.id === field.value)?.name
+                    ? leads.find((lead) => lead.id === field.value)?.name || "Unbekannt"
                     : "Wähle einen Kontakt"}
                 </Button>
               </FormControl>
             </PopoverTrigger>
             <PopoverContent className="w-[400px] p-0" align="start">
-              <Command shouldFilter={false}>
-                <CommandInput 
-                  placeholder="Suche nach Kontakten..."
-                  value={searchValue}
-                  onValueChange={setSearchValue}
-                />
-                <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
-                <CommandGroup>
-                  {leads.map((lead) => (
-                    <CommandItem
-                      key={lead.id}
-                      value={lead.name}
-                      onSelect={() => {
-                        form.setValue("leadId", lead.id);
-                        setOpen(false);
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          lead.id === field.value ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      {lead.name}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </Command>
+              {isLoading ? (
+                <div className="p-4">Lädt Kontakte...</div>
+              ) : (
+                <Command shouldFilter={false}>
+                  <CommandInput
+                    placeholder="Suche nach Kontakten..."
+                    value={searchValue}
+                    onValueChange={setSearchValue}
+                  />
+                  <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
+                  <CommandGroup>
+                    {leads.map((lead) => (
+                      <CommandItem
+                        key={lead.id}
+                        value={lead.name}
+                        onSelect={() => {
+                          form.setValue("leadId", lead.id);
+                          setOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            lead.id === field.value ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {lead.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              )}
             </PopoverContent>
           </Popover>
           <FormMessage />
