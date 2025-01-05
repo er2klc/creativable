@@ -85,6 +85,7 @@ export const CalendarView = () => {
         isRecurring: event.recurring_pattern !== 'none',
         meeting_type: 'initial_meeting',
         completed: false,
+        cancelled: false,
         created_at: event.created_at,
         user_id: event.created_by,
         lead_id: null,

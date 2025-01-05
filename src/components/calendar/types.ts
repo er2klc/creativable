@@ -8,7 +8,7 @@ export interface Appointment {
   cancelled: boolean;
   created_at: string;
   user_id: string;
-  lead_id: string;
+  lead_id: string | null;
   leads?: { name: string };
   isTeamEvent?: boolean;
   isAdminEvent?: boolean;
@@ -16,6 +16,8 @@ export interface Appointment {
   start_time?: string;
   end_time?: string;
   teams?: { name: string };
+  recurring_pattern?: string;
+  recurring_day_of_week?: number;
   onComplete?: (completed: boolean) => void;
   onCancel?: (cancelled: boolean) => void;
 }
