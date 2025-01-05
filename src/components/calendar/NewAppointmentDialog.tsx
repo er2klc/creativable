@@ -132,7 +132,7 @@ export const NewAppointmentDialog = ({
                 <Calendar
                   mode="single"
                   selected={selectedDate || undefined}
-                  onSelect={(date) => setSelectedDate(date)}
+                  onSelect={setSelectedDate}
                   initialFocus
                 />
               </PopoverContent>
