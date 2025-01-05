@@ -89,6 +89,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       content: input
     };
 
+    console.log('Sending message:', userMessage);
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsThinking(true);
@@ -115,24 +116,28 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
+      let buffer = '';
 
       while (true) {
         const { value, done } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log('Stream completed');
+          break;
+        }
 
         const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        console.log('Received chunk:', chunk);
+        buffer += chunk;
+
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
+              console.log('Parsed data:', data);
               
-              if (data.done) {
-                setIsThinking(false);
-                break;
-              }
-
               setMessages(prev => {
                 const lastMessage = prev[prev.length - 1];
                 if (lastMessage?.role === 'assistant') {

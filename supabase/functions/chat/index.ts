@@ -44,63 +44,45 @@ serve(async (req) => {
       throw new Error('Failed to get response from OpenAI');
     }
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
+    // Create a TransformStream to handle the data
+    const transformStream = new TransformStream({
+      async transform(chunk, controller) {
+        const text = new TextDecoder().decode(chunk);
+        const lines = text.split('\n');
 
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            
-            if (done) {
-              // Send final message
-              const finalMessage = {
-                id: 'done',
-                role: 'assistant',
-                content: buffer,
-                done: true
-              };
-              controller.enqueue(`data: ${JSON.stringify(finalMessage)}\n\n`);
-              controller.close();
-              break;
-            }
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                try {
-                  const data = line.slice(6);
-                  if (data === '[DONE]') continue;
-
-                  const json = JSON.parse(data);
-                  const content = json.choices?.[0]?.delta?.content;
-                  
-                  if (content) {
-                    const message = {
-                      id: crypto.randomUUID(),
-                      role: 'assistant',
-                      content: content
-                    };
-                    controller.enqueue(`data: ${JSON.stringify(message)}\n\n`);
-                  }
-                } catch (error) {
-                  console.warn('Error parsing line:', line, error);
-                  continue;
-                }
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                console.log('Stream completed');
+                return;
               }
+
+              const json = JSON.parse(data);
+              const content = json.choices?.[0]?.delta?.content;
+              
+              if (content) {
+                const message = {
+                  id: crypto.randomUUID(),
+                  role: 'assistant',
+                  content: content
+                };
+                console.log('Sending chunk:', message);
+                controller.enqueue(`data: ${JSON.stringify(message)}\n\n`);
+              }
+            } catch (error) {
+              console.warn('Error parsing line:', line, error);
             }
           }
-        } catch (error) {
-          console.error('Stream processing error:', error);
-          controller.error(error);
         }
       }
     });
+
+    // Pipe the response through our transform stream
+    const stream = response.body
+      .pipeThrough(new TextDecoderStream())
+      .pipeThrough(transformStream);
 
     return new Response(stream, {
       headers: {
