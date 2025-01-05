@@ -58,8 +58,7 @@ serve(async (req) => {
             const { done, value } = await reader.read();
             if (done) {
               if (!doneMessageSent) {
-                // Send a properly formatted JSON for the [DONE] event
-                controller.enqueue(encoder.encode('data: {"done":true}\n\n'));
+                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                 doneMessageSent = true;
               }
               controller.close();
@@ -73,8 +72,7 @@ serve(async (req) => {
               if (line.trim() === '') continue;
               if (line.trim() === 'data: [DONE]') {
                 if (!doneMessageSent) {
-                  // Send a properly formatted JSON for the [DONE] event
-                  controller.enqueue(encoder.encode('data: {"done":true}\n\n'));
+                  controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                   doneMessageSent = true;
                 }
                 continue;
