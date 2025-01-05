@@ -78,7 +78,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     e.preventDefault();
     if (!input.trim() || !sessionToken || !apiKey) return;
 
-    // Cancel any ongoing request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -96,7 +95,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
     try {
       abortControllerRef.current = new AbortController();
-      console.log('Making request to chat function...');
       
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
         method: 'POST',
@@ -123,10 +121,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
       while (true) {
         const { value, done } = await reader.read();
-        if (done) {
-          console.log('Stream completed');
-          break;
-        }
+        if (done) break;
 
         const chunk = decoder.decode(value);
         console.log('Received chunk:', chunk);
@@ -139,7 +134,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
-              console.log('Parsed message chunk:', data);
+              console.log('Received message:', data);
               
               setMessages(prev => {
                 const lastMessage = prev[prev.length - 1];
