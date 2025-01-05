@@ -32,29 +32,27 @@ export const ContactField = ({ form }: ContactFieldProps) => {
   const { data: leads = [], error, isLoading } = useQuery({
     queryKey: ["leads", searchValue],
     queryFn: async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Benutzer nicht authentifiziert");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
 
-        const { data, error } = await supabase
-          .from("leads")
-          .select("id, name")
-          .eq("user_id", user.id)
-          .ilike("name", `%${searchValue}%`)
-          .order("name");
+      const { data, error } = await supabase
+        .from("leads")
+        .select("id, name")
+        .eq("user_id", user.id)
+        .ilike("name", `%${searchValue}%`)
+        .order("name");
 
-        if (error) throw error;
-        return data || [];
-      } catch (error) {
+      if (error) {
         console.error("Error fetching leads:", error);
         return [];
       }
+
+      return data || [];
     },
   });
 
-  if (error) {
-    console.error("Fehler beim Laden der Kontakte:", error);
-  }
+  console.log("Leads:", leads);
+  console.log("Error:", error);
 
   return (
     <FormField
@@ -91,26 +89,29 @@ export const ContactField = ({ form }: ContactFieldProps) => {
                     value={searchValue}
                     onValueChange={setSearchValue}
                   />
-                  <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
                   <CommandGroup>
-                    {leads.map((lead) => (
-                      <CommandItem
-                        key={lead.id}
-                        value={lead.name}
-                        onSelect={() => {
-                          form.setValue("leadId", lead.id);
-                          setOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            lead.id === field.value ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {lead.name}
-                      </CommandItem>
-                    ))}
+                    {Array.isArray(leads) && leads.length > 0 ? (
+                      leads.map((lead) => (
+                        <CommandItem
+                          key={lead.id}
+                          value={lead.name}
+                          onSelect={() => {
+                            form.setValue("leadId", lead.id);
+                            setOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              lead.id === field.value ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {lead.name}
+                        </CommandItem>
+                      ))
+                    ) : (
+                      <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
+                    )}
                   </CommandGroup>
                 </Command>
               )}
