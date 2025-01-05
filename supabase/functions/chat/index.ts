@@ -44,67 +44,59 @@ serve(async (req) => {
       throw new Error('Failed to get response from OpenAI');
     }
 
-    const reader = response.body?.getReader();
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-
-    let accumulatedContent = '';
-    let doneMessageSent = false;
-
     const stream = new ReadableStream({
       async start(controller) {
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
         try {
           while (true) {
             const { done, value } = await reader.read();
+            
             if (done) {
-              if (!doneMessageSent) {
-                // Send a final message in the same format as other messages
-                controller.enqueue(encoder.encode('data: {"role":"assistant","done":true}\n\n'));
-                doneMessageSent = true;
-              }
+              // Send final message
+              const finalMessage = {
+                id: 'done',
+                role: 'assistant',
+                content: buffer,
+                done: true
+              };
+              controller.enqueue(`data: ${JSON.stringify(finalMessage)}\n\n`);
               controller.close();
               break;
             }
 
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
 
             for (const line of lines) {
-              if (line.trim() === '') continue;
-              if (line.trim() === 'data: [DONE]') {
-                if (!doneMessageSent) {
-                  // Send a final message in the same format as other messages
-                  controller.enqueue(encoder.encode('data: {"role":"assistant","done":true}\n\n'));
-                  doneMessageSent = true;
-                }
-                continue;
-              }
-
               if (line.startsWith('data: ')) {
                 try {
-                  const jsonStr = line.slice(6);
-                  const json = JSON.parse(jsonStr);
+                  const data = line.slice(6);
+                  if (data === '[DONE]') continue;
+
+                  const json = JSON.parse(data);
                   const content = json.choices?.[0]?.delta?.content;
                   
                   if (content) {
-                    accumulatedContent += content;
                     const message = {
-                      role: "assistant",
-                      content: accumulatedContent,
+                      id: crypto.randomUUID(),
+                      role: 'assistant',
+                      content: content
                     };
-                    
-                    console.log(`Streaming: ${JSON.stringify(message)}`);
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
+                    controller.enqueue(`data: ${JSON.stringify(message)}\n\n`);
                   }
                 } catch (error) {
-                  console.warn('Invalid JSON in line:', line, error);
+                  console.warn('Error parsing line:', line, error);
                   continue;
                 }
               }
             }
           }
         } catch (error) {
-          console.error('Error in stream processing:', error);
+          console.error('Stream processing error:', error);
           controller.error(error);
         }
       }

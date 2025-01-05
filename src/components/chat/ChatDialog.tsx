@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useChat } from "ai/react";
 import { Bot, SendHorizontal, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,32 +18,10 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [isThinking, setIsThinking] = useState(false);
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Array<{ id: string; role: string; content: string }>>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
-    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
-    headers: {
-      Authorization: `Bearer ${sessionToken}`,
-      'X-OpenAI-Key': apiKey || '',
-    },
-    body: {
-      language: 'de',
-    },
-    onResponse: () => {
-      setIsThinking(true);
-    },
-    onFinish: () => {
-      setIsThinking(false);
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      }
-    },
-    onError: (error) => {
-      console.error("Chat error:", error);
-      setIsThinking(false);
-      toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
-    },
-  });
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const setupChat = async () => {
@@ -81,7 +58,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
     if (open) {
       setupChat();
-      // Add initial welcome message
       setMessages([
         {
           id: "welcome",
@@ -90,7 +66,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         }
       ]);
     }
-  }, [open, setMessages]);
+  }, [open]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -98,7 +74,98 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     }
   }, [messages]);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || !sessionToken || !apiKey) return;
+
+    // Cancel any ongoing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const userMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: input
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput("");
+    setIsThinking(true);
+
+    try {
+      abortControllerRef.current = new AbortController();
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${sessionToken}`,
+          'X-OpenAI-Key': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: messages.concat(userMessage).map(({ role, content }) => ({ role, content })),
+          language: 'de',
+        }),
+        signal: abortControllerRef.current.signal
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.done) {
+                setIsThinking(false);
+                break;
+              }
+
+              setMessages(prev => {
+                const lastMessage = prev[prev.length - 1];
+                if (lastMessage?.role === 'assistant') {
+                  return [
+                    ...prev.slice(0, -1),
+                    { ...lastMessage, content: lastMessage.content + data.content }
+                  ];
+                }
+                return [...prev, { id: data.id, role: 'assistant', content: data.content }];
+              });
+            } catch (error) {
+              console.warn('Error parsing chunk:', error);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log('Request was cancelled');
+      } else {
+        console.error("Chat error:", error);
+        toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
+      }
+    } finally {
+      setIsThinking(false);
+      abortControllerRef.current = null;
+    }
+  };
+
   const handleClose = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
     onOpenChange(false);
   };
 
@@ -164,9 +231,9 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
             <Input
               placeholder="Schreibe eine Nachricht..."
               value={input}
-              onChange={handleInputChange}
+              onChange={(e) => setInput(e.target.value)}
             />
-            <Button type="submit" size="icon">
+            <Button type="submit" size="icon" disabled={isThinking}>
               <SendHorizontal className="h-4 w-4" />
             </Button>
           </form>
