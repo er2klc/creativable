@@ -18,6 +18,7 @@ export const CalendarView = () => {
     currentDate,
     setCurrentDate,
     selectedDate,
+    setSelectedDate,
     activeId,
     overDate,
     appointments,
@@ -109,7 +110,11 @@ export const CalendarView = () => {
           currentDate={currentDate}
           appointments={appointments}
           getDayAppointments={getDayAppointments}
-          onDateClick={handleDateClick}
+          onDateClick={(date) => {
+            setSelectedDate(date);
+            setSelectedAppointment(null);
+            setIsDialogOpen(true);
+          }}
           onAppointmentClick={(e, appointment) => {
             handleAppointmentClick(e, appointment);
             if (!appointment.isTeamEvent) {
