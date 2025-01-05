@@ -16,6 +16,7 @@ interface ChatDialogProps {
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const { systemMessage } = useChatContext();
 
@@ -58,6 +59,17 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         }
         setSessionToken(session.access_token);
 
+        // Fetch user profile to get the display name
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", session.user.id)
+          .single();
+
+        if (profile?.display_name) {
+          setUserName(profile.display_name.split(" ")[0]); // Get first name
+        }
+
         const { data: chatbotSettings, error } = await supabase
           .from("chatbot_settings")
           .select("openai_api_key")
@@ -94,12 +106,12 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
           {
             id: "welcome",
             role: "assistant",
-            content: "Hallo! Wie kann ich dir heute helfen?"
+            content: userName ? `Hallo ${userName}! Wie kann ich dir heute helfen?` : "Hallo! Wie kann ich dir heute helfen?"
           }
         ]);
       }
     }
-  }, [open, setMessages, systemMessage, messages.length]);
+  }, [open, setMessages, systemMessage, messages.length, userName]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -107,10 +119,14 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     }
   }, [messages]);
 
+  const handleMinimize = () => {
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
-        <ChatHeader />
+        <ChatHeader onMinimize={handleMinimize} onClose={handleMinimize} />
         <div className="flex flex-col h-[600px]">
           <ChatMessages messages={messages} scrollRef={scrollRef} />
           <ChatInput 

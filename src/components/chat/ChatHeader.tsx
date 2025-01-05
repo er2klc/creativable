@@ -1,15 +1,19 @@
-import { Info } from "lucide-react";
+import { Info, X, ChevronUp } from "lucide-react";
 import { DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export const ChatHeader = () => {
+interface ChatHeaderProps {
+  onMinimize: () => void;
+  onClose: () => void;
+}
+
+export const ChatHeader = ({ onMinimize, onClose }: ChatHeaderProps) => {
   return (
-    <div className="flex items-center gap-2">
-      <DialogTitle className="flex-1">Chat mit KI-Assistent</DialogTitle>
+    <div className="flex items-center gap-4 p-1">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Info className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+            <Info className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
           </TooltipTrigger>
           <TooltipContent className="max-w-[300px]">
             <p className="text-sm">
@@ -19,6 +23,22 @@ export const ChatHeader = () => {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+      
+      <DialogTitle className="flex-1 font-orbitron">Nexus AI-Assistent</DialogTitle>
+      
+      <button
+        onClick={onMinimize}
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ChevronUp className="h-4 w-4" />
+      </button>
+      
+      <button
+        onClick={onClose}
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <X className="h-4 w-4" />
+      </button>
     </div>
   );
 };
