@@ -141,7 +141,9 @@ export const CalendarView = () => {
             start: startOfMonth(currentDate),
             end: endOfMonth(currentDate),
           }).map((day, dayIdx) => {
-            const dayAppointments = getDayAppointments(day);
+            const dayAppointments = appointments?.filter(
+              (appointment) => format(new Date(appointment.due_date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd")
+            );
             
             return (
               <div

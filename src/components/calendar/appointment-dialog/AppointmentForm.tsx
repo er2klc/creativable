@@ -8,7 +8,7 @@ import { MeetingTypeField } from "./form-fields/MeetingTypeField";
 import { ColorField } from "./form-fields/ColorField";
 
 interface FormValues {
-  leadId: string;
+  leadId?: string;
   time: string;
   title: string;
   color: string;
@@ -33,9 +33,9 @@ export const AppointmentForm = ({ onSubmit, defaultValues, isEditing }: Appointm
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <ContactField form={form} />
-        <TimeField form={form} />
         <TitleField form={form} />
+        <TimeField form={form} />
+        <ContactField form={form} />
         <MeetingTypeField form={form} />
         <ColorField form={form} />
 

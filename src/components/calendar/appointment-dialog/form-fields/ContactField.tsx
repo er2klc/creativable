@@ -14,11 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
-import { useState } from "react";
 
 interface Lead {
   id: string;
@@ -30,8 +26,6 @@ interface ContactFieldProps {
 }
 
 export const ContactField = ({ form }: ContactFieldProps) => {
-  const [showAddLead, setShowAddLead] = useState(false);
-
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
@@ -63,54 +57,35 @@ export const ContactField = ({ form }: ContactFieldProps) => {
   }
 
   return (
-    <>
-      <FormField
-        control={form.control}
-        name="leadId"
-        rules={{ required: "Bitte wähle einen Kontakt aus" }}
-        render={({ field }) => (
-          <FormItem className="space-y-2">
-            <FormLabel>Kontakt</FormLabel>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Wähle einen Kontakt" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {leads.map((lead) => (
-                      <SelectItem key={lead.id} value={lead.id}>
-                        {lead.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button 
-                variant="outline" 
-                size="icon"
-                type="button"
-                onClick={() => setShowAddLead(true)}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      {showAddLead && (
-        <AddLeadDialog 
-          trigger={<div style={{ display: 'none' }} />}
-          open={showAddLead}
-          onClose={() => setShowAddLead(false)}
-        />
+    <FormField
+      control={form.control}
+      name="leadId"
+      render={({ field }) => (
+        <FormItem className="space-y-2">
+          <FormLabel>Kontakt (optional)</FormLabel>
+          <FormControl>
+            <Select 
+              onValueChange={field.onChange} 
+              defaultValue={field.value}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Wähle einen Kontakt" />
+              </SelectTrigger>
+              <SelectContent>
+                {leads.map((lead) => (
+                  <SelectItem key={lead.id} value={lead.id}>
+                    {lead.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormControl>
+          <p className="text-sm text-muted-foreground">
+            Sie können auch Termine ohne Kontaktzuordnung erstellen
+          </p>
+          <FormMessage />
+        </FormItem>
       )}
-    </>
+    />
   );
 };
