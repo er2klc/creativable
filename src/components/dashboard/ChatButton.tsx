@@ -13,6 +13,7 @@ export const ChatButton = () => {
   const [apiKey, setApiKey] = useState("");
   const [hasApiKey, setHasApiKey] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [messages, setMessages] = useState<any[]>([]);
 
   useEffect(() => {
     checkApiKey();
@@ -91,6 +92,7 @@ export const ChatButton = () => {
   const handleClose = () => {
     setOpen(false);
     setIsMinimized(false);
+    setMessages([]); // Only clear messages when actually closing
   };
 
   return (
@@ -135,7 +137,12 @@ export const ChatButton = () => {
         </DialogContent>
       </Dialog>
 
-      <ChatDialog open={open} onOpenChange={handleOpenChange} />
+      <ChatDialog 
+        open={open} 
+        onOpenChange={handleOpenChange}
+        messages={messages}
+        setMessages={setMessages}
+      />
     </>
   );
 };
