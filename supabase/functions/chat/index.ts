@@ -49,6 +49,7 @@ serve(async (req) => {
     const decoder = new TextDecoder();
 
     let accumulatedContent = '';
+    let previousContent = '';
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -56,7 +57,6 @@ serve(async (req) => {
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
-              // Send final accumulated content if any
               if (accumulatedContent) {
                 const finalMessage = {
                   role: "assistant",
@@ -64,6 +64,7 @@ serve(async (req) => {
                 };
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
               }
+              controller.enqueue(encoder.encode(`data: [DONE]\n\n`)); // Send [DONE]
               controller.close();
               break;
             }
@@ -74,21 +75,27 @@ serve(async (req) => {
             for (const line of lines) {
               const trimmedLine = line.trim();
               if (!trimmedLine) continue;
-              
-              if (trimmedLine === 'data: [DONE]') {
-                controller.close();
-                return;
-              }
 
               if (trimmedLine.startsWith('data: ')) {
                 try {
                   const jsonStr = trimmedLine.slice(6);
                   const json = JSON.parse(jsonStr);
                   const content = json.choices?.[0]?.delta?.content;
-                  
+
                   if (content) {
-                    console.log('Processing content chunk:', content);
                     accumulatedContent += content;
+
+                    // Check if the last two contents are identical
+                    if (accumulatedContent === previousContent) {
+                      controller.enqueue(
+                        encoder.encode(`data: ${JSON.stringify({ role: "assistant", content: accumulatedContent })}\n\n`)
+                      );
+                      controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+                      controller.close();
+                      return;
+                    }
+
+                    previousContent = accumulatedContent; // Update previous content
                   }
                 } catch (error) {
                   console.warn('Invalid JSON in line:', trimmedLine, error);
