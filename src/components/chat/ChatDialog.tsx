@@ -30,7 +30,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     body: {
       language: 'de',
     },
-    partialMessages: true,
+    experimental_streamData: true,
     onResponse: (response) => {
       if (!response.ok) {
         console.error("Chat response error:", response.status, response.statusText);
