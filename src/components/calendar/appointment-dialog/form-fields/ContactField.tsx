@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -34,8 +34,21 @@ export const ContactField = ({ form }: ContactFieldProps) => {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
+  // Optional: Debounce den Suchwert, um die Anzahl der Abfragen zu reduzieren
+  const [debouncedSearch, setDebouncedSearch] = useState(searchValue);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchValue);
+    }, 300); // 300ms Verzögerung
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchValue]);
+
   const { data: leads = [], error, isLoading } = useQuery({
-    queryKey: ["leads", searchValue],
+    queryKey: ["leads", debouncedSearch],
     queryFn: async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -45,7 +58,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
           .from("leads")
           .select("id, name")
           .eq("user_id", user.id)
-          .ilike("name", `%${searchValue}%`) // Korrigierte Syntax
+          .ilike("name", `%${debouncedSearch}%`) // Korrigierte Syntax
           .order("name");
 
         if (error) {
@@ -59,7 +72,21 @@ export const ContactField = ({ form }: ContactFieldProps) => {
         return [];
       }
     },
+    // Optional: Refetch bei jedem Fokus oder Wiederholen von Fehlern
+    refetchOnWindowFocus: false,
   });
+
+  // Debugging: Überprüfe die Suchwerte und Daten
+  useEffect(() => {
+    console.log("Suchwert geändert:", debouncedSearch);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    console.log("Abgerufene Leads:", leads);
+    if (error) {
+      console.error("Abfragefehler:", error);
+    }
+  }, [leads, error]);
 
   const leadsData = Array.isArray(leads) ? leads : [];
   const selectedLead = leadsData.find((lead) => lead.id === form.getValues("leadId"));
