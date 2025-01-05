@@ -104,10 +104,13 @@ export const ContactField = ({ form }: ContactFieldProps) => {
           </FormItem>
         )}
       />
-      <AddLeadDialog 
-        trigger={<div style={{ display: 'none' }} />}
-        onOpenChange={setShowAddLead}
-      />
+      {showAddLead && (
+        <AddLeadDialog 
+          trigger={<div style={{ display: 'none' }} />}
+          isOpen={showAddLead}
+          onClose={() => setShowAddLead(false)}
+        />
+      )}
     </>
   );
 };

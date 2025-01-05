@@ -26,7 +26,7 @@ export const CalendarView = () => {
     })
   );
 
-  const { data: appointments = [], refetch } = useQuery({
+  const { data: appointments = [] } = useQuery({
     queryKey: ["appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
       const startDate = startOfMonth(currentDate);
@@ -51,15 +51,9 @@ export const CalendarView = () => {
       return data || [];
     },
     refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
-
-  const days = eachDayOfInterval({
-    start: startOfMonth(currentDate),
-    end: endOfMonth(currentDate),
-  });
-
-  const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
-  const previousMonth = () => setCurrentDate(subMonths(currentDate, 1));
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
