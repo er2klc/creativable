@@ -49,6 +49,7 @@ serve(async (req) => {
     const decoder = new TextDecoder();
 
     let accumulatedContent = '';
+    let doneMessageSent = false;
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -56,7 +57,10 @@ serve(async (req) => {
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
-              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+              if (!doneMessageSent) {
+                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                doneMessageSent = true;
+              }
               controller.close();
               break;
             }
@@ -67,7 +71,10 @@ serve(async (req) => {
             for (const line of lines) {
               if (line.trim() === '') continue;
               if (line.trim() === 'data: [DONE]') {
-                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                if (!doneMessageSent) {
+                  controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                  doneMessageSent = true;
+                }
                 continue;
               }
 
