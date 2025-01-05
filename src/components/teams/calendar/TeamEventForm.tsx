@@ -26,7 +26,6 @@ interface FormValues {
   color: string;
   is_team_event: boolean;
   recurring_pattern: string;
-  recurring_day_of_week?: number;
 }
 
 interface TeamEventFormProps {
@@ -125,34 +124,6 @@ export const TeamEventForm = ({ onSubmit, defaultValues, isEditing }: TeamEventF
             </FormItem>
           )}
         />
-
-        {form.watch("recurring_pattern") === "weekly" && (
-          <FormField
-            control={form.control}
-            name="recurring_day_of_week"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Wochentag</FormLabel>
-                <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Wähle einen Wochentag" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="1">Montag</SelectItem>
-                    <SelectItem value="2">Dienstag</SelectItem>
-                    <SelectItem value="3">Mittwoch</SelectItem>
-                    <SelectItem value="4">Donnerstag</SelectItem>
-                    <SelectItem value="5">Freitag</SelectItem>
-                    <SelectItem value="6">Samstag</SelectItem>
-                    <SelectItem value="0">Sonntag</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormItem>
-            )}
-          />
-        )}
 
         <FormField
           control={form.control}

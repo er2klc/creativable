@@ -26,7 +26,6 @@ interface NewTeamEventDialogProps {
     color: string;
     is_team_event: boolean;
     recurring_pattern: string;
-    recurring_day_of_week?: number;
   };
 }
 
@@ -55,6 +54,11 @@ export const NewTeamEventDialog = ({
         endDate.setHours(parseInt(endHours), parseInt(endMinutes));
       }
 
+      // Calculate recurring_day_of_week if pattern is weekly
+      const recurring_day_of_week = values.recurring_pattern === 'weekly' 
+        ? eventDate.getDay() 
+        : null;
+
       if (eventToEdit) {
         const { error } = await supabase
           .from("team_calendar_events")
@@ -66,7 +70,7 @@ export const NewTeamEventDialog = ({
             color: values.color,
             is_team_event: values.is_team_event,
             recurring_pattern: values.recurring_pattern,
-            recurring_day_of_week: values.recurring_day_of_week,
+            recurring_day_of_week,
           })
           .eq('id', eventToEdit.id);
 
@@ -84,7 +88,7 @@ export const NewTeamEventDialog = ({
             color: values.color,
             is_team_event: values.is_team_event,
             recurring_pattern: values.recurring_pattern,
-            recurring_day_of_week: values.recurring_day_of_week,
+            recurring_day_of_week,
           });
 
         if (error) throw error;
