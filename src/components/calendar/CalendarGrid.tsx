@@ -38,18 +38,62 @@ export const CalendarGrid = ({
     [currentDate]
   );
 
-  // Create droppable states for all days at once
-  const droppableStates = useMemo(() => {
-    const states: { [key: string]: ReturnType<typeof useDroppable> } = {};
-    days.forEach(day => {
-      const dateStr = format(day, "yyyy-MM-dd");
-      states[dateStr] = useDroppable({
-        id: dateStr,
-        data: { date: day }
-      });
+  // Create a separate component for droppable day
+  const DroppableDay = ({ date, children }: { date: Date; children: React.ReactNode }) => {
+    const dateStr = format(date, "yyyy-MM-dd");
+    const { setNodeRef } = useDroppable({
+      id: dateStr,
+      data: { date }
     });
-    return states;
-  }, [days]);
+
+    const isCurrentOver = overDate === dateStr;
+    const dayAppointments = getDayAppointments(date);
+    
+    return (
+      <div
+        ref={setNodeRef}
+        key={date.toString()}
+        id={dateStr}
+        className={cn(
+          "min-h-[100px] bg-background p-2 relative transition-colors duration-200",
+          !isSameMonth(date, currentDate) && "text-muted-foreground",
+          "hover:bg-accent hover:text-accent-foreground cursor-pointer",
+          isCurrentOver && "bg-accent/50"
+        )}
+        onClick={() => onDateClick(date)}
+        onMouseEnter={(e) => {
+          if (activeId) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const mouseX = e.clientX;
+            const threshold = 100; // pixels from edge
+
+            if (mouseX - rect.left < threshold) {
+              setMonthChangeIndicator('prev');
+              if (onMonthChange) onMonthChange('prev');
+            } else if (rect.right - mouseX < threshold) {
+              setMonthChangeIndicator('next');
+              if (onMonthChange) onMonthChange('next');
+            } else {
+              setMonthChangeIndicator(null);
+            }
+          }
+        }}
+        onMouseLeave={() => setMonthChangeIndicator(null)}
+      >
+        {children}
+        <div className="mt-1">
+          {dayAppointments?.map((appointment) => (
+            <AppointmentItem
+              key={appointment.id}
+              appointment={appointment}
+              onClick={(e) => onAppointmentClick(e, appointment)}
+              isDragging={activeId === appointment.id}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="relative">
@@ -70,65 +114,19 @@ export const CalendarGrid = ({
           </div>
         ))}
 
-        {days.map((date) => {
-          const dateStr = format(date, "yyyy-MM-dd");
-          const { setNodeRef, isOver } = droppableStates[dateStr] || {};
-          const dayAppointments = getDayAppointments(date);
-          const isCurrentOver = overDate === dateStr;
-          
-          return (
-            <div
-              ref={setNodeRef}
-              key={date.toString()}
-              id={dateStr}
+        {days.map((date) => (
+          <DroppableDay key={date.toString()} date={date}>
+            <time
+              dateTime={format(date, "yyyy-MM-dd")}
               className={cn(
-                "min-h-[100px] bg-background p-2 relative transition-colors duration-200",
-                !isSameMonth(date, currentDate) && "text-muted-foreground",
-                "hover:bg-accent hover:text-accent-foreground cursor-pointer",
-                isCurrentOver && "bg-accent/50"
+                "flex h-6 w-6 items-center justify-center rounded-full",
+                isToday(date) && "bg-primary text-primary-foreground"
               )}
-              onClick={() => onDateClick(date)}
-              onMouseEnter={(e) => {
-                if (activeId) {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const mouseX = e.clientX;
-                  const threshold = 100; // pixels from edge
-
-                  if (mouseX - rect.left < threshold) {
-                    setMonthChangeIndicator('prev');
-                    if (onMonthChange) onMonthChange('prev');
-                  } else if (rect.right - mouseX < threshold) {
-                    setMonthChangeIndicator('next');
-                    if (onMonthChange) onMonthChange('next');
-                  } else {
-                    setMonthChangeIndicator(null);
-                  }
-                }
-              }}
-              onMouseLeave={() => setMonthChangeIndicator(null)}
             >
-              <time
-                dateTime={format(date, "yyyy-MM-dd")}
-                className={cn(
-                  "flex h-6 w-6 items-center justify-center rounded-full",
-                  isToday(date) && "bg-primary text-primary-foreground"
-                )}
-              >
-                {format(date, "d")}
-              </time>
-              <div className="mt-1">
-                {dayAppointments?.map((appointment) => (
-                  <AppointmentItem
-                    key={appointment.id}
-                    appointment={appointment}
-                    onClick={(e) => onAppointmentClick(e, appointment)}
-                    isDragging={activeId === appointment.id}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
+              {format(date, "d")}
+            </time>
+          </DroppableDay>
+        ))}
       </div>
 
       <DragOverlay>
