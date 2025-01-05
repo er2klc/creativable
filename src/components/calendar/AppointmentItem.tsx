@@ -1,7 +1,7 @@
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Users, Infinity, Video, Phone, Building, Presentation, ArrowRightLeft, Wave } from "lucide-react";
+import { Clock, User, FileText, Users, Infinity, Video, Phone, MapPin, BarChart, RefreshCw } from "lucide-react";
 
 interface AppointmentItemProps {
   appointment: any;
@@ -45,18 +45,18 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
   // Get the appropriate icon based on meeting type
   const getMeetingTypeIcon = () => {
     switch (appointment.meeting_type) {
-      case 'zoom':
-        return <Video className="h-3 w-3" />;
       case 'phone_call':
         return <Phone className="h-3 w-3" />;
       case 'on_site':
-        return <Building className="h-3 w-3" />;
-      case 'presentation':
-        return <Presentation className="h-3 w-3" />;
-      case 'follow_up':
-        return <ArrowRightLeft className="h-3 w-3" />;
+        return <MapPin className="h-3 w-3" />;
+      case 'zoom':
+        return <Video className="h-3 w-3" />;
       case 'initial_meeting':
-        return <Wave className="h-3 w-3" />;
+        return <Users className="h-3 w-3" />;
+      case 'presentation':
+        return <BarChart className="h-3 w-3" />;
+      case 'follow_up':
+        return <RefreshCw className="h-3 w-3" />;
       default:
         return <FileText className="h-3 w-3" />;
     }
