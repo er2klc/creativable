@@ -9,6 +9,16 @@ interface CalendarHeaderProps {
 }
 
 export const CalendarHeader = ({ currentDate, onDateChange }: CalendarHeaderProps) => {
+  const handlePrevMonth = () => {
+    const newDate = subMonths(currentDate, 1);
+    onDateChange(newDate);
+  };
+
+  const handleNextMonth = () => {
+    const newDate = addMonths(currentDate, 1);
+    onDateChange(newDate);
+  };
+
   return (
     <div className="flex items-center justify-between">
       <h2 className="text-xl font-semibold">
@@ -18,14 +28,14 @@ export const CalendarHeader = ({ currentDate, onDateChange }: CalendarHeaderProp
         <Button 
           variant="outline" 
           size="icon" 
-          onClick={() => onDateChange(subMonths(currentDate, 1))}
+          onClick={handlePrevMonth}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <Button 
           variant="outline" 
           size="icon" 
-          onClick={() => onDateChange(addMonths(currentDate, 1))}
+          onClick={handleNextMonth}
         >
           <ChevronRight className="h-4 w-4" />
         </Button>

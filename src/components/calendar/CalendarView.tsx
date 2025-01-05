@@ -116,6 +116,7 @@ export const CalendarView = () => {
             setIsDialogOpen(true);
           }}
           onAppointmentClick={(e, appointment) => {
+            e.stopPropagation(); // Prevent the date click handler from firing
             if (!appointment.isTeamEvent) {
               setSelectedDate(new Date(appointment.due_date));
               setSelectedAppointment({
