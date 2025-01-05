@@ -37,7 +37,7 @@ export interface Appointment {
 
 export interface AppointmentToEdit {
   id: string;
-  lead_id: string;
+  leadId: string;  // Keep this as leadId to match the expected props type
   time: string;
   title: string;
   color: string;

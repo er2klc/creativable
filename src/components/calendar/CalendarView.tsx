@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format, addMonths, subMonths } from "date-fns";
-import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors, DragOverEvent } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { usePersonalCalendar } from "./hooks/usePersonalCalendar";
 import { useCalendarEvents } from "./hooks/useCalendarEvents";
@@ -85,7 +85,7 @@ export const CalendarView = () => {
               setSelectedDate(new Date(appointment.due_date));
               setSelectedAppointment({
                 id: appointment.id,
-                lead_id: appointment.lead_id,
+                leadId: appointment.lead_id, // Convert lead_id to leadId here
                 time: format(new Date(appointment.due_date), "HH:mm"),
                 title: appointment.title,
                 color: appointment.color,
