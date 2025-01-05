@@ -19,14 +19,21 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface NewAppointmentDialogProps {
   open: boolean;
@@ -38,7 +45,18 @@ interface FormValues {
   leadId: string;
   time: string;
   title: string;
+  color: string;
+  meeting_type: string;
 }
+
+const MEETING_TYPES = [
+  { value: "phone_call", label: "Telefongespräch" },
+  { value: "on_site", label: "Vor-Ort-Termin" },
+  { value: "zoom", label: "Zoom Meeting" },
+  { value: "initial_meeting", label: "Erstgespräch" },
+  { value: "presentation", label: "Präsentation" },
+  { value: "follow_up", label: "Folgetermin" }
+];
 
 export const NewAppointmentDialog = ({
   open,
@@ -48,6 +66,8 @@ export const NewAppointmentDialog = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const form = useForm<FormValues>();
+  const [openCombobox, setOpenCombobox] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
   const { data: leads } = useQuery({
     queryKey: ["leads"],
@@ -59,6 +79,7 @@ export const NewAppointmentDialog = ({
         .from("leads")
         .select("id, name")
         .eq("user_id", user.id)
+        .ilike("name", `%${searchValue}%`)
         .order("name");
 
       if (error) {
@@ -84,7 +105,8 @@ export const NewAppointmentDialog = ({
         lead_id: values.leadId,
         title: values.title,
         due_date: appointmentDate.toISOString(),
-        meeting_type: "meeting",
+        meeting_type: values.meeting_type,
+        color: values.color,
       });
 
       if (error) throw error;
@@ -131,23 +153,57 @@ export const NewAppointmentDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Kontakt</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Wähle einen Kontakt" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {leads?.map((lead) => (
-                        <SelectItem key={lead.id} value={lead.id}>
-                          {lead.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value
+                            ? leads?.find((lead) => lead.id === field.value)?.name
+                            : "Wähle einen Kontakt"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Suche nach Kontakten..."
+                          value={searchValue}
+                          onValueChange={setSearchValue}
+                        />
+                        <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
+                        <CommandGroup>
+                          {leads?.map((lead) => (
+                            <CommandItem
+                              key={lead.id}
+                              value={lead.name}
+                              onSelect={() => {
+                                form.setValue("leadId", lead.id);
+                                setOpenCombobox(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  lead.id === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {lead.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </FormItem>
               )}
             />
@@ -173,6 +229,82 @@ export const NewAppointmentDialog = ({
                   <FormLabel>Titel</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Terminbeschreibung" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="meeting_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Terminart</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value
+                            ? MEETING_TYPES.find(
+                                (type) => type.value === field.value
+                              )?.label
+                            : "Wähle eine Terminart"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Suche Terminart..." />
+                        <CommandEmpty>Keine Terminart gefunden.</CommandEmpty>
+                        <CommandGroup>
+                          {MEETING_TYPES.map((type) => (
+                            <CommandItem
+                              value={type.value}
+                              key={type.value}
+                              onSelect={() => {
+                                form.setValue("meeting_type", type.value);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  type.value === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {type.label}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Farbe</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="color"
+                      {...field}
+                      className="h-10 w-full"
+                      defaultValue="#FEF7CD"
+                    />
                   </FormControl>
                 </FormItem>
               )}
