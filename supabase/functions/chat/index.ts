@@ -51,8 +51,6 @@ serve(async (req) => {
     }
 
     let currentContent = '';
-    let doneSent = false;
-    
     const stream = new ReadableStream({
       async start(controller) {
         const reader = response.body!.getReader();
@@ -64,10 +62,7 @@ serve(async (req) => {
             const { done, value } = await reader.read();
             
             if (done) {
-              if (!doneSent) {
-                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-                doneSent = true;
-              }
+              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
               break;
             }
 
@@ -75,32 +70,26 @@ serve(async (req) => {
             const lines = chunk.split('\n');
 
             for (const line of lines) {
-              const trimmedLine = line.trim();
-              if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
-
-              const data = trimmedLine.slice(6);
-              if (data === '[DONE]') {
-                if (!doneSent) {
-                  controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-                  doneSent = true;
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                
+                if (data === '[DONE]') continue;
+                
+                try {
+                  const parsed = JSON.parse(data);
+                  const content = parsed.choices?.[0]?.delta?.content || '';
+                  if (content) {
+                    currentContent += content;
+                    const message = {
+                      id: Date.now().toString(),
+                      role: 'assistant',
+                      content: currentContent
+                    };
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
+                  }
+                } catch (error) {
+                  console.error('Error parsing JSON:', error);
                 }
-                continue;
-              }
-
-              try {
-                const json = JSON.parse(data);
-                const content = json.choices[0]?.delta?.content || '';
-                if (content) {
-                  currentContent += content;
-                  const message = {
-                    id: Date.now().toString(),
-                    role: 'assistant',
-                    content: currentContent
-                  };
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
-                }
-              } catch (error) {
-                console.error('Error parsing JSON:', error);
               }
             }
           }
@@ -109,10 +98,8 @@ serve(async (req) => {
           controller.error(error);
         } finally {
           reader.releaseLock();
+          controller.close();
         }
-      },
-      cancel() {
-        // Handle stream cancellation if needed
       }
     });
 
