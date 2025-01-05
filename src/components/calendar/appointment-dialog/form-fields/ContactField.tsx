@@ -107,7 +107,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
       {showAddLead && (
         <AddLeadDialog 
           trigger={<div style={{ display: 'none' }} />}
-          isOpen={showAddLead}
+          open={showAddLead}
           onClose={() => setShowAddLead(false)}
         />
       )}
