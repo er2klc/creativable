@@ -10,12 +10,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSettings } from "@/hooks/use-settings";
 import { SuccessAnimation } from "@/components/ui/success-animation";
 import { AddTaskDialog } from "@/components/todo/AddTaskDialog";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const TodoList = () => {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
   const [showSuccess, setShowSuccess] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const navigate = useNavigate();
 
   const { data: tasks = [] } = useQuery({
     queryKey: ["tasks-without-date"],
@@ -28,6 +31,7 @@ const TodoList = () => {
         .select("*, leads(name)")
         .eq("user_id", user.id)
         .is("due_date", null)
+        .eq("completed", false)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -38,6 +42,28 @@ const TodoList = () => {
       return data;
     },
   });
+
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('tasks-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["tasks-without-date"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const handleComplete = async (taskId: string) => {
     try {
@@ -50,10 +76,12 @@ const TodoList = () => {
 
       // Show success animation
       setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 1500);
-
-      // Update the tasks list
-      await queryClient.invalidateQueries({ queryKey: ["tasks-without-date"] });
+      setTimeout(() => {
+        setShowSuccess(false);
+        // Invalidate queries after animation
+        queryClient.invalidateQueries({ queryKey: ["tasks-without-date"] });
+        queryClient.invalidateQueries({ queryKey: ["lead"] });
+      }, 1500);
       
     } catch (error) {
       console.error("Error completing task:", error);
@@ -63,6 +91,10 @@ const TodoList = () => {
           : "Fehler beim Abschließen der Aufgabe"
       );
     }
+  };
+
+  const handleContactClick = (leadId: string) => {
+    navigate(`/leads?leadId=${leadId}`);
   };
 
   return (
@@ -101,9 +133,12 @@ const TodoList = () => {
                   <div className={`flex-1 ${task.completed ? "line-through text-muted-foreground" : ""}`}>
                     <div className="font-medium">{task.title}</div>
                     {task.leads && (
-                      <div className="text-sm text-muted-foreground mt-1">
+                      <button 
+                        onClick={() => handleContactClick(task.lead_id)}
+                        className="text-sm text-muted-foreground mt-1 hover:text-primary transition-colors"
+                      >
                         {settings?.language === "en" ? "Contact" : "Kontakt"}: {task.leads.name}
-                      </div>
+                      </button>
                     )}
                   </div>
                 </div>
