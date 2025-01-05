@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
+import { Clock, User, FileText } from "lucide-react";
 
 interface AppointmentItemProps {
   appointment: any;
@@ -27,13 +28,27 @@ export const AppointmentItem = ({ appointment, onClick }: AppointmentItemProps) 
       {...listeners}
       {...attributes}
       className={cn(
-        "text-xs rounded p-1 mb-1 truncate cursor-pointer hover:opacity-80",
-        "transition-colors duration-200"
+        "p-2 mb-1 rounded cursor-pointer hover:opacity-80",
+        "transition-colors duration-200 space-y-1"
       )}
       onClick={onClick}
-      title={`${format(new Date(appointment.due_date), "HH:mm")} - ${appointment.leads?.name}`}
     >
-      {format(new Date(appointment.due_date), "HH:mm")} - {appointment.leads?.name}
+      <div className="flex items-center gap-1 text-xs">
+        <Clock className="h-3 w-3" />
+        <span>{format(new Date(appointment.due_date), "HH:mm")}</span>
+      </div>
+      
+      <div className="flex items-center gap-1 text-xs">
+        <FileText className="h-3 w-3" />
+        <span className="truncate">{appointment.title}</span>
+      </div>
+
+      {appointment.leads?.name && (
+        <div className="flex items-center gap-1 text-xs">
+          <User className="h-3 w-3" />
+          <span className="truncate">{appointment.leads.name}</span>
+        </div>
+      )}
     </div>
   );
 };
