@@ -44,7 +44,6 @@ const TodoList = () => {
 
   // Set up real-time subscription
   useEffect(() => {
-    // Enable REPLICA IDENTITY FULL for the tasks table
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -53,7 +52,7 @@ const TodoList = () => {
           event: 'INSERT',
           schema: 'public',
           table: 'tasks',
-          filter: 'completed=eq.false'
+          filter: 'completed=eq.false AND due_date=is.null'
         },
         (payload) => {
           console.log("New task inserted:", payload);
@@ -66,7 +65,7 @@ const TodoList = () => {
           event: 'UPDATE',
           schema: 'public',
           table: 'tasks',
-          filter: 'completed=eq.false'
+          filter: 'completed=eq.false AND due_date=is.null'
         },
         (payload) => {
           console.log("Task updated:", payload);
