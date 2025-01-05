@@ -43,7 +43,7 @@ export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
       control={form.control}
       name="meeting_type"
       render={({ field }) => (
-        <FormItem>
+        <FormItem className="flex flex-col">
           <FormLabel>Terminart</FormLabel>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -68,7 +68,7 @@ export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
                 </Button>
               </FormControl>
             </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0">
+            <PopoverContent className="w-[200px] p-0" align="start">
               <Command>
                 <CommandInput placeholder="Suche Terminart..." />
                 <CommandEmpty>Keine Terminart gefunden.</CommandEmpty>

@@ -61,7 +61,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
       control={form.control}
       name="leadId"
       render={({ field }) => (
-        <FormItem>
+        <FormItem className="flex flex-col">
           <FormLabel>Kontakt</FormLabel>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -69,7 +69,10 @@ export const ContactField = ({ form }: ContactFieldProps) => {
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="w-full justify-between"
+                  className={cn(
+                    "w-full justify-between",
+                    !field.value && "text-muted-foreground"
+                  )}
                 >
                   {field.value
                     ? leads.find((lead) => lead.id === field.value)?.name
@@ -77,7 +80,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
                 </Button>
               </FormControl>
             </PopoverTrigger>
-            <PopoverContent className="w-[400px] p-0">
+            <PopoverContent className="w-[400px] p-0" align="start">
               <Command>
                 <CommandInput
                   placeholder="Suche nach Kontakten..."
