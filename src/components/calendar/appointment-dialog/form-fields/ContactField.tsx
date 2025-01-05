@@ -98,29 +98,26 @@ export const ContactField = ({ form }: ContactFieldProps) => {
                     value={searchValue}
                     onValueChange={setSearchValue}
                   />
+                  <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
                   <CommandGroup>
-                    {leadsData.length > 0 ? (
-                      leadsData.map((lead) => (
-                        <CommandItem
-                          key={lead.id}
-                          value={lead.name}
-                          onSelect={() => {
-                            form.setValue("leadId", lead.id);
-                            setOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              lead.id === field.value ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {lead.name}
-                        </CommandItem>
-                      ))
-                    ) : (
-                      <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
-                    )}
+                    {leadsData.map((lead) => (
+                      <CommandItem
+                        key={lead.id}
+                        value={lead.name}
+                        onSelect={() => {
+                          form.setValue("leadId", lead.id);
+                          setOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            lead.id === field.value ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {lead.name}
+                      </CommandItem>
+                    ))}
                   </CommandGroup>
                 </Command>
               )}
