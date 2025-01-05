@@ -22,7 +22,6 @@ import {
   Globe2,
   Infinity,
   GraduationCap,
-  ListTodo,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -40,8 +39,7 @@ const personalItems = [
     badge: true 
   },
   { title: "Kalender", icon: Calendar, url: "/calendar" },
-  { title: "Aufgaben", icon: CheckSquare, url: "/todo" },
-  { title: "Todo Liste", icon: ListTodo, url: "/todolist" },
+  { title: "Todo Liste", icon: CheckSquare, url: "/todo" },
 ];
 
 const teamItems = [
@@ -184,4 +182,5 @@ export const DashboardSidebar = () => {
     </Sidebar>
   );
 };
+
 
