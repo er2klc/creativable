@@ -72,15 +72,21 @@ export const CalendarView = () => {
         return [];
       }
 
+      // Transform team events to match the appointment structure
       return events.map(event => ({
-        ...event,
         id: `team-${event.id}`,
-        due_date: event.start_time,
         title: event.title,
+        due_date: event.start_time,
+        color: `${event.color || "#FEF7CD"}30`,
         isTeamEvent: true,
         isAdminEvent: event.is_admin_only,
-        color: `${event.color || "#FEF7CD"}30`,
-        isRecurring: event.recurring_pattern !== 'none'
+        isRecurring: event.recurring_pattern !== 'none',
+        meeting_type: 'initial_meeting',
+        completed: false,
+        created_at: event.created_at,
+        user_id: event.created_by,
+        lead_id: null,
+        leads: { name: event.teams?.name || 'Team Event' }
       }));
     },
   });
