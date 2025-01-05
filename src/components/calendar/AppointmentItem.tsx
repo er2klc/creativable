@@ -50,7 +50,8 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       {...attributes}
       className={cn(
         "p-2 mb-1 rounded cursor-pointer hover:opacity-80",
-        "transition-colors duration-200 space-y-1"
+        "transition-colors duration-200 space-y-1",
+        appointment.isRecurring && "border-l-4 border-primary"
       )}
       onClick={onClick}
     >

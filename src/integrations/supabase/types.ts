@@ -872,6 +872,38 @@ export type Database = {
           },
         ]
       }
+      team_calendar_disabled_events: {
+        Row: {
+          created_at: string | null
+          disabled_by: string
+          disabled_date: string
+          event_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          disabled_by: string
+          disabled_date: string
+          event_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          disabled_by?: string
+          disabled_date?: string
+          event_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_calendar_disabled_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "team_calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_calendar_events: {
         Row: {
           color: string | null
