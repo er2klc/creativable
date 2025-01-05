@@ -18,70 +18,76 @@ interface ChatDialogProps {
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [isThinking, setIsThinking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Verwende den `useChat` Hook für Streaming
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
     headers: {
       Authorization: `Bearer ${sessionToken}`,
-      "X-OpenAI-Key": apiKey || "",
+      'X-OpenAI-Key': apiKey || '',
     },
     body: {
-      language: "de", // Sprache kann angepasst werden
+      language: 'de',
     },
-    partialMessages: true, // Aktiviert das Live-Streaming der Nachrichten
     onResponse: (response) => {
       if (!response.ok) {
         console.error("Chat response error:", response.status, response.statusText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       console.log("Chat response received");
+      setIsThinking(true);
     },
     onFinish: () => {
+      setIsThinking(false);
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
     },
     onError: (error) => {
       console.error("Chat error:", error);
-      if (!error.message.includes("Failed to parse")) {
+      setIsThinking(false);
+      // Don't show error toast for parsing errors as they don't affect functionality
+      if (!error.message.includes('Failed to parse')) {
         toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
       }
     },
   });
 
-  // Setup der Chat-Session und API-Key
   useEffect(() => {
     const setupChat = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
-          toast.error("Bitte melde dich an.");
+          console.error("No session found");
+          toast.error("Bitte melden Sie sich an");
           return;
         }
-        setSessionToken(session.access_token);
 
-        const { data: chatbotSettings, error } = await supabase
-          .from("chatbot_settings")
-          .select("openai_api_key")
-          .eq("user_id", session.user.id)
+        setSessionToken(session.access_token);
+        
+        const { data: chatbotSettings, error: chatbotError } = await supabase
+          .from('chatbot_settings')
+          .select('openai_api_key')
+          .eq('user_id', session.user.id)
           .maybeSingle();
 
-        if (error) {
-          console.error("Error fetching chatbot settings:", error);
-          toast.error("Fehler beim Laden der Chat-Einstellungen.");
+        if (chatbotError) {
+          console.error("Error fetching chatbot settings:", chatbotError);
+          toast.error("Fehler beim Laden der Chat-Einstellungen");
           return;
         }
 
         if (chatbotSettings?.openai_api_key) {
+          console.log("✅ OpenAI API Key found in chatbot_settings");
           setApiKey(chatbotSettings.openai_api_key);
         } else {
-          toast.error("Kein OpenAI API-Key gefunden. Bitte hinterlege ihn in den Einstellungen.");
+          console.warn("⚠️ No OpenAI API Key found in chatbot_settings");
+          toast.error("Bitte fügen Sie einen OpenAI API Key in den Chat-Einstellungen hinzu");
         }
       } catch (error) {
         console.error("Error in setupChat:", error);
-        toast.error("Fehler beim Einrichten des Chats.");
+        toast.error("Fehler beim Einrichten des Chats");
       }
     };
 
@@ -90,7 +96,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     }
   }, [open]);
 
-  // Scrollt bei neuen Nachrichten automatisch nach unten
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -145,7 +150,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
                   )}
                 </div>
               ))}
-              {isLoading && (
+              {isThinking && (
                 <div className="flex gap-3 text-slate-600 text-sm mb-4">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback>
