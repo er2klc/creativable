@@ -27,14 +27,13 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       Authorization: `Bearer ${sessionToken}`,
       'X-OpenAI-Key': apiKey || '',
     },
-    body: {
-      language: 'de',
-    },
     onResponse: () => {
       setIsThinking(true);
+      console.log("Chat response started");
     },
     onFinish: () => {
       setIsThinking(false);
+      console.log("Chat response finished");
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
@@ -70,6 +69,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
         if (chatbotSettings?.openai_api_key) {
           setApiKey(chatbotSettings.openai_api_key);
+          console.log("OpenAI API key loaded successfully");
         } else {
           toast.error("Kein OpenAI API-Key gefunden. Bitte hinterlege ihn in den Einstellungen.");
         }
@@ -81,7 +81,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
     if (open) {
       setupChat();
-      // Add initial welcome message
       setMessages([
         {
           id: "welcome",

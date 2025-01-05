@@ -44,7 +44,6 @@ serve(async (req) => {
       throw new Error('Failed to get response from OpenAI');
     }
 
-    // Direkte Weiterleitung des Streams ohne Modifikation
     return new Response(response.body, {
       headers: {
         ...corsHeaders,
