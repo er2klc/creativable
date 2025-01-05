@@ -93,24 +93,24 @@ export const ChatButton = () => {
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 flex gap-2">
+      <div className="fixed bottom-4 right-4 flex flex-col gap-2 items-end">
         {isMinimized && (
           <Button 
             variant="outline" 
             size="icon"
-            className="rounded-full bg-destructive hover:bg-destructive/90"
+            className="h-6 w-6 rounded-full bg-destructive hover:bg-destructive/90"
             onClick={handleClose}
           >
-            <X className="h-4 w-4 text-destructive-foreground" />
+            <X className="h-3 w-3 text-destructive-foreground" />
           </Button>
         )}
         <Button 
           variant="outline" 
           size="icon" 
-          className="rounded-full"
+          className="h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all"
           onClick={handleClick}
         >
-          <MessageCircle className="h-4 w-4" />
+          <MessageCircle className="h-6 w-6" />
         </Button>
       </div>
 

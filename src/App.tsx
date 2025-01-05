@@ -18,6 +18,7 @@ import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import InstagramDataDeletion from "./pages/legal/InstagramDataDeletion";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
+import { ChatButton } from "@/components/dashboard/ChatButton";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -87,6 +88,7 @@ const App = () => (
         </ProtectedRoute>
       } />
     </Routes>
+    <ChatButton />
   </AppProvider>
 );
 
