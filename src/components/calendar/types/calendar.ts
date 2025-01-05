@@ -29,7 +29,7 @@ export interface Appointment {
   cancelled: boolean;
   created_at: string;
   user_id: string;
-  lead_id?: string;
+  lead_id: string;
   leads: { name: string };
   isTeamEvent: boolean;
   onComplete?: (completed: boolean) => void;

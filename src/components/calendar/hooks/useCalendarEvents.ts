@@ -106,15 +106,17 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     const allAppointments = [...appointments].map(appointment => ({
       ...appointment,
       isTeamEvent: false,
-      onComplete: (completed: boolean) => handleCompleteAppointment(appointment, completed)
-    }));
+      lead_id: appointment.lead_id || '',
+      onComplete: (completed: boolean) => handleCompleteAppointment(appointment as Appointment, completed)
+    })) as Appointment[];
 
     if (showTeamEvents) {
       const teamEvents = (teamAppointments || []).map(event => ({
         ...event,
+        lead_id: event.lead_id || '',
         isTeamEvent: true,
         onComplete: undefined
-      }));
+      })) as Appointment[];
       allAppointments.push(...teamEvents);
     }
     

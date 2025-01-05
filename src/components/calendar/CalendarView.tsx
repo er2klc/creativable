@@ -85,7 +85,7 @@ export const CalendarView = () => {
               setSelectedDate(new Date(appointment.due_date));
               setSelectedAppointment({
                 id: appointment.id,
-                lead_id: appointment.lead_id || '',
+                lead_id: appointment.lead_id,
                 time: format(new Date(appointment.due_date), "HH:mm"),
                 title: appointment.title,
                 color: appointment.color,
