@@ -11,9 +11,9 @@ import { useSettings } from "@/hooks/use-settings";
 import { SuccessAnimation } from "@/components/ui/success-animation";
 import { AddTaskDialog } from "@/components/todo/AddTaskDialog";
 import { useNavigate } from "react-router-dom";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Database } from "@/integrations/supabase/types";
 
-type Task = Tables["tasks"]["Row"] & {
+type Task = Database["public"]["Tables"]["tasks"]["Row"] & {
   leads?: {
     name: string;
   };
@@ -46,11 +46,11 @@ const TodoList = () => {
         return [];
       }
 
-      console.log("Fetched tasks:", data);
       return data as Task[];
-    }
+    },
   });
 
+  // Update local state when new data is fetched
   useEffect(() => {
     if (fetchedTasks) {
       setTasks(fetchedTasks);
@@ -59,7 +59,6 @@ const TodoList = () => {
 
   // Set up real-time subscription
   useEffect(() => {
-    console.log("Setting up real-time subscription");
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -68,19 +67,15 @@ const TodoList = () => {
           event: '*',
           schema: 'public',
           table: 'tasks',
-          filter: 'completed=eq.false AND due_date=is.null'
         },
-        (payload) => {
-          console.log("Task change detected:", payload);
+        () => {
+          // Invalidate and refetch when any task changes
           queryClient.invalidateQueries({ queryKey: ["tasks-without-date"] });
         }
       )
-      .subscribe((status) => {
-        console.log("Subscription status:", status);
-      });
+      .subscribe();
 
     return () => {
-      console.log("Cleaning up subscription");
       supabase.removeChannel(channel);
     };
   }, [queryClient]);
