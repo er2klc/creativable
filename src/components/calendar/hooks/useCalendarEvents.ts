@@ -76,7 +76,6 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
         cancelled: false,
         created_at: event.created_at,
         user_id: event.created_by,
-        lead_id: null,
         leads: { name: event.teams?.name || 'Team Event' },
         start_time: event.start_time,
         end_time: event.end_time,
@@ -103,7 +102,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     }
   };
 
-  const getDayAppointments = (date: Date) => {
+  const getDayAppointments = (date: Date): Appointment[] => {
     const allAppointments = [...appointments];
     if (showTeamEvents) {
       allAppointments.push(...(teamAppointments || []));

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format, addMonths, subMonths } from "date-fns";
+import { format } from "date-fns";
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors, DragOverEvent } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { usePersonalCalendar } from "./hooks/usePersonalCalendar";
@@ -8,11 +8,11 @@ import { CalendarHeader } from "./CalendarHeader";
 import { CalendarGrid } from "./CalendarGrid";
 import { NewAppointmentDialog } from "./NewAppointmentDialog";
 import { Switch } from "@/components/ui/switch";
-import { Appointment } from "./types/calendar";
+import { Appointment, AppointmentToEdit } from "./types/calendar";
 
 export const CalendarView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentToEdit | null>(null);
   const [showTeamEvents, setShowTeamEvents] = useState(true);
 
   const {
@@ -85,7 +85,7 @@ export const CalendarView = () => {
               setSelectedDate(new Date(appointment.due_date));
               setSelectedAppointment({
                 id: appointment.id,
-                leadId: appointment.lead_id,
+                lead_id: appointment.lead_id || '',
                 time: format(new Date(appointment.due_date), "HH:mm"),
                 title: appointment.title,
                 color: appointment.color,

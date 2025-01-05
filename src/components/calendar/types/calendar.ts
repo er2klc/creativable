@@ -34,3 +34,12 @@ export interface Appointment {
   isTeamEvent?: boolean;
   onComplete?: (completed: boolean) => void;
 }
+
+export interface AppointmentToEdit {
+  id: string;
+  lead_id: string;
+  time: string;
+  title: string;
+  color: string;
+  meeting_type: string;
+}
