@@ -65,26 +65,13 @@ const TodoList = () => {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'tasks',
-          filter: 'completed=eq.false and due_date is null'
+          filter: 'completed=eq.false AND due_date=is.null'
         },
         (payload) => {
-          console.log("New task inserted:", payload);
-          queryClient.invalidateQueries({ queryKey: ["tasks-without-date"] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'tasks',
-          filter: 'completed=eq.false and due_date is null'
-        },
-        (payload) => {
-          console.log("Task updated:", payload);
+          console.log("Task change detected:", payload);
           queryClient.invalidateQueries({ queryKey: ["tasks-without-date"] });
         }
       )
@@ -151,7 +138,7 @@ const TodoList = () => {
         </Button>
       </div>
       
-      <div className="grid gap-4">
+      <div className="grid gap-6">
         <Reorder.Group axis="y" values={tasks} onReorder={handleReorder}>
           <AnimatePresence>
             {tasks.map((task) => (
@@ -166,7 +153,7 @@ const TodoList = () => {
                   }}
                   layout
                 >
-                  <Card className="p-4 cursor-move">
+                  <Card className="p-4 cursor-move hover:shadow-md transition-shadow">
                     <div className="flex items-start gap-3">
                       <Checkbox
                         checked={task.completed}
