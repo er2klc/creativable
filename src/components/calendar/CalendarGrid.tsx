@@ -29,6 +29,16 @@ export const CalendarGrid = ({
     end: endOfMonth(currentDate),
   });
 
+  // Create a map of droppable states for each date
+  const droppableStates = days.reduce((acc, day) => {
+    const dateStr = format(day, "yyyy-MM-dd");
+    const { setNodeRef } = useDroppable({
+      id: dateStr,
+    });
+    acc[dateStr] = setNodeRef;
+    return acc;
+  }, {} as Record<string, (element: HTMLElement | null) => void>);
+
   return (
     <>
       <div className="grid grid-cols-7 gap-px bg-muted">
@@ -45,13 +55,10 @@ export const CalendarGrid = ({
           const dayAppointments = getDayAppointments(day);
           const dateStr = format(day, "yyyy-MM-dd");
           const isOver = overDate === dateStr;
-          const { setNodeRef } = useDroppable({
-            id: dateStr,
-          });
           
           return (
             <div
-              ref={setNodeRef}
+              ref={droppableStates[dateStr]}
               key={day.toString()}
               id={dateStr}
               className={cn(
