@@ -66,11 +66,7 @@ export const usePersonalCalendar = () => {
 
   const handleDragOver = (event: DragOverEvent) => {
     const { over } = event;
-    if (over?.id === 'prev-month' || over?.id === 'next-month') {
-      setOverDate(over.id as string);
-    } else {
-      setOverDate(over ? over.id as string : null);
-    }
+    setOverDate(over ? over.id as string : null);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -84,11 +80,6 @@ export const usePersonalCalendar = () => {
     
     if (appointment.isTeamEvent) {
       toast.error("Team-Termine können nicht verschoben werden");
-      return;
-    }
-
-    // Handle month navigation buttons
-    if (over.id === 'prev-month' || over.id === 'next-month') {
       return;
     }
 
