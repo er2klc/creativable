@@ -1,16 +1,12 @@
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useChat } from "ai/react";
-import { Bot, Info, SendHorizontal, User } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { useChatContext } from "@/hooks/use-chat-context";
+import { ChatHeader } from "./ChatHeader";
+import { ChatMessages } from "./ChatMessages";
+import { ChatInput } from "./ChatInput";
 
 interface ChatDialogProps {
   open: boolean;
@@ -88,20 +84,22 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
     if (open) {
       setupChat();
-      setMessages([
-        {
-          id: "system",
-          role: "system",
-          content: systemMessage,
-        },
-        {
-          id: "welcome",
-          role: "assistant",
-          content: "Hallo! Ich bin dein Network Marketing Assistent. Ich helfe dir dabei, neue Partner und Kunden zu gewinnen. Wie kann ich dir heute helfen?"
-        }
-      ]);
+      if (messages.length === 0) {
+        setMessages([
+          {
+            id: "system",
+            role: "system",
+            content: systemMessage,
+          },
+          {
+            id: "welcome",
+            role: "assistant",
+            content: "Hallo! Wie kann ich dir heute helfen?"
+          }
+        ]);
+      }
     }
-  }, [open, setMessages, systemMessage]);
+  }, [open, setMessages, systemMessage, messages.length]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -109,103 +107,17 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     }
   }, [messages]);
 
-  const handleClose = () => {
-    onOpenChange(false);
-  };
-
-  // Filter out system messages and duplicates for display
-  const displayMessages = messages.reduce((acc, current) => {
-    if (!current.content.trim() || current.role === 'system') return acc;
-    
-    const existingMessage = acc.find(msg => 
-      msg.role === current.role && 
-      msg.content === current.content.trim()
-    );
-    
-    if (!existingMessage) {
-      return [...acc, current];
-    }
-    
-    return acc;
-  }, [] as typeof messages);
-
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogTitle className="flex items-center justify-between">
-          Chat mit KI-Assistent
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                  <Info className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-[300px]">
-                <p className="text-sm">
-                  Ich bin dein persönlicher Network Marketing Assistent. Ich helfe dir dabei:
-                  <br />• Neue Partner und Kunden zu gewinnen
-                  <br />• Verkaufsgespräche zu optimieren
-                  <br />• Marketing-Strategien zu entwickeln
-                  <br />• Nachrichten und Posts zu formulieren
-                  <br />• Dein Business zu skalieren
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </DialogTitle>
-        <DialogDescription>
-          Ich unterstütze dich bei allen Aspekten deines Network Marketing Business.
-        </DialogDescription>
+        <ChatHeader />
         <div className="flex flex-col h-[600px]">
-          <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
-            <div className="space-y-4 mb-4">
-              {displayMessages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "flex gap-3 text-slate-600 text-sm mb-4",
-                    message.role === "user" && "justify-end"
-                  )}
-                >
-                  {message.role === "assistant" && (
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        <Bot className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  <div
-                    className={cn(
-                      "rounded-lg px-3 py-2 max-w-[85%] text-sm whitespace-pre-wrap",
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
-                    )}
-                  >
-                    {message.content}
-                  </div>
-                  {message.role === "user" && (
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        <User className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-          <form onSubmit={handleSubmit} className="flex items-center gap-2 mt-4">
-            <Input
-              placeholder="Schreibe eine Nachricht..."
-              value={input}
-              onChange={handleInputChange}
-            />
-            <Button type="submit" size="icon">
-              <SendHorizontal className="h-4 w-4" />
-            </Button>
-          </form>
+          <ChatMessages messages={messages} scrollRef={scrollRef} />
+          <ChatInput 
+            input={input}
+            handleInputChange={handleInputChange}
+            handleSubmit={handleSubmit}
+          />
         </div>
       </DialogContent>
     </Dialog>

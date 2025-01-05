@@ -1,18 +1,18 @@
 import { useState, useEffect } from "react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatDialog } from "@/components/chat/ChatDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { Tables } from "@/integrations/supabase/types/tables";
 
 export const ChatButton = () => {
   const [open, setOpen] = useState(false);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   useEffect(() => {
     checkApiKey();
@@ -48,6 +48,7 @@ export const ChatButton = () => {
       return;
     }
     setOpen(true);
+    setIsMinimized(false);
   };
 
   const handleSaveApiKey = async () => {
@@ -80,9 +81,29 @@ export const ChatButton = () => {
     }
   };
 
+  const handleMinimize = () => {
+    setIsMinimized(true);
+    setOpen(false);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setIsMinimized(false);
+  };
+
   return (
     <>
-      <div className="fixed bottom-4 right-4">
+      <div className="fixed bottom-4 right-4 flex gap-2">
+        {isMinimized && (
+          <Button 
+            variant="outline" 
+            size="icon"
+            className="rounded-full bg-destructive hover:bg-destructive/90"
+            onClick={handleClose}
+          >
+            <X className="h-4 w-4 text-destructive-foreground" />
+          </Button>
+        )}
         <Button 
           variant="outline" 
           size="icon" 
@@ -112,7 +133,7 @@ export const ChatButton = () => {
         </DialogContent>
       </Dialog>
 
-      <ChatDialog open={open} onOpenChange={setOpen} />
+      <ChatDialog open={open} onOpenChange={handleMinimize} />
     </>
   );
 };
