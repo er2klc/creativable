@@ -52,9 +52,6 @@ export const CalendarView = () => {
 
       return data || [];
     },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchInterval: 30000,
   });
 
   const handleDateClick = (date: Date) => {
@@ -93,40 +90,39 @@ export const CalendarView = () => {
   const handleDragEnd = async (event: DragEndEvent) => {
     setActiveId(null);
     setOverDate(null);
-    const { active, over } = event;
     
+    const { active, over } = event;
     if (!over || !active.data.current) return;
 
     const appointment = active.data.current;
     const newDateStr = over.id as string;
-    
+
     try {
+      // Parse the dates
       const oldDate = new Date(appointment.due_date);
       const newDate = parseISO(newDateStr);
-      
-      // Keep the same time from the old date
+
+      // Transfer the time from the old date to the new date
       newDate.setHours(oldDate.getHours());
       newDate.setMinutes(oldDate.getMinutes());
-      newDate.setSeconds(oldDate.getSeconds());
+      newDate.setSeconds(0);
+      newDate.setMilliseconds(0);
 
-      console.log('Updating appointment:', {
-        id: appointment.id,
-        oldDate: oldDate.toISOString(),
-        newDate: newDate.toISOString()
-      });
-
+      // Update the appointment in Supabase
       const { error } = await supabase
         .from("tasks")
-        .update({ 
-          due_date: newDate.toISOString() 
+        .update({
+          due_date: newDate.toISOString()
         })
         .eq("id", appointment.id);
 
       if (error) {
-        console.error('Error updating appointment:', error);
-        throw error;
+        console.error("Error updating appointment:", error);
+        toast.error("Fehler beim Verschieben des Termins");
+        return;
       }
 
+      // Invalidate and refetch the appointments
       await queryClient.invalidateQueries({ queryKey: ["appointments"] });
       toast.success("Termin wurde verschoben");
     } catch (error) {
@@ -178,7 +174,7 @@ export const CalendarView = () => {
           {eachDayOfInterval({
             start: startOfMonth(currentDate),
             end: endOfMonth(currentDate),
-          }).map((day, dayIdx) => {
+          }).map((day) => {
             const dayAppointments = getDayAppointments(day);
             const dateStr = format(day, "yyyy-MM-dd");
             const isOver = overDate === dateStr;
@@ -191,7 +187,7 @@ export const CalendarView = () => {
                   "min-h-[100px] bg-background p-2 relative transition-colors duration-200",
                   !isSameMonth(day, currentDate) && "text-muted-foreground",
                   "hover:bg-accent hover:text-accent-foreground cursor-pointer",
-                  isOver && "bg-accent/50"
+                  isOver && "bg-accent"
                 )}
                 onClick={() => handleDateClick(day)}
               >
