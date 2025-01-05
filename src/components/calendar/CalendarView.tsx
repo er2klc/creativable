@@ -61,7 +61,8 @@ export const CalendarView = () => {
           teams:team_id (name)
         `)
         .in("team_id", teamIds)
-        .not("start_time", "is", null)
+        .gte('start_time', format(new Date(currentDate.getFullYear(), currentDate.getMonth(), 1), 'yyyy-MM-dd'))
+        .lte('start_time', format(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0), 'yyyy-MM-dd'))
         .or(`is_admin_only.eq.false${isAdmin ? ',is_admin_only.eq.true' : ''}`);
 
       if (error) {

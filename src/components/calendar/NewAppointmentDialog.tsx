@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { AppointmentForm } from "./appointment-dialog/AppointmentForm";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface NewAppointmentDialogProps {
   open: boolean;
@@ -40,6 +40,11 @@ export const NewAppointmentDialog = ({
 }: NewAppointmentDialogProps) => {
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate || new Date());
+
+  // Update selectedDate when initialSelectedDate changes
+  useEffect(() => {
+    setSelectedDate(initialSelectedDate || new Date());
+  }, [initialSelectedDate]);
 
   const createAppointment = useMutation({
     mutationFn: async (values: any) => {
@@ -78,7 +83,7 @@ export const NewAppointmentDialog = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["leads"] }); // Refresh leads to show new task
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast.success(appointmentToEdit ? "Termin aktualisiert" : "Termin erstellt");
       onOpenChange(false);
     },
