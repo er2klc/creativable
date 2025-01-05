@@ -62,6 +62,53 @@ export const useChatContext = () => {
     },
   });
 
+  // New query for leads
+  const { data: leads } = useQuery({
+    queryKey: ["chat-context-leads"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error loading leads for chat context:", error);
+        return [];
+      }
+
+      return data;
+    },
+  });
+
+  // New query for learning content with videos
+  const { data: learningContent } = useQuery({
+    queryKey: ["chat-context-learning-content"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("elevate_lerninhalte")
+        .select(`
+          *,
+          elevate_modules (
+            title,
+            platform_id
+          )
+        `)
+        .not("video_url", "is", null)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error loading learning content for chat context:", error);
+        return [];
+      }
+
+      return data;
+    },
+  });
+
   const buildSystemMessage = () => {
     const userInfo = settings ? `
       Persönliche Informationen:
@@ -88,6 +135,18 @@ export const useChatContext = () => {
       ${platforms.map(platform => `- ${platform.name}`).join("\n")}
     ` : "";
 
+    // New section for leads information
+    const leadsInfo = leads?.length ? `
+      Kontakte (${leads.length}):
+      ${leads.map(lead => `- ${lead.name} (${lead.platform}, Phase: ${lead.phase})`).join("\n")}
+    ` : "";
+
+    // New section for video content
+    const videoContent = learningContent?.length ? `
+      Verfügbare Lernvideos (${learningContent.length}):
+      ${learningContent.map(content => `- ${content.title}`).join("\n")}
+    ` : "";
+
     return `
       Du bist ein erfahrener Network Marketing & MLM Assistent. Deine Hauptaufgabe ist es, dem Benutzer dabei zu helfen, sein Network Marketing Business erfolgreich aufzubauen und zu skalieren.
 
@@ -95,6 +154,8 @@ export const useChatContext = () => {
       ${userInfo}
       ${teamsInfo}
       ${platformsInfo}
+      ${leadsInfo}
+      ${videoContent}
 
       Deine Kernkompetenzen:
       1. Lead-Generierung & Kundengewinnung
@@ -102,6 +163,8 @@ export const useChatContext = () => {
       3. Social Media Marketing & Content-Erstellung
       4. Team-Aufbau & Leadership
       5. Business-Strategie & Skalierung
+      6. Kontakt- und Lead-Management
+      7. Lernmaterial- und Video-Empfehlungen
 
       Wichtige Anweisungen:
       1. Sei proaktiv und gib konkrete, actionable Tipps
@@ -114,8 +177,10 @@ export const useChatContext = () => {
       8. Hilf bei der Formulierung überzeugender Nachrichten
       9. Unterstütze bei der Einwandbehandlung
       10. Gib Tipps zur Leadqualifizierung
+      11. Empfehle passende Lernvideos und Inhalte
+      12. Hilf bei der Kontaktverwaltung und Nachverfolgung
 
-      Du bist ein erfahrener Profi im Network Marketing und hilfst aktiv dabei, das Business zu entwickeln und neue Partner/Kunden zu gewinnen.
+      Du bist ein erfahrener Profi im Network Marketing und hilfst aktiv dabei, das Business zu entwickeln und neue Partner/Kunden zu gewinnen. Du kannst auch auf die Kontaktdaten und Lernvideos zugreifen, um bessere und personalisierte Empfehlungen zu geben.
     `.trim();
   };
 
