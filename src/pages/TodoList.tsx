@@ -44,24 +44,41 @@ const TodoList = () => {
 
   // Set up real-time subscription
   useEffect(() => {
+    // Enable REPLICA IDENTITY FULL for the tasks table
     const channel = supabase
       .channel('tasks-changes')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'tasks',
           filter: 'completed=eq.false'
         },
-        () => {
-          console.log("Task change detected, refreshing...");
+        (payload) => {
+          console.log("New task inserted:", payload);
           queryClient.invalidateQueries({ queryKey: ["tasks-without-date"] });
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'tasks',
+          filter: 'completed=eq.false'
+        },
+        (payload) => {
+          console.log("Task updated:", payload);
+          queryClient.invalidateQueries({ queryKey: ["tasks-without-date"] });
+        }
+      )
+      .subscribe((status) => {
+        console.log("Subscription status:", status);
+      });
 
     return () => {
+      console.log("Cleaning up subscription");
       supabase.removeChannel(channel);
     };
   }, [queryClient]);
