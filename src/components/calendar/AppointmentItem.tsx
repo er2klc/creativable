@@ -84,9 +84,9 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         }
       }}
     >
-      <div className="flex items-center gap-1 text-xs">
+      <div className="flex items-center gap-1 text-xs text-gray-600">
         {appointment.isAdminEvent ? (
-          <Infinity className="h-3 w-3 text-primary" />
+          <Infinity className="h-4 w-4 text-primary" />
         ) : appointment.isTeamEvent ? (
           <Users className="h-3 w-3" />
         ) : (

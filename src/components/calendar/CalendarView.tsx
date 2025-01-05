@@ -74,10 +74,10 @@ export const CalendarView = () => {
         ...event,
         id: `team-${event.id}`,
         due_date: event.start_time,
-        title: `[${event.teams?.name}] ${event.title}`,
+        title: event.title,
         isTeamEvent: true,
         isAdminEvent: event.is_admin_only,
-        color: `${event.color || "#FEF7CD"}80`,
+        color: `${event.color || "#FEF7CD"}30`,
         isRecurring: event.recurring_pattern !== 'none'
       }));
     },
