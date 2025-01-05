@@ -86,7 +86,11 @@ export const CalendarView = () => {
         created_at: event.created_at,
         user_id: event.created_by,
         lead_id: null,
-        leads: { name: event.teams?.name || 'Team Event' }
+        leads: { name: event.teams?.name || 'Team Event' },
+        start_time: event.start_time,
+        end_time: event.end_time,
+        recurring_pattern: event.recurring_pattern,
+        recurring_day_of_week: event.recurring_day_of_week
       }));
     },
   });

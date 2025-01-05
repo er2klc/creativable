@@ -75,7 +75,8 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         "p-2 mb-1 rounded hover:opacity-80",
         "transition-colors duration-200 space-y-1",
         appointment.isRecurring && "border-l-4 border-primary",
-        appointment.isTeamEvent && "border border-gray-200"
+        appointment.isTeamEvent && "border border-gray-200",
+        !appointment.isTeamEvent && "text-black"
       )}
       onClick={(e) => {
         // Only trigger onClick for personal appointments or if explicitly allowed
