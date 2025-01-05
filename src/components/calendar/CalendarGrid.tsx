@@ -38,27 +38,26 @@ export const CalendarGrid = ({
     [currentDate]
   );
 
-  // Create droppable elements for each day
-  const droppables = useMemo(() => 
-    days.map(day => {
+  // Create droppable states for all days at once
+  const droppableStates = useMemo(() => {
+    const states: { [key: string]: ReturnType<typeof useDroppable> } = {};
+    days.forEach(day => {
       const dateStr = format(day, "yyyy-MM-dd");
-      const { setNodeRef, isOver } = useDroppable({ 
+      states[dateStr] = useDroppable({
         id: dateStr,
         data: { date: day }
       });
-      return { date: day, dateStr, setNodeRef, isOver };
-    }),
-    [days]
-  );
+    });
+    return states;
+  }, [days]);
 
   return (
     <div className="relative">
-      {/* Month change indicators */}
       {monthChangeIndicator === 'prev' && (
-        <div className="absolute left-0 top-0 h-full w-16 bg-primary/10 pointer-events-none" />
+        <div className="absolute left-0 top-0 h-full w-16 bg-primary/10 pointer-events-none z-10" />
       )}
       {monthChangeIndicator === 'next' && (
-        <div className="absolute right-0 top-0 h-full w-16 bg-primary/10 pointer-events-none" />
+        <div className="absolute right-0 top-0 h-full w-16 bg-primary/10 pointer-events-none z-10" />
       )}
 
       <div className="grid grid-cols-7 gap-px bg-muted">
@@ -71,9 +70,11 @@ export const CalendarGrid = ({
           </div>
         ))}
 
-        {droppables.map(({ date, dateStr, setNodeRef }) => {
+        {days.map((date) => {
+          const dateStr = format(date, "yyyy-MM-dd");
+          const { setNodeRef, isOver } = droppableStates[dateStr] || {};
           const dayAppointments = getDayAppointments(date);
-          const isOver = overDate === dateStr;
+          const isCurrentOver = overDate === dateStr;
           
           return (
             <div
@@ -84,7 +85,7 @@ export const CalendarGrid = ({
                 "min-h-[100px] bg-background p-2 relative transition-colors duration-200",
                 !isSameMonth(date, currentDate) && "text-muted-foreground",
                 "hover:bg-accent hover:text-accent-foreground cursor-pointer",
-                isOver && "bg-accent/50"
+                isCurrentOver && "bg-accent/50"
               )}
               onClick={() => onDateClick(date)}
               onMouseEnter={(e) => {
@@ -95,8 +96,10 @@ export const CalendarGrid = ({
 
                   if (mouseX - rect.left < threshold) {
                     setMonthChangeIndicator('prev');
+                    if (onMonthChange) onMonthChange('prev');
                   } else if (rect.right - mouseX < threshold) {
                     setMonthChangeIndicator('next');
+                    if (onMonthChange) onMonthChange('next');
                   } else {
                     setMonthChangeIndicator(null);
                   }
