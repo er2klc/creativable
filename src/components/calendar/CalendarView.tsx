@@ -39,7 +39,7 @@ export const CalendarView = () => {
         .from("tasks")
         .select("*, leads(name)")
         .eq("user_id", user.id)
-        .eq("meeting_type", "meeting")
+        .not("due_date", "is", null)  // Only fetch tasks with a due_date
         .gte("due_date", startDate.toISOString())
         .lte("due_date", endDate.toISOString());
 
@@ -141,9 +141,7 @@ export const CalendarView = () => {
             start: startOfMonth(currentDate),
             end: endOfMonth(currentDate),
           }).map((day, dayIdx) => {
-            const dayAppointments = appointments?.filter(
-              (appointment) => format(new Date(appointment.due_date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd")
-            );
+            const dayAppointments = getDayAppointments(day);
             
             return (
               <div
