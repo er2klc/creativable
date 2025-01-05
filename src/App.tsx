@@ -12,7 +12,8 @@ import Leads from "./pages/Leads";
 import Messages from "./pages/Messages";
 import Settings from "./pages/Settings";
 import Changelog from "./pages/Changelog";
-import Calendar from "./pages/Calendar"; // New import
+import Calendar from "./pages/Calendar";
+import TodoList from "./pages/TodoList";
 import LinkedInCallback from "./pages/auth/callback/LinkedIn";
 import InstagramCallback from "./pages/auth/callback/Instagram";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
@@ -56,6 +57,11 @@ const App = () => (
       <Route path="/calendar" element={
         <ProtectedRoute>
           <AppLayout><Calendar /></AppLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/todo" element={
+        <ProtectedRoute>
+          <AppLayout><TodoList /></AppLayout>
         </ProtectedRoute>
       } />
       <Route path="/unity" element={

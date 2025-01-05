@@ -8,13 +8,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { 
   LayoutGrid, 
   Users, 
   MessageSquare, 
-  Calendar, 
+  Calendar,
+  CheckSquare,
   BarChart, 
   Settings,
   FileText,
@@ -39,6 +39,7 @@ const personalItems = [
     badge: true 
   },
   { title: "Kalender", icon: Calendar, url: "/calendar" },
+  { title: "Aufgaben", icon: CheckSquare, url: "/todo" },
 ];
 
 const teamItems = [
