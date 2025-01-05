@@ -48,19 +48,20 @@ serve(async (req) => {
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
-    let accumulatedContent = '';
-
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          let currentContent = '';
+
           while (true) {
             const { done, value } = await reader.read();
+            
             if (done) {
-              // Send final accumulated content if any
-              if (accumulatedContent) {
+              // Send final message if there's accumulated content
+              if (currentContent) {
                 const finalMessage = {
                   role: "assistant",
-                  content: accumulatedContent,
+                  content: currentContent,
                 };
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
               }
@@ -75,10 +76,7 @@ serve(async (req) => {
               const trimmedLine = line.trim();
               if (!trimmedLine) continue;
               
-              if (trimmedLine === 'data: [DONE]') {
-                controller.close();
-                return;
-              }
+              if (trimmedLine === 'data: [DONE]') continue;
 
               if (trimmedLine.startsWith('data: ')) {
                 try {
@@ -87,8 +85,13 @@ serve(async (req) => {
                   const content = json.choices?.[0]?.delta?.content;
                   
                   if (content) {
-                    console.log('Processing content chunk:', content);
-                    accumulatedContent += content;
+                    currentContent += content;
+                    // Stream each update immediately
+                    const message = {
+                      role: "assistant",
+                      content: currentContent,
+                    };
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
                   }
                 } catch (error) {
                   console.warn('Invalid JSON in line:', trimmedLine, error);
