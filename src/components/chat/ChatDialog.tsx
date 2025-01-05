@@ -30,7 +30,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     body: {
       language: 'de',
     },
-    experimental_streamData: true,
     onResponse: (response) => {
       if (!response.ok) {
         console.error("Chat response error:", response.status, response.statusText);
@@ -48,7 +47,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     onError: (error) => {
       console.error("Chat error:", error);
       setIsThinking(false);
-      // Don't show error toast for parsing errors as they don't affect functionality
       if (!error.message.includes('Failed to parse')) {
         toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
       }

@@ -57,7 +57,6 @@ serve(async (req) => {
             const { done, value } = await reader.read();
             
             if (done) {
-              // Send final message if there's accumulated content
               if (currentContent) {
                 const finalMessage = {
                   role: "assistant",
@@ -74,9 +73,7 @@ serve(async (req) => {
 
             for (const line of lines) {
               const trimmedLine = line.trim();
-              if (!trimmedLine) continue;
-              
-              if (trimmedLine === 'data: [DONE]') continue;
+              if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
 
               if (trimmedLine.startsWith('data: ')) {
                 try {
@@ -86,7 +83,6 @@ serve(async (req) => {
                   
                   if (content) {
                     currentContent += content;
-                    // Stream each update immediately
                     const message = {
                       role: "assistant",
                       content: currentContent,
