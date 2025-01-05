@@ -49,7 +49,8 @@ export const CalendarView = () => {
       }
 
       return data || [];
-    }
+    },
+    refetchOnWindowFocus: true,
   });
 
   const days = eachDayOfInterval({
@@ -101,7 +102,6 @@ export const CalendarView = () => {
 
       if (error) throw error;
 
-      // Invalidate both the current and next/previous month queries to ensure proper updates
       await queryClient.invalidateQueries({ queryKey: ["appointments"] });
       toast.success("Termin wurde verschoben");
     } catch (error) {
@@ -124,10 +124,10 @@ export const CalendarView = () => {
             {format(currentDate, "MMMM yyyy", { locale: de })}
           </h2>
           <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={previousMonth}>
+            <Button variant="outline" size="icon" onClick={() => setCurrentDate(subMonths(currentDate, 1))}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={nextMonth}>
+            <Button variant="outline" size="icon" onClick={() => setCurrentDate(addMonths(currentDate, 1))}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -143,7 +143,10 @@ export const CalendarView = () => {
             </div>
           ))}
 
-          {days.map((day, dayIdx) => {
+          {eachDayOfInterval({
+            start: startOfMonth(currentDate),
+            end: endOfMonth(currentDate),
+          }).map((day, dayIdx) => {
             const dayAppointments = getDayAppointments(day);
             
             return (
