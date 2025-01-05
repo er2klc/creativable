@@ -6,11 +6,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Plus, ListTodo } from "lucide-react";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { useSettings } from "@/hooks/use-settings";
 import { SuccessAnimation } from "@/components/ui/success-animation";
 import { AddTaskDialog } from "@/components/todo/AddTaskDialog";
 import { useNavigate } from "react-router-dom";
+import type { Tables } from "@/integrations/supabase/types";
+
+type Task = Tables<"tasks">;
 
 const TodoList = () => {
   const { settings } = useSettings();
@@ -18,8 +21,9 @@ const TodoList = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const navigate = useNavigate();
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-  const { data: tasks = [] } = useQuery({
+  const { data: fetchedTasks = [] } = useQuery({
     queryKey: ["tasks-without-date"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -40,11 +44,14 @@ const TodoList = () => {
 
       return data;
     },
+    onSuccess: (data) => {
+      setTasks(data);
+    }
   });
 
   // Set up real-time subscription
   useEffect(() => {
- // Enable REPLICA IDENTITY FULL for the tasks table
+    console.log("Setting up real-time subscription");
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -53,7 +60,7 @@ const TodoList = () => {
           event: 'INSERT',
           schema: 'public',
           table: 'tasks',
-          filter: 'completed=eq.false'
+          filter: 'completed=eq.false and due_date is null'
         },
         (payload) => {
           console.log("New task inserted:", payload);
@@ -66,7 +73,7 @@ const TodoList = () => {
           event: 'UPDATE',
           schema: 'public',
           table: 'tasks',
-          filter: 'completed=eq.false'
+          filter: 'completed=eq.false and due_date is null'
         },
         (payload) => {
           console.log("Task updated:", payload);
@@ -92,11 +99,9 @@ const TodoList = () => {
 
       if (error) throw error;
 
-      // Show success animation
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
-        // Invalidate queries after animation
         queryClient.invalidateQueries({ queryKey: ["tasks-without-date"] });
         queryClient.invalidateQueries({ queryKey: ["lead"] });
       }, 1500);
@@ -113,6 +118,10 @@ const TodoList = () => {
 
   const handleContactClick = (leadId: string) => {
     navigate(`/leads?leadId=${leadId}`);
+  };
+
+  const handleReorder = async (reorderedTasks: Task[]) => {
+    setTasks(reorderedTasks);
   };
 
   return (
@@ -135,42 +144,45 @@ const TodoList = () => {
       </div>
       
       <div className="grid gap-4">
-        <AnimatePresence>
-          {tasks.map((task) => (
-            <motion.div
-              key={task.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ 
-                opacity: 0, 
-                x: -300,
-                transition: { duration: 0.5 }
-              }}
-              layout
-            >
-              <Card className="p-4">
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    checked={task.completed}
-                    onCheckedChange={() => handleComplete(task.id)}
-                    className="mt-1"
-                  />
-                  <div className={`flex-1 ${task.completed ? "line-through text-muted-foreground" : ""}`}>
-                    <div className="font-medium">{task.title}</div>
-                    {task.leads && (
-                      <button 
-                        onClick={() => handleContactClick(task.lead_id)}
-                        className="text-sm text-muted-foreground mt-1 hover:text-primary transition-colors"
-                      >
-                        {settings?.language === "en" ? "Contact" : "Kontakt"}: {task.leads.name}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        <Reorder.Group axis="y" values={tasks} onReorder={handleReorder}>
+          <AnimatePresence>
+            {tasks.map((task) => (
+              <Reorder.Item key={task.id} value={task}>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ 
+                    opacity: 0, 
+                    x: -300,
+                    transition: { duration: 0.5 }
+                  }}
+                  layout
+                >
+                  <Card className="p-4 cursor-move">
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        checked={task.completed}
+                        onCheckedChange={() => handleComplete(task.id)}
+                        className="mt-1"
+                      />
+                      <div className={`flex-1 ${task.completed ? "line-through text-muted-foreground" : ""}`}>
+                        <div className="font-medium">{task.title}</div>
+                        {task.leads && (
+                          <button 
+                            onClick={() => handleContactClick(task.lead_id)}
+                            className="text-sm text-muted-foreground mt-1 hover:text-primary transition-colors"
+                          >
+                            {settings?.language === "en" ? "Contact" : "Kontakt"}: {task.leads.name}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              </Reorder.Item>
+            ))}
+          </AnimatePresence>
+        </Reorder.Group>
 
         {tasks.length === 0 && (
           <div className="text-center text-muted-foreground py-8">
