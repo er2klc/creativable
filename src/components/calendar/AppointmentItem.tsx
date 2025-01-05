@@ -1,7 +1,7 @@
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check } from "lucide-react";
+import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AppointmentItemProps {
@@ -78,7 +78,8 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         appointment.isRecurring && "border-l-4 border-primary",
         appointment.isTeamEvent && "border border-gray-200",
         !appointment.isTeamEvent && "text-black",
-        appointment.completed && "bg-opacity-50"
+        appointment.completed && "bg-opacity-50",
+        appointment.cancelled && "bg-opacity-30"
       )}
       onClick={(e) => {
         // Only trigger onClick for personal appointments or if explicitly allowed
@@ -110,8 +111,8 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         <span>{timeString}</span>
       </div>
 
-      {/* Completed indicator */}
-      {!appointment.isTeamEvent && appointment.completed && (
+      {/* Status indicator */}
+      {!appointment.isTeamEvent && (appointment.completed || appointment.cancelled) && (
         <div className="absolute bottom-1 right-1">
           <Button 
             variant="ghost" 
@@ -120,12 +121,42 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
             onClick={(e) => {
               e.stopPropagation();
               if (appointment.onComplete) {
-                appointment.onComplete(!appointment.completed);
+                if (appointment.cancelled) {
+                  appointment.onCancel(false);
+                } else {
+                  appointment.onComplete(!appointment.completed);
+                }
               }
             }}
           >
-            <Check className="h-3 w-3 text-green-600" />
+            {appointment.cancelled ? (
+              <X className="h-3 w-3 text-red-600" />
+            ) : (
+              <Check className="h-3 w-3 text-green-600" />
+            )}
           </Button>
+        </div>
+      )}
+
+      {/* Drop zones */}
+      {!appointment.isTeamEvent && !isDragging && (
+        <div className="absolute bottom-0 left-0 right-0 flex h-1 -mx-2 -mb-1 rounded-b overflow-hidden">
+          <div 
+            className="w-1/2 bg-green-100 hover:bg-green-200 transition-colors"
+            onMouseUp={() => {
+              if (appointment.onComplete) {
+                appointment.onComplete(true);
+              }
+            }}
+          />
+          <div 
+            className="w-1/2 bg-red-100 hover:bg-red-200 transition-colors"
+            onMouseUp={() => {
+              if (appointment.onCancel) {
+                appointment.onCancel(true);
+              }
+            }}
+          />
         </div>
       )}
     </div>

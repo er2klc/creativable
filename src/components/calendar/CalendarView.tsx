@@ -72,7 +72,6 @@ export const CalendarView = () => {
         return [];
       }
 
-      // Transform team events to match the appointment structure
       return events.map(event => ({
         id: `team-${event.id}`,
         title: event.title,
@@ -99,14 +98,30 @@ export const CalendarView = () => {
     try {
       const { error } = await supabase
         .from('tasks')
-        .update({ completed })
+        .update({ completed, cancelled: false })
         .eq('id', appointment.id);
 
       if (error) throw error;
 
-      // Invalidate and refetch appointments
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
       toast.success(completed ? 'Termin als erledigt markiert' : 'Termin als nicht erledigt markiert');
+    } catch (error) {
+      console.error('Error updating appointment:', error);
+      toast.error('Fehler beim Aktualisieren des Termins');
+    }
+  };
+
+  const handleCancelAppointment = async (appointment: any, cancelled: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ cancelled, completed: false })
+        .eq('id', appointment.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      toast.success(cancelled ? 'Termin als abgesagt markiert' : 'Termin als nicht abgesagt markiert');
     } catch (error) {
       console.error('Error updating appointment:', error);
       toast.error('Fehler beim Aktualisieren des Termins');
@@ -122,6 +137,9 @@ export const CalendarView = () => {
       ...appointment,
       onComplete: !appointment.isTeamEvent ? 
         (completed: boolean) => handleCompleteAppointment(appointment, completed) : 
+        undefined,
+      onCancel: !appointment.isTeamEvent ?
+        (cancelled: boolean) => handleCancelAppointment(appointment, cancelled) :
         undefined
     })).filter(
       (appointment) => format(new Date(appointment.due_date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
