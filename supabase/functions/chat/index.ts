@@ -14,7 +14,10 @@ serve(async (req) => {
     const openaiApiKey = req.headers.get('x-openai-key');
     if (!openaiApiKey) {
       console.error('OpenAI API Key missing');
-      throw new Error('OpenAI API Key is required');
+      return new Response(JSON.stringify({ error: 'OpenAI API Key is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const { messages, language = 'de' } = await req.json();
@@ -41,11 +44,12 @@ serve(async (req) => {
     if (!response.ok) {
       const error = await response.json();
       console.error('OpenAI API error:', error);
-      throw new Error('Failed to get response from OpenAI');
+      return new Response(JSON.stringify({ error: 'Failed to get response from OpenAI' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Transform the stream
-    const reader = response.body!.getReader();
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
@@ -74,7 +78,7 @@ serve(async (req) => {
             if (content) {
               currentContent += content;
               const message = {
-                role: 'assistant',
+                role: "assistant",
                 content: currentContent
               };
               controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
@@ -94,7 +98,7 @@ serve(async (req) => {
               if (content) {
                 currentContent += content;
                 const message = {
-                  role: 'assistant',
+                  role: "assistant",
                   content: currentContent
                 };
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
