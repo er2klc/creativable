@@ -101,19 +101,31 @@ export const CalendarView = () => {
     const newDateStr = over.id as string;
     
     try {
+      const oldDate = new Date(appointment.due_date);
       const newDate = parseISO(newDateStr);
-      const oldDate = parseISO(appointment.due_date);
-
-      // Keep the same time, just change the date
+      
+      // Keep the same time from the old date
       newDate.setHours(oldDate.getHours());
       newDate.setMinutes(oldDate.getMinutes());
+      newDate.setSeconds(oldDate.getSeconds());
+
+      console.log('Updating appointment:', {
+        id: appointment.id,
+        oldDate: oldDate.toISOString(),
+        newDate: newDate.toISOString()
+      });
 
       const { error } = await supabase
         .from("tasks")
-        .update({ due_date: newDate.toISOString() })
+        .update({ 
+          due_date: newDate.toISOString() 
+        })
         .eq("id", appointment.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating appointment:', error);
+        throw error;
+      }
 
       await queryClient.invalidateQueries({ queryKey: ["appointments"] });
       toast.success("Termin wurde verschoben");
