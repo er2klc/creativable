@@ -10,6 +10,26 @@ import { CalendarGrid } from "./CalendarGrid";
 import { NewAppointmentDialog } from "./NewAppointmentDialog";
 import { Switch } from "@/components/ui/switch";
 
+interface TeamEvent {
+  id: string;
+  title: string;
+  due_date: string;
+  color: string;
+  isTeamEvent: boolean;
+  isAdminEvent: boolean;
+  isRecurring: boolean;
+  meeting_type: string;
+  completed: boolean;
+  created_at: string;
+  user_id: string;
+  lead_id?: string;
+  leads: { name: string };
+  start_time: string;
+  end_time?: string;
+  recurring_pattern?: string;
+  recurring_day_of_week?: number;
+}
+
 export const CalendarView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
@@ -91,7 +111,7 @@ export const CalendarView = () => {
         end_time: event.end_time,
         recurring_pattern: event.recurring_pattern,
         recurring_day_of_week: event.recurring_day_of_week
-      }));
+      })) as TeamEvent[];
     },
   });
 
@@ -104,7 +124,6 @@ export const CalendarView = () => {
 
       if (error) throw error;
 
-      // Invalidate and refetch appointments
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
       toast.success(completed ? 'Termin als erledigt markiert' : 'Termin als nicht erledigt markiert');
     } catch (error) {
@@ -120,6 +139,7 @@ export const CalendarView = () => {
     }
     return allAppointments.map(appointment => ({
       ...appointment,
+      isTeamEvent: 'isTeamEvent' in appointment ? appointment.isTeamEvent : false,
       onComplete: !appointment.isTeamEvent ? 
         (completed: boolean) => handleCompleteAppointment(appointment, completed) : 
         undefined
