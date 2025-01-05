@@ -87,7 +87,7 @@ export const CalendarView = () => {
     if (!over || !active.data.current) return;
 
     const appointment = active.data.current;
-    const newDate = new Date(over.id as string);
+    const newDate = new Date(over.id);
     const oldDate = parseISO(appointment.due_date);
 
     // Keep the same time, just change the date
@@ -139,7 +139,7 @@ export const CalendarView = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-px bg-muted relative">
+        <div className="grid grid-cols-7 gap-px bg-muted">
           {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day) => (
             <div
               key={day}
