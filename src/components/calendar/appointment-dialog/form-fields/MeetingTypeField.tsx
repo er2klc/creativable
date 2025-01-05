@@ -28,7 +28,7 @@ const MEETING_TYPES = [
   { value: "call", label: "Telefonat" },
   { value: "video_call", label: "Video Call" },
   { value: "follow_up", label: "Follow-up" },
-];
+] as const;
 
 interface MeetingTypeFieldProps {
   form: UseFormReturn<any>;
@@ -36,11 +36,6 @@ interface MeetingTypeFieldProps {
 
 export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
   const [open, setOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
-
-  const filteredTypes = MEETING_TYPES.filter(type => 
-    type.label.toLowerCase().includes(searchValue.toLowerCase())
-  );
 
   return (
     <FormField
@@ -61,25 +56,19 @@ export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
                     !field.value && "text-muted-foreground"
                   )}
                 >
-                  {field.value ? (
-                    MEETING_TYPES.find(type => type.value === field.value)?.label
-                  ) : (
-                    "Wähle eine Terminart"
-                  )}
+                  {field.value
+                    ? MEETING_TYPES.find((type) => type.value === field.value)?.label
+                    : "Wähle eine Terminart"}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </FormControl>
             </PopoverTrigger>
             <PopoverContent className="w-[200px] p-0" align="start">
               <Command>
-                <CommandInput 
-                  placeholder="Suche Terminart..." 
-                  value={searchValue}
-                  onValueChange={setSearchValue}
-                />
+                <CommandInput placeholder="Suche Terminart..." />
                 <CommandEmpty>Keine Terminart gefunden.</CommandEmpty>
                 <CommandGroup>
-                  {filteredTypes.map((type) => (
+                  {MEETING_TYPES.map((type) => (
                     <CommandItem
                       key={type.value}
                       value={type.value}
