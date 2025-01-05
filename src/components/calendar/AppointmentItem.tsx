@@ -39,22 +39,30 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
     return null;
   }
 
+  // Determine if the appointment is draggable
+  const isDraggable = !appointment.isTeamEvent;
+
   return (
     <div
       ref={setNodeRef}
       style={{
         ...style,
         backgroundColor: appointment.color || "#FEF7CD",
-        cursor: appointment.isTeamEvent ? 'default' : 'pointer'
+        cursor: isDraggable ? 'pointer' : 'default'
       }}
-      {...(appointment.isTeamEvent ? {} : { ...listeners, ...attributes })}
+      {...(isDraggable ? { ...listeners, ...attributes } : {})}
       className={cn(
         "p-2 mb-1 rounded hover:opacity-80",
         "transition-colors duration-200 space-y-1",
         appointment.isRecurring && "border-l-4 border-primary",
         appointment.isTeamEvent && "border border-gray-200"
       )}
-      onClick={onClick}
+      onClick={(e) => {
+        // Only trigger onClick for personal appointments or if explicitly allowed
+        if (!appointment.isTeamEvent) {
+          onClick(e);
+        }
+      }}
     >
       <div className="flex items-center gap-1 text-xs">
         {appointment.isAdminEvent ? (
