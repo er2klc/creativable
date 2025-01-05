@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
+import { useChatContext } from "@/hooks/use-chat-context";
 
 interface ChatDialogProps {
   open: boolean;
@@ -19,6 +20,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { systemMessage } = useChatContext();
 
   const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
     api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
@@ -26,6 +28,13 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       Authorization: `Bearer ${sessionToken}`,
       'X-OpenAI-Key': apiKey || '',
     },
+    initialMessages: [
+      {
+        id: "system",
+        role: "system",
+        content: systemMessage,
+      }
+    ],
     streamProtocol: 'text',
     onResponse: () => {
       console.log("Chat response started");
