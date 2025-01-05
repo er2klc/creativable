@@ -44,71 +44,8 @@ serve(async (req) => {
       throw new Error('Failed to get response from OpenAI');
     }
 
-    const reader = response.body?.getReader();
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-
-    let accumulatedContent = '';
-    let doneMessageSent = false;
-
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-              if (!doneMessageSent) {
-                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-                doneMessageSent = true;
-              }
-              controller.close();
-              break;
-            }
-
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
-
-            for (const line of lines) {
-              if (line.trim() === '') continue;
-              if (line.trim() === 'data: [DONE]') {
-                if (!doneMessageSent) {
-                  controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-                  doneMessageSent = true;
-                }
-                continue;
-              }
-
-              if (line.startsWith('data: ')) {
-                try {
-                  const jsonStr = line.slice(6);
-                  const json = JSON.parse(jsonStr);
-                  const content = json.choices?.[0]?.delta?.content;
-                  
-                  if (content) {
-                    accumulatedContent += content;
-                    const message = {
-                      role: "assistant",
-                      content: accumulatedContent,
-                    };
-                    
-                    console.log(`Streaming: ${JSON.stringify(message)}`);
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
-                  }
-                } catch (error) {
-                  console.warn('Invalid JSON in line:', line, error);
-                  continue;
-                }
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error in stream processing:', error);
-          controller.error(error);
-        }
-      }
-    });
-
-    return new Response(stream, {
+    // Direkte Weiterleitung des Streams ohne Modifikation
+    return new Response(response.body, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
