@@ -12,6 +12,7 @@ export const CalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
   const { data: appointments } = useQuery({
     queryKey: ["appointments", format(currentDate, "yyyy-MM")],
@@ -49,6 +50,21 @@ export const CalendarView = () => {
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
+    setSelectedAppointment(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleAppointmentClick = (e: React.MouseEvent, appointment: any) => {
+    e.stopPropagation();
+    setSelectedDate(new Date(appointment.due_date));
+    setSelectedAppointment({
+      id: appointment.id,
+      leadId: appointment.lead_id,
+      time: format(new Date(appointment.due_date), "HH:mm"),
+      title: appointment.title,
+      color: appointment.color,
+      meeting_type: appointment.meeting_type,
+    });
     setIsDialogOpen(true);
   };
 
@@ -110,7 +126,12 @@ export const CalendarView = () => {
                 {dayAppointments?.map((appointment) => (
                   <div
                     key={appointment.id}
-                    className="text-xs bg-primary/10 rounded p-1 mb-1 truncate"
+                    className={cn(
+                      "text-xs rounded p-1 mb-1 truncate cursor-pointer hover:opacity-80",
+                      "transition-colors duration-200"
+                    )}
+                    style={{ backgroundColor: appointment.color || "#FEF7CD" }}
+                    onClick={(e) => handleAppointmentClick(e, appointment)}
                     title={`${format(new Date(appointment.due_date), "HH:mm")} - ${appointment.leads?.name}`}
                   >
                     {format(new Date(appointment.due_date), "HH:mm")} - {appointment.leads?.name}
@@ -126,6 +147,7 @@ export const CalendarView = () => {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         selectedDate={selectedDate}
+        appointmentToEdit={selectedAppointment}
       />
     </div>
   );
