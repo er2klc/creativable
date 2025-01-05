@@ -11,6 +11,10 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
 
 const formSchema = z.object({
   title: z.string().min(1, "Titel ist erforderlich"),
@@ -33,12 +37,17 @@ export interface TeamEventFormProps {
 
 export const TeamEventForm = ({ 
   teamId,
-  selectedDate,
+  selectedDate: initialSelectedDate,
   eventToEdit,
   onClose,
   onDisableInstance
 }: TeamEventFormProps) => {
   const queryClient = useQueryClient();
+  const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
+
+  useEffect(() => {
+    setSelectedDate(initialSelectedDate);
+  }, [initialSelectedDate]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,7 +65,11 @@ export const TeamEventForm = ({
 
   const createEventMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const eventDate = selectedDate || new Date();
+      if (!selectedDate) {
+        throw new Error("Bitte wähle ein Datum aus");
+      }
+
+      const eventDate = new Date(selectedDate);
       const [hours, minutes] = values.start_time.split(":");
       eventDate.setHours(parseInt(hours), parseInt(minutes));
 
@@ -107,17 +120,47 @@ export const TeamEventForm = ({
     },
     onError: (error) => {
       console.error("Error saving event:", error);
-      toast.error("Fehler beim Speichern des Termins");
+      if (error instanceof Error && error.message === "Bitte wähle ein Datum aus") {
+        toast.error(error.message);
+      } else {
+        toast.error("Fehler beim Speichern des Termins");
+      }
     },
   });
 
-  const handleSubmit = (values: z.infer<typeof formSchema>) => {
-    createEventMutation.mutate(values);
-  };
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit((values) => createEventMutation.mutate(values))} className="space-y-4">
+        <div className="space-y-2">
+          <FormLabel>Datum</FormLabel>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !selectedDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? (
+                  format(selectedDate, "dd. MMMM yyyy", { locale: de })
+                ) : (
+                  <span>Datum wählen</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate || undefined}
+                onSelect={setSelectedDate}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
         <FormField
           control={form.control}
           name="title"

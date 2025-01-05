@@ -17,6 +17,7 @@ import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { AppointmentForm } from "./appointment-dialog/AppointmentForm";
 import { useState, useEffect } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface NewAppointmentDialogProps {
   open: boolean;
@@ -29,6 +30,7 @@ interface NewAppointmentDialogProps {
     title: string;
     color: string;
     meeting_type: string;
+    completed?: boolean;
   };
 }
 
@@ -40,13 +42,15 @@ export const NewAppointmentDialog = ({
 }: NewAppointmentDialogProps) => {
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [completed, setCompleted] = useState(appointmentToEdit?.completed || false);
 
   // Update selectedDate when initialSelectedDate or open changes
   useEffect(() => {
     if (open) {
       setSelectedDate(initialSelectedDate);
+      setCompleted(appointmentToEdit?.completed || false);
     }
-  }, [initialSelectedDate, open]);
+  }, [initialSelectedDate, open, appointmentToEdit]);
 
   const createAppointment = useMutation({
     mutationFn: async (values: any) => {
@@ -70,6 +74,7 @@ export const NewAppointmentDialog = ({
             due_date: appointmentDate.toISOString(),
             meeting_type: values.meeting_type,
             color: values.color,
+            completed: completed,
           })
           .eq('id', appointmentToEdit.id);
 
@@ -82,6 +87,7 @@ export const NewAppointmentDialog = ({
           due_date: appointmentDate.toISOString(),
           meeting_type: values.meeting_type,
           color: values.color,
+          completed: completed,
         });
 
         if (error) throw error;
@@ -154,6 +160,22 @@ export const NewAppointmentDialog = ({
           defaultValues={appointmentToEdit}
           isEditing={!!appointmentToEdit}
         />
+
+        {appointmentToEdit && (
+          <div className="flex items-center space-x-2 mt-4">
+            <Checkbox
+              id="completed"
+              checked={completed}
+              onCheckedChange={(checked) => setCompleted(checked as boolean)}
+            />
+            <label
+              htmlFor="completed"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Als erledigt markieren
+            </label>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
