@@ -50,8 +50,65 @@ serve(async (req) => {
       });
     }
 
-    // Direkte Weiterleitung des Streams ohne Modifikation
-    return new Response(response.body, {
+    let currentContent = '';
+    
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = response.body!.getReader();
+        const decoder = new TextDecoder();
+        const encoder = new TextEncoder();
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) {
+              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+              break;
+            }
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              const trimmedLine = line.trim();
+              if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+
+              const data = trimmedLine.slice(6);
+              if (data === '[DONE]') {
+                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                continue;
+              }
+
+              try {
+                const json = JSON.parse(data);
+                const content = json.choices[0]?.delta?.content || '';
+                if (content) {
+                  currentContent += content;
+                  const message = {
+                    role: 'assistant',
+                    content: currentContent
+                  };
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
+                }
+              } catch (error) {
+                console.error('Error parsing JSON:', error);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Stream processing error:', error);
+          controller.error(error);
+        } finally {
+          reader.releaseLock();
+        }
+      },
+      cancel() {
+        // Handle stream cancellation if needed
+      }
+    });
+
+    return new Response(stream, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
@@ -59,6 +116,7 @@ serve(async (req) => {
         'Connection': 'keep-alive',
       }
     });
+
   } catch (error) {
     console.error('Error in chat function:', error);
     return new Response(JSON.stringify({ error: error.message }), {
