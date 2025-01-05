@@ -88,6 +88,7 @@ export const TeamCalendarView = ({ teamId, isAdmin, onBack }: TeamCalendarViewPr
         />
 
         <NewTeamEventDialog
+          teamId={teamId}
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           selectedDate={selectedDate}
