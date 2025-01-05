@@ -1,29 +1,21 @@
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { MessageCircle, Send } from "lucide-react";
 import { useChat } from "ai/react";
-import { Bot, SendHorizontal, User } from "lucide-react";
+import { useSettings } from "@/hooks/use-settings";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState, useRef } from "react";
-import { toast } from "sonner";
 
-interface ChatDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
-  const [sessionToken, setSessionToken] = useState<string | null>(null);
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+export const ChatDialog = () => {
+  const { settings } = useSettings();
+  const apiKey = settings?.openai_api_key;
+  const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
+    api: '/functions/v1/chat',
     headers: {
-      Authorization: `Bearer ${sessionToken}`,
       'X-OpenAI-Key': apiKey || '',
     },
     body: {
@@ -31,148 +23,70 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     },
     onResponse: (response) => {
       if (!response.ok) {
-        console.error("Chat response error:", response.status, response.statusText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      console.log("Chat response received");
     },
     onFinish: () => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      }
+      // Handle chat completion if needed
     },
     onError: (error) => {
       console.error("Chat error:", error);
       // Don't show error toast for parsing errors as they don't affect functionality
       if (!error.message.includes('Failed to parse')) {
-        toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
+        toast({
+          title: "Fehler",
+          description: "Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.",
+          variant: "destructive",
+        });
       }
     },
   });
 
-  useEffect(() => {
-    const setupChat = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          console.error("No session found");
-          toast.error("Bitte melden Sie sich an");
-          return;
-        }
-
-        setSessionToken(session.access_token);
-        
-        const { data: chatbotSettings, error: chatbotError } = await supabase
-          .from('chatbot_settings')
-          .select('openai_api_key')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-
-        if (chatbotError) {
-          console.error("Error fetching chatbot settings:", chatbotError);
-          toast.error("Fehler beim Laden der Chat-Einstellungen");
-          return;
-        }
-
-        if (chatbotSettings?.openai_api_key) {
-          console.log("✅ OpenAI API Key found in chatbot_settings");
-          setApiKey(chatbotSettings.openai_api_key);
-        } else {
-          console.warn("⚠️ No OpenAI API Key found in chatbot_settings");
-          toast.error("Bitte fügen Sie einen OpenAI API Key in den Chat-Einstellungen hinzu");
-        }
-      } catch (error) {
-        console.error("Error in setupChat:", error);
-        toast.error("Fehler beim Einrichten des Chats");
-      }
-    };
-
-    if (open) {
-      setupChat();
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  const handleClose = () => {
-    onOpenChange(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogTitle>Chat mit KI-Assistent</DialogTitle>
-        <DialogDescription>
-          Ich helfe Ihnen gerne bei Ihren Fragen und Anliegen.
-        </DialogDescription>
-        <div className="flex flex-col h-[600px]">
-          <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
-            <div className="space-y-4 mb-4">
+    <>
+      <Button
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg"
+      >
+        <MessageCircle className="h-6 w-6" />
+      </Button>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <div className="flex flex-col h-[600px]">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.map((message) => (
                 <div
                   key={message.id}
                   className={cn(
-                    "flex gap-3 text-slate-600 text-sm mb-4",
-                    message.role === "user" && "justify-end"
+                    "flex w-max max-w-[80%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+                    message.role === "user"
+                      ? "ml-auto bg-primary text-primary-foreground"
+                      : "bg-muted"
                   )}
                 >
-                  {message.role === "assistant" && (
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        <Bot className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  <div
-                    className={cn(
-                      "rounded-lg px-3 py-2 max-w-[85%] text-sm whitespace-pre-wrap",
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
-                    )}
-                  >
-                    {message.content}
-                  </div>
-                  {message.role === "user" && (
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        <User className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
+                  {message.content}
                 </div>
               ))}
-              {isLoading && (
-                <div className="flex gap-3 text-slate-600 text-sm mb-4">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>
-                      <Bot className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="bg-muted rounded-lg px-3 py-2">
-                    Denke nach...
-                  </div>
-                </div>
-              )}
             </div>
-          </ScrollArea>
-          <form onSubmit={handleSubmit} className="flex items-center gap-2 mt-4">
-            <Input
-              placeholder="Schreibe eine Nachricht..."
-              value={input}
-              onChange={handleInputChange}
-              disabled={isLoading}
-            />
-            <Button type="submit" size="icon" disabled={isLoading}>
-              <SendHorizontal className="h-4 w-4" />
-            </Button>
-          </form>
-        </div>
-      </DialogContent>
-    </Dialog>
+
+            <form
+              onSubmit={handleSubmit}
+              className="flex items-center gap-2 border-t p-4"
+            >
+              <input
+                className="flex-1 px-3 py-2 bg-background border rounded-md"
+                value={input}
+                placeholder="Schreiben Sie eine Nachricht..."
+                onChange={handleInputChange}
+              />
+              <Button type="submit" size="icon" disabled={isLoading}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
-}
+};

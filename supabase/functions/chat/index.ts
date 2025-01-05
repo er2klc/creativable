@@ -1,105 +1,86 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
+import { corsHeaders } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-openai-key',
-};
+const openAiKey = Deno.env.get('OPENAI_API_KEY')
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const openaiApiKey = req.headers.get('x-openai-key');
-    if (!openaiApiKey) {
-      console.error('OpenAI API Key missing');
-      throw new Error('OpenAI API Key is required');
+    const { messages, openai_key, language = 'de' } = await req.json()
+    const apiKey = openai_key || openAiKey
+
+    if (!apiKey) {
+      throw new Error('OpenAI API key is required')
     }
 
-    const { messages, language = 'de' } = await req.json();
-    console.log('Processing chat request with messages:', messages);
-
-    // Add system message for language preference
     const systemMessage = {
-      role: 'system',
-      content: `Du bist ein freundlicher KI-Assistent. Antworte immer auf ${language === 'de' ? 'Deutsch' : 'English'}.`
-    };
+      role: "system",
+      content: language === 'de' 
+        ? "Du bist ein hilfreicher KI-Assistent. Antworte immer auf Deutsch."
+        : "You are a helpful AI assistant. Always respond in English."
+    }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4',
         messages: [systemMessage, ...messages],
         stream: true,
       }),
-    });
+    })
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error('OpenAI API error:', error);
-      throw new Error('Failed to get response from OpenAI');
+      const error = await response.json()
+      throw new Error(error.error?.message || 'Failed to generate completion')
     }
 
-    const reader = response.body?.getReader();
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
+    const reader = response.body?.getReader()
+    const decoder = new TextDecoder()
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
           while (true) {
-            const { done, value } = await reader.read();
+            const { done, value } = await reader.read()
             if (done) {
-              controller.close();
-              break;
+              controller.close()
+              break
             }
 
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
+            const text = decoder.decode(value)
+            const lines = text.split('\n')
 
             for (const line of lines) {
-              const trimmedLine = line.trim();
-              if (!trimmedLine) continue;
-              
-              if (trimmedLine === 'data: [DONE]') {
-                controller.close();
-                return;
-              }
+              if (line.trim() === '') continue
+              if (line.trim() === 'data: [DONE]') continue
 
-              if (trimmedLine.startsWith('data: ')) {
-                try {
-                  const jsonStr = trimmedLine.slice(6);
-                  const json = JSON.parse(jsonStr);
-                  const content = json.choices?.[0]?.delta?.content;
-                  
-                  if (content) {
-                    console.log('Processing content chunk:', content);
-                     // Hier die Rolle explizit angeben
-  const eventData = {
-    role: "assistant",
-    content,
-  };
-
-  controller.enqueue(encoder.encode(`data: ${JSON.stringify(eventData)}\n\n`));
-                  }
-                } catch (error) {
-                  console.warn('Invalid JSON in line:', trimmedLine, error);
-                  continue;
+              try {
+                const message = line.replace(/^data: /, '')
+                const json = JSON.parse(message)
+                const token = json.choices[0]?.delta?.content || ''
+                if (token) {
+                  const chunk = new TextEncoder().encode(`data: ${JSON.stringify({ content: token })}\n\n`)
+                  controller.enqueue(chunk)
                 }
+              } catch (error) {
+                console.error('Error parsing line:', error)
+                continue
               }
             }
           }
         } catch (error) {
-          console.error('Error in stream processing:', error);
-          controller.error(error);
+          controller.error(error)
         }
-      }
-    });
+      },
+    })
 
     return new Response(stream, {
       headers: {
@@ -107,13 +88,12 @@ serve(async (req) => {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-      }
-    });
+      },
+    })
   } catch (error) {
-    console.error('Error in chat function:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    })
   }
-});
+})
