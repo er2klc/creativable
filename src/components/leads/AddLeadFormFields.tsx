@@ -12,7 +12,7 @@ export const formSchema = z.object({
   phase: z.string().min(1, "Phase ist erforderlich 📊"),
   contact_type: z.string().nullable(),
   phone_number: z.string().optional().nullable(),
-  email: z.string().email("Ungültige E-Mail-Adresse").optional().nullable(),
+  email: z.string().optional().nullable(),
   company_name: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   industry: z.string().min(1, "Branche ist erforderlich"),
