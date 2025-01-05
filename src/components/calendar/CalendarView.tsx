@@ -1,20 +1,21 @@
 import { useState } from "react";
 import { format, parseISO, setHours, setMinutes, addMonths, subMonths } from "date-fns";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors, DragOverEvent } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { usePersonalCalendar } from "./hooks/usePersonalCalendar";
+import { useAppointmentHandlers } from "./hooks/useAppointmentHandlers";
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarGrid } from "./CalendarGrid";
 import { NewAppointmentDialog } from "./NewAppointmentDialog";
 import { Switch } from "@/components/ui/switch";
+import { Appointment } from "./types";
 
 export const CalendarView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [showTeamEvents, setShowTeamEvents] = useState(true);
-  const queryClient = useQueryClient();
 
   const {
     currentDate,
@@ -30,6 +31,8 @@ export const CalendarView = () => {
     handleDragOver,
     handleDragEnd,
   } = usePersonalCalendar();
+
+  const { handleCompleteAppointment, handleCancelAppointment } = useAppointmentHandlers();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -93,40 +96,6 @@ export const CalendarView = () => {
       }));
     },
   });
-
-  const handleCompleteAppointment = async (appointment: any, completed: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ completed, cancelled: false })
-        .eq('id', appointment.id);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['appointments'] });
-      toast.success(completed ? 'Termin als erledigt markiert' : 'Termin als nicht erledigt markiert');
-    } catch (error) {
-      console.error('Error updating appointment:', error);
-      toast.error('Fehler beim Aktualisieren des Termins');
-    }
-  };
-
-  const handleCancelAppointment = async (appointment: any, cancelled: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ cancelled, completed: false })
-        .eq('id', appointment.id);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['appointments'] });
-      toast.success(cancelled ? 'Termin als abgesagt markiert' : 'Termin als nicht abgesagt markiert');
-    } catch (error) {
-      console.error('Error updating appointment:', error);
-      toast.error('Fehler beim Aktualisieren des Termins');
-    }
-  };
 
   const getDayAppointments = (date: Date) => {
     const allAppointments = [...appointments];

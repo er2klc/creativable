@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Appointment } from "./types";
 
 interface AppointmentItemProps {
-  appointment: any;
+  appointment: Appointment;
   onClick: (e: React.MouseEvent) => void;
   isDragging?: boolean;
 }
@@ -122,7 +123,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
               e.stopPropagation();
               if (appointment.onComplete) {
                 if (appointment.cancelled) {
-                  appointment.onCancel(false);
+                  appointment.onCancel?.(false);
                 } else {
                   appointment.onComplete(!appointment.completed);
                 }
