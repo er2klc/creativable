@@ -79,7 +79,13 @@ serve(async (req) => {
                   
                   if (content) {
                     console.log('Processing content chunk:', content);
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+                     // Hier die Rolle explizit angeben
+  const eventData = {
+    role: "assistant",
+    content,
+  };
+
+  controller.enqueue(encoder.encode(`data: ${JSON.stringify(eventData)}\n\n`));
                   }
                 } catch (error) {
                   console.warn('Invalid JSON in line:', trimmedLine, error);
