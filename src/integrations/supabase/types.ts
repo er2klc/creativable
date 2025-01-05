@@ -912,6 +912,7 @@ export type Database = {
           description: string | null
           end_time: string | null
           id: string
+          is_admin_only: boolean | null
           is_team_event: boolean | null
           recurring_day_of_week: number | null
           recurring_pattern:
@@ -928,6 +929,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: string
+          is_admin_only?: boolean | null
           is_team_event?: boolean | null
           recurring_day_of_week?: number | null
           recurring_pattern?:
@@ -944,6 +946,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: string
+          is_admin_only?: boolean | null
           is_team_event?: boolean | null
           recurring_day_of_week?: number | null
           recurring_pattern?:
