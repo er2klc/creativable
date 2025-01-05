@@ -10,9 +10,10 @@ interface TeamSnapsProps {
   isAdmin: boolean;
   isManaging: boolean;
   teamId: string;
+  onCalendarClick: () => void;
 }
 
-export const TeamSnaps = ({ isAdmin, isManaging, teamId }: TeamSnapsProps) => {
+export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: TeamSnapsProps) => {
   const session = useSession();
   const queryClient = useQueryClient();
 
@@ -63,6 +64,14 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId }: TeamSnapsProps) => {
 
   const regularSnaps = [
     {
+      id: "calendar",
+      icon: <CalendarIcon className="h-8 w-8" />,
+      label: "Team-Kalender",
+      description: "Plane und verwalte Team-Termine",
+      gradient: "from-green-500 to-green-600",
+      onClick: onCalendarClick,
+    },
+    {
       id: "posts",
       icon: <MessageSquare className="h-8 w-8" />,
       label: "Diskussionen & Beiträge",
@@ -75,13 +84,6 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId }: TeamSnapsProps) => {
       label: "News & Updates",
       description: "Bleiben Sie über wichtige Updates informiert",
       gradient: "from-purple-500 to-purple-600",
-    },
-    {
-      id: "calendar",
-      icon: <CalendarIcon className="h-8 w-8" />,
-      label: "Kalender",
-      description: "Planen Sie Termine und Events",
-      gradient: "from-green-500 to-green-600",
     },
     {
       id: "files",

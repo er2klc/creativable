@@ -872,6 +872,65 @@ export type Database = {
           },
         ]
       }
+      team_calendar_events: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          end_time: string | null
+          id: string
+          is_team_event: boolean | null
+          recurring_day_of_week: number | null
+          recurring_pattern:
+            | Database["public"]["Enums"]["recurring_pattern"]
+            | null
+          start_time: string
+          team_id: string | null
+          title: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          is_team_event?: boolean | null
+          recurring_day_of_week?: number | null
+          recurring_pattern?:
+            | Database["public"]["Enums"]["recurring_pattern"]
+            | null
+          start_time: string
+          team_id?: string | null
+          title: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          is_team_event?: boolean | null
+          recurring_day_of_week?: number | null
+          recurring_pattern?:
+            | Database["public"]["Enums"]["recurring_pattern"]
+            | null
+          start_time?: string
+          team_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_calendar_events_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_categories: {
         Row: {
           created_at: string | null
@@ -1198,7 +1257,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      recurring_pattern: "none" | "daily" | "weekly" | "monthly" | "yearly"
     }
     CompositeTypes: {
       [_ in never]: never

@@ -11,12 +11,13 @@ import { NewsList } from "@/components/teams/news/NewsList";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useState } from "react";
 import { TeamSnaps } from "@/components/teams/detail/TeamSnaps";
+import { TeamCalendarView } from "@/components/teams/calendar/TeamCalendarView";
 
 const TeamDetail = () => {
   const { teamSlug } = useParams();
   const user = useUser();
   const [isManaging, setIsManaging] = useState(false);
-  const [hiddenSnaps, setHiddenSnaps] = useState<string[]>([]);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ["team", teamSlug],
@@ -80,7 +81,7 @@ const TeamDetail = () => {
         <div className="container py-4">
           <div className="flex items-center justify-between">
             <TeamHeader team={team} />
-            {isAdmin && (
+            {isAdmin && !showCalendar && (
               <Button
                 variant={isManaging ? "default" : "outline"}
                 size="sm"
@@ -97,11 +98,20 @@ const TeamDetail = () => {
 
       <div className="container">
         <Tabs defaultValue="posts">
-          <TeamSnaps 
-            isAdmin={isAdmin}
-            isManaging={isManaging}
-            teamId={team.id}
-          />
+          {showCalendar ? (
+            <TeamCalendarView
+              teamId={team.id}
+              isAdmin={isAdmin}
+              onBack={() => setShowCalendar(false)}
+            />
+          ) : (
+            <TeamSnaps 
+              isAdmin={isAdmin}
+              isManaging={isManaging}
+              teamId={team.id}
+              onCalendarClick={() => setShowCalendar(true)}
+            />
+          )}
 
           <TabsContent value="news" className="mt-6">
             <div className="space-y-6">

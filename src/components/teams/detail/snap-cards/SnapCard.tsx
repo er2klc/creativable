@@ -9,6 +9,7 @@ interface SnapCardProps {
     label: string;
     description: string;
     gradient: string;
+    onClick?: () => void;
   };
   isManaging?: boolean;
   isAdmin?: boolean;
@@ -17,12 +18,20 @@ interface SnapCardProps {
 }
 
 export const SnapCard = ({ snap, isManaging, isAdmin, canHide = true, onHide }: SnapCardProps) => {
+  const handleClick = (e: React.MouseEvent) => {
+    if (snap.onClick) {
+      e.preventDefault();
+      snap.onClick();
+    }
+  };
+
   return (
     <Card
       key={snap.id}
       className={`relative overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group ${
         isManaging ? 'ring-2 ring-primary/20' : ''
       }`}
+      onClick={handleClick}
     >
       {isAdmin && (
         <Badge 
