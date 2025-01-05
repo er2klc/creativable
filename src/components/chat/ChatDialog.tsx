@@ -18,7 +18,7 @@ interface ChatDialogProps {
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
-  const [isThinking, setIsThinking] = useState(false);
+  const [isThinking, setIsThinking] = useState(true); // Default: "Denke nach..."
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
@@ -30,16 +30,16 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     body: {
       language: 'de',
     },
+    partialMessages: true, // Aktiviert Live-Streaming
     onResponse: (response) => {
       if (!response.ok) {
         console.error("Chat response error:", response.status, response.statusText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      console.log("Chat response received");
-      setIsThinking(true);
+      setIsThinking(true); // Anzeige "Denke nach..." aktivieren
     },
     onFinish: () => {
-      setIsThinking(false);
+      setIsThinking(false); // Anzeige deaktivieren, wenn Stream beendet ist
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
@@ -47,10 +47,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     onError: (error) => {
       console.error("Chat error:", error);
       setIsThinking(false);
-      // Don't show error toast for parsing errors as they don't affect functionality
-      if (!error.message.includes('Failed to parse')) {
-        toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
-      }
+      toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
     },
   });
 
@@ -59,35 +56,31 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
-          console.error("No session found");
-          toast.error("Bitte melden Sie sich an");
+          toast.error("Bitte melde dich an.");
           return;
         }
-
         setSessionToken(session.access_token);
-        
-        const { data: chatbotSettings, error: chatbotError } = await supabase
-          .from('chatbot_settings')
-          .select('openai_api_key')
-          .eq('user_id', session.user.id)
+
+        const { data: chatbotSettings, error } = await supabase
+          .from("chatbot_settings")
+          .select("openai_api_key")
+          .eq("user_id", session.user.id)
           .maybeSingle();
 
-        if (chatbotError) {
-          console.error("Error fetching chatbot settings:", chatbotError);
-          toast.error("Fehler beim Laden der Chat-Einstellungen");
+        if (error) {
+          console.error("Error fetching chatbot settings:", error);
+          toast.error("Fehler beim Laden der Chat-Einstellungen.");
           return;
         }
 
         if (chatbotSettings?.openai_api_key) {
-          console.log("✅ OpenAI API Key found in chatbot_settings");
           setApiKey(chatbotSettings.openai_api_key);
         } else {
-          console.warn("⚠️ No OpenAI API Key found in chatbot_settings");
-          toast.error("Bitte fügen Sie einen OpenAI API Key in den Chat-Einstellungen hinzu");
+          toast.error("Kein OpenAI API-Key gefunden. Bitte hinterlege ihn in den Einstellungen.");
         }
       } catch (error) {
         console.error("Error in setupChat:", error);
-        toast.error("Fehler beim Einrichten des Chats");
+        toast.error("Fehler beim Einrichten des Chats.");
       }
     };
 
