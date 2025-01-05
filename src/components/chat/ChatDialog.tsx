@@ -11,18 +11,16 @@ import { ChatInput } from "./ChatInput";
 interface ChatDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  messages: any[];
-  setMessages: (messages: any[]) => void;
 }
 
-export function ChatDialog({ open, onOpenChange, messages: existingMessages, setMessages: setExistingMessages }: ChatDialogProps) {
+export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const { systemMessage } = useChatContext();
 
-  const { input, handleInputChange, handleSubmit } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
     api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
     headers: {
       Authorization: `Bearer ${sessionToken}`,
@@ -35,12 +33,15 @@ export function ChatDialog({ open, onOpenChange, messages: existingMessages, set
         content: systemMessage,
       }
     ],
-    messages: existingMessages,
-    onFinish: (message) => {
+    streamProtocol: 'text',
+    onResponse: () => {
+      console.log("Chat response started");
+    },
+    onFinish: () => {
+      console.log("Chat response finished");
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
-      setExistingMessages([...existingMessages, message]);
     },
     onError: (error) => {
       console.error("Chat error:", error);
@@ -94,8 +95,8 @@ export function ChatDialog({ open, onOpenChange, messages: existingMessages, set
 
     if (open) {
       setupChat();
-      if (existingMessages.length <= 1) { // Only system message or empty
-        setExistingMessages([
+      if (messages.length <= 1) { // Only system message or empty
+        setMessages([
           {
             id: "system",
             role: "system",
@@ -111,20 +112,20 @@ export function ChatDialog({ open, onOpenChange, messages: existingMessages, set
         ]);
       }
     }
-  }, [open, setExistingMessages, systemMessage, userName, existingMessages.length]);
+  }, [open, setMessages, systemMessage, userName]);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [existingMessages]);
+  }, [messages]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <ChatHeader onMinimize={onOpenChange} />
         <div className="flex flex-col h-[600px]">
-          <ChatMessages messages={existingMessages} scrollRef={scrollRef} />
+          <ChatMessages messages={messages} scrollRef={scrollRef} />
           <ChatInput 
             input={input}
             handleInputChange={handleInputChange}
