@@ -13,7 +13,11 @@ import { AddTaskDialog } from "@/components/todo/AddTaskDialog";
 import { useNavigate } from "react-router-dom";
 import type { Tables } from "@/integrations/supabase/types";
 
-type Task = Tables<"tasks">;
+type Task = Tables["tasks"]["Row"] & {
+  leads?: {
+    name: string;
+  };
+};
 
 const TodoList = () => {
   const { settings } = useSettings();
@@ -42,12 +46,16 @@ const TodoList = () => {
         return [];
       }
 
-      return data;
-    },
-    onSuccess: (data) => {
-      setTasks(data);
+      console.log("Fetched tasks:", data);
+      return data as Task[];
     }
   });
+
+  useEffect(() => {
+    if (fetchedTasks) {
+      setTasks(fetchedTasks);
+    }
+  }, [fetchedTasks]);
 
   // Set up real-time subscription
   useEffect(() => {
