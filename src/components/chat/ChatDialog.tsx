@@ -48,7 +48,9 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   useEffect(() => {
     const setupChat = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await sup
+
+abase.auth.getSession();
         if (!session) {
           toast.error("Bitte melde dich an.");
           return;
