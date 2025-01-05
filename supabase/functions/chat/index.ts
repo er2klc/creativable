@@ -77,10 +77,16 @@ serve(async (req) => {
                   const json = JSON.parse(jsonStr);
                   const content = json.choices?.[0]?.delta?.content;
                   
-                  if (content) {
-                    console.log('Processing content chunk:', content);
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
-                  }
+                 if (content) {
+  console.log('Processing content chunk:', content);
+
+  const eventData = {
+    role: "assistant",
+    content,
+  };
+
+  controller.enqueue(encoder.encode(`data: ${JSON.stringify(eventData)}\n\n`));
+}
                 } catch (error) {
                   console.warn('Invalid JSON in line:', trimmedLine, error);
                   continue;
