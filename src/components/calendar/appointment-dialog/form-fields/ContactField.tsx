@@ -32,27 +32,32 @@ export const ContactField = ({ form }: ContactFieldProps) => {
   const { data: leads = [], error, isLoading } = useQuery({
     queryKey: ["leads", searchValue],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Benutzer nicht authentifiziert");
 
-      const { data, error } = await supabase
-        .from("leads")
-        .select("id, name")
-        .eq("user_id", user.id)
-        .ilike("name", `%${searchValue}%`)
-        .order("name");
+        const { data, error } = await supabase
+          .from("leads")
+          .select("id, name")
+          .eq("user_id", user.id)
+          .ilike("name", `%${searchValue}%`)
+          .order("name");
 
-      if (error) {
-        console.error("Error fetching leads:", error);
+        if (error) {
+          console.error("Fehler beim Abrufen der Kontakte:", error);
+          return [];
+        }
+
+        return data || [];
+      } catch (error) {
+        console.error("Allgemeiner Fehler:", error);
         return [];
       }
-
-      return data || [];
     },
   });
 
-  console.log("Leads:", leads);
-  console.log("Error:", error);
+  const leadsData = Array.isArray(leads) ? leads : [];
+  console.log("Leads:", leadsData);
 
   return (
     <FormField
@@ -74,7 +79,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
                   )}
                 >
                   {field.value
-                    ? leads.find((lead) => lead.id === field.value)?.name || "Unbekannt"
+                    ? leadsData.find((lead) => lead.id === field.value)?.name || "Unbekannt"
                     : "Wähle einen Kontakt"}
                 </Button>
               </FormControl>
@@ -90,8 +95,8 @@ export const ContactField = ({ form }: ContactFieldProps) => {
                     onValueChange={setSearchValue}
                   />
                   <CommandGroup>
-                    {Array.isArray(leads) && leads.length > 0 ? (
-                      leads.map((lead) => (
+                    {leadsData.length > 0 ? (
+                      leadsData.map((lead) => (
                         <CommandItem
                           key={lead.id}
                           value={lead.name}
