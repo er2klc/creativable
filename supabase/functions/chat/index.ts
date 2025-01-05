@@ -48,22 +48,12 @@ serve(async (req) => {
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
-    let accumulatedContent = '';
-
     const stream = new ReadableStream({
       async start(controller) {
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
-              // Send final accumulated content if any
-              if (accumulatedContent) {
-                const finalMessage = {
-                  role: "assistant",
-                  content: accumulatedContent,
-                };
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
-              }
               controller.close();
               break;
             }
@@ -88,13 +78,14 @@ serve(async (req) => {
                   
                   if (content) {
                     console.log('Processing content chunk:', content);
-                    accumulatedContent += content;
-
+                    
+                    // Always include both role and content in the message
                     const message = {
                       role: "assistant",
-                      content: accumulatedContent,
+                      content: content,
                     };
 
+                    // Ensure proper SSE format with double newlines
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
                   }
                 } catch (error) {
