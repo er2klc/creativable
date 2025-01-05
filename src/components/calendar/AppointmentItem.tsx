@@ -6,9 +6,10 @@ import { Clock, User, FileText } from "lucide-react";
 interface AppointmentItemProps {
   appointment: any;
   onClick: (e: React.MouseEvent) => void;
+  isDragging?: boolean;
 }
 
-export const AppointmentItem = ({ appointment, onClick }: AppointmentItemProps) => {
+export const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemProps) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: appointment.id,
     data: appointment,
@@ -16,8 +17,7 @@ export const AppointmentItem = ({ appointment, onClick }: AppointmentItemProps) 
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    zIndex: 50,
-    position: 'relative' as const,
+    opacity: isDragging ? 0 : 1,
   } : undefined;
 
   return (

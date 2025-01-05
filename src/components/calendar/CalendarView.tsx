@@ -88,21 +88,14 @@ export const CalendarView = () => {
 
     const appointment = active.data.current;
     const newDateStr = over.id as string;
-    console.log("Drop target date:", newDateStr);
     
     try {
-      const newDate = new Date(newDateStr);
+      const newDate = parseISO(newDateStr);
       const oldDate = parseISO(appointment.due_date);
 
       // Keep the same time, just change the date
       newDate.setHours(oldDate.getHours());
       newDate.setMinutes(oldDate.getMinutes());
-
-      console.log("Updating appointment:", {
-        id: appointment.id,
-        oldDate: oldDate.toISOString(),
-        newDate: newDate.toISOString()
-      });
 
       const { error } = await supabase
         .from("tasks")
@@ -190,6 +183,7 @@ export const CalendarView = () => {
                       key={appointment.id}
                       appointment={appointment}
                       onClick={(e) => handleAppointmentClick(e, appointment)}
+                      isDragging={activeId === appointment.id}
                     />
                   ))}
                 </div>
@@ -200,7 +194,7 @@ export const CalendarView = () => {
 
         <DragOverlay>
           {draggedAppointment ? (
-            <div className="opacity-80">
+            <div className="opacity-100 z-50">
               <AppointmentItem
                 appointment={draggedAppointment}
                 onClick={() => {}}
