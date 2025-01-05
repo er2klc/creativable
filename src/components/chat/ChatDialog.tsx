@@ -96,6 +96,8 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
     try {
       abortControllerRef.current = new AbortController();
+      console.log('Making request to chat function...');
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
         method: 'POST',
         headers: {
@@ -114,6 +116,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      console.log('Started receiving stream...');
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -136,7 +139,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
-              console.log('Parsed data:', data);
+              console.log('Parsed message chunk:', data);
               
               setMessages(prev => {
                 const lastMessage = prev[prev.length - 1];
