@@ -103,18 +103,22 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
   };
 
   const getDayAppointments = (date: Date): Appointment[] => {
-    const allAppointments = [...appointments];
+    const allAppointments = [...appointments].map(appointment => ({
+      ...appointment,
+      isTeamEvent: false,
+      onComplete: (completed: boolean) => handleCompleteAppointment(appointment, completed)
+    }));
+
     if (showTeamEvents) {
-      allAppointments.push(...(teamAppointments || []));
+      const teamEvents = (teamAppointments || []).map(event => ({
+        ...event,
+        isTeamEvent: true,
+        onComplete: undefined
+      }));
+      allAppointments.push(...teamEvents);
     }
     
-    return allAppointments.map(appointment => ({
-      ...appointment,
-      isTeamEvent: 'isTeamEvent' in appointment ? appointment.isTeamEvent : false,
-      onComplete: !appointment.isTeamEvent ? 
-        (completed: boolean) => handleCompleteAppointment(appointment, completed) : 
-        undefined
-    })).filter(
+    return allAppointments.filter(
       (appointment) => format(new Date(appointment.due_date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
     );
   };
