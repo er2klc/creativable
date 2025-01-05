@@ -32,7 +32,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [systemMessage, ...messages],
         stream: true,
       }),
@@ -44,51 +44,73 @@ serve(async (req) => {
       throw new Error('Failed to get response from OpenAI');
     }
 
-    const transformStream = new TransformStream({
-      async transform(chunk, controller) {
-        const text = new TextDecoder().decode(chunk);
-        console.log('Raw chunk received:', text);
-        
-        const lines = text.split('\n');
-        
-        for (const line of lines) {
-          if (line.trim() === '') continue;
-          
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            
-            if (data === '[DONE]') {
-              console.log('Stream completed');
-              continue;
+    const reader = response.body?.getReader();
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    let accumulatedContent = '';
+    let doneMessageSent = false;
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              if (!doneMessageSent) {
+                // Send a properly formatted JSON for the [DONE] event
+                controller.enqueue(encoder.encode('data: {"done":true}\n\n'));
+                doneMessageSent = true;
+              }
+              controller.close();
+              break;
             }
 
-            try {
-              const json = JSON.parse(data);
-              console.log('Parsed JSON:', json);
-              
-              const content = json.choices?.[0]?.delta?.content;
-              if (content) {
-                const message = {
-                  id: crypto.randomUUID(),
-                  role: 'assistant',
-                  content: content
-                };
-                console.log('Sending message:', message);
-                controller.enqueue(`data: ${JSON.stringify(message)}\n\n`);
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              if (line.trim() === '') continue;
+              if (line.trim() === 'data: [DONE]') {
+                if (!doneMessageSent) {
+                  // Send a properly formatted JSON for the [DONE] event
+                  controller.enqueue(encoder.encode('data: {"done":true}\n\n'));
+                  doneMessageSent = true;
+                }
+                continue;
               }
-            } catch (error) {
-              console.warn('Error parsing line:', line, error);
+
+              if (line.startsWith('data: ')) {
+                try {
+                  const jsonStr = line.slice(6);
+                  const json = JSON.parse(jsonStr);
+                  const content = json.choices?.[0]?.delta?.content;
+                  
+                  if (content) {
+                    accumulatedContent += content;
+                    const message = {
+                      role: "assistant",
+                      content: accumulatedContent,
+                    };
+                    
+                    console.log(`Streaming: ${JSON.stringify(message)}`);
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
+                  }
+                } catch (error) {
+                  console.warn('Invalid JSON in line:', line, error);
+                  continue;
+                }
+              }
             }
           }
+        } catch (error) {
+          console.error('Error in stream processing:', error);
+          controller.error(error);
         }
       }
     });
 
-    const readableStream = response.body
-      .pipeThrough(new TextDecoderStream())
-      .pipeThrough(transformStream);
-
-    return new Response(readableStream, {
+    return new Response(stream, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
