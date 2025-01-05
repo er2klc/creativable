@@ -4,7 +4,7 @@ import { de } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { NewAppointmentDialog } from "./NewAppointmentDialog";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
@@ -16,6 +16,7 @@ export const CalendarView = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const queryClient = useQueryClient();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -25,7 +26,7 @@ export const CalendarView = () => {
     })
   );
 
-  const { data: appointments, refetch } = useQuery({
+  const { data: appointments = [], refetch } = useQuery({
     queryKey: ["appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
       const startDate = startOfMonth(currentDate);
@@ -47,7 +48,7 @@ export const CalendarView = () => {
         return [];
       }
 
-      return data;
+      return data || [];
     }
   });
 
@@ -100,7 +101,8 @@ export const CalendarView = () => {
 
       if (error) throw error;
 
-      await refetch();
+      // Invalidate both the current and next/previous month queries to ensure proper updates
+      await queryClient.invalidateQueries({ queryKey: ["appointments"] });
       toast.success("Termin wurde verschoben");
     } catch (error) {
       console.error("Error updating appointment:", error);
