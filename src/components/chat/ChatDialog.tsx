@@ -52,15 +52,11 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
       if (error) throw error;
 
-      // Invalidate queries to refresh the data
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["chat-context-leads"] });
 
-      toast.success(
-        "Phase erfolgreich aktualisiert"
-      );
+      toast.success("Phase erfolgreich aktualisiert");
 
-      // Add confirmation message to chat
       const confirmationMessage = {
         id: Date.now().toString(),
         role: "assistant" as const,
@@ -91,14 +87,16 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     onResponse: (response) => {
       console.log("Chat response started");
       
-      // Check for phase change commands in the message
+      // Check for phase change commands in the response text
       const phaseChangeRegex = /ändere die phase von kontakt "([^"]+)" (?:zu|auf|in) "([^"]+)"/i;
-      const match = response.match(phaseChangeRegex);
+      const responseText = response.text(); // Get the response text
+      const match = responseText.match(phaseChangeRegex);
       
       if (match) {
         const [_, leadName, newPhase] = match;
         // Find the lead ID based on the name
-        queryClient.getQueryData(["chat-context-leads"])?.forEach((lead: any) => {
+        const leads = queryClient.getQueryData(["chat-context-leads"]) as Array<{ id: string; name: string }> | undefined;
+        leads?.forEach((lead) => {
           if (lead.name.toLowerCase() === leadName.toLowerCase()) {
             setPhaseChangeRequest({
               leadId: lead.id,
