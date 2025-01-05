@@ -87,14 +87,23 @@ export const CalendarView = () => {
     if (!over || !active.data.current) return;
 
     const appointment = active.data.current;
-    const newDate = new Date(over.id);
-    const oldDate = parseISO(appointment.due_date);
-
-    // Keep the same time, just change the date
-    newDate.setHours(oldDate.getHours());
-    newDate.setMinutes(oldDate.getMinutes());
-
+    const newDateStr = over.id as string;
+    console.log("Drop target date:", newDateStr);
+    
     try {
+      const newDate = new Date(newDateStr);
+      const oldDate = parseISO(appointment.due_date);
+
+      // Keep the same time, just change the date
+      newDate.setHours(oldDate.getHours());
+      newDate.setMinutes(oldDate.getMinutes());
+
+      console.log("Updating appointment:", {
+        id: appointment.id,
+        oldDate: oldDate.toISOString(),
+        newDate: newDate.toISOString()
+      });
+
       const { error } = await supabase
         .from("tasks")
         .update({ due_date: newDate.toISOString() })
