@@ -77,14 +77,14 @@ export const ContactField = ({ form }: ContactFieldProps) => {
               </FormControl>
             </PopoverTrigger>
             <PopoverContent className="w-[400px] p-0" align="start">
-              <Command shouldFilter={false}>
+              <Command>
                 <CommandInput 
                   placeholder="Suche nach Kontakten..."
                   value={searchValue}
                   onValueChange={setSearchValue}
                 />
                 <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
-                <CommandGroup className="max-h-[200px] overflow-y-auto">
+                <CommandGroup>
                   {leads.map((lead) => (
                     <CommandItem
                       key={lead.id}

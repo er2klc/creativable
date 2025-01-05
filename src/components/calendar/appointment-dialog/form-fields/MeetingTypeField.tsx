@@ -75,7 +75,7 @@ export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
               </FormControl>
             </PopoverTrigger>
             <PopoverContent className="w-[200px] p-0" align="start">
-              <Command shouldFilter={false}>
+              <Command>
                 <CommandInput 
                   placeholder="Suche Terminart..." 
                   value={searchValue}
@@ -85,8 +85,8 @@ export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
                 <CommandGroup>
                   {filteredTypes.map((type) => (
                     <CommandItem
-                      value={type.value}
                       key={type.value}
+                      value={type.value}
                       onSelect={() => {
                         form.setValue("meeting_type", type.value);
                         setOpen(false);
