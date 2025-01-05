@@ -5,6 +5,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import {
   Command,
@@ -53,8 +54,6 @@ export const ContactField = ({ form }: ContactFieldProps) => {
         return [];
       }
     },
-    enabled: open,
-    initialData: [],
   });
 
   return (
@@ -111,6 +110,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
               </Command>
             </PopoverContent>
           </Popover>
+          <FormMessage />
         </FormItem>
       )}
     />

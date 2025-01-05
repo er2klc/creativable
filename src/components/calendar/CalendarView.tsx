@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -7,6 +7,9 @@ import { NewAppointmentDialog } from "./NewAppointmentDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { AppointmentItem } from "./AppointmentItem";
+import { toast } from "sonner";
 
 export const CalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -14,7 +17,15 @@ export const CalendarView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
-  const { data: appointments } = useQuery({
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  const { data: appointments, refetch } = useQuery({
     queryKey: ["appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
       const startDate = startOfMonth(currentDate);
@@ -68,6 +79,35 @@ export const CalendarView = () => {
     setIsDialogOpen(true);
   };
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || !active.data.current) return;
+
+    const appointment = active.data.current;
+    const newDate = new Date(over.id as string);
+    const oldDate = parseISO(appointment.due_date);
+
+    // Keep the same time, just change the date
+    newDate.setHours(oldDate.getHours());
+    newDate.setMinutes(oldDate.getMinutes());
+
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ due_date: newDate.toISOString() })
+        .eq("id", appointment.id);
+
+      if (error) throw error;
+
+      await refetch();
+      toast.success("Termin wurde verschoben");
+    } catch (error) {
+      console.error("Error updating appointment:", error);
+      toast.error("Fehler beim Verschieben des Termins");
+    }
+  };
+
   const getDayAppointments = (date: Date) => {
     return appointments?.filter(
       (appointment) => format(new Date(appointment.due_date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
@@ -75,80 +115,76 @@ export const CalendarView = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">
-          {format(currentDate, "MMMM yyyy", { locale: de })}
-        </h2>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={previousMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={nextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-7 gap-px bg-muted">
-        {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day) => (
-          <div
-            key={day}
-            className="bg-background p-2 text-center text-sm font-medium"
-          >
-            {day}
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">
+            {format(currentDate, "MMMM yyyy", { locale: de })}
+          </h2>
+          <div className="flex gap-2">
+            <Button variant="outline" size="icon" onClick={previousMonth}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={nextMonth}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-        ))}
+        </div>
 
-        {days.map((day, dayIdx) => {
-          const dayAppointments = getDayAppointments(day);
-          
-          return (
+        <div className="grid grid-cols-7 gap-px bg-muted">
+          {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day) => (
             <div
-              key={day.toString()}
-              className={cn(
-                "min-h-[100px] bg-background p-2 relative",
-                !isSameMonth(day, currentDate) && "text-muted-foreground",
-                "hover:bg-accent hover:text-accent-foreground cursor-pointer"
-              )}
-              onClick={() => handleDateClick(day)}
+              key={day}
+              className="bg-background p-2 text-center text-sm font-medium"
             >
-              <time
-                dateTime={format(day, "yyyy-MM-dd")}
-                className={cn(
-                  "flex h-6 w-6 items-center justify-center rounded-full",
-                  isToday(day) && "bg-primary text-primary-foreground"
-                )}
-              >
-                {format(day, "d")}
-              </time>
-              <div className="mt-1">
-                {dayAppointments?.map((appointment) => (
-                  <div
-                    key={appointment.id}
-                    className={cn(
-                      "text-xs rounded p-1 mb-1 truncate cursor-pointer hover:opacity-80",
-                      "transition-colors duration-200"
-                    )}
-                    style={{ backgroundColor: appointment.color || "#FEF7CD" }}
-                    onClick={(e) => handleAppointmentClick(e, appointment)}
-                    title={`${format(new Date(appointment.due_date), "HH:mm")} - ${appointment.leads?.name}`}
-                  >
-                    {format(new Date(appointment.due_date), "HH:mm")} - {appointment.leads?.name}
-                  </div>
-                ))}
-              </div>
+              {day}
             </div>
-          );
-        })}
-      </div>
+          ))}
 
-      <NewAppointmentDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        selectedDate={selectedDate}
-        appointmentToEdit={selectedAppointment}
-      />
-    </div>
+          {days.map((day, dayIdx) => {
+            const dayAppointments = getDayAppointments(day);
+            
+            return (
+              <div
+                key={day.toString()}
+                id={format(day, "yyyy-MM-dd")}
+                className={cn(
+                  "min-h-[100px] bg-background p-2 relative",
+                  !isSameMonth(day, currentDate) && "text-muted-foreground",
+                  "hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                )}
+                onClick={() => handleDateClick(day)}
+              >
+                <time
+                  dateTime={format(day, "yyyy-MM-dd")}
+                  className={cn(
+                    "flex h-6 w-6 items-center justify-center rounded-full",
+                    isToday(day) && "bg-primary text-primary-foreground"
+                  )}
+                >
+                  {format(day, "d")}
+                </time>
+                <div className="mt-1">
+                  {dayAppointments?.map((appointment) => (
+                    <AppointmentItem
+                      key={appointment.id}
+                      appointment={appointment}
+                      onClick={(e) => handleAppointmentClick(e, appointment)}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <NewAppointmentDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          selectedDate={selectedDate}
+          appointmentToEdit={selectedAppointment}
+        />
+      </div>
+    </DndContext>
   );
 };
