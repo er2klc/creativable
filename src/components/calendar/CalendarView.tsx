@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, setHours, setMinutes } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors, DragOverEvent } from "@dnd-kit/core";
@@ -84,27 +84,24 @@ export const CalendarView = () => {
 
     const appointment = active.data.current;
     const newDateStr = over.id as string;
+    const oldDate = new Date(appointment.due_date);
+    const newDate = parseISO(newDateStr);
+    
+    // Keep the original time
+    const updatedDate = setMinutes(
+      setHours(newDate, oldDate.getHours()),
+      oldDate.getMinutes()
+    );
 
     try {
-      const oldDate = new Date(appointment.due_date);
-      const newDate = parseISO(newDateStr);
-      
-      // Keep the time from the original appointment
-      newDate.setHours(oldDate.getHours());
-      newDate.setMinutes(oldDate.getMinutes());
-      
       const { error } = await supabase
         .from("tasks")
         .update({
-          due_date: newDate.toISOString()
+          due_date: updatedDate.toISOString()
         })
         .eq("id", appointment.id);
 
-      if (error) {
-        console.error("Error updating appointment:", error);
-        toast.error("Fehler beim Verschieben des Termins");
-        return;
-      }
+      if (error) throw error;
 
       await queryClient.invalidateQueries({ queryKey: ["appointments"] });
       toast.success("Termin wurde verschoben");

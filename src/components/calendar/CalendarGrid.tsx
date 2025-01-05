@@ -1,7 +1,7 @@
 import { format, isSameMonth, isToday, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AppointmentItem } from "./AppointmentItem";
-import { DragOverlay } from "@dnd-kit/core";
+import { DragOverlay, useDroppable } from "@dnd-kit/core";
 
 interface CalendarGridProps {
   currentDate: Date;
@@ -43,9 +43,13 @@ export const CalendarGrid = ({
           const dayAppointments = getDayAppointments(day);
           const dateStr = format(day, "yyyy-MM-dd");
           const isOver = overDate === dateStr;
+          const { setNodeRef } = useDroppable({
+            id: dateStr,
+          });
           
           return (
             <div
+              ref={setNodeRef}
               key={day.toString()}
               id={dateStr}
               className={cn(
