@@ -17,11 +17,9 @@ serve(async (req) => {
       throw new Error("OpenAI API Key is required");
     }
 
-    // Lese die eingehenden Nachrichten aus der Anfrage
     const { messages, language = "de" } = await req.json();
     console.log("Processing chat request with messages:", messages);
 
-    // Systemnachricht hinzufügen
     const systemMessage = {
       role: "system",
       content: `Du bist ein freundlicher KI-Assistent. Antworte immer auf ${
@@ -52,8 +50,7 @@ serve(async (req) => {
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
-    // Akkumulieren der vollständigen Antwort
-    let fullContent = "";
+    let accumulatedContent = ""; // Hier speichern wir die gesamte Antwort
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -61,12 +58,11 @@ serve(async (req) => {
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
-              // Wenn der Stream abgeschlossen ist, die gesamte Nachricht senden
-              const finalMessage = {
-                role: "assistant",
-                content: fullContent,
-              };
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
+              // Am Ende die gesamte Antwort senden
+              if (accumulatedContent) {
+                const finalMessage = { role: "assistant", content: accumulatedContent };
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
+              }
               controller.close();
               break;
             }
@@ -85,7 +81,7 @@ serve(async (req) => {
                   const content = json.choices?.[0]?.delta?.content;
 
                   if (content) {
-                    fullContent += content; // Sammeln des Inhalts
+                    accumulatedContent += content; // Token hinzufügen
                   }
                 } catch (error) {
                   console.warn("Invalid JSON in line:", trimmedLine, error);
