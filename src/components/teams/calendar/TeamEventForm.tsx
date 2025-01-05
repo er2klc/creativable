@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const formSchema = z.object({
   title: z.string().min(1, "Titel ist erforderlich"),
@@ -19,6 +20,7 @@ const formSchema = z.object({
   color: z.string().default("#FEF7CD"),
   is_team_event: z.boolean().default(false),
   recurring_pattern: z.enum(["none", "daily", "weekly"]).default("none"),
+  is_admin_only: z.boolean().default(false),
 });
 
 export interface TeamEventFormProps {
@@ -48,6 +50,7 @@ export const TeamEventForm = ({
       color: eventToEdit?.color || "#FEF7CD",
       is_team_event: eventToEdit?.is_team_event || false,
       recurring_pattern: eventToEdit?.recurring_pattern || "none",
+      is_admin_only: eventToEdit?.is_admin_only || false,
     },
   });
 
@@ -76,6 +79,7 @@ export const TeamEventForm = ({
         color: values.color,
         is_team_event: values.is_team_event,
         recurring_pattern: values.recurring_pattern,
+        is_admin_only: values.is_admin_only,
         created_by: user.id,
       };
 
@@ -208,6 +212,29 @@ export const TeamEventForm = ({
                 </SelectContent>
               </Select>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="is_admin_only"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Admin-Termin
+                </FormLabel>
+                <FormDescription>
+                  Dieser Termin ist nur für Team-Admins sichtbar
+                </FormDescription>
+              </div>
             </FormItem>
           )}
         />

@@ -57,12 +57,13 @@ export const CalendarView = () => {
       // First get all teams the user is a member of
       const { data: teamMemberships } = await supabase
         .from("team_members")
-        .select("team_id")
+        .select("team_id, role")
         .eq("user_id", user.id);
 
       if (!teamMemberships?.length) return [];
 
       const teamIds = teamMemberships.map(tm => tm.team_id);
+      const isAdminInTeams = teamMemberships.some(tm => ['admin', 'owner'].includes(tm.role));
 
       // Then get all team calendar events for these teams
       const { data: events, error } = await supabase
@@ -72,7 +73,9 @@ export const CalendarView = () => {
           teams:team_id (name)
         `)
         .in("team_id", teamIds)
-        .not("start_time", "is", null);
+        .not("start_time", "is", null)
+        // Only show admin events to admins
+        .or(`is_admin_only.eq.false${isAdminInTeams ? ',is_admin_only.eq.true' : ''}`);
 
       if (error) {
         console.error("Error fetching team events:", error);
@@ -86,7 +89,8 @@ export const CalendarView = () => {
         due_date: event.start_time,
         title: `[${event.teams?.name}] ${event.title}`,
         isTeamEvent: true,
-        color: event.color ? `${event.color}99` : "#FEF7CD99" // Add transparency
+        isAdminEvent: event.is_admin_only,
+        color: `${event.color || "#FEF7CD"}80`, // 50% transparency
       }));
     },
   });
@@ -102,6 +106,11 @@ export const CalendarView = () => {
 
   const handleAppointmentClick = (e: React.MouseEvent, appointment: any) => {
     e.stopPropagation();
+    // Prevent editing team events in personal calendar
+    if (appointment.isTeamEvent) {
+      toast.error("Team-Termine können nur im Team-Kalender bearbeitet werden");
+      return;
+    }
     setSelectedDate(new Date(appointment.due_date));
     setSelectedAppointment({
       id: appointment.id,

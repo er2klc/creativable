@@ -1,7 +1,7 @@
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Users } from "lucide-react";
+import { Clock, User, FileText, Users, Infinity } from "lucide-react";
 
 interface AppointmentItemProps {
   appointment: any;
@@ -57,7 +57,9 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       onClick={onClick}
     >
       <div className="flex items-center gap-1 text-xs">
-        {appointment.isTeamEvent ? (
+        {appointment.isAdminEvent ? (
+          <Infinity className="h-3 w-3 text-primary" />
+        ) : appointment.isTeamEvent ? (
           <Users className="h-3 w-3" />
         ) : (
           <FileText className="h-3 w-3" />
