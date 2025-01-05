@@ -2,7 +2,7 @@ import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 
 interface AppointmentItemProps {
   appointment: any;
@@ -73,7 +73,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       }}
       {...(isDraggable ? { ...listeners, ...attributes } : {})}
       className={cn(
-        "p-2 mb-1 rounded hover:opacity-80",
+        "p-2 mb-1 rounded hover:opacity-80 relative",
         "transition-colors duration-200 space-y-1",
         appointment.isRecurring && "border-l-4 border-primary",
         appointment.isTeamEvent && "border border-gray-200",
@@ -87,30 +87,15 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         }
       }}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 text-xs text-gray-600">
-          {appointment.isAdminEvent ? (
-            <Infinity className="h-4 w-4 text-primary" />
-          ) : appointment.isTeamEvent ? (
-            <Infinity className="h-4 w-4" />
-          ) : (
-            getMeetingTypeIcon()
-          )}
-          <span className="truncate font-bold">{appointment.title}</span>
-        </div>
-        {!appointment.isTeamEvent && (
-          <Checkbox
-            checked={appointment.completed}
-            onCheckedChange={(checked) => {
-              // Prevent the click from bubbling up to the appointment click handler
-              event?.stopPropagation();
-              if (appointment.onComplete) {
-                appointment.onComplete(checked);
-              }
-            }}
-            className="h-4 w-4"
-          />
+      <div className="flex items-center gap-1 text-xs text-gray-600">
+        {appointment.isAdminEvent ? (
+          <Infinity className="h-4 w-4 text-primary" />
+        ) : appointment.isTeamEvent ? (
+          <Infinity className="h-4 w-4" />
+        ) : (
+          getMeetingTypeIcon()
         )}
+        <span className="truncate font-bold">{appointment.title}</span>
       </div>
 
       {appointment.leads?.name && !appointment.isTeamEvent && (
@@ -124,6 +109,25 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         <Clock className="h-3 w-3" />
         <span>{timeString}</span>
       </div>
+
+      {/* Completed indicator */}
+      {!appointment.isTeamEvent && appointment.completed && (
+        <div className="absolute bottom-1 right-1">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-4 w-4 p-0 hover:bg-transparent"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (appointment.onComplete) {
+                appointment.onComplete(!appointment.completed);
+              }
+            }}
+          >
+            <Check className="h-3 w-3 text-green-600" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
