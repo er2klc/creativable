@@ -50,65 +50,78 @@ serve(async (req) => {
       });
     }
 
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    let buffer = '';
     let currentContent = '';
-    
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body!.getReader();
-        const decoder = new TextDecoder();
-        const encoder = new TextEncoder();
+    let doneSent = false; // Flag, um zu verhindern, dass [DONE] mehrfach gesendet wird
 
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            
-            if (done) {
+    const transformStream = new TransformStream({
+      async transform(chunk, controller) {
+        buffer += decoder.decode(chunk, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Letzte unvollständige Zeile behalten
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine.startsWith('data: ')) continue;
+
+          const data = trimmedLine.slice(6);
+          if (data === '[DONE]') {
+            if (!doneSent) {
               controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-              break;
+              doneSent = true;
             }
-
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
-
-            for (const line of lines) {
-              const trimmedLine = line.trim();
-              if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
-
-              const data = trimmedLine.slice(6);
-              if (data === '[DONE]') {
-                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-                continue;
-              }
-
-              try {
-                const json = JSON.parse(data);
-                const content = json.choices[0]?.delta?.content || '';
-                if (content) {
-                  currentContent += content;
-                  const message = {
-                    role: 'assistant',
-                    content: currentContent
-                  };
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
-                }
-              } catch (error) {
-                console.error('Error parsing JSON:', error);
-              }
-            }
+            continue;
           }
-        } catch (error) {
-          console.error('Stream processing error:', error);
-          controller.error(error);
-        } finally {
-          reader.releaseLock();
+
+          try {
+            const json = JSON.parse(data);
+            const content = json.choices[0]?.delta?.content || '';
+            if (content) {
+              currentContent += content;
+              const message = {
+                role: "assistant",
+                content: currentContent
+              };
+              console.log('Sending message to client:', message);
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
+            }
+          } catch (error) {
+            console.error('Error parsing JSON:', error);
+          }
         }
       },
-      cancel() {
-        // Handle stream cancellation if needed
+      async flush(controller) {
+        if (buffer) {
+          try {
+            const data = buffer.slice(6);
+            if (data && data !== '[DONE]') {
+              const json = JSON.parse(data);
+              const content = json.choices[0]?.delta?.content || '';
+              if (content) {
+                currentContent += content;
+                const message = {
+                  role: "assistant",
+                  content: currentContent
+                };
+                console.log('Sending message to client:', message);
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
+              }
+            }
+          } catch (error) {
+            console.error('Error parsing final JSON:', error);
+          }
+        }
+        if (!doneSent) {
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          doneSent = true;
+        }
       }
     });
 
-    return new Response(stream, {
+    return new Response(response.body.pipeThrough(transformStream), {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
