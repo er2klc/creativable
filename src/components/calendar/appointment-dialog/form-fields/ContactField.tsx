@@ -24,6 +24,7 @@ interface ContactFieldProps {
 
 export const ContactField = ({ form }: ContactFieldProps) => {
   const [searchValue, setSearchValue] = useState("");
+  const [open, setOpen] = useState(false);
 
   const { data: leads = [] } = useQuery({
     queryKey: ["leads", searchValue],
@@ -50,6 +51,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
         return [];
       }
     },
+    enabled: open, // Only fetch when the command menu is open
     initialData: [],
   });
 
@@ -60,35 +62,40 @@ export const ContactField = ({ form }: ContactFieldProps) => {
       render={({ field }) => (
         <FormItem>
           <FormLabel>Kontakt</FormLabel>
-          <Command className="border rounded-md">
-            <CommandInput 
-              placeholder="Suche nach Kontakten..." 
-              value={searchValue}
-              onValueChange={setSearchValue}
-            />
-            <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
-            <CommandGroup className="max-h-[200px] overflow-y-auto">
-              {leads.map((lead) => (
-                <CommandItem
-                  key={lead.id}
-                  value={lead.name}
-                  onSelect={() => {
-                    form.setValue("leadId", lead.id);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      lead.id === field.value
-                        ? "opacity-100"
-                        : "opacity-0"
-                    )}
-                  />
-                  {lead.name}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </Command>
+          <FormControl>
+            <Command 
+              className="border rounded-md" 
+              onOpenChange={setOpen}
+            >
+              <CommandInput 
+                placeholder="Suche nach Kontakten..." 
+                value={searchValue}
+                onValueChange={setSearchValue}
+              />
+              <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
+              <CommandGroup className="max-h-[200px] overflow-y-auto">
+                {leads.map((lead) => (
+                  <CommandItem
+                    key={lead.id}
+                    value={lead.name}
+                    onSelect={() => {
+                      form.setValue("leadId", lead.id);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        lead.id === field.value
+                          ? "opacity-100"
+                          : "opacity-0"
+                      )}
+                    />
+                    {lead.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </Command>
+          </FormControl>
         </FormItem>
       )}
     />
