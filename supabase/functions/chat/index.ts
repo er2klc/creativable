@@ -49,14 +49,16 @@ serve(async (req) => {
     const decoder = new TextDecoder();
 
     let accumulatedContent = '';
+    let streamEnded = false;
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          while (true) {
+          while (!streamEnded) {
             const { done, value } = await reader.read();
+            
             if (done) {
-              // Send final accumulated content if any
+              console.log('Stream completed: reader.read() returned done');
               if (accumulatedContent) {
                 const finalMessage = {
                   role: "assistant",
@@ -64,6 +66,7 @@ serve(async (req) => {
                 };
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
               }
+              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
               controller.close();
               break;
             }
@@ -76,8 +79,10 @@ serve(async (req) => {
               if (!trimmedLine) continue;
               
               if (trimmedLine === 'data: [DONE]') {
+                console.log('Stream completed: received [DONE] message');
+                streamEnded = true;
                 controller.close();
-                return;
+                break;
               }
 
               if (trimmedLine.startsWith('data: ')) {
@@ -89,6 +94,11 @@ serve(async (req) => {
                   if (content) {
                     console.log('Processing content chunk:', content);
                     accumulatedContent += content;
+                    const partialMessage = {
+                      role: "assistant",
+                      content: accumulatedContent,
+                    };
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(partialMessage)}\n\n`));
                   }
                 } catch (error) {
                   console.warn('Invalid JSON in line:', trimmedLine, error);
