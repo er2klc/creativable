@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/popover";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Phone, MapPin, Video, Users, BarChart, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NewAppointmentDialogProps {
