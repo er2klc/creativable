@@ -39,7 +39,7 @@ export const NewAppointmentDialog = ({
   appointmentToEdit,
 }: NewAppointmentDialogProps) => {
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate || new Date());
 
   const createAppointment = useMutation({
     mutationFn: async (values: any) => {

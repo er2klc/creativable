@@ -1,7 +1,7 @@
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Users, Infinity } from "lucide-react";
+import { Clock, User, FileText, Users, Infinity, Video, Phone, Building, PresentationScreen, ArrowRightLeft, HandWaving } from "lucide-react";
 
 interface AppointmentItemProps {
   appointment: any;
@@ -42,6 +42,26 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
   // Determine if the appointment is draggable
   const isDraggable = !appointment.isTeamEvent;
 
+  // Get the appropriate icon based on meeting type
+  const getMeetingTypeIcon = () => {
+    switch (appointment.meeting_type) {
+      case 'zoom':
+        return <Video className="h-3 w-3" />;
+      case 'phone_call':
+        return <Phone className="h-3 w-3" />;
+      case 'on_site':
+        return <Building className="h-3 w-3" />;
+      case 'presentation':
+        return <PresentationScreen className="h-3 w-3" />;
+      case 'follow_up':
+        return <ArrowRightLeft className="h-3 w-3" />;
+      case 'initial_meeting':
+        return <HandWaving className="h-3 w-3" />;
+      default:
+        return <FileText className="h-3 w-3" />;
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -70,7 +90,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         ) : appointment.isTeamEvent ? (
           <Users className="h-3 w-3" />
         ) : (
-          <FileText className="h-3 w-3" />
+          getMeetingTypeIcon()
         )}
         <span className="truncate font-bold">{appointment.title}</span>
       </div>
