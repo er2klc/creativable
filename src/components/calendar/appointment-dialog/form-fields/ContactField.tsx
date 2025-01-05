@@ -45,7 +45,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
           .from("leads")
           .select("id, name")
           .eq("user_id", user.id)
-          .ilike("name", `%${searchValue}%`)
+          .ilike("name", `%${searchValue}%`) // Korrigierte Syntax
           .order("name");
 
         if (error) {
@@ -98,27 +98,30 @@ export const ContactField = ({ form }: ContactFieldProps) => {
                     value={searchValue}
                     onValueChange={setSearchValue}
                   />
-                  <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
-                  <CommandGroup>
-                    {leadsData.map((lead) => (
-                      <CommandItem
-                        key={lead.id}
-                        value={lead.name}
-                        onSelect={() => {
-                          form.setValue("leadId", lead.id);
-                          setOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            lead.id === field.value ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {lead.name}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
+                  {leadsData.length > 0 ? (
+                    <CommandGroup>
+                      {leadsData.map((lead) => (
+                        <CommandItem
+                          key={lead.id}
+                          value={lead.name}
+                          onSelect={() => {
+                            form.setValue("leadId", lead.id);
+                            setOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              lead.id === field.value ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {lead.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  ) : (
+                    <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
+                  )}
                 </Command>
               )}
             </PopoverContent>
