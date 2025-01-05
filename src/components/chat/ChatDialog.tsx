@@ -106,7 +106,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
           {
             id: "welcome",
             role: "assistant",
-            content: userName ? `Hallo ${userName}! Wie kann ich dir heute helfen?` : "Hallo! Wie kann ich dir heute helfen?"
+            content: userName ? `Hallo ${userName}! Ich bin Nexus, dein persönlicher KI-Assistent. Ich unterstütze dich gerne bei allen Fragen rund um dein Network Marketing Business. Wie kann ich dir heute helfen?` : "Hallo! Ich bin Nexus, dein persönlicher KI-Assistent. Wie kann ich dir heute helfen?"
           }
         ]);
       }
