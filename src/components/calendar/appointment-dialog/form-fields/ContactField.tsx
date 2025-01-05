@@ -28,23 +28,29 @@ export const ContactField = ({ form }: ContactFieldProps) => {
   const { data: leads = [] } = useQuery({
     queryKey: ["leads", searchValue],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
 
-      const { data, error } = await supabase
-        .from("leads")
-        .select("id, name")
-        .eq("user_id", user.id)
-        .ilike("name", `%${searchValue}%`)
-        .order("name");
+        const { data, error } = await supabase
+          .from("leads")
+          .select("id, name")
+          .eq("user_id", user.id)
+          .ilike("name", `%${searchValue}%`)
+          .order("name");
 
-      if (error) {
-        console.error("Error fetching leads:", error);
+        if (error) {
+          console.error("Error fetching leads:", error);
+          return [];
+        }
+
+        return data || [];
+      } catch (error) {
+        console.error("Error in leads query:", error);
         return [];
       }
-
-      return data;
     },
+    initialData: [],
   });
 
   return (
@@ -62,7 +68,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
             />
             <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
             <CommandGroup className="max-h-[200px] overflow-y-auto">
-              {leads?.map((lead) => (
+              {leads.map((lead) => (
                 <CommandItem
                   key={lead.id}
                   value={lead.name}
