@@ -1,12 +1,11 @@
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check, X } from "lucide-react";
+import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Appointment } from "./types";
 
 interface AppointmentItemProps {
-  appointment: Appointment;
+  appointment: any;
   onClick: (e: React.MouseEvent) => void;
   isDragging?: boolean;
 }
@@ -70,7 +69,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       style={{
         ...style,
         backgroundColor: appointment.color || "#FEF7CD",
-        cursor: isDraggable ? 'grab' : 'default'
+        cursor: isDraggable ? 'pointer' : 'default'
       }}
       {...(isDraggable ? { ...listeners, ...attributes } : {})}
       className={cn(
@@ -79,8 +78,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         appointment.isRecurring && "border-l-4 border-primary",
         appointment.isTeamEvent && "border border-gray-200",
         !appointment.isTeamEvent && "text-black",
-        appointment.completed && "bg-opacity-50",
-        appointment.cancelled && "bg-opacity-30"
+        appointment.completed && "bg-opacity-50"
       )}
       onClick={(e) => {
         // Only trigger onClick for personal appointments or if explicitly allowed
@@ -112,36 +110,22 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         <span>{timeString}</span>
       </div>
 
-      {/* Status indicator */}
-      {!appointment.isTeamEvent && (appointment.completed || appointment.cancelled) && (
+      {/* Completed indicator */}
+      {!appointment.isTeamEvent && appointment.completed && (
         <div className="absolute bottom-1 right-1">
-          {appointment.cancelled ? (
-            <X className="h-3 w-3 text-red-600" />
-          ) : (
-            <Check className="h-3 w-3 text-green-600" />
-          )}
-        </div>
-      )}
-
-      {/* Drop zones */}
-      {!appointment.isTeamEvent && !isDragging && (
-        <div className="absolute bottom-0 left-0 right-0 flex h-1 -mx-2 -mb-1 rounded-b overflow-hidden">
-          <div 
-            className="w-1/2 bg-green-100 hover:bg-green-200 transition-colors"
-            onMouseUp={() => {
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-4 w-4 p-0 hover:bg-transparent"
+            onClick={(e) => {
+              e.stopPropagation();
               if (appointment.onComplete) {
-                appointment.onComplete(true);
+                appointment.onComplete(!appointment.completed);
               }
             }}
-          />
-          <div 
-            className="w-1/2 bg-red-100 hover:bg-red-200 transition-colors"
-            onMouseUp={() => {
-              if (appointment.onCancel) {
-                appointment.onCancel(true);
-              }
-            }}
-          />
+          >
+            <Check className="h-3 w-3 text-green-600" />
+          </Button>
         </div>
       )}
     </div>
