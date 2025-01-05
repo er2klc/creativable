@@ -2,6 +2,7 @@ import { format, isSameMonth, isToday, startOfMonth, endOfMonth, eachDayOfInterv
 import { cn } from "@/lib/utils";
 import { AppointmentItem } from "./AppointmentItem";
 import { DragOverlay, useDroppable } from "@dnd-kit/core";
+import { useMemo } from "react";
 
 interface CalendarGridProps {
   currentDate: Date;
@@ -24,20 +25,24 @@ export const CalendarGrid = ({
   overDate,
   draggedAppointment,
 }: CalendarGridProps) => {
-  const days = eachDayOfInterval({
-    start: startOfMonth(currentDate),
-    end: endOfMonth(currentDate),
-  });
+  // Calculate days once and memoize the result
+  const days = useMemo(() => 
+    eachDayOfInterval({
+      start: startOfMonth(currentDate),
+      end: endOfMonth(currentDate),
+    }),
+    [currentDate]
+  );
 
-  // Create a map of droppable states for each date
-  const droppableStates = days.reduce((acc, day) => {
+  // Create droppable elements for each day
+  const droppables = days.map(day => {
     const dateStr = format(day, "yyyy-MM-dd");
-    const { setNodeRef } = useDroppable({
-      id: dateStr,
-    });
-    acc[dateStr] = setNodeRef;
-    return acc;
-  }, {} as Record<string, (element: HTMLElement | null) => void>);
+    return {
+      date: day,
+      dateStr,
+      ...useDroppable({ id: dateStr })
+    };
+  });
 
   return (
     <>
@@ -51,32 +56,31 @@ export const CalendarGrid = ({
           </div>
         ))}
 
-        {days.map((day) => {
-          const dayAppointments = getDayAppointments(day);
-          const dateStr = format(day, "yyyy-MM-dd");
+        {droppables.map(({ date, dateStr, setNodeRef }) => {
+          const dayAppointments = getDayAppointments(date);
           const isOver = overDate === dateStr;
           
           return (
             <div
-              ref={droppableStates[dateStr]}
-              key={day.toString()}
+              ref={setNodeRef}
+              key={date.toString()}
               id={dateStr}
               className={cn(
                 "min-h-[100px] bg-background p-2 relative transition-colors duration-200",
-                !isSameMonth(day, currentDate) && "text-muted-foreground",
+                !isSameMonth(date, currentDate) && "text-muted-foreground",
                 "hover:bg-accent hover:text-accent-foreground cursor-pointer",
                 isOver && "bg-accent/50"
               )}
-              onClick={() => onDateClick(day)}
+              onClick={() => onDateClick(date)}
             >
               <time
-                dateTime={format(day, "yyyy-MM-dd")}
+                dateTime={format(date, "yyyy-MM-dd")}
                 className={cn(
                   "flex h-6 w-6 items-center justify-center rounded-full",
-                  isToday(day) && "bg-primary text-primary-foreground"
+                  isToday(date) && "bg-primary text-primary-foreground"
                 )}
               >
-                {format(day, "d")}
+                {format(date, "d")}
               </time>
               <div className="mt-1">
                 {dayAppointments?.map((appointment) => (
