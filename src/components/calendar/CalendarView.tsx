@@ -7,7 +7,7 @@ import { NewAppointmentDialog } from "./NewAppointmentDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core";
 import { AppointmentItem } from "./AppointmentItem";
 import { toast } from "sonner";
 
@@ -16,6 +16,7 @@ export const CalendarView = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const sensors = useSensors(
@@ -39,7 +40,7 @@ export const CalendarView = () => {
         .from("tasks")
         .select("*, leads(name)")
         .eq("user_id", user.id)
-        .not("due_date", "is", null)  // Only fetch tasks with a due_date
+        .not("due_date", "is", null)
         .gte("due_date", startDate.toISOString())
         .lte("due_date", endDate.toISOString());
 
@@ -52,7 +53,7 @@ export const CalendarView = () => {
     },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
   });
 
   const handleDateClick = (date: Date) => {
@@ -75,7 +76,12 @@ export const CalendarView = () => {
     setIsDialogOpen(true);
   };
 
+  const handleDragStart = (event: any) => {
+    setActiveId(event.active.id);
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveId(null);
     const { active, over } = event;
     
     if (!over || !active.data.current) return;
@@ -110,8 +116,14 @@ export const CalendarView = () => {
     );
   };
 
+  const draggedAppointment = activeId ? appointments?.find(app => app.id === activeId) : null;
+
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext 
+      sensors={sensors} 
+      onDragEnd={handleDragEnd}
+      onDragStart={handleDragStart}
+    >
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">
@@ -127,7 +139,7 @@ export const CalendarView = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-px bg-muted">
+        <div className="grid grid-cols-7 gap-px bg-muted relative">
           {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day) => (
             <div
               key={day}
@@ -176,6 +188,17 @@ export const CalendarView = () => {
             );
           })}
         </div>
+
+        <DragOverlay>
+          {draggedAppointment ? (
+            <div className="opacity-80">
+              <AppointmentItem
+                appointment={draggedAppointment}
+                onClick={() => {}}
+              />
+            </div>
+          ) : null}
+        </DragOverlay>
 
         <NewAppointmentDialog
           open={isDialogOpen}

@@ -14,15 +14,17 @@ export const AppointmentItem = ({ appointment, onClick }: AppointmentItemProps) 
     data: appointment,
   });
 
-  const dragStyle = transform ? {
+  const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    zIndex: 50,
+    position: 'relative' as const,
   } : undefined;
 
   return (
     <div
       ref={setNodeRef}
       style={{
-        ...dragStyle,
+        ...style,
         backgroundColor: appointment.color || "#FEF7CD"
       }}
       {...listeners}
