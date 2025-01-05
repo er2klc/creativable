@@ -9,8 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { AppointmentForm } from "./appointment-dialog/AppointmentForm";
+import { useState } from "react";
 
 interface NewAppointmentDialogProps {
   open: boolean;
@@ -29,10 +35,11 @@ interface NewAppointmentDialogProps {
 export const NewAppointmentDialog = ({
   open,
   onOpenChange,
-  selectedDate,
+  selectedDate: initialSelectedDate,
   appointmentToEdit,
 }: NewAppointmentDialogProps) => {
   const queryClient = useQueryClient();
+  const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate);
 
   const createAppointment = useMutation({
     mutationFn: async (values: any) => {
@@ -87,10 +94,34 @@ export const NewAppointmentDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {appointmentToEdit ? "Termin bearbeiten" : "Neuer Termin"} am{" "}
-            {selectedDate &&
-              format(selectedDate, "dd. MMMM yyyy", { locale: de })}
+          <DialogTitle className="space-y-2">
+            <div>{appointmentToEdit ? "Termin bearbeiten" : "Neuer Termin"}</div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "justify-start text-left font-normal w-full",
+                    !selectedDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? (
+                    format(selectedDate, "dd. MMMM yyyy", { locale: de })
+                  ) : (
+                    <span>Datum wählen</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate || undefined}
+                  onSelect={(date) => setSelectedDate(date)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </DialogTitle>
           <DialogDescription>
             Fülle die folgenden Felder aus, um {appointmentToEdit ? "den Termin zu aktualisieren" : "einen neuen Termin zu erstellen"}.
