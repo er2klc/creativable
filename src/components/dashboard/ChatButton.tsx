@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageCircle, X } from "lucide-react";
+import { Brain, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatDialog } from "@/components/chat/ChatDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -114,7 +114,7 @@ export const ChatButton = () => {
           className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all"
           onClick={handleClick}
         >
-          <MessageCircle className="h-7 w-7" />
+          <Brain className="h-7 w-7" />
         </Button>
       </div>
 
