@@ -48,6 +48,8 @@ serve(async (req) => {
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
+    let accumulatedContent = '';
+
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -76,9 +78,11 @@ serve(async (req) => {
                   const content = json.choices?.[0]?.delta?.content;
                   
                   if (content) {
+                    accumulatedContent += content;
                     const message = {
+                      id: Date.now().toString(),
                       role: "assistant",
-                      content: content,
+                      content: accumulatedContent,
                     };
                     
                     console.log(`Streaming: ${JSON.stringify(message)}`);
