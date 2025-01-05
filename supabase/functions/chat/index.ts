@@ -50,21 +50,17 @@ serve(async (req) => {
       });
     }
 
-    let currentContent = '';
     const stream = new ReadableStream({
       async start(controller) {
         const reader = response.body!.getReader();
         const decoder = new TextDecoder();
         const encoder = new TextEncoder();
+        let fullContent = '';
 
         try {
           while (true) {
             const { done, value } = await reader.read();
-            
-            if (done) {
-              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-              break;
-            }
+            if (done) break;
 
             const chunk = decoder.decode(value);
             const lines = chunk.split('\n');
@@ -72,18 +68,17 @@ serve(async (req) => {
             for (const line of lines) {
               if (line.startsWith('data: ')) {
                 const data = line.slice(6);
-                
                 if (data === '[DONE]') continue;
-                
+
                 try {
                   const parsed = JSON.parse(data);
                   const content = parsed.choices?.[0]?.delta?.content || '';
                   if (content) {
-                    currentContent += content;
+                    fullContent += content;
                     const message = {
-                      id: Date.now().toString(),
+                      id: crypto.randomUUID(),
                       role: 'assistant',
-                      content: currentContent
+                      content: fullContent,
                     };
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
                   }
@@ -93,6 +88,9 @@ serve(async (req) => {
               }
             }
           }
+          
+          // Send final DONE message
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         } catch (error) {
           console.error('Stream processing error:', error);
           controller.error(error);

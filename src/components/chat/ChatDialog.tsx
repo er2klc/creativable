@@ -103,12 +103,18 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
   // Filter out duplicate messages based on content
   const uniqueMessages = messages.reduce((acc, current) => {
-    const x = acc.find(item => item.content === current.content);
-    if (!x) {
-      return acc.concat([current]);
-    } else {
-      return acc;
+    if (!current.content.trim()) return acc;
+    
+    const existingMessage = acc.find(msg => 
+      msg.role === current.role && 
+      msg.content.includes(current.content.trim())
+    );
+    
+    if (!existingMessage) {
+      return [...acc, current];
     }
+    
+    return acc;
   }, [] as typeof messages);
 
   return (
