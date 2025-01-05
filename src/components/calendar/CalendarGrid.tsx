@@ -2,7 +2,7 @@ import { format, isSameMonth, isToday, startOfMonth, endOfMonth, eachDayOfInterv
 import { cn } from "@/lib/utils";
 import { AppointmentItem } from "./AppointmentItem";
 import { DragOverlay, useDroppable } from "@dnd-kit/core";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 interface CalendarGridProps {
   currentDate: Date;
@@ -13,6 +13,7 @@ interface CalendarGridProps {
   activeId: string | null;
   overDate: string | null;
   draggedAppointment: any;
+  onMonthChange?: (direction: 'prev' | 'next') => void;
 }
 
 export const CalendarGrid = ({
@@ -24,7 +25,10 @@ export const CalendarGrid = ({
   activeId,
   overDate,
   draggedAppointment,
+  onMonthChange,
 }: CalendarGridProps) => {
+  const [monthChangeIndicator, setMonthChangeIndicator] = useState<'prev' | 'next' | null>(null);
+
   // Calculate days once and memoize the result
   const days = useMemo(() => 
     eachDayOfInterval({
@@ -35,17 +39,28 @@ export const CalendarGrid = ({
   );
 
   // Create droppable elements for each day
-  const droppables = days.map(day => {
-    const dateStr = format(day, "yyyy-MM-dd");
-    return {
-      date: day,
-      dateStr,
-      ...useDroppable({ id: dateStr })
-    };
-  });
+  const droppables = useMemo(() => 
+    days.map(day => {
+      const dateStr = format(day, "yyyy-MM-dd");
+      const { setNodeRef, isOver } = useDroppable({ 
+        id: dateStr,
+        data: { date: day }
+      });
+      return { date: day, dateStr, setNodeRef, isOver };
+    }),
+    [days]
+  );
 
   return (
-    <>
+    <div className="relative">
+      {/* Month change indicators */}
+      {monthChangeIndicator === 'prev' && (
+        <div className="absolute left-0 top-0 h-full w-16 bg-primary/10 pointer-events-none" />
+      )}
+      {monthChangeIndicator === 'next' && (
+        <div className="absolute right-0 top-0 h-full w-16 bg-primary/10 pointer-events-none" />
+      )}
+
       <div className="grid grid-cols-7 gap-px bg-muted">
         {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day) => (
           <div
@@ -72,6 +87,22 @@ export const CalendarGrid = ({
                 isOver && "bg-accent/50"
               )}
               onClick={() => onDateClick(date)}
+              onMouseEnter={(e) => {
+                if (activeId) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const mouseX = e.clientX;
+                  const threshold = 100; // pixels from edge
+
+                  if (mouseX - rect.left < threshold) {
+                    setMonthChangeIndicator('prev');
+                  } else if (rect.right - mouseX < threshold) {
+                    setMonthChangeIndicator('next');
+                  } else {
+                    setMonthChangeIndicator(null);
+                  }
+                }
+              }}
+              onMouseLeave={() => setMonthChangeIndicator(null)}
             >
               <time
                 dateTime={format(date, "yyyy-MM-dd")}
@@ -107,6 +138,6 @@ export const CalendarGrid = ({
           </div>
         ) : null}
       </DragOverlay>
-    </>
+    </div>
   );
 };

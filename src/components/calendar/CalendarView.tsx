@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format, parseISO, setHours, setMinutes } from "date-fns";
+import { format, parseISO, setHours, setMinutes, addMonths, subMonths } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors, DragOverEvent } from "@dnd-kit/core";
@@ -44,7 +44,6 @@ export const CalendarView = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      // First get all teams the user is a member of
       const { data: teamMemberships } = await supabase
         .from("team_members")
         .select("team_id, role")
@@ -55,7 +54,6 @@ export const CalendarView = () => {
       const teamIds = teamMemberships.map(tm => tm.team_id);
       const isAdmin = teamMemberships.some(tm => ['admin', 'owner'].includes(tm.role));
 
-      // Then get all team calendar events for these teams
       const { data: events, error } = await supabase
         .from("team_calendar_events")
         .select(`
@@ -64,7 +62,6 @@ export const CalendarView = () => {
         `)
         .in("team_id", teamIds)
         .not("start_time", "is", null)
-        // Only show admin events to admins
         .or(`is_admin_only.eq.false${isAdmin ? ',is_admin_only.eq.true' : ''}`);
 
       if (error) {
@@ -72,7 +69,6 @@ export const CalendarView = () => {
         return [];
       }
 
-      // Transform team events to match appointment structure
       return events.map(event => ({
         ...event,
         id: `team-${event.id}`,
@@ -80,7 +76,7 @@ export const CalendarView = () => {
         title: `[${event.teams?.name}] ${event.title}`,
         isTeamEvent: true,
         isAdminEvent: event.is_admin_only,
-        color: `${event.color || "#FEF7CD"}80`, // 50% transparency
+        color: `${event.color || "#FEF7CD"}80`,
       }));
     },
   });
@@ -89,6 +85,10 @@ export const CalendarView = () => {
     return [...appointments, ...teamAppointments].filter(
       (appointment) => format(new Date(appointment.due_date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
     );
+  };
+
+  const handleMonthChange = (direction: 'prev' | 'next') => {
+    setCurrentDate(direction === 'prev' ? subMonths(currentDate, 1) : addMonths(currentDate, 1));
   };
 
   const draggedAppointment = activeId ? appointments?.find(app => app.id === activeId) : null;
@@ -116,7 +116,7 @@ export const CalendarView = () => {
             setIsDialogOpen(true);
           }}
           onAppointmentClick={(e, appointment) => {
-            e.stopPropagation(); // Prevent the date click handler from firing
+            e.stopPropagation();
             if (!appointment.isTeamEvent) {
               setSelectedDate(new Date(appointment.due_date));
               setSelectedAppointment({
@@ -135,6 +135,7 @@ export const CalendarView = () => {
           activeId={activeId}
           overDate={overDate}
           draggedAppointment={draggedAppointment}
+          onMonthChange={handleMonthChange}
         />
 
         <NewAppointmentDialog
