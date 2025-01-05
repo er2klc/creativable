@@ -7,7 +7,7 @@ import { NewAppointmentDialog } from "./NewAppointmentDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors, DragOverlay, DragOverEvent } from "@dnd-kit/core";
 import { AppointmentItem } from "./AppointmentItem";
 import { toast } from "sonner";
 
@@ -17,6 +17,7 @@ export const CalendarView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [overDate, setOverDate] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const sensors = useSensors(
@@ -80,8 +81,18 @@ export const CalendarView = () => {
     setActiveId(event.active.id);
   };
 
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event;
+    if (over) {
+      setOverDate(over.id as string);
+    } else {
+      setOverDate(null);
+    }
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     setActiveId(null);
+    setOverDate(null);
     const { active, over } = event;
     
     if (!over || !active.data.current) return;
@@ -125,6 +136,7 @@ export const CalendarView = () => {
       sensors={sensors} 
       onDragEnd={handleDragEnd}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
     >
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -156,15 +168,18 @@ export const CalendarView = () => {
             end: endOfMonth(currentDate),
           }).map((day, dayIdx) => {
             const dayAppointments = getDayAppointments(day);
+            const dateStr = format(day, "yyyy-MM-dd");
+            const isOver = overDate === dateStr;
             
             return (
               <div
                 key={day.toString()}
-                id={format(day, "yyyy-MM-dd")}
+                id={dateStr}
                 className={cn(
-                  "min-h-[100px] bg-background p-2 relative",
+                  "min-h-[100px] bg-background p-2 relative transition-colors duration-200",
                   !isSameMonth(day, currentDate) && "text-muted-foreground",
-                  "hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                  "hover:bg-accent hover:text-accent-foreground cursor-pointer",
+                  isOver && "bg-accent/50"
                 )}
                 onClick={() => handleDateClick(day)}
               >
