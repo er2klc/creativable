@@ -57,6 +57,7 @@ serve(async (req) => {
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
+              // Send the final accumulated content if any
               if (accumulatedContent) {
                 const finalMessage = {
                   role: "assistant",
@@ -64,7 +65,8 @@ serve(async (req) => {
                 };
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
               }
-              controller.enqueue(encoder.encode(`data: [DONE]\n\n`)); // Send [DONE]
+              // End the stream with [DONE]
+              controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
               controller.close();
               break;
             }
@@ -85,17 +87,22 @@ serve(async (req) => {
                   if (content) {
                     accumulatedContent += content;
 
-                    // Check if the last two contents are identical
+                    // Output to console
+                    console.log(`data: ${JSON.stringify({ role: "assistant", content: accumulatedContent })}`);
+
+                    // Check if the last two responses are identical
                     if (accumulatedContent === previousContent) {
-                      controller.enqueue(
-                        encoder.encode(`data: ${JSON.stringify({ role: "assistant", content: accumulatedContent })}\n\n`)
-                      );
+                      const finalMessage = {
+                        role: "assistant",
+                        content: accumulatedContent,
+                      };
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
                       controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
                       controller.close();
                       return;
                     }
 
-                    previousContent = accumulatedContent; // Update previous content
+                    previousContent = accumulatedContent; // Update the previous content
                   }
                 } catch (error) {
                   console.warn('Invalid JSON in line:', trimmedLine, error);
