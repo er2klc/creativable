@@ -3,11 +3,10 @@ import { DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ChatHeaderProps {
-  onMinimize: () => void;
-  onClose: () => void;
+  onMinimize: (open: boolean) => void;
 }
 
-export const ChatHeader = ({ onMinimize, onClose }: ChatHeaderProps) => {
+export const ChatHeader = ({ onMinimize }: ChatHeaderProps) => {
   return (
     <div className="flex flex-col">
       <div className="flex items-center gap-4 p-1">
@@ -29,17 +28,10 @@ export const ChatHeader = ({ onMinimize, onClose }: ChatHeaderProps) => {
         <DialogTitle className="flex-1 font-orbitron">Nexus AI-Assistent</DialogTitle>
         
         <button
-          onClick={onMinimize}
+          onClick={() => onMinimize(false)}
           className="text-muted-foreground hover:text-foreground transition-colors"
         >
           <ChevronUp className="h-4 w-4" />
-        </button>
-        
-        <button
-          onClick={onClose}
-          className="text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <X className="h-4 w-4" />
         </button>
       </div>
       <div className="h-px bg-border mt-1" />

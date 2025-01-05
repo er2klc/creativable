@@ -59,7 +59,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         }
         setSessionToken(session.access_token);
 
-        // Fetch user profile to get the display name
         const { data: profile } = await supabase
           .from("profiles")
           .select("display_name")
@@ -96,7 +95,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
     if (open) {
       setupChat();
-      if (messages.length === 0) {
+      if (messages.length <= 1) { // Only system message or empty
         setMessages([
           {
             id: "system",
@@ -106,12 +105,14 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
           {
             id: "welcome",
             role: "assistant",
-            content: userName ? `Hallo ${userName}! Ich bin Nexus, dein persönlicher KI-Assistent. Ich unterstütze dich gerne bei allen Fragen rund um dein Network Marketing Business. Wie kann ich dir heute helfen?` : "Hallo! Ich bin Nexus, dein persönlicher KI-Assistent. Wie kann ich dir heute helfen?"
+            content: userName 
+              ? `Hallo ${userName}! Ich bin Nexus, dein persönlicher KI-Assistent. Ich unterstütze dich gerne bei allen Fragen rund um dein Network Marketing Business. Wie kann ich dir heute helfen?` 
+              : "Hallo! Ich bin Nexus, dein persönlicher KI-Assistent. Wie kann ich dir heute helfen?"
           }
         ]);
       }
     }
-  }, [open, setMessages, systemMessage, messages.length, userName]);
+  }, [open, setMessages, systemMessage, userName]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -119,14 +120,10 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     }
   }, [messages]);
 
-  const handleMinimize = () => {
-    onOpenChange(false);
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
-        <ChatHeader onMinimize={handleMinimize} onClose={handleMinimize} />
+        <ChatHeader onMinimize={onOpenChange} />
         <div className="flex flex-col h-[600px]">
           <ChatMessages messages={messages} scrollRef={scrollRef} />
           <ChatInput 

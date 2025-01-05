@@ -81,9 +81,11 @@ export const ChatButton = () => {
     }
   };
 
-  const handleMinimize = () => {
-    setIsMinimized(true);
-    setOpen(false);
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      setIsMinimized(true);
+    }
+    setOpen(newOpen);
   };
 
   const handleClose = () => {
@@ -93,7 +95,7 @@ export const ChatButton = () => {
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 flex flex-col gap-2 items-end">
+      <div className="fixed bottom-4 right-4 flex flex-col gap-2 items-end z-50">
         {isMinimized && (
           <Button 
             variant="outline" 
@@ -107,10 +109,10 @@ export const ChatButton = () => {
         <Button 
           variant="outline" 
           size="icon" 
-          className="h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all"
+          className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all"
           onClick={handleClick}
         >
-          <MessageCircle className="h-6 w-6" />
+          <MessageCircle className="h-7 w-7" />
         </Button>
       </div>
 
@@ -133,7 +135,7 @@ export const ChatButton = () => {
         </DialogContent>
       </Dialog>
 
-      <ChatDialog open={open} onOpenChange={handleMinimize} />
+      <ChatDialog open={open} onOpenChange={handleOpenChange} />
     </>
   );
 };
