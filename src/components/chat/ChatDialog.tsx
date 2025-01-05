@@ -48,9 +48,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   useEffect(() => {
     const setupChat = async () => {
       try {
-        const { data: { session } } = await sup
-
-abase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           toast.error("Bitte melde dich an.");
           return;
@@ -103,6 +101,16 @@ abase.auth.getSession();
     onOpenChange(false);
   };
 
+  // Filter out duplicate messages based on content
+  const uniqueMessages = messages.reduce((acc, current) => {
+    const x = acc.find(item => item.content === current.content);
+    if (!x) {
+      return acc.concat([current]);
+    } else {
+      return acc;
+    }
+  }, [] as typeof messages);
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
@@ -113,7 +121,7 @@ abase.auth.getSession();
         <div className="flex flex-col h-[600px]">
           <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
             <div className="space-y-4 mb-4">
-              {messages.map((message) => (
+              {uniqueMessages.map((message) => (
                 <div
                   key={message.id}
                   className={cn(
