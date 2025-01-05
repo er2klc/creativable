@@ -53,7 +53,11 @@ export const NewAppointmentDialog = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const appointmentDate = new Date(selectedDate!);
+      if (!selectedDate) {
+        throw new Error("Bitte wähle ein Datum aus");
+      }
+
+      const appointmentDate = new Date(selectedDate);
       const [hours, minutes] = values.time.split(":");
       appointmentDate.setHours(parseInt(hours), parseInt(minutes));
 
@@ -90,10 +94,14 @@ export const NewAppointmentDialog = ({
       onOpenChange(false);
     },
     onError: (error) => {
-      toast.error(appointmentToEdit 
-        ? "Der Termin konnte nicht aktualisiert werden."
-        : "Der Termin konnte nicht erstellt werden.");
-      console.error("Error with appointment:", error);
+      if (error instanceof Error && error.message === "Bitte wähle ein Datum aus") {
+        toast.error(error.message);
+      } else {
+        toast.error(appointmentToEdit 
+          ? "Der Termin konnte nicht aktualisiert werden."
+          : "Der Termin konnte nicht erstellt werden.");
+        console.error("Error with appointment:", error);
+      }
     },
   });
 
@@ -136,7 +144,13 @@ export const NewAppointmentDialog = ({
         </DialogHeader>
 
         <AppointmentForm 
-          onSubmit={(values) => createAppointment.mutate(values)}
+          onSubmit={(values) => {
+            if (!selectedDate) {
+              toast.error("Bitte wähle ein Datum aus");
+              return;
+            }
+            createAppointment.mutate(values);
+          }}
           defaultValues={appointmentToEdit}
           isEditing={!!appointmentToEdit}
         />
