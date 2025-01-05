@@ -6,7 +6,6 @@ import { TimeField } from "./form-fields/TimeField";
 import { TitleField } from "./form-fields/TitleField";
 import { MeetingTypeField } from "./form-fields/MeetingTypeField";
 import { ColorField } from "./form-fields/ColorField";
-import { PhaseField } from "./form-fields/PhaseField";
 
 interface FormValues {
   leadId: string;
@@ -14,7 +13,6 @@ interface FormValues {
   title: string;
   color: string;
   meeting_type: string;
-  phase: string;
 }
 
 interface AppointmentFormProps {
@@ -28,7 +26,6 @@ export const AppointmentForm = ({ onSubmit, defaultValues, isEditing }: Appointm
     defaultValues: {
       color: "#FEF7CD",
       meeting_type: "meeting",
-      phase: "initial_contact",
       ...defaultValues
     }
   });
@@ -41,7 +38,6 @@ export const AppointmentForm = ({ onSubmit, defaultValues, isEditing }: Appointm
         <TitleField form={form} />
         <MeetingTypeField form={form} />
         <ColorField form={form} />
-        <PhaseField form={form} />
 
         <div className="flex justify-end gap-2">
           <Button type="submit">

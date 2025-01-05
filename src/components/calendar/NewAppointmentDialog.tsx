@@ -71,6 +71,7 @@ export const NewAppointmentDialog = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] }); // Refresh leads to show new task
       toast.success(appointmentToEdit ? "Termin aktualisiert" : "Termin erstellt");
       onOpenChange(false);
     },
