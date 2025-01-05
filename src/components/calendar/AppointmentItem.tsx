@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import { Clock, User, FileText } from "lucide-react";
@@ -22,6 +22,22 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     opacity: isDragging ? 0 : 1,
   } : undefined;
+
+  // Safely format the date, return null if invalid
+  const formatSafeDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return isValid(date) ? format(date, "HH:mm") : null;
+  };
+
+  // For team calendar events, use start_time instead of due_date
+  const timeString = appointment.start_time 
+    ? formatSafeDate(appointment.start_time)
+    : formatSafeDate(appointment.due_date);
+
+  if (!timeString) {
+    console.warn('Invalid date for appointment:', appointment);
+    return null;
+  }
 
   return (
     <div
@@ -52,7 +68,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       
       <div className="flex items-center gap-1 text-xs">
         <Clock className="h-3 w-3" />
-        <span>{format(new Date(appointment.due_date), "HH:mm")}</span>
+        <span>{timeString}</span>
       </div>
     </div>
   );
