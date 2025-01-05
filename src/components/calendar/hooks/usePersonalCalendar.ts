@@ -44,7 +44,6 @@ export const usePersonalCalendar = () => {
 
   const handleAppointmentClick = (e: React.MouseEvent, appointment: any) => {
     e.stopPropagation();
-    // Prevent editing team events in personal calendar
     if (appointment.isTeamEvent) {
       toast.error("Team-Termine können nur im Team-Kalender bearbeitet werden");
       return;
@@ -67,7 +66,11 @@ export const usePersonalCalendar = () => {
 
   const handleDragOver = (event: DragOverEvent) => {
     const { over } = event;
-    setOverDate(over ? over.id as string : null);
+    if (over?.id === 'prev-month' || over?.id === 'next-month') {
+      setOverDate(over.id as string);
+    } else {
+      setOverDate(over ? over.id as string : null);
+    }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -79,9 +82,13 @@ export const usePersonalCalendar = () => {
 
     const appointment = active.data.current;
     
-    // Prevent dragging team events
     if (appointment.isTeamEvent) {
       toast.error("Team-Termine können nicht verschoben werden");
+      return;
+    }
+
+    // Handle month navigation buttons
+    if (over.id === 'prev-month' || over.id === 'next-month') {
       return;
     }
 
@@ -89,7 +96,6 @@ export const usePersonalCalendar = () => {
     const oldDate = new Date(appointment.due_date);
     const newDate = parseISO(newDateStr);
     
-    // Keep the original time
     const updatedDate = setMinutes(
       setHours(newDate, oldDate.getHours()),
       oldDate.getMinutes()

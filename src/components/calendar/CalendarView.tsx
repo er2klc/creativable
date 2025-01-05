@@ -104,6 +104,8 @@ export const CalendarView = () => {
         <CalendarHeader 
           currentDate={currentDate}
           onDateChange={setCurrentDate}
+          draggedAppointment={draggedAppointment}
+          onMonthChange={handleMonthChange}
         />
 
         <CalendarGrid
@@ -135,7 +137,6 @@ export const CalendarView = () => {
           activeId={activeId}
           overDate={overDate}
           draggedAppointment={draggedAppointment}
-          onMonthChange={handleMonthChange}
         />
 
         <NewAppointmentDialog
