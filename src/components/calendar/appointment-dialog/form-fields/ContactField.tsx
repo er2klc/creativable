@@ -14,6 +14,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList, // Stelle sicher, dass CommandList importiert ist
 } from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -72,7 +73,6 @@ export const ContactField = ({ form }: ContactFieldProps) => {
         return [];
       }
     },
-    // Optional: Refetch bei jedem Fokus oder Wiederholen von Fehlern
     refetchOnWindowFocus: false,
   });
 
@@ -125,30 +125,32 @@ export const ContactField = ({ form }: ContactFieldProps) => {
                     value={searchValue}
                     onValueChange={setSearchValue}
                   />
-                  {leadsData.length > 0 ? (
-                    <CommandGroup>
-                      {leadsData.map((lead) => (
-                        <CommandItem
-                          key={lead.id}
-                          value={lead.name}
-                          onSelect={() => {
-                            form.setValue("leadId", lead.id);
-                            setOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              lead.id === field.value ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {lead.name}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  ) : (
-                    <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
-                  )}
+                  <CommandList> {/* Hinzugefügte CommandList */}
+                    {leadsData.length > 0 ? (
+                      <CommandGroup>
+                        {leadsData.map((lead) => (
+                          <CommandItem
+                            key={lead.id}
+                            value={lead.name}
+                            onSelect={() => {
+                              form.setValue("leadId", lead.id);
+                              setOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                lead.id === field.value ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {lead.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    ) : (
+                      <CommandEmpty>Keine Kontakte gefunden.</CommandEmpty>
+                    )}
+                  </CommandList>
                 </Command>
               )}
             </PopoverContent>
