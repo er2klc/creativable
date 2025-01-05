@@ -87,15 +87,21 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
     if (open) {
       setupChat();
+      // Reset messages and include system message
       setMessages([
+        {
+          id: "system",
+          role: "system",
+          content: systemMessage,
+        },
         {
           id: "welcome",
           role: "assistant",
-          content: "Hallo! Ich bin dein MLM Assistant. Wie kann ich dir heute helfen?"
+          content: "Hallo! Ich bin dein persönlicher MLM Assistant. Wie kann ich dir heute helfen?"
         }
       ]);
     }
-  }, [open, setMessages]);
+  }, [open, setMessages, systemMessage]);
 
   useEffect(() => {
     if (scrollRef.current) {

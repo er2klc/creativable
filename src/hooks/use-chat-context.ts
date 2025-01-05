@@ -41,14 +41,40 @@ export const useChatContext = () => {
     },
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ["chat-context-profile"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Error loading profile for chat context:", error);
+        return null;
+      }
+
+      return data;
+    },
+  });
+
   const buildSystemMessage = () => {
     const userInfo = settings ? `
-      User Information:
-      - Language: ${settings.language}
-      - Company: ${settings.company_name || "Not specified"}
-      - Products/Services: ${settings.products_services || "Not specified"}
-      - Target Audience: ${settings.target_audience || "Not specified"}
-      - Business Description: ${settings.business_description || "Not specified"}
+      Persönliche Informationen:
+      - Name: ${profile?.display_name || "Nicht angegeben"}
+      - E-Mail: ${profile?.email || "Nicht angegeben"}
+      - Sprache: ${settings.language === "en" ? "Englisch" : "Deutsch"}
+      
+      Geschäftsinformationen:
+      - Firma: ${settings.company_name || "Nicht angegeben"}
+      - Produkte/Services: ${settings.products_services || "Nicht angegeben"}
+      - Zielgruppe: ${settings.target_audience || "Nicht angegeben"}
+      - Geschäftsbeschreibung: ${settings.business_description || "Nicht angegeben"}
+      - Über mich: ${settings.about_me || "Nicht angegeben"}
     ` : "";
 
     const teamsInfo = teams?.length ? `
@@ -57,23 +83,27 @@ export const useChatContext = () => {
     ` : "";
 
     const platformsInfo = platforms?.length ? `
-      Learning Platforms (${platforms.length}):
+      Lernplattformen (${platforms.length}):
       ${platforms.map(platform => `- ${platform.name}`).join("\n")}
     ` : "";
 
     return `
-      You are an AI assistant with access to the following context:
+      Du bist ein persönlicher KI-Assistent mit Zugriff auf folgende Informationen:
       ${userInfo}
       ${teamsInfo}
       ${platformsInfo}
 
-      Please use this information to provide personalized and contextually relevant responses.
-      Always respond in ${settings?.language === "en" ? "English" : "German"}.
+      Wichtige Anweisungen:
+      1. Nutze diese Informationen, um personalisierte und kontextbezogene Antworten zu geben.
+      2. Sprich den Benutzer mit Namen an, wenn ein Name bekannt ist.
+      3. Beziehe dich auf die Teams und Plattformen in deinen Antworten, wenn es relevant ist.
+      4. Antworte immer auf ${settings?.language === "en" ? "Englisch" : "Deutsch"}.
+      5. Du bist ein freundlicher und hilfsbereiter Assistent, der die persönlichen und geschäftlichen Ziele des Benutzers kennt und unterstützt.
     `.trim();
   };
 
   return {
     systemMessage: buildSystemMessage(),
-    isLoading: false, // We'll add more loading states as we add more data
+    isLoading: false,
   };
 };
