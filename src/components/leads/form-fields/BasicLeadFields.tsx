@@ -4,6 +4,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UseFormReturn } from "react-hook-form";
 import { Platform, platformsConfig } from "@/config/platforms";
 import { User, Globe, AtSign, Phone, Mail } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@supabase/auth-helpers-react";
 import * as z from "zod";
 
 interface BasicLeadFieldsProps {
@@ -11,6 +14,29 @@ interface BasicLeadFieldsProps {
 }
 
 export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
+  const session = useSession();
+
+  const { data: phases = [] } = useQuery({
+    queryKey: ["lead-phases"],
+    queryFn: async () => {
+      if (!session?.user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from("lead_phases")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("order_index");
+
+      if (error) {
+        console.error("Error loading phases:", error);
+        return [];
+      }
+
+      return data || [];
+    },
+    enabled: !!session?.user?.id,
+  });
+
   return (
     <>
       <FormField
@@ -94,9 +120,20 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
               <Globe className="h-4 w-4" />
               Phase
             </FormLabel>
-            <FormControl>
-              <Input placeholder="Phase des Kontakts" {...field} />
-            </FormControl>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Phase des Kontakts" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {phases.map((phase) => (
+                  <SelectItem key={phase.id} value={phase.name}>
+                    {phase.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <FormMessage />
           </FormItem>
         )}
