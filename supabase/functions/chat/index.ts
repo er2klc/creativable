@@ -48,15 +48,13 @@ serve(async (req) => {
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
-    let accumulatedContent = '';
-
     const stream = new ReadableStream({
       async start(controller) {
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
-              controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
               controller.close();
               break;
             }
@@ -66,26 +64,24 @@ serve(async (req) => {
 
             for (const line of lines) {
               if (line.trim() === '') continue;
-              if (line.trim() === 'data: [DONE]') continue;
+              if (line.trim() === 'data: [DONE]') {
+                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                continue;
+              }
 
               if (line.startsWith('data: ')) {
                 try {
                   const jsonStr = line.slice(6);
-                  if (jsonStr === '[DONE]') continue;
-
                   const json = JSON.parse(jsonStr);
                   const content = json.choices?.[0]?.delta?.content;
-
+                  
                   if (content) {
-                    accumulatedContent += content;
                     const message = {
                       role: "assistant",
-                      content: accumulatedContent,
+                      content: content,
                     };
                     
-                    // Log each message for debugging
                     console.log(`Streaming: ${JSON.stringify(message)}`);
-                    
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
                   }
                 } catch (error) {
