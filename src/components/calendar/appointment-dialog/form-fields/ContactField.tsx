@@ -15,11 +15,16 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command";
-import { Check } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UseFormReturn } from "react-hook-form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+
+interface Lead {
+  id: string;
+  name: string;
+}
 
 interface ContactFieldProps {
   form: UseFormReturn<any>;
@@ -48,7 +53,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
           return [];
         }
 
-        return data || [];
+        return (data || []) as Lead[];
       } catch (error) {
         console.error("Allgemeiner Fehler:", error);
         return [];
@@ -57,7 +62,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
   });
 
   const leadsData = Array.isArray(leads) ? leads : [];
-  console.log("Leads:", leadsData);
+  const selectedLead = leadsData.find((lead) => lead.id === form.getValues("leadId"));
 
   return (
     <FormField
@@ -78,9 +83,8 @@ export const ContactField = ({ form }: ContactFieldProps) => {
                     !field.value && "text-muted-foreground"
                   )}
                 >
-                  {field.value
-                    ? leadsData.find((lead) => lead.id === field.value)?.name || "Unbekannt"
-                    : "Wähle einen Kontakt"}
+                  {selectedLead?.name || "Wähle einen Kontakt"}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </FormControl>
             </PopoverTrigger>

@@ -30,12 +30,15 @@ const MEETING_TYPES = [
   { value: "follow_up", label: "Follow-up" },
 ] as const;
 
+type MeetingType = typeof MEETING_TYPES[number]["value"];
+
 interface MeetingTypeFieldProps {
   form: UseFormReturn<any>;
 }
 
 export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
   const [open, setOpen] = useState(false);
+  const selectedType = MEETING_TYPES.find(type => type.value === form.getValues("meeting_type"));
 
   return (
     <FormField
@@ -56,9 +59,7 @@ export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
                     !field.value && "text-muted-foreground"
                   )}
                 >
-                  {field.value
-                    ? MEETING_TYPES.find((type) => type.value === field.value)?.label
-                    : "Wähle eine Terminart"}
+                  {selectedType?.label || "Wähle eine Terminart"}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </FormControl>
@@ -73,7 +74,7 @@ export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
                       key={type.value}
                       value={type.label}
                       onSelect={() => {
-                        form.setValue("meeting_type", type.value);
+                        form.setValue("meeting_type", type.value as MeetingType);
                         setOpen(false);
                       }}
                     >
