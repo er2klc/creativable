@@ -50,70 +50,8 @@ serve(async (req) => {
       });
     }
 
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-
-    let buffer = '';
-    let currentContent = '';
-
-    const transformStream = new TransformStream({
-      async transform(chunk, controller) {
-        buffer += decoder.decode(chunk, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
-
-          const data = trimmedLine.slice(6);
-          if (data === '[DONE]') {
-            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-            continue;
-          }
-
-          try {
-            const json = JSON.parse(data);
-            const content = json.choices[0]?.delta?.content || '';
-            if (content) {
-              currentContent += content;
-              const message = {
-                role: "assistant",
-                content: currentContent
-              };
-              console.log('Sending message to client:', message);
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
-            }
-          } catch (error) {
-            console.error('Error parsing JSON:', error);
-          }
-        }
-      },
-      async flush(controller) {
-        if (buffer) {
-          try {
-            const data = buffer.slice(6);
-            if (data && data !== '[DONE]') {
-              const json = JSON.parse(data);
-              const content = json.choices[0]?.delta?.content || '';
-              if (content) {
-                currentContent += content;
-                const message = {
-                  role: "assistant",
-                  content: currentContent
-                };
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
-              }
-            }
-          } catch (error) {
-            console.error('Error parsing final JSON:', error);
-          }
-        }
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-      }
-    });
-
-    return new Response(response.body.pipeThrough(transformStream), {
+    // Direkte Weiterleitung des Streams ohne Modifikation
+    return new Response(response.body, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
@@ -121,7 +59,6 @@ serve(async (req) => {
         'Connection': 'keep-alive',
       }
     });
-
   } catch (error) {
     console.error('Error in chat function:', error);
     return new Response(JSON.stringify({ error: error.message }), {
