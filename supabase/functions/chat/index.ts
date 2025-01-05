@@ -81,6 +81,7 @@ serve(async (req) => {
                 role: "assistant",
                 content: currentContent
               };
+              console.log('Sending message to client:', message);
               controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
             }
           } catch (error) {
