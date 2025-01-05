@@ -21,7 +21,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [isThinking, setIsThinking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+  const { messages, input, handleInputChange, handleSubmit } = useChat({
     api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
     headers: {
       Authorization: `Bearer ${sessionToken}`,
@@ -30,11 +30,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     body: {
       language: 'de',
     },
-    onResponse: (response) => {
-      if (!response.ok) {
-        console.error("Chat response error:", response.status, response.statusText);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+    onResponse: () => {
       setIsThinking(true);
     },
     onFinish: () => {
@@ -161,9 +157,8 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
               placeholder="Schreibe eine Nachricht..."
               value={input}
               onChange={handleInputChange}
-              disabled={isLoading}
             />
-            <Button type="submit" size="icon" disabled={isLoading}>
+            <Button type="submit" size="icon">
               <SendHorizontal className="h-4 w-4" />
             </Button>
           </form>
