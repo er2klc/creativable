@@ -75,12 +75,7 @@ serve(async (req) => {
                   const content = parsed.choices?.[0]?.delta?.content || '';
                   if (content) {
                     fullContent += content;
-                    const message = {
-                      id: crypto.randomUUID(),
-                      role: 'assistant',
-                      content: fullContent,
-                    };
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
+                    controller.enqueue(encoder.encode(content));
                   }
                 } catch (error) {
                   console.error('Error parsing JSON:', error);
@@ -88,9 +83,6 @@ serve(async (req) => {
               }
             }
           }
-          
-          // Send final DONE message
-          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         } catch (error) {
           console.error('Stream processing error:', error);
           controller.error(error);
@@ -104,7 +96,7 @@ serve(async (req) => {
     return new Response(stream, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'text/event-stream',
+        'Content-Type': 'text/plain',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
       }

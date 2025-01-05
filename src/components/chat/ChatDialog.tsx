@@ -27,6 +27,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       Authorization: `Bearer ${sessionToken}`,
       'X-OpenAI-Key': apiKey || '',
     },
+    streamProtocol: 'text',
     onResponse: () => {
       setIsThinking(true);
       console.log("Chat response started");
@@ -107,7 +108,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     
     const existingMessage = acc.find(msg => 
       msg.role === current.role && 
-      msg.content.includes(current.content.trim())
+      msg.content === current.content.trim()
     );
     
     if (!existingMessage) {
