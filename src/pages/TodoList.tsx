@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, ListTodo } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSettings } from "@/hooks/use-settings";
@@ -51,9 +51,11 @@ const TodoList = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'tasks'
+          table: 'tasks',
+          filter: 'completed=eq.false'
         },
         () => {
+          console.log("Task change detected, refreshing...");
           queryClient.invalidateQueries({ queryKey: ["tasks-without-date"] });
         }
       )
@@ -99,9 +101,12 @@ const TodoList = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">
-          {settings?.language === "en" ? "Todo List" : "Aufgabenliste"}
-        </h1>
+        <div className="flex items-center gap-2">
+          <ListTodo className="h-6 w-6" />
+          <h1 className="text-2xl font-bold">
+            {settings?.language === "en" ? "Todo List" : "Todo Liste"}
+          </h1>
+        </div>
         <Button 
           variant="ghost" 
           size="icon"
