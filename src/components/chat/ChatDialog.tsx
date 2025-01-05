@@ -18,7 +18,6 @@ interface ChatDialogProps {
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
-  const [isThinking, setIsThinking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
@@ -29,11 +28,9 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     },
     streamProtocol: 'text',
     onResponse: () => {
-      setIsThinking(true);
       console.log("Chat response started");
     },
     onFinish: () => {
-      setIsThinking(false);
       console.log("Chat response finished");
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -41,7 +38,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     },
     onError: (error) => {
       console.error("Chat error:", error);
-      setIsThinking(false);
       toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
     },
   });
@@ -162,18 +158,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
                   )}
                 </div>
               ))}
-              {isThinking && (
-                <div className="flex gap-3 text-slate-600 text-sm mb-4">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>
-                      <Bot className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="bg-muted rounded-lg px-3 py-2">
-                    Denke nach...
-                  </div>
-                </div>
-              )}
             </div>
           </ScrollArea>
           <form onSubmit={handleSubmit} className="flex items-center gap-2 mt-4">
