@@ -1,14 +1,21 @@
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSettings } from "@/hooks/use-settings";
+import { SuccessAnimation } from "@/components/ui/success-animation";
+import { AddTaskDialog } from "@/components/todo/AddTaskDialog";
 
 const TodoList = () => {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   const { data: tasks = [] } = useQuery({
     queryKey: ["tasks-without-date"],
@@ -41,14 +48,13 @@ const TodoList = () => {
 
       if (error) throw error;
 
+      // Show success animation
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 1500);
+
+      // Update the tasks list
       await queryClient.invalidateQueries({ queryKey: ["tasks-without-date"] });
       
-      // Show success animation and toast
-      toast.success(
-        settings?.language === "en" 
-          ? "Task completed! 🎉" 
-          : "Aufgabe erledigt! 🎉"
-      );
     } catch (error) {
       console.error("Error completing task:", error);
       toast.error(
@@ -61,9 +67,15 @@ const TodoList = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">
-        {settings?.language === "en" ? "Todo List" : "Aufgabenliste"}
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">
+          {settings?.language === "en" ? "Todo List" : "Aufgabenliste"}
+        </h1>
+        <Button onClick={() => setShowAddDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          {settings?.language === "en" ? "Add Task" : "Aufgabe hinzufügen"}
+        </Button>
+      </div>
       
       <div className="grid gap-4">
         <AnimatePresence>
@@ -108,6 +120,9 @@ const TodoList = () => {
           </div>
         )}
       </div>
+
+      <SuccessAnimation show={showSuccess} />
+      <AddTaskDialog open={showAddDialog} onOpenChange={setShowAddDialog} />
     </div>
   );
 };
