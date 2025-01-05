@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useChat } from "ai/react";
-import { Bot, SendHorizontal, User } from "lucide-react";
+import { Bot, Info, SendHorizontal, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useRef } from "react";
@@ -87,7 +88,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
     if (open) {
       setupChat();
-      // Reset messages and include system message
       setMessages([
         {
           id: "system",
@@ -97,7 +97,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         {
           id: "welcome",
           role: "assistant",
-          content: "Hallo! Ich bin dein persönlicher MLM Assistant. Wie kann ich dir heute helfen?"
+          content: "Hallo! Ich bin dein Network Marketing Assistent. Ich helfe dir dabei, neue Partner und Kunden zu gewinnen. Wie kann ich dir heute helfen?"
         }
       ]);
     }
@@ -113,9 +113,9 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     onOpenChange(false);
   };
 
-  // Filter out duplicate messages based on content
-  const uniqueMessages = messages.reduce((acc, current) => {
-    if (!current.content.trim()) return acc;
+  // Filter out system messages and duplicates for display
+  const displayMessages = messages.reduce((acc, current) => {
+    if (!current.content.trim() || current.role === 'system') return acc;
     
     const existingMessage = acc.find(msg => 
       msg.role === current.role && 
@@ -132,14 +132,35 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogTitle>Chat mit KI-Assistent</DialogTitle>
+        <DialogTitle className="flex items-center justify-between">
+          Chat mit KI-Assistent
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <Info className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[300px]">
+                <p className="text-sm">
+                  Ich bin dein persönlicher Network Marketing Assistent. Ich helfe dir dabei:
+                  <br />• Neue Partner und Kunden zu gewinnen
+                  <br />• Verkaufsgespräche zu optimieren
+                  <br />• Marketing-Strategien zu entwickeln
+                  <br />• Nachrichten und Posts zu formulieren
+                  <br />• Dein Business zu skalieren
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </DialogTitle>
         <DialogDescription>
-          Ich helfe Ihnen gerne bei Ihren Fragen und Anliegen.
+          Ich unterstütze dich bei allen Aspekten deines Network Marketing Business.
         </DialogDescription>
         <div className="flex flex-col h-[600px]">
           <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
             <div className="space-y-4 mb-4">
-              {uniqueMessages.map((message) => (
+              {displayMessages.map((message) => (
                 <div
                   key={message.id}
                   className={cn(
