@@ -117,6 +117,7 @@ export const usePersonalCalendar = () => {
     currentDate,
     setCurrentDate,
     selectedDate,
+    setSelectedDate,
     activeId,
     overDate,
     appointments,

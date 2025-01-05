@@ -116,7 +116,6 @@ export const CalendarView = () => {
             setIsDialogOpen(true);
           }}
           onAppointmentClick={(e, appointment) => {
-            handleAppointmentClick(e, appointment);
             if (!appointment.isTeamEvent) {
               setSelectedDate(new Date(appointment.due_date));
               setSelectedAppointment({
@@ -128,6 +127,8 @@ export const CalendarView = () => {
                 meeting_type: appointment.meeting_type,
               });
               setIsDialogOpen(true);
+            } else {
+              toast.error("Team-Termine können nur im Team-Kalender bearbeitet werden");
             }
           }}
           activeId={activeId}
