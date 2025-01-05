@@ -25,9 +25,11 @@ interface AppointmentFormProps {
 
 export const AppointmentForm = ({ onSubmit, defaultValues, isEditing }: AppointmentFormProps) => {
   const form = useForm<FormValues>({
-    defaultValues: defaultValues || {
+    defaultValues: {
       color: "#FEF7CD",
-      phase: "initial_contact"
+      meeting_type: "meeting",
+      phase: "initial_contact",
+      ...defaultValues
     }
   });
 

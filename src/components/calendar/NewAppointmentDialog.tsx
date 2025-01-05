@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { AppointmentForm } from "./appointment-dialog/AppointmentForm";
 
 interface NewAppointmentDialogProps {
@@ -32,7 +32,6 @@ export const NewAppointmentDialog = ({
   selectedDate,
   appointmentToEdit,
 }: NewAppointmentDialogProps) => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const createAppointment = useMutation({
@@ -72,22 +71,13 @@ export const NewAppointmentDialog = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      toast({
-        title: appointmentToEdit ? "Termin aktualisiert" : "Termin erstellt",
-        description: appointmentToEdit 
-          ? "Der Termin wurde erfolgreich aktualisiert."
-          : "Der Termin wurde erfolgreich erstellt.",
-      });
+      toast.success(appointmentToEdit ? "Termin aktualisiert" : "Termin erstellt");
       onOpenChange(false);
     },
     onError: (error) => {
-      toast({
-        title: "Fehler",
-        description: appointmentToEdit 
-          ? "Der Termin konnte nicht aktualisiert werden."
-          : "Der Termin konnte nicht erstellt werden.",
-        variant: "destructive",
-      });
+      toast.error(appointmentToEdit 
+        ? "Der Termin konnte nicht aktualisiert werden."
+        : "Der Termin konnte nicht erstellt werden.");
       console.error("Error with appointment:", error);
     },
   });

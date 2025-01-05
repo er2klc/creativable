@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   FormControl,
   FormField,
@@ -46,6 +45,7 @@ export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
     <FormField
       control={form.control}
       name="meeting_type"
+      rules={{ required: "Bitte wähle eine Terminart aus" }}
       render={({ field }) => (
         <FormItem className="flex flex-col">
           <FormLabel>Terminart</FormLabel>

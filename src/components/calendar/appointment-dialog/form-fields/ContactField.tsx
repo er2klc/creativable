@@ -56,6 +56,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
     <FormField
       control={form.control}
       name="leadId"
+      rules={{ required: "Bitte wähle einen Kontakt aus" }}
       render={({ field }) => (
         <FormItem className="flex flex-col">
           <FormLabel>Kontakt</FormLabel>
