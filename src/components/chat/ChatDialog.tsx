@@ -18,6 +18,7 @@ interface ChatDialogProps {
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [isThinking, setIsThinking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
@@ -35,14 +36,17 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       console.log("Chat response received");
+      setIsThinking(true);
     },
     onFinish: () => {
+      setIsThinking(false);
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
     },
     onError: (error) => {
       console.error("Chat error:", error);
+      setIsThinking(false);
       // Don't show error toast for parsing errors as they don't affect functionality
       if (!error.message.includes('Failed to parse')) {
         toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
@@ -146,7 +150,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
                   )}
                 </div>
               ))}
-              {isLoading && (
+              {isThinking && (
                 <div className="flex gap-3 text-slate-600 text-sm mb-4">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback>
