@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -11,7 +11,6 @@ import { useSettings } from "@/hooks/use-settings";
 import { SuccessAnimation } from "@/components/ui/success-animation";
 import { AddTaskDialog } from "@/components/todo/AddTaskDialog";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 
 const TodoList = () => {
   const { settings } = useSettings();
@@ -103,9 +102,13 @@ const TodoList = () => {
         <h1 className="text-2xl font-bold">
           {settings?.language === "en" ? "Todo List" : "Aufgabenliste"}
         </h1>
-        <Button onClick={() => setShowAddDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          {settings?.language === "en" ? "Add Task" : "Aufgabe hinzufügen"}
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => setShowAddDialog(true)}
+          className="h-8 w-8"
+        >
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
       
