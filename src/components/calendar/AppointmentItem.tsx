@@ -34,13 +34,8 @@ export const AppointmentItem = ({ appointment, onClick }: AppointmentItemProps) 
       onClick={onClick}
     >
       <div className="flex items-center gap-1 text-xs">
-        <Clock className="h-3 w-3" />
-        <span>{format(new Date(appointment.due_date), "HH:mm")}</span>
-      </div>
-      
-      <div className="flex items-center gap-1 text-xs">
         <FileText className="h-3 w-3" />
-        <span className="truncate">{appointment.title}</span>
+        <span className="truncate font-bold">{appointment.title}</span>
       </div>
 
       {appointment.leads?.name && (
@@ -49,6 +44,11 @@ export const AppointmentItem = ({ appointment, onClick }: AppointmentItemProps) 
           <span className="truncate">{appointment.leads.name}</span>
         </div>
       )}
+      
+      <div className="flex items-center gap-1 text-xs">
+        <Clock className="h-3 w-3" />
+        <span>{format(new Date(appointment.due_date), "HH:mm")}</span>
+      </div>
     </div>
   );
 };
