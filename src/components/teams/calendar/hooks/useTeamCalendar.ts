@@ -153,17 +153,22 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
 
   const disableEventInstance = async (eventId: string, date: Date) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
       const { error } = await supabase
         .from("team_calendar_disabled_events")
         .insert({
           event_id: eventId,
           disabled_date: format(date, 'yyyy-MM-dd'),
+          disabled_by: user.id
         });
 
       if (error) throw error;
 
       await queryClient.invalidateQueries({ queryKey: ["team-events"] });
       toast.success("Termin für diesen Tag deaktiviert");
+      setIsDialogOpen(false);
     } catch (error) {
       console.error("Error disabling event:", error);
       toast.error("Fehler beim Deaktivieren des Termins");

@@ -1,52 +1,119 @@
 import { useForm } from "react-hook-form";
-import { Form } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format } from "date-fns";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-interface FormValues {
-  title: string;
-  description?: string;
-  start_time: string;
-  end_time?: string;
-  color: string;
-  is_team_event: boolean;
-  recurring_pattern: string;
+const formSchema = z.object({
+  title: z.string().min(1, "Titel ist erforderlich"),
+  description: z.string().optional(),
+  start_time: z.string(),
+  end_time: z.string().optional(),
+  color: z.string().default("#FEF7CD"),
+  is_team_event: z.boolean().default(false),
+  recurring_pattern: z.enum(["none", "daily", "weekly"]).default("none"),
+});
+
+export interface TeamEventFormProps {
+  teamId: string;
+  selectedDate: Date | null;
+  eventToEdit?: any;
+  onClose: () => void;
+  onDisableInstance?: (date: Date) => void;
 }
 
-interface TeamEventFormProps {
-  onSubmit: (values: FormValues) => void;
-  defaultValues?: Partial<FormValues>;
-  isEditing?: boolean;
-}
+export const TeamEventForm = ({ 
+  teamId,
+  selectedDate,
+  eventToEdit,
+  onClose,
+  onDisableInstance
+}: TeamEventFormProps) => {
+  const queryClient = useQueryClient();
 
-export const TeamEventForm = ({ onSubmit, defaultValues, isEditing }: TeamEventFormProps) => {
-  const form = useForm<FormValues>({
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      color: "#FEF7CD",
-      is_team_event: false,
-      recurring_pattern: "none",
-      ...defaultValues
-    }
+      title: eventToEdit?.title || "",
+      description: eventToEdit?.description || "",
+      start_time: eventToEdit?.start_time || "09:00",
+      end_time: eventToEdit?.end_time || "",
+      color: eventToEdit?.color || "#FEF7CD",
+      is_team_event: eventToEdit?.is_team_event || false,
+      recurring_pattern: eventToEdit?.recurring_pattern || "none",
+    },
   });
+
+  const createEventMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      const eventDate = selectedDate || new Date();
+      const [hours, minutes] = values.start_time.split(":");
+      eventDate.setHours(parseInt(hours), parseInt(minutes));
+
+      let endDate = null;
+      if (values.end_time) {
+        const [endHours, endMinutes] = values.end_time.split(":");
+        endDate = new Date(eventDate);
+        endDate.setHours(parseInt(endHours), parseInt(endMinutes));
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const eventData = {
+        team_id: teamId,
+        title: values.title,
+        description: values.description,
+        start_time: eventDate.toISOString(),
+        end_time: endDate?.toISOString() || null,
+        color: values.color,
+        is_team_event: values.is_team_event,
+        recurring_pattern: values.recurring_pattern,
+        created_by: user.id,
+      };
+
+      if (eventToEdit) {
+        const { error } = await supabase
+          .from("team_calendar_events")
+          .update(eventData)
+          .eq("id", eventToEdit.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("team_calendar_events")
+          .insert(eventData);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team-events"] });
+      toast.success(
+        eventToEdit
+          ? "Termin erfolgreich aktualisiert"
+          : "Termin erfolgreich erstellt"
+      );
+      onClose();
+    },
+    onError: (error) => {
+      console.error("Error saving event:", error);
+      toast.error("Fehler beim Speichern des Termins");
+    },
+  });
+
+  const handleSubmit = (values: z.infer<typeof formSchema>) => {
+    createEventMutation.mutate(values);
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="title"
@@ -54,8 +121,9 @@ export const TeamEventForm = ({ onSubmit, defaultValues, isEditing }: TeamEventF
             <FormItem>
               <FormLabel>Titel</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Terminbeschreibung" />
+                <Input {...field} />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -67,8 +135,9 @@ export const TeamEventForm = ({ onSubmit, defaultValues, isEditing }: TeamEventF
             <FormItem>
               <FormLabel>Beschreibung</FormLabel>
               <FormControl>
-                <Textarea {...field} placeholder="Optionale Beschreibung" />
+                <Textarea {...field} />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -83,6 +152,7 @@ export const TeamEventForm = ({ onSubmit, defaultValues, isEditing }: TeamEventF
                 <FormControl>
                   <Input type="time" {...field} />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -96,34 +166,11 @@ export const TeamEventForm = ({ onSubmit, defaultValues, isEditing }: TeamEventF
                 <FormControl>
                   <Input type="time" {...field} />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="recurring_pattern"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Wiederholung</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Wähle eine Wiederholung" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="none">Keine Wiederholung</SelectItem>
-                  <SelectItem value="daily">Täglich</SelectItem>
-                  <SelectItem value="weekly">Wöchentlich</SelectItem>
-                  <SelectItem value="monthly">Monatlich</SelectItem>
-                  <SelectItem value="yearly">Jährlich</SelectItem>
-                </SelectContent>
-              </Select>
-            </FormItem>
-          )}
-        />
 
         <FormField
           control={form.control}
@@ -134,35 +181,59 @@ export const TeamEventForm = ({ onSubmit, defaultValues, isEditing }: TeamEventF
               <FormControl>
                 <Input type="color" {...field} />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
 
         <FormField
           control={form.control}
-          name="is_team_event"
+          name="recurring_pattern"
           render={({ field }) => (
-            <FormItem className="flex items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">Team-Event</FormLabel>
-                <div className="text-sm text-muted-foreground">
-                  Markiere diesen Termin als Team-Event
-                </div>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
+            <FormItem>
+              <FormLabel>Wiederholung</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Wählen Sie ein Muster" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="none">Keine Wiederholung</SelectItem>
+                  <SelectItem value="daily">Täglich</SelectItem>
+                  <SelectItem value="weekly">Wöchentlich</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
             </FormItem>
           )}
         />
 
-        <div className="flex justify-end gap-2">
-          <Button type="submit">
-            {isEditing ? "Termin aktualisieren" : "Termin erstellen"}
-          </Button>
+        <div className="flex justify-between pt-4">
+          {eventToEdit?.isRecurring && onDisableInstance && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (selectedDate && onDisableInstance) {
+                  onDisableInstance(selectedDate);
+                }
+              }}
+            >
+              Diese Instanz überspringen
+            </Button>
+          )}
+          <div className="flex gap-2 ml-auto">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Abbrechen
+            </Button>
+            <Button type="submit">
+              {eventToEdit ? "Aktualisieren" : "Erstellen"}
+            </Button>
+          </div>
         </div>
       </form>
     </Form>

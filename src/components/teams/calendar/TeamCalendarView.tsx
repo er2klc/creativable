@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -90,7 +91,6 @@ export const TeamCalendarView = ({ teamId, isAdmin, onBack }: TeamCalendarViewPr
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           selectedDate={selectedDate}
-          teamId={teamId}
           eventToEdit={selectedEvent}
           onDisableInstance={
             selectedEvent?.isRecurring 
