@@ -1,7 +1,7 @@
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText } from "lucide-react";
+import { Clock, User, FileText, Users } from "lucide-react";
 
 interface AppointmentItemProps {
   appointment: any;
@@ -44,23 +44,28 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       ref={setNodeRef}
       style={{
         ...style,
-        backgroundColor: appointment.color || "#FEF7CD"
+        backgroundColor: appointment.color || "#FEF7CD",
+        cursor: appointment.isTeamEvent ? 'default' : 'pointer'
       }}
-      {...listeners}
-      {...attributes}
+      {...(appointment.isTeamEvent ? {} : { ...listeners, ...attributes })}
       className={cn(
-        "p-2 mb-1 rounded cursor-pointer hover:opacity-80",
+        "p-2 mb-1 rounded hover:opacity-80",
         "transition-colors duration-200 space-y-1",
-        appointment.isRecurring && "border-l-4 border-primary"
+        appointment.isRecurring && "border-l-4 border-primary",
+        appointment.isTeamEvent && "border border-gray-200"
       )}
       onClick={onClick}
     >
       <div className="flex items-center gap-1 text-xs">
-        <FileText className="h-3 w-3" />
+        {appointment.isTeamEvent ? (
+          <Users className="h-3 w-3" />
+        ) : (
+          <FileText className="h-3 w-3" />
+        )}
         <span className="truncate font-bold">{appointment.title}</span>
       </div>
 
-      {appointment.leads?.name && (
+      {appointment.leads?.name && !appointment.isTeamEvent && (
         <div className="flex items-center gap-1 text-xs">
           <User className="h-3 w-3" />
           <span className="truncate">{appointment.leads.name}</span>

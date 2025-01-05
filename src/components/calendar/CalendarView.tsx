@@ -25,7 +25,8 @@ export const CalendarView = () => {
     })
   );
 
-  const { data: appointments = [] } = useQuery({
+  // Fetch personal appointments
+  const { data: personalAppointments = [] } = useQuery({
     queryKey: ["appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -45,6 +46,53 @@ export const CalendarView = () => {
       return data || [];
     },
   });
+
+  // Fetch team appointments
+  const { data: teamAppointments = [] } = useQuery({
+    queryKey: ["team-appointments", format(currentDate, "yyyy-MM")],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      // First get all teams the user is a member of
+      const { data: teamMemberships } = await supabase
+        .from("team_members")
+        .select("team_id")
+        .eq("user_id", user.id);
+
+      if (!teamMemberships?.length) return [];
+
+      const teamIds = teamMemberships.map(tm => tm.team_id);
+
+      // Then get all team calendar events for these teams
+      const { data: events, error } = await supabase
+        .from("team_calendar_events")
+        .select(`
+          *,
+          teams:team_id (name)
+        `)
+        .in("team_id", teamIds)
+        .not("start_time", "is", null);
+
+      if (error) {
+        console.error("Error fetching team events:", error);
+        return [];
+      }
+
+      // Transform team events to match appointment structure
+      return events.map(event => ({
+        ...event,
+        id: `team-${event.id}`,
+        due_date: event.start_time,
+        title: `[${event.teams?.name}] ${event.title}`,
+        isTeamEvent: true,
+        color: event.color ? `${event.color}99` : "#FEF7CD99" // Add transparency
+      }));
+    },
+  });
+
+  // Combine personal and team appointments
+  const appointments = [...personalAppointments, ...teamAppointments];
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
@@ -83,6 +131,13 @@ export const CalendarView = () => {
     if (!over || !active.data.current) return;
 
     const appointment = active.data.current;
+    
+    // Prevent dragging team events
+    if (appointment.isTeamEvent) {
+      toast.error("Team-Termine können nicht verschoben werden");
+      return;
+    }
+
     const newDateStr = over.id as string;
     const oldDate = new Date(appointment.due_date);
     const newDate = parseISO(newDateStr);
