@@ -71,7 +71,7 @@ export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
                   {MEETING_TYPES.map((type) => (
                     <CommandItem
                       key={type.value}
-                      value={type.value}
+                      value={type.label}
                       onSelect={() => {
                         form.setValue("meeting_type", type.value);
                         setOpen(false);

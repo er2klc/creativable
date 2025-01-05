@@ -78,7 +78,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
               </FormControl>
             </PopoverTrigger>
             <PopoverContent className="w-[400px] p-0" align="start">
-              <Command>
+              <Command shouldFilter={false}>
                 <CommandInput 
                   placeholder="Suche nach Kontakten..."
                   value={searchValue}
