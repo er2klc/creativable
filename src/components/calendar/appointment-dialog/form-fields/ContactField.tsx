@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -16,7 +17,6 @@ import {
 } from "@/components/ui/command";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -26,8 +26,8 @@ interface ContactFieldProps {
 }
 
 export const ContactField = ({ form }: ContactFieldProps) => {
-  const [searchValue, setSearchValue] = useState("");
   const [open, setOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
   const { data: leads = [] } = useQuery({
     queryKey: ["leads", searchValue],
@@ -43,14 +43,10 @@ export const ContactField = ({ form }: ContactFieldProps) => {
           .ilike("name", `%${searchValue}%`)
           .order("name");
 
-        if (error) {
-          console.error("Error fetching leads:", error);
-          return [];
-        }
-
+        if (error) throw error;
         return data || [];
       } catch (error) {
-        console.error("Error in leads query:", error);
+        console.error("Error fetching leads:", error);
         return [];
       }
     },
@@ -81,8 +77,8 @@ export const ContactField = ({ form }: ContactFieldProps) => {
               </FormControl>
             </PopoverTrigger>
             <PopoverContent className="w-[400px] p-0" align="start">
-              <Command>
-                <CommandInput
+              <Command shouldFilter={false}>
+                <CommandInput 
                   placeholder="Suche nach Kontakten..."
                   value={searchValue}
                   onValueChange={setSearchValue}
@@ -101,9 +97,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          lead.id === field.value
-                            ? "opacity-100"
-                            : "opacity-0"
+                          lead.id === field.value ? "opacity-100" : "opacity-0"
                         )}
                       />
                       {lead.name}

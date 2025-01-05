@@ -37,6 +37,11 @@ interface MeetingTypeFieldProps {
 
 export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
   const [open, setOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+
+  const filteredTypes = MEETING_TYPES.filter(type => 
+    type.label.toLowerCase().includes(searchValue.toLowerCase())
+  );
 
   return (
     <FormField
@@ -69,11 +74,15 @@ export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
               </FormControl>
             </PopoverTrigger>
             <PopoverContent className="w-[200px] p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Suche Terminart..." />
+              <Command shouldFilter={false}>
+                <CommandInput 
+                  placeholder="Suche Terminart..." 
+                  value={searchValue}
+                  onValueChange={setSearchValue}
+                />
                 <CommandEmpty>Keine Terminart gefunden.</CommandEmpty>
                 <CommandGroup>
-                  {MEETING_TYPES.map((type) => (
+                  {filteredTypes.map((type) => (
                     <CommandItem
                       value={type.value}
                       key={type.value}
@@ -88,9 +97,7 @@ export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
                         <Check
                           className={cn(
                             "ml-auto h-4 w-4",
-                            type.value === field.value
-                              ? "opacity-100"
-                              : "opacity-0"
+                            type.value === field.value ? "opacity-100" : "opacity-0"
                           )}
                         />
                       </div>
@@ -100,6 +107,7 @@ export const MeetingTypeField = ({ form }: MeetingTypeFieldProps) => {
               </Command>
             </PopoverContent>
           </Popover>
+          <FormMessage />
         </FormItem>
       )}
     />
