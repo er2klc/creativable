@@ -110,7 +110,21 @@ export const CalendarView = () => {
           appointments={appointments}
           getDayAppointments={getDayAppointments}
           onDateClick={handleDateClick}
-          onAppointmentClick={handleAppointmentClick}
+          onAppointmentClick={(e, appointment) => {
+            handleAppointmentClick(e, appointment);
+            if (!appointment.isTeamEvent) {
+              setSelectedDate(new Date(appointment.due_date));
+              setSelectedAppointment({
+                id: appointment.id,
+                leadId: appointment.lead_id,
+                time: format(new Date(appointment.due_date), "HH:mm"),
+                title: appointment.title,
+                color: appointment.color,
+                meeting_type: appointment.meeting_type,
+              });
+              setIsDialogOpen(true);
+            }
+          }}
           activeId={activeId}
           overDate={overDate}
           draggedAppointment={draggedAppointment}
