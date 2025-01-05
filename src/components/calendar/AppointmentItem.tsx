@@ -1,7 +1,8 @@
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw } from "lucide-react";
+import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AppointmentItemProps {
   appointment: any;
@@ -76,7 +77,8 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         "transition-colors duration-200 space-y-1",
         appointment.isRecurring && "border-l-4 border-primary",
         appointment.isTeamEvent && "border border-gray-200",
-        !appointment.isTeamEvent && "text-black"
+        !appointment.isTeamEvent && "text-black",
+        appointment.completed && "bg-opacity-50"
       )}
       onClick={(e) => {
         // Only trigger onClick for personal appointments or if explicitly allowed
@@ -85,15 +87,30 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         }
       }}
     >
-      <div className="flex items-center gap-1 text-xs text-gray-600">
-        {appointment.isAdminEvent ? (
-          <Infinity className="h-4 w-4 text-primary" />
-        ) : appointment.isTeamEvent ? (
-          <Infinity className="h-4 w-4" />
-        ) : (
-          getMeetingTypeIcon()
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1 text-xs text-gray-600">
+          {appointment.isAdminEvent ? (
+            <Infinity className="h-4 w-4 text-primary" />
+          ) : appointment.isTeamEvent ? (
+            <Infinity className="h-4 w-4" />
+          ) : (
+            getMeetingTypeIcon()
+          )}
+          <span className="truncate font-bold">{appointment.title}</span>
+        </div>
+        {!appointment.isTeamEvent && (
+          <Checkbox
+            checked={appointment.completed}
+            onCheckedChange={(checked) => {
+              // Prevent the click from bubbling up to the appointment click handler
+              event?.stopPropagation();
+              if (appointment.onComplete) {
+                appointment.onComplete(checked);
+              }
+            }}
+            className="h-4 w-4"
+          />
         )}
-        <span className="truncate font-bold">{appointment.title}</span>
       </div>
 
       {appointment.leads?.name && !appointment.isTeamEvent && (

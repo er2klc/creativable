@@ -95,12 +95,35 @@ export const CalendarView = () => {
     },
   });
 
+  const handleCompleteAppointment = async (appointment: any, completed: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ completed })
+        .eq('id', appointment.id);
+
+      if (error) throw error;
+
+      // Invalidate and refetch appointments
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      toast.success(completed ? 'Termin als erledigt markiert' : 'Termin als nicht erledigt markiert');
+    } catch (error) {
+      console.error('Error updating appointment:', error);
+      toast.error('Fehler beim Aktualisieren des Termins');
+    }
+  };
+
   const getDayAppointments = (date: Date) => {
     const allAppointments = [...appointments];
     if (showTeamEvents) {
       allAppointments.push(...(teamAppointments || []));
     }
-    return allAppointments.filter(
+    return allAppointments.map(appointment => ({
+      ...appointment,
+      onComplete: !appointment.isTeamEvent ? 
+        (completed: boolean) => handleCompleteAppointment(appointment, completed) : 
+        undefined
+    })).filter(
       (appointment) => format(new Date(appointment.due_date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
     );
   };
