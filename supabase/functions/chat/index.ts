@@ -49,7 +49,6 @@ serve(async (req) => {
     const decoder = new TextDecoder();
 
     let accumulatedContent = '';
-    let previousContent = '';
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -57,15 +56,6 @@ serve(async (req) => {
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
-              // Send the final accumulated content if any
-              if (accumulatedContent) {
-                const finalMessage = {
-                  role: "assistant",
-                  content: accumulatedContent,
-                };
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
-              }
-              // End the stream with [DONE]
               controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
               controller.close();
               break;
@@ -75,37 +65,31 @@ serve(async (req) => {
             const lines = chunk.split('\n');
 
             for (const line of lines) {
-              const trimmedLine = line.trim();
-              if (!trimmedLine) continue;
+              if (line.trim() === '') continue;
+              if (line.trim() === 'data: [DONE]') continue;
 
-              if (trimmedLine.startsWith('data: ')) {
+              if (line.startsWith('data: ')) {
                 try {
-                  const jsonStr = trimmedLine.slice(6);
+                  const jsonStr = line.slice(6);
+                  if (jsonStr === '[DONE]') continue;
+
                   const json = JSON.parse(jsonStr);
                   const content = json.choices?.[0]?.delta?.content;
 
                   if (content) {
                     accumulatedContent += content;
-
-                    // Output to console
-                    console.log(`data: ${JSON.stringify({ role: "assistant", content: accumulatedContent })}`);
-
-                    // Check if the last two responses are identical
-                    if (accumulatedContent === previousContent) {
-                      const finalMessage = {
-                        role: "assistant",
-                        content: accumulatedContent,
-                      };
-                      controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
-                      controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
-                      controller.close();
-                      return;
-                    }
-
-                    previousContent = accumulatedContent; // Update the previous content
+                    const message = {
+                      role: "assistant",
+                      content: accumulatedContent,
+                    };
+                    
+                    // Log each message for debugging
+                    console.log(`Streaming: ${JSON.stringify(message)}`);
+                    
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
                   }
                 } catch (error) {
-                  console.warn('Invalid JSON in line:', trimmedLine, error);
+                  console.warn('Invalid JSON in line:', line, error);
                   continue;
                 }
               }

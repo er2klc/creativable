@@ -18,7 +18,7 @@ interface ChatDialogProps {
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
-  const [isThinking, setIsThinking] = useState(true); // Default: "Denke nach..."
+  const [isThinking, setIsThinking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
@@ -30,16 +30,15 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     body: {
       language: 'de',
     },
-    partialMessages: true, // Aktiviert Live-Streaming
     onResponse: (response) => {
       if (!response.ok) {
         console.error("Chat response error:", response.status, response.statusText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      setIsThinking(true); // Anzeige "Denke nach..." aktivieren
+      setIsThinking(true);
     },
     onFinish: () => {
-      setIsThinking(false); // Anzeige deaktivieren, wenn Stream beendet ist
+      setIsThinking(false);
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
@@ -143,7 +142,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
                   )}
                 </div>
               ))}
-              {isThinking && (
+              {isThinking && !messages.length && (
                 <div className="flex gap-3 text-slate-600 text-sm mb-4">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback>
