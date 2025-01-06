@@ -89,10 +89,11 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       }));
 
       const { data: runs = [], error: runsError } = await supabase
-        .from("team_90_day_runs")
-        .select("*")
-        .in("team_id", teamIds)
-        .overlaps('start_date', format(currentDate, 'yyyy-MM-dd'));
+  .from("team_90_day_runs")
+  .select("*")
+  .in("team_id", teamIds)
+  .filter("start_date", "overlaps", format(currentDate, "yyyy-MM-dd") + "::date"); // Typumwandlung zu `date`
+
 
       if (runsError) {
         console.error("Error fetching 90-day runs:", runsError);
