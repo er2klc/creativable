@@ -81,9 +81,12 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
  const getDayAppointments = (date: Date): Appointment[] => {
   // Handle regular appointments (non-team events)
   const regularAppointments = appointments.filter((appointment) => {
-    const appointmentDate = new Date(appointment.due_date);
-    return isSameDay(appointmentDate, date);
-  });
+  const appointmentDate = new Date(appointment.due_date);
+  appointmentDate.setHours(0, 0, 0, 0); // Stelle sicher, dass die Zeit normalisiert ist
+  const currentDate = new Date(date);
+  currentDate.setHours(0, 0, 0, 0); // Normalisiere die Vergleichszeit
+  return isSameDay(appointmentDate, currentDate);
+});
 
   if (!showTeamEvents) {
     return regularAppointments;
