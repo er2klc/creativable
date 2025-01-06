@@ -26,6 +26,7 @@ interface NewAppointmentDialogProps {
     color: string;
     meeting_type: string;
     completed?: boolean;
+    cancelled?: boolean;
   };
 }
 
@@ -38,12 +39,13 @@ export const NewAppointmentDialog = ({
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [completed, setCompleted] = useState(appointmentToEdit?.completed || false);
+  const [cancelled, setCancelled] = useState(appointmentToEdit?.cancelled || false);
 
   useEffect(() => {
     if (open) {
-      // Set the initial date when the dialog opens
       setSelectedDate(initialSelectedDate);
       setCompleted(appointmentToEdit?.completed || false);
+      setCancelled(appointmentToEdit?.cancelled || false);
     }
   }, [initialSelectedDate, open, appointmentToEdit]);
 
@@ -70,6 +72,7 @@ export const NewAppointmentDialog = ({
             meeting_type: values.meeting_type,
             color: values.color,
             completed: completed,
+            cancelled: cancelled,
           })
           .eq('id', appointmentToEdit.id);
 
@@ -83,6 +86,7 @@ export const NewAppointmentDialog = ({
           meeting_type: values.meeting_type,
           color: values.color,
           completed: completed,
+          cancelled: cancelled,
         });
 
         if (error) throw error;
@@ -144,7 +148,11 @@ export const NewAppointmentDialog = ({
         {appointmentToEdit && (
           <CompletionCheckbox 
             completed={completed}
-            onChange={setCompleted}
+            cancelled={cancelled}
+            onChange={(newCompleted, newCancelled) => {
+              setCompleted(newCompleted);
+              setCancelled(newCancelled);
+            }}
           />
         )}
       </DialogContent>

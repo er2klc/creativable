@@ -1,7 +1,7 @@
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check } from "lucide-react";
+import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AppointmentItemProps {
@@ -21,7 +21,6 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    opacity: isDragging ? 0 : 1,
   } : undefined;
 
   // Safely format the date, return null if invalid
@@ -110,8 +109,8 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         <span>{timeString}</span>
       </div>
 
-      {/* Completed indicator */}
-      {!appointment.isTeamEvent && appointment.completed && (
+      {/* Status indicators */}
+      {!appointment.isTeamEvent && (appointment.completed || appointment.cancelled) && (
         <div className="absolute bottom-1 right-1">
           <Button 
             variant="ghost" 
@@ -124,7 +123,11 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
               }
             }}
           >
-            <Check className="h-3 w-3 text-green-600" />
+            {appointment.completed ? (
+              <Check className="h-3 w-3 text-green-600" />
+            ) : appointment.cancelled ? (
+              <X className="h-3 w-3 text-red-600" />
+            ) : null}
           </Button>
         </div>
       )}
