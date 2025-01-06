@@ -1,5 +1,5 @@
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { Check, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface CompletionCheckboxProps {
   completed: boolean;
@@ -10,26 +10,30 @@ interface CompletionCheckboxProps {
 export const CompletionCheckbox = ({ completed, cancelled, onChange }: CompletionCheckboxProps) => {
   return (
     <div className="flex items-center gap-4">
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="completed"
-          checked={completed}
-          onCheckedChange={(checked) => {
-            onChange(checked as boolean, false);
-          }}
-        />
-        <Label htmlFor="completed">Abgeschlossen</Label>
-      </div>
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="cancelled"
-          checked={cancelled}
-          onCheckedChange={(checked) => {
-            onChange(false, checked as boolean);
-          }}
-        />
-        <Label htmlFor="cancelled">Abgelehnt</Label>
-      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className={cn(
+          "gap-2",
+          completed && "text-green-500 hover:text-green-600"
+        )}
+        onClick={() => onChange(!completed, false)}
+      >
+        <Check className="h-4 w-4" />
+        Abgeschlossen
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className={cn(
+          "gap-2",
+          cancelled && "text-red-500 hover:text-red-600"
+        )}
+        onClick={() => onChange(false, !cancelled)}
+      >
+        <X className="h-4 w-4" />
+        Abgelehnt
+      </Button>
     </div>
   );
 };

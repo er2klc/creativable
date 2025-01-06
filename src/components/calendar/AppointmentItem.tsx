@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Infinity, Flame } from "lucide-react";
+import { Clock, User, FileText, Infinity, Flame, Phone, MapPin, Video, Users, BarChart, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 
 interface AppointmentItemProps {
@@ -8,6 +8,18 @@ interface AppointmentItemProps {
   onClick: (e: React.MouseEvent) => void;
   isDragging?: boolean;
 }
+
+const getMeetingTypeIcon = (type: string) => {
+  switch (type) {
+    case "phone_call": return <Phone className="h-4 w-4" />;
+    case "on_site": return <MapPin className="h-4 w-4" />;
+    case "zoom": return <Video className="h-4 w-4" />;
+    case "initial_meeting": return <Users className="h-4 w-4" />;
+    case "presentation": return <BarChart className="h-4 w-4" />;
+    case "follow_up": return <RefreshCw className="h-4 w-4" />;
+    default: return null;
+  }
+};
 
 export const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemProps) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
@@ -24,7 +36,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
 
   const isMultiDayEvent = appointment.is_multi_day && appointment.end_date;
 
-  // Feststellen, ob der aktuelle Tag der Start-, Zwischen- oder Endtag ist
+  // Determine if current day is start, middle, or end day
   const currentDay = appointment.current_day || null;
   const isStartDay = currentDay && appointment.start_time ? 
     currentDay === format(new Date(appointment.start_time), "yyyy-MM-dd") : false;
@@ -41,21 +53,40 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       }}
       {...(appointment.isTeamEvent ? {} : { ...listeners, ...attributes })}
       className={cn(
-        "p-2 rounded hover:opacity-80",
+        "p-2 rounded hover:opacity-80 space-y-1",
         appointment.isRecurring && "border-l-4 border-primary",
         appointment.isTeamEvent && "border border-gray-200",
-        !appointment.isTeamEvent && "text-black"
+        !appointment.isTeamEvent && "text-black",
+        (appointment.completed || appointment.cancelled) && "opacity-50"
       )}
       onClick={(e) => !appointment.isTeamEvent && onClick(e)}
     >
-      <div className="flex items-center gap-1 text-xs text-gray-600">
-        {appointment.isTeamEvent ? (
-          <Flame className="h-4 w-4 text-orange-500" />
-        ) : (
-          <Infinity className="h-4 w-4 text-primary" />
-        )}
-        <span className="truncate font-bold">{appointment.title}</span>
+      <div className="flex items-center gap-1 text-xs">
+        <div className="flex items-center gap-1 flex-1">
+          {appointment.isTeamEvent ? (
+            <Flame className="h-4 w-4 text-orange-500" />
+          ) : (
+            getMeetingTypeIcon(appointment.meeting_type) || <Infinity className="h-4 w-4 text-primary" />
+          )}
+          <span className="font-bold truncate">{appointment.title}</span>
+        </div>
+        {appointment.completed && <div className="text-green-500"><Check className="h-4 w-4" /></div>}
+        {appointment.cancelled && <div className="text-red-500"><X className="h-4 w-4" /></div>}
       </div>
+
+      {(!isMultiDayEvent || (isMultiDayEvent && isStartDay)) && !appointment.isTeamEvent && appointment.start_time && (
+        <div className="flex items-center gap-1 text-xs text-gray-600">
+          <Clock className="h-3 w-3" />
+          {format(new Date(appointment.start_time), "HH:mm")}
+        </div>
+      )}
+
+      {appointment.leads?.name && (
+        <div className="flex items-center gap-1 text-xs text-gray-600">
+          <User className="h-3 w-3" />
+          <span className="truncate">{appointment.leads.name}</span>
+        </div>
+      )}
 
       {isMultiDayEvent && (
         <div className="text-xs text-gray-500">

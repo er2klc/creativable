@@ -144,9 +144,22 @@ export const NewAppointmentDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {appointmentToEdit ? "Termin bearbeiten" : "Neuer Termin"}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>
+              {appointmentToEdit ? "Termin bearbeiten" : "Neuer Termin"}
+            </DialogTitle>
+            {appointmentToEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => deleteAppointment.mutate()}
+                disabled={deleteAppointment.isPending}
+                className="text-destructive hover:text-destructive/90"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           <DialogDescription>
             Fülle die folgenden Felder aus, um {appointmentToEdit ? "den Termin zu aktualisieren" : "einen neuen Termin zu erstellen"}.
           </DialogDescription>
@@ -171,28 +184,15 @@ export const NewAppointmentDialog = ({
         />
 
         <div className="flex items-center justify-between mt-6">
-          <div className="flex-1">
-            {appointmentToEdit && (
-              <CompletionCheckbox 
-                completed={completed}
-                cancelled={cancelled}
-                onChange={(newCompleted, newCancelled) => {
-                  setCompleted(newCompleted);
-                  setCancelled(newCancelled);
-                }}
-              />
-            )}
-          </div>
           {appointmentToEdit && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => deleteAppointment.mutate()}
-              disabled={deleteAppointment.isPending}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Löschen
-            </Button>
+            <CompletionCheckbox 
+              completed={completed}
+              cancelled={cancelled}
+              onChange={(newCompleted, newCancelled) => {
+                setCompleted(newCompleted);
+                setCancelled(newCancelled);
+              }}
+            />
           )}
         </div>
       </DialogContent>

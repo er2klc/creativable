@@ -64,13 +64,13 @@ export const NewTeamEventDialog = ({
             </DialogTitle>
             {eventToEdit && (
               <Button
-                variant="destructive"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 onClick={() => deleteEvent.mutate()}
                 disabled={deleteEvent.isPending}
+                className="text-destructive hover:text-destructive/90"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Löschen
+                <Trash2 className="h-4 w-4" />
               </Button>
             )}
           </div>

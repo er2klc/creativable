@@ -40,3 +40,14 @@ export interface Appointment {
   due_date?: string;
   current_day?: string;
 }
+
+export interface AppointmentToEdit {
+  id: string;
+  leadId: string;
+  time: string;
+  title: string;
+  color: string;
+  meeting_type: string;
+  completed?: boolean;
+  cancelled?: boolean;
+}
