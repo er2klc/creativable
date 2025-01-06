@@ -7,7 +7,7 @@ interface TeamCardImageProps {
 
 export const TeamCardImage = ({ team }: TeamCardImageProps) => {
   return (
-    <div className="relative w-full h-48 rounded-lg overflow-hidden">
+    <div className="relative w-full h-[400px] overflow-hidden">
       {team.logo_url ? (
         <>
           <img 
@@ -16,14 +16,14 @@ export const TeamCardImage = ({ team }: TeamCardImageProps) => {
             className="w-full h-full object-cover"
           />
           {team.video_url && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-              <Play className="w-12 h-12 text-white" />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity group-hover:opacity-100">
+              <Play className="w-16 h-16 text-white" />
             </div>
           )}
         </>
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-muted">
-          <span className="text-3xl font-semibold">
+          <span className="text-5xl font-semibold">
             {team.name.substring(0, 2).toUpperCase()}
           </span>
         </div>

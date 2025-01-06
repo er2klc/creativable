@@ -13,8 +13,6 @@ interface TeamCardProps {
       admins: number;
     };
   };
-  isFirst?: boolean;
-  isLast?: boolean;
   onDelete: (id: string) => void;
   onLeave: (id: string) => void;
   onCopyJoinCode: (code: string) => void;
@@ -41,16 +39,14 @@ export const TeamCard = ({
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group min-h-[200px]"
+      className="cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group"
       onClick={handleClick}
     >
-      <div className="flex flex-col gap-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4 flex-1">
-            <TeamCardImage team={team} />
-            <TeamCardContent team={team} />
-          </div>
-          <div className="flex items-start gap-2">
+      <div className="flex flex-col">
+        <TeamCardImage team={team} />
+        <div className="p-6 space-y-6">
+          <TeamCardContent team={team} />
+          <div className="flex justify-end">
             <TeamCardActions
               teamId={team.id}
               joinCode={team.join_code}

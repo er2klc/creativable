@@ -16,23 +16,25 @@ export const TeamCardContent = ({ team }: TeamCardContentProps) => {
   const isTeamOwner = user?.id === team.created_by;
 
   return (
-    <div className="flex-1 mt-4">
-      <h3 className="text-xl font-semibold mb-2">{team.name}</h3>
-      {team.description && (
-        <p className="text-base text-muted-foreground mb-4">{team.description}</p>
-      )}
-      <div className="flex items-center gap-6 text-base text-muted-foreground">
-        <span className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-2xl font-semibold mb-3">{team.name}</h3>
+        {team.description && (
+          <p className="text-lg text-muted-foreground">{team.description}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-8 text-lg text-muted-foreground">
+        <span className="flex items-center gap-3">
+          <Users className="h-6 w-6" />
           <span>{team.stats?.totalMembers || 0}</span>
         </span>
         <span>•</span>
-        <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5" />
+        <div className="flex items-center gap-3">
+          <Shield className="h-6 w-6" />
           <span>{team.stats?.admins || 0}</span>
           {isTeamOwner && (
-            <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-              <Crown className="h-4 w-4" />
+            <span className="bg-yellow-100 text-yellow-800 px-4 py-1.5 rounded-full text-base font-medium flex items-center gap-2">
+              <Crown className="h-5 w-5" />
               Team Owner
             </span>
           )}
