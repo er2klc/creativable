@@ -12,6 +12,7 @@ export const useTeamEventDates = ({
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
 
+  // Initialize dates when component mounts or eventToEdit changes
   useEffect(() => {
     if (eventToEdit) {
       if (eventToEdit.is_multi_day) {
@@ -19,18 +20,19 @@ export const useTeamEventDates = ({
         const endTime = eventToEdit.end_date ? new Date(eventToEdit.end_date) : null;
         
         if (startTime) {
-          // For multi-day events, we want to preserve the exact date
-          setSelectedDate(startTime);
+          const newStartDate = new Date(startTime);
+          setSelectedDate(newStartDate);
         }
         
         if (endTime) {
-          setEndDate(endTime);
+          const newEndDate = new Date(endTime);
+          setEndDate(newEndDate);
         }
       } else {
         const startTime = eventToEdit.start_time ? new Date(eventToEdit.start_time) : null;
         if (startTime) {
-          // For single-day events, we want to preserve the time
-          setSelectedDate(startTime);
+          const newStartDate = new Date(startTime);
+          setSelectedDate(newStartDate);
           
           if (eventToEdit.end_time) {
             const endTime = new Date(eventToEdit.end_time);
@@ -51,17 +53,23 @@ export const useTeamEventDates = ({
       
       if (selectedDate) {
         // Preserve the time from the previous selectedDate
-        newDate.setHours(
-          selectedDate.getHours(),
-          selectedDate.getMinutes(),
-          0,
-          0
-        );
+        const hours = selectedDate.getHours();
+        const minutes = selectedDate.getMinutes();
+        newDate.setHours(hours, minutes, 0, 0);
       } else {
+        // Default to 9:00 AM if no previous time
         newDate.setHours(9, 0, 0, 0);
       }
       
       setSelectedDate(newDate);
+
+      // For multi-day events, if end date is before the new start date,
+      // update end date to be the same as start date
+      if (endDate && endDate < newDate) {
+        const newEndDate = new Date(newDate);
+        newEndDate.setHours(18, 0, 0, 0);
+        setEndDate(newEndDate);
+      }
     } else {
       setSelectedDate(null);
     }
@@ -73,18 +81,22 @@ export const useTeamEventDates = ({
       
       if (endDate) {
         // Preserve the time from the previous endDate
-        newDate.setHours(
-          endDate.getHours(),
-          endDate.getMinutes(),
-          0,
-          0
-        );
+        const hours = endDate.getHours();
+        const minutes = endDate.getMinutes();
+        newDate.setHours(hours, minutes, 0, 0);
       } else {
         // Default end time to 18:00
         newDate.setHours(18, 0, 0, 0);
       }
-      
-      setEndDate(newDate);
+
+      // Ensure end date is not before start date
+      if (selectedDate && newDate < selectedDate) {
+        const adjustedDate = new Date(selectedDate);
+        adjustedDate.setHours(18, 0, 0, 0);
+        setEndDate(adjustedDate);
+      } else {
+        setEndDate(newDate);
+      }
     } else {
       setEndDate(null);
     }
