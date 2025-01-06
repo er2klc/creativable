@@ -79,35 +79,33 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     },
   });
 
-const getDayAppointments = (date: Date): Appointment[] => {
-  const regularAppointments = appointments.filter((appointment) => {
-    const appointmentDate = new Date(appointment.due_date);
-    return isSameDay(appointmentDate, date);
-  });
+ const getDayAppointments = (date: Date): Appointment[] => {
+    const regularAppointments = appointments.filter((appointment) => {
+      const appointmentDate = new Date(appointment.due_date);
+      appointmentDate.setHours(0, 0, 0, 0);
+      const currentDate = new Date(date);
+      currentDate.setHours(0, 0, 0, 0);
+      return isSameDay(appointmentDate, currentDate);
+    });
 
-  if (!showTeamEvents) {
-    return regularAppointments;
-  }
+    if (!showTeamEvents) {
+      return regularAppointments;
+    }
 
-  // Handle team events (multi-day, recurring, admin-only)
-  const teamEvents = teamData.events.filter((event) => {
-    const startDate = new Date(event.start_time);
-    const endDate = event.is_multi_day
-      ? new Date(event.end_date || event.start_time)
-      : startDate;
+    const teamEvents = teamData.events.filter((event) => {
+      const startDate = new Date(event.start_time);
+      const endDate = event.is_multi_day
+        ? new Date(event.end_date || event.start_time)
+        : startDate;
 
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
 
-    const isWithinDateRange = isWithinInterval(date, { start: startDate, end: endDate });
-    const isVisibleForUser = !event.is_admin_only || isAdmin; // Check Admin-only visibility
+      return isWithinInterval(date, { start: startDate, end: endDate });
+    });
 
-    return isWithinDateRange && isVisibleForUser;
-  });
-
-  // Merge personal and team events
-  return [...regularAppointments, ...teamEvents];
-};
+    return [...regularAppointments, ...teamEvents] as Appointment[];
+  };
 
 
   return {
