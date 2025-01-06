@@ -173,7 +173,7 @@ export const NewAppointmentDialog = ({
           <div className="mt-4">
             <DateSelector 
               selectedDate={selectedDate} 
-              onDateSelect={handleDateSelect}
+              onDateSelect={setSelectedDate}
             />
           </div>
         </DialogHeader>
