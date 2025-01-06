@@ -96,10 +96,13 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
       description: event.description,
       start_time: format(new Date(event.start_time), "HH:mm"),
       end_time: event.end_time ? format(new Date(event.end_time), "HH:mm") : undefined,
+      end_date: event.end_date ? new Date(event.end_date) : undefined,
       color: event.color,
       is_team_event: event.is_team_event,
       recurring_pattern: event.recurring_pattern,
       isRecurring: event.isRecurring,
+      is_multi_day: event.is_multi_day,
+      is_admin_only: event.is_admin_only,
     });
     setIsDialogOpen(true);
   };
