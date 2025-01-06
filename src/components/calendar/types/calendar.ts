@@ -17,6 +17,9 @@ export interface TeamEvent {
   end_time?: string;
   recurring_pattern?: string;
   recurring_day_of_week?: number;
+  is_multi_day?: boolean;
+  end_date?: string;
+  is_90_day_run?: boolean;
 }
 
 export interface Appointment {
@@ -33,6 +36,11 @@ export interface Appointment {
   leads: { name: string };
   isTeamEvent: boolean;
   onComplete?: (completed: boolean) => void;
+  start_time?: string;
+  end_time?: string;
+  is_multi_day?: boolean;
+  end_date?: string;
+  is_90_day_run?: boolean;
 }
 
 export interface AppointmentToEdit {

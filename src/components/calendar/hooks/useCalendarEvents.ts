@@ -8,7 +8,6 @@ import { TeamEvent, Appointment } from "../types/calendar";
 export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) => {
   const queryClient = useQueryClient();
 
-  // Fetch personal appointments
   const { data: appointments = [] } = useQuery({
     queryKey: ["appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
@@ -30,7 +29,6 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     },
   });
 
-  // Fetch team appointments and 90-day runs
   const { data: teamData = { events: [], runs: [] } } = useQuery({
     queryKey: ["team-appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
@@ -128,13 +126,12 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     })) as Appointment[];
 
     if (showTeamEvents) {
-      const processedEvents = new Set<string>(); // Track processed recurring events
+      const processedEvents = new Set<string>();
       
       teamData.events.forEach(event => {
         const startDate = new Date(event.start_time);
         const eventDayOfWeek = getDay(startDate);
         
-        // Handle recurring events
         if (event.recurring_pattern !== 'none') {
           let currentDate = startDate;
           
@@ -189,7 +186,6 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
             currentDate = addDays(currentDate, 1);
           }
         } else if (isSameDay(startDate, date)) {
-          // Handle regular events
           allAppointments.push({
             ...event,
             isTeamEvent: true,
