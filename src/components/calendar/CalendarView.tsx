@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Appointment, AppointmentToEdit } from "./types/calendar";
 
 export const CalendarView = () => {
+  console.log("CalendarView geladen version 1.0"); // Füge dieses Log hinzu
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentToEdit | null>(null);
   const [showTeamEvents, setShowTeamEvents] = useState(true);
