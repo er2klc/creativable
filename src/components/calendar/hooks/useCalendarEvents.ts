@@ -25,7 +25,6 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       return data.map(appointment => ({
         ...appointment,
         isTeamEvent: false,
-        end_date: appointment.due_date // Set end_date equal to due_date for single-day events
         end_date: appointment.due_date, // Set end_date equal to due_date for single-day events
         is_multi_day: false // Personal appointments are always single-day
       })) || [];
@@ -86,8 +85,6 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
         leads: { name: event.teams?.name || 'Team Event' },
         user_id: event.created_by,
         lead_id: 'team-event',
-        due_date: event.start_time,
-        is_90_day_run: event.is_90_day_run
         due_date: event.start_time
       }));
 
@@ -131,7 +128,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       if (event.recurring_pattern !== 'none') {
         const eventDayOfWeek = getDay(startDate);
         let currentDate = startDate;
-
+        
         while (currentDate <= date) {
           if (event.recurring_pattern === 'weekly' && getDay(currentDate) === eventDayOfWeek) {
             if (isSameDay(currentDate, date)) {
@@ -142,7 +139,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
               return true;
             }
           }
-
+          
           currentDate = event.recurring_pattern === 'weekly' 
             ? addWeeks(currentDate, 1)
             : addMonths(currentDate, 1);
@@ -154,7 +151,6 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       return isSameDay(startDate, date);
     });
 
-    return [...regularAppointments, ...teamEvents] as Appointment[];
     return [...regularAppointments, ...teamEvents];
   };
 
@@ -163,3 +159,4 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     teamAppointments: teamData.events,
     getDayAppointments,
   };
+};
