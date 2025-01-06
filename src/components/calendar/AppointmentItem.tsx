@@ -1,4 +1,4 @@
-import { format, isValid } from 'date-fns';
+import { format, isValid, differenceInDays, startOfMonth, endOfMonth } from 'date-fns';
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check, X, Flame } from "lucide-react";
@@ -70,7 +70,15 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
   let gridColumnEnd = 'span 1';
   
   if (isMultiDayEvent && endDate) {
-    const dayDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    // Get the current month's boundaries
+    const monthStart = startOfMonth(startDate);
+    const monthEnd = endOfMonth(startDate);
+    
+    // Calculate the actual end date (either the event's end date or month end)
+    const effectiveEndDate = endDate > monthEnd ? monthEnd : endDate;
+    
+    // Calculate days difference and add 1 to include both start and end days
+    const dayDiff = differenceInDays(effectiveEndDate, startDate) + 1;
     gridColumnEnd = `span ${dayDiff}`;
   }
 
