@@ -147,10 +147,8 @@ export const NewAppointmentDialog = ({
                   mode="single"
                   selected={selectedDate}
                   onSelect={(date) => {
-                    if (date) {
-                      setSelectedDate(date);
-                      setIsCalendarOpen(false);
-                    }
+                    setSelectedDate(date);
+                    setIsCalendarOpen(false);
                   }}
                   initialFocus
                 />
