@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { UseFormReturn } from "react-hook-form";
+import { DateSelector } from "@/components/calendar/appointment-dialog/DateSelector";
 import * as z from "zod";
 
 export const formSchema = z.object({
@@ -21,9 +22,11 @@ export const formSchema = z.object({
 
 interface TeamEventFormFieldsProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
+  selectedDate: Date | null;
+  onEndDateSelect: (date: Date | null) => void;
 }
 
-export const TeamEventFormFields = ({ form }: TeamEventFormFieldsProps) => {
+export const TeamEventFormFields = ({ form, selectedDate, onEndDateSelect }: TeamEventFormFieldsProps) => {
   const isMultiDay = form.watch("is_multi_day");
 
   return (
@@ -51,7 +54,24 @@ export const TeamEventFormFields = ({ form }: TeamEventFormFieldsProps) => {
         )}
       />
 
-      {!isMultiDay && (
+      {isMultiDay ? (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <FormLabel>Startdatum</FormLabel>
+            <DateSelector 
+              selectedDate={selectedDate} 
+              onDateSelect={() => {}} // This is handled by the parent
+            />
+          </div>
+          <div>
+            <FormLabel>Enddatum</FormLabel>
+            <DateSelector 
+              selectedDate={form.watch("end_date") ? new Date(form.watch("end_date")) : null}
+              onDateSelect={onEndDateSelect}
+            />
+          </div>
+        </div>
+      ) : (
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}

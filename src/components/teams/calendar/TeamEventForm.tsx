@@ -28,10 +28,14 @@ export const TeamEventForm = ({
 }: TeamEventFormProps) => {
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
 
   useEffect(() => {
     setSelectedDate(initialSelectedDate);
-  }, [initialSelectedDate]);
+    if (eventToEdit?.end_date) {
+      setEndDate(new Date(eventToEdit.end_date));
+    }
+  }, [initialSelectedDate, eventToEdit]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,6 +48,7 @@ export const TeamEventForm = ({
       end_time: eventToEdit?.end_time && isValid(new Date(eventToEdit.end_time))
         ? format(new Date(eventToEdit.end_time), "HH:mm")
         : "",
+      end_date: eventToEdit?.end_date || null,
       color: eventToEdit?.color || "#FEF7CD",
       is_team_event: eventToEdit?.is_team_event || false,
       recurring_pattern: eventToEdit?.recurring_pattern || "none",
@@ -62,7 +67,7 @@ export const TeamEventForm = ({
       if (!user) throw new Error("No user found");
 
       let eventDate = startOfDay(selectedDate);
-      let endDate = null;
+      let eventEndDate = values.is_multi_day ? endDate : selectedDate;
 
       // Handle time setting based on whether it's a multi-day event
       if (!values.is_multi_day && values.start_time) {
@@ -72,8 +77,8 @@ export const TeamEventForm = ({
 
       if (values.end_time && !values.is_multi_day) {
         const [endHours, endMinutes] = values.end_time.split(":");
-        endDate = new Date(selectedDate);
-        endDate.setHours(parseInt(endHours), parseInt(endMinutes));
+        eventEndDate = new Date(selectedDate);
+        eventEndDate.setHours(parseInt(endHours), parseInt(endMinutes));
       }
 
       const eventData = {
@@ -81,7 +86,8 @@ export const TeamEventForm = ({
         title: values.title,
         description: values.description,
         start_time: eventDate.toISOString(),
-        end_time: endDate?.toISOString() || null,
+        end_time: !values.is_multi_day ? eventEndDate?.toISOString() : null,
+        end_date: values.is_multi_day ? eventEndDate?.toISOString() : eventDate.toISOString(),
         color: values.color,
         is_team_event: values.is_team_event,
         recurring_pattern: values.recurring_pattern,
@@ -127,6 +133,12 @@ export const TeamEventForm = ({
     setSelectedDate(date);
   };
 
+  const handleEndDateSelect = (date: Date | null) => {
+    console.log("End date selected:", date);
+    setEndDate(date);
+    form.setValue("end_date", date?.toISOString() || null);
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit((values) => createEventMutation.mutate(values))} className="space-y-4">
@@ -138,7 +150,11 @@ export const TeamEventForm = ({
           />
         </div>
 
-        <TeamEventFormFields form={form} />
+        <TeamEventFormFields 
+          form={form} 
+          selectedDate={selectedDate}
+          onEndDateSelect={handleEndDateSelect}
+        />
 
         <div className="flex justify-between pt-4">
           {eventToEdit?.isRecurring && onDisableInstance && (
