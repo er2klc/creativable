@@ -114,42 +114,24 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       return regularAppointments;
     }
 
-    // Handle team events
+ // Handle team events
     const teamEvents = teamData.events.filter(event => {
-  const startDate = new Date(event.start_time);
-  const endDate = event.is_multi_day
-    ? new Date(event.end_date || event.start_time)
-    : startDate;
+      const startDate = new Date(event.start_time);
+      const endDate = event.is_multi_day
+        ? new Date(event.end_date || event.start_time)
+        : startDate;
 
-  // Überprüfe, ob das Datum im Intervall liegt
-  return isWithinInterval(date, { start: startDate, end: endDate });
-      }
+      // Check if the date falls within the interval
+      const isWithin = isWithinInterval(date, { start: startDate, end: endDate });
+      console.log("Checking event:", {
+        date,
+        eventTitle: event.title,
+        startDate,
+        endDate,
+        isWithin,
+      });
 
-      // For recurring events
-      if (event.recurring_pattern !== 'none') {
-        const eventDayOfWeek = getDay(startDate);
-        let currentDate = startDate;
-        
-        while (currentDate <= date) {
-          if (event.recurring_pattern === 'weekly' && getDay(currentDate) === eventDayOfWeek) {
-            if (isSameDay(currentDate, date)) {
-              return true;
-            }
-          } else if (event.recurring_pattern === 'monthly' && currentDate.getDate() === startDate.getDate()) {
-            if (isSameDay(currentDate, date)) {
-              return true;
-            }
-          }
-          
-          currentDate = event.recurring_pattern === 'weekly' 
-            ? addWeeks(currentDate, 1)
-            : addMonths(currentDate, 1);
-        }
-        return false;
-      }
-
-      // For single-day events
-      return isSameDay(startDate, date);
+      return isWithin;
     });
 
     return [...regularAppointments, ...teamEvents];
