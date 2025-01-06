@@ -13,8 +13,15 @@ interface DateSelectorProps {
 }
 
 export const DateSelector = ({ selectedDate, onDateSelect }: DateSelectorProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleSelect = (date: Date | null) => {
+    onDateSelect(date);
+    setIsOpen(false);
+  };
+
   return (
-    <Popover>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -34,28 +41,14 @@ export const DateSelector = ({ selectedDate, onDateSelect }: DateSelectorProps) 
       <PopoverContent 
         className="w-auto p-0" 
         align="start"
-        sideOffset={4}
-        // Füge diese Props hinzu, falls verfügbar
-        // z.B. preventCloseOnClickInside oder ähnliche, je nach Bibliothek
       >
-        <div 
-          className="p-0"
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => {
-              console.log("Date selected:", date);
-              if (date) {
-                onDateSelect(date);
-              }
-            }}
-            initialFocus
-          />
-        </div>
+        <Calendar
+          mode="single"
+          selected={selectedDate}
+          onSelect={handleSelect}
+          initialFocus
+          locale={de}
+        />
       </PopoverContent>
     </Popover>
   );
