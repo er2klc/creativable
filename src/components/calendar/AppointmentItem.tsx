@@ -66,8 +66,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
   const startDate = new Date(appointment.start_time || appointment.due_date);
   const endDate = appointment.end_date ? new Date(appointment.end_date) : null;
 
-  // Calculate width for multi-day events
-  let width = '100%';
+  // Calculate grid column span for multi-day events
   let gridColumnEnd = 'span 1';
   
   if (isMultiDayEvent && endDate) {
@@ -83,7 +82,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         backgroundColor: appointment.color || "#FEF7CD",
         cursor: isDraggable ? 'pointer' : 'default',
         gridColumn: isMultiDayEvent ? gridColumnEnd : 'auto',
-        position: isMultiDayEvent ? 'relative' : 'relative',
+        position: 'relative',
         zIndex: isMultiDayEvent ? 10 : 1,
       }}
       {...(isDraggable ? { ...listeners, ...attributes } : {})}
