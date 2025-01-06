@@ -1,5 +1,3 @@
-// src/components/calendar/AppointmentItem.tsx
-
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import {
