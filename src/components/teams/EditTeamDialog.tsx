@@ -52,7 +52,7 @@ export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: Edit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Team bearbeiten</DialogTitle>
         </DialogHeader>
@@ -68,11 +68,13 @@ export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: Edit
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Beschreibung</Label>
-            <div className="max-h-[200px] overflow-y-auto">
-              <RichTextEditor
-                content={description}
-                onChange={setDescription}
-              />
+            <div className="max-h-[200px] overflow-y-auto border rounded-md">
+              <div className="sticky top-0 z-10 bg-background border-b">
+                <RichTextEditor
+                  content={description}
+                  onChange={setDescription}
+                />
+              </div>
             </div>
           </div>
           <div className="space-y-2">
