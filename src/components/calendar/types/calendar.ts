@@ -23,9 +23,8 @@ export interface TeamEvent {
   cancelled: boolean;
   leads: { name: string };
   user_id: string;
-  lead_id?: string;
+  lead_id: string;
   due_date: string;
-  is_90_day_run?: boolean;
 }
 
 export interface Appointment {
@@ -43,6 +42,7 @@ export interface Appointment {
   isTeamEvent: boolean;
   end_date?: string;
   is_multi_day?: boolean;
+  start_time?: string;
 }
 
 export interface AppointmentToEdit {
