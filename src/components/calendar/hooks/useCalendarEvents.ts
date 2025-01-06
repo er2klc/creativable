@@ -1,10 +1,19 @@
 import { useState } from "react";
-import { format, addDays, addWeeks, addMonths, isSameDay, getDay, isWithinInterval, parseISO } from "date-fns";
+import {
+  format,
+  addDays,
+  addWeeks,
+  addMonths,
+  isSameDay,
+  getDay,
+  isWithinInterval,
+} from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamEvent, Appointment } from "../types/calendar";
 
 export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) => {
+  // Fetch personal appointments
   const { data: appointments = [] } = useQuery({
     queryKey: ["appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
@@ -31,6 +40,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     },
   });
 
+  // Fetch team events
   const { data: teamData = { events: [], runs: [] } } = useQuery({
     queryKey: ["team-appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
@@ -67,7 +77,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
         description: event.description,
         start_time: event.start_time,
         end_time: event.end_time,
-        end_date: event.end_date || event.start_time,
+        end_date: event.end_date || event.start_time, // Fallback für fehlendes Enddatum
         color: `${event.color || "#FEF7CD"}30`,
         is_team_event: event.is_team_event,
         is_admin_only: event.is_admin_only,
@@ -88,23 +98,13 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
         due_date: event.start_time
       }));
 
-      const { data: runs = [], error: runsError } = await supabase
-        .from("team_90_day_runs")
-        .select("*")
-        .in("team_id", teamIds)
-        .overlaps('start_date', format(currentDate, 'yyyy-MM-dd'));
-
-      if (runsError) {
-        console.error("Error fetching 90-day runs:", runsError);
-        return { events: teamEvents, runs: [] };
-      }
-
-      return { events: teamEvents, runs };
+      return { events: teamEvents, runs: [] };
     },
   });
 
+  // Filter events for a specific day
   const getDayAppointments = (date: Date): Appointment[] => {
-    // Handle regular appointments (non-team events)
+    // Regular personal appointments
     const regularAppointments = appointments.filter(appointment => {
       const appointmentDate = new Date(appointment.due_date);
       return isSameDay(appointmentDate, date);
@@ -114,24 +114,50 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       return regularAppointments;
     }
 
- // Handle team events
+    // Team events
     const teamEvents = teamData.events.filter(event => {
       const startDate = new Date(event.start_time);
       const endDate = event.is_multi_day
         ? new Date(event.end_date || event.start_time)
         : startDate;
 
-      // Check if the date falls within the interval
-      const isWithin = isWithinInterval(date, { start: startDate, end: endDate });
-      console.log("Checking event:", {
-        date,
-        eventTitle: event.title,
-        startDate,
-        endDate,
-        isWithin,
-      });
+      // Check if the date falls within the interval for multi-day events
+      if (event.is_multi_day) {
+        return isWithinInterval(date, { start: startDate, end: endDate });
+      }
 
-      return isWithin;
+      // Recurring events logic
+      if (event.recurring_pattern !== 'none') {
+        const eventDayOfWeek = getDay(startDate);
+        let currentDate = startDate;
+
+        while (currentDate <= date) {
+          if (
+            event.recurring_pattern === 'weekly' &&
+            getDay(currentDate) === eventDayOfWeek
+          ) {
+            if (isSameDay(currentDate, date)) {
+              return true;
+            }
+          } else if (
+            event.recurring_pattern === 'monthly' &&
+            currentDate.getDate() === startDate.getDate()
+          ) {
+            if (isSameDay(currentDate, date)) {
+              return true;
+            }
+          }
+
+          currentDate =
+            event.recurring_pattern === 'weekly'
+              ? addWeeks(currentDate, 1)
+              : addMonths(currentDate, 1);
+        }
+        return false;
+      }
+
+      // Single-day events
+      return isSameDay(startDate, date);
     });
 
     return [...regularAppointments, ...teamEvents];
