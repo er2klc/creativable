@@ -14,10 +14,14 @@ export const useTeamEventDates = ({
 
   // Initialize dates when component mounts or eventToEdit changes
   useEffect(() => {
+    console.log("useTeamEventDates effect:", { eventToEdit, initialSelectedDate });
+    
     if (eventToEdit) {
       if (eventToEdit.is_multi_day) {
         const startTime = eventToEdit.start_time ? new Date(eventToEdit.start_time) : null;
         const endTime = eventToEdit.end_date ? new Date(eventToEdit.end_date) : null;
+        
+        console.log("Setting multi-day event dates:", { startTime, endTime });
         
         if (startTime) {
           const newStartDate = new Date(startTime);
@@ -48,6 +52,8 @@ export const useTeamEventDates = ({
   }, [eventToEdit, initialSelectedDate]);
 
   const handleDateSelect = (date: Date | null) => {
+    console.log("handleDateSelect called with:", date);
+    
     if (date) {
       const newDate = new Date(date);
       
@@ -76,6 +82,8 @@ export const useTeamEventDates = ({
   };
 
   const handleEndDateSelect = (date: Date | null) => {
+    console.log("handleEndDateSelect called with:", date);
+    
     if (date) {
       const newDate = new Date(date);
       

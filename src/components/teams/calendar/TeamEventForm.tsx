@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -52,6 +52,30 @@ export const TeamEventForm = ({
     },
   });
 
+  // Update form when dates change
+  useEffect(() => {
+    if (selectedDate) {
+      const isMultiDay = form.getValues('is_multi_day');
+      if (!isMultiDay) {
+        form.setValue('start_time', format(selectedDate, 'HH:mm'));
+      }
+    }
+  }, [selectedDate, form]);
+
+  useEffect(() => {
+    if (endDate) {
+      const isMultiDay = form.getValues('is_multi_day');
+      if (!isMultiDay) {
+        form.setValue('end_time', format(endDate, 'HH:mm'));
+      }
+    }
+  }, [endDate, form]);
+
+  // Debug logs
+  useEffect(() => {
+    console.log("Form values updated:", form.getValues());
+  }, [form.watch()]);
+
   const createEventMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
       if (!selectedDate) {
@@ -61,34 +85,44 @@ export const TeamEventForm = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // For multi-day events, use the full dates
+      let startTime: Date, endTime: Date | null = null;
+
+      if (values.is_multi_day) {
+        startTime = selectedDate;
+        endTime = endDate || null;
+      } else {
+        startTime = new Date(selectedDate);
+        const [startHours, startMinutes] = values.start_time.split(':');
+        startTime.setHours(parseInt(startHours), parseInt(startMinutes), 0, 0);
+
+        if (values.end_time) {
+          endTime = new Date(selectedDate);
+          const [endHours, endMinutes] = values.end_time.split(':');
+          endTime.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0);
+        }
+      }
+
+      console.log("Saving event with dates:", {
+        startTime,
+        endTime,
+        isMultiDay: values.is_multi_day
+      });
+
       const eventData = {
         team_id: teamId,
         title: values.title,
         description: values.description,
-        start_time: values.is_multi_day 
-          ? selectedDate.toISOString()
-          : new Date(selectedDate.setHours(
-              parseInt(values.start_time.split(":")[0]),
-              parseInt(values.start_time.split(":")[1])
-            )).toISOString(),
-        end_time: values.is_multi_day 
-          ? null 
-          : values.end_time 
-            ? new Date(selectedDate.setHours(
-                parseInt(values.end_time.split(":")[0]),
-                parseInt(values.end_time.split(":")[1])
-              )).toISOString()
-            : null,
-        end_date: values.is_multi_day && endDate 
-          ? endDate.toISOString()
-          : null,
+        start_time: startTime.toISOString(),
+        end_time: values.is_multi_day ? null : endTime?.toISOString() || null,
+        end_date: values.is_multi_day && endTime ? endTime.toISOString() : null,
         color: values.color,
         is_team_event: values.is_team_event,
         recurring_pattern: values.recurring_pattern,
         is_admin_only: values.is_admin_only,
         is_multi_day: values.is_multi_day,
       };
+
+      console.log("Saving event data:", eventData);
 
       if (eventToEdit) {
         const { error } = await supabase

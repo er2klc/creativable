@@ -50,9 +50,13 @@ export const NewTeamEventDialog = ({
     },
   });
 
+  const dialogDescription = eventToEdit 
+    ? "Bearbeiten Sie die Details des ausgewählten Termins."
+    : "Erstellen Sie einen neuen Termin für Ihr Team.";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent aria-describedby="event-dialog-description">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>
@@ -70,10 +74,8 @@ export const NewTeamEventDialog = ({
               </Button>
             )}
           </div>
-          <DialogDescription>
-            {eventToEdit 
-              ? "Bearbeiten Sie die Details des ausgewählten Termins."
-              : "Erstellen Sie einen neuen Termin für Ihr Team."}
+          <DialogDescription id="event-dialog-description">
+            {dialogDescription}
           </DialogDescription>
         </DialogHeader>
 
