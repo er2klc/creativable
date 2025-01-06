@@ -1,9 +1,10 @@
+// src/components/calendar/AppointmentItem.tsx
+
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import {
   Clock,
   User,
-  FileText,
   Video,
   Flame,
   Phone,
@@ -73,6 +74,7 @@ export const AppointmentItem = ({
 
   // Get the appropriate icon based on event type
   const getEventIcon = () => {
+    console.log("Appointment Icon Logic:", appointment);
     if (appointment.isTeamEvent) {
       if (isMultiDayEvent) {
         return <Rocket className="h-4 w-4 text-black" />;
