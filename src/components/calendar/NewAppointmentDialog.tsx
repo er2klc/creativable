@@ -146,16 +146,18 @@ export const NewAppointmentDialog = ({
         />
 
         <div className="flex items-center justify-between mt-6">
-          {appointmentToEdit && (
-            <CompletionCheckbox 
-              completed={completed}
-              cancelled={cancelled}
-              onChange={(newCompleted, newCancelled) => {
-                setCompleted(newCompleted);
-                setCancelled(newCancelled);
-              }}
-            />
-          )}
+          <div className="flex-1">
+            {appointmentToEdit && (
+              <CompletionCheckbox 
+                completed={completed}
+                cancelled={cancelled}
+                onChange={(newCompleted, newCancelled) => {
+                  setCompleted(newCompleted);
+                  setCancelled(newCancelled);
+                }}
+              />
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

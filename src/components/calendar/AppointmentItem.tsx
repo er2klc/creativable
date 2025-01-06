@@ -81,7 +81,6 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         appointment.completed && "bg-opacity-50"
       )}
       onClick={(e) => {
-        // Only trigger onClick for personal appointments or if explicitly allowed
         if (!appointment.isTeamEvent) {
           onClick(e);
         }
@@ -115,14 +114,14 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         <>
           {/* Overlay for cancelled appointments */}
           {appointment.cancelled && (
-            <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center rounded">
-              <X className="h-8 w-8 text-red-600" />
+            <div className="absolute inset-0 bg-red-500/70 flex items-center justify-center rounded">
+              <X className="h-8 w-8 text-white" />
             </div>
           )}
           {/* Overlay for completed appointments */}
           {appointment.completed && (
-            <div className="absolute inset-0 bg-green-500/50 flex items-center justify-center rounded">
-              <Check className="h-8 w-8 text-green-600" />
+            <div className="absolute inset-0 bg-green-500/70 flex items-center justify-center rounded">
+              <Check className="h-8 w-8 text-white" />
             </div>
           )}
         </>
