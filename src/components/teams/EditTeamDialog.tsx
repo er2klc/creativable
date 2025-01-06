@@ -14,6 +14,7 @@ interface EditTeamDialogProps {
     name: string;
     description?: string;
     logo_url?: string;
+    video_url?: string;
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -24,6 +25,7 @@ export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: Edit
   const [name, setName] = useState(team.name);
   const [description, setDescription] = useState(team.description || "");
   const [imageUrl, setImageUrl] = useState<string | null>(team.logo_url || null);
+  const [videoUrl, setVideoUrl] = useState(team.video_url || "");
 
   const handleSave = async () => {
     try {
@@ -32,7 +34,8 @@ export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: Edit
         .update({ 
           name, 
           description,
-          logo_url: imageUrl
+          logo_url: imageUrl,
+          video_url: videoUrl
         })
         .eq('id', team.id);
 
@@ -71,6 +74,15 @@ export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: Edit
                 onChange={setDescription}
               />
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="videoUrl">Video URL (optional)</Label>
+            <Input
+              id="videoUrl"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="Fügen Sie eine Video-URL hinzu"
+            />
           </div>
           <TeamLogoUpload
             currentLogoUrl={imageUrl}
