@@ -1,4 +1,4 @@
-import { format, isSameMonth, isToday, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
+import { format, isSameMonth, isToday, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AppointmentItem } from "./AppointmentItem";
 import { DragOverlay, useDroppable } from "@dnd-kit/core";
@@ -32,6 +32,16 @@ export const CalendarGrid = ({
     [currentDate]
   );
 
+  // Helper function to check if a date is part of a multi-day event
+  const isPartOfMultiDayEvent = (date: Date, appointment: Appointment) => {
+    if (!appointment.is_multi_day || !appointment.end_date) return false;
+    
+    const start = parseISO(appointment.start_time);
+    const end = parseISO(appointment.end_date);
+    
+    return isWithinInterval(date, { start, end });
+  };
+
   // Create a separate component for droppable day
   const DroppableDay = ({ date, children }: { date: Date; children: React.ReactNode }) => {
     const dateStr = format(date, "yyyy-MM-dd");
@@ -42,6 +52,7 @@ export const CalendarGrid = ({
 
     const isCurrentOver = overDate === dateStr;
     const dayAppointments = getDayAppointments(date);
+    const multiDayEvents = dayAppointments.filter(app => isPartOfMultiDayEvent(date, app));
     
     return (
       <div
@@ -52,7 +63,8 @@ export const CalendarGrid = ({
           "min-h-[100px] bg-background p-2 relative transition-colors duration-200",
           !isSameMonth(date, currentDate) && "text-muted-foreground",
           "hover:bg-accent hover:text-accent-foreground cursor-pointer",
-          isCurrentOver && "bg-accent/50"
+          isCurrentOver && "bg-accent/50",
+          multiDayEvents.length > 0 && "bg-accent/10"
         )}
         onClick={() => onDateClick(date)}
       >
@@ -64,6 +76,7 @@ export const CalendarGrid = ({
               appointment={appointment}
               onClick={(e) => onAppointmentClick(e, appointment)}
               isDragging={activeId === appointment.id}
+              isMultiDay={isPartOfMultiDayEvent(date, appointment)}
             />
           ))}
         </div>

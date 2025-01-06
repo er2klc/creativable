@@ -46,6 +46,7 @@ export const TeamCalendarView = ({ teamId, isAdmin, onBack }: TeamCalendarViewPr
     );
   };
 
+  const multiDayEvents = events?.filter(event => event.is_multi_day) || [];
   const draggedEvent = activeId ? events?.find(event => event.id === activeId) : null;
 
   return (
@@ -74,6 +75,7 @@ export const TeamCalendarView = ({ teamId, isAdmin, onBack }: TeamCalendarViewPr
         <CalendarHeader 
           currentDate={currentDate}
           onDateChange={setCurrentDate}
+          multiDayEvents={multiDayEvents}
         />
 
         <CalendarGrid
