@@ -49,12 +49,12 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
 
       const { data: events = [], error: eventsError } = await supabase
         .from("team_calendar_events")
-        .select(`
+        .select(
           *,
           teams:team_id (name)
-        `)
+        )
         .in("team_id", teamIds)
-        .or(`is_admin_only.eq.false${isAdmin ? ',is_admin_only.eq.true' : ''}`);
+        .or(is_admin_only.eq.false${isAdmin ? ',is_admin_only.eq.true' : ''});
 
       if (eventsError) {
         console.error("Error fetching team events:", eventsError);
@@ -62,13 +62,13 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       }
 
       const teamEvents: TeamEvent[] = events.map(event => ({
-        id: `team-${event.id}`,
+        id: team-${event.id},
         title: event.title,
         description: event.description,
         start_time: event.start_time,
         end_time: event.end_time,
         end_date: event.end_date || event.start_time,
-        color: `${event.color || "#FEF7CD"}30`,
+        color: ${event.color || "#FEF7CD"}30,
         is_team_event: event.is_team_event,
         is_admin_only: event.is_admin_only,
         is_multi_day: event.is_multi_day,
@@ -92,48 +92,71 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     },
   });
 
-  const getDayAppointments = (date: Date): Appointment[] => {
-    // Handle regular appointments (non-team events)
-    const regularAppointments = appointments.filter(appointment => {
-      const appointmentDate = new Date(appointment.due_date);
-      return isSameDay(appointmentDate, date);
-    });
+const getDayAppointments = (date: Date): Appointment[] => {
+  // Handle regular appointments (non-team events)
+  const regularAppointments = appointments.filter(appointment => {
+    const appointmentDate = new Date(appointment.due_date);
+    return isSameDay(appointmentDate, date);
+  });
 
-    if (!showTeamEvents) {
-      return regularAppointments;
+  if (!showTeamEvents) {
+    return regularAppointments;
+  }
+
+  // Handle team events
+  const teamEvents = teamData.events.filter(event => {
+    const startDate = new Date(event.start_time);
+    const endDate = event.is_multi_day
+      ? new Date(event.end_date || event.start_time)
+      : startDate;
+
+    // Normalize start and end times to ensure consistent comparison
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    // For multi-day events, check if the current date falls within the event period
+    if (event.is_multi_day) {
+      const isStartDay = isSameDay(startDate, date); // Check explicitly for start date
+      const isWithinRange = isWithinInterval(date, { start: startDate, end: endDate });
+      return isStartDay || isWithinRange;
     }
 
-    // Handle team events
-    const teamEvents = teamData.events.filter(event => {
-      const startDate = new Date(event.start_time);
-      const endDate = event.is_multi_day
-        ? new Date(event.end_date || event.start_time)
-        : startDate;
+    // For recurring events
+    if (event.recurring_pattern !== "none") {
+      const eventDayOfWeek = getDay(startDate);
+      let currentDate = startDate;
 
-      // Normalize start and end times for comparison
-      const normalizedStartDate = new Date(startDate);
-      const normalizedEndDate = new Date(endDate);
-      const normalizedDate = new Date(date);
+      while (currentDate <= date) {
+        if (
+          event.recurring_pattern === "weekly" &&
+          getDay(currentDate) === eventDayOfWeek
+        ) {
+          if (isSameDay(currentDate, date)) {
+            return true;
+          }
+        } else if (
+          event.recurring_pattern === "monthly" &&
+          currentDate.getDate() === startDate.getDate()
+        ) {
+          if (isSameDay(currentDate, date)) {
+            return true;
+          }
+        }
 
-      // Set hours to cover the full day for comparison
-      normalizedStartDate.setHours(0, 0, 0, 0);
-      normalizedEndDate.setHours(23, 59, 59, 999);
-      normalizedDate.setHours(0, 0, 0, 0);
-
-      // For multi-day events, check if the current date falls within the event period
-      if (event.is_multi_day) {
-        return isWithinInterval(normalizedDate, { 
-          start: normalizedStartDate, 
-          end: normalizedEndDate 
-        });
+        currentDate =
+          event.recurring_pattern === "weekly"
+            ? addWeeks(currentDate, 1)
+            : addMonths(currentDate, 1);
       }
+      return false;
+    }
 
-      // For single-day events
-      return isSameDay(startDate, date);
-    });
+    // For single-day events
+    return isSameDay(startDate, date);
+  });
 
-    return [...regularAppointments, ...teamEvents];
-  };
+  return [...regularAppointments, ...teamEvents];
+};
 
   return {
     appointments,
