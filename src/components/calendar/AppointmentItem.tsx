@@ -80,10 +80,10 @@ export const AppointmentItem = ({
     console.log("Appointment Icon Logic:", appointment);
     if (appointment.isTeamEvent) {
       if (isMultiDayEvent) {
-        return <Rocket className="h-4 w-4 text-black" />;
+        return <Rocket className="h-4 w-4 text-primary" />;
       }
       if (appointment.is_admin_only) {
-        return <Crown className="h-4 w-4 text-black" />;
+        return <Crown className="h-4 w-4 text-primary" />;
       }
       return <Flame className="h-4 w-4 text-orange-500" />;
     }
