@@ -31,20 +31,40 @@ export const TeamEventForm = ({
 
   useEffect(() => {
     if (eventToEdit?.end_date) {
-      const parsedEndDate = parseISO(eventToEdit.end_date);
-      if (isValid(parsedEndDate)) {
-        setEndDate(parsedEndDate);
+      try {
+        const parsedEndDate = parseISO(eventToEdit.end_date);
+        if (isValid(parsedEndDate)) {
+          setEndDate(parsedEndDate);
+        }
+      } catch (error) {
+        console.error("Error parsing end date:", error);
       }
     }
+    
     if (eventToEdit?.start_time) {
-      const startDate = parseISO(eventToEdit.start_time);
-      if (isValid(startDate)) {
-        setSelectedDate(startDate);
+      try {
+        const startDate = parseISO(eventToEdit.start_time);
+        if (isValid(startDate)) {
+          setSelectedDate(startDate);
+        }
+      } catch (error) {
+        console.error("Error parsing start time:", error);
       }
     } else if (initialSelectedDate && isValid(initialSelectedDate)) {
       setSelectedDate(initialSelectedDate);
     }
   }, [initialSelectedDate, eventToEdit]);
+
+  const getFormattedTime = (dateString: string | undefined, defaultValue: string = ""): string => {
+    if (!dateString) return defaultValue;
+    try {
+      const date = parseISO(dateString);
+      return isValid(date) ? format(date, "HH:mm") : defaultValue;
+    } catch (error) {
+      console.error("Error formatting time:", error);
+      return defaultValue;
+    }
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -52,10 +72,10 @@ export const TeamEventForm = ({
       title: eventToEdit?.title || "",
       description: eventToEdit?.description || "",
       start_time: eventToEdit?.start_time && !eventToEdit?.is_multi_day 
-        ? format(parseISO(eventToEdit.start_time), "HH:mm")
+        ? getFormattedTime(eventToEdit.start_time, "09:00")
         : "09:00",
       end_time: eventToEdit?.end_time && !eventToEdit?.is_multi_day
-        ? format(parseISO(eventToEdit.end_time), "HH:mm")
+        ? getFormattedTime(eventToEdit.end_time)
         : "",
       end_date: eventToEdit?.end_date || null,
       color: eventToEdit?.color || "#FEF7CD",
@@ -78,7 +98,6 @@ export const TeamEventForm = ({
       let eventDate = startOfDay(selectedDate);
       let eventEndDate = values.is_multi_day ? endDate : selectedDate;
 
-      // For multi-day events, we don't need time values
       if (!values.is_multi_day && values.start_time) {
         const [hours, minutes] = values.start_time.split(":");
         eventDate = new Date(selectedDate);
