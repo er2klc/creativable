@@ -22,7 +22,11 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
         return [];
       }
 
-      return data || [];
+      return data.map(appointment => ({
+        ...appointment,
+        isTeamEvent: false,
+        end_date: appointment.due_date // Set end_date equal to due_date for single-day events
+      })) || [];
     },
   });
 
@@ -56,6 +60,27 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
         return { events: [], runs: [] };
       }
 
+      const teamEvents: TeamEvent[] = events.map(event => ({
+        id: `team-${event.id}`,
+        title: event.title,
+        due_date: event.start_time,
+        color: `${event.color || "#FEF7CD"}30`,
+        isTeamEvent: true,
+        isAdminEvent: event.is_admin_only,
+        isRecurring: event.recurring_pattern !== 'none',
+        meeting_type: 'initial_meeting',
+        completed: false,
+        cancelled: false,
+        leads: { name: event.teams?.name || 'Team Event' },
+        start_time: event.start_time,
+        end_time: event.end_time,
+        end_date: event.end_date || event.start_time,
+        is_multi_day: event.is_multi_day,
+        is_90_day_run: event.is_90_day_run,
+        user_id: event.created_by,
+        lead_id: 'team-event' // Provide a default value for lead_id
+      }));
+
       const { data: runs = [], error: runsError } = await supabase
         .from("team_90_day_runs")
         .select("*")
@@ -64,26 +89,10 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
 
       if (runsError) {
         console.error("Error fetching 90-day runs:", runsError);
-        return { events: [], runs: [] };
+        return { events: teamEvents, runs: [] };
       }
 
-      return { 
-        events: events.map(event => ({
-          ...event,
-          id: `team-${event.id}`,
-          title: event.title,
-          due_date: event.start_time,
-          color: `${event.color || "#FEF7CD"}30`,
-          isTeamEvent: true,
-          isAdminEvent: event.is_admin_only,
-          isRecurring: event.recurring_pattern !== 'none',
-          meeting_type: 'initial_meeting',
-          completed: false,
-          cancelled: false,
-          leads: { name: event.teams?.name || 'Team Event' },
-        })) as TeamEvent[],
-        runs 
-      };
+      return { events: teamEvents, runs };
     },
   });
 
@@ -92,11 +101,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     const regularAppointments = appointments.filter(appointment => {
       const appointmentDate = new Date(appointment.due_date);
       return isSameDay(appointmentDate, date);
-    }).map(appointment => ({
-      ...appointment,
-      isTeamEvent: false,
-      lead_id: appointment.lead_id || '',
-    }));
+    });
 
     if (!showTeamEvents) {
       return regularAppointments;
@@ -139,7 +144,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       return isSameDay(startDate, date);
     });
 
-    return [...regularAppointments, ...teamEvents];
+    return [...regularAppointments, ...teamEvents] as Appointment[];
   };
 
   return {
