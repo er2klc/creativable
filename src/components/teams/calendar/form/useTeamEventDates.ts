@@ -14,11 +14,14 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
       // For editing existing events
       if (eventToEdit.is_multi_day) {
         // Handle multi-day events
-        setSelectedDate(new Date(eventToEdit.start_time));
-        setEndDate(new Date(eventToEdit.end_date));
+        const startDate = eventToEdit.start_time ? new Date(eventToEdit.start_time) : null;
+        const endDate = eventToEdit.end_date ? new Date(eventToEdit.end_date) : null;
+        setSelectedDate(startDate);
+        setEndDate(endDate);
       } else {
         // Handle regular events
-        setSelectedDate(new Date(eventToEdit.start_time));
+        const date = eventToEdit.start_time ? new Date(eventToEdit.start_time) : null;
+        setSelectedDate(date);
       }
     } else if (initialSelectedDate) {
       // For creating new events
