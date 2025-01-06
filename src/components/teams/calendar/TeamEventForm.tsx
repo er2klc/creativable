@@ -13,6 +13,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TeamEventFormFields, formSchema } from "./form/TeamEventFormFields";
+import * as z from 'zod';
 
 interface TeamEventFormProps {
   teamId: string;
@@ -150,7 +151,9 @@ export const TeamEventForm = ({
                 selected={selectedDate}
                 onSelect={(date) => {
                   console.log("Selected date:", date);
-                  setSelectedDate(date);
+                  if (date) {
+                    setSelectedDate(date);
+                  }
                 }}
                 initialFocus
               />
