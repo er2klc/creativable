@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod"; // Add this import
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormLabel } from "@/components/ui/form";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { de } from "date-fns/locale";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,8 +42,12 @@ export const TeamEventForm = ({
     defaultValues: {
       title: eventToEdit?.title || "",
       description: eventToEdit?.description || "",
-      start_time: eventToEdit?.start_time ? format(new Date(eventToEdit.start_time), "HH:mm") : "09:00",
-      end_time: eventToEdit?.end_time ? format(new Date(eventToEdit.end_time), "HH:mm") : "",
+      start_time: eventToEdit?.start_time && isValid(new Date(eventToEdit.start_time)) 
+        ? format(new Date(eventToEdit.start_time), "HH:mm")
+        : "09:00",
+      end_time: eventToEdit?.end_time && isValid(new Date(eventToEdit.end_time))
+        ? format(new Date(eventToEdit.end_time), "HH:mm")
+        : "",
       color: eventToEdit?.color || "#FEF7CD",
       is_team_event: eventToEdit?.is_team_event || false,
       recurring_pattern: eventToEdit?.recurring_pattern || "none",
