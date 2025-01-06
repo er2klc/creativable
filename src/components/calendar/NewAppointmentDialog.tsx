@@ -43,6 +43,7 @@ export const NewAppointmentDialog = ({
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate);
   const [completed, setCompleted] = useState(appointmentToEdit?.completed || false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   // Update selectedDate when initialSelectedDate or open changes
   useEffect(() => {
@@ -111,13 +112,21 @@ export const NewAppointmentDialog = ({
     },
   });
 
+  const handleDateSelect = (date: Date | undefined) => {
+    console.log("Handling date select:", date);
+    if (date) {
+      setSelectedDate(date);
+      setIsCalendarOpen(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="space-y-2">
             <div>{appointmentToEdit ? "Termin bearbeiten" : "Neuer Termin"}</div>
-            <Popover>
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -138,12 +147,7 @@ export const NewAppointmentDialog = ({
                 <Calendar
                   mode="single"
                   selected={selectedDate}
-                  onSelect={(date) => {
-                    console.log("Selected date:", date);
-                    if (date) {
-                      setSelectedDate(date);
-                    }
-                  }}
+                  onSelect={handleDateSelect}
                   initialFocus
                 />
               </PopoverContent>

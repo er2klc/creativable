@@ -32,6 +32,7 @@ export const TeamEventForm = ({
 }: TeamEventFormProps) => {
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   // Update selectedDate when initialSelectedDate changes
   useEffect(() => {
@@ -123,12 +124,20 @@ export const TeamEventForm = ({
     },
   });
 
+  const handleDateSelect = (date: Date | undefined) => {
+    console.log("Handling date select:", date);
+    if (date) {
+      setSelectedDate(date);
+      setIsCalendarOpen(false);
+    }
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit((values) => createEventMutation.mutate(values))} className="space-y-4">
         <div className="space-y-2">
           <FormLabel>Datum</FormLabel>
-          <Popover>
+          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -149,12 +158,7 @@ export const TeamEventForm = ({
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={(date) => {
-                  console.log("Selected date:", date);
-                  if (date) {
-                    setSelectedDate(date);
-                  }
-                }}
+                onSelect={handleDateSelect}
                 initialFocus
               />
             </PopoverContent>
