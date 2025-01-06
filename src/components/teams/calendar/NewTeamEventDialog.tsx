@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { TeamEventForm } from "./TeamEventForm";
@@ -70,6 +70,11 @@ export const NewTeamEventDialog = ({
               </Button>
             )}
           </div>
+          <DialogDescription>
+            {eventToEdit 
+              ? "Bearbeiten Sie die Details des ausgewählten Termins."
+              : "Erstellen Sie einen neuen Termin für Ihr Team."}
+          </DialogDescription>
         </DialogHeader>
 
         <TeamEventForm
