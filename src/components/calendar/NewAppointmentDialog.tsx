@@ -1,5 +1,4 @@
 import { format } from "date-fns";
-import { de } from "date-fns/locale";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -9,15 +8,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { AppointmentForm } from "./appointment-dialog/AppointmentForm";
 import { useState, useEffect } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { DateSelector } from "./appointment-dialog/DateSelector";
+import { CompletionCheckbox } from "./appointment-dialog/CompletionCheckbox";
 
 interface NewAppointmentDialogProps {
   open: boolean;
@@ -43,7 +38,6 @@ export const NewAppointmentDialog = ({
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate);
   const [completed, setCompleted] = useState(appointmentToEdit?.completed || false);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -117,58 +111,10 @@ export const NewAppointmentDialog = ({
         <DialogHeader>
           <DialogTitle className="space-y-2">
             <div>{appointmentToEdit ? "Termin bearbeiten" : "Neuer Termin"}</div>
-            <Popover 
-              open={isCalendarOpen}
-              onOpenChange={setIsCalendarOpen}
-            >
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "justify-start text-left font-normal w-full",
-                    !selectedDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? (
-                    format(selectedDate, "dd. MMMM yyyy", { locale: de })
-                  ) : (
-                    <span>Datum wählen</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent 
-                className="w-auto p-0" 
-                align="start"
-                sideOffset={4}
-                onPointerDownOutside={(e) => {
-                  e.preventDefault();
-                }}
-                onInteractOutside={(e) => {
-                  e.preventDefault();
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-              >
-                <div onMouseDown={(e) => e.preventDefault()}>
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => {
-                      if (date) {
-                        setSelectedDate(date);
-                        // Use RAF to ensure state updates are processed before closing
-                        requestAnimationFrame(() => {
-                          setIsCalendarOpen(false);
-                        });
-                      }
-                    }}
-                    initialFocus
-                  />
-                </div>
-              </PopoverContent>
-            </Popover>
+            <DateSelector 
+              selectedDate={selectedDate} 
+              onDateSelect={setSelectedDate}
+            />
           </DialogTitle>
           <DialogDescription>
             Fülle die folgenden Felder aus, um {appointmentToEdit ? "den Termin zu aktualisieren" : "einen neuen Termin zu erstellen"}.
@@ -188,19 +134,10 @@ export const NewAppointmentDialog = ({
         />
 
         {appointmentToEdit && (
-          <div className="flex items-center space-x-2 mt-4">
-            <Checkbox
-              id="completed"
-              checked={completed}
-              onCheckedChange={(checked) => setCompleted(checked as boolean)}
-            />
-            <label
-              htmlFor="completed"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Als erledigt markieren
-            </label>
-          </div>
+          <CompletionCheckbox 
+            completed={completed}
+            onChange={setCompleted}
+          />
         )}
       </DialogContent>
     </Dialog>
