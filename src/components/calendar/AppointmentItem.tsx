@@ -68,11 +68,9 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
 
   // Calculate width and position for multi-day events
   let width = '100%';
-  let left = '0';
   if (isMultiDayEvent && endDate) {
     const dayDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
     width = `calc(${dayDiff * 100}% + ${(dayDiff - 1) * 0.25}rem)`;
-    left = '0.5rem'; // Add left margin to align with grid
   }
 
   return (
@@ -84,7 +82,6 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         cursor: isDraggable ? 'pointer' : 'default',
         zIndex: isMultiDayEvent ? 0 : 1,
         width: isMultiDayEvent ? width : undefined,
-        left: isMultiDayEvent ? left : undefined,
         position: isMultiDayEvent ? 'absolute' : 'relative',
       }}
       {...(isDraggable ? { ...listeners, ...attributes } : {})}
@@ -95,7 +92,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         appointment.isTeamEvent && "border border-gray-200",
         !appointment.isTeamEvent && "text-black",
         appointment.completed && "bg-opacity-50",
-        isMultiDayEvent && "top-0"
+        isMultiDayEvent && "absolute inset-x-0 mx-2"
       )}
       onClick={(e) => {
         if (!appointment.isTeamEvent) {
