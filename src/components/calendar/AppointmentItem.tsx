@@ -1,4 +1,4 @@
-import { format, isValid } from 'date-fns';
+import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check, X, Flame } from "lucide-react";
@@ -68,11 +68,9 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
 
   // Calculate width for multi-day events
   let width = '100%';
-  let gridColumnEnd = 'span 1';
-  
   if (isMultiDayEvent && endDate) {
-    const dayDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    gridColumnEnd = `span ${dayDiff}`;
+    const dayDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    width = `calc(${dayDiff * 100}% + ${(dayDiff - 1) * 0.25}rem)`;
   }
 
   return (
@@ -82,18 +80,18 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         ...style,
         backgroundColor: appointment.color || "#FEF7CD",
         cursor: isDraggable ? 'pointer' : 'default',
-        gridColumn: isMultiDayEvent ? gridColumnEnd : 'auto',
-        position: isMultiDayEvent ? 'relative' : 'relative',
-        zIndex: isMultiDayEvent ? 10 : 1,
+        zIndex: isMultiDayEvent ? 0 : 1,
+        width: isMultiDayEvent ? width : undefined,
       }}
       {...(isDraggable ? { ...listeners, ...attributes } : {})}
       className={cn(
-        "p-2 mb-1 rounded hover:opacity-80",
+        "p-2 mb-1 rounded hover:opacity-80 relative",
         "transition-colors duration-200 space-y-1",
         appointment.isRecurring && "border-l-4 border-primary",
         appointment.isTeamEvent && "border border-gray-200",
         !appointment.isTeamEvent && "text-black",
-        appointment.completed && "bg-opacity-50"
+        appointment.completed && "bg-opacity-50",
+        isMultiDayEvent && "absolute inset-x-0 mx-2"
       )}
       onClick={(e) => {
         if (!appointment.isTeamEvent) {
