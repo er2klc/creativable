@@ -127,16 +127,16 @@ export const TeamEventForm = ({
     },
   });
 
-  const onSubmit = form.handleSubmit((values) => {
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
     console.log("Form submitted with values:", values);
     console.log("Selected date:", selectedDate);
     console.log("End date:", endDate);
     createEventMutation.mutate(values);
-  });
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <TeamEventFormFields 
           form={form} 
           selectedDate={selectedDate}
