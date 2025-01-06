@@ -3,9 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormLabel } from "@/components/ui/form";
-import { cn } from "@/lib/utils";
-import { format, isValid } from "date-fns";
-import { de } from "date-fns/locale";
+import { format, isValid, startOfDay } from "date-fns";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -30,7 +28,6 @@ export const TeamEventForm = ({
 }: TeamEventFormProps) => {
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   useEffect(() => {
     setSelectedDate(initialSelectedDate);
@@ -51,6 +48,7 @@ export const TeamEventForm = ({
       is_team_event: eventToEdit?.is_team_event || false,
       recurring_pattern: eventToEdit?.recurring_pattern || "none",
       is_admin_only: eventToEdit?.is_admin_only || false,
+      is_multi_day: eventToEdit?.is_multi_day || false,
     },
   });
 
@@ -60,19 +58,23 @@ export const TeamEventForm = ({
         throw new Error("Bitte wähle ein Datum aus");
       }
 
-      const eventDate = new Date(selectedDate);
-      const [hours, minutes] = values.start_time.split(":");
-      eventDate.setHours(parseInt(hours), parseInt(minutes));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
 
+      let eventDate = startOfDay(selectedDate);
       let endDate = null;
-      if (values.end_time) {
+
+      // Handle time setting based on whether it's a multi-day event
+      if (!values.is_multi_day && values.start_time) {
+        const [hours, minutes] = values.start_time.split(":");
+        eventDate.setHours(parseInt(hours), parseInt(minutes));
+      }
+
+      if (values.end_time && !values.is_multi_day) {
         const [endHours, endMinutes] = values.end_time.split(":");
         endDate = new Date(selectedDate);
         endDate.setHours(parseInt(endHours), parseInt(endMinutes));
       }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
 
       const eventData = {
         team_id: teamId,
@@ -84,6 +86,7 @@ export const TeamEventForm = ({
         is_team_event: values.is_team_event,
         recurring_pattern: values.recurring_pattern,
         is_admin_only: values.is_admin_only,
+        is_multi_day: values.is_multi_day,
         created_by: user.id,
       };
 

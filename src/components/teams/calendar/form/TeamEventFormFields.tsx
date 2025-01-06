@@ -3,14 +3,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DatePicker } from "@/components/ui/date-picker";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
 
 export const formSchema = z.object({
   title: z.string().min(1, "Titel ist erforderlich"),
   description: z.string().optional(),
-  start_time: z.string(),
+  start_time: z.string().optional(),
   end_time: z.string().optional(),
   end_date: z.string().optional(),
   color: z.string().default("#FEF7CD"),
@@ -29,6 +28,61 @@ export const TeamEventFormFields = ({ form }: TeamEventFormFieldsProps) => {
 
   return (
     <>
+      <FormField
+        control={form.control}
+        name="is_multi_day"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+            <FormControl>
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            </FormControl>
+            <div className="space-y-1 leading-none">
+              <FormLabel>
+                Mehrtägiges Event
+              </FormLabel>
+              <FormDescription>
+                Event erstreckt sich über mehrere Tage
+              </FormDescription>
+            </div>
+          </FormItem>
+        )}
+      />
+
+      {!isMultiDay && (
+        <FormField
+          control={form.control}
+          name="start_time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Startzeit</FormLabel>
+              <FormControl>
+                <Input type="time" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+
+      {!isMultiDay && (
+        <FormField
+          control={form.control}
+          name="end_time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Endzeit (optional)</FormLabel>
+              <FormControl>
+                <Input type="time" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+
       <FormField
         control={form.control}
         name="title"
@@ -56,75 +110,6 @@ export const TeamEventFormFields = ({ form }: TeamEventFormFieldsProps) => {
           </FormItem>
         )}
       />
-
-      <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="start_time"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Startzeit</FormLabel>
-              <FormControl>
-                <Input type="time" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="end_time"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Endzeit (optional)</FormLabel>
-              <FormControl>
-                <Input type="time" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      <FormField
-        control={form.control}
-        name="is_multi_day"
-        render={({ field }) => (
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-            <FormControl>
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            </FormControl>
-            <div className="space-y-1 leading-none">
-              <FormLabel>
-                Mehrtägiges Event
-              </FormLabel>
-              <FormDescription>
-                Event erstreckt sich über mehrere Tage
-              </FormDescription>
-            </div>
-          </FormItem>
-        )}
-      />
-
-      {isMultiDay && (
-        <FormField
-          control={form.control}
-          name="end_date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Enddatum</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      )}
 
       <FormField
         control={form.control}
