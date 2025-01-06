@@ -6,28 +6,23 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { UseFormReturn } from "react-hook-form";
 import { DateSelector } from "@/components/calendar/appointment-dialog/DateSelector";
 import * as z from "zod";
-
-export const formSchema = z.object({
-  title: z.string().min(1, "Titel ist erforderlich"),
-  description: z.string().optional(),
-  start_time: z.string().optional(),
-  end_time: z.string().optional(),
-  end_date: z.string().nullable(),
-  color: z.string().default("#FEF7CD"),
-  is_team_event: z.boolean().default(false),
-  is_admin_only: z.boolean().default(false),
-  is_multi_day: z.boolean().default(false),
-  recurring_pattern: z.enum(["none", "daily", "weekly", "monthly"]).default("none"),
-});
+import { formSchema } from "../TeamEventForm";
 
 interface TeamEventFormFieldsProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
   selectedDate: Date | null;
+  onDateSelect: (date: Date | null) => void;
   onEndDateSelect: (date: Date | null) => void;
   endDate: Date | null;
 }
 
-export const TeamEventFormFields = ({ form, selectedDate, onEndDateSelect, endDate }: TeamEventFormFieldsProps) => {
+export const TeamEventFormFields = ({ 
+  form, 
+  selectedDate, 
+  onDateSelect,
+  onEndDateSelect,
+  endDate 
+}: TeamEventFormFieldsProps) => {
   const isMultiDay = form.watch("is_multi_day");
 
   return (
@@ -60,8 +55,8 @@ export const TeamEventFormFields = ({ form, selectedDate, onEndDateSelect, endDa
           <div>
             <FormLabel>Startdatum</FormLabel>
             <DateSelector 
-              selectedDate={selectedDate} 
-              onDateSelect={() => {}} 
+              selectedDate={selectedDate}
+              onDateSelect={onDateSelect}
             />
           </div>
           <div>
@@ -74,6 +69,13 @@ export const TeamEventFormFields = ({ form, selectedDate, onEndDateSelect, endDa
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2">
+            <FormLabel>Datum</FormLabel>
+            <DateSelector 
+              selectedDate={selectedDate}
+              onDateSelect={onDateSelect}
+            />
+          </div>
           <FormField
             control={form.control}
             name="start_time"

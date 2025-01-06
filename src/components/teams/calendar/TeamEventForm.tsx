@@ -7,7 +7,7 @@ import { format, isValid, startOfDay } from "date-fns";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { TeamEventFormFields, formSchema } from "./form/TeamEventFormFields";
+import { TeamEventFormFields } from "./form/TeamEventFormFields";
 import { DateSelector } from "@/components/calendar/appointment-dialog/DateSelector";
 import * as z from 'zod';
 
@@ -31,9 +31,13 @@ export const TeamEventForm = ({
   const [endDate, setEndDate] = useState<Date | null>(null);
 
   useEffect(() => {
-    setSelectedDate(initialSelectedDate);
     if (eventToEdit?.end_date) {
       setEndDate(new Date(eventToEdit.end_date));
+    }
+    if (eventToEdit?.start_time) {
+      setSelectedDate(new Date(eventToEdit.start_time));
+    } else {
+      setSelectedDate(initialSelectedDate);
     }
   }, [initialSelectedDate, eventToEdit]);
 
@@ -142,17 +146,10 @@ export const TeamEventForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit((values) => createEventMutation.mutate(values))} className="space-y-4">
-        <div className="space-y-2">
-          <FormLabel>Datum</FormLabel>
-          <DateSelector 
-            selectedDate={selectedDate}
-            onDateSelect={handleDateSelect}
-          />
-        </div>
-
         <TeamEventFormFields 
           form={form} 
           selectedDate={selectedDate}
+          onDateSelect={handleDateSelect}
           onEndDateSelect={handleEndDateSelect}
           endDate={endDate}
         />
@@ -184,3 +181,16 @@ export const TeamEventForm = ({
     </Form>
   );
 };
+
+export const formSchema = z.object({
+  title: z.string().min(1, "Titel ist erforderlich"),
+  description: z.string().optional(),
+  start_time: z.string().optional(),
+  end_time: z.string().optional(),
+  end_date: z.string().nullable(),
+  color: z.string().default("#FEF7CD"),
+  is_team_event: z.boolean().default(false),
+  is_admin_only: z.boolean().default(false),
+  is_multi_day: z.boolean().default(false),
+  recurring_pattern: z.enum(["none", "daily", "weekly", "monthly"]).default("none"),
+});
