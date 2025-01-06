@@ -1,16 +1,23 @@
-// src/components/calendar/hooks/useCalendarEvents.ts
-
 import { useState } from "react";
-import { format, addDays, addWeeks, addMonths, isSameDay, isWithinInterval } from "date-fns";
+import {
+  format,
+  isSameDay,
+  isWithinInterval,
+} from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamEvent, Appointment } from "../types/calendar";
 
-export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) => {
+export const useCalendarEvents = (
+  currentDate: Date,
+  showTeamEvents: boolean
+) => {
   const { data: appointments = [] } = useQuery({
     queryKey: ["appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return [];
 
       const { data, error } = await supabase
@@ -37,7 +44,9 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
   const { data: teamData = { events: [] } } = useQuery({
     queryKey: ["team-appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return { events: [] };
 
       const { data: teamMemberships } = await supabase
@@ -48,7 +57,9 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       if (!teamMemberships?.length) return { events: [] };
 
       const teamIds = teamMemberships.map(tm => tm.team_id);
-      const isAdmin = teamMemberships.some(tm => ['admin', 'owner'].includes(tm.role));
+      const isAdmin = teamMemberships.some(tm =>
+        ["admin", "owner"].includes(tm.role)
+      );
 
       const { data: events = [], error: eventsError } = await supabase
         .from("team_calendar_events")
@@ -57,12 +68,18 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
           teams:team_id (name)
         `)
         .in("team_id", teamIds)
-        .or(`is_admin_only.eq.false${isAdmin ? ',is_admin_only.eq.true' : ''}`);
+        .or(
+          isAdmin
+            ? `is_admin_only.eq.false,is_admin_only.eq.true`
+            : `is_admin_only.eq.false`
+        );
 
       if (eventsError) {
         console.error("Error fetching team events:", eventsError);
         return { events: [] };
       }
+
+      console.log("Fetched team events:", events);
 
       return {
         events: events.map(event => ({
@@ -74,14 +91,14 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
           end_date: event.end_date,
           color: `${event.color || "#FEF7CD"}30`,
           is_multi_day: event.is_multi_day,
-          isRecurring: event.recurring_pattern !== 'none',
+          isRecurring: event.recurring_pattern !== "none",
         })) as TeamEvent[],
       };
     },
   });
 
   const getDayAppointments = (date: Date): Appointment[] => {
-    const regularAppointments = appointments.filter((appointment) => {
+    const regularAppointments = appointments.filter(appointment => {
       const appointmentDate = new Date(appointment.due_date);
       appointmentDate.setHours(0, 0, 0, 0);
       const currentDate = new Date(date);
@@ -93,7 +110,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       return regularAppointments;
     }
 
-    const teamEvents = teamData.events.filter((event) => {
+    const teamEvents = teamData.events.filter(event => {
       const startDate = new Date(event.start_time);
       const endDate = event.is_multi_day
         ? new Date(event.end_date || event.start_time)
@@ -104,6 +121,11 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
 
       return isWithinInterval(date, { start: startDate, end: endDate });
     });
+
+    console.log(`Appointments for ${format(date, "yyyy-MM-dd")}:`, [
+      ...regularAppointments,
+      ...teamEvents,
+    ]);
 
     return [...regularAppointments, ...teamEvents] as Appointment[];
   };
