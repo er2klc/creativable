@@ -33,7 +33,7 @@ export const CalendarGrid = ({
   );
 
   // Create a separate component for droppable day
- const DroppableDay = ({ date, children }: { date: Date; children: React.ReactNode }) => {
+const DroppableDay = ({ date, children }: { date: Date; children: React.ReactNode }) => {
   const dateStr = format(date, "yyyy-MM-dd");
   const { setNodeRef } = useDroppable({
     id: dateStr,
@@ -42,7 +42,6 @@ export const CalendarGrid = ({
 
   const isCurrentOver = overDate === dateStr;
 
-  // Holen der Termine des aktuellen Tages
   const dayAppointments = getDayAppointments(date);
 
   return (
@@ -59,16 +58,13 @@ export const CalendarGrid = ({
       onClick={() => onDateClick(date)}
     >
       {children}
-
-      {/* Mehrtägige Events korrekt anzeigen */}
       <div className="mt-1">
         {dayAppointments?.map((appointment) => (
           <AppointmentItem
-            key={`${appointment.id}-${dateStr}`} // Uniqueness for multi-day events
+            key={`${appointment.id}-${dateStr}`}
             appointment={{
               ...appointment,
-              // Darstellung von multi-day events für jeden Tag
-              is_multi_day: appointment.is_multi_day,
+              is_multi_day: appointment.start_date < appointment.end_date,
               current_day: dateStr,
             }}
             onClick={(e) => onAppointmentClick(e, appointment)}
@@ -79,6 +75,7 @@ export const CalendarGrid = ({
     </div>
   );
 };
+
 
 
   return (
