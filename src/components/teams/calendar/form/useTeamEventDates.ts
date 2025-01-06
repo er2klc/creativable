@@ -30,11 +30,29 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
   }, [eventToEdit, initialSelectedDate]);
 
   const handleDateSelect = (date: Date | null) => {
-    setSelectedDate(date);
+    if (date) {
+      const newDate = new Date(date);
+      if (selectedDate) {
+        // Preserve the time from the existing selectedDate
+        newDate.setHours(selectedDate.getHours(), selectedDate.getMinutes());
+      }
+      setSelectedDate(newDate);
+    } else {
+      setSelectedDate(null);
+    }
   };
 
   const handleEndDateSelect = (date: Date | null) => {
-    setEndDate(date);
+    if (date) {
+      const newDate = new Date(date);
+      if (endDate) {
+        // Preserve the time from the existing endDate
+        newDate.setHours(endDate.getHours(), endDate.getMinutes());
+      }
+      setEndDate(newDate);
+    } else {
+      setEndDate(null);
+    }
   };
 
   return {
