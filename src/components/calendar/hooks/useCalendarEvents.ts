@@ -5,10 +5,16 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamEvent, Appointment } from "../types/calendar";
 
+// Debugging-Log hinzufügen
+console.log("useCalendarEvents.ts version 1.0 geladen");
+
 export const useCalendarEvents = (
   currentDate: Date,
   showTeamEvents: boolean
 ) => {
+  console.log("useCalendarEvents Hook wird aufgerufen mit Version 1.0");
+  console.log("Aktuelles Datum:", currentDate);
+  console.log("showTeamEvents:", showTeamEvents);
   // Persönliche Termine abrufen
   const { data: appointments = [], isLoading: isLoadingAppointments } = useQuery({
     queryKey: ["appointments", format(currentDate, "yyyy-MM")],
