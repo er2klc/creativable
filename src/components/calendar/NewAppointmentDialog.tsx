@@ -144,19 +144,29 @@ export const NewAppointmentDialog = ({
                 onPointerDownOutside={(e) => {
                   e.preventDefault();
                 }}
-                onClick={(e) => e.stopPropagation()}
+                onInteractOutside={(e) => {
+                  e.preventDefault();
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
               >
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      setSelectedDate(date);
-                      setTimeout(() => setIsCalendarOpen(false), 100);
-                    }
-                  }}
-                  initialFocus
-                />
+                <div onMouseDown={(e) => e.preventDefault()}>
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setSelectedDate(date);
+                        // Use RAF to ensure state updates are processed before closing
+                        requestAnimationFrame(() => {
+                          setIsCalendarOpen(false);
+                        });
+                      }
+                    }}
+                    initialFocus
+                  />
+                </div>
               </PopoverContent>
             </Popover>
           </DialogTitle>
