@@ -73,6 +73,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
           color: `${event.color || "#FEF7CD"}30`,
           is_multi_day: event.is_multi_day,
           isRecurring: event.recurring_pattern !== 'none',
+          is_admin_only: event.is_admin_only
         })) as TeamEvent[],
       };
     },
