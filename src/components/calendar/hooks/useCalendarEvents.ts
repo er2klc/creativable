@@ -1,3 +1,5 @@
+// src/components/calendar/hooks/useCalendarEvents.ts
+
 import { useState } from "react";
 import { format, addDays, addWeeks, addMonths, isSameDay, isWithinInterval } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
