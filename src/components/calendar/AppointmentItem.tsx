@@ -81,7 +81,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         appointment.isTeamEvent && "border border-gray-200",
         !appointment.isTeamEvent && "text-black",
         appointment.completed && "bg-opacity-50",
-        isMultiDayEvent && "mx-2" // Add horizontal margin for multi-day events
+        isMultiDayEvent && "mx-2 relative" // Add horizontal margin and relative positioning for multi-day events
       )}
       onClick={(e) => {
         if (!appointment.isTeamEvent) {
