@@ -77,7 +77,7 @@ export const TeamList = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
       {teams.map((team, index) => (
         <TeamCard
           key={team.id}

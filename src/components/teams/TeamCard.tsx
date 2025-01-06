@@ -46,30 +46,32 @@ export const TeamCard = ({
 
   return (
     <Card
-      className="p-6 cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group"
+      className="p-6 cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group min-h-[200px]"
       onClick={handleClick}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4 flex-1">
-          <TeamCardImage team={team} />
-          <TeamCardContent team={team} />
-        </div>
-        <div className="flex items-center gap-2">
-          {onUpdateOrder && isTeamOwner && (
-            <TeamOrderButtons
-              isFirst={isFirst}
-              isLast={isLast}
-              onUpdateOrder={(direction) => onUpdateOrder(team.id, direction)}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4 flex-1">
+            <TeamCardImage team={team} />
+            <TeamCardContent team={team} />
+          </div>
+          <div className="flex items-start gap-2">
+            {onUpdateOrder && isTeamOwner && (
+              <TeamOrderButtons
+                isFirst={isFirst}
+                isLast={isLast}
+                onUpdateOrder={(direction) => onUpdateOrder(team.id, direction)}
+              />
+            )}
+            <TeamCardActions
+              teamId={team.id}
+              joinCode={team.join_code}
+              onDelete={() => onDelete(team.id)}
+              onLeave={() => onLeave(team.id)}
+              onCopyJoinCode={onCopyJoinCode}
+              isOwner={isTeamOwner}
             />
-          )}
-          <TeamCardActions
-            teamId={team.id}
-            joinCode={team.join_code}
-            onDelete={() => onDelete(team.id)}
-            onLeave={() => onLeave(team.id)}
-            onCopyJoinCode={onCopyJoinCode}
-            isOwner={isTeamOwner}
-          />
+          </div>
         </div>
       </div>
     </Card>
