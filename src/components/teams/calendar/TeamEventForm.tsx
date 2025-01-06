@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -81,7 +80,7 @@ export const TeamEventForm = ({
       if (values.end_time && !values.is_multi_day) {
         const [endHours, endMinutes] = values.end_time.split(":");
         eventEndDate = new Date(selectedDate);
-        eventEndDate.setHours(parseInt(endHours), parseInt(minutes));
+        eventEndDate.setHours(parseInt(endHours), parseInt(endMinutes));
       }
 
       const eventData = {
