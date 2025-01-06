@@ -1,6 +1,23 @@
+// src/components/calendar/AppointmentItem.tsx
+
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Video, Flame, Phone, MapPin, Users, BarChart, RefreshCw, Check, X, Crown, Rocket } from "lucide-react";
+import {
+  Clock,
+  User,
+  FileText,
+  Video,
+  Flame,
+  Phone,
+  MapPin,
+  Users,
+  BarChart,
+  RefreshCw,
+  Check,
+  X,
+  Crown,
+  Rocket,
+} from "lucide-react";
 import { format } from "date-fns";
 
 interface AppointmentItemProps {
@@ -11,17 +28,28 @@ interface AppointmentItemProps {
 
 const getMeetingTypeIcon = (type: string) => {
   switch (type) {
-    case "phone_call": return <Phone className="h-4 w-4" />;
-    case "on_site": return <MapPin className="h-4 w-4" />;
-    case "zoom": return <Video className="h-4 w-4" />;
-    case "initial_meeting": return <Users className="h-4 w-4" />;
-    case "presentation": return <BarChart className="h-4 w-4" />;
-    case "follow_up": return <RefreshCw className="h-4 w-4" />;
-    default: return null;
+    case "phone_call":
+      return <Phone className="h-4 w-4" />;
+    case "on_site":
+      return <MapPin className="h-4 w-4" />;
+    case "zoom":
+      return <Video className="h-4 w-4" />;
+    case "initial_meeting":
+      return <Users className="h-4 w-4" />;
+    case "presentation":
+      return <BarChart className="h-4 w-4" />;
+    case "follow_up":
+      return <RefreshCw className="h-4 w-4" />;
+    default:
+      return null;
   }
 };
 
-export const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemProps) => {
+export const AppointmentItem = ({
+  appointment,
+  onClick,
+  isDragging,
+}: AppointmentItemProps) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: appointment.id,
     data: { ...appointment, type: "appointment" },
@@ -38,10 +66,12 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
 
   // Determine if current day is start, middle, or end day
   const currentDay = appointment.current_day || null;
-  const isStartDay = currentDay && appointment.start_time ? 
-    currentDay === format(new Date(appointment.start_time), "yyyy-MM-dd") : false;
-  const isEndDay = currentDay && appointment.end_date ? 
-    currentDay === format(new Date(appointment.end_date), "yyyy-MM-dd") : false;
+  const isStartDay = currentDay && appointment.start_time
+    ? currentDay === format(new Date(appointment.start_time), "yyyy-MM-dd")
+    : false;
+  const isEndDay = currentDay && appointment.end_date
+    ? currentDay === format(new Date(appointment.end_date), "yyyy-MM-dd")
+    : false;
 
   // Get the appropriate icon based on event type
   const getEventIcon = () => {
@@ -55,7 +85,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       return <Flame className="h-4 w-4 text-orange-500" />;
     }
     if (appointment.isRecurring) {
-      return <Video className="h-4 w-4 text-primary" />;
+      return <Video className="h-4 w-4 text-primary" />; // Zoom Icon
     }
     return getMeetingTypeIcon(appointment.meeting_type);
   };
@@ -83,16 +113,26 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
           {getEventIcon()}
           <span className="font-bold truncate">{appointment.title}</span>
         </div>
-        {appointment.completed && <div className="text-green-500"><Check className="h-4 w-4" /></div>}
-        {appointment.cancelled && <div className="text-red-500"><X className="h-4 w-4" /></div>}
+        {appointment.completed && (
+          <div className="text-green-500">
+            <Check className="h-4 w-4" />
+          </div>
+        )}
+        {appointment.cancelled && (
+          <div className="text-red-500">
+            <X className="h-4 w-4" />
+          </div>
+        )}
       </div>
 
-      {(!isMultiDayEvent || (isMultiDayEvent && isStartDay)) && !appointment.isTeamEvent && appointment.start_time && (
-        <div className="flex items-center gap-1 text-xs text-gray-600">
-          <Clock className="h-3 w-3" />
-          {format(new Date(appointment.start_time), "HH:mm")}
-        </div>
-      )}
+      {(!isMultiDayEvent || (isMultiDayEvent && isStartDay)) &&
+        !appointment.isTeamEvent &&
+        appointment.start_time && (
+          <div className="flex items-center gap-1 text-xs text-gray-600">
+            <Clock className="h-3 w-3" />
+            {format(new Date(appointment.start_time), "HH:mm")}
+          </div>
+        )}
 
       {appointment.leads?.name && (
         <div className="flex items-center gap-1 text-xs text-gray-600">
