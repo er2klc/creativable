@@ -1,19 +1,10 @@
 import { useState } from "react";
-import {
-  format,
-  addDays,
-  addWeeks,
-  addMonths,
-  isSameDay,
-  getDay,
-  isWithinInterval,
-} from "date-fns";
+import { format, addDays, addWeeks, addMonths, isSameDay, getDay, isWithinInterval, parseISO } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamEvent, Appointment } from "../types/calendar";
 
 export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) => {
-  // Fetch personal appointments
   const { data: appointments = [] } = useQuery({
     queryKey: ["appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
@@ -34,13 +25,13 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       return data.map(appointment => ({
         ...appointment,
         isTeamEvent: false,
+        end_date: appointment.due_date // Set end_date equal to due_date for single-day events
         end_date: appointment.due_date, // Set end_date equal to due_date for single-day events
         is_multi_day: false // Personal appointments are always single-day
       })) || [];
     },
   });
 
-  // Fetch team events
   const { data: teamData = { events: [], runs: [] } } = useQuery({
     queryKey: ["team-appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
@@ -77,7 +68,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
         description: event.description,
         start_time: event.start_time,
         end_time: event.end_time,
-        end_date: event.end_date || event.start_time, // Fallback für fehlendes Enddatum
+        end_date: event.end_date || event.start_time,
         color: `${event.color || "#FEF7CD"}30`,
         is_team_event: event.is_team_event,
         is_admin_only: event.is_admin_only,
@@ -95,16 +86,28 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
         leads: { name: event.teams?.name || 'Team Event' },
         user_id: event.created_by,
         lead_id: 'team-event',
+        due_date: event.start_time,
+        is_90_day_run: event.is_90_day_run
         due_date: event.start_time
       }));
 
-      return { events: teamEvents, runs: [] };
+      const { data: runs = [], error: runsError } = await supabase
+        .from("team_90_day_runs")
+        .select("*")
+        .in("team_id", teamIds)
+        .overlaps('start_date', format(currentDate, 'yyyy-MM-dd'));
+
+      if (runsError) {
+        console.error("Error fetching 90-day runs:", runsError);
+        return { events: teamEvents, runs: [] };
+      }
+
+      return { events: teamEvents, runs };
     },
   });
 
-  // Filter events for a specific day
   const getDayAppointments = (date: Date): Appointment[] => {
-    // Regular personal appointments
+    // Handle regular appointments (non-team events)
     const regularAppointments = appointments.filter(appointment => {
       const appointmentDate = new Date(appointment.due_date);
       return isSameDay(appointmentDate, date);
@@ -114,52 +117,44 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       return regularAppointments;
     }
 
-    // Team events
+    // Handle team events
     const teamEvents = teamData.events.filter(event => {
       const startDate = new Date(event.start_time);
-      const endDate = event.is_multi_day
-        ? new Date(event.end_date || event.start_time)
-        : startDate;
+      const endDate = event.is_multi_day ? new Date(event.end_date || event.start_time) : new Date(event.start_time);
 
-      // Check if the date falls within the interval for multi-day events
+      // For multi-day events, check if the current date falls within the event period
       if (event.is_multi_day) {
         return isWithinInterval(date, { start: startDate, end: endDate });
       }
 
-      // Recurring events logic
+      // For recurring events
       if (event.recurring_pattern !== 'none') {
         const eventDayOfWeek = getDay(startDate);
         let currentDate = startDate;
 
         while (currentDate <= date) {
-          if (
-            event.recurring_pattern === 'weekly' &&
-            getDay(currentDate) === eventDayOfWeek
-          ) {
+          if (event.recurring_pattern === 'weekly' && getDay(currentDate) === eventDayOfWeek) {
             if (isSameDay(currentDate, date)) {
               return true;
             }
-          } else if (
-            event.recurring_pattern === 'monthly' &&
-            currentDate.getDate() === startDate.getDate()
-          ) {
+          } else if (event.recurring_pattern === 'monthly' && currentDate.getDate() === startDate.getDate()) {
             if (isSameDay(currentDate, date)) {
               return true;
             }
           }
 
-          currentDate =
-            event.recurring_pattern === 'weekly'
-              ? addWeeks(currentDate, 1)
-              : addMonths(currentDate, 1);
+          currentDate = event.recurring_pattern === 'weekly' 
+            ? addWeeks(currentDate, 1)
+            : addMonths(currentDate, 1);
         }
         return false;
       }
 
-      // Single-day events
+      // For single-day events
       return isSameDay(startDate, date);
     });
 
+    return [...regularAppointments, ...teamEvents] as Appointment[];
     return [...regularAppointments, ...teamEvents];
   };
 
@@ -168,4 +163,3 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     teamAppointments: teamData.events,
     getDayAppointments,
   };
-};
