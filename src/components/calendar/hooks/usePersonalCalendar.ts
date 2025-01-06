@@ -15,26 +15,37 @@ export const usePersonalCalendar = () => {
   const queryClient = useQueryClient();
 
   // Fetch personal appointments
-  const { data: appointments = [] } = useQuery({
-    queryKey: ["appointments", format(currentDate, "yyyy-MM")],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+ const { data: appointments = [] } = useQuery({
+  queryKey: ["appointments", format(currentDate, "yyyy-MM")],
+  queryFn: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
 
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*, leads(name)")
-        .eq("user_id", user.id)
-        .not("due_date", "is", null);
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("*, leads(name)")
+      .eq("user_id", user.id)
+      .not("due_date", "is", null);
 
-      if (error) {
-        console.error("Error fetching appointments:", error);
-        return [];
-      }
+    if (error) {
+      console.error("Error fetching appointments:", error);
+      return [];
+    }
 
-      return data || [];
-    },
-  });
+    return data.map((appointment) => {
+      const start = new Date(appointment.due_date);
+      const end = appointment.end_date ? new Date(appointment.end_date) : start;
+
+      return {
+        ...appointment,
+        is_multi_day: start < end, // Mehrtägige Events markieren
+        start_date: start,
+        end_date: end,
+      };
+    });
+  },
+});
+
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
