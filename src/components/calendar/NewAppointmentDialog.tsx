@@ -41,7 +41,7 @@ export const NewAppointmentDialog = ({
   appointmentToEdit,
 }: NewAppointmentDialogProps) => {
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate);
   const [completed, setCompleted] = useState(appointmentToEdit?.completed || false);
 
   // Update selectedDate when initialSelectedDate or open changes
@@ -137,8 +137,11 @@ export const NewAppointmentDialog = ({
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={selectedDate || undefined}
-                  onSelect={setSelectedDate}
+                  selected={selectedDate}
+                  onSelect={(date) => {
+                    console.log("Selected date:", date);
+                    setSelectedDate(date);
+                  }}
                   initialFocus
                 />
               </PopoverContent>

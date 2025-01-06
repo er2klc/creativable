@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormLabel } from "@/components/ui/form";
 import { Calendar } from "@/components/ui/calendar";
@@ -148,11 +147,10 @@ export const TeamEventForm = ({
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={selectedDate || undefined}
+                selected={selectedDate}
                 onSelect={(date) => {
-                  if (date) {
-                    setSelectedDate(date);
-                  }
+                  console.log("Selected date:", date);
+                  setSelectedDate(date);
                 }}
                 initialFocus
               />
