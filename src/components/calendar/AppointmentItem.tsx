@@ -1,4 +1,4 @@
-import { format, isValid } from "date-fns";
+import { format, isValid } from 'date-fns';
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check, X, Flame } from "lucide-react";
@@ -66,7 +66,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
   const startDate = new Date(appointment.start_time || appointment.due_date);
   const endDate = appointment.end_date ? new Date(appointment.end_date) : null;
 
-  // Calculate width and position for multi-day events
+  // Calculate width for multi-day events
   let width = '100%';
   if (isMultiDayEvent && endDate) {
     const dayDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
