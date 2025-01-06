@@ -33,43 +33,53 @@ export const CalendarGrid = ({
   );
 
   // Create a separate component for droppable day
-  const DroppableDay = ({ date, children }: { date: Date; children: React.ReactNode }) => {
-    const dateStr = format(date, "yyyy-MM-dd");
-    const { setNodeRef } = useDroppable({
-      id: dateStr,
-      data: { date }
-    });
+ const DroppableDay = ({ date, children }: { date: Date; children: React.ReactNode }) => {
+  const dateStr = format(date, "yyyy-MM-dd");
+  const { setNodeRef } = useDroppable({
+    id: dateStr,
+    data: { date },
+  });
 
-    const isCurrentOver = overDate === dateStr;
-    const dayAppointments = getDayAppointments(date);
-    
-    return (
-      <div
-        ref={setNodeRef}
-        key={date.toString()}
-        id={dateStr}
-        className={cn(
-          "min-h-[100px] bg-background p-2 relative transition-colors duration-200",
-          !isSameMonth(date, currentDate) && "text-muted-foreground",
-          "hover:bg-accent hover:text-accent-foreground cursor-pointer",
-          isCurrentOver && "bg-accent/50"
-        )}
-        onClick={() => onDateClick(date)}
-      >
-        {children}
-        <div className="mt-1">
-          {dayAppointments?.map((appointment) => (
-            <AppointmentItem
-              key={appointment.id}
-              appointment={appointment}
-              onClick={(e) => onAppointmentClick(e, appointment)}
-              isDragging={activeId === appointment.id}
-            />
-          ))}
-        </div>
+  const isCurrentOver = overDate === dateStr;
+
+  // Holen der Termine des aktuellen Tages
+  const dayAppointments = getDayAppointments(date);
+
+  return (
+    <div
+      ref={setNodeRef}
+      key={date.toString()}
+      id={dateStr}
+      className={cn(
+        "min-h-[100px] bg-background p-2 relative transition-colors duration-200",
+        !isSameMonth(date, currentDate) && "text-muted-foreground",
+        "hover:bg-accent hover:text-accent-foreground cursor-pointer",
+        isCurrentOver && "bg-accent/50"
+      )}
+      onClick={() => onDateClick(date)}
+    >
+      {children}
+
+      {/* Mehrtägige Events korrekt anzeigen */}
+      <div className="mt-1">
+        {dayAppointments?.map((appointment) => (
+          <AppointmentItem
+            key={`${appointment.id}-${dateStr}`} // Uniqueness for multi-day events
+            appointment={{
+              ...appointment,
+              // Darstellung von multi-day events für jeden Tag
+              is_multi_day: appointment.is_multi_day,
+              current_day: dateStr,
+            }}
+            onClick={(e) => onAppointmentClick(e, appointment)}
+            isDragging={activeId === appointment.id}
+          />
+        ))}
       </div>
-    );
-  };
+    </div>
+  );
+};
+
 
   return (
     <div className="grid grid-cols-7 gap-px bg-muted">
