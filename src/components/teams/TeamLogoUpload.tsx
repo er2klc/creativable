@@ -1,4 +1,8 @@
-interface TeamLogoUploadProps {
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Trash2, Upload } from "lucide-react";
+
+export interface TeamLogoUploadProps {
   logoPreview: string | null;
   onLogoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onLogoRemove: () => void;
@@ -7,40 +11,51 @@ interface TeamLogoUploadProps {
 export const TeamLogoUpload = ({
   logoPreview,
   onLogoChange,
-  onLogoRemove
+  onLogoRemove,
 }: TeamLogoUploadProps) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
-        <input
+        <Input
           type="file"
-          onChange={onLogoChange}
           accept="image/*"
+          onChange={onLogoChange}
           className="hidden"
-          id="team-logo-upload"
+          id="logo-upload"
         />
         <label
-          htmlFor="team-logo-upload"
-          className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+          htmlFor="logo-upload"
+          className="flex-1"
         >
-          Team Foto auswählen
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            asChild
+          >
+            <span>
+              <Upload className="h-5 w-5 mr-2" />
+              Team Foto auswählen
+            </span>
+          </Button>
         </label>
         {logoPreview && (
-          <button
-            onClick={onLogoRemove}
+          <Button
             type="button"
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+            variant="outline"
+            onClick={onLogoRemove}
+            className="px-3"
           >
-            Foto entfernen
-          </button>
+            <Trash2 className="h-5 w-5" />
+          </Button>
         )}
       </div>
       {logoPreview && (
-        <div className="relative w-full h-48">
+        <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
           <img
             src={logoPreview}
-            alt="Team logo preview"
-            className="w-full h-full object-cover rounded-md"
+            alt="Preview"
+            className="object-cover w-full h-full"
           />
         </div>
       )}

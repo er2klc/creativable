@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { TeamLogoUpload } from "../TeamLogoUpload";
 
 interface CreateTeamFormProps {
@@ -59,11 +59,9 @@ export const CreateTeamForm = ({
       </div>
       <div className="space-y-2">
         <Label htmlFor="description">Beschreibung</Label>
-        <Textarea
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Beschreiben Sie Ihr Team (optional)"
+        <RichTextEditor
+          content={description}
+          onChange={setDescription}
         />
       </div>
       <div className="space-y-2">

@@ -20,7 +20,10 @@ export const TeamCardContent = ({ team }: TeamCardContentProps) => {
       <div>
         <h3 className="text-2xl font-semibold mb-3">{team.name}</h3>
         {team.description && (
-          <p className="text-lg text-muted-foreground">{team.description}</p>
+          <div 
+            className="text-lg text-muted-foreground prose"
+            dangerouslySetInnerHTML={{ __html: team.description }}
+          />
         )}
       </div>
       <div className="flex items-center gap-8 text-lg text-muted-foreground">
