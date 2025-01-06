@@ -30,27 +30,32 @@ export const TeamEventForm = ({
   const [endDate, setEndDate] = useState<Date | null>(null);
 
   useEffect(() => {
-    if (eventToEdit?.end_date) {
-      try {
-        const parsedEndDate = parseISO(eventToEdit.end_date);
-        if (isValid(parsedEndDate)) {
-          setEndDate(parsedEndDate);
+    // Set initial dates when the form opens
+    if (eventToEdit) {
+      // For editing existing events
+      if (eventToEdit.end_date) {
+        try {
+          const parsedEndDate = parseISO(eventToEdit.end_date);
+          if (isValid(parsedEndDate)) {
+            setEndDate(parsedEndDate);
+          }
+        } catch (error) {
+          console.error("Error parsing end date:", error);
         }
-      } catch (error) {
-        console.error("Error parsing end date:", error);
       }
-    }
-    
-    if (eventToEdit?.start_time) {
-      try {
-        const startDate = parseISO(eventToEdit.start_time);
-        if (isValid(startDate)) {
-          setSelectedDate(startDate);
+      
+      if (eventToEdit.start_time) {
+        try {
+          const startDate = parseISO(eventToEdit.start_time);
+          if (isValid(startDate)) {
+            setSelectedDate(startDate);
+          }
+        } catch (error) {
+          console.error("Error parsing start time:", error);
         }
-      } catch (error) {
-        console.error("Error parsing start time:", error);
       }
     } else if (initialSelectedDate && isValid(initialSelectedDate)) {
+      // For creating new events
       setSelectedDate(initialSelectedDate);
     }
   }, [initialSelectedDate, eventToEdit]);
