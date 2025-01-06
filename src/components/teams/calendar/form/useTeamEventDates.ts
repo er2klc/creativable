@@ -15,23 +15,23 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
       // For editing existing events
       if (eventToEdit.is_multi_day) {
         // Handle multi-day events
-        const startDate = new Date(eventToEdit.start_time);
-        if (isValid(startDate)) {
+        if (eventToEdit.start_time) {
+          const startDate = new Date(eventToEdit.start_time);
           setSelectedDate(startDate);
         }
 
-        const endDate = new Date(eventToEdit.end_date);
-        if (isValid(endDate)) {
+        if (eventToEdit.end_date) {
+          const endDate = new Date(eventToEdit.end_date);
           setEndDate(endDate);
         }
       } else {
         // Handle regular events
-        const startDate = new Date(eventToEdit.start_time);
-        if (isValid(startDate)) {
+        if (eventToEdit.start_time) {
+          const startDate = new Date(eventToEdit.start_time);
           setSelectedDate(startDate);
         }
       }
-    } else if (initialSelectedDate && isValid(initialSelectedDate)) {
+    } else if (initialSelectedDate) {
       // For creating new events
       setSelectedDate(initialSelectedDate);
     }
