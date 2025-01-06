@@ -41,10 +41,18 @@ export const TeamCalendarView = ({ teamId, isAdmin, onBack }: TeamCalendarViewPr
   } = useTeamCalendar(teamId, isAdmin);
 
   const getDayEvents = (date: Date) => {
-    return events?.filter(
-      (event) => format(new Date(event.start_time), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
+  return events?.filter((event) => {
+    const eventStart = new Date(event.start_time);
+    const eventEnd = event.end_date ? new Date(event.end_date) : eventStart;
+
+    // Prüfen, ob das aktuelle Datum im Zeitraum des Events liegt
+    return (
+      date >= new Date(eventStart.setHours(0, 0, 0, 0)) &&
+      date <= new Date(eventEnd.setHours(23, 59, 59, 999))
     );
-  };
+  });
+};
+
 
   const draggedEvent = activeId ? events?.find(event => event.id === activeId) : null;
 
