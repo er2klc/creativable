@@ -33,6 +33,11 @@ const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemPr
 
   const isMultiDayEvent = appointment.is_multi_day && appointment.end_date;
 
+  // Zusätzliche Logik für mehrtägige Events
+  const currentDay = appointment.current_day || null; // Tag im Multi-Day-Zeitraum
+  const isStartDay = currentDay === format(new Date(appointment.start_time), "yyyy-MM-dd");
+  const isEndDay = currentDay === format(new Date(appointment.end_date), "yyyy-MM-dd");
+
   return (
     <div
       ref={setNodeRef}
@@ -61,8 +66,9 @@ const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemPr
 
       {isMultiDayEvent && (
         <div className="text-xs text-gray-500">
-          {format(new Date(appointment.start_time), "dd.MM.yyyy")} -{" "}
-          {format(new Date(appointment.end_date), "dd.MM.yyyy")}
+          {isStartDay && "Start"}
+          {!isStartDay && !isEndDay && "Zwischen"}
+          {isEndDay && "Ende"}
         </div>
       )}
 
