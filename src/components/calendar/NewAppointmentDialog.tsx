@@ -113,10 +113,11 @@ export const NewAppointmentDialog = ({
   });
 
   const handleDateSelect = (date: Date | undefined) => {
-    console.log("Handling date select:", date);
     if (date) {
+      console.log("Setting new date:", date);
       setSelectedDate(date);
-      setIsCalendarOpen(false);
+      // Only close the calendar after we've successfully set the date
+      setTimeout(() => setIsCalendarOpen(false), 100);
     }
   };
 
@@ -126,7 +127,10 @@ export const NewAppointmentDialog = ({
         <DialogHeader>
           <DialogTitle className="space-y-2">
             <div>{appointmentToEdit ? "Termin bearbeiten" : "Neuer Termin"}</div>
-            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+            <Popover 
+              open={isCalendarOpen} 
+              onOpenChange={setIsCalendarOpen}
+            >
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -134,6 +138,7 @@ export const NewAppointmentDialog = ({
                     "justify-start text-left font-normal w-full",
                     !selectedDate && "text-muted-foreground"
                   )}
+                  onClick={() => setIsCalendarOpen(true)}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {selectedDate ? (

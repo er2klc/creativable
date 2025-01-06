@@ -125,10 +125,11 @@ export const TeamEventForm = ({
   });
 
   const handleDateSelect = (date: Date | undefined) => {
-    console.log("Handling date select:", date);
     if (date) {
+      console.log("Setting new date:", date);
       setSelectedDate(date);
-      setIsCalendarOpen(false);
+      // Only close the calendar after we've successfully set the date
+      setTimeout(() => setIsCalendarOpen(false), 100);
     }
   };
 
@@ -137,7 +138,10 @@ export const TeamEventForm = ({
       <form onSubmit={form.handleSubmit((values) => createEventMutation.mutate(values))} className="space-y-4">
         <div className="space-y-2">
           <FormLabel>Datum</FormLabel>
-          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+          <Popover 
+            open={isCalendarOpen} 
+            onOpenChange={setIsCalendarOpen}
+          >
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -145,6 +149,7 @@ export const TeamEventForm = ({
                   "w-full justify-start text-left font-normal",
                   !selectedDate && "text-muted-foreground"
                 )}
+                onClick={() => setIsCalendarOpen(true)}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {selectedDate ? (
