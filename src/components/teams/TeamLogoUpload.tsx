@@ -1,51 +1,54 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Image as ImageIcon, X } from "lucide-react";
-
-export interface TeamLogoUploadProps {
-  logoPreview?: string | null;
+interface TeamLogoUploadProps {
   currentLogoUrl?: string | null;
   onLogoChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onLogoRemove?: () => void;
+  teamId?: string;
+  logoPreview?: string | null;
 }
 
 export const TeamLogoUpload = ({
-  logoPreview,
   currentLogoUrl,
   onLogoChange,
-  onLogoRemove
+  onLogoRemove,
+  logoPreview
 }: TeamLogoUploadProps) => {
   return (
     <div className="space-y-2">
-      <Label>Team Foto</Label>
-      <div className="flex items-center gap-4">
-        {(logoPreview || currentLogoUrl) && (
-          <div className="relative w-24 h-24">
-            <img
-              src={logoPreview || currentLogoUrl || ''}
-              alt="Logo preview"
-              className="w-full h-full object-cover rounded-lg"
-            />
-            {onLogoRemove && (
-              <button
-                onClick={onLogoRemove}
-                className="absolute -top-2 -right-2 p-1 bg-background rounded-full shadow-sm hover:bg-muted"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        )}
-        <div className="flex-1">
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={onLogoChange}
-            className="cursor-pointer"
-          />
+      {logoPreview ? (
+        <div className="relative">
+          <img src={logoPreview} alt="Logo Preview" className="w-full h-32 object-cover rounded-md" />
+          <button
+            type="button"
+            onClick={onLogoRemove}
+            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1"
+          >
+            X
+          </button>
         </div>
-      </div>
+      ) : currentLogoUrl ? (
+        <div className="relative">
+          <img src={currentLogoUrl} alt="Current Logo" className="w-full h-32 object-cover rounded-md" />
+          <button
+            type="button"
+            onClick={onLogoRemove}
+            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1"
+          >
+            X
+          </button>
+        </div>
+      ) : (
+        <div className="h-32 border-dashed border-2 border-gray-300 flex items-center justify-center rounded-md">
+          <label className="cursor-pointer">
+            <span className="text-gray-500">Logo hochladen</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={onLogoChange}
+              className="hidden"
+            />
+          </label>
+        </div>
+      )}
     </div>
   );
 };

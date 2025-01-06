@@ -23,7 +23,7 @@ export const TeamCardImage = ({ team }: TeamCardImageProps) => {
   };
 
   return (
-    <div className="relative w-full h-[400px] overflow-hidden cursor-pointer group" onClick={handleClick}>
+    <div className="relative w-full h-[400px] overflow-hidden cursor-pointer" onClick={handleClick}>
       {showVideo && team.video_url ? (
         <iframe
           className="absolute inset-0 w-full h-full"
@@ -47,7 +47,7 @@ export const TeamCardImage = ({ team }: TeamCardImageProps) => {
             </div>
           )}
           {team.video_url && !showVideo && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
               <Play className="w-16 h-16 text-white" />
             </div>
           )}
