@@ -127,9 +127,16 @@ export const TeamEventForm = ({
     },
   });
 
+  const onSubmit = form.handleSubmit((values) => {
+    console.log("Form submitted with values:", values);
+    console.log("Selected date:", selectedDate);
+    console.log("End date:", endDate);
+    createEventMutation.mutate(values);
+  });
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit((values) => createEventMutation.mutate(values))} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4">
         <TeamEventFormFields 
           form={form} 
           selectedDate={selectedDate}
