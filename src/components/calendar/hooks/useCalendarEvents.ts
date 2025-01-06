@@ -73,34 +73,40 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     },
   });
 
-  const getDayAppointments = (date: Date): Appointment[] => {
-    // Handle regular appointments (non-team events)
-    const regularAppointments = appointments.filter(appointment => {
-      const appointmentDate = new Date(appointment.due_date);
-      return isSameDay(appointmentDate, date);
-    });
+ const getDayAppointments = (date: Date): Appointment[] => {
+  // Handle regular appointments (non-team events)
+  const regularAppointments = appointments.filter(appointment => {
+    const appointmentDate = new Date(appointment.due_date);
+    return isSameDay(appointmentDate, date);
+  });
 
-    if (!showTeamEvents) {
-      return regularAppointments;
+  if (!showTeamEvents) {
+    return regularAppointments;
+  }
+
+  // Handle team events
+  const teamEvents = teamData.events.filter(event => {
+    const startDate = new Date(event.start_time);
+    const endDate = event.is_multi_day
+      ? new Date(event.end_date || event.start_time)
+      : startDate;
+
+    // Normalize times for consistent comparison
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    // For multi-day events, check if the current date falls within the event period
+    if (event.is_multi_day) {
+      return isWithinInterval(date, { start: startDate, end: endDate });
     }
 
-    // Handle team events
-    const teamEvents = teamData.events.filter(event => {
-      const startDate = new Date(event.start_time);
-      const endDate = event.is_multi_day
-        ? new Date(event.end_date || event.start_time)
-        : startDate;
+    // For single-day events
+    return isSameDay(startDate, date);
+  });
 
-      // Normalize start and end times for comparison
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
+  return [...regularAppointments, ...teamEvents];
+};
 
-      // Check if the current date falls within the multi-day event period
-      return isWithinInterval(date, { start: startDate, end: endDate });
-    });
-
-    return [...regularAppointments, ...teamEvents];
-  };
 
   return {
     appointments,
