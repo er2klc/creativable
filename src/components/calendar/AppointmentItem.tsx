@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import { Clock, User, FileText, Infinity, Flame } from "lucide-react";
+import { format } from "date-fns";
 
 interface AppointmentItemProps {
   appointment: any;
