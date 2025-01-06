@@ -35,11 +35,14 @@ export const DateSelector = ({ selectedDate, onDateSelect }: DateSelectorProps) 
         className="w-auto p-0" 
         align="start"
         sideOffset={4}
+        // Füge diese Props hinzu, falls verfügbar
+        // z.B. preventCloseOnClickInside oder ähnliche, je nach Bibliothek
       >
         <div 
           className="p-0"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
         >
           <Calendar
             mode="single"
