@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { format, startOfDay } from "date-fns";
+import { format, startOfDay, isValid } from "date-fns";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,7 +34,10 @@ export const TeamEventForm = ({
       setEndDate(new Date(eventToEdit.end_date));
     }
     if (eventToEdit?.start_time) {
-      setSelectedDate(new Date(eventToEdit.start_time));
+      const startDate = new Date(eventToEdit.start_time);
+      if (isValid(startDate)) {
+        setSelectedDate(startDate);
+      }
     } else {
       setSelectedDate(initialSelectedDate);
     }
@@ -75,10 +78,11 @@ export const TeamEventForm = ({
       // For multi-day events, we don't need time values
       if (!values.is_multi_day && values.start_time) {
         const [hours, minutes] = values.start_time.split(":");
+        eventDate = new Date(selectedDate);
         eventDate.setHours(parseInt(hours), parseInt(minutes));
       }
 
-      if (values.end_time && !values.is_multi_day) {
+      if (!values.is_multi_day && values.end_time) {
         const [endHours, endMinutes] = values.end_time.split(":");
         eventEndDate = new Date(selectedDate);
         eventEndDate.setHours(parseInt(endHours), parseInt(endMinutes));
