@@ -31,17 +31,6 @@ export const TeamEventForm = ({
     initialSelectedDate
   });
 
-  const getFormattedTime = (dateString: string | undefined, defaultValue: string = ""): string => {
-    if (!dateString) return defaultValue;
-    try {
-      const date = parseISO(dateString);
-      return isValid(date) ? format(date, "HH:mm") : defaultValue;
-    } catch (error) {
-      console.error("Error formatting time:", error);
-      return defaultValue;
-    }
-  };
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -162,7 +151,7 @@ export const TeamEventForm = ({
             </Button>
             <Button 
               type="submit" 
-              disabled={createEventMutation.isPending || !form.formState.isDirty}
+              disabled={createEventMutation.isPending}
             >
               {eventToEdit ? "Aktualisieren" : "Erstellen"}
             </Button>
