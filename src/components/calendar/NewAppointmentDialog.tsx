@@ -45,7 +45,6 @@ export const NewAppointmentDialog = ({
   const [completed, setCompleted] = useState(appointmentToEdit?.completed || false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
-  // Update selectedDate when initialSelectedDate or open changes
   useEffect(() => {
     if (open) {
       setSelectedDate(initialSelectedDate);
@@ -142,13 +141,19 @@ export const NewAppointmentDialog = ({
                 className="w-auto p-0" 
                 align="start"
                 sideOffset={4}
+                onPointerDownOutside={(e) => {
+                  e.preventDefault();
+                }}
+                onClick={(e) => e.stopPropagation()}
               >
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={(date) => {
-                    setSelectedDate(date);
-                    setIsCalendarOpen(false);
+                    if (date) {
+                      setSelectedDate(date);
+                      setTimeout(() => setIsCalendarOpen(false), 100);
+                    }
                   }}
                   initialFocus
                 />
