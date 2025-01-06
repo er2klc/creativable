@@ -115,35 +115,16 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         <>
           {/* Overlay for cancelled appointments */}
           {appointment.cancelled && (
-            <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center rounded">
+            <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center rounded">
               <X className="h-8 w-8 text-red-600" />
             </div>
           )}
           {/* Overlay for completed appointments */}
           {appointment.completed && (
-            <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center rounded">
+            <div className="absolute inset-0 bg-green-500/50 flex items-center justify-center rounded">
               <Check className="h-8 w-8 text-green-600" />
             </div>
           )}
-          <div className="absolute bottom-1 right-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-4 w-4 p-0 hover:bg-transparent"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (appointment.onComplete) {
-                  appointment.onComplete(!appointment.completed);
-                }
-              }}
-            >
-              {appointment.completed ? (
-                <Check className="h-3 w-3 text-green-600" />
-              ) : appointment.cancelled ? (
-                <X className="h-3 w-3 text-red-600" />
-              ) : null}
-            </Button>
-          </div>
         </>
       )}
     </div>
