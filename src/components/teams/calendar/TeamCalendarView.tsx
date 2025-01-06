@@ -91,7 +91,12 @@ export const TeamCalendarView = ({ teamId, isAdmin, onBack }: TeamCalendarViewPr
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           initialSelectedDate={selectedDate}
-          eventToEdit={selectedEvent}
+          eventToEdit={selectedEvent ? {
+            ...selectedEvent,
+            start_time: selectedEvent.start_time ? new Date(selectedEvent.start_time) : null,
+            end_time: selectedEvent.end_time ? new Date(selectedEvent.end_time) : null,
+            end_date: selectedEvent.end_date ? new Date(selectedEvent.end_date) : null,
+          } : null}
           onDisableInstance={
             selectedEvent?.isRecurring 
               ? (date: Date) => disableEventInstance(selectedEvent.id, date)

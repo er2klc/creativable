@@ -17,7 +17,6 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
   const { data: events = [] } = useQuery({
     queryKey: ["team-events", teamId, format(currentDate, "yyyy-MM")],
     queryFn: async () => {
-      // Fetch both events and disabled dates
       const [eventsResult, disabledResult] = await Promise.all([
         supabase
           .from("team_calendar_events")
@@ -43,7 +42,6 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
           continue;
         }
 
-        // Generate recurring instances for the current month
         const startDate = new Date(event.start_time);
         const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
@@ -51,7 +49,6 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
         let currentInstance = startDate;
         while (currentInstance <= monthEnd) {
           if (currentInstance >= monthStart) {
-            // Check if this instance is disabled
             const instanceKey = `${event.id}-${format(currentInstance, 'yyyy-MM-dd')}`;
             if (!disabledDates.has(instanceKey)) {
               allEvents.push({
@@ -81,7 +78,9 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
 
   const handleDateClick = (date: Date) => {
     if (!isAdmin) return;
-    setSelectedDate(date);
+    const newDate = new Date(date);
+    newDate.setHours(9, 0, 0, 0);
+    setSelectedDate(newDate);
     setSelectedEvent(null);
     setIsDialogOpen(true);
   };
@@ -89,21 +88,16 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
   const handleEventClick = (e: React.MouseEvent, event: any) => {
     e.stopPropagation();
     if (!isAdmin) return;
-    setSelectedDate(new Date(event.start_time));
-    setSelectedEvent({
-      id: event.id,
-      title: event.title,
-      description: event.description,
-      start_time: format(new Date(event.start_time), "HH:mm"),
-      end_time: event.end_time ? format(new Date(event.end_time), "HH:mm") : undefined,
-      end_date: event.end_date ? new Date(event.end_date) : undefined,
-      color: event.color,
-      is_team_event: event.is_team_event,
-      recurring_pattern: event.recurring_pattern,
-      isRecurring: event.isRecurring,
-      is_multi_day: event.is_multi_day,
-      is_admin_only: event.is_admin_only,
-    });
+    
+    const eventWithParsedDates = {
+      ...event,
+      start_time: event.start_time ? new Date(event.start_time) : null,
+      end_time: event.end_time ? new Date(event.end_time) : null,
+      end_date: event.end_date ? new Date(event.end_date) : null,
+    };
+    
+    setSelectedEvent(eventWithParsedDates);
+    setSelectedDate(eventWithParsedDates.start_time);
     setIsDialogOpen(true);
   };
 
