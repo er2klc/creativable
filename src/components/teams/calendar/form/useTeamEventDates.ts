@@ -25,7 +25,10 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
       }
     } else if (initialSelectedDate) {
       // For creating new events, ensure we create a new Date object
-      setSelectedDate(new Date(initialSelectedDate));
+      const date = new Date(initialSelectedDate);
+      // Set default time to ensure valid ISO string
+      date.setHours(9, 0, 0, 0);
+      setSelectedDate(date);
     }
   }, [eventToEdit, initialSelectedDate]);
 
@@ -37,10 +40,10 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
         // Preserve the time from the existing selectedDate
         const hours = selectedDate.getHours();
         const minutes = selectedDate.getMinutes();
-        newDate.setHours(hours, minutes);
+        newDate.setHours(hours, minutes, 0, 0);
       } else {
-        // Set default time if no previous time exists
-        newDate.setHours(9, 0, 0);
+        // Set default time to ensure valid ISO string
+        newDate.setHours(9, 0, 0, 0);
       }
       console.log("Setting selected date to:", newDate);
       setSelectedDate(newDate);
@@ -54,10 +57,10 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
       const newDate = new Date(date);
       if (endDate) {
         // Preserve the time from the existing endDate
-        newDate.setHours(endDate.getHours(), endDate.getMinutes());
+        newDate.setHours(endDate.getHours(), endDate.getMinutes(), 0, 0);
       } else {
-        // Set default time if no previous time exists
-        newDate.setHours(18, 0, 0);
+        // Set default time to ensure valid ISO string
+        newDate.setHours(18, 0, 0, 0);
       }
       setEndDate(newDate);
     } else {
