@@ -116,12 +116,13 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
 
     // Handle team events
     const teamEvents = teamData.events.filter(event => {
-      const startDate = new Date(event.start_time);
-      const endDate = event.is_multi_day ? new Date(event.end_date || event.start_time) : new Date(event.start_time);
+  const startDate = new Date(event.start_time);
+  const endDate = event.is_multi_day
+    ? new Date(event.end_date || event.start_time)
+    : startDate;
 
-      // For multi-day events, check if the current date falls within the event period
-      if (event.is_multi_day) {
-        return isWithinInterval(date, { start: startDate, end: endDate });
+  // Überprüfe, ob das Datum im Intervall liegt
+  return isWithinInterval(date, { start: startDate, end: endDate });
       }
 
       // For recurring events
