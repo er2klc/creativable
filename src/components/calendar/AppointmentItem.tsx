@@ -1,4 +1,4 @@
-import { format, isValid, differenceInDays, startOfMonth, endOfMonth } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check, X, Flame } from "lucide-react";
@@ -66,19 +66,12 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
   const startDate = new Date(appointment.start_time || appointment.due_date);
   const endDate = appointment.end_date ? new Date(appointment.end_date) : null;
 
-  // Calculate grid column span for multi-day events
+  // Calculate width for multi-day events
+  let width = '100%';
   let gridColumnEnd = 'span 1';
   
   if (isMultiDayEvent && endDate) {
-    // Get the current month's boundaries
-    const monthStart = startOfMonth(startDate);
-    const monthEnd = endOfMonth(startDate);
-    
-    // Calculate the actual end date (either the event's end date or month end)
-    const effectiveEndDate = endDate > monthEnd ? monthEnd : endDate;
-    
-    // Calculate days difference and add 1 to include both start and end days
-    const dayDiff = differenceInDays(effectiveEndDate, startDate) + 1;
+    const dayDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     gridColumnEnd = `span ${dayDiff}`;
   }
 
@@ -90,7 +83,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         backgroundColor: appointment.color || "#FEF7CD",
         cursor: isDraggable ? 'pointer' : 'default',
         gridColumn: isMultiDayEvent ? gridColumnEnd : 'auto',
-        position: 'relative',
+        position: isMultiDayEvent ? 'relative' : 'relative',
         zIndex: isMultiDayEvent ? 10 : 1,
       }}
       {...(isDraggable ? { ...listeners, ...attributes } : {})}
