@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { format, startOfDay, isValid, parseISO } from "date-fns";
+import { startOfDay, isValid, parseISO } from "date-fns";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TeamEventFormFields } from "./form/TeamEventFormFields";
+import { useTeamEventDates } from "./form/useTeamEventDates";
 import * as z from 'zod';
 
 interface TeamEventFormProps {
@@ -26,39 +26,10 @@ export const TeamEventForm = ({
   onDisableInstance
 }: TeamEventFormProps) => {
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-
-  useEffect(() => {
-    // Set initial dates when the form opens
-    if (eventToEdit) {
-      // For editing existing events
-      if (eventToEdit.end_date) {
-        try {
-          const parsedEndDate = parseISO(eventToEdit.end_date);
-          if (isValid(parsedEndDate)) {
-            setEndDate(parsedEndDate);
-          }
-        } catch (error) {
-          console.error("Error parsing end date:", error);
-        }
-      }
-      
-      if (eventToEdit.start_time) {
-        try {
-          const startDate = parseISO(eventToEdit.start_time);
-          if (isValid(startDate)) {
-            setSelectedDate(startDate);
-          }
-        } catch (error) {
-          console.error("Error parsing start time:", error);
-        }
-      }
-    } else if (initialSelectedDate && isValid(initialSelectedDate)) {
-      // For creating new events
-      setSelectedDate(initialSelectedDate);
-    }
-  }, [initialSelectedDate, eventToEdit]);
+  const { selectedDate, endDate, handleDateSelect, handleEndDateSelect } = useTeamEventDates({
+    eventToEdit,
+    initialSelectedDate
+  });
 
   const getFormattedTime = (dateString: string | undefined, defaultValue: string = ""): string => {
     if (!dateString) return defaultValue;
@@ -162,17 +133,6 @@ export const TeamEventForm = ({
     },
   });
 
-  const handleDateSelect = (date: Date | null) => {
-    console.log("Date selected in team event form:", date);
-    setSelectedDate(date);
-  };
-
-  const handleEndDateSelect = (date: Date | null) => {
-    console.log("End date selected:", date);
-    setEndDate(date);
-    form.setValue("end_date", date?.toISOString() || null);
-  };
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit((values) => createEventMutation.mutate(values))} className="space-y-4">
@@ -185,15 +145,11 @@ export const TeamEventForm = ({
         />
 
         <div className="flex justify-between pt-4">
-          {eventToEdit?.isRecurring && onDisableInstance && (
+          {eventToEdit?.recurring_pattern !== "none" && onDisableInstance && selectedDate && (
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                if (selectedDate && onDisableInstance) {
-                  onDisableInstance(selectedDate);
-                }
-              }}
+              onClick={() => onDisableInstance(selectedDate)}
             >
               Diese Instanz überspringen
             </Button>
