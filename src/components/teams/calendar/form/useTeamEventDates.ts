@@ -13,40 +13,40 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
   useEffect(() => {
     if (eventToEdit) {
       // For editing existing events
-      if (eventToEdit.end_date) {
-        try {
-          const parsedEndDate = parseISO(eventToEdit.end_date);
-          if (isValid(parsedEndDate)) {
-            setEndDate(parsedEndDate);
-          }
-        } catch (error) {
-          console.error("Error parsing end date:", error);
-        }
-      }
-      
-      if (eventToEdit.start_time) {
-        try {
+      if (eventToEdit.is_multi_day) {
+        // Handle multi-day events
+        if (eventToEdit.start_time) {
           const startDate = parseISO(eventToEdit.start_time);
           if (isValid(startDate)) {
             setSelectedDate(startDate);
           }
-        } catch (error) {
-          console.error("Error parsing start time:", error);
+        }
+        if (eventToEdit.end_date) {
+          const parsedEndDate = parseISO(eventToEdit.end_date);
+          if (isValid(parsedEndDate)) {
+            setEndDate(parsedEndDate);
+          }
+        }
+      } else {
+        // Handle regular events
+        if (eventToEdit.start_time) {
+          const startDate = parseISO(eventToEdit.start_time);
+          if (isValid(startDate)) {
+            setSelectedDate(startDate);
+          }
         }
       }
     } else if (initialSelectedDate && isValid(initialSelectedDate)) {
       // For creating new events
       setSelectedDate(initialSelectedDate);
     }
-  }, [initialSelectedDate, eventToEdit]);
+  }, [eventToEdit, initialSelectedDate]);
 
   const handleDateSelect = (date: Date | null) => {
-    console.log("Date selected in team event form:", date);
     setSelectedDate(date);
   };
 
   const handleEndDateSelect = (date: Date | null) => {
-    console.log("End date selected:", date);
     setEndDate(date);
   };
 
