@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Infinity, Flame, Phone, MapPin, Video, Users, BarChart, RefreshCw, Check, X } from "lucide-react";
+import { Clock, User, FileText, Zoom, Flame, Phone, MapPin, Video, Users, BarChart, RefreshCw, Check, X, Crown, Rocket } from "lucide-react";
 import { format } from "date-fns";
 
 interface AppointmentItemProps {
@@ -43,6 +43,23 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
   const isEndDay = currentDay && appointment.end_date ? 
     currentDay === format(new Date(appointment.end_date), "yyyy-MM-dd") : false;
 
+  // Get the appropriate icon based on event type
+  const getEventIcon = () => {
+    if (appointment.isTeamEvent) {
+      if (isMultiDayEvent) {
+        return <Rocket className="h-4 w-4 text-blue-500" />;
+      }
+      if (appointment.is_admin_only) {
+        return <Crown className="h-4 w-4 text-yellow-500" />;
+      }
+      return <Flame className="h-4 w-4 text-orange-500" />;
+    }
+    if (appointment.isRecurring) {
+      return <Zoom className="h-4 w-4 text-primary" />;
+    }
+    return getMeetingTypeIcon(appointment.meeting_type) || null;
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -63,11 +80,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
     >
       <div className="flex items-center gap-1 text-xs">
         <div className="flex items-center gap-1 flex-1">
-          {appointment.isTeamEvent ? (
-            <Flame className="h-4 w-4 text-orange-500" />
-          ) : (
-            getMeetingTypeIcon(appointment.meeting_type) || <Infinity className="h-4 w-4 text-primary" />
-          )}
+          {getEventIcon()}
           <span className="font-bold truncate">{appointment.title}</span>
         </div>
         {appointment.completed && <div className="text-green-500"><Check className="h-4 w-4" /></div>}
