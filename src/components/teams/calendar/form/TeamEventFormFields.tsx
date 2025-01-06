@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
 
-const formSchema = z.object({
+export const formSchema = z.object({
   title: z.string().min(1, "Titel ist erforderlich"),
   description: z.string().optional(),
   start_time: z.string(),
@@ -17,8 +17,10 @@ const formSchema = z.object({
   is_admin_only: z.boolean().default(false),
 });
 
+type FormData = z.infer<typeof formSchema>;
+
 interface TeamEventFormFieldsProps {
-  form: UseFormReturn<z.infer<typeof formSchema>>;
+  form: UseFormReturn<FormData>;
 }
 
 export const TeamEventFormFields = ({ form }: TeamEventFormFieldsProps) => {
@@ -147,5 +149,3 @@ export const TeamEventFormFields = ({ form }: TeamEventFormFieldsProps) => {
     </>
   );
 };
-
-export { formSchema };

@@ -36,7 +36,7 @@ export const TeamEventForm = ({
     setSelectedDate(initialSelectedDate);
   }, [initialSelectedDate]);
 
-  const form = useForm({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: eventToEdit?.title || "",
@@ -51,7 +51,7 @@ export const TeamEventForm = ({
   });
 
   const createEventMutation = useMutation({
-    mutationFn: async (values: any) => {
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
       if (!selectedDate) {
         throw new Error("Bitte wähle ein Datum aus");
       }
