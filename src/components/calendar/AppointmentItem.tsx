@@ -34,7 +34,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
     ? formatSafeDate(appointment.start_time)
     : formatSafeDate(appointment.due_date);
 
-  if (!timeString) {
+  if (!timeString && !appointment.is_multi_day) {
     console.warn('Invalid date for appointment:', appointment);
     return null;
   }
@@ -107,10 +107,12 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         </div>
       )}
       
-      <div className="flex items-center gap-1 text-xs">
-        <Clock className="h-3 w-3" />
-        <span>{timeString}</span>
-      </div>
+      {!appointment.is_multi_day && (
+        <div className="flex items-center gap-1 text-xs">
+          <Clock className="h-3 w-3" />
+          <span>{timeString}</span>
+        </div>
+      )}
 
       {/* Status indicators */}
       {!appointment.isTeamEvent && (appointment.completed || appointment.cancelled) && (

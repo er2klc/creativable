@@ -1,4 +1,4 @@
-export type RecurringPattern = 'none' | 'daily' | 'weekly' | 'monthly';
+export type RecurringPattern = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export interface TeamEvent {
   id: string;
@@ -42,6 +42,7 @@ export interface Appointment {
   leads: { name: string };
   isTeamEvent: boolean;
   end_date?: string;
+  is_multi_day?: boolean;
 }
 
 export interface AppointmentToEdit {
