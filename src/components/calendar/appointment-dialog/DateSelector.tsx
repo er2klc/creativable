@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { de } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -37,7 +37,7 @@ export const DateSelector = ({ selectedDate, onDateSelect }: DateSelectorProps) 
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {selectedDate ? (
+          {selectedDate && isValid(selectedDate) ? (
             format(selectedDate, "dd. MMMM yyyy", { locale: de })
           ) : (
             <span>Datum wählen</span>

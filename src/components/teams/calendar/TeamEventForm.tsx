@@ -2,13 +2,12 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Form, FormLabel } from "@/components/ui/form";
-import { format, isValid, startOfDay } from "date-fns";
+import { Form } from "@/components/ui/form";
+import { format, startOfDay } from "date-fns";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TeamEventFormFields } from "./form/TeamEventFormFields";
-import { DateSelector } from "@/components/calendar/appointment-dialog/DateSelector";
 import * as z from 'zod';
 
 interface TeamEventFormProps {
@@ -46,10 +45,10 @@ export const TeamEventForm = ({
     defaultValues: {
       title: eventToEdit?.title || "",
       description: eventToEdit?.description || "",
-      start_time: eventToEdit?.start_time && isValid(new Date(eventToEdit.start_time)) 
+      start_time: eventToEdit?.start_time && !eventToEdit?.is_multi_day 
         ? format(new Date(eventToEdit.start_time), "HH:mm")
         : "09:00",
-      end_time: eventToEdit?.end_time && isValid(new Date(eventToEdit.end_time))
+      end_time: eventToEdit?.end_time && !eventToEdit?.is_multi_day
         ? format(new Date(eventToEdit.end_time), "HH:mm")
         : "",
       end_date: eventToEdit?.end_date || null,
@@ -73,7 +72,7 @@ export const TeamEventForm = ({
       let eventDate = startOfDay(selectedDate);
       let eventEndDate = values.is_multi_day ? endDate : selectedDate;
 
-      // Handle time setting based on whether it's a multi-day event
+      // For multi-day events, we don't need time values
       if (!values.is_multi_day && values.start_time) {
         const [hours, minutes] = values.start_time.split(":");
         eventDate.setHours(parseInt(hours), parseInt(minutes));
@@ -82,7 +81,7 @@ export const TeamEventForm = ({
       if (values.end_time && !values.is_multi_day) {
         const [endHours, endMinutes] = values.end_time.split(":");
         eventEndDate = new Date(selectedDate);
-        eventEndDate.setHours(parseInt(endHours), parseInt(endMinutes));
+        eventEndDate.setHours(parseInt(endHours), parseInt(minutes));
       }
 
       const eventData = {
@@ -91,7 +90,7 @@ export const TeamEventForm = ({
         description: values.description,
         start_time: eventDate.toISOString(),
         end_time: !values.is_multi_day ? eventEndDate?.toISOString() : null,
-        end_date: values.is_multi_day ? eventEndDate?.toISOString() : eventDate.toISOString(),
+        end_date: values.is_multi_day ? eventEndDate?.toISOString() : null,
         color: values.color,
         is_team_event: values.is_team_event,
         recurring_pattern: values.recurring_pattern,
