@@ -69,6 +69,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
           isTeamEvent: true,
           start_time: event.start_time,
           end_time: event.end_time || event.start_time,
+          end_date: event.end_date,
           color: `${event.color || "#FEF7CD"}30`,
           is_multi_day: event.is_multi_day,
           isRecurring: event.recurring_pattern !== 'none',

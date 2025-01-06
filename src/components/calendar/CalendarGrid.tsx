@@ -1,4 +1,4 @@
-import { format, isSameMonth, isToday, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
+import { format, isSameMonth, isToday, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AppointmentItem } from "./AppointmentItem";
 import { DragOverlay, useDroppable } from "@dnd-kit/core";
@@ -24,13 +24,19 @@ export const CalendarGrid = ({
   overDate,
   draggedAppointment,
 }: CalendarGridProps) => {
-  const days = useMemo(() => 
-    eachDayOfInterval({
-      start: startOfMonth(currentDate),
-      end: endOfMonth(currentDate),
-    }),
-    [currentDate]
-  );
+  const days = useMemo(() => {
+    const start = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 }); // Start week on Monday
+    const end = endOfMonth(currentDate);
+    const daysArray = [];
+    let currentDay = start;
+
+    while (currentDay <= end || daysArray.length % 7 !== 0) {
+      daysArray.push(currentDay);
+      currentDay = addDays(currentDay, 1);
+    }
+
+    return daysArray;
+  }, [currentDate]);
 
   // Create a separate component for droppable day
   const DroppableDay = ({ date, children }: { date: Date; children: React.ReactNode }) => {
@@ -77,7 +83,7 @@ export const CalendarGrid = ({
 
   return (
     <div className="grid grid-cols-7 gap-px bg-muted">
-      {["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"].map((day) => (
+      {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day) => (
         <div
           key={day}
           className="bg-background p-2 text-center text-sm font-medium"
