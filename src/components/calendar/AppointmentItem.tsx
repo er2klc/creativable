@@ -19,7 +19,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
   });
 
   const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    transform: translate3d(${transform.x}px, ${transform.y}px, 0),
     opacity: isDragging ? 0.5 : 1,
   } : undefined;
 
@@ -62,7 +62,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
     }
   };
 
-  const isMultiDayEvent = appointment.is_multi_day || (appointment.end_date && new Date(appointment.start_time) < new Date(appointment.end_date));
+  const isMultiDayEvent = appointment.is_multi_day && appointment.end_date;
 
   return (
     <div
@@ -107,27 +107,23 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         </div>
       )}
       
-      {isMultiDayEvent ? (
-        <div className="flex items-center gap-1 text-xs">
-          <Flame className="h-3 w-3 text-orange-500" />
-          <span>
-            {format(new Date(appointment.start_time), "dd.MM.yyyy")} - {format(new Date(appointment.end_date), "dd.MM.yyyy")}
-          </span>
-        </div>
-      ) : (
+      {!appointment.is_multi_day && (
         <div className="flex items-center gap-1 text-xs">
           <Clock className="h-3 w-3" />
           <span>{timeString}</span>
         </div>
       )}
 
+      {/* Status indicators */}
       {!appointment.isTeamEvent && (appointment.completed || appointment.cancelled) && (
         <>
+          {/* Overlay for cancelled appointments */}
           {appointment.cancelled && (
             <div className="absolute inset-0 bg-red-500/70 flex items-center justify-center rounded">
               <X className="h-8 w-8 text-white" />
             </div>
           )}
+          {/* Overlay for completed appointments */}
           {appointment.completed && (
             <div className="absolute inset-0 bg-green-500/70 flex items-center justify-center rounded">
               <Check className="h-8 w-8 text-white" />
