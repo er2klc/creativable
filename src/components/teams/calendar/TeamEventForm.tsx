@@ -42,7 +42,7 @@ export const TeamEventForm = ({
         : "09:00",
       end_time: eventToEdit?.end_time && !eventToEdit?.is_multi_day
         ? format(new Date(eventToEdit.end_time), "HH:mm")
-        : "18:00", // Set default end time
+        : "18:00",
       end_date: eventToEdit?.end_date || null,
       color: eventToEdit?.color || "#FEF7CD",
       is_team_event: eventToEdit?.is_team_event || false,
@@ -68,7 +68,8 @@ export const TeamEventForm = ({
       if (!isMultiDay) {
         form.setValue('end_time', format(endDate, 'HH:mm'));
       } else {
-        form.setValue('end_date', endDate);
+        // For multi-day events, we need to convert the Date to ISO string
+        form.setValue('end_date', endDate.toISOString());
       }
     }
   }, [endDate, form, isMultiDay]);
