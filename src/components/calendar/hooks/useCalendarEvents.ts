@@ -65,21 +65,23 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       return {
         events: events.map(event => ({
           ...event,
-          id: event.id,
-          isTeamEvent: true,
+          id: `team-${event.id}`,
+          title: event.title,
+          description: event.description,
           start_time: event.start_time,
           end_time: event.end_time || event.start_time,
           end_date: event.end_date,
           color: `${event.color || "#FEF7CD"}30`,
+          isTeamEvent: true,
           is_multi_day: event.is_multi_day,
           isRecurring: event.recurring_pattern !== 'none',
-          is_admin_only: event.is_admin_only
+          is_admin_only: event.is_admin_only,
         })) as TeamEvent[],
       };
     },
   });
 
- const getDayAppointments = (date: Date): Appointment[] => {
+  const getDayAppointments = (date: Date): Appointment[] => {
     const regularAppointments = appointments.filter((appointment) => {
       const appointmentDate = new Date(appointment.due_date);
       appointmentDate.setHours(0, 0, 0, 0);
@@ -94,9 +96,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
 
     const teamEvents = teamData.events.filter((event) => {
       const startDate = new Date(event.start_time);
-      const endDate = event.is_multi_day
-        ? new Date(event.end_date || event.start_time)
-        : startDate;
+      const endDate = event.end_date ? new Date(event.end_date) : startDate;
 
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
@@ -106,7 +106,6 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
 
     return [...regularAppointments, ...teamEvents] as Appointment[];
   };
-
 
   return {
     appointments,

@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import { Clock, User, FileText, Video, Phone, MapPin, Users, BarChart, RefreshCw, Check, X, Award, Flame } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 interface AppointmentItemProps {
   appointment: any;
@@ -22,6 +23,9 @@ const getMeetingTypeIcon = (type: string) => {
 };
 
 export const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemProps) => {
+  const isMultiDayEvent = appointment.is_multi_day && appointment.end_date;
+  const shouldPreventDrag = appointment.isTeamEvent && isMultiDayEvent;
+
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: appointment.id,
     data: { ...appointment, type: "appointment" },
@@ -34,7 +38,12 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       }
     : undefined;
 
-  const isMultiDayEvent = appointment.is_multi_day && appointment.end_date;
+  const handleClick = (e: React.MouseEvent) => {
+    if (shouldPreventDrag) {
+      toast.info("Mehrtägige Team-Events können nur durch Klicken bearbeitet werden");
+    }
+    onClick(e);
+  };
 
   // Determine if current day is start, middle, or end day
   const currentDay = appointment.current_day || null;
@@ -49,9 +58,9 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       style={{
         ...style,
         backgroundColor: appointment.color || "#FEF7CD",
-        cursor: appointment.isTeamEvent ? "default" : "pointer",
+        cursor: shouldPreventDrag ? "default" : "pointer",
       }}
-      {...(appointment.isTeamEvent ? {} : { ...listeners, ...attributes })}
+      {...(shouldPreventDrag ? {} : { ...listeners, ...attributes })}
       className={cn(
         "p-2 rounded hover:opacity-80 space-y-1",
         appointment.isRecurring && "border-l-4 border-primary",
@@ -59,7 +68,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         !appointment.isTeamEvent && "text-black",
         (appointment.completed || appointment.cancelled) && "opacity-50"
       )}
-      onClick={(e) => !appointment.isTeamEvent && onClick(e)}
+      onClick={handleClick}
     >
       <div className="flex items-center gap-1 text-xs">
         <div className="flex items-center gap-1 flex-1">
