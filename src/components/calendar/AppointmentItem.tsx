@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Video, Phone, MapPin, Users, BarChart, RefreshCw, Check, X, Award, Eagle, Flame } from "lucide-react";
+import { Clock, User, FileText, Video, Phone, MapPin, Users, BarChart, RefreshCw, Check, X, Award, Flame } from "lucide-react";
 import { format } from "date-fns";
 
 interface AppointmentItemProps {
@@ -64,7 +64,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       <div className="flex items-center gap-1 text-xs">
         <div className="flex items-center gap-1 flex-1">
           {appointment.isRecurring && <Video className="h-4 w-4 text-primary" />}
-          {appointment.isTeamEvent && <Users className="h-4 w-4 text-orange-500" />}
+          {appointment.isTeamEvent && <Award className="h-4 w-4 text-orange-500" />}
           {isMultiDayEvent && <Flame className="h-4 w-4 text-orange-500" />}
           {appointment.is_admin_only && <Award className="h-4 w-4 text-yellow-500" />}
           {!appointment.isRecurring && !appointment.isTeamEvent && !isMultiDayEvent && !appointment.is_admin_only && getMeetingTypeIcon(appointment.meeting_type)}

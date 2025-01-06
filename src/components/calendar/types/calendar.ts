@@ -16,6 +16,8 @@ export interface Appointment {
     name: string;
   };
   current_day?: string;
+  due_date?: string;
+  lead_id?: string;
 }
 
 export interface TeamEvent extends Appointment {
@@ -28,9 +30,15 @@ export interface TeamEvent extends Appointment {
 
 export interface AppointmentToEdit {
   id: string;
-  leadId?: string;
+  leadId: string;
   time: string;
   title: string;
-  color?: string;
-  meeting_type?: string;
+  color: string;
+  meeting_type: string;
 }
+
+export interface AppointmentWithEndDate extends Appointment {
+  end_date?: string;
+}
+
+export type RecurringPattern = 'none' | 'daily' | 'weekly' | 'monthly';
