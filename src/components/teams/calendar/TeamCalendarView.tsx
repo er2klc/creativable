@@ -90,7 +90,7 @@ export const TeamCalendarView = ({ teamId, isAdmin, onBack }: TeamCalendarViewPr
           teamId={teamId}
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          selectedDate={selectedDate}
+          initialSelectedDate={selectedDate}
           eventToEdit={selectedEvent}
           onDisableInstance={
             selectedEvent?.isRecurring 

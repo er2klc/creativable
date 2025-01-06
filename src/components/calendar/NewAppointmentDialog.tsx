@@ -17,7 +17,7 @@ import { CompletionCheckbox } from "./appointment-dialog/CompletionCheckbox";
 interface NewAppointmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedDate: Date | null;
+  initialSelectedDate: Date | null;
   appointmentToEdit?: {
     id: string;
     leadId: string;
@@ -32,7 +32,7 @@ interface NewAppointmentDialogProps {
 export const NewAppointmentDialog = ({
   open,
   onOpenChange,
-  selectedDate: initialSelectedDate,
+  initialSelectedDate,
   appointmentToEdit,
 }: NewAppointmentDialogProps) => {
   const queryClient = useQueryClient();

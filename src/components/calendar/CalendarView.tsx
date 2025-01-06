@@ -85,7 +85,7 @@ export const CalendarView = () => {
               setSelectedDate(new Date(appointment.due_date));
               setSelectedAppointment({
                 id: appointment.id,
-                leadId: appointment.lead_id, // Convert lead_id to leadId here
+                leadId: appointment.lead_id,
                 time: format(new Date(appointment.due_date), "HH:mm"),
                 title: appointment.title,
                 color: appointment.color,
@@ -104,7 +104,7 @@ export const CalendarView = () => {
         <NewAppointmentDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          selectedDate={selectedDate}
+          initialSelectedDate={selectedDate}
           appointmentToEdit={selectedAppointment}
         />
       </div>

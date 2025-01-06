@@ -6,7 +6,7 @@ import { TeamEventForm } from "./TeamEventForm";
 interface NewTeamEventDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedDate: Date | null;
+  initialSelectedDate: Date | null;
   teamId: string;
   eventToEdit?: any;
   onDisableInstance?: (date: Date) => void;
@@ -15,7 +15,7 @@ interface NewTeamEventDialogProps {
 export const NewTeamEventDialog = ({
   open,
   onOpenChange,
-  selectedDate,
+  initialSelectedDate,
   teamId,
   eventToEdit,
   onDisableInstance,
@@ -26,14 +26,14 @@ export const NewTeamEventDialog = ({
         <DialogHeader>
           <DialogTitle>
             {eventToEdit ? "Termin bearbeiten" : "Neuer Termin"} am{" "}
-            {selectedDate &&
-              format(selectedDate, "dd. MMMM yyyy", { locale: de })}
+            {initialSelectedDate &&
+              format(initialSelectedDate, "dd. MMMM yyyy", { locale: de })}
           </DialogTitle>
         </DialogHeader>
 
         <TeamEventForm
           teamId={teamId}
-          selectedDate={selectedDate}
+          selectedDate={initialSelectedDate}
           eventToEdit={eventToEdit}
           onClose={() => onOpenChange(false)}
           onDisableInstance={onDisableInstance}
