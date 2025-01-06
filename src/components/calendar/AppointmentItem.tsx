@@ -9,13 +9,10 @@ interface AppointmentItemProps {
   isDragging?: boolean;
 }
 
-export const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemProps) => {
+const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemProps) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: appointment.id,
-    data: {
-      ...appointment,
-      type: 'appointment',
-    },
+    data: { ...appointment, type: "appointment" },
   });
 
   const style = transform
