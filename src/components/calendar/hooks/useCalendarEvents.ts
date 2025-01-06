@@ -15,6 +15,7 @@ export const useCalendarEvents = (
   console.log("useCalendarEvents Hook wird aufgerufen mit Version 1.0");
   console.log("Aktuelles Datum:", currentDate);
   console.log("showTeamEvents:", showTeamEvents);
+
   // Persönliche Termine abrufen
   const { data: appointments = [], isLoading: isLoadingAppointments } = useQuery({
     queryKey: ["appointments", format(currentDate, "yyyy-MM")],
@@ -90,6 +91,7 @@ export const useCalendarEvents = (
       }
 
       console.log("Abgerufene Team-Termine:", events);
+      console.log("Anzahl der abgerufenen Team-Termine:", events.length);
 
       return {
         events: events.map((event: any) => ({
@@ -109,6 +111,7 @@ export const useCalendarEvents = (
   });
 
   const getDayAppointments = (date: Date): Appointment[] => {
+    console.log("Abrufen der Termine für das Datum:", date);
     const regularAppointments = appointments.filter(appointment => {
       const appointmentDate = new Date(appointment.due_date);
       appointmentDate.setHours(0, 0, 0, 0);
@@ -118,6 +121,7 @@ export const useCalendarEvents = (
     });
 
     if (!showTeamEvents) {
+      console.log("Nur persönliche Termine werden zurückgegeben.");
       return regularAppointments;
     }
 
