@@ -78,39 +78,33 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     },
   });
 
- const getDayAppointments = (date: Date): Appointment[] => {
-  // Handle regular appointments (non-team events)
-  const regularAppointments = appointments.filter((appointment) => {
-  const appointmentDate = new Date(appointment.due_date);
-  appointmentDate.setHours(0, 0, 0, 0); // Stelle sicher, dass die Zeit normalisiert ist
-  const currentDate = new Date(date);
-  currentDate.setHours(0, 0, 0, 0); // Normalisiere die Vergleichszeit
-  return isSameDay(appointmentDate, currentDate);
-});
+  const getDayAppointments = (date: Date): Appointment[] => {
+    const regularAppointments = appointments.filter((appointment) => {
+      const appointmentDate = new Date(appointment.due_date);
+      appointmentDate.setHours(0, 0, 0, 0);
+      const currentDate = new Date(date);
+      currentDate.setHours(0, 0, 0, 0);
+      return isSameDay(appointmentDate, currentDate);
+    });
 
-  if (!showTeamEvents) {
-    return regularAppointments;
-  }
+    if (!showTeamEvents) {
+      return regularAppointments;
+    }
 
-  // Handle team events (multi-day and single-day)
-  const teamEvents = teamData.events.filter((event) => {
-    const startDate = new Date(event.start_time);
-    const endDate = event.is_multi_day
-      ? new Date(event.end_date || event.start_time)
-      : startDate;
+    const teamEvents = teamData.events.filter((event) => {
+      const startDate = new Date(event.start_time);
+      const endDate = event.is_multi_day
+        ? new Date(event.end_date || event.start_time)
+        : startDate;
 
-    // Normalize times for comparison
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
 
-    // Check if the current date is within the range
-    return isWithinInterval(date, { start: startDate, end: endDate });
-  });
+      return isWithinInterval(date, { start: startDate, end: endDate });
+    });
 
-  // Combine regular and team appointments
-  return [...regularAppointments, ...teamEvents];
-};
-
+    return [...regularAppointments, ...teamEvents];
+  };
 
   return {
     appointments,
