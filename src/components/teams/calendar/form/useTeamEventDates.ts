@@ -30,11 +30,15 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
   }, [eventToEdit, initialSelectedDate]);
 
   const handleDateSelect = (date: Date | null) => {
+    console.log("Handling date selection:", date);
     if (date) {
       const newDate = new Date(date);
       if (selectedDate) {
         // Preserve the time from the existing selectedDate
-        newDate.setHours(selectedDate.getHours(), selectedDate.getMinutes());
+        const hours = selectedDate.getHours();
+        const minutes = selectedDate.getMinutes();
+        newDate.setHours(hours, minutes);
+        console.log("Setting new date with preserved time:", newDate);
       }
       setSelectedDate(newDate);
     } else {
