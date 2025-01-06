@@ -11,37 +11,25 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
 
   useEffect(() => {
     if (eventToEdit) {
-      // For editing existing events
       if (eventToEdit.is_multi_day) {
-        // Handle multi-day events
         const startTime = eventToEdit.start_time ? new Date(eventToEdit.start_time) : null;
         const endTime = eventToEdit.end_date ? new Date(eventToEdit.end_date) : null;
         
         if (startTime) {
-          const validStartTime = new Date(startTime);
-          validStartTime.setSeconds(0, 0);
-          setSelectedDate(validStartTime);
+          setSelectedDate(startTime);
         }
         
         if (endTime) {
-          const validEndTime = new Date(endTime);
-          validEndTime.setSeconds(0, 0);
-          setEndDate(validEndTime);
+          setEndDate(endTime);
         }
       } else {
-        // Handle regular events
         const startTime = eventToEdit.start_time ? new Date(eventToEdit.start_time) : null;
         if (startTime) {
-          const validStartTime = new Date(startTime);
-          validStartTime.setSeconds(0, 0);
-          setSelectedDate(validStartTime);
+          setSelectedDate(startTime);
         }
       }
     } else if (initialSelectedDate) {
-      // For creating new events
-      const date = new Date(initialSelectedDate);
-      date.setHours(9, 0, 0, 0);
-      setSelectedDate(date);
+      setSelectedDate(initialSelectedDate);
     }
   }, [eventToEdit, initialSelectedDate]);
 
@@ -51,19 +39,11 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
       const newDate = new Date(date);
       
       if (selectedDate) {
-        // Preserve the time from the existing selectedDate
-        newDate.setHours(
-          selectedDate.getHours(),
-          selectedDate.getMinutes(),
-          0,
-          0
-        );
+        newDate.setHours(selectedDate.getHours(), selectedDate.getMinutes());
       } else {
-        // Set default time for new dates
-        newDate.setHours(9, 0, 0, 0);
+        newDate.setHours(9, 0);
       }
       
-      console.log("Setting selected date to:", newDate);
       setSelectedDate(newDate);
     } else {
       setSelectedDate(null);
@@ -75,16 +55,9 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
       const newDate = new Date(date);
       
       if (endDate) {
-        // Preserve the time from the existing endDate
-        newDate.setHours(
-          endDate.getHours(),
-          endDate.getMinutes(),
-          0,
-          0
-        );
+        newDate.setHours(endDate.getHours(), endDate.getMinutes());
       } else {
-        // Set default time for new end dates
-        newDate.setHours(18, 0, 0, 0);
+        newDate.setHours(18, 0);
       }
       
       setEndDate(newDate);
