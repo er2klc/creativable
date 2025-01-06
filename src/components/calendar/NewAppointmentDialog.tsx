@@ -138,14 +138,21 @@ export const NewAppointmentDialog = ({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent 
+                className="w-auto p-0" 
+                align="start"
+                onInteractOutside={(e) => {
+                  // Prevent closing when interacting with the calendar
+                  e.preventDefault();
+                }}
+              >
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={(date) => {
                     if (date) {
                       setSelectedDate(date);
-                      setIsCalendarOpen(false);
+                      // Don't close the calendar automatically
                     }
                   }}
                   initialFocus
