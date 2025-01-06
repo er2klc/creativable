@@ -48,10 +48,10 @@ export const TeamEventForm = ({
       title: eventToEdit?.title || "",
       description: eventToEdit?.description || "",
       start_time: eventToEdit?.start_time && !eventToEdit?.is_multi_day 
-        ? getFormattedTime(eventToEdit.start_time, "09:00")
+        ? format(new Date(eventToEdit.start_time), "HH:mm")
         : "09:00",
       end_time: eventToEdit?.end_time && !eventToEdit?.is_multi_day
-        ? getFormattedTime(eventToEdit.end_time)
+        ? format(new Date(eventToEdit.end_time), "HH:mm")
         : "",
       end_date: eventToEdit?.end_date || null,
       color: eventToEdit?.color || "#FEF7CD",
@@ -98,7 +98,6 @@ export const TeamEventForm = ({
         recurring_pattern: values.recurring_pattern,
         is_admin_only: values.is_admin_only,
         is_multi_day: values.is_multi_day,
-        created_by: user.id,
       };
 
       if (eventToEdit) {
@@ -110,7 +109,10 @@ export const TeamEventForm = ({
       } else {
         const { error } = await supabase
           .from("team_calendar_events")
-          .insert(eventData);
+          .insert({
+            ...eventData,
+            created_by: user.id,
+          });
         if (error) throw error;
       }
     },
@@ -158,7 +160,10 @@ export const TeamEventForm = ({
             <Button type="button" variant="outline" onClick={onClose}>
               Abbrechen
             </Button>
-            <Button type="submit">
+            <Button 
+              type="submit" 
+              disabled={createEventMutation.isPending || !form.formState.isDirty}
+            >
               {eventToEdit ? "Aktualisieren" : "Erstellen"}
             </Button>
           </div>
