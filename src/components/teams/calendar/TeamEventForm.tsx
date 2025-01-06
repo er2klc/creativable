@@ -42,34 +42,36 @@ export const TeamEventForm = ({
         : "09:00",
       end_time: eventToEdit?.end_time && !eventToEdit?.is_multi_day
         ? format(new Date(eventToEdit.end_time), "HH:mm")
-        : "",
+        : "18:00", // Set default end time
       end_date: eventToEdit?.end_date || null,
       color: eventToEdit?.color || "#FEF7CD",
       is_team_event: eventToEdit?.is_team_event || false,
-      recurring_pattern: eventToEdit?.recurring_pattern || "none",
       is_admin_only: eventToEdit?.is_admin_only || false,
       is_multi_day: eventToEdit?.is_multi_day || false,
+      recurring_pattern: eventToEdit?.recurring_pattern || "none",
     },
   });
+
+  const isMultiDay = form.watch("is_multi_day");
 
   // Update form when dates change
   useEffect(() => {
     if (selectedDate) {
-      const isMultiDay = form.getValues('is_multi_day');
       if (!isMultiDay) {
         form.setValue('start_time', format(selectedDate, 'HH:mm'));
       }
     }
-  }, [selectedDate, form]);
+  }, [selectedDate, form, isMultiDay]);
 
   useEffect(() => {
     if (endDate) {
-      const isMultiDay = form.getValues('is_multi_day');
       if (!isMultiDay) {
         form.setValue('end_time', format(endDate, 'HH:mm'));
+      } else {
+        form.setValue('end_date', endDate);
       }
     }
-  }, [endDate, form]);
+  }, [endDate, form, isMultiDay]);
 
   // Debug logs
   useEffect(() => {
@@ -88,8 +90,13 @@ export const TeamEventForm = ({
       let startTime: Date, endTime: Date | null = null;
 
       if (values.is_multi_day) {
-        startTime = selectedDate;
-        endTime = endDate || null;
+        startTime = new Date(selectedDate);
+        startTime.setHours(9, 0, 0, 0); // Set default start time for multi-day events
+        
+        if (endDate) {
+          endTime = new Date(endDate);
+          endTime.setHours(18, 0, 0, 0); // Set default end time for multi-day events
+        }
       } else {
         startTime = new Date(selectedDate);
         const [startHours, startMinutes] = values.start_time.split(':');
