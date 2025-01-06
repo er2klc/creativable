@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { parseISO, isValid } from "date-fns";
 
 interface UseTeamEventDatesProps {
   eventToEdit?: any;
@@ -15,21 +14,11 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
       // For editing existing events
       if (eventToEdit.is_multi_day) {
         // Handle multi-day events
-        if (eventToEdit.start_time) {
-          const startDate = new Date(eventToEdit.start_time);
-          setSelectedDate(startDate);
-        }
-
-        if (eventToEdit.end_date) {
-          const endDate = new Date(eventToEdit.end_date);
-          setEndDate(endDate);
-        }
+        setSelectedDate(new Date(eventToEdit.start_time));
+        setEndDate(new Date(eventToEdit.end_date));
       } else {
         // Handle regular events
-        if (eventToEdit.start_time) {
-          const startDate = new Date(eventToEdit.start_time);
-          setSelectedDate(startDate);
-        }
+        setSelectedDate(new Date(eventToEdit.start_time));
       }
     } else if (initialSelectedDate) {
       // For creating new events
