@@ -13,7 +13,7 @@ import { de } from "date-fns/locale";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { TeamEventFormFields } from "./form/TeamEventFormFields";
+import { TeamEventFormFields, formSchema } from "./form/TeamEventFormFields";
 
 interface TeamEventFormProps {
   teamId: string;
