@@ -13,19 +13,19 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
     if (eventToEdit) {
       // For editing existing events
       if (eventToEdit.is_multi_day) {
-        // Handle multi-day events (Team Events with start/end dates)
+        // Handle multi-day events
         const startTime = eventToEdit.start_time ? new Date(eventToEdit.start_time) : null;
         const endTime = eventToEdit.end_date ? new Date(eventToEdit.end_date) : null;
         setSelectedDate(startTime);
         setEndDate(endTime);
       } else {
-        // Handle regular events (with or without time, recurring or admin-only)
+        // Handle regular events
         const startTime = eventToEdit.start_time ? new Date(eventToEdit.start_time) : null;
         setSelectedDate(startTime);
       }
     } else if (initialSelectedDate) {
-      // For creating new events
-      setSelectedDate(initialSelectedDate);
+      // For creating new events, ensure we create a new Date object
+      setSelectedDate(new Date(initialSelectedDate));
     }
   }, [eventToEdit, initialSelectedDate]);
 
@@ -38,8 +38,11 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
         const hours = selectedDate.getHours();
         const minutes = selectedDate.getMinutes();
         newDate.setHours(hours, minutes);
-        console.log("Setting new date with preserved time:", newDate);
+      } else {
+        // Set default time if no previous time exists
+        newDate.setHours(9, 0, 0);
       }
+      console.log("Setting selected date to:", newDate);
       setSelectedDate(newDate);
     } else {
       setSelectedDate(null);
@@ -52,6 +55,9 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
       if (endDate) {
         // Preserve the time from the existing endDate
         newDate.setHours(endDate.getHours(), endDate.getMinutes());
+      } else {
+        // Set default time if no previous time exists
+        newDate.setHours(18, 0, 0);
       }
       setEndDate(newDate);
     } else {
