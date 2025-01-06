@@ -26,6 +26,7 @@ export interface Appointment {
   title: string;
   start_time: string;
   end_time: string;
+  end_date?: string;
   color: string;
   meeting_type: string;
   completed: boolean;
@@ -35,7 +36,6 @@ export interface Appointment {
   lead_id: string;
   leads: { name: string };
   isTeamEvent: boolean;
-  end_date?: string;
   is_multi_day?: boolean;
   due_date?: string;
   current_day?: string;

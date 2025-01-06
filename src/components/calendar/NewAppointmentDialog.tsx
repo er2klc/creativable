@@ -135,11 +135,6 @@ export const NewAppointmentDialog = ({
     },
   });
 
-  const handleDateSelect = (date: Date | null) => {
-    console.log("Date selected in dialog:", date);
-    setSelectedDate(date);
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -148,17 +143,29 @@ export const NewAppointmentDialog = ({
             <DialogTitle>
               {appointmentToEdit ? "Termin bearbeiten" : "Neuer Termin"}
             </DialogTitle>
-            {appointmentToEdit && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => deleteAppointment.mutate()}
-                disabled={deleteAppointment.isPending}
-                className="text-destructive hover:text-destructive/90"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {appointmentToEdit && (
+                <>
+                  <CompletionCheckbox 
+                    completed={completed}
+                    cancelled={cancelled}
+                    onChange={(newCompleted, newCancelled) => {
+                      setCompleted(newCompleted);
+                      setCancelled(newCancelled);
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => deleteAppointment.mutate()}
+                    disabled={deleteAppointment.isPending}
+                    className="text-destructive hover:text-destructive/90 h-8 w-8"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
           <DialogDescription>
             Fülle die folgenden Felder aus, um {appointmentToEdit ? "den Termin zu aktualisieren" : "einen neuen Termin zu erstellen"}.
@@ -182,19 +189,6 @@ export const NewAppointmentDialog = ({
           defaultValues={appointmentToEdit}
           isEditing={!!appointmentToEdit}
         />
-
-        <div className="flex items-center justify-between mt-6">
-          {appointmentToEdit && (
-            <CompletionCheckbox 
-              completed={completed}
-              cancelled={cancelled}
-              onChange={(newCompleted, newCancelled) => {
-                setCompleted(newCompleted);
-                setCancelled(newCancelled);
-              }}
-            />
-          )}
-        </div>
       </DialogContent>
     </Dialog>
   );
