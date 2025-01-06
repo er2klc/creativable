@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -38,12 +39,13 @@ export const DateSelector = ({ selectedDate, onDateSelect }: DateSelectorProps) 
         <div 
           className="p-0"
           onClick={(e) => e.stopPropagation()}
-          // onMouseDown entfernt
+          onMouseDown={(e) => e.stopPropagation()}
         >
           <Calendar
             mode="single"
             selected={selectedDate}
             onSelect={(date) => {
+              console.log("Date selected:", date);
               if (date) {
                 onDateSelect(date);
               }
