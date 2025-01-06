@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Infinity, Flame, Phone, MapPin, Video, Users, BarChart, RefreshCw } from "lucide-react";
+import { Clock, User, FileText, Infinity, Flame, Phone, MapPin, Video, Users, BarChart, RefreshCw, Check, X } from "lucide-react";
 import { format } from "date-fns";
 
 interface AppointmentItemProps {

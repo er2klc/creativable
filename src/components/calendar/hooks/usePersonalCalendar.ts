@@ -4,6 +4,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DragEndEvent, DragOverEvent } from "@dnd-kit/core";
+import { Appointment } from "../types/calendar";
+
+interface AppointmentWithEndDate extends Appointment {
+  end_date?: string;
+}
 
 export const usePersonalCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -14,38 +19,36 @@ export const usePersonalCalendar = () => {
   const [overDate, setOverDate] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  // Fetch personal appointments
- const { data: appointments = [] } = useQuery({
-  queryKey: ["appointments", format(currentDate, "yyyy-MM")],
-  queryFn: async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return [];
+  const { data: appointments = [] } = useQuery({
+    queryKey: ["appointments", format(currentDate, "yyyy-MM")],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
 
-    const { data, error } = await supabase
-      .from("tasks")
-      .select("*, leads(name)")
-      .eq("user_id", user.id)
-      .not("due_date", "is", null);
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*, leads(name)")
+        .eq("user_id", user.id)
+        .not("due_date", "is", null);
 
-    if (error) {
-      console.error("Error fetching appointments:", error);
-      return [];
-    }
+      if (error) {
+        console.error("Error fetching appointments:", error);
+        return [];
+      }
 
-    return data.map((appointment) => {
-      const start = new Date(appointment.due_date);
-      const end = appointment.end_date ? new Date(appointment.end_date) : start;
+      return data.map((appointment) => {
+        const start = new Date(appointment.due_date);
+        const end = appointment.end_date ? new Date(appointment.end_date) : start;
 
-      return {
-        ...appointment,
-        is_multi_day: start < end, // Mehrtägige Events markieren
-        start_date: start,
-        end_date: end,
-      };
-    });
-  },
-});
-
+        return {
+          ...appointment,
+          is_multi_day: start < end,
+          start_date: start,
+          end_date: end,
+        } as AppointmentWithEndDate;
+      });
+    },
+  });
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
