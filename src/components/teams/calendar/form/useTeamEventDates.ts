@@ -16,17 +16,30 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
         // Handle multi-day events
         const startTime = eventToEdit.start_time ? new Date(eventToEdit.start_time) : null;
         const endTime = eventToEdit.end_date ? new Date(eventToEdit.end_date) : null;
-        setSelectedDate(startTime);
-        setEndDate(endTime);
+        
+        if (startTime) {
+          const validStartTime = new Date(startTime);
+          validStartTime.setSeconds(0, 0);
+          setSelectedDate(validStartTime);
+        }
+        
+        if (endTime) {
+          const validEndTime = new Date(endTime);
+          validEndTime.setSeconds(0, 0);
+          setEndDate(validEndTime);
+        }
       } else {
         // Handle regular events
         const startTime = eventToEdit.start_time ? new Date(eventToEdit.start_time) : null;
-        setSelectedDate(startTime);
+        if (startTime) {
+          const validStartTime = new Date(startTime);
+          validStartTime.setSeconds(0, 0);
+          setSelectedDate(validStartTime);
+        }
       }
     } else if (initialSelectedDate) {
-      // For creating new events, ensure we create a new Date object
+      // For creating new events
       const date = new Date(initialSelectedDate);
-      // Set default time to ensure valid ISO string
       date.setHours(9, 0, 0, 0);
       setSelectedDate(date);
     }
@@ -36,15 +49,20 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
     console.log("Handling date selection:", date);
     if (date) {
       const newDate = new Date(date);
+      
       if (selectedDate) {
         // Preserve the time from the existing selectedDate
-        const hours = selectedDate.getHours();
-        const minutes = selectedDate.getMinutes();
-        newDate.setHours(hours, minutes, 0, 0);
+        newDate.setHours(
+          selectedDate.getHours(),
+          selectedDate.getMinutes(),
+          0,
+          0
+        );
       } else {
-        // Set default time to ensure valid ISO string
+        // Set default time for new dates
         newDate.setHours(9, 0, 0, 0);
       }
+      
       console.log("Setting selected date to:", newDate);
       setSelectedDate(newDate);
     } else {
@@ -55,13 +73,20 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
   const handleEndDateSelect = (date: Date | null) => {
     if (date) {
       const newDate = new Date(date);
+      
       if (endDate) {
         // Preserve the time from the existing endDate
-        newDate.setHours(endDate.getHours(), endDate.getMinutes(), 0, 0);
+        newDate.setHours(
+          endDate.getHours(),
+          endDate.getMinutes(),
+          0,
+          0
+        );
       } else {
-        // Set default time to ensure valid ISO string
+        // Set default time for new end dates
         newDate.setHours(18, 0, 0, 0);
       }
+      
       setEndDate(newDate);
     } else {
       setEndDate(null);
