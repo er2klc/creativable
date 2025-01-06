@@ -16,6 +16,7 @@ export const DateSelector = ({ selectedDate, onDateSelect }: DateSelectorProps) 
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSelect = (date: Date | null) => {
+    console.log("Date selected:", date);
     onDateSelect(date);
     setIsOpen(false);
   };
@@ -42,13 +43,19 @@ export const DateSelector = ({ selectedDate, onDateSelect }: DateSelectorProps) 
         className="w-auto p-0" 
         align="start"
       >
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          onSelect={handleSelect}
-          initialFocus
-          locale={de}
-        />
+        <div 
+          className="p-0"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleSelect}
+            initialFocus
+            locale={de}
+          />
+        </div>
       </PopoverContent>
     </Popover>
   );
