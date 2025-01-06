@@ -74,7 +74,6 @@ export const CreateTeamForm = ({
         />
       </div>
       <div className="space-y-2">
-        <Label>Team Foto</Label>
         <TeamLogoUpload
           logoPreview={logoPreview}
           onLogoChange={handleLogoChange}

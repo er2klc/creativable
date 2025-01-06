@@ -16,13 +16,15 @@ interface TeamListProps {
   onDelete: (teamId: string) => Promise<void>;
   onLeave: (teamId: string) => Promise<void>;
   isLoading?: boolean;
+  onUpdateOrder?: (teamId: string, direction: 'up' | 'down') => Promise<void>;
 }
 
 export const TeamList = ({ 
   teams,
   onDelete,
   onLeave,
-  isLoading
+  isLoading,
+  onUpdateOrder
 }: TeamListProps) => {
   const [copyingJoinCode, setCopyingJoinCode] = useState(false);
   const { toast } = useToast();

@@ -1,64 +1,51 @@
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Upload } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Image as ImageIcon, X } from "lucide-react";
 
 export interface TeamLogoUploadProps {
-  logoPreview: string | null;
-  onLogoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onLogoRemove: () => void;
+  logoPreview?: string | null;
+  currentLogoUrl?: string | null;
+  onLogoChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onLogoRemove?: () => void;
 }
 
 export const TeamLogoUpload = ({
   logoPreview,
+  currentLogoUrl,
   onLogoChange,
-  onLogoRemove,
+  onLogoRemove
 }: TeamLogoUploadProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
+      <Label>Team Foto</Label>
       <div className="flex items-center gap-4">
-        <Input
-          type="file"
-          accept="image/*"
-          onChange={onLogoChange}
-          className="hidden"
-          id="logo-upload"
-        />
-        <label
-          htmlFor="logo-upload"
-          className="flex-1"
-        >
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            asChild
-          >
-            <span>
-              <Upload className="h-5 w-5 mr-2" />
-              Team Foto auswählen
-            </span>
-          </Button>
-        </label>
-        {logoPreview && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onLogoRemove}
-            className="px-3"
-          >
-            <Trash2 className="h-5 w-5" />
-          </Button>
+        {(logoPreview || currentLogoUrl) && (
+          <div className="relative w-24 h-24">
+            <img
+              src={logoPreview || currentLogoUrl || ''}
+              alt="Logo preview"
+              className="w-full h-full object-cover rounded-lg"
+            />
+            {onLogoRemove && (
+              <button
+                onClick={onLogoRemove}
+                className="absolute -top-2 -right-2 p-1 bg-background rounded-full shadow-sm hover:bg-muted"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         )}
-      </div>
-      {logoPreview && (
-        <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-          <img
-            src={logoPreview}
-            alt="Preview"
-            className="object-cover w-full h-full"
+        <div className="flex-1">
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={onLogoChange}
+            className="cursor-pointer"
           />
         </div>
-      )}
+      </div>
     </div>
   );
 };

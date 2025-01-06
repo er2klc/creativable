@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { TeamAccessManager } from "./TeamAccessManager";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 interface EditPlatformDialogProps {
   platformId: string;
@@ -22,7 +23,6 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
-  // Fetch platform data
   const { data: platform } = useQuery({
     queryKey: ['platform', platformId],
     queryFn: async () => {
@@ -140,15 +140,12 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Beschreibung</Label>
-            <Input
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Beschreibung der Plattform"
+            <RichTextEditor
+              content={description}
+              onChange={setDescription}
             />
           </div>
           <TeamLogoUpload
-            teamId={platformId}
             currentLogoUrl={imageUrl}
             onLogoChange={(e) => {
               const file = e.target.files?.[0];
