@@ -32,6 +32,8 @@ export const TeamEventForm = ({
     initialSelectedDate
   });
 
+  console.log('Form initialization:', { eventToEdit, initialSelectedDate, selectedDate, endDate });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -64,6 +66,8 @@ export const TeamEventForm = ({
       let eventDate = startOfDay(selectedDate);
       let eventEndDate = values.is_multi_day ? endDate : selectedDate;
 
+      console.log('Processing dates:', { eventDate, eventEndDate, isMultiDay: values.is_multi_day });
+
       if (!values.is_multi_day && values.start_time) {
         const [hours, minutes] = values.start_time.split(":");
         eventDate = new Date(selectedDate);
@@ -93,11 +97,16 @@ export const TeamEventForm = ({
       console.log('Saving event with data:', eventData);
 
       if (eventToEdit) {
+        console.log('Updating existing event:', eventToEdit.id);
         const { error } = await supabase
           .from("team_calendar_events")
           .update(eventData)
           .eq("id", eventToEdit.id);
-        if (error) throw error;
+        
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
       } else {
         const { error } = await supabase
           .from("team_calendar_events")
@@ -105,7 +114,11 @@ export const TeamEventForm = ({
             ...eventData,
             created_by: user.id,
           });
-        if (error) throw error;
+        
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
       }
     },
     onSuccess: () => {

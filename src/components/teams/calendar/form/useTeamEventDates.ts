@@ -13,10 +13,14 @@ export const useTeamEventDates = ({
   const [endDate, setEndDate] = useState<Date | null>(null);
 
   useEffect(() => {
+    console.log('useTeamEventDates effect:', { eventToEdit, initialSelectedDate });
+    
     if (eventToEdit) {
       if (eventToEdit.is_multi_day) {
         const startTime = eventToEdit.start_time ? new Date(eventToEdit.start_time) : null;
         const endTime = eventToEdit.end_date ? new Date(eventToEdit.end_date) : null;
+        
+        console.log('Setting multi-day event dates:', { startTime, endTime });
         
         if (startTime) {
           setSelectedDate(startTime);
@@ -27,12 +31,13 @@ export const useTeamEventDates = ({
         }
       } else {
         const startTime = eventToEdit.start_time ? new Date(eventToEdit.start_time) : null;
+        console.log('Setting single-day event date:', startTime);
         if (startTime) {
           setSelectedDate(startTime);
         }
       }
     } else if (initialSelectedDate) {
-      // Ensure we create a new Date object
+      console.log('Setting initial date:', initialSelectedDate);
       const newDate = new Date(initialSelectedDate);
       newDate.setHours(9, 0, 0, 0);
       setSelectedDate(newDate);
@@ -40,6 +45,7 @@ export const useTeamEventDates = ({
   }, [eventToEdit, initialSelectedDate]);
 
   const handleDateSelect = (date: Date | null) => {
+    console.log('handleDateSelect called with:', date);
     if (date) {
       const newDate = new Date(date);
       
@@ -56,6 +62,7 @@ export const useTeamEventDates = ({
   };
 
   const handleEndDateSelect = (date: Date | null) => {
+    console.log('handleEndDateSelect called with:', date);
     if (date) {
       const newDate = new Date(date);
       
