@@ -20,7 +20,7 @@ import {
 import { format } from "date-fns";
 
 // Debugging-Log hinzufügen
-console.log("AppointmentItem.tsx version 1.0 geladen");
+console.log("AppointmentItem.tsx version 1.1 geladen");
 
 interface AppointmentItemProps {
   appointment: any;
