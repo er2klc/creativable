@@ -100,10 +100,11 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(23, 59, 59, 999);
 
-    // Include all days within the event range
+    // Check if the current date is within the range
     return isWithinInterval(date, { start: startDate, end: endDate });
   });
 
+  // Combine regular and team appointments
   return [...regularAppointments, ...teamEvents];
 };
 
