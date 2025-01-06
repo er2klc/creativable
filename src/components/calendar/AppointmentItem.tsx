@@ -62,13 +62,16 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
     }
   };
 
+  const isMultiDayEvent = appointment.is_multi_day && appointment.end_date;
+
   return (
     <div
       ref={setNodeRef}
       style={{
         ...style,
         backgroundColor: appointment.color || "#FEF7CD",
-        cursor: isDraggable ? 'pointer' : 'default'
+        cursor: isDraggable ? 'pointer' : 'default',
+        zIndex: isMultiDayEvent ? 0 : 1, // Multi-day events appear behind other events
       }}
       {...(isDraggable ? { ...listeners, ...attributes } : {})}
       className={cn(
@@ -77,7 +80,8 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         appointment.isRecurring && "border-l-4 border-primary",
         appointment.isTeamEvent && "border border-gray-200",
         !appointment.isTeamEvent && "text-black",
-        appointment.completed && "bg-opacity-50"
+        appointment.completed && "bg-opacity-50",
+        isMultiDayEvent && "absolute inset-x-0 mx-2"
       )}
       onClick={(e) => {
         if (!appointment.isTeamEvent) {

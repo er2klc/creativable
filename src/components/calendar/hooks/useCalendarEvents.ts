@@ -88,79 +88,58 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
   });
 
   const getDayAppointments = (date: Date): Appointment[] => {
-    const allAppointments = [...appointments].map(appointment => ({
+    // Handle regular appointments (non-team events)
+    const regularAppointments = appointments.filter(appointment => {
+      const appointmentDate = new Date(appointment.due_date);
+      return isSameDay(appointmentDate, date);
+    }).map(appointment => ({
       ...appointment,
       isTeamEvent: false,
       lead_id: appointment.lead_id || '',
-    })) as Appointment[];
+    }));
 
-    if (showTeamEvents) {
-      const processedEvents = new Set<string>();
-      
-      teamData.events.forEach(event => {
-        const startDate = new Date(event.start_time);
-        const eventDayOfWeek = getDay(startDate);
-        
-        // Handle multi-day events
-        if (event.is_multi_day && event.end_date) {
-          const endDate = new Date(event.end_date);
-          if (isWithinInterval(date, { start: startDate, end: endDate })) {
-            allAppointments.push({
-              ...event,
-              isTeamEvent: true,
-              lead_id: event.lead_id || '',
-            });
-          }
-          return;
-        }
-        
-        // Handle recurring events
-        if (event.recurring_pattern !== 'none') {
-          let currentDate = startDate;
-          
-          while (currentDate <= date) {
-            const eventKey = `${event.id}-${format(currentDate, 'yyyy-MM-dd')}`;
-            
-            if (!processedEvents.has(eventKey)) {
-              if (event.recurring_pattern === 'weekly' && getDay(currentDate) === eventDayOfWeek) {
-                if (isSameDay(currentDate, date)) {
-                  allAppointments.push({
-                    ...event,
-                    start_time: format(currentDate, "yyyy-MM-dd'T'HH:mm:ss"),
-                    isTeamEvent: true,
-                    lead_id: event.lead_id || '',
-                  });
-                }
-                processedEvents.add(eventKey);
-              } else if (event.recurring_pattern === 'monthly' && currentDate.getDate() === startDate.getDate()) {
-                if (isSameDay(currentDate, date)) {
-                  allAppointments.push({
-                    ...event,
-                    start_time: format(currentDate, "yyyy-MM-dd'T'HH:mm:ss"),
-                    isTeamEvent: true,
-                    lead_id: event.lead_id || '',
-                  });
-                }
-                processedEvents.add(eventKey);
-              }
-            }
-            
-            currentDate = event.recurring_pattern === 'weekly' 
-              ? addWeeks(currentDate, 1)
-              : addMonths(currentDate, 1);
-          }
-        } else if (isSameDay(startDate, date)) {
-          // Single day event
-          allAppointments.push({
-            ...event,
-            isTeamEvent: true,
-            lead_id: event.lead_id || '',
-          });
-        }
-      });
+    if (!showTeamEvents) {
+      return regularAppointments;
     }
-    
-    return allAppointments;
+
+    // Handle team events
+    const teamEvents = teamData.events.filter(event => {
+      const startDate = new Date(event.start_time);
+      const endDate = event.is_multi_day ? new Date(event.end_date || event.start_time) : new Date(event.start_time);
+
+      // For multi-day events, check if the current date falls within the event period
+      if (event.is_multi_day) {
+        return isWithinInterval(date, { start: startDate, end: endDate });
+      }
+
+      // For recurring events
+      if (event.recurring_pattern !== 'none') {
+        const eventDayOfWeek = getDay(startDate);
+        let currentDate = startDate;
+        
+        while (currentDate <= date) {
+          if (event.recurring_pattern === 'weekly' && getDay(currentDate) === eventDayOfWeek) {
+            if (isSameDay(currentDate, date)) {
+              return true;
+            }
+          } else if (event.recurring_pattern === 'monthly' && currentDate.getDate() === startDate.getDate()) {
+            if (isSameDay(currentDate, date)) {
+              return true;
+            }
+          }
+          
+          currentDate = event.recurring_pattern === 'weekly' 
+            ? addWeeks(currentDate, 1)
+            : addMonths(currentDate, 1);
+        }
+        return false;
+      }
+
+      // For single-day events
+      return isSameDay(startDate, date);
+    });
+
+    return [...regularAppointments, ...teamEvents];
   };
 
   return {
