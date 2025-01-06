@@ -28,14 +28,10 @@ export const TeamEventForm = ({
 }: TeamEventFormProps) => {
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
 
   useEffect(() => {
     setSelectedDate(initialSelectedDate);
-    if (eventToEdit?.end_date) {
-      setEndDate(new Date(eventToEdit.end_date));
-    }
-  }, [initialSelectedDate, eventToEdit]);
+  }, [initialSelectedDate]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,23 +52,17 @@ export const TeamEventForm = ({
     },
   });
 
-  const isMultiDay = form.watch("is_multi_day");
-
   const createEventMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
       if (!selectedDate) {
         throw new Error("Bitte wähle ein Datum aus");
       }
 
-      if (values.is_multi_day && !endDate) {
-        throw new Error("Bitte wähle ein Enddatum aus");
-      }
-
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
       let eventDate = startOfDay(selectedDate);
-      let eventEndDate = values.is_multi_day ? endDate : null;
+      let endDate = null;
 
       // Handle time setting based on whether it's a multi-day event
       if (!values.is_multi_day && values.start_time) {
@@ -82,8 +72,8 @@ export const TeamEventForm = ({
 
       if (values.end_time && !values.is_multi_day) {
         const [endHours, endMinutes] = values.end_time.split(":");
-        eventEndDate = new Date(selectedDate);
-        eventEndDate.setHours(parseInt(endHours), parseInt(endMinutes));
+        endDate = new Date(selectedDate);
+        endDate.setHours(parseInt(endHours), parseInt(endMinutes));
       }
 
       const eventData = {
@@ -91,8 +81,7 @@ export const TeamEventForm = ({
         title: values.title,
         description: values.description,
         start_time: eventDate.toISOString(),
-        end_time: !values.is_multi_day ? eventEndDate?.toISOString() : null,
-        end_date: values.is_multi_day ? eventEndDate?.toISOString() : null,
+        end_time: endDate?.toISOString() || null,
         color: values.color,
         is_team_event: values.is_team_event,
         recurring_pattern: values.recurring_pattern,
@@ -125,7 +114,7 @@ export const TeamEventForm = ({
     },
     onError: (error) => {
       console.error("Error saving event:", error);
-      if (error instanceof Error) {
+      if (error instanceof Error && error.message === "Bitte wähle ein Datum aus") {
         toast.error(error.message);
       } else {
         toast.error("Fehler beim Speichern des Termins");
@@ -138,41 +127,15 @@ export const TeamEventForm = ({
     setSelectedDate(date);
   };
 
-  const handleEndDateSelect = (date: Date | null) => {
-    console.log("End date selected in team event form:", date);
-    setEndDate(date);
-  };
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit((values) => createEventMutation.mutate(values))} className="space-y-4">
         <div className="space-y-2">
-          {isMultiDay ? (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <FormLabel>Startdatum</FormLabel>
-                <DateSelector 
-                  selectedDate={selectedDate}
-                  onDateSelect={handleDateSelect}
-                />
-              </div>
-              <div>
-                <FormLabel>Enddatum</FormLabel>
-                <DateSelector 
-                  selectedDate={endDate}
-                  onDateSelect={handleEndDateSelect}
-                />
-              </div>
-            </div>
-          ) : (
-            <>
-              <FormLabel>Datum</FormLabel>
-              <DateSelector 
-                selectedDate={selectedDate}
-                onDateSelect={handleDateSelect}
-              />
-            </>
-          )}
+          <FormLabel>Datum</FormLabel>
+          <DateSelector 
+            selectedDate={selectedDate}
+            onDateSelect={handleDateSelect}
+          />
         </div>
 
         <TeamEventFormFields form={form} />
