@@ -25,9 +25,7 @@ export const NewTeamEventDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {eventToEdit ? "Termin bearbeiten" : "Neuer Termin"} am{" "}
-            {initialSelectedDate &&
-              format(initialSelectedDate, "dd. MMMM yyyy", { locale: de })}
+            {eventToEdit ? "Termin bearbeiten" : "Neuer Termin"}
           </DialogTitle>
         </DialogHeader>
 

@@ -3,16 +3,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormLabel } from "@/components/ui/form";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { CalendarIcon } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { de } from "date-fns/locale";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TeamEventFormFields, formSchema } from "./form/TeamEventFormFields";
+import { DateSelector } from "@/components/calendar/appointment-dialog/DateSelector";
 import * as z from 'zod';
 
 interface TeamEventFormProps {
@@ -31,14 +29,11 @@ export const TeamEventForm = ({
   onDisableInstance
 }: TeamEventFormProps) => {
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
-  // Update selectedDate when initialSelectedDate changes
   useEffect(() => {
-    if (initialSelectedDate) {
-      setSelectedDate(initialSelectedDate);
-    }
+    setSelectedDate(initialSelectedDate);
   }, [initialSelectedDate]);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -124,48 +119,20 @@ export const TeamEventForm = ({
     },
   });
 
+  const handleDateSelect = (date: Date | null) => {
+    console.log("Date selected in team event form:", date);
+    setSelectedDate(date);
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit((values) => createEventMutation.mutate(values))} className="space-y-4">
         <div className="space-y-2">
           <FormLabel>Datum</FormLabel>
-          <Popover 
-            open={isCalendarOpen}
-            onOpenChange={setIsCalendarOpen}
-          >
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !selectedDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {selectedDate ? (
-                  format(selectedDate, "dd. MMMM yyyy", { locale: de })
-                ) : (
-                  <span>Datum wählen</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent 
-              className="w-auto p-0" 
-              align="start"
-            >
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => {
-                  if (date) {
-                    setSelectedDate(date);
-                    setIsCalendarOpen(false);
-                  }
-                }}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <DateSelector 
+            selectedDate={selectedDate}
+            onDateSelect={handleDateSelect}
+          />
         </div>
 
         <TeamEventFormFields form={form} />
