@@ -47,17 +47,17 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
   const getEventIcon = () => {
     if (appointment.isTeamEvent) {
       if (isMultiDayEvent) {
-        return <Rocket className="h-4 w-4" />;
+        return <Rocket className="h-4 w-4 text-black" />;
       }
       if (appointment.is_admin_only) {
-        return <Crown className="h-4 w-4" />;
+        return <Crown className="h-4 w-4 text-black" />;
       }
       return <Flame className="h-4 w-4 text-orange-500" />;
     }
     if (appointment.isRecurring) {
       return <Video className="h-4 w-4 text-primary" />;
     }
-    return getMeetingTypeIcon(appointment.meeting_type) || null;
+    return getMeetingTypeIcon(appointment.meeting_type);
   };
 
   return (
