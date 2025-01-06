@@ -141,6 +141,7 @@ export const NewAppointmentDialog = ({
               <PopoverContent 
                 className="w-auto p-0" 
                 align="start"
+                sideOffset={4}
               >
                 <Calendar
                   mode="single"
