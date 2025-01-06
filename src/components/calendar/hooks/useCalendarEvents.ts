@@ -78,30 +78,35 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     },
   });
 
-  const getDayAppointments = (date: Date): Appointment[] => {
-    const regularAppointments = appointments.filter(appointment => {
-      const appointmentDate = new Date(appointment.due_date);
-      return isSameDay(appointmentDate, date);
-    });
+ const getDayAppointments = (date: Date): Appointment[] => {
+  // Handle regular appointments (non-team events)
+  const regularAppointments = appointments.filter((appointment) => {
+    const appointmentDate = new Date(appointment.due_date);
+    return isSameDay(appointmentDate, date);
+  });
 
-    if (!showTeamEvents) {
-      return regularAppointments;
-    }
+  if (!showTeamEvents) {
+    return regularAppointments;
+  }
 
-    const teamEvents = teamData.events.filter(event => {
-      const startDate = new Date(event.start_time);
-      const endDate = event.is_multi_day
-        ? new Date(event.end_date || event.start_time)
-        : startDate;
+  // Handle team events (multi-day and single-day)
+  const teamEvents = teamData.events.filter((event) => {
+    const startDate = new Date(event.start_time);
+    const endDate = event.is_multi_day
+      ? new Date(event.end_date || event.start_time)
+      : startDate;
 
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
+    // Normalize times for comparison
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
 
-      return isWithinInterval(date, { start: startDate, end: endDate });
-    });
+    // Include all days within the event range
+    return isWithinInterval(date, { start: startDate, end: endDate });
+  });
 
-    return [...regularAppointments, ...teamEvents];
-  };
+  return [...regularAppointments, ...teamEvents];
+};
+
 
   return {
     appointments,
