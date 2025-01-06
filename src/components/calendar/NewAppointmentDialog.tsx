@@ -141,12 +141,6 @@ export const NewAppointmentDialog = ({
               <PopoverContent 
                 className="w-auto p-0" 
                 align="start"
-                onPointerDownOutside={(e) => {
-                  e.preventDefault();
-                }}
-                onInteractOutside={(e) => {
-                  e.preventDefault();
-                }}
               >
                 <Calendar
                   mode="single"
@@ -154,6 +148,7 @@ export const NewAppointmentDialog = ({
                   onSelect={(date) => {
                     if (date) {
                       setSelectedDate(date);
+                      setIsCalendarOpen(false);
                     }
                   }}
                   initialFocus

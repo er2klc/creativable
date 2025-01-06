@@ -152,12 +152,6 @@ export const TeamEventForm = ({
             <PopoverContent 
               className="w-auto p-0" 
               align="start"
-              onPointerDownOutside={(e) => {
-                e.preventDefault();
-              }}
-              onInteractOutside={(e) => {
-                e.preventDefault();
-              }}
             >
               <Calendar
                 mode="single"
@@ -165,6 +159,7 @@ export const TeamEventForm = ({
                 onSelect={(date) => {
                   if (date) {
                     setSelectedDate(date);
+                    setIsCalendarOpen(false);
                   }
                 }}
                 initialFocus
