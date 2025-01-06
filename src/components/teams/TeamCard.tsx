@@ -27,11 +27,17 @@ export const TeamCard = ({
   const navigate = useNavigate();
   const user = useUser();
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (e: React.MouseEvent, isVideoArea: boolean) => {
     if ((e.target as HTMLElement).closest('button') || 
         (e.target as HTMLElement).closest('[role="dialog"]')) {
       return;
     }
+    
+    if (isVideoArea && team.video_url) {
+      window.open(team.video_url, '_blank');
+      return;
+    }
+    
     navigate(`/unity/team/${team.slug}`);
   };
 
@@ -39,12 +45,16 @@ export const TeamCard = ({
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group"
-      onClick={handleClick}
+      className="cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group w-full"
     >
       <div className="flex flex-col">
-        <TeamCardImage team={team} />
-        <div className="p-6 space-y-6">
+        <div onClick={(e) => handleClick(e, true)}>
+          <TeamCardImage team={team} />
+        </div>
+        <div 
+          className="p-6 space-y-6"
+          onClick={(e) => handleClick(e, false)}
+        >
           <TeamCardContent team={team} />
           <div className="flex justify-end">
             <TeamCardActions
