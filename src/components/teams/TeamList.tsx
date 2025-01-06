@@ -15,7 +15,6 @@ interface TeamListProps {
   teams: TeamWithStats[];
   onDelete: (teamId: string) => Promise<void>;
   onLeave: (teamId: string) => Promise<void>;
-  onUpdateOrder?: (teamId: string, direction: 'up' | 'down') => Promise<void>;
   isLoading?: boolean;
 }
 

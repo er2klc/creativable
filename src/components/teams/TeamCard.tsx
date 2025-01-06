@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
 import { TeamCardImage } from "./card/TeamCardImage";
 import { TeamCardContent } from "./card/TeamCardContent";
-import { TeamOrderButtons } from "./card/TeamOrderButtons";
 
 interface TeamCardProps {
   team: Tables<"teams"> & {
@@ -19,17 +18,13 @@ interface TeamCardProps {
   onDelete: (id: string) => void;
   onLeave: (id: string) => void;
   onCopyJoinCode: (code: string) => void;
-  onUpdateOrder?: (teamId: string, direction: 'up' | 'down') => void;
 }
 
 export const TeamCard = ({ 
   team, 
-  isFirst = false,
-  isLast = false,
   onDelete, 
   onLeave, 
-  onCopyJoinCode,
-  onUpdateOrder 
+  onCopyJoinCode 
 }: TeamCardProps) => {
   const navigate = useNavigate();
   const user = useUser();
@@ -46,7 +41,7 @@ export const TeamCard = ({
 
   return (
     <Card
-      className="p-6 cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group min-h-[200px]"
+      className="cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group min-h-[200px]"
       onClick={handleClick}
     >
       <div className="flex flex-col gap-4">
@@ -56,13 +51,6 @@ export const TeamCard = ({
             <TeamCardContent team={team} />
           </div>
           <div className="flex items-start gap-2">
-            {onUpdateOrder && isTeamOwner && (
-              <TeamOrderButtons
-                isFirst={isFirst}
-                isLast={isLast}
-                onUpdateOrder={(direction) => onUpdateOrder(team.id, direction)}
-              />
-            )}
             <TeamCardActions
               teamId={team.id}
               joinCode={team.join_code}
@@ -70,6 +58,7 @@ export const TeamCard = ({
               onLeave={() => onLeave(team.id)}
               onCopyJoinCode={onCopyJoinCode}
               isOwner={isTeamOwner}
+              team={team}
             />
           </div>
         </div>

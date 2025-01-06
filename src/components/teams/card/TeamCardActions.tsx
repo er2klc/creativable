@@ -1,7 +1,6 @@
 import { LogOut, Trash2, Copy, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
 import { EditTeamDialog } from "../EditTeamDialog";
 import { DeleteTeamDialog } from "./DeleteTeamDialog";
 import { type Tables } from "@/integrations/supabase/types";
@@ -25,7 +24,6 @@ export const TeamCardActions = ({
   onCopyJoinCode,
   team,
 }: TeamCardActionsProps) => {
-  const session = useSession();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   return (
