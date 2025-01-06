@@ -1,8 +1,7 @@
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Video, Phone, MapPin, Users, BarChart, RefreshCw, Check, X, Award, Flame } from "lucide-react";
+import { Clock, User, FileText, Infinity, Flame, Phone, MapPin, Video, Users, BarChart, RefreshCw, Check, X } from "lucide-react";
 import { format } from "date-fns";
-import { toast } from "sonner";
 
 interface AppointmentItemProps {
   appointment: any;
@@ -23,13 +22,9 @@ const getMeetingTypeIcon = (type: string) => {
 };
 
 export const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemProps) => {
-  const isMultiDayEvent = appointment.is_multi_day && appointment.end_date;
-  const shouldPreventDrag = appointment.isTeamEvent && isMultiDayEvent;
-
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: appointment.id,
     data: { ...appointment, type: "appointment" },
-    disabled: shouldPreventDrag
   });
 
   const style = transform
@@ -39,12 +34,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       }
     : undefined;
 
-  const handleClick = (e: React.MouseEvent) => {
-    if (shouldPreventDrag) {
-      toast.info("Mehrtägige Team-Events können nur durch Klicken bearbeitet werden");
-    }
-    onClick(e);
-  };
+  const isMultiDayEvent = appointment.is_multi_day && appointment.end_date;
 
   // Determine if current day is start, middle, or end day
   const currentDay = appointment.current_day || null;
@@ -59,9 +49,9 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
       style={{
         ...style,
         backgroundColor: appointment.color || "#FEF7CD",
-        cursor: shouldPreventDrag ? "default" : "pointer",
+        cursor: appointment.isTeamEvent ? "default" : "pointer",
       }}
-      {...(shouldPreventDrag ? {} : { ...listeners, ...attributes })}
+      {...(appointment.isTeamEvent ? {} : { ...listeners, ...attributes })}
       className={cn(
         "p-2 rounded hover:opacity-80 space-y-1",
         appointment.isRecurring && "border-l-4 border-primary",
@@ -69,15 +59,15 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         !appointment.isTeamEvent && "text-black",
         (appointment.completed || appointment.cancelled) && "opacity-50"
       )}
-      onClick={handleClick}
+      onClick={(e) => !appointment.isTeamEvent && onClick(e)}
     >
       <div className="flex items-center gap-1 text-xs">
         <div className="flex items-center gap-1 flex-1">
-          {appointment.isRecurring && <Video className="h-4 w-4 text-primary" />}
-          {appointment.isTeamEvent && <Award className="h-4 w-4 text-orange-500" />}
-          {isMultiDayEvent && <Flame className="h-4 w-4 text-orange-500" />}
-          {appointment.is_admin_only && <Award className="h-4 w-4 text-yellow-500" />}
-          {!appointment.isRecurring && !appointment.isTeamEvent && !isMultiDayEvent && !appointment.is_admin_only && getMeetingTypeIcon(appointment.meeting_type)}
+          {appointment.isTeamEvent ? (
+            <Flame className="h-4 w-4 text-orange-500" />
+          ) : (
+            getMeetingTypeIcon(appointment.meeting_type) || <Infinity className="h-4 w-4 text-primary" />
+          )}
           <span className="font-bold truncate">{appointment.title}</span>
         </div>
         {appointment.completed && <div className="text-green-500"><Check className="h-4 w-4" /></div>}
