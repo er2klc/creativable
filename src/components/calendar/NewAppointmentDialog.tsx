@@ -112,15 +112,15 @@ export const NewAppointmentDialog = ({
           <DialogTitle>
             {appointmentToEdit ? "Termin bearbeiten" : "Neuer Termin"}
           </DialogTitle>
-          <div className="mt-2">
+          <DialogDescription>
+            Fülle die folgenden Felder aus, um {appointmentToEdit ? "den Termin zu aktualisieren" : "einen neuen Termin zu erstellen"}.
+          </DialogDescription>
+          <div className="mt-4">
             <DateSelector 
               selectedDate={selectedDate} 
               onDateSelect={setSelectedDate}
             />
           </div>
-          <DialogDescription className="mt-2">
-            Fülle die folgenden Felder aus, um {appointmentToEdit ? "den Termin zu aktualisieren" : "einen neuen Termin zu erstellen"}.
-          </DialogDescription>
         </DialogHeader>
 
         <AppointmentForm 
