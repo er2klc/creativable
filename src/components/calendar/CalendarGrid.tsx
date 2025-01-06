@@ -1,4 +1,4 @@
-import { format, isSameMonth, isToday, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
+import { format, isSameMonth, isToday, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AppointmentItem } from "./AppointmentItem";
 import { DragOverlay, useDroppable } from "@dnd-kit/core";
@@ -43,6 +43,15 @@ export const CalendarGrid = ({
     const isCurrentOver = overDate === dateStr;
     const dayAppointments = getDayAppointments(date);
     
+    // Filter out multi-day events that have already been rendered
+    const filteredAppointments = dayAppointments.filter(appointment => {
+      if (!appointment.is_multi_day) return true;
+      
+      // For multi-day events, only render on the start date
+      const startDate = new Date(appointment.start_time || appointment.due_date);
+      return format(startDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+    });
+    
     return (
       <div
         ref={setNodeRef}
@@ -58,7 +67,7 @@ export const CalendarGrid = ({
       >
         {children}
         <div className="mt-1">
-          {dayAppointments?.map((appointment) => (
+          {filteredAppointments?.map((appointment) => (
             <AppointmentItem
               key={appointment.id}
               appointment={appointment}
