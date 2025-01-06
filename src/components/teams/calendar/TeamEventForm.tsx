@@ -2,21 +2,6 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Form
-
-Let's fix the syntax errors in the TeamEventForm component. The main issues are:
-1. Missing closing tags
-2. Malformed JSX structure
-3. Incorrect nesting of components
-
-<lov-code>
-Let's fix the TeamEventForm component:
-
-<lov-write file_path="src/components/teams/calendar/TeamEventForm.tsx">
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
 import { Form, FormLabel } from "@/components/ui/form";
 import { format, isValid, startOfDay } from "date-fns";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
