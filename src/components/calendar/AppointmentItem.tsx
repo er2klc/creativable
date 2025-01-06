@@ -68,9 +68,11 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
 
   // Calculate width for multi-day events
   let width = '100%';
+  let gridColumnEnd = 'span 1';
+  
   if (isMultiDayEvent && endDate) {
-    const dayDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    width = `calc(${dayDiff * 100}% + ${(dayDiff - 1) * 0.25}rem)`;
+    const dayDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    gridColumnEnd = `span ${dayDiff}`;
   }
 
   return (
@@ -80,9 +82,9 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         ...style,
         backgroundColor: appointment.color || "#FEF7CD",
         cursor: isDraggable ? 'pointer' : 'default',
-        zIndex: isMultiDayEvent ? 0 : 1,
-        width: isMultiDayEvent ? width : undefined,
-        position: isMultiDayEvent ? 'absolute' : 'relative',
+        gridColumn: isMultiDayEvent ? gridColumnEnd : 'auto',
+        position: isMultiDayEvent ? 'relative' : 'relative',
+        zIndex: isMultiDayEvent ? 10 : 1,
       }}
       {...(isDraggable ? { ...listeners, ...attributes } : {})}
       className={cn(
@@ -91,8 +93,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         appointment.isRecurring && "border-l-4 border-primary",
         appointment.isTeamEvent && "border border-gray-200",
         !appointment.isTeamEvent && "text-black",
-        appointment.completed && "bg-opacity-50",
-        isMultiDayEvent && "absolute inset-x-0 mx-2"
+        appointment.completed && "bg-opacity-50"
       )}
       onClick={(e) => {
         if (!appointment.isTeamEvent) {
