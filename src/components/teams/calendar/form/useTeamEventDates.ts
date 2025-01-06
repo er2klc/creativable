@@ -5,7 +5,10 @@ interface UseTeamEventDatesProps {
   initialSelectedDate: Date | null;
 }
 
-export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamEventDatesProps) => {
+export const useTeamEventDates = ({ 
+  eventToEdit,
+  initialSelectedDate
+}: UseTeamEventDatesProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
 
@@ -29,19 +32,21 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
         }
       }
     } else if (initialSelectedDate) {
-      setSelectedDate(initialSelectedDate);
+      // Ensure we create a new Date object
+      const newDate = new Date(initialSelectedDate);
+      newDate.setHours(9, 0, 0, 0);
+      setSelectedDate(newDate);
     }
   }, [eventToEdit, initialSelectedDate]);
 
   const handleDateSelect = (date: Date | null) => {
-    console.log("Handling date selection:", date);
     if (date) {
       const newDate = new Date(date);
       
       if (selectedDate) {
-        newDate.setHours(selectedDate.getHours(), selectedDate.getMinutes());
+        newDate.setHours(selectedDate.getHours(), selectedDate.getMinutes(), 0, 0);
       } else {
-        newDate.setHours(9, 0);
+        newDate.setHours(9, 0, 0, 0);
       }
       
       setSelectedDate(newDate);
@@ -55,9 +60,9 @@ export const useTeamEventDates = ({ eventToEdit, initialSelectedDate }: UseTeamE
       const newDate = new Date(date);
       
       if (endDate) {
-        newDate.setHours(endDate.getHours(), endDate.getMinutes());
+        newDate.setHours(endDate.getHours(), endDate.getMinutes(), 0, 0);
       } else {
-        newDate.setHours(18, 0);
+        newDate.setHours(18, 0, 0, 0);
       }
       
       setEndDate(newDate);

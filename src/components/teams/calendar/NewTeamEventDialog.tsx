@@ -20,6 +20,9 @@ export const NewTeamEventDialog = ({
   eventToEdit,
   onDisableInstance,
 }: NewTeamEventDialogProps) => {
+  // Ensure initialSelectedDate is a valid Date object
+  const selectedDate = initialSelectedDate ? new Date(initialSelectedDate) : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -31,7 +34,7 @@ export const NewTeamEventDialog = ({
 
         <TeamEventForm
           teamId={teamId}
-          selectedDate={initialSelectedDate}
+          selectedDate={selectedDate}
           eventToEdit={eventToEdit}
           onClose={() => onOpenChange(false)}
           onDisableInstance={onDisableInstance}
