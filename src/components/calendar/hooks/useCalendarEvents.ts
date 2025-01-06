@@ -104,55 +104,75 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
   });
 
   const getDayAppointments = (date: Date): Appointment[] => {
-    // Handle regular appointments (non-team events)
-    const regularAppointments = appointments.filter(appointment => {
-      const appointmentDate = new Date(appointment.due_date);
-      return isSameDay(appointmentDate, date);
-    });
+  // Handle regular appointments (non-team events)
+  const regularAppointments = appointments.filter(appointment => {
+    const appointmentDate = new Date(appointment.due_date);
+    return isSameDay(appointmentDate, date);
+  });
 
-    if (!showTeamEvents) {
-      return regularAppointments;
+  if (!showTeamEvents) {
+    return regularAppointments;
+  }
+
+  // Handle team events
+  const teamEvents = teamData.events.filter(event => {
+    const startDate = new Date(event.start_time);
+    const endDate = event.is_multi_day
+      ? new Date(event.end_date || event.start_time)
+      : startDate;
+
+    // Normalize start and end times to ensure consistent comparison
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    // For multi-day events, check if the current date falls within the event period
+    if (event.is_multi_day) {
+      const isWithin = isWithinInterval(date, { start: startDate, end: endDate });
+      console.log("Multi-day event check:", {
+        date,
+        startDate,
+        endDate,
+        isWithin,
+      });
+      return isWithin;
     }
 
-    // Handle team events
-    const teamEvents = teamData.events.filter(event => {
-      const startDate = new Date(event.start_time);
-      const endDate = event.is_multi_day ? new Date(event.end_date || event.start_time) : new Date(event.start_time);
+    // For recurring events
+    if (event.recurring_pattern !== "none") {
+      const eventDayOfWeek = getDay(startDate);
+      let currentDate = startDate;
 
-      // For multi-day events, check if the current date falls within the event period
-      if (event.is_multi_day) {
-        return isWithinInterval(date, { start: startDate, end: endDate });
-      }
-
-      // For recurring events
-      if (event.recurring_pattern !== 'none') {
-        const eventDayOfWeek = getDay(startDate);
-        let currentDate = startDate;
-        
-        while (currentDate <= date) {
-          if (event.recurring_pattern === 'weekly' && getDay(currentDate) === eventDayOfWeek) {
-            if (isSameDay(currentDate, date)) {
-              return true;
-            }
-          } else if (event.recurring_pattern === 'monthly' && currentDate.getDate() === startDate.getDate()) {
-            if (isSameDay(currentDate, date)) {
-              return true;
-            }
+      while (currentDate <= date) {
+        if (
+          event.recurring_pattern === "weekly" &&
+          getDay(currentDate) === eventDayOfWeek
+        ) {
+          if (isSameDay(currentDate, date)) {
+            return true;
           }
-          
-          currentDate = event.recurring_pattern === 'weekly' 
+        } else if (
+          event.recurring_pattern === "monthly" &&
+          currentDate.getDate() === startDate.getDate()
+        ) {
+          if (isSameDay(currentDate, date)) {
+            return true;
+          }
+        }
+
+        currentDate =
+          event.recurring_pattern === "weekly"
             ? addWeeks(currentDate, 1)
             : addMonths(currentDate, 1);
-        }
-        return false;
       }
+      return false;
+    }
 
-      // For single-day events
-      return isSameDay(startDate, date);
-    });
+    // For single-day events
+    return isSameDay(startDate, date);
+  });
 
-    return [...regularAppointments, ...teamEvents];
-  };
+  return [...regularAppointments, ...teamEvents];
+};
 
   return {
     appointments,
