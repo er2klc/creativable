@@ -1,9 +1,6 @@
-import { useState } from "react";
-import {
-  format,
-  isSameDay,
-  isWithinInterval,
-} from "date-fns";
+// src/components/calendar/hooks/useCalendarEvents.ts
+
+import { format, isSameDay, isWithinInterval } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamEvent, Appointment } from "../types/calendar";
@@ -12,13 +9,15 @@ export const useCalendarEvents = (
   currentDate: Date,
   showTeamEvents: boolean
 ) => {
-  const { data: appointments = [] } = useQuery({
+  // Persönliche Termine abrufen
+  const { data: appointments = [], isLoading: isLoadingAppointments } = useQuery({
     queryKey: ["appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return [];
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error("Error fetching user:", authError);
+        return [];
+      }
 
       const { data, error } = await supabase
         .from("tasks")
@@ -31,30 +30,35 @@ export const useCalendarEvents = (
         return [];
       }
 
-      return data.map(appointment => ({
+      return data.map((appointment: any) => ({
         ...appointment,
         isTeamEvent: false,
         start_time: appointment.due_date,
         end_time: appointment.due_date,
         is_multi_day: false,
-      })) || [];
+      }));
     },
   });
 
-  const { data: teamData = { events: [] } } = useQuery({
+  // Team-Termine abrufen
+  const { data: teamData = { events: [] }, isLoading: isLoadingTeamEvents } = useQuery({
     queryKey: ["team-appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return { events: [] };
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error("Error fetching user:", authError);
+        return { events: [] };
+      }
 
-      const { data: teamMemberships } = await supabase
+      const { data: teamMemberships, error: membershipError } = await supabase
         .from("team_members")
         .select("team_id, role")
         .eq("user_id", user.id);
 
-      if (!teamMemberships?.length) return { events: [] };
+      if (membershipError || !teamMemberships?.length) {
+        console.error("Error fetching team memberships:", membershipError);
+        return { events: [] };
+      }
 
       const teamIds = teamMemberships.map(tm => tm.team_id);
       const isAdmin = teamMemberships.some(tm =>
@@ -79,10 +83,10 @@ export const useCalendarEvents = (
         return { events: [] };
       }
 
-      console.log("Fetched team events:", events);
+      console.log("Abgerufene Team-Termine:", events);
 
       return {
-        events: events.map(event => ({
+        events: events.map((event: any) => ({
           ...event,
           id: event.id,
           isTeamEvent: true,
@@ -95,6 +99,7 @@ export const useCalendarEvents = (
         })) as TeamEvent[],
       };
     },
+    enabled: showTeamEvents, // Nur ausführen, wenn Team-Termine angezeigt werden sollen
   });
 
   const getDayAppointments = (date: Date): Appointment[] => {
@@ -122,7 +127,7 @@ export const useCalendarEvents = (
       return isWithinInterval(date, { start: startDate, end: endDate });
     });
 
-    console.log(`Appointments for ${format(date, "yyyy-MM-dd")}:`, [
+    console.log(`Termine für ${format(date, "yyyy-MM-dd")}:`, [
       ...regularAppointments,
       ...teamEvents,
     ]);
@@ -134,5 +139,7 @@ export const useCalendarEvents = (
     appointments,
     teamAppointments: teamData.events,
     getDayAppointments,
+    isLoadingAppointments,
+    isLoadingTeamEvents,
   };
 };
