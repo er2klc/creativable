@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format, addDays, addWeeks, addMonths, isSameDay, getDay, isWithinInterval } from "date-fns";
+import { format, addDays, addWeeks, addMonths, isSameDay, isWithinInterval } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamEvent, Appointment } from "../types/calendar";
@@ -65,12 +65,14 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       return {
         events: events.map(event => ({
           ...event,
+          id: event.id,
           isTeamEvent: true,
           start_time: event.start_time,
           end_time: event.end_time || event.start_time,
           color: `${event.color || "#FEF7CD"}30`,
-          is_multi_day: !!event.end_date,
-        })),
+          is_multi_day: event.is_multi_day,
+          isRecurring: event.recurring_pattern !== 'none',
+        })) as TeamEvent[],
       };
     },
   });

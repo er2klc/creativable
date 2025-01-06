@@ -77,7 +77,7 @@ export const CalendarGrid = ({
 
   return (
     <div className="grid grid-cols-7 gap-px bg-muted">
-      {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day) => (
+      {["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"].map((day) => (
         <div
           key={day}
           className="bg-background p-2 text-center text-sm font-medium"
