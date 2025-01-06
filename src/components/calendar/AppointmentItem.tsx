@@ -72,16 +72,17 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         backgroundColor: appointment.color || "#FEF7CD",
         cursor: isDraggable ? 'pointer' : 'default',
         zIndex: isMultiDayEvent ? 0 : 1, // Multi-day events appear behind other events
+        position: isMultiDayEvent ? 'relative' : 'static', // Changed from absolute to relative
       }}
       {...(isDraggable ? { ...listeners, ...attributes } : {})}
       className={cn(
-        "p-2 mb-1 rounded hover:opacity-80 relative",
+        "p-2 mb-1 rounded hover:opacity-80",
         "transition-colors duration-200 space-y-1",
         appointment.isRecurring && "border-l-4 border-primary",
         appointment.isTeamEvent && "border border-gray-200",
         !appointment.isTeamEvent && "text-black",
         appointment.completed && "bg-opacity-50",
-        isMultiDayEvent && "absolute inset-x-0 mx-2"
+        isMultiDayEvent && "mx-2" // Add horizontal margin instead of full width
       )}
       onClick={(e) => {
         if (!appointment.isTeamEvent) {
