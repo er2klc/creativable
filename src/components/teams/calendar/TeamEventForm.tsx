@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { format, startOfDay, isValid } from "date-fns";
+import { format, startOfDay, isValid, parseISO } from "date-fns";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -31,14 +31,17 @@ export const TeamEventForm = ({
 
   useEffect(() => {
     if (eventToEdit?.end_date) {
-      setEndDate(new Date(eventToEdit.end_date));
+      const parsedEndDate = parseISO(eventToEdit.end_date);
+      if (isValid(parsedEndDate)) {
+        setEndDate(parsedEndDate);
+      }
     }
     if (eventToEdit?.start_time) {
-      const startDate = new Date(eventToEdit.start_time);
+      const startDate = parseISO(eventToEdit.start_time);
       if (isValid(startDate)) {
         setSelectedDate(startDate);
       }
-    } else {
+    } else if (initialSelectedDate && isValid(initialSelectedDate)) {
       setSelectedDate(initialSelectedDate);
     }
   }, [initialSelectedDate, eventToEdit]);
@@ -49,10 +52,10 @@ export const TeamEventForm = ({
       title: eventToEdit?.title || "",
       description: eventToEdit?.description || "",
       start_time: eventToEdit?.start_time && !eventToEdit?.is_multi_day 
-        ? format(new Date(eventToEdit.start_time), "HH:mm")
+        ? format(parseISO(eventToEdit.start_time), "HH:mm")
         : "09:00",
       end_time: eventToEdit?.end_time && !eventToEdit?.is_multi_day
-        ? format(new Date(eventToEdit.end_time), "HH:mm")
+        ? format(parseISO(eventToEdit.end_time), "HH:mm")
         : "",
       end_date: eventToEdit?.end_date || null,
       color: eventToEdit?.color || "#FEF7CD",
