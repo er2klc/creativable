@@ -17,9 +17,10 @@ interface EditTeamDialogProps {
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onTeamUpdated: () => Promise<void>;
 }
 
-export const EditTeamDialog = ({ team, open, onOpenChange }: EditTeamDialogProps) => {
+export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: EditTeamDialogProps) => {
   const [name, setName] = useState(team.name);
   const [description, setDescription] = useState(team.description || "");
   const [imageUrl, setImageUrl] = useState<string | null>(team.logo_url || null);
@@ -39,6 +40,7 @@ export const EditTeamDialog = ({ team, open, onOpenChange }: EditTeamDialogProps
 
       toast.success("Team erfolgreich aktualisiert");
       onOpenChange(false);
+      await onTeamUpdated();
     } catch (error) {
       console.error('Error updating team:', error);
       toast.error("Fehler beim Aktualisieren des Teams");
