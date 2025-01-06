@@ -22,20 +22,11 @@ const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemPr
       }
     : undefined;
 
-  const formatSafeDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return isValid(date) ? format(date, "HH:mm") : null;
-  };
-
-  const timeString = appointment.start_time
-    ? formatSafeDate(appointment.start_time)
-    : formatSafeDate(appointment.due_date);
-
   const isMultiDayEvent = appointment.is_multi_day && appointment.end_date;
 
-  // Zusätzliche Logik für mehrtägige Events
-  const currentDay = appointment.current_day || null; // Tag im Multi-Day-Zeitraum
-  const isStartDay = currentDay === format(new Date(appointment.start_time), "yyyy-MM-dd");
+  // Feststellen, ob der aktuelle Tag der Start-, Zwischen- oder Endtag ist
+  const currentDay = appointment.current_day || null;
+  const isStartDay = currentDay === format(new Date(appointment.start_date), "yyyy-MM-dd");
   const isEndDay = currentDay === format(new Date(appointment.end_date), "yyyy-MM-dd");
 
   return (
@@ -71,13 +62,7 @@ const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemPr
           {isEndDay && "Ende"}
         </div>
       )}
-
-      {!isMultiDayEvent && (
-        <div className="flex items-center gap-1 text-xs">
-          <Clock className="h-3 w-3" />
-          <span>{timeString}</span>
-        </div>
-      )}
     </div>
   );
 };
+
