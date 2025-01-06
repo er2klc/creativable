@@ -13,6 +13,8 @@ import { AppointmentForm } from "./appointment-dialog/AppointmentForm";
 import { useState, useEffect } from "react";
 import { DateSelector } from "./appointment-dialog/DateSelector";
 import { CompletionCheckbox } from "./appointment-dialog/CompletionCheckbox";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 
 interface NewAppointmentDialogProps {
   open: boolean;
@@ -110,6 +112,29 @@ export const NewAppointmentDialog = ({
     },
   });
 
+  const deleteAppointment = useMutation({
+    mutationFn: async () => {
+      if (!appointmentToEdit?.id) return;
+      
+      const { error } = await supabase
+        .from("tasks")
+        .delete()
+        .eq('id', appointmentToEdit.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast.success("Termin gelöscht");
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      toast.error("Der Termin konnte nicht gelöscht werden");
+      console.error("Error deleting appointment:", error);
+    },
+  });
+
   const handleDateSelect = (date: Date | null) => {
     console.log("Date selected in dialog:", date);
     setSelectedDate(date);
@@ -158,6 +183,17 @@ export const NewAppointmentDialog = ({
               />
             )}
           </div>
+          {appointmentToEdit && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => deleteAppointment.mutate()}
+              disabled={deleteAppointment.isPending}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Löschen
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

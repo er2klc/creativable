@@ -60,23 +60,6 @@ export const usePersonalCalendar = () => {
     setIsDialogOpen(true);
   };
 
-  const handleAppointmentDelete = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from("tasks")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-
-      await queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      toast.success("Termin wurde gelöscht");
-    } catch (error) {
-      console.error("Error deleting appointment:", error);
-      toast.error("Fehler beim Löschen des Termins");
-    }
-  };
-
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
   };
@@ -137,7 +120,6 @@ export const usePersonalCalendar = () => {
     appointments,
     handleDateClick,
     handleAppointmentClick,
-    handleAppointmentDelete,
     handleDragStart,
     handleDragOver,
     handleDragEnd,
