@@ -63,8 +63,18 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       const teamEvents: TeamEvent[] = events.map(event => ({
         id: `team-${event.id}`,
         title: event.title,
-        due_date: event.start_time,
+        description: event.description,
+        start_time: event.start_time,
+        end_time: event.end_time,
+        end_date: event.end_date || event.start_time,
         color: `${event.color || "#FEF7CD"}30`,
+        is_team_event: event.is_team_event,
+        is_admin_only: event.is_admin_only,
+        is_multi_day: event.is_multi_day,
+        recurring_pattern: event.recurring_pattern,
+        recurring_day_of_week: event.recurring_day_of_week,
+        created_by: event.created_by,
+        created_at: event.created_at,
         isTeamEvent: true,
         isAdminEvent: event.is_admin_only,
         isRecurring: event.recurring_pattern !== 'none',
@@ -72,13 +82,10 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
         completed: false,
         cancelled: false,
         leads: { name: event.teams?.name || 'Team Event' },
-        start_time: event.start_time,
-        end_time: event.end_time,
-        end_date: event.end_date || event.start_time,
-        is_multi_day: event.is_multi_day,
-        is_90_day_run: event.is_90_day_run,
         user_id: event.created_by,
-        lead_id: 'team-event' // Provide a default value for lead_id
+        lead_id: 'team-event',
+        due_date: event.start_time,
+        is_90_day_run: event.is_90_day_run
       }));
 
       const { data: runs = [], error: runsError } = await supabase
