@@ -1,15 +1,16 @@
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check, X, Flame } from "lucide-react";
+import { Clock, User, FileText, Infinity, Video, Phone, MapPin, BarChart, RefreshCw, Check, X, Flame, Trash2 } from "lucide-react";
 
 interface AppointmentItemProps {
   appointment: any;
   onClick: (e: React.MouseEvent) => void;
   isDragging?: boolean;
+  onDelete?: (id: string) => void;
 }
 
-export const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemProps) => {
+export const AppointmentItem = ({ appointment, onClick, isDragging, onDelete }: AppointmentItemProps) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: appointment.id,
     data: {
@@ -64,6 +65,13 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
 
   const isMultiDayEvent = appointment.is_multi_day && appointment.end_date;
 
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete(appointment.id);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -71,11 +79,11 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         ...style,
         backgroundColor: appointment.color || "#FEF7CD",
         cursor: isDraggable ? 'pointer' : 'default',
-        zIndex: isMultiDayEvent ? 0 : 1, // Multi-day events appear behind other events
+        zIndex: isMultiDayEvent ? 0 : 1,
       }}
       {...(isDraggable ? { ...listeners, ...attributes } : {})}
       className={cn(
-        "p-2 mb-1 rounded hover:opacity-80 relative",
+        "p-2 mb-1 rounded hover:opacity-80 relative group",
         "transition-colors duration-200 space-y-1",
         appointment.isRecurring && "border-l-4 border-primary",
         appointment.isTeamEvent && "border border-gray-200",
@@ -89,15 +97,26 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         }
       }}
     >
-      <div className="flex items-center gap-1 text-xs text-gray-600">
-        {appointment.isAdminEvent ? (
-          <Infinity className="h-4 w-4 text-primary" />
-        ) : appointment.isTeamEvent ? (
-          <Flame className="h-4 w-4 text-orange-500" />
-        ) : (
-          getMeetingTypeIcon()
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1 text-xs text-gray-600">
+          {appointment.isAdminEvent ? (
+            <Infinity className="h-4 w-4 text-primary" />
+          ) : appointment.isTeamEvent ? (
+            <Flame className="h-4 w-4 text-orange-500" />
+          ) : (
+            getMeetingTypeIcon()
+          )}
+          <span className="truncate font-bold">{appointment.title}</span>
+        </div>
+        {!appointment.isTeamEvent && onDelete && (
+          <button
+            onClick={handleDelete}
+            className="hidden group-hover:flex items-center justify-center h-5 w-5 rounded hover:bg-red-100 transition-colors"
+            aria-label="Delete appointment"
+          >
+            <Trash2 className="h-3 w-3 text-red-500" />
+          </button>
         )}
-        <span className="truncate font-bold">{appointment.title}</span>
       </div>
 
       {appointment.leads?.name && !appointment.isTeamEvent && (

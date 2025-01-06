@@ -10,6 +10,7 @@ interface CalendarGridProps {
   getDayAppointments: (date: Date) => Appointment[];
   onDateClick: (date: Date) => void;
   onAppointmentClick: (e: React.MouseEvent, appointment: Appointment) => void;
+  onAppointmentDelete?: (id: string) => void;
   activeId: string | null;
   overDate: string | null;
   draggedAppointment: Appointment | null;
@@ -20,6 +21,7 @@ export const CalendarGrid = ({
   getDayAppointments,
   onDateClick,
   onAppointmentClick,
+  onAppointmentDelete,
   activeId,
   overDate,
   draggedAppointment,
@@ -63,6 +65,7 @@ export const CalendarGrid = ({
               key={appointment.id}
               appointment={appointment}
               onClick={(e) => onAppointmentClick(e, appointment)}
+              onDelete={onAppointmentDelete}
               isDragging={activeId === appointment.id}
             />
           ))}
