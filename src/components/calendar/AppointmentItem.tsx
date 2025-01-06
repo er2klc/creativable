@@ -63,15 +63,6 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
   };
 
   const isMultiDayEvent = appointment.is_multi_day && appointment.end_date;
-  const startDate = new Date(appointment.start_time || appointment.due_date);
-  const endDate = appointment.end_date ? new Date(appointment.end_date) : null;
-
-  // Calculate width for multi-day events
-  let width = '100%';
-  if (isMultiDayEvent && endDate) {
-    const dayDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    width = `calc(${dayDiff * 100}% + ${(dayDiff - 1) * 0.25}rem)`;
-  }
 
   return (
     <div
@@ -80,8 +71,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         ...style,
         backgroundColor: appointment.color || "#FEF7CD",
         cursor: isDraggable ? 'pointer' : 'default',
-        zIndex: isMultiDayEvent ? 0 : 1,
-        width: isMultiDayEvent ? width : undefined,
+        zIndex: isMultiDayEvent ? 0 : 1, // Multi-day events appear behind other events
       }}
       {...(isDraggable ? { ...listeners, ...attributes } : {})}
       className={cn(
