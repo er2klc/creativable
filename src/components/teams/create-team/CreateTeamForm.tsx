@@ -59,10 +59,12 @@ export const CreateTeamForm = ({
       </div>
       <div className="space-y-2">
         <Label htmlFor="description">Beschreibung</Label>
-        <RichTextEditor
-          content={description}
-          onChange={setDescription}
-        />
+        <div className="max-h-[200px] overflow-y-auto">
+          <RichTextEditor
+            content={description}
+            onChange={setDescription}
+          />
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="videoUrl">Team Video URL (optional)</Label>

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
+import { TeamLogoUpload } from "./TeamLogoUpload";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 interface EditTeamDialogProps {
@@ -49,7 +49,7 @@ export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: Edit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Team bearbeiten</DialogTitle>
         </DialogHeader>
@@ -65,10 +65,12 @@ export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: Edit
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Beschreibung</Label>
-            <RichTextEditor
-              content={description}
-              onChange={setDescription}
-            />
+            <div className="max-h-[200px] overflow-y-auto">
+              <RichTextEditor
+                content={description}
+                onChange={setDescription}
+              />
+            </div>
           </div>
           <TeamLogoUpload
             currentLogoUrl={imageUrl}
