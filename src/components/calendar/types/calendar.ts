@@ -18,19 +18,13 @@ export interface TeamEvent {
   isTeamEvent: boolean;
   isAdminEvent: boolean;
   isRecurring: boolean;
-  meeting_type: string;
-  completed: boolean;
-  cancelled: boolean;
-  leads: { name: string };
-  user_id: string;
-  lead_id: string;
-  due_date: string;
 }
 
 export interface Appointment {
   id: string;
   title: string;
-  due_date: string;
+  start_time: string;
+  end_time: string;
   color: string;
   meeting_type: string;
   completed: boolean;
@@ -42,14 +36,5 @@ export interface Appointment {
   isTeamEvent: boolean;
   end_date?: string;
   is_multi_day?: boolean;
-  start_time?: string;
-}
-
-export interface AppointmentToEdit {
-  id: string;
-  leadId: string;
-  time: string;
-  title: string;
-  color: string;
-  meeting_type: string;
+  due_date?: string;
 }

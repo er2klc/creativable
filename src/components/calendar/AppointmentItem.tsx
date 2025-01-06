@@ -1,4 +1,3 @@
-import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import { Clock, User, FileText, Infinity, Flame } from "lucide-react";
@@ -9,7 +8,7 @@ interface AppointmentItemProps {
   isDragging?: boolean;
 }
 
-const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemProps) => {
+export const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemProps) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: appointment.id,
     data: { ...appointment, type: "appointment" },
@@ -26,7 +25,7 @@ const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemPr
 
   // Feststellen, ob der aktuelle Tag der Start-, Zwischen- oder Endtag ist
   const currentDay = appointment.current_day || null;
-  const isStartDay = currentDay === format(new Date(appointment.start_date), "yyyy-MM-dd");
+  const isStartDay = currentDay === format(new Date(appointment.start_time), "yyyy-MM-dd");
   const isEndDay = currentDay === format(new Date(appointment.end_date), "yyyy-MM-dd");
 
   return (
@@ -65,4 +64,3 @@ const AppointmentItem = ({ appointment, onClick, isDragging }: AppointmentItemPr
     </div>
   );
 };
-

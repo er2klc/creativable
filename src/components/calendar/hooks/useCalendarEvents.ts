@@ -25,7 +25,8 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       return data.map(appointment => ({
         ...appointment,
         isTeamEvent: false,
-        end_date: appointment.due_date, // Set end_date for single-day events
+        start_time: appointment.due_date,
+        end_time: appointment.due_date,
         is_multi_day: false,
       })) || [];
     },
@@ -63,16 +64,12 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
 
       return {
         events: events.map(event => ({
-          id: `team-${event.id}`,
-          title: event.title,
-          description: event.description,
+          ...event,
+          isTeamEvent: true,
           start_time: event.start_time,
-          end_time: event.end_time,
-          end_date: event.end_date || event.start_time,
+          end_time: event.end_time || event.start_time,
           color: `${event.color || "#FEF7CD"}30`,
-          is_team_event: true,
           is_multi_day: !!event.end_date,
-          recurring_pattern: event.recurring_pattern,
         })),
       };
     },
@@ -103,7 +100,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       return isWithinInterval(date, { start: startDate, end: endDate });
     });
 
-    return [...regularAppointments, ...teamEvents];
+    return [...regularAppointments, ...teamEvents] as Appointment[];
   };
 
   return {
