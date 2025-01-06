@@ -86,8 +86,6 @@ export const useCalendarEvents = (
         return { events: [] };
       }
 
-      console.log("Abgerufene Team-Termine:", events);
-
       return {
         events: events.map((event: any) => ({
           ...event,
@@ -129,11 +127,6 @@ export const useCalendarEvents = (
 
       return isWithinInterval(date, { start: startDate, end: endDate });
     });
-
-    console.log(`Termine für ${format(date, "yyyy-MM-dd")}:`, [
-      ...regularAppointments,
-      ...teamEvents,
-    ]);
 
     return [...regularAppointments, ...teamEvents] as Appointment[];
   };
