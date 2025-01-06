@@ -126,10 +126,7 @@ export const TeamEventForm = ({
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
-      console.log("Setting new date:", date);
       setSelectedDate(date);
-      // Only close the calendar after we've successfully set the date
-      setTimeout(() => setIsCalendarOpen(false), 100);
     }
   };
 
@@ -139,8 +136,14 @@ export const TeamEventForm = ({
         <div className="space-y-2">
           <FormLabel>Datum</FormLabel>
           <Popover 
-            open={isCalendarOpen} 
-            onOpenChange={setIsCalendarOpen}
+            open={isCalendarOpen}
+            onOpenChange={(open) => {
+              setIsCalendarOpen(open);
+              // Don't close the popover if we're selecting a date
+              if (!open && !selectedDate) {
+                setIsCalendarOpen(true);
+              }
+            }}
           >
             <PopoverTrigger asChild>
               <Button
@@ -149,7 +152,6 @@ export const TeamEventForm = ({
                   "w-full justify-start text-left font-normal",
                   !selectedDate && "text-muted-foreground"
                 )}
-                onClick={() => setIsCalendarOpen(true)}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {selectedDate ? (
