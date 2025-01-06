@@ -1,3 +1,5 @@
+// src/components/calendar/CalendarView.tsx
+
 import { useState } from "react";
 import { format, addMonths, subMonths } from "date-fns";
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
@@ -30,6 +32,8 @@ export const CalendarView = () => {
 
   const {
     getDayAppointments,
+    isLoadingAppointments,
+    isLoadingTeamEvents,
   } = useCalendarEvents(currentDate, showTeamEvents);
 
   const sensors = useSensors(
@@ -70,6 +74,11 @@ export const CalendarView = () => {
             />
           </div>
         </div>
+
+        {/* Anzeigen von Ladezuständen */}
+        {(isLoadingAppointments || isLoadingTeamEvents) && (
+          <div className="text-center text-gray-500">Lade Termine...</div>
+        )}
 
         <CalendarGrid
           currentDate={currentDate}
