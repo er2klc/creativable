@@ -43,7 +43,11 @@ export const DateSelector = ({ selectedDate, onDateSelect }: DateSelectorProps) 
           <Calendar
             mode="single"
             selected={selectedDate}
-            onSelect={onDateSelect}
+            onSelect={(date) => {
+              if (date) {
+                onDateSelect(date);
+              }
+            }}
             initialFocus
           />
         </div>
