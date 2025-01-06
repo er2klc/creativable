@@ -16,6 +16,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
   const [joinCode, setJoinCode] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -25,6 +26,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
   const resetState = () => {
     setName("");
     setDescription("");
+    setVideoUrl("");
     setJoinCode(null);
     setLogoFile(null);
     setLogoPreview(null);
@@ -75,6 +77,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
         .insert({
           name: name.trim(),
           description: description.trim() || null,
+          video_url: videoUrl.trim() || null,
           created_by: user.id,
           logo_url: logoUrl,
           slug: name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')
@@ -134,6 +137,8 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
               setName={setName}
               description={description}
               setDescription={setDescription}
+              videoUrl={videoUrl}
+              setVideoUrl={setVideoUrl}
               logoFile={logoFile}
               setLogoFile={setLogoFile}
               logoPreview={logoPreview}

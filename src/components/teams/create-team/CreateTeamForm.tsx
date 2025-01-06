@@ -8,6 +8,8 @@ interface CreateTeamFormProps {
   setName: (name: string) => void;
   description: string;
   setDescription: (description: string) => void;
+  videoUrl: string;
+  setVideoUrl: (url: string) => void;
   logoFile: File | null;
   setLogoFile: (file: File | null) => void;
   logoPreview: string | null;
@@ -19,6 +21,8 @@ export const CreateTeamForm = ({
   setName,
   description,
   setDescription,
+  videoUrl,
+  setVideoUrl,
   logoFile,
   setLogoFile,
   logoPreview,
@@ -30,7 +34,6 @@ export const CreateTeamForm = ({
 
     setLogoFile(file);
 
-    // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setLogoPreview(reader.result as string);
@@ -63,11 +66,23 @@ export const CreateTeamForm = ({
           placeholder="Beschreiben Sie Ihr Team (optional)"
         />
       </div>
-      <TeamLogoUpload
-        logoPreview={logoPreview}
-        onLogoChange={handleLogoChange}
-        onLogoRemove={handleLogoRemove}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="videoUrl">Team Video URL (optional)</Label>
+        <Input
+          id="videoUrl"
+          value={videoUrl}
+          onChange={(e) => setVideoUrl(e.target.value)}
+          placeholder="Fügen Sie eine Video-URL hinzu"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Team Foto</Label>
+        <TeamLogoUpload
+          logoPreview={logoPreview}
+          onLogoChange={handleLogoChange}
+          onLogoRemove={handleLogoRemove}
+        />
+      </div>
     </div>
   );
 };

@@ -23,7 +23,6 @@ export const TeamList = ({
   teams,
   onDelete,
   onLeave,
-  onUpdateOrder,
   isLoading
 }: TeamListProps) => {
   const [copyingJoinCode, setCopyingJoinCode] = useState(false);
@@ -77,17 +76,14 @@ export const TeamList = ({
   }
 
   return (
-    <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-      {teams.map((team, index) => (
+    <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+      {teams.map((team) => (
         <TeamCard
           key={team.id}
           team={team}
-          isFirst={index === 0}
-          isLast={index === teams.length - 1}
           onDelete={handleDelete}
           onLeave={handleLeave}
           onCopyJoinCode={handleCopyJoinCode}
-          onUpdateOrder={onUpdateOrder}
         />
       ))}
     </div>
