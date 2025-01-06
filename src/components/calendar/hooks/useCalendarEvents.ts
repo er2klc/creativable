@@ -40,13 +40,12 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
 
       const { data: teamMemberships } = await supabase
         .from("team_members")
-        .select("team_id, role")
+        .select("team_id")
         .eq("user_id", user.id);
 
       if (!teamMemberships?.length) return { events: [] };
 
       const teamIds = teamMemberships.map(tm => tm.team_id);
-      const isAdmin = teamMemberships.some(tm => ['admin', 'owner'].includes(tm.role));
 
       const { data: events = [], error: eventsError } = await supabase
         .from("team_calendar_events")
@@ -54,8 +53,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
           *,
           teams:team_id (name)
         `)
-        .in("team_id", teamIds)
-        .or(`is_admin_only.eq.false${isAdmin ? ',is_admin_only.eq.true' : ''}`);
+        .in("team_id", teamIds);
 
       if (eventsError) {
         console.error("Error fetching team events:", eventsError);
@@ -82,6 +80,8 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
   });
 
   const getDayAppointments = (date: Date): Appointment[] => {
+    if (!appointments) return [];
+    
     const regularAppointments = appointments.filter((appointment) => {
       const appointmentDate = new Date(appointment.due_date);
       appointmentDate.setHours(0, 0, 0, 0);
@@ -90,7 +90,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       return isSameDay(appointmentDate, currentDate);
     });
 
-    if (!showTeamEvents) {
+    if (!showTeamEvents || !teamData?.events) {
       return regularAppointments;
     }
 
@@ -104,7 +104,7 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
       return isWithinInterval(date, { start: startDate, end: endDate });
     });
 
-    return [...regularAppointments, ...teamEvents] as Appointment[];
+    return [...regularAppointments, ...teamEvents];
   };
 
   return {

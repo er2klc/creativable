@@ -29,6 +29,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: appointment.id,
     data: { ...appointment, type: "appointment" },
+    disabled: shouldPreventDrag
   });
 
   const style = transform
