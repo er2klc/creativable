@@ -38,7 +38,7 @@ export const DateSelector = ({ selectedDate, onDateSelect }: DateSelectorProps) 
         <div 
           className="p-0"
           onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.preventDefault()}
+          // onMouseDown entfernt
         >
           <Calendar
             mode="single"
