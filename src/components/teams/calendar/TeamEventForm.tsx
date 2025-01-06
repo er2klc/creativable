@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
-import { startOfDay, isValid, parseISO, format } from 'date-fns';
+import { startOfDay, format } from 'date-fns';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -89,6 +89,8 @@ export const TeamEventForm = ({
         is_admin_only: values.is_admin_only,
         is_multi_day: values.is_multi_day,
       };
+
+      console.log('Saving event with data:', eventData);
 
       if (eventToEdit) {
         const { error } = await supabase
