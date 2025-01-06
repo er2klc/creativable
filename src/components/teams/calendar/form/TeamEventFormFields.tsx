@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
 
@@ -11,19 +12,21 @@ export const formSchema = z.object({
   description: z.string().optional(),
   start_time: z.string(),
   end_time: z.string().optional(),
+  end_date: z.string().optional(),
   color: z.string().default("#FEF7CD"),
   is_team_event: z.boolean().default(false),
-  recurring_pattern: z.enum(["none", "daily", "weekly"]).default("none"),
   is_admin_only: z.boolean().default(false),
+  is_multi_day: z.boolean().default(false),
+  recurring_pattern: z.enum(["none", "daily", "weekly", "monthly"]).default("none"),
 });
 
-type FormData = z.infer<typeof formSchema>;
-
 interface TeamEventFormFieldsProps {
-  form: UseFormReturn<FormData>;
+  form: UseFormReturn<z.infer<typeof formSchema>>;
 }
 
 export const TeamEventFormFields = ({ form }: TeamEventFormFieldsProps) => {
+  const isMultiDay = form.watch("is_multi_day");
+
   return (
     <>
       <FormField
@@ -86,17 +89,42 @@ export const TeamEventFormFields = ({ form }: TeamEventFormFieldsProps) => {
 
       <FormField
         control={form.control}
-        name="color"
+        name="is_multi_day"
         render={({ field }) => (
-          <FormItem>
-            <FormLabel>Farbe</FormLabel>
+          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
             <FormControl>
-              <Input type="color" {...field} />
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
             </FormControl>
-            <FormMessage />
+            <div className="space-y-1 leading-none">
+              <FormLabel>
+                Mehrtägiges Event
+              </FormLabel>
+              <FormDescription>
+                Event erstreckt sich über mehrere Tage
+              </FormDescription>
+            </div>
           </FormItem>
         )}
       />
+
+      {isMultiDay && (
+        <FormField
+          control={form.control}
+          name="end_date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Enddatum</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
 
       <FormField
         control={form.control}
@@ -117,6 +145,7 @@ export const TeamEventFormFields = ({ form }: TeamEventFormFieldsProps) => {
                 <SelectItem value="none">Keine Wiederholung</SelectItem>
                 <SelectItem value="daily">Täglich</SelectItem>
                 <SelectItem value="weekly">Wöchentlich</SelectItem>
+                <SelectItem value="monthly">Monatlich</SelectItem>
               </SelectContent>
             </Select>
             <FormMessage />
@@ -124,25 +153,64 @@ export const TeamEventFormFields = ({ form }: TeamEventFormFieldsProps) => {
         )}
       />
 
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="is_admin_only"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Admin-Termin
+                </FormLabel>
+                <FormDescription>
+                  Nur für Team-Admins sichtbar
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="is_team_event"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Team-Event
+                </FormLabel>
+                <FormDescription>
+                  Wichtiges Team-Event
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+      </div>
+
       <FormField
         control={form.control}
-        name="is_admin_only"
+        name="color"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+          <FormItem>
+            <FormLabel>Farbe</FormLabel>
             <FormControl>
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
+              <Input type="color" {...field} />
             </FormControl>
-            <div className="space-y-1 leading-none">
-              <FormLabel>
-                Admin-Termin
-              </FormLabel>
-              <FormDescription>
-                Dieser Termin ist nur für Team-Admins sichtbar
-              </FormDescription>
-            </div>
+            <FormMessage />
           </FormItem>
         )}
       />

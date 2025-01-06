@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format } from "date-fns";
+import { format, addDays, addWeeks, addMonths, isSameDay, getDay } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -30,58 +30,75 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     },
   });
 
-  // Fetch team appointments
-  const { data: teamAppointments = [] } = useQuery({
+  // Fetch team appointments and 90-day runs
+  const { data: teamData = { events: [], runs: [] } } = useQuery({
     queryKey: ["team-appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!user) return { events: [], runs: [] };
 
       const { data: teamMemberships } = await supabase
         .from("team_members")
         .select("team_id, role")
         .eq("user_id", user.id);
 
-      if (!teamMemberships?.length) return [];
+      if (!teamMemberships?.length) return { events: [], runs: [] };
 
       const teamIds = teamMemberships.map(tm => tm.team_id);
       const isAdmin = teamMemberships.some(tm => ['admin', 'owner'].includes(tm.role));
 
-      const { data: events, error } = await supabase
+      // Fetch team events
+      const { data: events = [], error: eventsError } = await supabase
         .from("team_calendar_events")
         .select(`
           *,
           teams:team_id (name)
         `)
         .in("team_id", teamIds)
-        .gte('start_time', format(new Date(currentDate.getFullYear(), currentDate.getMonth(), 1), 'yyyy-MM-dd'))
-        .lte('start_time', format(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0), 'yyyy-MM-dd'))
         .or(`is_admin_only.eq.false${isAdmin ? ',is_admin_only.eq.true' : ''}`);
 
-      if (error) {
-        console.error("Error fetching team events:", error);
-        return [];
+      if (eventsError) {
+        console.error("Error fetching team events:", eventsError);
+        return { events: [], runs: [] };
       }
 
-      return events.map(event => ({
-        id: `team-${event.id}`,
-        title: event.title,
-        due_date: event.start_time,
-        color: `${event.color || "#FEF7CD"}30`,
-        isTeamEvent: true,
-        isAdminEvent: event.is_admin_only,
-        isRecurring: event.recurring_pattern !== 'none',
-        meeting_type: 'initial_meeting',
-        completed: false,
-        cancelled: false,
-        created_at: event.created_at,
-        user_id: event.created_by,
-        leads: { name: event.teams?.name || 'Team Event' },
-        start_time: event.start_time,
-        end_time: event.end_time,
-        recurring_pattern: event.recurring_pattern,
-        recurring_day_of_week: event.recurring_day_of_week
-      })) as TeamEvent[];
+      // Fetch 90-day runs
+      const { data: runs = [], error: runsError } = await supabase
+        .from("team_90_day_runs")
+        .select("*")
+        .in("team_id", teamIds)
+        .overlaps('start_date', format(currentDate, 'yyyy-MM-dd'));
+
+      if (runsError) {
+        console.error("Error fetching 90-day runs:", runsError);
+        return { events: [], runs: [] };
+      }
+
+      return { 
+        events: events.map(event => ({
+          id: `team-${event.id}`,
+          title: event.title,
+          due_date: event.start_time,
+          color: `${event.color || "#FEF7CD"}30`,
+          isTeamEvent: true,
+          isAdminEvent: event.is_admin_only,
+          isRecurring: event.recurring_pattern !== 'none',
+          meeting_type: 'initial_meeting',
+          completed: false,
+          cancelled: false,
+          created_at: event.created_at,
+          user_id: event.created_by,
+          leads: { name: event.teams?.name || 'Team Event' },
+          start_time: event.start_time,
+          end_time: event.end_time,
+          end_date: event.end_date,
+          recurring_pattern: event.recurring_pattern,
+          recurring_day_of_week: event.recurring_day_of_week,
+          is_multi_day: event.is_multi_day,
+          is_90_day_run: event.is_90_day_run
+        })) as TeamEvent[],
+        runs 
+      };
     },
   });
 
@@ -111,23 +128,84 @@ export const useCalendarEvents = (currentDate: Date, showTeamEvents: boolean) =>
     })) as Appointment[];
 
     if (showTeamEvents) {
-      const teamEvents = (teamAppointments || []).map(event => ({
-        ...event,
-        lead_id: event.lead_id || '',
-        isTeamEvent: true,
-        onComplete: undefined
-      })) as Appointment[];
-      allAppointments.push(...teamEvents);
+      const processedEvents = new Set<string>(); // Track processed recurring events
+      
+      teamData.events.forEach(event => {
+        const startDate = new Date(event.start_time);
+        const eventDayOfWeek = getDay(startDate);
+        
+        // Handle recurring events
+        if (event.recurring_pattern !== 'none') {
+          let currentDate = startDate;
+          
+          while (currentDate <= date) {
+            const eventKey = `${event.id}-${format(currentDate, 'yyyy-MM-dd')}`;
+            
+            if (!processedEvents.has(eventKey)) {
+              if (event.recurring_pattern === 'weekly' && getDay(currentDate) === eventDayOfWeek) {
+                if (isSameDay(currentDate, date)) {
+                  allAppointments.push({
+                    ...event,
+                    start_time: format(currentDate, "yyyy-MM-dd'T'HH:mm:ss"),
+                    isTeamEvent: true,
+                    lead_id: event.lead_id || '',
+                    onComplete: undefined
+                  });
+                }
+                processedEvents.add(eventKey);
+              } else if (event.recurring_pattern === 'monthly' && currentDate.getDate() === startDate.getDate()) {
+                if (isSameDay(currentDate, date)) {
+                  allAppointments.push({
+                    ...event,
+                    start_time: format(currentDate, "yyyy-MM-dd'T'HH:mm:ss"),
+                    isTeamEvent: true,
+                    lead_id: event.lead_id || '',
+                    onComplete: undefined
+                  });
+                }
+                processedEvents.add(eventKey);
+              }
+            }
+            
+            currentDate = event.recurring_pattern === 'weekly' 
+              ? addWeeks(currentDate, 1)
+              : addMonths(currentDate, 1);
+          }
+        } else if (event.is_multi_day) {
+          // Handle multi-day events
+          const endDate = event.end_date ? new Date(event.end_date) : startDate;
+          let currentDate = startDate;
+          
+          while (currentDate <= endDate) {
+            if (isSameDay(currentDate, date)) {
+              allAppointments.push({
+                ...event,
+                isTeamEvent: true,
+                lead_id: event.lead_id || '',
+                onComplete: undefined
+              });
+              break;
+            }
+            currentDate = addDays(currentDate, 1);
+          }
+        } else if (isSameDay(startDate, date)) {
+          // Handle regular events
+          allAppointments.push({
+            ...event,
+            isTeamEvent: true,
+            lead_id: event.lead_id || '',
+            onComplete: undefined
+          });
+        }
+      });
     }
     
-    return allAppointments.filter(
-      (appointment) => format(new Date(appointment.due_date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
-    );
+    return allAppointments;
   };
 
   return {
     appointments,
-    teamAppointments,
+    teamAppointments: teamData.events,
     getDayAppointments,
     handleCompleteAppointment,
   };

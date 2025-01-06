@@ -875,6 +875,41 @@ export type Database = {
           },
         ]
       }
+      team_90_day_runs: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          end_date: string
+          id: string
+          start_date: string
+          team_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          end_date: string
+          id?: string
+          start_date: string
+          team_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string
+          id?: string
+          start_date?: string
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_90_day_runs_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_calendar_disabled_events: {
         Row: {
           created_at: string | null
@@ -913,9 +948,12 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           description: string | null
+          end_date: string | null
           end_time: string | null
           id: string
+          is_90_day_run: boolean | null
           is_admin_only: boolean | null
+          is_multi_day: boolean | null
           is_team_event: boolean | null
           recurring_day_of_week: number | null
           recurring_pattern:
@@ -930,9 +968,12 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          end_date?: string | null
           end_time?: string | null
           id?: string
+          is_90_day_run?: boolean | null
           is_admin_only?: boolean | null
+          is_multi_day?: boolean | null
           is_team_event?: boolean | null
           recurring_day_of_week?: number | null
           recurring_pattern?:
@@ -947,9 +988,12 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          end_date?: string | null
           end_time?: string | null
           id?: string
+          is_90_day_run?: boolean | null
           is_admin_only?: boolean | null
+          is_multi_day?: boolean | null
           is_team_event?: boolean | null
           recurring_day_of_week?: number | null
           recurring_pattern?:
