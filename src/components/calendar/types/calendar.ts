@@ -43,3 +43,12 @@ export interface Appointment {
   isTeamEvent: boolean;
   end_date?: string;
 }
+
+export interface AppointmentToEdit {
+  id: string;
+  leadId: string;
+  time: string;
+  title: string;
+  color: string;
+  meeting_type: string;
+}

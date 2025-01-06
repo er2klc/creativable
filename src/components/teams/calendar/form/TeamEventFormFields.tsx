@@ -12,7 +12,7 @@ export const formSchema = z.object({
   description: z.string().optional(),
   start_time: z.string().optional(),
   end_time: z.string().optional(),
-  end_date: z.string().optional(),
+  end_date: z.string().nullable(),
   color: z.string().default("#FEF7CD"),
   is_team_event: z.boolean().default(false),
   is_admin_only: z.boolean().default(false),
@@ -24,9 +24,10 @@ interface TeamEventFormFieldsProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
   selectedDate: Date | null;
   onEndDateSelect: (date: Date | null) => void;
+  endDate: Date | null;
 }
 
-export const TeamEventFormFields = ({ form, selectedDate, onEndDateSelect }: TeamEventFormFieldsProps) => {
+export const TeamEventFormFields = ({ form, selectedDate, onEndDateSelect, endDate }: TeamEventFormFieldsProps) => {
   const isMultiDay = form.watch("is_multi_day");
 
   return (
@@ -60,13 +61,13 @@ export const TeamEventFormFields = ({ form, selectedDate, onEndDateSelect }: Tea
             <FormLabel>Startdatum</FormLabel>
             <DateSelector 
               selectedDate={selectedDate} 
-              onDateSelect={() => {}} // This is handled by the parent
+              onDateSelect={() => {}} 
             />
           </div>
           <div>
             <FormLabel>Enddatum</FormLabel>
             <DateSelector 
-              selectedDate={form.watch("end_date") ? new Date(form.watch("end_date")) : null}
+              selectedDate={endDate}
               onDateSelect={onEndDateSelect}
             />
           </div>
