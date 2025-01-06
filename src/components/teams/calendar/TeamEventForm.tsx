@@ -32,8 +32,6 @@ export const TeamEventForm = ({
     initialSelectedDate
   });
 
-  console.log('Form initialization:', { eventToEdit, initialSelectedDate, selectedDate, endDate });
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -63,30 +61,28 @@ export const TeamEventForm = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      let eventDate = startOfDay(selectedDate);
-      let eventEndDate = values.is_multi_day ? endDate : selectedDate;
-
-      console.log('Processing dates:', { eventDate, eventEndDate, isMultiDay: values.is_multi_day });
-
-      if (!values.is_multi_day && values.start_time) {
-        const [hours, minutes] = values.start_time.split(":");
-        eventDate = new Date(selectedDate);
-        eventDate.setHours(parseInt(hours), parseInt(minutes));
-      }
-
-      if (!values.is_multi_day && values.end_time) {
-        const [endHours, endMinutes] = values.end_time.split(":");
-        eventEndDate = new Date(selectedDate);
-        eventEndDate.setHours(parseInt(endHours), parseInt(endMinutes));
-      }
-
+      // For multi-day events, use the full dates
       const eventData = {
         team_id: teamId,
         title: values.title,
         description: values.description,
-        start_time: eventDate.toISOString(),
-        end_time: !values.is_multi_day ? eventEndDate?.toISOString() : null,
-        end_date: values.is_multi_day ? eventEndDate?.toISOString() : null,
+        start_time: values.is_multi_day 
+          ? selectedDate.toISOString()
+          : new Date(selectedDate.setHours(
+              parseInt(values.start_time.split(":")[0]),
+              parseInt(values.start_time.split(":")[1])
+            )).toISOString(),
+        end_time: values.is_multi_day 
+          ? null 
+          : values.end_time 
+            ? new Date(selectedDate.setHours(
+                parseInt(values.end_time.split(":")[0]),
+                parseInt(values.end_time.split(":")[1])
+              )).toISOString()
+            : null,
+        end_date: values.is_multi_day && endDate 
+          ? endDate.toISOString()
+          : null,
         color: values.color,
         is_team_event: values.is_team_event,
         recurring_pattern: values.recurring_pattern,
@@ -94,10 +90,7 @@ export const TeamEventForm = ({
         is_multi_day: values.is_multi_day,
       };
 
-      console.log('Saving event with data:', eventData);
-
       if (eventToEdit) {
-        console.log('Updating existing event:', eventToEdit.id);
         const { error } = await supabase
           .from("team_calendar_events")
           .update(eventData)
@@ -141,9 +134,6 @@ export const TeamEventForm = ({
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log("Form submitted with values:", values);
-    console.log("Selected date:", selectedDate);
-    console.log("End date:", endDate);
     createEventMutation.mutate(values);
   };
 
