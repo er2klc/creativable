@@ -36,11 +36,12 @@ export const NewAppointmentDialog = ({
   appointmentToEdit,
 }: NewAppointmentDialogProps) => {
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [completed, setCompleted] = useState(appointmentToEdit?.completed || false);
 
   useEffect(() => {
     if (open) {
+      // Set the initial date when the dialog opens
       setSelectedDate(initialSelectedDate);
       setCompleted(appointmentToEdit?.completed || false);
     }
@@ -105,6 +106,11 @@ export const NewAppointmentDialog = ({
     },
   });
 
+  const handleDateSelect = (date: Date | null) => {
+    console.log("Date selected in dialog:", date);
+    setSelectedDate(date);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -118,7 +124,7 @@ export const NewAppointmentDialog = ({
           <div className="mt-4">
             <DateSelector 
               selectedDate={selectedDate} 
-              onDateSelect={setSelectedDate}
+              onDateSelect={handleDateSelect}
             />
           </div>
         </DialogHeader>

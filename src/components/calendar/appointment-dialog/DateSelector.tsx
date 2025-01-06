@@ -16,9 +16,14 @@ export const DateSelector = ({ selectedDate, onDateSelect }: DateSelectorProps) 
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSelect = (date: Date | null) => {
-    console.log("Date selected:", date);
+    console.log("Date selected in DateSelector:", date);
     onDateSelect(date);
     setIsOpen(false);
+  };
+
+  const handleCalendarClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log("Calendar clicked");
   };
 
   return (
@@ -42,11 +47,13 @@ export const DateSelector = ({ selectedDate, onDateSelect }: DateSelectorProps) 
       <PopoverContent 
         className="w-auto p-0" 
         align="start"
+        style={{ zIndex: 100 }}
       >
         <div 
           className="p-0"
-          onClick={(e) => e.stopPropagation()}
+          onClick={handleCalendarClick}
           onMouseDown={(e) => e.stopPropagation()}
+          style={{ pointerEvents: 'auto' }}
         >
           <Calendar
             mode="single"
