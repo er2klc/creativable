@@ -19,7 +19,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
   });
 
   const style = transform ? {
-    transform: translate3d(${transform.x}px, ${transform.y}px, 0),
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     opacity: isDragging ? 0.5 : 1,
   } : undefined;
 
@@ -81,7 +81,7 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
         appointment.isTeamEvent && "border border-gray-200",
         !appointment.isTeamEvent && "text-black",
         appointment.completed && "bg-opacity-50",
-        isMultiDayEvent && "mx-2" // Add horizontal margin for multi-day events
+        isMultiDayEvent && "mx-2 relative" // Add horizontal margin and relative positioning for multi-day events
       )}
       onClick={(e) => {
         if (!appointment.isTeamEvent) {
