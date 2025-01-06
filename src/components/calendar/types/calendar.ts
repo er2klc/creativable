@@ -18,6 +18,7 @@ export interface TeamEvent {
   isTeamEvent: boolean;
   isAdminEvent: boolean;
   isRecurring: boolean;
+  current_day?: string;
 }
 
 export interface Appointment {
@@ -37,4 +38,5 @@ export interface Appointment {
   end_date?: string;
   is_multi_day?: boolean;
   due_date?: string;
+  current_day?: string;
 }

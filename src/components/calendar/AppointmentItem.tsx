@@ -26,8 +26,10 @@ export const AppointmentItem = ({ appointment, onClick, isDragging }: Appointmen
 
   // Feststellen, ob der aktuelle Tag der Start-, Zwischen- oder Endtag ist
   const currentDay = appointment.current_day || null;
-  const isStartDay = currentDay === format(new Date(appointment.start_time), "yyyy-MM-dd");
-  const isEndDay = currentDay === format(new Date(appointment.end_date), "yyyy-MM-dd");
+  const isStartDay = currentDay && appointment.start_time ? 
+    currentDay === format(new Date(appointment.start_time), "yyyy-MM-dd") : false;
+  const isEndDay = currentDay && appointment.end_date ? 
+    currentDay === format(new Date(appointment.end_date), "yyyy-MM-dd") : false;
 
   return (
     <div
