@@ -112,12 +112,6 @@ export const NewAppointmentDialog = ({
     },
   });
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      setSelectedDate(date);
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -126,13 +120,7 @@ export const NewAppointmentDialog = ({
             <div>{appointmentToEdit ? "Termin bearbeiten" : "Neuer Termin"}</div>
             <Popover 
               open={isCalendarOpen}
-              onOpenChange={(open) => {
-                setIsCalendarOpen(open);
-                // Don't close the popover if we're selecting a date
-                if (!open && !selectedDate) {
-                  setIsCalendarOpen(true);
-                }
-              }}
+              onOpenChange={setIsCalendarOpen}
             >
               <PopoverTrigger asChild>
                 <Button
@@ -154,7 +142,12 @@ export const NewAppointmentDialog = ({
                 <Calendar
                   mode="single"
                   selected={selectedDate}
-                  onSelect={handleDateSelect}
+                  onSelect={(date) => {
+                    if (date) {
+                      setSelectedDate(date);
+                      setIsCalendarOpen(false);
+                    }
+                  }}
                   initialFocus
                 />
               </PopoverContent>

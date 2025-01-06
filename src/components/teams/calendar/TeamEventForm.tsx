@@ -124,12 +124,6 @@ export const TeamEventForm = ({
     },
   });
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      setSelectedDate(date);
-    }
-  };
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit((values) => createEventMutation.mutate(values))} className="space-y-4">
@@ -137,13 +131,7 @@ export const TeamEventForm = ({
           <FormLabel>Datum</FormLabel>
           <Popover 
             open={isCalendarOpen}
-            onOpenChange={(open) => {
-              setIsCalendarOpen(open);
-              // Don't close the popover if we're selecting a date
-              if (!open && !selectedDate) {
-                setIsCalendarOpen(true);
-              }
-            }}
+            onOpenChange={setIsCalendarOpen}
           >
             <PopoverTrigger asChild>
               <Button
@@ -165,7 +153,12 @@ export const TeamEventForm = ({
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={handleDateSelect}
+                onSelect={(date) => {
+                  if (date) {
+                    setSelectedDate(date);
+                    setIsCalendarOpen(false);
+                  }
+                }}
                 initialFocus
               />
             </PopoverContent>
