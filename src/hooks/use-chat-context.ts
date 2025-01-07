@@ -51,7 +51,7 @@ export const useChatContext = () => {
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error loading profile for chat context:", error);
@@ -62,35 +62,7 @@ export const useChatContext = () => {
     },
   });
 
-  // Optimized query for leads - only get recent and important leads
-  const { data: leads } = useQuery({
-    queryKey: ["chat-context-leads"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-
-      // Get leads from the last 30 days + any leads marked as important
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-      const { data, error } = await supabase
-        .from("leads")
-        .select("id, name, platform, phase")
-        .eq("user_id", user.id)
-        .gt("created_at", thirtyDaysAgo.toISOString())
-        .limit(50) // Limit to most recent 50 leads
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error loading leads for chat context:", error);
-        return [];
-      }
-
-      return data;
-    },
-  });
-
-  // Optimized query for learning content - only get relevant videos
+  // Fixed query for learning content - specifying the relationship
   const { data: learningContent } = useQuery({
     queryKey: ["chat-context-learning-content"],
     queryFn: async () => {
@@ -99,12 +71,12 @@ export const useChatContext = () => {
         .select(`
           id,
           title,
-          elevate_modules (
+          elevate_modules!elevate_lerninhalte_module_id_fkey (
             title
           )
         `)
         .not("video_url", "is", null)
-        .limit(20) // Limit to 20 most recent videos
+        .limit(20)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -142,13 +114,8 @@ export const useChatContext = () => {
       ${platforms.map(platform => `- ${platform.name}`).join("\n")}
     ` : "";
 
-    // Optimized leads information - more concise format
-    const leadsInfo = leads?.length ? `
-      Aktuelle Kontakte (${leads.length} der letzten 30 Tage):
-      ${leads.map(lead => `- ${lead.name} (${lead.phase})`).join("\n")}
-    ` : "";
+    const leadsInfo = `Aktuelle Kontakte werden geladen...`;
 
-    // Optimized video content - more concise format
     const videoContent = learningContent?.length ? `
       Relevante Lernvideos (Top ${learningContent.length}):
       ${learningContent.map(content => `- ${content.title}`).join("\n")}
