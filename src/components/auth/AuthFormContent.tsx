@@ -101,6 +101,7 @@ export const AuthFormContent = () => {
       <Button
         type="submit"
         className="w-full"
+        variant="glassy"
         disabled={isLoading || cooldownRemaining > 0}
       >
         {isLoading ? (
@@ -126,7 +127,7 @@ export const AuthFormContent = () => {
         <Button
           type="button"
           variant="outline"
-          className="w-full"
+          className="w-full border-white/10 text-white hover:bg-white/5"
           onClick={() => setRegistrationStep(1)}
           disabled={isLoading}
         >
@@ -138,7 +139,7 @@ export const AuthFormContent = () => {
         <button
           type="button"
           onClick={handleToggleMode}
-          className="text-sm text-muted-foreground hover:underline"
+          className="text-sm text-gray-400 hover:text-white hover:underline"
           disabled={isLoading}
         >
           {isSignUp
