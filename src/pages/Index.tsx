@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { MessageSquare, Users, Calendar, BarChart2, Bot, Globe } from "lucide-react";
+import { MessageSquare, Sparkles, Globe, Rocket, Brain, Github } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -16,117 +16,135 @@ const Index = () => {
   }, [user, navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen bg-[#0A0A0A] text-white">
+      {/* Navigation */}
+      <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <img src="/lovable-uploads/5a7338a2-5048-441b-85cc-019706e45223.png" alt="Creativable Logo" className="h-12 w-12" />
+          <span className="text-xl font-bold">creativable</span>
+        </div>
+        <div className="flex gap-6">
+          <Button variant="ghost" className="text-white hover:text-white/80">Templates</Button>
+          <Button variant="ghost" className="text-white hover:text-white/80">News</Button>
+          <Button variant="ghost" className="text-white hover:text-white/80">Support</Button>
+        </div>
+      </nav>
+
       {/* Hero Section */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            MLMFlow – Die perfekte Plattform für Network-Marketing
+      <div className="container mx-auto px-4 pt-20 pb-32 text-center">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="flex justify-center mb-8">
+            <img src="/lovable-uploads/5a7338a2-5048-441b-85cc-019706e45223.png" alt="Creativable Logo" className="h-24 w-24" />
+          </div>
+          <h1 className="text-6xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 bg-clip-text text-transparent">
+            Create. Connect. Grow.
           </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            Verwalte deine Leads, optimiere dein Follow-up und automatisiere dein Geschäft mit KI-Unterstützung
+          <p className="text-xl text-gray-400 mt-6">
+            Transform your creative vision into reality with our intuitive platform.
           </p>
-          <div className="flex justify-center gap-4">
+          <div className="flex justify-center gap-4 mt-8">
             <Button
               onClick={() => navigate("/auth")}
               size="lg"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg"
+              className="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 text-white px-8 py-6 rounded-lg text-lg hover:opacity-90 transition-opacity"
             >
-              Jetzt kostenlos testen
+              Start Creating Now
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8 mt-20">
-          <FeatureCard
-            icon={Users}
-            title="Lead-Management"
-            description="Verwalte deine Kontakte effizient mit einem übersichtlichen Kanban-Board und detaillierten Profilen."
-          />
-          <FeatureCard
-            icon={Bot}
-            title="KI-Unterstützung"
-            description="Nutze KI für personalisierte Nachrichten und automatische Lead-Analysen."
-          />
-          <FeatureCard
-            icon={Globe}
-            title="Social Media Integration"
-            description="Verbinde dich nahtlos mit LinkedIn, Instagram und weiteren Plattformen."
-          />
-          <FeatureCard
-            icon={MessageSquare}
-            title="Nachrichtenverwaltung"
-            description="Behalte den Überblick über alle Konversationen und nutze Vorlagen für effiziente Kommunikation."
-          />
-          <FeatureCard
-            icon={Calendar}
-            title="Aufgabenplanung"
-            description="Plane und verfolge alle Follow-ups und Meetings mit dem integrierten Kalender."
-          />
-          <FeatureCard
-            icon={BarChart2}
-            title="Analysen & Berichte"
-            description="Verfolge deinen Erfolg mit detaillierten Statistiken und Conversion-Tracking."
-          />
-        </div>
-
-        {/* Benefits Section */}
-        <div className="mt-20 text-center">
-          <h2 className="text-3xl font-bold mb-12">Warum MLMFlow?</h2>
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <BenefitCard
-              title="Zeitersparnis"
-              description="Automatisiere wiederkehrende Aufgaben und konzentriere dich auf das Wesentliche."
+      {/* Features Grid */}
+      <div className="bg-[#111111] py-32">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-8">
+            <FeatureCard
+              icon={Sparkles}
+              title="Instant & Intuitive"
+              description="Experience seamless creativity with our intuitive interface. Transform your ideas into reality with just a few clicks."
             />
-            <BenefitCard
-              title="Höhere Conversion"
-              description="Verbessere deine Abschlussquote durch datengestützte Entscheidungen."
+            <FeatureCard
+              icon={Brain}
+              title="AI-Powered"
+              description="Leverage the power of artificial intelligence to enhance your creative process and streamline your workflow."
             />
-            <BenefitCard
-              title="Professioneller Auftritt"
-              description="Präsentiere dich und dein Business stets von der besten Seite."
-            />
-            <BenefitCard
-              title="Skalierbarkeit"
-              description="Wachse effizient und behalte dabei alle Prozesse im Griff."
+            <FeatureCard
+              icon={Globe}
+              title="Connect Globally"
+              description="Join a worldwide community of creators, share your work, and collaborate with talents across the globe."
             />
           </div>
         </div>
+      </div>
 
-        {/* CTA Section */}
-        <div className="mt-20 text-center bg-blue-50 rounded-xl p-12">
-          <h2 className="text-3xl font-bold mb-6">Bereit durchzustarten?</h2>
-          <p className="text-xl text-gray-600 mb-8">
-            Starte jetzt und erlebe, wie MLMFlow dein Network-Marketing auf das nächste Level hebt.
+      {/* Call to Action */}
+      <div className="container mx-auto px-4 py-32">
+        <div className="text-center max-w-3xl mx-auto">
+          <h2 className="text-4xl font-bold mb-6">Ready to unleash your creativity?</h2>
+          <p className="text-xl text-gray-400 mb-8">
+            Join thousands of creators who are already building amazing things with Creativable.
           </p>
           <Button
             onClick={() => navigate("/auth")}
             size="lg"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg"
+            className="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 text-white px-8 py-6 rounded-lg text-lg hover:opacity-90 transition-opacity"
           >
-            Kostenlos registrieren
+            Get Started Free
           </Button>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-[#111111] py-16">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Product</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li>About</li>
+                <li>Features</li>
+                <li>Pricing</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Resources</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li>Documentation</li>
+                <li>Blog</li>
+                <li>Community</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Company</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li>About Us</li>
+                <li>Careers</li>
+                <li>Contact</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Legal</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li>Privacy Policy</li>
+                <li>Terms of Service</li>
+                <li>Cookie Policy</li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 Creativable. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
 
 const FeatureCard = ({ icon: Icon, title, description }: { icon: any; title: string; description: string }) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-    <div className="flex items-center gap-3 mb-4">
-      <Icon className="h-6 w-6 text-blue-600" />
-      <h3 className="text-xl font-semibold">{title}</h3>
-    </div>
-    <p className="text-gray-600">{description}</p>
-  </div>
-);
-
-const BenefitCard = ({ title, description }: { title: string; description: string }) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm">
+  <div className="bg-[#1A1A1A] p-8 rounded-xl hover:bg-[#222222] transition-colors">
+    <Icon className="h-8 w-8 mb-4 text-gradient bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500" />
     <h3 className="text-xl font-semibold mb-3">{title}</h3>
-    <p className="text-gray-600">{description}</p>
+    <p className="text-gray-400">{description}</p>
   </div>
 );
 
