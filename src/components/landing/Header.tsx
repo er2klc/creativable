@@ -23,7 +23,7 @@ export const Header = ({ isScrolled }: HeaderProps) => {
             <span className="text-base font-bold">creativable</span>
           </div>
           {/* Vertical Separator Line */}
-          <div className="h-4 w-px bg-gradient-to-b from-transparent via-gray-500/30 to-transparent mx-2" />
+          <div className="h-6 w-px bg-gradient-to-b from-transparent via-gray-500/30 to-transparent mx-2" />
           <nav className="hidden md:flex gap-2">
             <NavItem href="#features">Funktionen</NavItem>
             <NavItem href="#why">Warum Creativable?</NavItem>
@@ -46,8 +46,7 @@ export const Header = ({ isScrolled }: HeaderProps) => {
             <>
               <Button 
                 onClick={() => navigate("/auth")} 
-                variant="ghost"
-                className="text-white hover:text-white/80"
+                className="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 hover:from-red-600 hover:via-yellow-600 hover:to-blue-600 text-white border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
               >
                 Login
               </Button>
