@@ -30,15 +30,15 @@ const Index = () => {
       {/* Sticky Header */}
       <header className={cn(
         "fixed top-0 w-full z-50 transition-all duration-300",
-        isScrolled ? "bg-black/80 backdrop-blur-lg shadow-lg" : "bg-transparent"
+        isScrolled ? "bg-black/80 backdrop-blur-lg shadow-lg border-b border-white/5" : "bg-transparent"
       )}>
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <img src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" alt="Creativable Logo" className="h-8 w-8" />
               <span className="text-xl font-bold">creativable</span>
             </div>
-            <nav className="hidden md:flex gap-6">
+            <nav className="hidden md:flex gap-4">
               <Button variant="ghost" className="text-white hover:text-white/80">Funktionen</Button>
               <Button variant="ghost" className="text-white hover:text-white/80">Warum Creativable?</Button>
               <Button variant="ghost" className="text-white hover:text-white/80">Preise</Button>
@@ -67,7 +67,7 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => navigate("/register")}
-                  className="bg-[#1A1F2C] hover:bg-[#2A2F3C] text-white border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
+                  className="bg-[#1A1F2C]/80 hover:bg-[#2A2F3C]/80 text-white border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
                 >
                   Register
                 </Button>
@@ -75,6 +75,8 @@ const Index = () => {
             )}
           </div>
         </div>
+        {/* Decorative Line */}
+        <div className="absolute bottom-0 w-full h-px bg-gradient-to-r from-transparent via-gray-500/50 to-transparent" />
       </header>
 
       {/* Hero Section with Gradient Background */}
@@ -97,7 +99,7 @@ const Index = () => {
               #creativable
             </span>
             <div className="flex justify-center mb-8">
-              <img src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" alt="Creativable Logo" className="h-24 w-24" />
+              <img src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" alt="Creativable Logo" className="h-32 w-32" />
             </div>
             <h1 className="text-6xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 bg-clip-text text-transparent">
               Create. Connect. Grow.
@@ -109,7 +111,7 @@ const Index = () => {
               <Button
                 onClick={() => navigate("/auth")}
                 size="lg"
-                className="bg-[#1A1F2C] hover:bg-[#2A2F3C] text-white px-8 py-6 rounded-lg text-lg border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
+                className="bg-[#1A1F2C]/80 hover:bg-[#2A2F3C]/80 text-white px-8 py-6 rounded-lg text-lg border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
               >
                 Start Creating Now
               </Button>
@@ -164,7 +166,7 @@ const Index = () => {
             <Button
               onClick={() => navigate("/auth")}
               size="lg"
-              className="bg-[#1A1F2C] hover:bg-[#2A2F3C] text-white px-8 py-6 rounded-lg text-lg border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
+              className="bg-[#1A1F2C]/80 hover:bg-[#2A2F3C]/80 text-white px-8 py-6 rounded-lg text-lg border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
             >
               Get Started Free
             </Button>
