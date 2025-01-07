@@ -67,7 +67,7 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => navigate("/register")}
-                  className="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 text-white hover:opacity-90"
+                  className="bg-[#1A1F2C] hover:bg-[#2A2F3C] text-white border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
                 >
                   Register
                 </Button>
@@ -109,7 +109,7 @@ const Index = () => {
               <Button
                 onClick={() => navigate("/auth")}
                 size="lg"
-                className="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 text-white px-8 py-6 rounded-lg text-lg hover:opacity-90 transition-opacity"
+                className="bg-[#1A1F2C] hover:bg-[#2A2F3C] text-white px-8 py-6 rounded-lg text-lg border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
               >
                 Start Creating Now
               </Button>
@@ -164,7 +164,7 @@ const Index = () => {
             <Button
               onClick={() => navigate("/auth")}
               size="lg"
-              className="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 text-white px-8 py-6 rounded-lg text-lg hover:opacity-90 transition-opacity"
+              className="bg-[#1A1F2C] hover:bg-[#2A2F3C] text-white px-8 py-6 rounded-lg text-lg border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
             >
               Get Started Free
             </Button>
