@@ -89,6 +89,19 @@ export const AuthFormContent = () => {
     navigate("/auth", { replace: true, state: { isSignUp: !isSignUp } });
   };
 
+  const getButtonText = () => {
+    if (isLoading) {
+      return "Laden...";
+    }
+    if (cooldownRemaining > 0) {
+      return `Bitte warten (${cooldownRemaining}s)`;
+    }
+    if (isSignUp) {
+      return registrationStep === 1 ? "Weiter" : "Registrieren";
+    }
+    return "Anmelden";
+  };
+
   return (
     <>
       <form onSubmit={onSubmit} className="space-y-6">
@@ -118,15 +131,7 @@ export const AuthFormContent = () => {
           variant="glassy"
           disabled={isLoading || cooldownRemaining > 0}
         >
-          {isLoading ? (
-            <span>Laden...</span>
-          ) : cooldownRemaining > 0 ? (
-            `Bitte warten (${cooldownRemaining}s)`
-          ) : isSignUp ? (
-            "Registrieren"
-          ) : (
-            "Anmelden"
-          )}
+          {getButtonText()}
         </Button>
 
         {!isSignUp && (
