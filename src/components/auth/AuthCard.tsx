@@ -16,12 +16,19 @@ export const AuthCard = ({ title, description, children }: AuthCardProps) => {
           <div className="flex justify-center">
             <img src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" alt="Creativable Logo" className="h-16 w-16" />
           </div>
-          <div>
-            <CardTitle className="text-white text-center">{title}</CardTitle>
-            <CardDescription className="text-gray-300">{description}</CardDescription>
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <CardTitle className="text-white text-xl font-medium">{title}</CardTitle>
+              <div className="w-full flex justify-center">
+                <div className="h-[1px] w-32 bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+              </div>
+            </div>
+            <CardDescription className="text-gray-300 text-center">{description}</CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="text-white">{children}</CardContent>
+        <CardContent className="text-white space-y-6">
+          {children}
+        </CardContent>
       </Card>
     </div>
   );

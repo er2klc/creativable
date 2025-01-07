@@ -77,7 +77,7 @@ export const AuthFormContent = () => {
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-6">
       {isSignUp ? (
         <RegistrationForm
           registrationStep={registrationStep}
@@ -100,7 +100,7 @@ export const AuthFormContent = () => {
 
       <Button
         type="submit"
-        className="w-full"
+        className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-lg backdrop-blur-sm transition-all"
         variant="glassy"
         disabled={isLoading || cooldownRemaining > 0}
       >
@@ -116,11 +116,18 @@ export const AuthFormContent = () => {
       </Button>
 
       {!isSignUp && (
-        <SocialLoginButtons
-          onGoogleLogin={() => handleSocialLogin("google")}
-          onAppleLogin={() => handleSocialLogin("apple")}
-          isLoading={isLoading}
-        />
+        <>
+          <div className="relative flex items-center gap-3">
+            <div className="h-[1px] flex-1 bg-white/10" />
+            <span className="text-sm text-gray-400">oder anmelden mit</span>
+            <div className="h-[1px] flex-1 bg-white/10" />
+          </div>
+          <SocialLoginButtons
+            onGoogleLogin={() => handleSocialLogin("google")}
+            onAppleLogin={() => handleSocialLogin("apple")}
+            isLoading={isLoading}
+          />
+        </>
       )}
 
       {isSignUp && registrationStep === 2 && (
