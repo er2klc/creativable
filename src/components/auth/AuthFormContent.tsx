@@ -55,10 +55,18 @@ export const AuthFormContent = () => {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (isSignUp) {
+        // If we're in registration mode and on step 1, just move to step 2
+        if (registrationStep === 1) {
+          setRegistrationStep(2);
+          return;
+        }
+      }
+      
       const success = await handleSubmit(e);
-
-      if (success && isSignUp && registrationStep === 1) {
-        setRegistrationStep(2);
+      
+      if (success && !isSignUp) {
+        navigate("/dashboard");
       }
     } catch (error: any) {
       if (error.message?.includes('already registered')) {
@@ -80,13 +88,14 @@ export const AuthFormContent = () => {
         phoneNumber: "",
         language: "Deutsch",
       } as RegistrationData);
+      navigate("/register", { replace: true });
     } else {
       setFormData({
         email: "",
         password: "",
       } as LoginFormData);
+      navigate("/auth", { replace: true });
     }
-    navigate("/auth", { replace: true, state: { isSignUp: !isSignUp } });
   };
 
   const getButtonText = () => {
