@@ -44,12 +44,13 @@ export const Header = ({ isScrolled }: HeaderProps) => {
             </Button>
           ) : (
             <>
-              <Button 
+              <button 
                 onClick={() => navigate("/auth")} 
-                className="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 hover:from-red-600 hover:via-yellow-600 hover:to-blue-600 text-white border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
+                className="relative px-3 py-2 text-white/90 hover:text-white transition-colors group"
               >
                 Login
-              </Button>
+                <span className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 transform scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
+              </button>
               <Button
                 onClick={() => navigate("/register")}
                 className="bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"

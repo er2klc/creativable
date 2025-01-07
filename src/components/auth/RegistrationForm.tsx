@@ -34,7 +34,7 @@ const passwordRequirements = [
   { check: (pwd: string) => pwd.length >= 8, label: "Mindestens 8 Zeichen" },
   { check: (pwd: string) => /[A-Z]/.test(pwd), label: "Ein Großbuchstabe" },
   { check: (pwd: string) => /[0-9]/.test(pwd), label: "Eine Zahl" },
-  { check: (pwd: string) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd), label: "Ein Sonderzeichen" },
+  { check: (pwd: string) => /[!@#$%^&*(),.?":{}|<>\-]/.test(pwd), label: "Ein Sonderzeichen" },
 ];
 
 export const RegistrationForm = ({
