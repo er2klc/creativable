@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { MessageSquare, Sparkles, Globe, Rocket, Brain, Github } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Header } from "@/components/landing/Header";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -27,57 +28,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
-      {/* Sticky Header */}
-      <header className={cn(
-        "fixed top-0 w-full z-50 transition-all duration-300",
-        isScrolled ? "bg-black/80 backdrop-blur-lg shadow-lg border-b border-white/5" : "bg-transparent"
-      )}>
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <img src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" alt="Creativable Logo" className="h-8 w-8" />
-              <span className="text-xl font-bold">creativable</span>
-            </div>
-            <nav className="hidden md:flex gap-4">
-              <Button variant="ghost" className="text-white hover:text-white/80">Funktionen</Button>
-              <Button variant="ghost" className="text-white hover:text-white/80">Warum Creativable?</Button>
-              <Button variant="ghost" className="text-white hover:text-white/80">Preise</Button>
-              <Button variant="ghost" className="text-white hover:text-white/80">Unsere Kunden</Button>
-              <Button variant="ghost" className="text-white hover:text-white/80">Support</Button>
-              <Button variant="ghost" className="text-white hover:text-white/80">Updates & Roadmap</Button>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            {user ? (
-              <Button 
-                onClick={() => navigate("/dashboard")} 
-                variant="ghost"
-                className="text-white hover:text-white/80"
-              >
-                Profil
-              </Button>
-            ) : (
-              <>
-                <Button 
-                  onClick={() => navigate("/auth")} 
-                  variant="ghost"
-                  className="text-white hover:text-white/80"
-                >
-                  Login
-                </Button>
-                <Button
-                  onClick={() => navigate("/register")}
-                  className="bg-[#1A1F2C]/80 hover:bg-[#2A2F3C]/80 text-white border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
-                >
-                  Register
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-        {/* Decorative Line */}
-        <div className="absolute bottom-0 w-full h-px bg-gradient-to-r from-transparent via-gray-500/50 to-transparent" />
-      </header>
+      <Header isScrolled={isScrolled} />
 
       {/* Hero Section with Gradient Background */}
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
