@@ -1,62 +1,132 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { MessageSquare, Sparkles, Globe, Rocket, Brain, Github } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
   const navigate = useNavigate();
   const user = useUser();
   const supabase = useSupabaseClient();
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     if (user) {
       navigate("/dashboard");
     }
+
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      setIsScrolled(scrollPosition > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [user, navigate]);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
-      {/* Navigation */}
-      <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <img src="/lovable-uploads/5a7338a2-5048-441b-85cc-019706e45223.png" alt="Creativable Logo" className="h-12 w-12" />
-          <span className="text-xl font-bold">creativable</span>
+      {/* Sticky Header */}
+      <header className={cn(
+        "fixed top-0 w-full z-50 transition-all duration-300",
+        isScrolled ? "bg-black/80 backdrop-blur-lg shadow-lg" : "bg-transparent"
+      )}>
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-2">
+              <img src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" alt="Creativable Logo" className="h-8 w-8" />
+              <span className="text-xl font-bold">creativable</span>
+            </div>
+            <nav className="hidden md:flex gap-6">
+              <Button variant="ghost" className="text-white hover:text-white/80">Funktionen</Button>
+              <Button variant="ghost" className="text-white hover:text-white/80">Warum Creativable?</Button>
+              <Button variant="ghost" className="text-white hover:text-white/80">Preise</Button>
+              <Button variant="ghost" className="text-white hover:text-white/80">Unsere Kunden</Button>
+              <Button variant="ghost" className="text-white hover:text-white/80">Support</Button>
+              <Button variant="ghost" className="text-white hover:text-white/80">Updates & Roadmap</Button>
+            </nav>
+          </div>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <Button 
+                onClick={() => navigate("/dashboard")} 
+                variant="ghost"
+                className="text-white hover:text-white/80"
+              >
+                Profil
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  onClick={() => navigate("/auth")} 
+                  variant="ghost"
+                  className="text-white hover:text-white/80"
+                >
+                  Login
+                </Button>
+                <Button
+                  onClick={() => navigate("/register")}
+                  className="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 text-white hover:opacity-90"
+                >
+                  Register
+                </Button>
+              </>
+            )}
+          </div>
         </div>
-        <div className="flex gap-6">
-          <Button variant="ghost" className="text-white hover:text-white/80">Templates</Button>
-          <Button variant="ghost" className="text-white hover:text-white/80">News</Button>
-          <Button variant="ghost" className="text-white hover:text-white/80">Support</Button>
-        </div>
-      </nav>
+      </header>
 
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 pt-20 pb-32 text-center">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="flex justify-center mb-8">
-            <img src="/lovable-uploads/5a7338a2-5048-441b-85cc-019706e45223.png" alt="Creativable Logo" className="h-24 w-24" />
-          </div>
-          <h1 className="text-6xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 bg-clip-text text-transparent">
-            Create. Connect. Grow.
-          </h1>
-          <p className="text-xl text-gray-400 mt-6">
-            Transform your creative vision into reality with our intuitive platform.
-          </p>
-          <div className="flex justify-center gap-4 mt-8">
-            <Button
-              onClick={() => navigate("/auth")}
-              size="lg"
-              className="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 text-white px-8 py-6 rounded-lg text-lg hover:opacity-90 transition-opacity"
-            >
-              Start Creating Now
-            </Button>
+      {/* Hero Section with Gradient Background */}
+      <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Gradient Effect */}
+        <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30" />
+        
+        {/* Logo Background Blur */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-10">
+          <img 
+            src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
+            alt="Background Logo" 
+            className="w-[800px] blur-3xl"
+          />
+        </div>
+
+        <div className="container mx-auto px-4 pt-32 pb-20 text-center relative">
+          <div className="max-w-4xl mx-auto space-y-6">
+            <span className="inline-block px-4 py-1 bg-white/10 rounded-full text-sm font-medium backdrop-blur-sm mb-8">
+              #creativable
+            </span>
+            <div className="flex justify-center mb-8">
+              <img src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" alt="Creativable Logo" className="h-24 w-24" />
+            </div>
+            <h1 className="text-6xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 bg-clip-text text-transparent">
+              Create. Connect. Grow.
+            </h1>
+            <p className="text-xl text-gray-400 mt-6">
+              Transform your creative vision into reality with our intuitive platform.
+            </p>
+            <div className="flex justify-center gap-4 mt-8">
+              <Button
+                onClick={() => navigate("/auth")}
+                size="lg"
+                className="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 text-white px-8 py-6 rounded-lg text-lg hover:opacity-90 transition-opacity"
+              >
+                Start Creating Now
+              </Button>
+            </div>
           </div>
         </div>
+
+        {/* Decorative Line */}
+        <div className="absolute bottom-0 w-full h-px bg-gradient-to-r from-transparent via-gray-500/50 to-transparent" />
       </div>
 
       {/* Features Grid */}
-      <div className="bg-[#111111] py-32">
-        <div className="container mx-auto px-4">
+      <div className="relative bg-[#111111] py-32">
+        {/* Background Gradient Effect */}
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-500/10 via-purple-500/10 to-red-500/10 opacity-30" />
+        
+        <div className="container mx-auto px-4 relative">
           <div className="grid md:grid-cols-3 gap-8">
             <FeatureCard
               icon={Sparkles}
@@ -75,27 +145,35 @@ const Index = () => {
             />
           </div>
         </div>
+
+        {/* Decorative Line */}
+        <div className="absolute bottom-0 w-full h-px bg-gradient-to-r from-transparent via-gray-500/50 to-transparent" />
       </div>
 
       {/* Call to Action */}
-      <div className="container mx-auto px-4 py-32">
-        <div className="text-center max-w-3xl mx-auto">
-          <h2 className="text-4xl font-bold mb-6">Ready to unleash your creativity?</h2>
-          <p className="text-xl text-gray-400 mb-8">
-            Join thousands of creators who are already building amazing things with Creativable.
-          </p>
-          <Button
-            onClick={() => navigate("/auth")}
-            size="lg"
-            className="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 text-white px-8 py-6 rounded-lg text-lg hover:opacity-90 transition-opacity"
-          >
-            Get Started Free
-          </Button>
+      <div className="relative py-32">
+        {/* Background Gradient Effect */}
+        <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 via-yellow-500/10 to-blue-500/10 opacity-30" />
+        
+        <div className="container mx-auto px-4 relative">
+          <div className="text-center max-w-3xl mx-auto">
+            <h2 className="text-4xl font-bold mb-6">Ready to unleash your creativity?</h2>
+            <p className="text-xl text-gray-400 mb-8">
+              Join thousands of creators who are already building amazing things with Creativable.
+            </p>
+            <Button
+              onClick={() => navigate("/auth")}
+              size="lg"
+              className="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 text-white px-8 py-6 rounded-lg text-lg hover:opacity-90 transition-opacity"
+            >
+              Get Started Free
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="bg-[#111111] py-16">
+      <footer className="relative bg-[#111111] py-16">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
