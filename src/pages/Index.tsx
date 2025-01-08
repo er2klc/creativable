@@ -27,11 +27,11 @@ const Index = () => {
   }, [user, navigate]);
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className="min-h-screen w-full bg-[#0A0A0A] text-white overflow-x-hidden">
       <Header isScrolled={isScrolled} />
 
       {/* Hero Section with Gradient Background */}
-      <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
         {/* Background Gradient Effect */}
         <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30" />
         
@@ -75,7 +75,7 @@ const Index = () => {
       </div>
 
       {/* Features Grid */}
-      <div className="relative bg-[#111111] py-32">
+      <div className="relative w-full bg-[#111111] py-32">
         {/* Background Gradient Effect */}
         <div className="absolute inset-0 bg-gradient-to-b from-blue-500/10 via-purple-500/10 to-red-500/10 opacity-30" />
         
@@ -104,7 +104,7 @@ const Index = () => {
       </div>
 
       {/* Call to Action */}
-      <div className="relative py-32">
+      <div className="relative w-full py-32">
         {/* Background Gradient Effect */}
         <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 via-yellow-500/10 to-blue-500/10 opacity-30" />
         
@@ -126,7 +126,7 @@ const Index = () => {
       </div>
 
       {/* Footer */}
-      <footer className="relative bg-[#111111] py-16">
+      <footer className="relative w-full bg-[#111111] py-16">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
