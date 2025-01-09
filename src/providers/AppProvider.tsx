@@ -6,7 +6,6 @@ import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthProvider } from "./AuthProvider";
-import { BrowserRouter } from "react-router-dom";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,9 +25,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
           <SidebarProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
-              <AuthProvider>{children}</AuthProvider>
-            </BrowserRouter>
+            <AuthProvider>{children}</AuthProvider>
           </SidebarProvider>
         </TooltipProvider>
       </SessionContextProvider>
