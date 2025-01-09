@@ -29,8 +29,6 @@ const Index = () => {
   return (
     <MainLayout>
       <div className="min-h-screen w-full bg-[#0A0A0A] text-white overflow-x-hidden">
-        <Header isScrolled={isScrolled} />
-
         {/* Hero Section with Gradient Background */}
         <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
           {/* Background Gradient Effect */}
@@ -120,49 +118,6 @@ const Index = () => {
             </div>
           </div>
         </div>
-
-        {/* Footer */}
-        <footer className="relative w-full bg-[#111111] py-16">
-          <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-4 gap-8">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Product</h3>
-                <ul className="space-y-2 text-gray-400">
-                  <li>About</li>
-                  <li>Features</li>
-                  <li>Pricing</li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Resources</h3>
-                <ul className="space-y-2 text-gray-400">
-                  <li>Documentation</li>
-                  <li>Blog</li>
-                  <li>Community</li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Company</h3>
-                <ul className="space-y-2 text-gray-400">
-                  <li>About Us</li>
-                  <li>Careers</li>
-                  <li>Contact</li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Legal</h3>
-                <ul className="space-y-2 text-gray-400">
-                  <li>Privacy Policy</li>
-                  <li>Terms of Service</li>
-                  <li>Cookie Policy</li>
-                </ul>
-              </div>
-            </div>
-            <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-              <p>&copy; 2024 Creativable. All rights reserved.</p>
-            </div>
-          </div>
-        </footer>
       </div>
     </MainLayout>
   );
