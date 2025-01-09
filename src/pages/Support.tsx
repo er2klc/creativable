@@ -1,10 +1,19 @@
+import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 
 const Support = () => {
+  const navigate = useNavigate();
+
   return (
-    <MainLayout>
+    <MainLayout
+      pageTitle="Support"
+      pageSubtitle="Wir sind für dich da"
+      showButton={true}
+      buttonText="Hilfe erhalten"
+      buttonAction={() => navigate("/register")}
+    >
       <div className="container mx-auto px-4 py-20">
-        <h1 className="text-4xl font-bold">Support</h1>
+        {/* Content will be added later */}
       </div>
     </MainLayout>
   );

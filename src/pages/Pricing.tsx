@@ -1,10 +1,19 @@
+import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 
 const Pricing = () => {
+  const navigate = useNavigate();
+
   return (
-    <MainLayout>
+    <MainLayout
+      pageTitle="Preise"
+      pageSubtitle="Wähle den Plan, der zu dir passt"
+      showButton={true}
+      buttonText="Plan wählen"
+      buttonAction={() => navigate("/register")}
+    >
       <div className="container mx-auto px-4 py-20">
-        <h1 className="text-4xl font-bold">Preise</h1>
+        {/* Content will be added later */}
       </div>
     </MainLayout>
   );

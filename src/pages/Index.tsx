@@ -9,25 +9,22 @@ import { MainLayout } from "@/components/layout/MainLayout";
 const Index = () => {
   const navigate = useNavigate();
   const user = useUser();
-  const supabase = useSupabaseClient();
-  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     if (user) {
       navigate("/dashboard");
     }
-
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > 50);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, [user, navigate]);
 
   return (
-    <MainLayout>
+    <MainLayout
+      pageTitle="Create. Connect. Grow."
+      pageSubtitle="Transform your creative vision into reality with our intuitive platform."
+      showButton={true}
+      buttonText="Start Creating Now"
+      buttonAction={() => navigate("/auth")}
+      isHomePage={true}
+    >
       <div className="min-h-screen w-full bg-[#0A0A0A] text-white overflow-x-hidden">
         {/* Hero Section with Gradient Background */}
         <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
