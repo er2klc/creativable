@@ -9,7 +9,7 @@ const Features = () => {
   return (
     <div className="min-h-screen w-full bg-[#0A0A0A] text-white overflow-x-hidden">
       {/* Header */}
-      <header className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-lg">
+      <header className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-lg border-b border-white/10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div 
