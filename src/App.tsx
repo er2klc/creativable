@@ -14,7 +14,6 @@ import Settings from "./pages/Settings";
 import Changelog from "./pages/Changelog";
 import Calendar from "./pages/Calendar";
 import TodoList from "./pages/TodoList";
-import Features from "./pages/Features";
 import LinkedInCallback from "./pages/auth/callback/LinkedIn";
 import InstagramCallback from "./pages/auth/callback/Instagram";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
@@ -42,7 +41,8 @@ const App = () => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
   
-  const publicRoutes = ["/", "/auth", "/register", "/features", "/privacy-policy", "/auth/data-deletion/instagram"];
+  // Liste der öffentlichen Routen, wo der Chat-Button nicht angezeigt werden soll
+  const publicRoutes = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram"];
   const showChatButton = isAuthenticated && !publicRoutes.includes(location.pathname);
 
   return (
@@ -51,7 +51,6 @@ const App = () => {
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/features" element={<Features />} />
         <Route path="/auth/callback/linkedin" element={<LinkedInCallback />} />
         <Route path="/auth/callback/instagram" element={<InstagramCallback />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
