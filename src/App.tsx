@@ -5,6 +5,8 @@ import Pricing from "@/pages/Pricing";
 import About from "@/pages/About";
 import Support from "@/pages/Support";
 import News from "@/pages/News";
+import Auth from "@/pages/Auth";
+import Register from "@/pages/Register";
 
 const App = () => {
   return (
@@ -15,6 +17,8 @@ const App = () => {
       <Route path="/about" element={<About />} />
       <Route path="/support" element={<Support />} />
       <Route path="/news" element={<News />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/register" element={<Register />} />
     </Routes>
   );
 };
