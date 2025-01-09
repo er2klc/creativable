@@ -115,6 +115,9 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="relative w-full bg-[#111111] py-16">
+        {/* Footer Separator Line */}
+        <div className="absolute top-0 w-full h-px bg-gradient-to-r from-transparent via-gray-500/30 to-transparent" />
+        
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">
             <div>

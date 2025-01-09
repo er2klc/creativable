@@ -29,7 +29,10 @@ export const Header = ({ isScrolled }: HeaderProps) => {
     )}>
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
+          <div 
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => navigate("/")}
+          >
             <img src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" alt="Creativable Logo" className="h-8 w-8" />
             <span className="text-base font-bold">creativable</span>
           </div>
@@ -41,33 +44,35 @@ export const Header = ({ isScrolled }: HeaderProps) => {
               className="text-white/90 hover:text-white transition-colors relative group"
             >
               Funktionen
-              <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+              <div className="absolute -bottom-1 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gray-400/50 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
             </button>
             <button 
               onClick={() => scrollToSection('pricing')} 
               className="text-white/90 hover:text-white transition-colors relative group"
             >
               Preise
-              <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+              <div className="absolute -bottom-1 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gray-400/50 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
             </button>
             <button 
               onClick={() => scrollToSection('mission')} 
               className="text-white/90 hover:text-white transition-colors relative group"
             >
               Unsere Mission
-              <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+              <div className="absolute -bottom-1 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gray-400/50 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
             </button>
             <a 
               href="/support" 
-              className="text-white/90 hover:text-white transition-colors"
+              className="text-white/90 hover:text-white transition-colors relative group"
             >
               Support
+              <div className="absolute -bottom-1 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gray-400/50 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
             </a>
             <a 
               href="/news" 
-              className="text-white/90 hover:text-white transition-colors"
+              className="text-white/90 hover:text-white transition-colors relative group"
             >
               News
+              <div className="absolute -bottom-1 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gray-400/50 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
             </a>
           </nav>
         </div>
@@ -84,7 +89,7 @@ export const Header = ({ isScrolled }: HeaderProps) => {
                 className="text-white/90 hover:text-white transition-colors relative group"
               >
                 Login
-                <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+                <div className="absolute -bottom-1 left-0 w-full h-[1px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
               </button>
               <Button
                 onClick={() => navigate("/register")}
