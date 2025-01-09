@@ -117,7 +117,7 @@ export const RegistrationForm = ({
             required
             className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
           />
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+          <div className="grid grid-cols-4 gap-x-4 gap-y-2 text-sm">
             {passwordRequirements.map(({ label }) => (
               <div key={label} className="flex items-center gap-2 transition-opacity duration-200" style={{ opacity: passwordStrength[label] ? 1 : 0.5 }}>
                 {passwordStrength[label] ? (
