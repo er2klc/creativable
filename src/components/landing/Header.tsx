@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@supabase/auth-helpers-react";
 import { cn } from "@/lib/utils";
+import { Mail } from "lucide-react";
 
 interface HeaderProps {
   isScrolled: boolean;
@@ -37,21 +38,24 @@ export const Header = ({ isScrolled }: HeaderProps) => {
           <nav className="hidden md:flex gap-6">
             <button 
               onClick={() => scrollToSection('features')} 
-              className="text-white/90 hover:text-white transition-colors"
+              className="text-white/90 hover:text-white transition-colors relative group"
             >
               Funktionen
+              <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
             </button>
             <button 
               onClick={() => scrollToSection('pricing')} 
-              className="text-white/90 hover:text-white transition-colors"
+              className="text-white/90 hover:text-white transition-colors relative group"
             >
               Preise
+              <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
             </button>
             <button 
               onClick={() => scrollToSection('mission')} 
-              className="text-white/90 hover:text-white transition-colors"
+              className="text-white/90 hover:text-white transition-colors relative group"
             >
               Unsere Mission
+              <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
             </button>
             <a 
               href="/support" 
@@ -69,20 +73,18 @@ export const Header = ({ isScrolled }: HeaderProps) => {
         </div>
         <div className="flex items-center gap-4">
           {user ? (
-            <Button 
-              onClick={() => navigate("/dashboard")} 
-              variant="ghost"
-              className="text-white hover:text-white/80"
-            >
-              Profil
-            </Button>
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full border border-white/20">
+              <Mail className="h-4 w-4 text-white/80" />
+              <span className="text-sm text-white/90">{user.email}</span>
+            </div>
           ) : (
             <>
               <button 
                 onClick={() => navigate("/auth")} 
-                className="text-white/90 hover:text-white transition-colors"
+                className="text-white/90 hover:text-white transition-colors relative group"
               >
                 Login
+                <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
               </button>
               <Button
                 onClick={() => navigate("/register")}

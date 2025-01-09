@@ -16,7 +16,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { Upload } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 const formSchema = z.object({
@@ -27,6 +26,7 @@ const formSchema = z.object({
 export const AuthenticatedSupportView = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isHovered, setIsHovered] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
@@ -169,13 +169,20 @@ export const AuthenticatedSupportView = () => {
                 </div>
               )}
             </div>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-            >
-              {isSubmitting ? "Wird erstellt..." : "Ticket erstellen"}
-            </Button>
+            <div className="relative">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                className="w-full bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white border border-white/10 backdrop-blur-sm transition-all duration-300"
+              >
+                {isSubmitting ? "Wird erstellt..." : "Ticket erstellen"}
+              </Button>
+              <div 
+                className={`absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-transform duration-300 ${isHovered ? "scale-x-100" : "scale-x-0"}`}
+              />
+            </div>
           </form>
         </Form>
       </motion.div>
