@@ -29,7 +29,7 @@ const Features = () => {
             </Button>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Hero Section */}
       <div className="relative min-h-[60vh] w-full flex items-center justify-center pt-20">
