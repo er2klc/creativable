@@ -11,6 +11,16 @@ export const Header = ({ isScrolled }: HeaderProps) => {
   const navigate = useNavigate();
   const user = useUser();
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
   return (
     <header className={cn(
       "fixed top-0 w-full z-50 transition-all duration-300",
@@ -25,11 +35,36 @@ export const Header = ({ isScrolled }: HeaderProps) => {
           {/* Vertical Separator Line */}
           <div className="h-6 w-px bg-gradient-to-b from-transparent via-gray-500/30 to-transparent mx-2" />
           <nav className="hidden md:flex gap-6">
-            <NavItem href="#features">Funktionen</NavItem>
-            <NavItem href="#pricing">Preise</NavItem>
-            <NavItem href="#about">Über uns</NavItem>
-            <NavItem href="#support">Support</NavItem>
-            <NavItem href="#news">News</NavItem>
+            <button 
+              onClick={() => scrollToSection('features')} 
+              className="text-white/90 hover:text-white transition-colors"
+            >
+              Funktionen
+            </button>
+            <button 
+              onClick={() => scrollToSection('pricing')} 
+              className="text-white/90 hover:text-white transition-colors"
+            >
+              Preise
+            </button>
+            <button 
+              onClick={() => scrollToSection('mission')} 
+              className="text-white/90 hover:text-white transition-colors"
+            >
+              Unsere Mission
+            </button>
+            <a 
+              href="/support" 
+              className="text-white/90 hover:text-white transition-colors"
+            >
+              Support
+            </a>
+            <a 
+              href="/news" 
+              className="text-white/90 hover:text-white transition-colors"
+            >
+              News
+            </a>
           </nav>
         </div>
         <div className="flex items-center gap-4">
@@ -62,16 +97,5 @@ export const Header = ({ isScrolled }: HeaderProps) => {
       {/* Decorative Line */}
       <div className="absolute bottom-0 w-full h-px bg-gradient-to-r from-transparent via-gray-500/30 to-transparent" />
     </header>
-  );
-};
-
-const NavItem = ({ children, href }: { children: React.ReactNode; href: string }) => {
-  return (
-    <a 
-      href={href}
-      className="text-white/90 hover:text-white transition-colors"
-    >
-      {children}
-    </a>
   );
 };

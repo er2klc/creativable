@@ -74,8 +74,8 @@ const Index = () => {
         <div className="absolute bottom-0 w-full h-px bg-gradient-to-r from-transparent via-gray-500/50 to-transparent" />
       </div>
 
-      {/* Features Grid */}
-      <div className="relative w-full bg-[#111111] py-32">
+      {/* Features Section */}
+      <div id="features" className="relative w-full bg-[#111111] py-32">
         {/* Background Gradient Effect */}
         <div className="absolute inset-0 bg-gradient-to-b from-blue-500/10 via-purple-500/10 to-red-500/10 opacity-30" />
         
@@ -103,26 +103,14 @@ const Index = () => {
         <div className="absolute bottom-0 w-full h-px bg-gradient-to-r from-transparent via-gray-500/50 to-transparent" />
       </div>
 
-      {/* Call to Action */}
-      <div className="relative w-full py-32">
-        {/* Background Gradient Effect */}
-        <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 via-yellow-500/10 to-blue-500/10 opacity-30" />
-        
-        <div className="container mx-auto px-4 relative">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-4xl font-bold mb-6">Ready to unleash your creativity?</h2>
-            <p className="text-xl text-gray-400 mb-8">
-              Join thousands of creators who are already building amazing things with Creativable.
-            </p>
-            <Button
-              onClick={() => navigate("/auth")}
-              size="lg"
-              className="bg-[#1A1F2C]/80 hover:bg-[#2A2F3C]/80 text-white px-8 py-6 rounded-lg text-lg border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
-            >
-              Get Started Free
-            </Button>
-          </div>
-        </div>
+      {/* Pricing Section */}
+      <div id="pricing" className="relative w-full py-32">
+        {/* Pricing content goes here */}
+      </div>
+
+      {/* Mission Section (formerly About) */}
+      <div id="mission" className="relative w-full bg-[#111111] py-32">
+        {/* Mission content goes here */}
       </div>
 
       {/* Footer */}
@@ -146,11 +134,11 @@ const Index = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">Creativable</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#about" className="hover:text-white transition-colors">Über uns</a></li>
-                <li><a href="#imprint" className="hover:text-white transition-colors">Impressum</a></li>
-                <li><a href="#privacy" className="hover:text-white transition-colors">Datenschutz</a></li>
-                <li><a href="#terms" className="hover:text-white transition-colors">AGB</a></li>
-                <li><a href="#partner" className="hover:text-white transition-colors">Partnerprogramm</a></li>
+                <li><a href="#mission" className="hover:text-white transition-colors">Unsere Mission</a></li>
+                <li><a href="/imprint" className="hover:text-white transition-colors">Impressum</a></li>
+                <li><a href="/privacy" className="hover:text-white transition-colors">Datenschutz</a></li>
+                <li><a href="/terms" className="hover:text-white transition-colors">AGB</a></li>
+                <li><a href="/partner" className="hover:text-white transition-colors">Partnerprogramm</a></li>
               </ul>
             </div>
             <div>

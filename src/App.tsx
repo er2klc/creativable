@@ -18,6 +18,8 @@ import LinkedInCallback from "./pages/auth/callback/LinkedIn";
 import InstagramCallback from "./pages/auth/callback/Instagram";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import InstagramDataDeletion from "./pages/legal/InstagramDataDeletion";
+import News from "./pages/News";
+import Support from "./pages/Support";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { ChatButton } from "@/components/dashboard/ChatButton";
@@ -41,8 +43,7 @@ const App = () => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
   
-  // Liste der öffentlichen Routen, wo der Chat-Button nicht angezeigt werden soll
-  const publicRoutes = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram"];
+  const publicRoutes = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram", "/news", "/support"];
   const showChatButton = isAuthenticated && !publicRoutes.includes(location.pathname);
 
   return (
@@ -51,10 +52,8 @@ const App = () => {
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/auth/callback/linkedin" element={<LinkedInCallback />} />
-        <Route path="/auth/callback/instagram" element={<InstagramCallback />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/auth/data-deletion/instagram" element={<InstagramDataDeletion />} />
+        <Route path="/news" element={<News />} />
+        <Route path="/support" element={<Support />} />
         <Route path="/changelog" element={<AppLayout><Changelog /></AppLayout>} />
         
         {/* Protected Routes */}
