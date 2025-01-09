@@ -46,8 +46,8 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Decorative Line */}
-          <div className="absolute bottom-0 w-full h-px bg-gradient-to-r from-transparent via-gray-500/50 to-transparent" />
+          {/* Decorative Line with more spacing */}
+          <div className="absolute bottom-0 w-full h-px bg-gradient-to-r from-transparent via-gray-500/50 to-transparent transform translate-y-8" />
         </div>
 
         {/* Call to Action */}
@@ -63,9 +63,7 @@ const Index = () => {
               </p>
               <Button
                 onClick={() => navigate("/auth")}
-                variant="glassy"
-                size="lg"
-                className="px-8 py-6 text-lg"
+                className="px-6 py-2 text-base bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white border border-white/10 shadow-lg backdrop-blur-sm transition-all"
               >
                 Get Started Free
               </Button>
