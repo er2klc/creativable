@@ -29,6 +29,7 @@ jobs:
         run: npm run build
 
       # 5. Upload Files to Server
+           # 5. Upload Files to Server
       - name: Upload Files to Server
         uses: appleboy/scp-action@v0.1.4
         with:
@@ -37,9 +38,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           target: /var/www/creativable.de/web
           source: |
-            *         # Alle Dateien hochladen
-            .env      # Optional: falls du eine .env-Datei hast
+            **/*      # Alle Dateien und Unterordner hochladen
           port: 22
+
 
       # 6. Run Build on Server
       - name: Run Build on Server
