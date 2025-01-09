@@ -828,6 +828,80 @@ export type Database = {
         }
         Relationships: []
       }
+      support_ticket_attachments: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_path: string
+          file_type: string | null
+          id: string
+          ticket_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          file_type?: string | null
+          id?: string
+          ticket_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_type?: string | null
+          id?: string
+          ticket_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_attachments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          is_visitor: boolean | null
+          message: string
+          priority: string | null
+          status: string | null
+          subject: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          is_visitor?: boolean | null
+          message: string
+          priority?: string | null
+          status?: string | null
+          subject: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_visitor?: boolean | null
+          message?: string
+          priority?: string | null
+          status?: string | null
+          subject?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           cancelled: boolean | null
