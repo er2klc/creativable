@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const passwordRequirements = [
   { check: (pwd: string) => pwd.length >= 8, label: "Mindestens 8 Zeichen" },
@@ -18,6 +19,7 @@ const passwordRequirements = [
 const Register = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -72,10 +74,15 @@ const Register = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes('already registered')) {
+          setShowLoginDialog(true);
+          return;
+        }
+        throw error;
+      }
 
       if (data) {
-        // Create initial settings with phone number
         const { error: settingsError } = await supabase
           .from('settings')
           .insert({
@@ -114,6 +121,7 @@ const Register = () => {
             onChange={handleInputChange}
             disabled={isLoading}
             required
+            className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
           />
         </div>
 
@@ -128,6 +136,7 @@ const Register = () => {
             onChange={handleInputChange}
             disabled={isLoading}
             required
+            className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
           />
         </div>
 
@@ -142,8 +151,9 @@ const Register = () => {
             onChange={handleInputChange}
             disabled={isLoading}
             required
+            className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
           />
-          <div className="space-y-2 text-sm">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
             {passwordRequirements.map(({ label }) => (
               <div key={label} className="flex items-center gap-2 transition-opacity duration-200" style={{ opacity: passwordStrength[label] ? 1 : 0.5 }}>
                 {passwordStrength[label] ? (
@@ -168,6 +178,7 @@ const Register = () => {
             onChange={handleInputChange}
             disabled={isLoading}
             required
+            className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
           />
         </div>
 
@@ -182,12 +193,13 @@ const Register = () => {
             onChange={handleInputChange}
             disabled={isLoading}
             required
+            className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
           />
         </div>
 
         <Button
           type="submit"
-          className="w-full"
+          className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-lg backdrop-blur-sm relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-full after:bg-gradient-to-r after:from-red-500 after:via-yellow-500 after:to-blue-500"
           disabled={isLoading || !isPasswordValid || !doPasswordsMatch}
         >
           {isLoading ? "Laden..." : "Registrieren"}
@@ -203,6 +215,35 @@ const Register = () => {
           </button>
         </div>
       </form>
+
+      <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <DialogContent className="bg-[#1A1F2C]/95 border-white/10 text-white backdrop-blur-sm">
+          <DialogHeader>
+            <DialogTitle>Account bereits vorhanden</DialogTitle>
+            <DialogDescription className="text-gray-300">
+              Diese E-Mail-Adresse ist bereits registriert. Möchten Sie sich stattdessen anmelden?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end space-x-4 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowLoginDialog(false)}
+              className="border-white/10 text-white hover:bg-white/5"
+            >
+              Abbrechen
+            </Button>
+            <Button
+              onClick={() => {
+                setShowLoginDialog(false);
+                navigate("/auth", { state: { initialEmail: formData.email } });
+              }}
+              className="bg-white/10 hover:bg-white/20 text-white border border-white/20"
+            >
+              Zum Login
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AuthCard>
   );
 };
