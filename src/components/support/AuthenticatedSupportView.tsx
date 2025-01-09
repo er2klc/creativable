@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
+import { Upload } from "lucide-react";
 
 const formSchema = z.object({
   subject: z.string().min(1, "Bitte gib einen Betreff ein"),
