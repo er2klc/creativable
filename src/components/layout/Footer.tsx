@@ -9,6 +9,21 @@ export const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
+          <div className="flex flex-col items-start">
+            <div className="flex items-center gap-2 mb-4">
+              <img src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" alt="Creativable Logo" className="h-8 w-8" />
+              <span className="text-lg font-bold">creativable</span>
+            </div>
+            <p className="text-gray-400 mb-6">Revolutioniere dein Social Media Marketing</p>
+            <Button 
+              onClick={() => window.location.href = '/register'}
+              className="bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white border border-white/10 shadow-lg backdrop-blur-sm"
+            >
+              Jetzt Anmelden
+            </Button>
+          </div>
+
+          {/* Quick Links */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Creativable</h3>
             <ul className="space-y-2 text-gray-400">
@@ -16,6 +31,7 @@ export const Footer = () => {
               <li><Link to="/imprint" className="hover:text-white transition-colors">Impressum</Link></li>
               <li><Link to="/privacy" className="hover:text-white transition-colors">Datenschutz</Link></li>
               <li><Link to="/terms" className="hover:text-white transition-colors">AGB</Link></li>
+              <li><Link to="/affiliate" className="hover:text-white transition-colors">Partnerprogramm</Link></li>
             </ul>
           </div>
 
@@ -52,15 +68,6 @@ export const Footer = () => {
                 <Button variant="secondary">Anmelden</Button>
               </div>
             </div>
-          </div>
-
-          {/* Affiliate Program */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Partnerprogramm</h3>
-            <p className="text-gray-400 mb-4">Werde Affiliate und verdiene mit!</p>
-            <Button variant="outline" className="border-white/10 hover:bg-white/5">
-              Jetzt Partner werden
-            </Button>
           </div>
         </div>
 
