@@ -13,6 +13,10 @@ export const Header = ({ isScrolled }: HeaderProps) => {
   const user = useUser();
 
   const scrollToSection = (sectionId: string) => {
+    if (window.location.pathname !== '/') {
+      navigate('/#' + sectionId);
+      return;
+    }
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ 
@@ -47,24 +51,24 @@ export const Header = ({ isScrolled }: HeaderProps) => {
               <div className="absolute -bottom-1 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gray-400/50 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
             </button>
             <button 
-              onClick={() => scrollToSection('pricing')} 
-              className="text-white/90 hover:text-white transition-colors relative group"
-            >
-              Preise
-              <div className="absolute -bottom-1 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gray-400/50 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
-            </button>
-            <button 
               onClick={() => scrollToSection('mission')} 
               className="text-white/90 hover:text-white transition-colors relative group"
             >
               Unsere Mission
               <div className="absolute -bottom-1 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gray-400/50 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
             </button>
+            <button 
+              onClick={() => scrollToSection('pricing')} 
+              className="text-white/90 hover:text-white transition-colors relative group"
+            >
+              Preise
+              <div className="absolute -bottom-1 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gray-400/50 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+            </button>
             <a 
               href="/support" 
               className="text-white/90 hover:text-white transition-colors relative group"
             >
-              Support
+              Kontakt
               <div className="absolute -bottom-1 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gray-400/50 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
             </a>
             <a 

@@ -3,135 +3,104 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
-  email: z.string().email("Bitte gib eine gültige E-Mail-Adresse ein"),
-  subject: z.string().min(1, "Bitte gib einen Betreff ein"),
-  message: z.string().min(10, "Deine Nachricht sollte mindestens 10 Zeichen lang sein"),
+  email: z.string().email("Bitte geben Sie eine gültige E-Mail-Adresse ein"),
+  subject: z.string().min(1, "Bitte geben Sie einen Betreff ein"),
+  message: z.string().min(1, "Bitte geben Sie eine Nachricht ein"),
 });
 
 export const VisitorSupportForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const form = useForm<z.infer<typeof formSchema>>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: zodResolver(formSchema),
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from("support_tickets").insert({
-        email: values.email,
-        subject: values.subject,
-        message: values.message,
-        is_visitor: true,
-      });
+      const { error } = await supabase
+        .from('support_tickets')
+        .insert([
+          { 
+            email: data.email,
+            subject: data.subject,
+            message: data.message,
+            is_visitor: true
+          }
+        ]);
 
       if (error) throw error;
 
-      toast.success("Deine Anfrage wurde erfolgreich gesendet!");
-      form.reset();
+      toast.success("Ihre Nachricht wurde erfolgreich gesendet!");
+      reset();
     } catch (error) {
-      console.error("Error submitting support ticket:", error);
-      toast.error("Es gab einen Fehler beim Senden deiner Anfrage. Bitte versuche es später erneut.");
+      console.error('Error submitting support ticket:', error);
+      toast.error("Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-      className="bg-[#1A1F2C]/60 backdrop-blur-lg border border-white/10 rounded-lg p-6 shadow-xl"
-    >
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>E-Mail</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="deine@email.de"
-                    {...field}
-                    className="bg-[#0A0A0A]/60 border-white/10"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="subject"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Betreff</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Wie können wir dir helfen?"
-                    {...field}
-                    className="bg-[#0A0A0A]/60 border-white/10"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="message"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nachricht</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Beschreibe dein Anliegen..."
-                    className="min-h-[150px] bg-[#0A0A0A]/60 border-white/10"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="relative">
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              className="w-full bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white border border-white/10 backdrop-blur-sm transition-all duration-300"
-            >
-              {isSubmitting ? "Wird gesendet..." : "Anfrage senden"}
-            </Button>
-            <div 
-              className={cn(
-                "absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-transform duration-300",
-                isHovered ? "scale-x-100" : "scale-x-0"
-              )}
-            />
-          </div>
-        </form>
-      </Form>
-    </motion.div>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div>
+        <Input
+          type="email"
+          placeholder="E-Mail Adresse"
+          {...register("email")}
+          className={cn(
+            "bg-[#1A1F2C]/60 border border-white/10 text-white placeholder-gray-400",
+            errors.email && "border-red-500"
+          )}
+        />
+        {errors.email && (
+          <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+        )}
+      </div>
+
+      <div>
+        <Input
+          type="text"
+          placeholder="Betreff"
+          {...register("subject")}
+          className={cn(
+            "bg-[#1A1F2C]/60 border border-white/10 text-white placeholder-gray-400",
+            errors.subject && "border-red-500"
+          )}
+        />
+        {errors.subject && (
+          <p className="text-red-500 text-sm mt-1">{errors.subject.message}</p>
+        )}
+      </div>
+
+      <div>
+        <Textarea
+          placeholder="Ihre Nachricht"
+          {...register("message")}
+          className={cn(
+            "bg-[#1A1F2C]/60 border border-white/10 text-white placeholder-gray-400 min-h-[150px]",
+            errors.message && "border-red-500"
+          )}
+        />
+        {errors.message && (
+          <p className="text-red-500 text-sm mt-1">{errors.message.message}</p>
+        )}
+      </div>
+
+      <Button 
+        type="submit" 
+        disabled={isSubmitting}
+        className="w-full relative group bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white border border-white/10"
+      >
+        <span className="relative z-10">Kontakt versenden</span>
+        <div className="absolute -bottom-[1px] left-0 w-full h-[1px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+      </Button>
+    </form>
   );
 };
