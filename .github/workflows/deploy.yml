@@ -24,20 +24,12 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # 4. Build the Project
-      - name: Build Project
+      # 4. Build the Project Locally (optional, falls du testen möchtest)
+      - name: Build Project Locally
         run: npm run build
 
-      # 5. Verify dist directory
-      - name: Verify dist directory
-        run: |
-          if [ ! -d "dist" ] || [ -z "$(ls -A dist)" ]; then
-            echo "dist directory is empty or does not exist";
-            exit 1;
-          fi
-
-      # 6. Deploy to Server
-      - name: Deploy to Server
+      # 5. Upload Files to Server
+      - name: Upload Files to Server
         uses: appleboy/scp-action@v0.1.4
         with:
           host: server.kreative-webdesign.de
@@ -45,6 +37,19 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           target: /var/www/creativable.de/web
           source: |
-            dist/*
-            public/*
+            *         # Alle Dateien hochladen
+            .env      # Optional: falls du eine .env-Datei hast
           port: 22
+
+      # 6. Run Build on Server
+      - name: Run Build on Server
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: server.kreative-webdesign.de
+          username: web39
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /var/www/creativable.de/web
+            npm install
+            npm run build
