@@ -24,12 +24,15 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # 4. Build the Project Locally (optional, falls du testen möchtest)
-      - name: Build Project Locally
+      # 4. Build the Project
+      - name: Build Project
         run: npm run build
 
-      # 5. Upload Files to Server
-           # 5. Upload Files to Server
+      # 5. Debugging: Check dist directory
+      - name: Check dist directory
+        run: ls -la dist/
+
+      # 6. Upload Files to Server
       - name: Upload Files to Server
         uses: appleboy/scp-action@v0.1.4
         with:
@@ -37,12 +40,11 @@ jobs:
           username: web39
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           target: /var/www/creativable.de/web
-          source: |
-            **/*      # Alle Dateien und Unterordner hochladen
+          source: dist/**/*  # Alle Dateien und Unterordner im dist/ Ordner
           port: 22
+          debug: true
 
-
-      # 6. Run Build on Server
+      # 7. Run Build on Server (optional, falls nötig)
       - name: Run Build on Server
         uses: appleboy/ssh-action@v0.1.7
         with:
