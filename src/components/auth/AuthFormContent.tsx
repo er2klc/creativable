@@ -215,3 +215,5 @@ export const AuthFormContent = () => {
     </>
   );
 };
+
+export default AuthFormContent;
