@@ -28,7 +28,15 @@ jobs:
       - name: Build Project
         run: npm run build
 
-      # 5. Deploy to Server
+      # 5. Verify dist directory
+      - name: Verify dist directory
+        run: |
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist)" ]; then
+            echo "dist directory is empty or does not exist";
+            exit 1;
+          fi
+
+      # 6. Deploy to Server
       - name: Deploy to Server
         uses: appleboy/scp-action@v0.1.4
         with:
@@ -37,7 +45,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           target: /var/www/creativable.de/web
           source: |
-            dist/*       # Gebaute Dateien
-            public/*     # Statische Dateien
-            package.json # Andere wichtige Dateien
+            dist/*
+            public/*
           port: 22
