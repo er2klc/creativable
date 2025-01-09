@@ -136,7 +136,7 @@ export const AuthFormContent = () => {
 
         <Button
           type="submit"
-          className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-lg backdrop-blur-sm transition-all"
+          className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-lg backdrop-blur-sm relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-full after:bg-gradient-to-r after:from-red-500 after:via-yellow-500 after:to-blue-500"
           variant="glassy"
           disabled={isLoading || cooldownRemaining > 0}
         >
@@ -162,7 +162,7 @@ export const AuthFormContent = () => {
           <Button
             type="button"
             variant="outline"
-            className="w-full border-white/10 text-white hover:bg-white/5"
+            className="w-full border-white/10 text-white hover:bg-white/5 relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-full after:bg-gradient-to-r after:from-red-500 after:via-yellow-500 after:to-blue-500"
             onClick={() => setRegistrationStep(1)}
             disabled={isLoading}
           >

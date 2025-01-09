@@ -16,12 +16,12 @@ export const SocialLoginButtons = ({
       <Button
         type="button"
         variant="outline"
-        className="bg-white/10 hover:bg-white/20 text-white border border-white/20 flex items-center gap-2"
+        className="bg-white/10 hover:bg-white/20 text-white border border-white/20 flex items-center gap-2 relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-full after:bg-gradient-to-r after:from-red-500 after:via-yellow-500 after:to-blue-500"
         onClick={onGoogleLogin}
         disabled={isLoading}
       >
         <img 
-          src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_32dp.png" 
+          src="/lovable-uploads/5a7338a2-5048-441b-85cc-019706e45223.png" 
           alt="Google" 
           className="h-4 w-auto object-contain"
         />
@@ -30,12 +30,12 @@ export const SocialLoginButtons = ({
       <Button
         type="button"
         variant="outline"
-        className="bg-white/10 hover:bg-white/20 text-white border border-white/20 flex items-center gap-2"
+        className="bg-white/10 hover:bg-white/20 text-white border border-white/20 flex items-center gap-2 relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-full after:bg-gradient-to-r after:from-red-500 after:via-yellow-500 after:to-blue-500"
         onClick={onAppleLogin}
         disabled={isLoading}
       >
         <img 
-          src="https://www.apple.com/ac/globalnav/7/en_US/images/be15095f-5a20-57d0-ad14-cf4c638e223a/globalnav_apple_image__b5er5ngrzxqq_large.svg" 
+          src="/lovable-uploads/e39946c9-8413-4b84-a119-1d00818b24d3.png" 
           alt="Apple" 
           className="h-4 w-auto object-contain"
         />
