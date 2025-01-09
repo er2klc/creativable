@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Apple, Chrome } from "lucide-react";
 
 interface SocialLoginButtonsProps {
   onGoogleLogin: () => void;
@@ -21,7 +20,11 @@ export const SocialLoginButtons = ({
         onClick={onGoogleLogin}
         disabled={isLoading}
       >
-        <Chrome className="h-4 w-4" />
+        <img 
+          src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_32dp.png" 
+          alt="Google" 
+          className="h-4 w-auto object-contain"
+        />
         Google
       </Button>
       <Button
@@ -31,7 +34,11 @@ export const SocialLoginButtons = ({
         onClick={onAppleLogin}
         disabled={isLoading}
       >
-        <Apple className="h-4 w-4" />
+        <img 
+          src="https://www.apple.com/ac/globalnav/7/en_US/images/be15095f-5a20-57d0-ad14-cf4c638e223a/globalnav_apple_image__b5er5ngrzxqq_large.svg" 
+          alt="Apple" 
+          className="h-4 w-auto object-contain"
+        />
         Apple
       </Button>
     </div>
