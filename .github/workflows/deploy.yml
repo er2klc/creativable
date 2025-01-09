@@ -1,0 +1,43 @@
+name: Build and Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout Repository Code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # 2. Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      # 3. Install Dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # 4. Build the Project
+      - name: Build Project
+        run: npm run build
+
+      # 5. Upload Files to Server via SSH
+      - name: Deploy to Server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: server.kreative-webdesign.de
+          username: c620751creativable
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          target: /var/www/creativable.de/web
+          source: |
+            dist/*       # Gebaute Dateien
+            public/*     # Statische Dateien
+            package.json # Andere wichtige Dateien
+            index.html   # Falls außerhalb des dist-Ordners
