@@ -18,14 +18,17 @@ export const Header = ({ isScrolled }: HeaderProps) => {
     )}>
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
+          <div 
+            className="flex items-center gap-2 cursor-pointer" 
+            onClick={() => navigate("/")}
+          >
             <img src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" alt="Creativable Logo" className="h-8 w-8" />
             <span className="text-base font-bold">creativable</span>
           </div>
           {/* Vertical Separator Line */}
           <div className="h-6 w-px bg-gradient-to-b from-transparent via-gray-500/30 to-transparent mx-2" />
           <nav className="hidden md:flex gap-2">
-            <NavItem href="#features">Funktionen</NavItem>
+            <NavItem href="/features">Funktionen</NavItem>
             <NavItem href="#why">Warum Creativable?</NavItem>
             <NavItem href="#pricing">Preise</NavItem>
             <NavItem href="#customers">Unsere Kunden</NavItem>
@@ -68,9 +71,22 @@ export const Header = ({ isScrolled }: HeaderProps) => {
 };
 
 const NavItem = ({ children, href }: { children: React.ReactNode; href: string }) => {
+  const navigate = useNavigate();
+  const isExternalLink = href.startsWith('#');
+  
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isExternalLink) {
+      window.location.href = href;
+    } else {
+      navigate(href);
+    }
+  };
+
   return (
     <a 
       href={href}
+      onClick={handleClick}
       className="relative px-3 py-2 text-white/90 hover:text-white transition-colors group"
     >
       {children}
