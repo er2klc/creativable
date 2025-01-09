@@ -2,7 +2,7 @@ import { AuthCard } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,19 +32,23 @@ const Register = () => {
     [key: string]: boolean;
   }>({});
 
-  useEffect(() => {
-    const strength = passwordRequirements.reduce((acc, req) => ({
-      ...acc,
-      [req.label]: req.check(formData.password),
-    }), {});
-    setPasswordStrength(strength);
-  }, [formData.password]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    if (name === "password") {
+      const strength = passwordRequirements.reduce(
+        (acc, req) => ({
+          ...acc,
+          [req.label]: req.check(value),
+        }),
+        {}
+      );
+      setPasswordStrength(strength);
+    }
   };
 
   const isPasswordValid = Object.values(passwordStrength).every(Boolean);
@@ -77,16 +81,17 @@ const Register = () => {
       if (error) {
         if (error.message?.includes('already registered')) {
           setShowLoginDialog(true);
+          setIsLoading(false);
           return;
         }
         throw error;
       }
 
-      if (data) {
+      if (data?.user) {
         const { error: settingsError } = await supabase
           .from('settings')
           .insert({
-            user_id: data.user?.id,
+            user_id: data.user.id,
             language: "Deutsch",
             whatsapp_number: formData.phoneNumber,
           });
@@ -209,7 +214,7 @@ const Register = () => {
           <button
             type="button"
             onClick={() => navigate("/auth")}
-            className="text-sm text-muted-foreground hover:underline"
+            className="text-sm text-gray-400 hover:text-white hover:underline"
           >
             Bereits registriert? Hier anmelden
           </button>
