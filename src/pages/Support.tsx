@@ -4,9 +4,12 @@ import { VisitorSupportForm } from "@/components/support/VisitorSupportForm";
 import { AuthenticatedSupportView } from "@/components/support/AuthenticatedSupportView";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const Support = () => {
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
 
   return (

@@ -60,7 +60,7 @@ export const VisitorSupportForm = () => {
           )}
         />
         {errors.email && (
-          <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+          <p className="text-red-500 text-sm mt-1">{errors.email.message?.toString()}</p>
         )}
       </div>
 
@@ -75,7 +75,7 @@ export const VisitorSupportForm = () => {
           )}
         />
         {errors.subject && (
-          <p className="text-red-500 text-sm mt-1">{errors.subject.message}</p>
+          <p className="text-red-500 text-sm mt-1">{errors.subject.message?.toString()}</p>
         )}
       </div>
 
@@ -89,7 +89,7 @@ export const VisitorSupportForm = () => {
           )}
         />
         {errors.message && (
-          <p className="text-red-500 text-sm mt-1">{errors.message.message}</p>
+          <p className="text-red-500 text-sm mt-1">{errors.message.message?.toString()}</p>
         )}
       </div>
 
