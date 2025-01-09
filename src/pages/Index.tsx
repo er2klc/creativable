@@ -26,50 +26,6 @@ const Index = () => {
       isHomePage={true}
     >
       <div className="min-h-screen w-full bg-[#0A0A0A] text-white overflow-x-hidden">
-        {/* Hero Section with Gradient Background */}
-        <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
-          {/* Background Gradient Effect */}
-          <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30" />
-          
-          {/* Logo Background Blur */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-10">
-            <img 
-              src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
-              alt="Background Logo" 
-              className="w-[800px] blur-3xl"
-            />
-          </div>
-
-          <div className="container mx-auto px-4 pt-32 pb-20 text-center relative">
-            <div className="max-w-4xl mx-auto space-y-6">
-              <span className="inline-block px-4 py-1 bg-white/10 rounded-full text-sm font-medium backdrop-blur-sm mb-8">
-                #creativable
-              </span>
-              <div className="flex justify-center mb-8">
-                <img src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" alt="Creativable Logo" className="h-32 w-32" />
-              </div>
-              <h1 className="text-6xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 bg-clip-text text-transparent">
-                Create. Connect. Grow.
-              </h1>
-              <p className="text-xl text-gray-400 mt-6">
-                Transform your creative vision into reality with our intuitive platform.
-              </p>
-              <div className="flex justify-center gap-4 mt-8">
-                <Button
-                  onClick={() => navigate("/auth")}
-                  size="lg"
-                  className="bg-[#1A1F2C]/80 hover:bg-[#2A2F3C]/80 text-white px-8 py-6 rounded-lg text-lg border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
-                >
-                  Start Creating Now
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Decorative Line */}
-          <div className="absolute bottom-0 w-full h-px bg-gradient-to-r from-transparent via-gray-500/50 to-transparent" />
-        </div>
-
         {/* Features Grid */}
         <div className="relative w-full bg-[#111111] py-32">
           {/* Background Gradient Effect */}
@@ -107,8 +63,9 @@ const Index = () => {
               </p>
               <Button
                 onClick={() => navigate("/auth")}
+                variant="glassy"
                 size="lg"
-                className="bg-[#1A1F2C]/80 hover:bg-[#2A2F3C]/80 text-white px-8 py-6 rounded-lg text-lg border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-300"
+                className="px-8 py-6 text-lg"
               >
                 Get Started Free
               </Button>
