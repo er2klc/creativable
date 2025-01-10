@@ -21,11 +21,13 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
+      // First try to get the name from user metadata
       const fullName = user.user_metadata?.full_name;
       if (fullName) {
         return { name: fullName };
       }
 
+      // If not found in metadata, try to get from settings table
       const { data, error } = await supabase
         .from("settings")
         .select("*")
@@ -37,6 +39,7 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
     }
   });
 
+  // Fetch daily quote
   useEffect(() => {
     const fetchDailyQuote = async () => {
       try {
@@ -70,10 +73,14 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
 
   const handleSignOut = async () => {
     try {
+      // Clear local storage first
       localStorage.clear();
+      
+      // Try to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
       if (error) {
+        // If we get a session_not_found error, we can still proceed with local cleanup
         if (error.message.includes('session_not_found')) {
           console.info('Session already expired, proceeding with cleanup');
         } else {
@@ -81,15 +88,18 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
         }
       }
 
+      // Always show success message and redirect
       toast({
         title: "Erfolgreich abgemeldet",
         description: "Auf Wiedersehen!",
       });
 
+      // Force navigation to auth page
       navigate("/auth", { replace: true });
       
     } catch (error) {
       console.error("Logout error:", error);
+      // Even if there's an error, try to redirect to auth
       toast({
         title: "Abmeldung",
         description: "Sie wurden aus Sicherheitsgründen abgemeldet.",
@@ -102,31 +112,24 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
     <div className="flex flex-col gap-4 mb-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 bg-clip-text text-transparent font-orbitron">
+          <h1 className="text-3xl font-bold text-foreground">
             Willkommen, {displayName}
           </h1>
-          <p className="text-white/60 mt-1 text-lg">
+          <p className="text-muted-foreground mt-1">
             Hier ist Ihr aktueller Überblick
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <Button 
-            onClick={handleSignOut} 
-            className="relative bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white hover:text-white border-0 shadow-lg backdrop-blur-sm group overflow-hidden"
-          >
-            <span>Abmelden</span>
-            <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 transform translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300" />
+          <Button onClick={handleSignOut} variant="outline">
+            Abmelden
           </Button>
         </div>
       </div>
       {dailyQuote && (
-        <div className="relative">
-          <div className="bg-[#1A1F2C]/60 p-6 rounded-lg backdrop-blur-sm">
-            <p className="text-lg text-white/90 italic text-center">
-              "{dailyQuote}"
-            </p>
-          </div>
-          <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <div className="bg-primary/5 p-4 rounded-lg">
+          <p className="text-lg text-primary italic text-center">
+            "{dailyQuote}"
+          </p>
         </div>
       )}
     </div>

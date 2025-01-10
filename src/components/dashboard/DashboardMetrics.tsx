@@ -48,42 +48,36 @@ export const DashboardMetrics = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <Card className="bg-[#1A1F2C]/60 border border-white/10 backdrop-blur-sm">
+      <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium text-white/90">
+          <CardTitle className="text-lg font-medium">
             {settings?.language === "en" ? "Active Leads" : "Leads in Bearbeitung"}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 bg-clip-text text-transparent">
-            {metrics?.totalLeads || 0}
-          </p>
+          <p className="text-3xl font-bold">{metrics?.totalLeads || 0}</p>
         </CardContent>
       </Card>
 
-      <Card className="bg-[#1A1F2C]/60 border border-white/10 backdrop-blur-sm">
+      <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium text-white/90">
+          <CardTitle className="text-lg font-medium">
             {settings?.language === "en" ? "Open Tasks" : "Offene Aufgaben"}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 bg-clip-text text-transparent">
-            {metrics?.openTasks || 0}
-          </p>
+          <p className="text-3xl font-bold">{metrics?.openTasks || 0}</p>
         </CardContent>
       </Card>
 
-      <Card className="bg-[#1A1F2C]/60 border border-white/10 backdrop-blur-sm">
+      <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium text-white/90">
+          <CardTitle className="text-lg font-medium">
             {settings?.language === "en" ? "Completion Rate" : "Abschlussquote"}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 bg-clip-text text-transparent">
-            {metrics?.completionRate || 0}%
-          </p>
+          <p className="text-3xl font-bold">{metrics?.completionRate || 0}%</p>
         </CardContent>
       </Card>
     </div>
