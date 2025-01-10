@@ -81,7 +81,7 @@ export const DashboardSidebar = () => {
       <SidebarContent className="flex flex-col h-full">
         {/* Logo with blur effect */}
         <div className="relative flex items-center justify-center p-4 mb-2 overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png')] opacity-10 blur-xl scale-150" />
+          <div className="absolute inset-0 bg-[url('/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png')] opacity-10 blur-2xl scale-150" />
           <img 
             src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
             alt="Logo" 
@@ -95,7 +95,7 @@ export const DashboardSidebar = () => {
         <div className="flex-1 overflow-y-auto">
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
-              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-orbitron">
+              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 Persönlich
               </SidebarGroupLabel>
             </div>
@@ -105,8 +105,8 @@ export const DashboardSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-purple-300 hover:bg-white/5 rounded-lg transition-all duration-200 group/item">
-                        <item.icon className="h-[18px] w-[18px] shrink-0" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap font-orbitron">
+                        <item.icon className="h-5 w-5 shrink-0 group-hover:h-[18px] group-hover:w-[18px] transition-all duration-300" />
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm">
                           {item.title}
                         </span>
                         {item.badge && unreadCount > 0 && (
@@ -127,7 +127,7 @@ export const DashboardSidebar = () => {
 
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
-              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-orbitron">
+              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 Teams & Gruppen
               </SidebarGroupLabel>
             </div>
@@ -137,8 +137,8 @@ export const DashboardSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-purple-300 hover:bg-white/5 rounded-lg transition-all duration-200 group/item">
-                        <item.icon className="h-[18px] w-[18px] shrink-0" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap font-orbitron">
+                        <item.icon className="h-5 w-5 shrink-0 group-hover:h-[18px] group-hover:w-[18px] transition-all duration-300" />
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm">
                           {item.title}
                         </span>
                         <div className="absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-purple-500/50 via-pink-500/50 to-purple-500/50 group-hover/item:w-full transition-all duration-300" />
@@ -154,7 +154,7 @@ export const DashboardSidebar = () => {
 
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
-              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-orbitron">
+              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 Analyse & Tools
               </SidebarGroupLabel>
             </div>
@@ -164,8 +164,8 @@ export const DashboardSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-purple-300 hover:bg-white/5 rounded-lg transition-all duration-200 group/item">
-                        <item.icon className="h-[18px] w-[18px] shrink-0" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap font-orbitron">
+                        <item.icon className="h-5 w-5 shrink-0 group-hover:h-[18px] group-hover:w-[18px] transition-all duration-300" />
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm">
                           {item.title}
                         </span>
                         <div className="absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-purple-500/50 via-pink-500/50 to-purple-500/50 group-hover/item:w-full transition-all duration-300" />
@@ -181,7 +181,7 @@ export const DashboardSidebar = () => {
 
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
-              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-orbitron">
+              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 Rechtliches
               </SidebarGroupLabel>
             </div>
@@ -191,9 +191,9 @@ export const DashboardSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-purple-300 hover:bg-white/5 rounded-lg transition-all duration-200 group/item">
-                        <item.icon className="h-[18px] w-[18px] shrink-0" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap font-orbitron">
-                          {item.title}
+                        <item.icon className="h-5 w-5 shrink-0 group-hover:h-[18px] group-hover:w-[18px] transition-all duration-300" />
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm">
+                          {item.title === "Datenlöschung" ? "Datenlöschung" : item.title}
                         </span>
                         <div className="absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-purple-500/50 via-pink-500/50 to-purple-500/50 group-hover/item:w-full transition-all duration-300" />
                       </a>
@@ -206,9 +206,9 @@ export const DashboardSidebar = () => {
         </div>
 
         <div className="px-4 py-2 text-sm text-gray-400 border-t border-gray-800">
-          <a href="/changelog" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:text-purple-300 font-orbitron">
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:text-purple-300">
             Version {APP_VERSION}
-          </a>
+          </span>
         </div>
       </SidebarContent>
     </Sidebar>
