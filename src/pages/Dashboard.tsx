@@ -21,10 +21,19 @@ const Dashboard = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
-      {/* Gradient Background Effect */}
+    <div className="min-h-screen bg-[#0A0A0A] text-white relative">
+      {/* Background Gradient Effect */}
       <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30 pointer-events-none" />
       
+      {/* Logo Background Blur */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-5">
+        <img 
+          src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
+          alt="Background Logo" 
+          className="w-[800px] h-[800px] blur-3xl"
+        />
+      </div>
+
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
         <DashboardHeader userEmail={user.email} />
         <QuickActions />

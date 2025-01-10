@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Users, UserPlus, CheckCircle } from "lucide-react";
+import { Users, UserPlus, CheckCircle2 } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -137,9 +137,9 @@ export const LeadPhases = () => {
   }
 
   return (
-    <Card className="mb-8">
+    <Card className="mb-8 bg-[#1A1F2C]/60 border border-white/10 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="text-lg font-medium flex items-center gap-2">
+        <CardTitle className="text-lg font-medium flex items-center gap-2 text-white/90">
           <Users className="h-5 w-5" />
           Kontakt-Phasen
         </CardTitle>
@@ -147,12 +147,12 @@ export const LeadPhases = () => {
       <CardContent className="space-y-4">
         {phases.map(phase => (
           <div key={phase.id}>
-            <div className="flex justify-between mb-1 text-sm">
+            <div className="flex justify-between mb-1 text-sm text-white/80">
               <span className="flex items-center gap-2">
                 {phase.order_index === 0 ? (
                   <UserPlus className="h-4 w-4" />
                 ) : phase.order_index === phases.length - 1 ? (
-                  <CheckCircle className="h-4 w-4" />
+                  <CheckCircle2 className="h-4 w-4" />
                 ) : (
                   <Users className="h-4 w-4" />
                 )}
@@ -160,7 +160,11 @@ export const LeadPhases = () => {
               </span>
               <span>{leadCounts[phase.name] || 0}%</span>
             </div>
-            <Progress value={leadCounts[phase.name] || 0} className="h-2" />
+            <Progress 
+              value={leadCounts[phase.name] || 0} 
+              className="h-2 bg-white/5" 
+              indicatorClassName="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500"
+            />
           </div>
         ))}
       </CardContent>
