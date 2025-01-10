@@ -112,15 +112,16 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
         <div className="flex items-center gap-4">
           <Button 
             onClick={handleSignOut} 
-            className="bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white border border-white/10 shadow-lg backdrop-blur-sm"
+            className="relative bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white hover:text-white border-0 shadow-lg backdrop-blur-sm group overflow-hidden"
           >
-            Abmelden
+            <span>Abmelden</span>
+            <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 transform translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300" />
           </Button>
         </div>
       </div>
       {dailyQuote && (
         <div className="relative">
-          <div className="bg-[#1A1F2C]/60 p-6 rounded-lg border border-white/10 backdrop-blur-sm">
+          <div className="bg-[#1A1F2C]/60 p-6 rounded-lg backdrop-blur-sm">
             <p className="text-lg text-white/90 italic text-center">
               "{dailyQuote}"
             </p>

@@ -137,7 +137,7 @@ export const LeadPhases = () => {
   }
 
   return (
-    <Card className="mb-8 bg-[#1A1F2C]/60 border border-white/10 backdrop-blur-sm">
+    <Card className="mb-8 bg-[#1A1F2C]/60 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="text-lg font-medium flex items-center gap-2 text-white/90">
           <Users className="h-5 w-5" />
@@ -163,7 +163,6 @@ export const LeadPhases = () => {
             <Progress 
               value={leadCounts[phase.name] || 0} 
               className="h-2 bg-white/5" 
-              indicatorClassName="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500"
             />
           </div>
         ))}
