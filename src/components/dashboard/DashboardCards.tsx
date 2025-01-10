@@ -48,9 +48,9 @@ export const DashboardCards = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card>
+      <Card className="bg-[#1A1F2C]/60 border border-white/10 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-white/90">
             <CalendarClock className="h-5 w-5" />
             {settings?.language === "en" ? "Current Tasks" : "Aktuelle Aufgaben"}
           </CardTitle>
@@ -59,11 +59,11 @@ export const DashboardCards = () => {
           {tasks && tasks.length > 0 ? (
             <ul className="space-y-2">
               {tasks.map((task) => (
-                <li key={task.id} className="text-sm">
+                <li key={task.id} className="text-sm text-white/80">
                   <div className="flex items-center justify-between">
                     <span>{task.title}</span>
                     {task.due_date && (
-                      <span className="text-muted-foreground">
+                      <span className="text-white/50">
                         {new Date(task.due_date).toLocaleDateString(
                           settings?.language === "en" ? "en-US" : "de-DE"
                         )}
@@ -74,7 +74,7 @@ export const DashboardCards = () => {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-white/50">
               {settings?.language === "en" 
                 ? "No tasks available" 
                 : "Keine Aufgaben vorhanden"}
@@ -83,9 +83,9 @@ export const DashboardCards = () => {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-[#1A1F2C]/60 border border-white/10 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-white/90">
             <BrainCircuit className="h-5 w-5" />
             {settings?.language === "en" ? "AI Recommendations" : "KI-Empfehlungen"}
           </CardTitle>
@@ -94,16 +94,16 @@ export const DashboardCards = () => {
           {leads && leads.length > 0 ? (
             <ul className="space-y-2">
               {leads.map((lead) => (
-                <li key={lead.id} className="text-sm">
+                <li key={lead.id} className="text-sm text-white/80">
                   <div className="flex items-center justify-between">
                     <span>{lead.name}</span>
-                    <span className="text-muted-foreground">{lead.phase}</span>
+                    <span className="text-white/50">{lead.phase}</span>
                   </div>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-white/50">
               {settings?.language === "en"
                 ? "No recommendations available"
                 : "Keine Empfehlungen verfügbar"}
