@@ -112,7 +112,7 @@ export const DashboardSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-all duration-200 group/item">
-                        <item.icon className="h-[20px] w-[20px] shrink-0 group-hover/item:h-[18px] group-hover/item:w-[18px] transition-all duration-300" />
+                        <item.icon className="h-[22px] w-[22px] shrink-0 group-hover/item:h-[20px] group-hover/item:w-[20px] transition-all duration-300" />
                         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
                         </span>
@@ -145,7 +145,7 @@ export const DashboardSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white transition-all duration-200 group/item">
-                        <item.icon className="h-[20px] w-[20px] shrink-0 group-hover/item:h-[18px] group-hover/item:w-[18px] transition-all duration-300" />
+                        <item.icon className="h-[22px] w-[22px] shrink-0 group-hover/item:h-[20px] group-hover/item:w-[20px] transition-all duration-300" />
                         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
                         </span>
@@ -173,7 +173,7 @@ export const DashboardSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white transition-all duration-200 group/item">
-                        <item.icon className="h-[20px] w-[20px] shrink-0 group-hover/item:h-[18px] group-hover/item:w-[18px] transition-all duration-300" />
+                        <item.icon className="h-[22px] w-[22px] shrink-0 group-hover/item:h-[20px] group-hover/item:w-[20px] transition-all duration-300" />
                         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
                         </span>
@@ -201,7 +201,7 @@ export const DashboardSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white transition-all duration-200 group/item">
-                        <item.icon className="h-[20px] w-[20px] shrink-0 group-hover/item:h-[18px] group-hover/item:w-[18px] transition-all duration-300" />
+                        <item.icon className="h-[22px] w-[22px] shrink-0 group-hover/item:h-[20px] group-hover/item:w-[20px] transition-all duration-300" />
                         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
                         </span>
