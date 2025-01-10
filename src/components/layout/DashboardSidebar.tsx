@@ -59,7 +59,6 @@ const legalItems = [
 ];
 
 export const DashboardSidebar = () => {
-  // Query for unread messages count
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-messages-count'],
     queryFn: async () => {
@@ -74,27 +73,43 @@ export const DashboardSidebar = () => {
 
       return count || 0;
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
   });
   
   return (
-    <Sidebar>
+    <Sidebar className="group w-[60px] hover:w-64 transition-all duration-300 ease-in-out bg-white/80 backdrop-blur-xl border-r border-r-transparent">
       <SidebarContent className="flex flex-col h-full">
+        {/* Logo */}
+        <div className="flex items-center justify-center p-4 mb-2">
+          <img 
+            src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
+            alt="Logo" 
+            className="h-8 w-8 group-hover:w-32 transition-all duration-300"
+          />
+        </div>
+
+        {/* Gradient Separator */}
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent mb-4" />
+
         <div className="flex-1 overflow-y-auto">
           <SidebarGroup>
-            <div className="flex items-center justify-between px-4 py-1.5">
-              <SidebarGroupLabel>Persönlich</SidebarGroupLabel>
+            <div className="flex items-center px-4 py-1.5">
+              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                Persönlich
+              </SidebarGroupLabel>
             </div>
             <SidebarGroupContent>
               <SidebarMenu>
                 {personalItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 relative">
-                        <item.icon className="h-5 w-5" />
-                        <span>{item.title}</span>
+                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200">
+                        <item.icon className="h-5 w-5 shrink-0" />
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                          {item.title}
+                        </span>
                         {item.badge && unreadCount > 0 && (
-                          <Badge variant="destructive" className="absolute right-0 -top-1">
+                          <Badge variant="destructive" className="absolute right-2 -top-1 opacity-0 group-hover:opacity-100">
                             {unreadCount}
                           </Badge>
                         )}
@@ -106,20 +121,24 @@ export const DashboardSidebar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator className="my-1" />
+          <SidebarSeparator className="my-2 h-px w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
 
           <SidebarGroup>
-            <div className="flex items-center justify-between px-4 py-1.5">
-              <SidebarGroupLabel>Teams & Gruppen</SidebarGroupLabel>
+            <div className="flex items-center px-4 py-1.5">
+              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                Teams & Gruppen
+              </SidebarGroupLabel>
             </div>
             <SidebarGroupContent>
               <SidebarMenu>
                 {teamItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3">
-                        <item.icon className="h-5 w-5" />
-                        <span>{item.title}</span>
+                      <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200">
+                        <item.icon className="h-5 w-5 shrink-0" />
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                          {item.title}
+                        </span>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -128,20 +147,24 @@ export const DashboardSidebar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator className="my-1" />
+          <SidebarSeparator className="my-2 h-px w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
 
           <SidebarGroup>
-            <div className="flex items-center justify-between px-4 py-1.5">
-              <SidebarGroupLabel>Analyse & Tools</SidebarGroupLabel>
+            <div className="flex items-center px-4 py-1.5">
+              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                Analyse & Tools
+              </SidebarGroupLabel>
             </div>
             <SidebarGroupContent>
               <SidebarMenu>
                 {analysisItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3">
-                        <item.icon className="h-5 w-5" />
-                        <span>{item.title}</span>
+                      <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200">
+                        <item.icon className="h-5 w-5 shrink-0" />
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                          {item.title}
+                        </span>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -150,20 +173,24 @@ export const DashboardSidebar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator className="my-1" />
+          <SidebarSeparator className="my-2 h-px w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
 
           <SidebarGroup>
-            <div className="flex items-center justify-between px-4 py-1.5">
-              <SidebarGroupLabel>Rechtliches</SidebarGroupLabel>
+            <div className="flex items-center px-4 py-1.5">
+              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                Rechtliches
+              </SidebarGroupLabel>
             </div>
             <SidebarGroupContent>
               <SidebarMenu>
                 {legalItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
+                      <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200">
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                          {item.title}
+                        </span>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -173,8 +200,8 @@ export const DashboardSidebar = () => {
           </SidebarGroup>
         </div>
 
-        <div className="px-4 py-2 text-sm text-muted-foreground border-t">
-          <a href="/changelog" className="hover:text-foreground">
+        <div className="px-4 py-2 text-sm text-gray-500 border-t border-gray-100">
+          <a href="/changelog" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:text-purple-600">
             Version {APP_VERSION}
           </a>
         </div>
@@ -182,5 +209,3 @@ export const DashboardSidebar = () => {
     </Sidebar>
   );
 };
-
-
