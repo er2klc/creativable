@@ -100,7 +100,7 @@ export const DashboardSidebar = () => {
         <div className="flex-1 overflow-y-auto no-scrollbar pt-4">
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
-              <SidebarGroupLabel className="opacity-0 group-hover:[.group:hover]:opacity-100 transition-opacity duration-300 text-white/70">
+              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
                 Persönlich
               </SidebarGroupLabel>
             </div>
@@ -109,8 +109,8 @@ export const DashboardSidebar = () => {
                 {personalItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item hover:bg-transparent">
-                        <item.icon className="h-[28px] w-[28px] shrink-0 group-hover/item:h-[24px] group-hover/item:w-[24px] transition-all duration-300" />
+                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item">
+                        <item.icon className="h-[25px] w-[25px] shrink-0 group-hover:h-[20px] group-hover:w-[20px] transition-all duration-300" />
                         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
                         </span>
@@ -119,7 +119,7 @@ export const DashboardSidebar = () => {
                             {unreadCount}
                           </Badge>
                         )}
-                        <div className="absolute bottom-0 left-0 w-0 h-[2px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
+                        <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -132,7 +132,7 @@ export const DashboardSidebar = () => {
 
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
-              <SidebarGroupLabel className="opacity-0 group-hover:[.group:hover]:opacity-100 transition-opacity duration-300 text-white/70">
+              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
                 Teams & Gruppen
               </SidebarGroupLabel>
             </div>
@@ -141,12 +141,12 @@ export const DashboardSidebar = () => {
                 {teamItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item hover:bg-transparent">
-                        <item.icon className="h-[28px] w-[28px] shrink-0 group-hover/item:h-[24px] group-hover/item:w-[24px] transition-all duration-300" />
+                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item">
+                        <item.icon className="h-[25px] w-[25px] shrink-0 group-hover:h-[20px] group-hover:w-[20px] transition-all duration-300" />
                         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
                         </span>
-                        <div className="absolute bottom-0 left-0 w-0 h-[2px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
+                        <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -159,7 +159,7 @@ export const DashboardSidebar = () => {
 
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
-              <SidebarGroupLabel className="opacity-0 group-hover:[.group:hover]:opacity-100 transition-opacity duration-300 text-white/70">
+              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
                 Analyse & Tools
               </SidebarGroupLabel>
             </div>
@@ -168,12 +168,12 @@ export const DashboardSidebar = () => {
                 {analysisItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item hover:bg-transparent">
-                        <item.icon className="h-[28px] w-[28px] shrink-0 group-hover/item:h-[24px] group-hover/item:w-[24px] transition-all duration-300" />
+                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item">
+                        <item.icon className="h-[25px] w-[25px] shrink-0 group-hover:h-[20px] group-hover:w-[20px] transition-all duration-300" />
                         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
                         </span>
-                        <div className="absolute bottom-0 left-0 w-0 h-[2px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
+                        <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -186,7 +186,7 @@ export const DashboardSidebar = () => {
 
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
-              <SidebarGroupLabel className="opacity-0 group-hover:[.group:hover]:opacity-100 transition-opacity duration-300 text-white/70">
+              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
                 Rechtliches
               </SidebarGroupLabel>
             </div>
@@ -195,12 +195,12 @@ export const DashboardSidebar = () => {
                 {legalItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item hover:bg-transparent">
-                        <item.icon className="h-[28px] w-[28px] shrink-0 group-hover/item:h-[24px] group-hover/item:w-[24px] transition-all duration-300" />
+                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item">
+                        <item.icon className="h-[25px] w-[25px] shrink-0 group-hover:h-[20px] group-hover:w-[20px] transition-all duration-300" />
                         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
                         </span>
-                        <div className="absolute bottom-0 left-0 w-0 h-[2px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
+                        <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
