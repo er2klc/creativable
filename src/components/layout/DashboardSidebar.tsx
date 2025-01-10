@@ -7,7 +7,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { 
   LayoutGrid, 
@@ -81,14 +80,19 @@ export const DashboardSidebar = () => {
       <div className="absolute inset-0 bg-[#0A0A0A]/95 backdrop-blur-xl shadow-xl" />
       <SidebarContent className="flex flex-col h-full relative">
         {/* Fixed Logo Container */}
-        <div className="sticky top-0 left-0 z-50 bg-[#0A0A0A]/95 w-full">
-          <div className="w-[60px] h-16 flex items-center justify-center">
+        <div className="sticky top-0 left-0 z-50 bg-[#111111] w-full">
+          <div className="w-full h-16 flex items-center px-4">
             <div className="absolute inset-0 bg-[url('/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png')] opacity-10 blur-2xl scale-150" />
-            <img 
-              src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
-              alt="Logo" 
-              className="h-8 w-8 relative z-10"
-            />
+            <div className="flex items-center gap-3">
+              <img 
+                src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
+                alt="Logo" 
+                className="h-8 w-8 relative z-10"
+              />
+              <span className="text-white font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                creativable
+              </span>
+            </div>
           </div>
           {/* Gradient Separator */}
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
@@ -212,10 +216,13 @@ export const DashboardSidebar = () => {
         </div>
 
         {/* Version number - visible when collapsed */}
-        <div className="sticky bottom-0 left-0 w-[60px] px-4 py-2 text-sm text-gray-400 flex items-center justify-center group-hover:w-full group-hover:justify-start border-t border-white/10 bg-[#0A0A0A]/95">
-          <span className="whitespace-nowrap">
+        <div className="sticky bottom-0 left-0 w-[60px] px-4 py-2 text-sm text-gray-400 flex items-center justify-center group-hover:w-full group-hover:justify-start border-t border-white/10 bg-[#111111]">
+          <a href="/changelog" className="whitespace-nowrap hover:text-white transition-colors">
             {APP_VERSION}
-          </span>
+            <span className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              Changelog
+            </span>
+          </a>
         </div>
       </SidebarContent>
     </Sidebar>
