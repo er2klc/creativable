@@ -79,7 +79,7 @@ export const DashboardSidebar = () => {
   return (
     <Sidebar className="fixed group w-[60px] hover:w-[240px] transition-all duration-300 ease-in-out z-50">
       <div className="absolute inset-0 bg-[#0A0A0A]/95 backdrop-blur-xl shadow-xl" />
-      <SidebarContent className="flex flex-col h-full relative">
+      <SidebarContent className="flex flex-col h-full relative overflow-y-auto no-scrollbar">
         {/* Fixed Logo Container */}
         <div className="absolute top-0 left-0 w-[60px] h-16 flex items-center justify-center">
           <div className="absolute inset-0 bg-[url('/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png')] opacity-10 blur-2xl scale-150" />
@@ -91,7 +91,7 @@ export const DashboardSidebar = () => {
         </div>
 
         {/* Main Content with Offset for Fixed Logo */}
-        <div className="pt-16 flex-1 overflow-y-auto">
+        <div className="pt-16 flex-1 overflow-y-auto no-scrollbar">
           {/* Gradient Separator */}
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent mb-4" />
 
@@ -107,8 +107,8 @@ export const DashboardSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-all duration-200 group/item">
-                        <item.icon className="h-[20px] w-[20px] shrink-0 group-hover:h-[18px] group-hover:w-[18px] transition-all duration-300" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm">
+                        <item.icon className="h-[20px] w-[20px] shrink-0 group-hover/item:h-[18px] group-hover/item:w-[18px] transition-all duration-300" />
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
                         </span>
                         {item.badge && unreadCount > 0 && (
@@ -140,8 +140,8 @@ export const DashboardSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white transition-all duration-200 group/item">
-                        <item.icon className="h-[20px] w-[20px] shrink-0 group-hover:h-[18px] group-hover:w-[18px] transition-all duration-300" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm">
+                        <item.icon className="h-[20px] w-[20px] shrink-0 group-hover/item:h-[18px] group-hover/item:w-[18px] transition-all duration-300" />
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
                         </span>
                         <div className="absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
@@ -168,8 +168,8 @@ export const DashboardSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white transition-all duration-200 group/item">
-                        <item.icon className="h-[20px] w-[20px] shrink-0 group-hover:h-[18px] group-hover:w-[18px] transition-all duration-300" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm">
+                        <item.icon className="h-[20px] w-[20px] shrink-0 group-hover/item:h-[18px] group-hover/item:w-[18px] transition-all duration-300" />
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
                         </span>
                         <div className="absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
@@ -196,8 +196,8 @@ export const DashboardSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white transition-all duration-200 group/item">
-                        <item.icon className="h-[20px] w-[20px] shrink-0 group-hover:h-[18px] group-hover:w-[18px] transition-all duration-300" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm">
+                        <item.icon className="h-[20px] w-[20px] shrink-0 group-hover/item:h-[18px] group-hover/item:w-[18px] transition-all duration-300" />
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
                         </span>
                         <div className="absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
@@ -211,7 +211,7 @@ export const DashboardSidebar = () => {
         </div>
 
         {/* Version number - visible when collapsed */}
-        <div className="absolute bottom-0 left-0 w-[60px] px-4 py-2 text-sm text-gray-400 flex items-center justify-center group-hover:w-full group-hover:justify-start border-t border-white/10">
+        <div className="sticky bottom-0 left-0 w-[60px] px-4 py-2 text-sm text-gray-400 flex items-center justify-center group-hover:w-full group-hover:justify-start border-t border-white/10 bg-[#0A0A0A]/95">
           <span className="whitespace-nowrap">
             {APP_VERSION}
           </span>
