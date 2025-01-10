@@ -77,10 +77,11 @@ export const DashboardSidebar = () => {
   });
   
   return (
-    <Sidebar className="fixed group w-[60px] hover:w-64 transition-all duration-300 ease-in-out z-50 bg-[#1A1F2C]/95 backdrop-blur-xl shadow-xl">
-      <SidebarContent className="flex flex-col h-full">
-        {/* Logo with blur effect */}
-        <div className="relative flex items-center justify-center p-4 mb-2 overflow-hidden">
+    <Sidebar className="fixed group w-[60px] hover:w-64 transition-all duration-300 ease-in-out z-50">
+      <div className="absolute inset-0 bg-[#1A1F2C]/95 backdrop-blur-xl shadow-xl" />
+      <SidebarContent className="flex flex-col h-full relative">
+        {/* Logo container with fixed position and blur effect */}
+        <div className="relative h-16 flex items-center justify-center">
           <div className="absolute inset-0 bg-[url('/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png')] opacity-10 blur-2xl scale-150" />
           <img 
             src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
@@ -90,7 +91,7 @@ export const DashboardSidebar = () => {
         </div>
 
         {/* Gradient Separator */}
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent mb-4" />
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent mb-4" />
 
         <div className="flex-1 overflow-y-auto">
           <SidebarGroup>
@@ -105,7 +106,7 @@ export const DashboardSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 group/item">
-                        <item.icon className="h-5 w-5 shrink-0 group-hover:h-[18px] group-hover:w-[18px] transition-all duration-300" />
+                        <item.icon className="h-5 w-5 shrink-0" />
                         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm">
                           {item.title}
                         </span>
@@ -203,12 +204,12 @@ export const DashboardSidebar = () => {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        </div>
 
-        <div className="px-4 py-2 text-sm text-gray-400 border-t border-gray-800">
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:text-white">
-            Version {APP_VERSION}
-          </span>
+          <div className="px-4 py-2 text-sm text-gray-400 border-t border-white/10">
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:text-white">
+              Version {APP_VERSION}
+            </span>
+          </div>
         </div>
       </SidebarContent>
     </Sidebar>
