@@ -79,22 +79,23 @@ export const DashboardSidebar = () => {
   return (
     <Sidebar className="fixed group w-[60px] hover:w-[240px] transition-all duration-300 ease-in-out z-50">
       <div className="absolute inset-0 bg-[#0A0A0A]/95 backdrop-blur-xl shadow-xl" />
-      <SidebarContent className="flex flex-col h-full relative overflow-y-auto no-scrollbar">
+      <SidebarContent className="flex flex-col h-full relative">
         {/* Fixed Logo Container */}
-        <div className="absolute top-0 left-0 w-[60px] h-16 flex items-center justify-center">
-          <div className="absolute inset-0 bg-[url('/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png')] opacity-10 blur-2xl scale-150" />
-          <img 
-            src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
-            alt="Logo" 
-            className="h-8 w-8 relative z-10"
-          />
+        <div className="sticky top-0 left-0 z-50 bg-[#0A0A0A]/95 w-full">
+          <div className="w-[60px] h-16 flex items-center justify-center">
+            <div className="absolute inset-0 bg-[url('/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png')] opacity-10 blur-2xl scale-150" />
+            <img 
+              src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
+              alt="Logo" 
+              className="h-8 w-8 relative z-10"
+            />
+          </div>
+          {/* Gradient Separator */}
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         </div>
 
-        {/* Main Content with Offset for Fixed Logo */}
-        <div className="pt-16 flex-1 overflow-y-auto no-scrollbar">
-          {/* Gradient Separator */}
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent mb-4" />
-
+        {/* Main Content with Scrollable Area */}
+        <div className="flex-1 overflow-y-auto no-scrollbar pt-4">
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
               <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
@@ -125,7 +126,7 @@ export const DashboardSidebar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator className="my-2 h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
 
           {/* Teams & Groups Section */}
           <SidebarGroup>
@@ -153,7 +154,7 @@ export const DashboardSidebar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator className="my-2 h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
 
           {/* Analysis & Tools Section */}
           <SidebarGroup>
@@ -181,7 +182,7 @@ export const DashboardSidebar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator className="my-2 h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
 
           {/* Legal Section */}
           <SidebarGroup>
