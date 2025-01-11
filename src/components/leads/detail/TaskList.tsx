@@ -1,53 +1,45 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
-import { Tables } from "@/integrations/supabase/types";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TaskForm } from "./tasks/TaskForm";
 import { TaskItem } from "./tasks/TaskItem";
 import { ClipboardList } from "lucide-react";
 import confetti from "canvas-confetti";
 
-interface TaskListProps {
-  leadId: string;
-  tasks: Tables<"tasks">[];
+interface Task {
+  id: string;
+  title: string;
+  completed: boolean;
+  lead_id: string;
+  created_at: string;
 }
 
-export function TaskList({ leadId, tasks }: TaskListProps) {
+interface TaskListProps {
+  leadId: string;
+}
+
+export function TaskList({ leadId }: TaskListProps) {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
 
-  const addTaskMutation = useMutation({
-    mutationFn: async (data: {
-      title: string;
-      color: string;
-      due_date: string | null;
-      meeting_type: string | null;
-    }) => {
-      const { error } = await supabase
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["lead", leadId, "tasks"],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("tasks")
-        .insert({
-          lead_id: leadId,
-          title: data.title,
-          color: data.color,
-          due_date: data.due_date,
-          meeting_type: data.meeting_type,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-        });
+        .select("*")
+        .eq("lead_id", leadId)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      toast.success(
-        settings?.language === "en" ? "Task added" : "Aufgabe hinzugefügt"
-      );
+      return data as Task[];
     },
   });
 
-  const toggleTaskMutation = useMutation({
-    mutationFn: async (task: Tables<"tasks">) => {
+  const updateTask = useMutation({
+    mutationFn: async (task: Task) => {
       const { error } = await supabase
         .from("tasks")
         .update({ completed: !task.completed })
@@ -86,13 +78,13 @@ export function TaskList({ leadId, tasks }: TaskListProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <TaskForm onSubmit={(data) => addTaskMutation.mutate(data)} />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        <TaskForm leadId={leadId} />
+        <div className="space-y-2 mt-4">
           {tasks.map((task) => (
             <TaskItem
               key={task.id}
               task={task}
-              onToggle={(task) => toggleTaskMutation.mutate(task)}
+              onToggleComplete={() => updateTask.mutate(task)}
             />
           ))}
         </div>

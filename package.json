@@ -49,6 +49,7 @@
     "@tiptap/pm": "^2.11.0",
     "@tiptap/react": "^2.11.0",
     "@tiptap/starter-kit": "^2.11.0",
+    "@types/canvas-confetti": "^1.9.0",
     "ai": "^4.0.26",
     "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.1",

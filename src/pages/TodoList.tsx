@@ -8,6 +8,14 @@ import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 
+interface Task {
+  id: string;
+  title: string;
+  completed: boolean;
+  lead_id: string | null;
+  created_at: string;
+}
+
 export default function TodoList() {
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const { settings } = useSettings();
@@ -22,7 +30,7 @@ export default function TodoList() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return tasks;
+      return tasks as Task[];
     }
   });
 
