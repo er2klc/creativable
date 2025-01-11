@@ -106,7 +106,7 @@ export const DashboardSidebar = () => {
           ].map((group, index) => (
             <SidebarGroup key={index}>
               <div className="flex items-center px-4 py-1.5">
-                <SidebarGroupLabel className="opacity-0 group-hover:w-[240px]:opacity-100 transition-opacity duration-300 text-white/70">
+                <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
                   {group.label}
                 </SidebarGroupLabel>
               </div>
@@ -117,12 +117,12 @@ export const DashboardSidebar = () => {
                       <SidebarMenuButton asChild>
                         <a 
                           href={item.url} 
-                          className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item bg-transparent hover:bg-transparent"
+                          className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item"
                         >
                           <item.icon
                             className="h-[20px] w-[20px] shrink-0 group-data-[collapsible=icon]:h-[25px] group-data-[collapsible=icon]:w-[25px] transition-all duration-300"
                           />
-                          <span className="opacity-0 group-hover:w-[240px]:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
+                          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm">
                             {item.title}
                           </span>
                           <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-gradient-to-r from-red-500/50 via-yellow-500/50 to-blue-500/50 group-hover/item:w-full transition-all duration-300" />
