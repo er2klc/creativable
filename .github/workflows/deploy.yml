@@ -10,24 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Check out the code
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-      # Set up SSH
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # Deploy code to server
-      - name: Deploy to Server
-        run: |
-          ssh root@<SERVER_IP> "
-            cd /var/www/creativable &&
-            git reset --hard &&
-            git pull origin main &&
-            npm install &&
-            npm run build &&
-            systemctl reload nginx
-          "
+    - name: Deploy via SSH
+      run: |
+        ssh -o StrictHostKeyChecking=no root@<DEIN_SERVER> "
+        cd /var/www/creativable &&
+        git reset --hard &&
+        git pull origin main &&
+        npm install &&
+        npm run build &&
+        systemctl reload nginx
+        "
