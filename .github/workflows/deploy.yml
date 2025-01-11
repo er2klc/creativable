@@ -16,7 +16,7 @@ jobs:
       - name: Start SSH Agent and Add Key
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Mark repository as safe
         run: git config --global --add safe.directory /var/www/creativable
