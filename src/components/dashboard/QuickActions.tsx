@@ -91,10 +91,10 @@ export const QuickActions = () => {
   const handleShortcutClick = (shortcut) => {
     switch (shortcut.type) {
       case "team":
-        navigate(`/teams/${shortcut.target_id}`);
+        navigate(`/unity/team/${shortcut.target_slug}`);
         break;
       case "team_calendar":
-        navigate(`/teams/${shortcut.target_id}/calendar`);
+        navigate(`/unity/team/${shortcut.target_slug}`);
         break;
       case "personal_calendar":
         navigate("/calendar");

@@ -32,6 +32,7 @@ interface ShortcutFormData {
   type: ShortcutType;
   title: string;
   target_id?: string;
+  target_slug?: string;
 }
 
 interface ShortcutDialogProps {
@@ -59,6 +60,12 @@ export const ShortcutDialog = ({ trigger, onSubmit }: ShortcutDialogProps) => {
   });
 
   const handleSubmit = (data: ShortcutFormData) => {
+    if (data.target_id && (data.type === "team" || data.type === "team_calendar")) {
+      const selectedTeam = teams.find(team => team.id === data.target_id);
+      if (selectedTeam) {
+        data.target_slug = selectedTeam.slug;
+      }
+    }
     onSubmit(data);
     setOpen(false);
     form.reset();

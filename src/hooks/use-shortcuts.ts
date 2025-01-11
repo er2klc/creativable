@@ -9,6 +9,7 @@ export interface Shortcut {
   type: ShortcutType;
   title: string;
   target_id?: string;
+  target_slug?: string;
   order_index: number;
 }
 
