@@ -7,9 +7,9 @@ interface AppLayoutProps {
 
 export const AppLayout = ({ children }: AppLayoutProps) => {
   return (
-    <div className="min-h-screen flex w-full bg-background">
+    <div className="min-h-screen flex w-full bg-background relative">
       <DashboardSidebar />
-      <MainContent>{children}</MainContent>
+      <MainContent className="pl-[60px]">{children}</MainContent>
     </div>
   );
 };
