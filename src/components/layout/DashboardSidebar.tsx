@@ -58,66 +58,6 @@ const legalItems = [
   { title: "Datenlöschung", icon: Globe2, url: "/auth/data-deletion/instagram" },
 ];
 
-import { 
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { 
-  LayoutGrid, 
-  Users, 
-  MessageSquare, 
-  Calendar,
-  CheckSquare,
-  BarChart, 
-  Settings,
-  FileText,
-  Shield,
-  Globe2,
-  Infinity,
-  GraduationCap,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
-
-const APP_VERSION = "0.3";
-
-const personalItems = [
-  { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
-  { title: "Kontakte", icon: Users, url: "/leads" },
-  { 
-    title: "Nachrichten", 
-    icon: MessageSquare, 
-    url: "/messages",
-    badge: true 
-  },
-  { title: "Kalender", icon: Calendar, url: "/calendar" },
-  { title: "Todo Liste", icon: CheckSquare, url: "/todo" },
-];
-
-const teamItems = [
-  { title: "Unity", icon: Infinity, url: "/unity" },
-  { title: "Elevate", icon: GraduationCap, url: "/elevate" },
-];
-
-const analysisItems = [
-  { title: "Berichte", icon: BarChart, url: "/reports" },
-  { title: "Einstellungen", icon: Settings, url: "/settings" },
-];
-
-const legalItems = [
-  { title: "Impressum", icon: FileText, url: "/impressum" },
-  { title: "Datenschutz", icon: Shield, url: "/privacy-policy" },
-  { title: "Datenlöschung", icon: Globe2, url: "/auth/data-deletion/instagram" },
-];
-
 export const DashboardSidebar = () => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -146,7 +86,7 @@ export const DashboardSidebar = () => {
     >
       {/* Sidebar Overlay */}
       <div
-        className={`absolute top-0 left-0 h-full transition-all duration-300 ${
+        className={`absolute top-0 left-0 h-full transition-all duration-300 pointer-events-none ${
           isExpanded ? 'w-[240px]' : 'w-[60px]'
         } bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl`}
       />
