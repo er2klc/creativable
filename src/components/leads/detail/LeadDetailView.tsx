@@ -138,7 +138,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
               </div>
               
               <LeadInfoCard lead={lead} />
-              <TaskList leadId={lead.id} tasks={lead.tasks} />
+              <TaskList leadId={lead.id} />
               <NoteList leadId={lead.id} />
               <LeadMessages messages={lead.messages} />
             </div>

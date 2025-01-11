@@ -1,12 +1,11 @@
-import { Check, Calendar, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Check, Calendar } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { Badge } from "@/components/ui/badge";
 
 interface TaskItemProps {
   task: Tables<"tasks">;
-  onToggle: (task: Tables<"tasks">) => void;
+  onToggle: () => void;
 }
 
 export const TaskItem = ({ task, onToggle }: TaskItemProps) => {
@@ -33,7 +32,7 @@ export const TaskItem = ({ task, onToggle }: TaskItemProps) => {
     >
       <div className="flex items-start gap-3">
         <button
-          onClick={() => onToggle(task)}
+          onClick={onToggle}
           className={`flex-shrink-0 flex items-center justify-center w-5 h-5 rounded border mt-1 ${
             task.completed
               ? "bg-green-500 border-green-600 text-white"

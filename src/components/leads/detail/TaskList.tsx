@@ -75,7 +75,7 @@ export function TaskList({ leadId }: TaskListProps) {
             <TaskItem
               key={task.id}
               task={task}
-              onToggleComplete={() => updateTask.mutate(task)}
+              onToggle={() => updateTask.mutate(task)}
             />
           ))}
         </div>
