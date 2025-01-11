@@ -130,6 +130,7 @@ export const DashboardSidebar = () => {
 
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
 
+          {/* Teams & Groups Section */}
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
               <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
@@ -157,6 +158,7 @@ export const DashboardSidebar = () => {
 
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
 
+          {/* Analysis & Tools Section */}
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
               <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
@@ -184,6 +186,7 @@ export const DashboardSidebar = () => {
 
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
 
+          {/* Legal Section */}
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
               <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
