@@ -80,11 +80,11 @@ export const DashboardSidebar = () => {
   
   return (
     <Sidebar 
-      className={`fixed group w-[60px] hover:w-[240px] transition-all duration-300 ease-in-out ${isExpanded ? 'w-[240px] z-[100]' : 'z-[40]'}`}
+      className={`fixed group w-[60px] hover:w-[240px] transition-all duration-300 ease-in-out ${isExpanded ? 'w-[240px] z-[999]' : 'z-[10]'}`}
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
-      <div className={`absolute inset-0 -z-10 ${isExpanded ? 'w-[240px]' : 'w-[60px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
+      <div className={`absolute inset-0 ${isExpanded ? 'w-[240px]' : 'w-[60px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
       <SidebarContent className="flex flex-col h-full relative">
         <div className="sticky top-0 left-0 z-50 bg-[#111111]/80 w-full">
           <div className="w-full h-16 flex items-center px-4">
@@ -220,10 +220,10 @@ export const DashboardSidebar = () => {
           </SidebarGroup>
         </div>
 
-        <div className={`sticky bottom-0 left-0 ${isExpanded ? 'w-full' : 'w-[60px]'} h-16 flex items-center justify-center px-4 text-sm text-gray-400 border-t border-white/10 bg-[#111111]/80 transition-all duration-300`}>
-          <a href="/changelog" className="flex items-center gap-3 hover:text-white transition-colors">
-            <span className="relative z-10">{APP_VERSION}</span>
-            <span className={`transition-opacity duration-300 whitespace-nowrap ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`sticky bottom-0 left-0 ${isExpanded ? 'w-full' : 'w-[60px]'} px-4 py-2 text-sm text-gray-400 flex items-center justify-center border-t border-white/10 bg-[#111111]/80 transition-all duration-300`}>
+          <a href="/changelog" className="whitespace-nowrap hover:text-white transition-colors">
+            {APP_VERSION}
+            <span className={`ml-1 transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
               Changelog
             </span>
           </a>
