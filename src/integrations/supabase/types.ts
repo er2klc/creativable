@@ -69,6 +69,39 @@ export type Database = {
         }
         Relationships: []
       }
+      dashboard_shortcuts: {
+        Row: {
+          created_at: string | null
+          id: string
+          order_index: number
+          target_id: string | null
+          title: string
+          type: Database["public"]["Enums"]["shortcut_type"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          order_index?: number
+          target_id?: string | null
+          title: string
+          type: Database["public"]["Enums"]["shortcut_type"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          order_index?: number
+          target_id?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["shortcut_type"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string | null
@@ -1424,6 +1457,13 @@ export type Database = {
     }
     Enums: {
       recurring_pattern: "none" | "daily" | "weekly" | "monthly" | "yearly"
+      shortcut_type:
+        | "team"
+        | "team_calendar"
+        | "personal_calendar"
+        | "create_contact"
+        | "learning_platform"
+        | "todo_list"
     }
     CompositeTypes: {
       [_ in never]: never
