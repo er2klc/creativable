@@ -98,116 +98,48 @@ export const DashboardSidebar = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto no-scrollbar pt-4">
-          <SidebarGroup>
-            <div className="flex items-center px-4 py-1.5">
-              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
-                Persönlich
-              </SidebarGroupLabel>
-            </div>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {personalItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item">
-                        <item.icon className="h-[20px] w-[20px] shrink-0 group-data-[collapsible=icon]:h-[25px] group-data-[collapsible=icon]:w-[25px] transition-all duration-300" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
-                          {item.title}
-                        </span>
-                        {item.badge && unreadCount > 0 && (
-                          <Badge variant="destructive" className="absolute right-2 -top-1 opacity-0 group-hover:opacity-100">
-                            {unreadCount}
-                          </Badge>
-                        )}
-                        <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
-
-          <SidebarGroup>
-            <div className="flex items-center px-4 py-1.5">
-              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
-                Teams & Gruppen
-              </SidebarGroupLabel>
-            </div>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {teamItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item">
-                        <item.icon className="h-[20px] w-[20px] shrink-0 group-data-[collapsible=icon]:h-[25px] group-data-[collapsible=icon]:w-[25px] transition-all duration-300" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
-                          {item.title}
-                        </span>
-                        <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
-
-          <SidebarGroup>
-            <div className="flex items-center px-4 py-1.5">
-              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
-                Analyse & Tools
-              </SidebarGroupLabel>
-            </div>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {analysisItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item">
-                        <item.icon className="h-[20px] w-[20px] shrink-0 group-data-[collapsible=icon]:h-[25px] group-data-[collapsible=icon]:w-[25px] transition-all duration-300" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
-                          {item.title}
-                        </span>
-                        <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
-
-          <SidebarGroup>
-            <div className="flex items-center px-4 py-1.5">
-              <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
-                Rechtliches
-              </SidebarGroupLabel>
-            </div>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {legalItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item">
-                        <item.icon className="h-[20px] w-[20px] shrink-0 group-data-[collapsible=icon]:h-[25px] group-data-[collapsible=icon]:w-[25px] transition-all duration-300" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
-                          {item.title}
-                        </span>
-                        <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          {[
+            { items: personalItems, label: "Persönlich" },
+            { items: teamItems, label: "Teams & Gruppen" },
+            { items: analysisItems, label: "Analyse & Tools" },
+            { items: legalItems, label: "Rechtliches" },
+          ].map((group, index) => (
+            <SidebarGroup key={index}>
+              <div className="flex items-center px-4 py-1.5">
+                <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
+                  {group.label}
+                </SidebarGroupLabel>
+              </div>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200">
+                          <item.icon
+                            className={`shrink-0 transition-all duration-300 ${
+                              groupClassName.includes("hover:w-[240px]")
+                                ? "h-[20px] w-[20px]"
+                                : "h-[25px] w-[25px]"
+                            }`}
+                          />
+                          <span className={`opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white`}>
+                            {item.title}
+                          </span>
+                          {item.badge && unreadCount > 0 && (
+                            <Badge variant="destructive" className="absolute right-2 -top-1 opacity-0 group-hover:opacity-100">
+                              {unreadCount}
+                            </Badge>
+                          )}
+                          <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
+                        </a>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
         </div>
 
         <div className="sticky bottom-0 left-0 w-[60px] px-4 py-2 text-sm text-gray-400 flex items-center justify-center group-hover:w-full group-hover:justify-start border-t border-white/10 bg-[#111111]/80">
