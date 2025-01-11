@@ -220,7 +220,7 @@ export const DashboardSidebar = () => {
           </SidebarGroup>
         </div>
 
-        <div className={`sticky bottom-0 left-0 ${isExpanded ? 'w-full' : 'w-[60px]'} px-4 py-2 text-sm text-gray-400 flex items-center justify-center border-t border-white/10 bg-[#111111]/80 transition-all duration-300`}>
+        <div className={`sticky bottom-0 left-0 ${isExpanded ? 'w-[240px]' : 'w-[60px]'} px-4 py-2 text-sm text-gray-400 flex items-center justify-center border-t border-white/10 bg-[#111111]/80 transition-all duration-300`}>
           <a href="/changelog" className="whitespace-nowrap hover:text-white transition-colors">
             {APP_VERSION}
             <span className={`ml-1 transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
