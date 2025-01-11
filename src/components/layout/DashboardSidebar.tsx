@@ -1,9 +1,9 @@
 import {
   Sidebar,
   SidebarContent,
-  SidebarNav,
-  SidebarNavLink,
-  SidebarSection,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarGroup,
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
@@ -91,10 +91,10 @@ export const DashboardSidebar = ({ onExpandChange }: DashboardSidebarProps) => {
           </div>
         </div>
 
-        <SidebarNav>
-          <SidebarSection>
+        <SidebarMenu>
+          <SidebarGroup>
             {mainNavItems.map((item) => (
-              <SidebarNavLink
+              <SidebarMenuButton
                 key={item.title}
                 icon={item.icon}
                 title={item.title}
@@ -106,19 +106,19 @@ export const DashboardSidebar = ({ onExpandChange }: DashboardSidebarProps) => {
                 ) : undefined}
               />
             ))}
-          </SidebarSection>
+          </SidebarGroup>
 
-          <SidebarSection title="Mehr">
+          <SidebarGroup title="Mehr">
             {moreNavItems.map((item) => (
-              <SidebarNavLink
+              <SidebarMenuButton
                 key={item.title}
                 icon={item.icon}
                 title={item.title}
                 url={item.url}
               />
             ))}
-          </SidebarSection>
-        </SidebarNav>
+          </SidebarGroup>
+        </SidebarMenu>
 
         <div className="mt-auto p-4">
           <div className={`text-xs text-gray-500 transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
