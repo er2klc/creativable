@@ -117,7 +117,7 @@ export const DashboardSidebar = () => {
                       <SidebarMenuButton asChild>
                         <a 
                           href={item.url} 
-                          className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-colors duration-200 group/item"
+                          className="flex items-center gap-3 relative px-4 py-2 text-white hover:text-white transition-colors duration-200 group/item"
                         >
                           <item.icon
                             className="h-[20px] w-[20px] shrink-0 group-data-[collapsible=icon]:h-[25px] group-data-[collapsible=icon]:w-[25px] transition-all duration-300"
