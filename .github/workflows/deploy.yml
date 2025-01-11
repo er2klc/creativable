@@ -1,4 +1,4 @@
-name: Deploy to Server
+name: Deploy
 
 on:
   push:
@@ -10,22 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Start SSH Agent and Add Key
+      - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Mark repository as safe
-        run: git config --global --add safe.directory /var/www/creativable
-
-      - name: Deploy Changes
+      - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no root@142.132.191.233 << 'EOF'
           cd /var/www/creativable
+          git stash
           git pull origin main
           npm install
           npm run build
+          systemctl reload nginx
+          echo "Deployment abgeschlossen!"
           EOF
