@@ -7,7 +7,22 @@ import { Plus, CheckSquare } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
-import { DragDropContext, Droppable, Draggable } from "@dnd-kit/core";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Task {
@@ -20,12 +35,66 @@ interface Task {
   order_index: number;
 }
 
+function SortableTask({ task }: { task: Task }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="flex items-center gap-4 p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+    >
+      <input
+        type="checkbox"
+        checked={task.completed}
+        onChange={(e) => handleTaskComplete(task.id, e.target.checked)}
+        className="h-4 w-4"
+      />
+      <span className={task.completed ? "line-through text-gray-500" : "flex-1"}>
+        {task.title}
+      </span>
+      <Select
+        value={task.priority}
+        onValueChange={(value) => handlePriorityChange(task.id, value)}
+      >
+        <SelectTrigger className="w-[100px]">
+          <SelectValue placeholder="Priority" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="High">High</SelectItem>
+          <SelectItem value="Medium">Medium</SelectItem>
+          <SelectItem value="Low">Low</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 export default function TodoList() {
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const { settings } = useSettings();
   const queryClient = useQueryClient();
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-  const { data: tasks = [], refetch } = useQuery({
+  const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
       const { data: tasks, error } = await supabase
@@ -84,22 +153,25 @@ export default function TodoList() {
     });
   };
 
-  const handleDragEnd = async (result: any) => {
-    if (!result.destination) return;
+  const handleDragEnd = async (event: any) => {
+    const { active, over } = event;
+    
+    if (active.id !== over.id) {
+      const oldIndex = tasks.findIndex((task) => task.id === active.id);
+      const newIndex = tasks.findIndex((task) => task.id === over.id);
+      
+      const newTasks = arrayMove(tasks, oldIndex, newIndex);
+      
+      // Update order_index for all affected tasks
+      const updates = newTasks.map((task, index) => 
+        updateTaskMutation.mutateAsync({
+          taskId: task.id,
+          data: { order_index: index }
+        })
+      );
 
-    const items = Array.from(tasks);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    // Update order_index for all affected tasks
-    const updates = items.map((task, index) => 
-      updateTaskMutation.mutateAsync({
-        taskId: task.id,
-        data: { order_index: index }
-      })
-    );
-
-    await Promise.all(updates);
+      await Promise.all(updates);
+    }
   };
 
   // Filter out completed tasks for display
@@ -118,54 +190,22 @@ export default function TodoList() {
         </Button>
       </div>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="tasks">
-          {(provided) => (
-            <div
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              className="space-y-4"
-            >
-              {incompleteTasks.map((task, index) => (
-                <Draggable key={task.id} draggableId={task.id} index={index}>
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      className="flex items-center gap-4 p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={task.completed}
-                        onChange={(e) => handleTaskComplete(task.id, e.target.checked)}
-                        className="h-4 w-4"
-                      />
-                      <span className={task.completed ? "line-through text-gray-500" : "flex-1"}>
-                        {task.title}
-                      </span>
-                      <Select
-                        value={task.priority}
-                        onValueChange={(value) => handlePriorityChange(task.id, value)}
-                      >
-                        <SelectTrigger className="w-[100px]">
-                          <SelectValue placeholder="Priority" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="High">High</SelectItem>
-                          <SelectItem value="Medium">Medium</SelectItem>
-                          <SelectItem value="Low">Low</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={incompleteTasks.map(task => task.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-4">
+            {incompleteTasks.map((task) => (
+              <SortableTask key={task.id} task={task} />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {incompleteTasks.length === 0 && (
         <div className="text-center text-gray-500 py-8">
