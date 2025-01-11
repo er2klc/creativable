@@ -96,14 +96,17 @@ export const DashboardSidebar = ({ onExpandChange }: DashboardSidebarProps) => {
             {mainNavItems.map((item) => (
               <SidebarMenuButton
                 key={item.title}
-                icon={item.icon}
-                title={item.title}
-                url={item.url}
-                badge={item.url === "/messages" && unreadCount > 0 ? (
-                  <Badge variant="default" className="ml-auto">
-                    {unreadCount}
-                  </Badge>
-                ) : undefined}
+                children={
+                  <>
+                    {item.icon}
+                    <span>{item.title}</span>
+                    {item.url === "/messages" && unreadCount > 0 && (
+                      <Badge variant="default" className="ml-auto">
+                        {unreadCount}
+                      </Badge>
+                    )}
+                  </>
+                }
               />
             ))}
           </SidebarGroup>
@@ -112,9 +115,12 @@ export const DashboardSidebar = ({ onExpandChange }: DashboardSidebarProps) => {
             {moreNavItems.map((item) => (
               <SidebarMenuButton
                 key={item.title}
-                icon={item.icon}
-                title={item.title}
-                url={item.url}
+                children={
+                  <>
+                    {item.icon}
+                    <span>{item.title}</span>
+                  </>
+                }
               />
             ))}
           </SidebarGroup>
