@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TeamEvent, Appointment } from "../types/calendar";
 
 // Debugging-Log hinzufügen
-console.log("useCalendarEvents.ts version 1.0 geladen");
+console.log("useCalendarEvents.ts version 1.1 geladen");
 
 export const useCalendarEvents = (
   currentDate: Date,
@@ -68,6 +68,7 @@ export const useCalendarEvents = (
         ["admin", "owner"].includes(tm.role)
       );
 
+      // Fetch all team events for teams the user is a member of
       const { data: events = [], error: eventsError } = await supabase
         .from("team_calendar_events")
         .select(`
@@ -86,6 +87,7 @@ export const useCalendarEvents = (
         return { events: [] };
       }
 
+      // Process and return all events
       return {
         events: events.map((event: any) => ({
           ...event,
@@ -94,13 +96,13 @@ export const useCalendarEvents = (
           start_time: event.start_time,
           end_time: event.end_time || event.start_time,
           end_date: event.end_date,
-          color: `${event.color || "#FEF7CD"}30`,
-          is_multi_day: event.is_multi_day,
+          color: event.color || "#FEF7CD",
+          is_multi_day: event.is_multi_day || false,
           isRecurring: event.recurring_pattern !== "none",
         })) as TeamEvent[],
       };
     },
-    enabled: showTeamEvents, // Nur ausführen, wenn Team-Termine angezeigt werden sollen
+    enabled: showTeamEvents,
   });
 
   const getDayAppointments = (date: Date): Appointment[] => {
@@ -118,9 +120,11 @@ export const useCalendarEvents = (
 
     const teamEvents = teamData.events.filter(event => {
       const startDate = new Date(event.start_time);
-      const endDate = event.is_multi_day
-        ? new Date(event.end_date || event.start_time)
-        : startDate;
+      const endDate = event.is_multi_day && event.end_date
+        ? new Date(event.end_date)
+        : event.end_time 
+          ? new Date(event.end_time)
+          : startDate;
 
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
