@@ -10,21 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up SSH
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Start SSH Agent and Add Key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
-    - name: Deploy via SSH
-      run: |
-        ssh -o StrictHostKeyChecking=no root@142.132.191.233 "
-        cd /var/www/creativable &&
-        git reset --hard &&
-        git pull origin main &&
-        npm install &&
-        npm run build &&
-        systemctl reload nginx
-        "
+      - name: Mark repository as safe
+        run: git config --global --add safe.directory /var/www/creativable
+
+      - name: Deploy Changes
+        run: |
+          ssh -o StrictHostKeyChecking=no root@142.132.191.233 << 'EOF'
+          cd /var/www/creativable
+          git pull origin main
+          npm install
+          npm run build
+          EOF
