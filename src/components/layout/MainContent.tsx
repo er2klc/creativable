@@ -7,8 +7,8 @@ interface MainContentProps {
 
 export const MainContent = ({ children, className }: MainContentProps) => {
   return (
-    <main className={cn("flex-1 px-16 py-8", className)}>
-      <div className="mx-auto max-w-[1920px]">
+    <main className={cn("flex-1 w-full px-8 py-8", className)}>
+      <div className="w-full max-w-full">
         {children}
       </div>
     </main>

@@ -77,7 +77,7 @@ export const DashboardSidebar = () => {
   
   return (
     <Sidebar className="fixed group w-[60px] hover:w-[200px] transition-all duration-300 ease-in-out z-50">
-      <div className="absolute inset-0 bg-[#0A0A0A]/95 backdrop-blur-xl shadow-xl" />
+      <div className="absolute inset-0 bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl" />
       <SidebarContent className="flex flex-col h-full relative">
         {/* Fixed Logo Container */}
         <div className="sticky top-0 left-0 z-50 bg-[#111111]/80 w-full">
