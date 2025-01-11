@@ -1,10 +1,52 @@
-import { format, isSameDay, isWithinInterval } from "date-fns";
+import { format, isSameDay, isWithinInterval, addDays, addWeeks, addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamEvent, Appointment } from "../types/calendar";
 
 // Debugging-Log hinzufügen
-console.log("useCalendarEvents.ts version 1.1 geladen");
+console.log("useCalendarEvents.ts version 1.2 geladen");
+
+const expandRecurringEvent = (event: TeamEvent, currentDate: Date): TeamEvent[] => {
+  if (!event.isRecurring || event.recurring_pattern === 'none') {
+    return [event];
+  }
+
+  const startDate = new Date(event.start_time);
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  const instances: TeamEvent[] = [];
+
+  let currentInstance = startDate;
+  while (currentInstance <= monthEnd) {
+    if (currentInstance >= monthStart) {
+      instances.push({
+        ...event,
+        id: `${event.id}-${format(currentInstance, 'yyyy-MM-dd')}`,
+        start_time: format(currentInstance, "yyyy-MM-dd'T'HH:mm:ssxxx"),
+        end_time: event.end_time ? format(
+          new Date(event.end_time),
+          "yyyy-MM-dd'T'HH:mm:ssxxx"
+        ) : format(currentInstance, "yyyy-MM-dd'T'HH:mm:ssxxx"),
+      });
+    }
+
+    switch (event.recurring_pattern) {
+      case 'daily':
+        currentInstance = addDays(currentInstance, 1);
+        break;
+      case 'weekly':
+        currentInstance = addWeeks(currentInstance, 1);
+        break;
+      case 'monthly':
+        currentInstance = addMonths(currentInstance, 1);
+        break;
+      default:
+        currentInstance = monthEnd; // Exit loop for unknown patterns
+    }
+  }
+
+  return instances;
+};
 
 export const useCalendarEvents = (
   currentDate: Date,
@@ -87,19 +129,24 @@ export const useCalendarEvents = (
       }
 
       // Process and return team events
-      return {
-        events: events.map((event: any) => ({
-          ...event,
-          id: event.id,
-          isTeamEvent: true,
-          start_time: event.start_time,
-          end_time: event.end_time || event.start_time,
-          end_date: event.end_date,
-          color: `${event.color || "#FEF7CD"}30`,
-          is_multi_day: event.is_multi_day || false,
-          isRecurring: event.recurring_pattern !== "none",
-        })) as TeamEvent[],
-      };
+      const processedEvents = events.map((event: any) => ({
+        ...event,
+        id: event.id,
+        isTeamEvent: true,
+        start_time: event.start_time,
+        end_time: event.end_time || event.start_time,
+        end_date: event.end_date,
+        color: `${event.color || "#FEF7CD"}30`,
+        is_multi_day: event.is_multi_day || false,
+        isRecurring: event.recurring_pattern !== "none",
+      })) as TeamEvent[];
+
+      // Expand recurring events
+      const expandedEvents = processedEvents.flatMap(event => 
+        expandRecurringEvent(event, currentDate)
+      );
+
+      return { events: expandedEvents };
     },
     enabled: showTeamEvents,
   });
