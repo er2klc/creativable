@@ -18,6 +18,14 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Run Deployment Script
+      - name: Deploy to server
         run: |
-          ssh -o StrictHostKeyChecking=no root@142.132.191.233 "bash /var/www/creativable/deploy.sh"
+          ssh -o StrictHostKeyChecking=no root@142.132.191.233 << 'EOF'
+          cd /var/www/creativable
+          git stash
+          git pull origin main
+          npm install
+          npm run build
+          systemctl reload nginx
+          echo "Deployment abgeschlossen!"
+          EOF
