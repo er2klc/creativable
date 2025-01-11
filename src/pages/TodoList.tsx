@@ -49,6 +49,35 @@ function SortableTask({ task }: { task: Task }) {
     transition,
   };
 
+  const handleTaskComplete = async (taskId: string, completed: boolean) => {
+    if (completed) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#FFD700', '#FFA500', '#FF6347', '#98FB98', '#87CEEB'],
+      });
+
+      toast.success(
+        settings?.language === "en" 
+          ? "Task completed! 🎉" 
+          : "Aufgabe erledigt! 🎉"
+      );
+    }
+
+    await updateTaskMutation.mutateAsync({
+      taskId,
+      data: { completed }
+    });
+  };
+
+  const handlePriorityChange = async (taskId: string, priority: string) => {
+    await updateTaskMutation.mutateAsync({
+      taskId,
+      data: { priority }
+    });
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -124,39 +153,10 @@ export default function TodoList() {
     }
   });
 
-  const handleTaskComplete = async (taskId: string, completed: boolean) => {
-    if (completed) {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#FFD700', '#FFA500', '#FF6347', '#98FB98', '#87CEEB'],
-      });
-
-      toast.success(
-        settings?.language === "en" 
-          ? "Task completed! 🎉" 
-          : "Aufgabe erledigt! 🎉"
-      );
-    }
-
-    await updateTaskMutation.mutateAsync({
-      taskId,
-      data: { completed }
-    });
-  };
-
-  const handlePriorityChange = async (taskId: string, priority: string) => {
-    await updateTaskMutation.mutateAsync({
-      taskId,
-      data: { priority }
-    });
-  };
-
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
     
-    if (active.id !== over.id) {
+    if (active && over && active.id !== over.id) {
       const oldIndex = tasks.findIndex((task) => task.id === active.id);
       const newIndex = tasks.findIndex((task) => task.id === over.id);
       
