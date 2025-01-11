@@ -4,23 +4,54 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSettings } from "@/hooks/use-settings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface TaskFormProps {
-  onSubmit: (data: {
-    title: string;
-    color: string;
-    due_date: string | null;
-    meeting_type: string | null;
-  }) => void;
+  leadId: string;
 }
 
-export const TaskForm = ({ onSubmit }: TaskFormProps) => {
+export const TaskForm = ({ leadId }: TaskFormProps) => {
   const { settings } = useSettings();
+  const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [selectedColor, setSelectedColor] = useState("#FEF7CD");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedType, setSelectedType] = useState<string>("");
+
+  const addTaskMutation = useMutation({
+    mutationFn: async (data: {
+      title: string;
+      color: string;
+      due_date: string | null;
+      meeting_type: string | null;
+    }) => {
+      const { error } = await supabase
+        .from("tasks")
+        .insert({
+          lead_id: leadId,
+          title: data.title,
+          color: data.color,
+          due_date: data.due_date,
+          meeting_type: data.meeting_type,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      toast.success(
+        settings?.language === "en" ? "Task added" : "Aufgabe hinzugefügt"
+      );
+      setTitle("");
+      setSelectedDate("");
+      setSelectedTime("");
+      setSelectedType("");
+    },
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,26 +60,22 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
         ? new Date(`${selectedDate}T${selectedTime}`).toISOString()
         : null;
 
-      onSubmit({
+      addTaskMutation.mutate({
         title,
         color: selectedColor,
         due_date: dueDate,
         meeting_type: selectedType || null,
       });
-      setTitle("");
-      setSelectedDate("");
-      setSelectedTime("");
-      setSelectedType("");
     }
   };
 
   const MEETING_TYPES = [
-    { value: "phone_call", label: "Telefongespräch", icon: <Phone className="h-4 w-4" /> },
-    { value: "on_site", label: "Vor-Ort-Termin", icon: <MapPin className="h-4 w-4" /> },
+    { value: "phone_call", label: settings?.language === "en" ? "Phone Call" : "Telefongespräch", icon: <Phone className="h-4 w-4" /> },
+    { value: "on_site", label: settings?.language === "en" ? "On-site Meeting" : "Vor-Ort-Termin", icon: <MapPin className="h-4 w-4" /> },
     { value: "zoom", label: "Zoom Meeting", icon: <Video className="h-4 w-4" /> },
-    { value: "initial_meeting", label: "Erstgespräch", icon: <Users className="h-4 w-4" /> },
-    { value: "presentation", label: "Präsentation", icon: <BarChart className="h-4 w-4" /> },
-    { value: "follow_up", label: "Folgetermin", icon: <RefreshCw className="h-4 w-4" /> }
+    { value: "initial_meeting", label: settings?.language === "en" ? "Initial Meeting" : "Erstgespräch", icon: <Users className="h-4 w-4" /> },
+    { value: "presentation", label: settings?.language === "en" ? "Presentation" : "Präsentation", icon: <BarChart className="h-4 w-4" /> },
+    { value: "follow_up", label: settings?.language === "en" ? "Follow-up" : "Folgetermin", icon: <RefreshCw className="h-4 w-4" /> }
   ];
 
   return (

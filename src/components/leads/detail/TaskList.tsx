@@ -7,14 +7,7 @@ import { TaskForm } from "./tasks/TaskForm";
 import { TaskItem } from "./tasks/TaskItem";
 import { ClipboardList } from "lucide-react";
 import confetti from "canvas-confetti";
-
-interface Task {
-  id: string;
-  title: string;
-  completed: boolean;
-  lead_id: string;
-  created_at: string;
-}
+import { Tables } from "@/integrations/supabase/types";
 
 interface TaskListProps {
   leadId: string;
@@ -34,12 +27,12 @@ export function TaskList({ leadId }: TaskListProps) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Task[];
+      return data as Tables<"tasks">[];
     },
   });
 
   const updateTask = useMutation({
-    mutationFn: async (task: Task) => {
+    mutationFn: async (task: Tables<"tasks">) => {
       const { error } = await supabase
         .from("tasks")
         .update({ completed: !task.completed })
@@ -51,7 +44,6 @@ export function TaskList({ leadId }: TaskListProps) {
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
       
       if (!task.completed) {
-        // Trigger confetti animation when completing a task
         confetti({
           particleCount: 100,
           spread: 70,
@@ -68,7 +60,6 @@ export function TaskList({ leadId }: TaskListProps) {
     },
   });
 
-  // Show all tasks in the lead view, both complete and incomplete
   return (
     <Card>
       <CardHeader>
