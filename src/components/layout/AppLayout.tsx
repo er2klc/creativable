@@ -9,7 +9,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   return (
     <div className="min-h-screen flex w-full bg-background relative">
       <DashboardSidebar />
-      <MainContent className="w-full max-w-[1400px] mx-auto">{children}</MainContent>
+      <div className="flex-1 pl-[60px]">
+        <MainContent>{children}</MainContent>
+      </div>
     </div>
   );
 };
