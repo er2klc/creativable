@@ -35,7 +35,7 @@ interface Task {
   order_index: number;
 }
 
-function SortableTask({ task }: { task: Task }) {
+function SortableTask({ task, updateTaskMutation, settings }: { task: Task, updateTaskMutation: any, settings: any }) {
   const {
     attributes,
     listeners,
@@ -201,7 +201,12 @@ export default function TodoList() {
         >
           <div className="space-y-4">
             {incompleteTasks.map((task) => (
-              <SortableTask key={task.id} task={task} />
+              <SortableTask 
+                key={task.id} 
+                task={task} 
+                updateTaskMutation={updateTaskMutation}
+                settings={settings}
+              />
             ))}
           </div>
         </SortableContext>
