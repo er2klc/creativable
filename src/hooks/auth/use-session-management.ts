@@ -10,10 +10,15 @@ export const useSessionManagement = () => {
 
     if (error?.message?.includes("session_not_found") || 
         error?.message?.includes("JWT expired") ||
-        error?.message?.includes("token is expired")) {
+        error?.message?.includes("token is expired") ||
+        error?.message?.includes("Failed to fetch")) {
       
-      // Clear session and redirect
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        console.error("[Auth] Sign out error:", signOutError);
+      }
+      
       toast.error("Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.");
       navigate("/auth");
       return;
@@ -26,11 +31,10 @@ export const useSessionManagement = () => {
     try {
       const { data: { session }, error } = await supabase.auth.refreshSession();
       if (error) throw error;
-      return session;
+      return { session, error: null };
     } catch (error) {
       console.error("[Auth] Session refresh error:", error);
-      handleSessionError(error);
-      return null;
+      return { session: null, error };
     }
   };
 
