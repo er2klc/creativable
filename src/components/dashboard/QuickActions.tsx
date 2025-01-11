@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, Users, Calendar, CalendarDays, UserPlus, GraduationCap, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ShortcutDialog } from "./ShortcutDialog";
@@ -17,6 +17,25 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+
+const getShortcutIcon = (type: string) => {
+  switch (type) {
+    case "team":
+      return <Users className="h-4 w-4" />;
+    case "team_calendar":
+      return <Calendar className="h-4 w-4" />;
+    case "personal_calendar":
+      return <CalendarDays className="h-4 w-4" />;
+    case "create_contact":
+      return <UserPlus className="h-4 w-4" />;
+    case "learning_platform":
+      return <GraduationCap className="h-4 w-4" />;
+    case "todo_list":
+      return <CheckSquare className="h-4 w-4" />;
+    default:
+      return <Plus className="h-4 w-4" />;
+  }
+};
 
 const SortableShortcut = ({ shortcut, onClick }) => {
   const {
@@ -39,11 +58,23 @@ const SortableShortcut = ({ shortcut, onClick }) => {
         className="flex items-center gap-2"
         onClick={onClick}
       >
+        {getShortcutIcon(shortcut.type)}
         {shortcut.title}
       </Button>
     </div>
   );
 };
+
+const EmptyShortcutButton = ({ onClick }) => (
+  <Button
+    variant="outline"
+    className="flex items-center gap-2"
+    onClick={onClick}
+  >
+    <Plus className="h-4 w-4" />
+    Add Shortcut
+  </Button>
+);
 
 export const QuickActions = () => {
   const navigate = useNavigate();
@@ -103,40 +134,13 @@ export const QuickActions = () => {
     return <div>Loading...</div>;
   }
 
-  if (shortcuts.length === 0) {
-    return (
-      <div className="flex flex-col items-center gap-4 mb-8 p-8 border rounded-lg">
-        <p className="text-muted-foreground">
-          No shortcuts added yet. Click 'Add Shortcut' to create your preferred links.
-        </p>
-        <ShortcutDialog
-          trigger={
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Shortcut
-            </Button>
-          }
-          onSubmit={(data) => addShortcut.mutate({ ...data, order_index: shortcuts.length })}
-        />
-      </div>
-    );
-  }
+  const emptySlots = Math.max(0, 6 - shortcuts.length);
+  const emptyButtons = Array(emptySlots).fill(null);
 
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Quick Actions</h2>
-        {shortcuts.length < 6 && (
-          <ShortcutDialog
-            trigger={
-              <Button variant="outline" size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Shortcut
-              </Button>
-            }
-            onSubmit={(data) => addShortcut.mutate({ ...data, order_index: shortcuts.length })}
-          />
-        )}
       </div>
       <DndContext
         sensors={sensors}
@@ -152,9 +156,21 @@ export const QuickActions = () => {
                 onClick={() => handleShortcutClick(shortcut)}
               />
             ))}
+            {emptyButtons.map((_, index) => (
+              <ShortcutDialog
+                key={`empty-${index}`}
+                trigger={<EmptyShortcutButton onClick={() => {}} />}
+                onSubmit={(data) => addShortcut.mutate({ ...data, order_index: shortcuts.length })}
+              />
+            ))}
           </div>
         </SortableContext>
       </DndContext>
+      {shortcuts.length === 0 && (
+        <p className="text-muted-foreground text-center mt-4">
+          Click on a button to add a shortcut.
+        </p>
+      )}
     </div>
   );
 };

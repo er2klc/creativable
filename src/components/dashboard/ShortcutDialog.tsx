@@ -25,6 +25,8 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { ShortcutType } from "@/hooks/use-shortcuts";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ShortcutFormData {
   type: ShortcutType;
@@ -40,12 +42,29 @@ interface ShortcutDialogProps {
 export const ShortcutDialog = ({ trigger, onSubmit }: ShortcutDialogProps) => {
   const [open, setOpen] = useState(false);
   const form = useForm<ShortcutFormData>();
+  const selectedType = form.watch("type");
+
+  const { data: teams = [] } = useQuery({
+    queryKey: ["user-teams"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data: userTeams } = await supabase.rpc("get_user_teams", {
+        uid: user.id,
+      });
+
+      return userTeams || [];
+    },
+  });
 
   const handleSubmit = (data: ShortcutFormData) => {
     onSubmit(data);
     setOpen(false);
     form.reset();
   };
+
+  const needsTeamSelection = selectedType === "team" || selectedType === "team_calendar";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -97,6 +116,35 @@ export const ShortcutDialog = ({ trigger, onSubmit }: ShortcutDialogProps) => {
                 </FormItem>
               )}
             />
+            {needsTeamSelection && (
+              <FormField
+                control={form.control}
+                name="target_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Select Team</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a team" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {teams.map((team) => (
+                          <SelectItem key={team.id} value={team.id}>
+                            {team.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <Button type="submit">Add Shortcut</Button>
           </form>
         </Form>
