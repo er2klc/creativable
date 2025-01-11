@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { TaskForm } from "./tasks/TaskForm";
 import { TaskItem } from "./tasks/TaskItem";
 import { ClipboardList } from "lucide-react";
+import confetti from "canvas-confetti";
 
 interface TaskListProps {
   leadId: string;
@@ -54,24 +55,34 @@ export function TaskList({ leadId, tasks }: TaskListProps) {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, task) => {
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      
+      if (!task.completed) {
+        // Trigger confetti animation when completing a task
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#FFD700', '#FFA500', '#FF6347', '#98FB98', '#87CEEB'],
+        });
+      }
+      
       toast.success(
         settings?.language === "en"
-          ? "Task status updated"
-          : "Aufgabenstatus aktualisiert"
+          ? task.completed ? "Task uncompleted" : "Task completed! 🎉"
+          : task.completed ? "Aufgabe nicht erledigt" : "Aufgabe erledigt! 🎉"
       );
     },
   });
 
-  const incompleteTasks = tasks.filter(task => !task.completed);
-
+  // Show all tasks in the lead view, both complete and incomplete
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ClipboardList className="h-5 w-5" />
-          {settings?.language === "en" ? "Tasks" : "Aufgaben"} ({incompleteTasks.length})
+          {settings?.language === "en" ? "Tasks" : "Aufgaben"} ({tasks.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
