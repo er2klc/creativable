@@ -30,7 +30,10 @@ export const useSessionManagement = () => {
   const refreshSession = async () => {
     try {
       const { data: { session }, error } = await supabase.auth.refreshSession();
-      if (error) throw error;
+      if (error) {
+        console.error("[Auth] Refresh session error:", error);
+        throw error;
+      }
       return { session, error: null };
     } catch (error) {
       console.error("[Auth] Session refresh error:", error);
