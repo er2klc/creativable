@@ -16,7 +16,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
           onExpandChange={setIsSidebarExpanded}
         />
       </div>
-      <div className={`flex-1 ${!isSidebarExpanded ? "z-50" : ""} relative`}>
+      <div className={`flex-1 ${!isSidebarExpanded ? "z-[999]" : ""} relative`}>
         <MainContent>{children}</MainContent>
       </div>
     </div>
