@@ -912,6 +912,8 @@ export type Database = {
           id: string
           lead_id: string | null
           meeting_type: string | null
+          order_index: number | null
+          priority: string | null
           title: string
           user_id: string
         }
@@ -924,6 +926,8 @@ export type Database = {
           id?: string
           lead_id?: string | null
           meeting_type?: string | null
+          order_index?: number | null
+          priority?: string | null
           title: string
           user_id: string
         }
@@ -936,6 +940,8 @@ export type Database = {
           id?: string
           lead_id?: string | null
           meeting_type?: string | null
+          order_index?: number | null
+          priority?: string | null
           title?: string
           user_id?: string
         }

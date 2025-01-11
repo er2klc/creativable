@@ -7,7 +7,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface AddTaskDialogProps {
   open: boolean;
@@ -16,8 +16,10 @@ interface AddTaskDialogProps {
 
 export const AddTaskDialog = ({ open, onOpenChange }: AddTaskDialogProps) => {
   const { settings } = useSettings();
+  const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [selectedLead, setSelectedLead] = useState<string | undefined>();
+  const [priority, setPriority] = useState("Medium");
 
   const { data: leads = [] } = useQuery({
     queryKey: ["leads"],
@@ -44,12 +46,23 @@ export const AddTaskDialog = ({ open, onOpenChange }: AddTaskDialogProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      // Get the current highest order_index
+      const { data: lastTask } = await supabase
+        .from('tasks')
+        .select('order_index')
+        .order('order_index', { ascending: false })
+        .limit(1);
+
+      const newOrderIndex = lastTask && lastTask[0] ? lastTask[0].order_index + 1 : 0;
+
       const { error } = await supabase
         .from("tasks")
         .insert({
           title,
           lead_id: selectedLead,
           user_id: user.id,
+          priority,
+          order_index: newOrderIndex
         });
 
       if (error) throw error;
@@ -59,8 +72,13 @@ export const AddTaskDialog = ({ open, onOpenChange }: AddTaskDialogProps) => {
           ? "Task added successfully" 
           : "Aufgabe erfolgreich hinzugefügt"
       );
+      
+      // Invalidate and refetch tasks
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      
       setTitle("");
       setSelectedLead(undefined);
+      setPriority("Medium");
       onOpenChange(false);
     } catch (error) {
       console.error("Error adding task:", error);
@@ -91,6 +109,21 @@ export const AddTaskDialog = ({ open, onOpenChange }: AddTaskDialogProps) => {
               onChange={(e) => setTitle(e.target.value)}
               placeholder={settings?.language === "en" ? "Enter task title" : "Aufgabentitel eingeben"}
             />
+          </div>
+          <div>
+            <Label htmlFor="priority">
+              {settings?.language === "en" ? "Priority" : "Priorität"}
+            </Label>
+            <Select value={priority} onValueChange={setPriority}>
+              <SelectTrigger>
+                <SelectValue placeholder={settings?.language === "en" ? "Select priority" : "Priorität auswählen"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="High">High</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="Low">Low</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="lead">
