@@ -106,14 +106,20 @@ export const useShortcuts = () => {
 
   const reorderShortcuts = useMutation({
     mutationFn: async (shortcuts: Shortcut[]) => {
-      const updates = shortcuts.map((shortcut, index) => ({
-        id: shortcut.id,
-        order_index: index,
-      }));
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("No user found");
+      }
 
       const { error } = await supabase
         .from("dashboard_shortcuts")
-        .upsert(updates);
+        .upsert(
+          shortcuts.map((shortcut) => ({
+            ...shortcut,
+            user_id: user.id,
+          }))
+        );
 
       if (error) throw error;
     },
