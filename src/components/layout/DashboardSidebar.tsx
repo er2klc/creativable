@@ -94,11 +94,9 @@ export const DashboardSidebar = () => {
               </span>
             </div>
           </div>
-          {/* Gradient Separator */}
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         </div>
 
-        {/* Main Content with Scrollable Area */}
         <div className="flex-1 overflow-y-auto no-scrollbar pt-4">
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
@@ -111,7 +109,7 @@ export const DashboardSidebar = () => {
                 {personalItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white transition-all duration-200 group/item">
+                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 bg-transparent hover:text-white hover:bg-transparent transition-all duration-200 group/item">
                         <item.icon className="h-[25px] w-[25px] shrink-0 group-hover/item:h-[23px] group-hover/item:w-[23px] transition-all duration-300" />
                         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
@@ -132,7 +130,6 @@ export const DashboardSidebar = () => {
 
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
 
-          {/* Teams & Groups Section */}
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
               <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
@@ -144,7 +141,7 @@ export const DashboardSidebar = () => {
                 {teamItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white transition-all duration-200 group/item">
+                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 bg-transparent hover:text-white hover:bg-transparent transition-all duration-200 group/item">
                         <item.icon className="h-[25px] w-[25px] shrink-0 group-hover/item:h-[23px] group-hover/item:w-[23px] transition-all duration-300" />
                         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
@@ -160,7 +157,6 @@ export const DashboardSidebar = () => {
 
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
 
-          {/* Analysis & Tools Section */}
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
               <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
@@ -172,7 +168,7 @@ export const DashboardSidebar = () => {
                 {analysisItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white transition-all duration-200 group/item">
+                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 bg-transparent hover:text-white hover:bg-transparent transition-all duration-200 group/item">
                         <item.icon className="h-[25px] w-[25px] shrink-0 group-hover/item:h-[23px] group-hover/item:w-[23px] transition-all duration-300" />
                         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
@@ -188,7 +184,6 @@ export const DashboardSidebar = () => {
 
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
 
-          {/* Legal Section */}
           <SidebarGroup>
             <div className="flex items-center px-4 py-1.5">
               <SidebarGroupLabel className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white/70">
@@ -200,7 +195,7 @@ export const DashboardSidebar = () => {
                 {legalItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white transition-all duration-200 group/item">
+                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 bg-transparent hover:text-white hover:bg-transparent transition-all duration-200 group/item">
                         <item.icon className="h-[25px] w-[25px] shrink-0 group-hover/item:h-[23px] group-hover/item:w-[23px] transition-all duration-300" />
                         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-sm text-white">
                           {item.title}
@@ -215,7 +210,6 @@ export const DashboardSidebar = () => {
           </SidebarGroup>
         </div>
 
-        {/* Version number - visible when collapsed */}
         <div className="sticky bottom-0 left-0 w-[60px] px-4 py-2 text-sm text-gray-400 flex items-center justify-center group-hover:w-full group-hover:justify-start border-t border-white/10 bg-[#111111]/80">
           <a href="/changelog" className="whitespace-nowrap hover:text-white transition-colors">
             {APP_VERSION}
