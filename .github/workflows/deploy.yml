@@ -20,7 +20,7 @@ jobs:
 
     - name: Deploy via SSH
       run: |
-        ssh -o StrictHostKeyChecking=no root@<DEIN_SERVER> "
+        ssh -o StrictHostKeyChecking=no root@142.132.191.233 "
         cd /var/www/creativable &&
         git reset --hard &&
         git pull origin main &&
