@@ -3,7 +3,8 @@ import { processTeamData, processPersonalData, initOpenAI, initSupabase } from "
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-openai-key',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 serve(async (req) => {
@@ -13,11 +14,13 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, teamId } = await req.json()
+    const { userId, teamId, processPersonalData: shouldProcessPersonal = true } = await req.json()
     
     if (!userId) {
       throw new Error('User ID is required')
     }
+
+    console.log('Processing data for user:', userId)
 
     // Initialize clients
     const supabase = initSupabase()
@@ -35,11 +38,15 @@ serve(async (req) => {
 
     const openai = initOpenAI(settings.openai_api_key)
 
-    // Process personal data
-    await processPersonalData(userId, supabase, openai)
+    // Process personal data if requested
+    if (shouldProcessPersonal) {
+      console.log('Processing personal data...')
+      await processPersonalData(userId, supabase, openai)
+    }
 
     // If teamId is provided, process team data
     if (teamId) {
+      console.log('Processing team data...')
       await processTeamData(teamId, supabase, openai)
     }
 
@@ -56,7 +63,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in populate-team-embeddings:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: 'Make sure you have set up your OpenAI API key in settings'
+      }),
       { 
         status: 500,
         headers: { 

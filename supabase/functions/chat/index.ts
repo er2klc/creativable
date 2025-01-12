@@ -10,8 +10,9 @@ const corsHeaders = {
 console.log('Chat function loaded')
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
@@ -44,14 +45,6 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    const { data: teamMemberships } = await supabase
-      .from('team_members')
-      .select('team_id')
-      .eq('user_id', userId)
-
-    const userTeamIds = teamMemberships?.map(tm => tm.team_id) || []
-    console.log('User team memberships:', userTeamIds)
-
     let contextMessages = []
     if (messages?.length > 0) {
       const userMessage = messages[messages.length - 1]
@@ -62,7 +55,6 @@ serve(async (req) => {
           if (typeof userMessage.content !== 'string' || userMessage.content.trim().length === 0) {
             console.log('Invalid input for embeddings, skipping similarity search')
           } else {
-            // First, get embeddings from OpenAI
             const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
               method: 'POST',
               headers: {
@@ -82,7 +74,6 @@ serve(async (req) => {
             const embeddingData = await embeddingResponse.json();
             const embedding = embeddingData.data[0].embedding;
 
-            // Now use the embedding for similarity search
             const { data: similarContent, error } = await supabase.rpc('match_content', {
               query_embedding: embedding,
               match_threshold: 0.5,
@@ -106,53 +97,6 @@ serve(async (req) => {
       }
     }
 
-    if (teamId) {
-      try {
-        // Get embeddings for team content search
-        const lastMessage = messages[messages.length - 1];
-        const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            input: lastMessage.content,
-            model: 'text-embedding-ada-002'
-          })
-        });
-
-        if (!embeddingResponse.ok) {
-          throw new Error('Failed to generate embeddings for team content');
-        }
-
-        const embeddingData = await embeddingResponse.json();
-        const embedding = embeddingData.data[0].embedding;
-
-        const { data: teamContent, error } = await supabase.rpc('match_content', {
-          query_embedding: embedding,
-          match_threshold: 0.5,
-          match_count: 5,
-          content_type: 'team'
-        })
-
-        if (error) {
-          console.error('Error in team content search:', error)
-        } else if (teamContent?.length > 0) {
-          console.log('Found team content:', teamContent.length, 'items')
-          contextMessages = [
-            ...contextMessages,
-            ...teamContent.map(item => ({
-              role: 'system',
-              content: `Team context: ${item.content}`
-            }))
-          ]
-        }
-      } catch (error) {
-        console.error('Error finding team content:', error)
-      }
-    }
-
     console.log('Making request to OpenAI with', messages.length, 'messages')
 
     const encoder = new TextEncoder()
@@ -167,7 +111,7 @@ serve(async (req) => {
         },
         method: 'POST',
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4',
           messages: [
             ...messages.slice(0, -1),
             ...contextMessages,
@@ -182,8 +126,6 @@ serve(async (req) => {
         throw new Error(error.error?.message || 'OpenAI API error')
       }
 
-      console.log('OpenAI response received, starting stream...')
-
       const reader = openAIResponse.body?.getReader()
       if (!reader) {
         throw new Error('No response body')
@@ -195,7 +137,6 @@ serve(async (req) => {
             const { done, value } = await reader.read()
             
             if (done) {
-              console.log('Stream complete')
               await writer.close()
               break
             }
@@ -206,21 +147,23 @@ serve(async (req) => {
             for (const line of lines) {
               if (line.includes('[DONE]')) continue
               
-              try {
-                const json = JSON.parse(line.replace(/^data: /, ''))
-                const content = json.choices[0]?.delta?.content || ''
-                
-                if (content) {
-                  await writer.write(encoder.encode(`data: ${JSON.stringify({
-                    id: crypto.randomUUID(),
-                    role: 'assistant',
-                    content,
-                    createdAt: new Date().toISOString()
-                  })}\n\n`))
+              if (line.startsWith('data: ')) {
+                try {
+                  const json = JSON.parse(line.replace('data: ', ''))
+                  const content = json.choices[0]?.delta?.content || ''
+                  
+                  if (content) {
+                    await writer.write(encoder.encode(`data: ${JSON.stringify({
+                      id: crypto.randomUUID(),
+                      role: 'assistant',
+                      content,
+                      createdAt: new Date().toISOString()
+                    })}\n\n`))
+                  }
+                } catch (error) {
+                  console.error('Error parsing chunk:', error)
+                  console.error('Problematic line:', line)
                 }
-              } catch (error) {
-                console.error('Error parsing chunk:', error)
-                console.error('Problematic line:', line)
               }
             }
           }
