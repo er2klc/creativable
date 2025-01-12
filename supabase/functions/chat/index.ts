@@ -51,12 +51,26 @@ serve(async (req) => {
       throw new Error('Failed to get response from OpenAI');
     }
 
-    return new Response(response.body, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/event-stream',
-      }
+    // Transform the response stream to ensure proper SSE format
+    const transformStream = new TransformStream({
+      async transform(chunk, controller) {
+        const text = new TextDecoder().decode(chunk);
+        const lines = text.split('\n').filter(line => line.trim() !== '');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            controller.enqueue(line + '\n\n');
+          }
+        }
+      },
     });
+
+    return new Response(
+      response.body?.pipeThrough(transformStream),
+      { 
+        headers: corsHeaders
+      }
+    );
 
   } catch (error) {
     console.error('Chat function error:', error);
