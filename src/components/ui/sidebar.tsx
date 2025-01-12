@@ -211,7 +211,7 @@ const Sidebar = React.forwardRef<
     }
 
     return (
-    <div
+   <div
   className={cn(
     "duration-200 relative bg-transparent transition-[width,height] ease-linear",
     "group-data-[collapsible=offcanvas]:w-0",
@@ -221,9 +221,8 @@ const Sidebar = React.forwardRef<
       : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
   )}
   style={{
-    width: state === "collapsed" ? "60px" : "240px",
-    height: "0px !important", // Set to 0px to avoid blocking
-    pointerEvents: state === "collapsed" ? "none" : "auto",
+    height: "0px !important", // Force height to 0px for this instance
+    pointerEvents: "none", // Prevent any blocking interactions
   }}
 />
 <div
