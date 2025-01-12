@@ -213,7 +213,8 @@ const Sidebar = () => {
   const divId = "myCustomId";
 
     return (
-   <div id={divId}
+   <div
+        id="mySidebarDiv" // Added ID here
   className={cn(
     "duration-200 relative bg-transparent transition-[width,height] ease-linear",
     "group-data-[collapsible=offcanvas]:w-0",
@@ -227,7 +228,8 @@ const Sidebar = () => {
   pointerEvents: "none !important", // Ensure no interaction
 }}
 />
-<div id="test1"
+<div
+        id="mySidebarDiv1" // Added ID here
   className={cn(
     "duration-200 fixed inset-y-0 z-10 hidden transition-[left,right,width,height] ease-linear md:flex",
     side === "left"
