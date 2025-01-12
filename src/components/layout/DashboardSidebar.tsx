@@ -220,14 +220,23 @@ export const DashboardSidebar = () => {
           </SidebarGroup>
         </div>
 
-        <div className={`sticky bottom-0 left-0 ${isExpanded ? 'w-full' : 'w-[60px]'} px-4 py-2 text-sm text-gray-400 flex items-center justify-center border-t border-white/10 bg-[#111111]/80 transition-all duration-300`}>
-          <a href="/changelog" className="whitespace-nowrap hover:text-white transition-colors">
-            {APP_VERSION}
-            <span className={`ml-1 transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
-              Changelog
-            </span>
-          </a>
-        </div>
+        <div
+  className={`sticky bottom-0 left-0 flex items-center justify-center px-4 py-2 text-sm text-gray-400 border-t border-white/10 bg-[#111111]/80 transition-all duration-300 ${
+    isExpanded ? "justify-between w-full" : "w-[60px]"
+  }`}
+>
+  <div className="flex items-center gap-2">
+    <span className="text-white">{APP_VERSION}</span>
+    {isExpanded && (
+      <a
+        href="/changelog"
+        className="whitespace-nowrap text-gray-400 hover:text-white transition-opacity duration-300"
+      >
+        Changelog
+      </a>
+    )}
+  </div>
+</div>
       </SidebarContent>
     </Sidebar>
   );
