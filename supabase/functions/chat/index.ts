@@ -1,11 +1,11 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
 console.log('Chat function loaded')
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
@@ -34,13 +34,16 @@ serve(async (req) => {
     }));
 
     const openaiApiKey = req.headers.get('x-openai-key')
+    
+    console.log('Making request to OpenAI...')
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       headers: {
         Authorization: `Bearer ${openaiApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4-0613',
         messages: processedMessages.map(({ role, content }) => ({ role, content })),
         stream: true,
         temperature: 0.7,
@@ -48,9 +51,17 @@ serve(async (req) => {
       method: 'POST',
     })
 
+    if (!response.ok) {
+      const error = await response.json()
+      console.error('OpenAI API error:', error)
+      throw new Error(error.error?.message || 'Failed to get response from OpenAI')
+    }
+
+    console.log('OpenAI response received, starting stream...')
+
     // Transform the response stream
     const transformStream = new TransformStream({
-      transform(chunk, controller) {
+      async transform(chunk, controller) {
         const text = new TextDecoder().decode(chunk)
         const lines = text.split('\n').filter(line => line.trim())
         
@@ -79,6 +90,7 @@ serve(async (req) => {
         'Connection': 'keep-alive'
       },
     })
+
   } catch (error) {
     console.error('Error in chat function:', error)
     return new Response(JSON.stringify({ error: error.message }), {
