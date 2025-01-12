@@ -82,7 +82,15 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
               try {
                 const jsonStr = line.replace('data: ', '');
                 if (jsonStr === '[DONE]') return null;
+                
                 const parsed = JSON.parse(jsonStr);
+                const lastMessage = messages[messages.length - 1];
+                
+                // Only create a new message if content is different
+                if (lastMessage?.role === 'assistant' && lastMessage.content === parsed.content) {
+                  return null;
+                }
+                
                 return {
                   id: parsed.id || crypto.randomUUID(),
                   role: parsed.role || 'assistant',
