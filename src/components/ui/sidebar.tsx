@@ -225,7 +225,7 @@ const Sidebar = React.forwardRef<
   pointerEvents: "none !important", // Ensure no interaction
 }}
 />
-<div
+<div id="test1"
   className={cn(
     "duration-200 fixed inset-y-0 z-10 hidden transition-[left,right,width,height] ease-linear md:flex",
     side === "left"
