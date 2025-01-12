@@ -86,9 +86,6 @@ export const DashboardSidebar = () => {
     >
       <div 
         className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[60px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`}
-        style={{
-          pointerEvents: 'none'
-        }}
       />
       <SidebarContent className="flex flex-col h-full relative">
         <div className="sticky top-0 left-0 z-50 bg-[#111111]/80 w-full">
