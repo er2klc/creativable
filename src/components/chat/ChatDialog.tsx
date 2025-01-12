@@ -104,12 +104,13 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         setSessionToken(session.access_token);
         setUserId(session.user.id);
 
+        // Update team member query to use maybeSingle()
         const { data: teamMembers, error: teamError } = await supabase
           .from('team_members')
           .select('team_id')
           .eq('user_id', session.user.id)
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (teamError) {
           console.error("Error fetching team:", teamError);
