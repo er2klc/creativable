@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-openai-key',
   'Content-Type': 'text/event-stream',
   'Cache-Control': 'no-cache',
   'Connection': 'keep-alive'
@@ -52,15 +52,36 @@ serve(async (req) => {
       throw new Error('Failed to get response from OpenAI');
     }
 
-    return new Response(response.body, {
-      headers: corsHeaders,
+    // Transform the response stream
+    const transformStream = new TransformStream({
+      async transform(chunk, controller) {
+        const text = new TextDecoder().decode(chunk);
+        // Forward the data as-is
+        controller.enqueue(text);
+      },
     });
+
+    return new Response(
+      response.body?.pipeThrough(transformStream),
+      { 
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+        }
+      }
+    );
 
   } catch (error) {
     console.error('Chat function error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: error.message }), 
+      {
+        status: 500,
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
   }
 });

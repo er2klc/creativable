@@ -64,7 +64,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         console.error('Error searching similar content:', error);
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("Chat error:", error);
       toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
     },
@@ -84,7 +84,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         }
         setSessionToken(session.access_token);
 
-        // Fetch user profile information
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("display_name")
@@ -94,42 +93,31 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         if (profileError) {
           console.error("Error fetching profile:", profileError);
         } else if (profile?.display_name) {
-          setUserName(profile.display_name.split(" ")[0]); // Get first name
+          setUserName(profile.display_name.split(" ")[0]);
         }
 
-        // Fetch chatbot settings
-        const { data: chatbotSettings, error } = await supabase
-          .from("chatbot_settings")
+        const { data: settings, error: settingsError } = await supabase
+          .from("settings")
           .select("openai_api_key")
           .eq("user_id", session.user.id)
           .maybeSingle();
 
-        if (error) {
-          console.error("Error fetching chatbot settings:", error);
+        if (settingsError) {
+          console.error("Error fetching settings:", settingsError);
           toast.error("Fehler beim Laden der Chat-Einstellungen.");
           return;
         }
 
-        if (chatbotSettings?.openai_api_key) {
-          setApiKey(chatbotSettings.openai_api_key);
+        if (settings?.openai_api_key) {
+          setApiKey(settings.openai_api_key);
           console.log("OpenAI API key loaded successfully");
         } else {
           toast.error("Kein OpenAI API-Key gefunden. Bitte hinterlege ihn in den Einstellungen.");
           return;
         }
 
-        // Get team memberships
-        const { data: teamMemberships } = await supabase
-          .from('team_members')
-          .select('team_id')
-          .eq('user_id', session.user.id);
-
-        const currentTeamId = teamMemberships?.[0]?.team_id || null;
-
-        // Update chat config with context
         chatConfig.body = {
           ...chatConfig.body,
-          currentTeamId,
           userId: session.user.id
         };
 
@@ -142,7 +130,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
     if (open) {
       setupChat();
-      if (messages.length <= 1) { // Only system message or empty
+      if (messages.length <= 1) {
         setMessages([
           {
             id: "system",
