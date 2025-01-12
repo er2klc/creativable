@@ -1,8 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
-
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
 
 console.log('Chat function loaded')
 
@@ -79,11 +77,11 @@ serve(async (req) => {
     // Get team context if available
     if (teamId) {
       try {
-        const { data: teamContent, error } = await supabase.rpc('match_team_content', {
+        const { data: teamContent, error } = await supabase.rpc('match_content', {
           query_embedding: messages[messages.length - 1].content,
           match_threshold: 0.5,
           match_count: 5,
-          team_id: teamId
+          content_type: 'team'
         })
 
         if (error) {
