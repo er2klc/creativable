@@ -1,31 +1,31 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-openai-key',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+};
 
-console.log('Chat function loaded')
+console.log('Chat function loaded');
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages, teamId, platformId, currentTeamId, userId } = await req.json()
-    const apiKey = req.headers.get('X-OpenAI-Key')
-    const authHeader = req.headers.get('Authorization')
+    const { messages, teamId, platformId, currentTeamId, userId } = await req.json();
+    const apiKey = req.headers.get('X-OpenAI-Key');
+    const authHeader = req.headers.get('Authorization');
 
     if (!authHeader) {
-      throw new Error('Missing auth header')
+      throw new Error('Missing auth header');
     }
 
     if (!apiKey) {
-      throw new Error('Missing OpenAI API key')
+      throw new Error('Missing OpenAI API key');
     }
 
     console.log('Processing chat request:', { 
@@ -34,26 +34,26 @@ serve(async (req) => {
       platformId,
       currentTeamId,
       userId
-    })
+    });
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Missing Supabase environment variables')
+      throw new Error('Missing Supabase environment variables');
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    let contextMessages = []
+    let contextMessages = [];
     if (messages?.length > 0) {
-      const userMessage = messages[messages.length - 1]
+      const userMessage = messages[messages.length - 1];
       if (userMessage.role === 'user') {
-        console.log('Processing message for embeddings:', userMessage.content)
+        console.log('Processing message for embeddings:', userMessage.content);
         
         try {
           if (typeof userMessage.content !== 'string' || userMessage.content.trim().length === 0) {
-            console.log('Invalid input for embeddings, skipping similarity search')
+            console.log('Invalid input for embeddings, skipping similarity search');
           } else {
             const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
               method: 'POST',
@@ -63,7 +63,7 @@ serve(async (req) => {
               },
               body: JSON.stringify({
                 input: userMessage.content,
-                model: 'text-embedding-ada-002'
+                model: 'text-embedding-3-small'
               })
             });
 
@@ -79,29 +79,27 @@ serve(async (req) => {
               match_threshold: 0.5,
               match_count: 5,
               content_type: 'personal'
-            })
+            });
 
             if (error) {
-              console.error('Error in similarity search:', error)
+              console.error('Error in similarity search:', error);
             } else if (similarContent?.length > 0) {
-              console.log('Found similar content:', similarContent.length, 'items')
+              console.log('Found similar content:', similarContent.length, 'items');
               contextMessages = similarContent.map(item => ({
                 role: 'system',
                 content: `Related content: ${item.content}`
-              }))
+              }));
             }
           }
         } catch (error) {
-          console.error('Error in embeddings process:', error)
+          console.error('Error in embeddings process:', error);
         }
       }
     }
 
-    console.log('Making request to OpenAI with', messages.length, 'messages')
-
-    const encoder = new TextEncoder()
-    const stream = new TransformStream()
-    const writer = stream.writable.getWriter()
+    const encoder = new TextEncoder();
+    const stream = new TransformStream();
+    const writer = stream.writable.getWriter();
 
     try {
       const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -111,7 +109,7 @@ serve(async (req) => {
         },
         method: 'POST',
         body: JSON.stringify({
-          model: 'gpt-4',
+          model: 'gpt-4o-mini',
           messages: [
             ...messages.slice(0, -1),
             ...contextMessages,
@@ -119,61 +117,72 @@ serve(async (req) => {
           ],
           stream: true,
         }),
-      })
+      });
 
       if (!openAIResponse.ok) {
-        const error = await openAIResponse.json()
-        throw new Error(error.error?.message || 'OpenAI API error')
+        const error = await openAIResponse.json();
+        throw new Error(error.error?.message || 'OpenAI API error');
       }
 
-      const reader = openAIResponse.body?.getReader()
+      const reader = openAIResponse.body?.getReader();
       if (!reader) {
-        throw new Error('No response body')
+        throw new Error('No response body');
       }
 
       const processStream = async () => {
         try {
+          let accumulatedContent = '';
+          
           while (true) {
-            const { done, value } = await reader.read()
+            const { done, value } = await reader.read();
             
             if (done) {
-              await writer.close()
-              break
+              if (accumulatedContent) {
+                await writer.write(encoder.encode(`data: ${JSON.stringify({
+                  id: crypto.randomUUID(),
+                  role: 'assistant',
+                  content: accumulatedContent,
+                  createdAt: new Date().toISOString()
+                })}\n\n`));
+              }
+              await writer.close();
+              break;
             }
 
-            const chunk = new TextDecoder().decode(value)
-            const lines = chunk.split('\n').filter(line => line.trim() !== '')
+            const chunk = new TextDecoder().decode(value);
+            const lines = chunk.split('\n').filter(line => line.trim() !== '');
             
             for (const line of lines) {
-              if (line.includes('[DONE]')) continue
+              if (line.includes('[DONE]')) continue;
               
               if (line.startsWith('data: ')) {
                 try {
-                  const json = JSON.parse(line.replace('data: ', ''))
-                  const content = json.choices[0]?.delta?.content || ''
+                  const json = JSON.parse(line.replace('data: ', ''));
+                  const content = json.choices[0]?.delta?.content || '';
                   
                   if (content) {
+                    accumulatedContent += content;
                     await writer.write(encoder.encode(`data: ${JSON.stringify({
                       id: crypto.randomUUID(),
                       role: 'assistant',
-                      content,
+                      content: accumulatedContent,
                       createdAt: new Date().toISOString()
-                    })}\n\n`))
+                    })}\n\n`));
                   }
                 } catch (error) {
-                  console.error('Error parsing chunk:', error)
-                  console.error('Problematic line:', line)
+                  console.error('Error parsing chunk:', error);
+                  console.error('Problematic line:', line);
                 }
               }
             }
           }
         } catch (error) {
-          console.error('Error processing stream:', error)
-          await writer.abort(error)
+          console.error('Error processing stream:', error);
+          await writer.abort(error);
         }
-      }
+      };
 
-      processStream()
+      processStream();
 
       return new Response(stream.readable, {
         headers: {
@@ -182,21 +191,21 @@ serve(async (req) => {
           'Cache-Control': 'no-cache',
           'Connection': 'keep-alive',
         },
-      })
+      });
 
     } catch (error) {
-      console.error('Error in OpenAI request:', error)
-      throw error
+      console.error('Error in OpenAI request:', error);
+      throw error;
     }
 
   } catch (error) {
-    console.error('Error in chat function:', error)
+    console.error('Error in chat function:', error);
     return new Response(
       JSON.stringify({ error: error.message }), 
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
       }
-    )
+    );
   }
-})
+});

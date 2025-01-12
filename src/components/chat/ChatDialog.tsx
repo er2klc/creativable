@@ -46,7 +46,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     },
     onResponse: (response: Response) => {
       if (!response.ok) {
-        console.error('Chat response error:', response.status, response.statusText)
+        console.error('Chat response error:', response.status, response.statusText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     },
