@@ -56,30 +56,43 @@ serve(async (req) => {
     if (messages?.length > 0) {
       const userMessage = messages[messages.length - 1]
       if (userMessage.role === 'user') {
-        console.log('Generating embedding for message:', userMessage.content)
+        console.log('Processing message for embeddings:', userMessage.content)
         
         try {
-          // Validate input before searching
           if (typeof userMessage.content !== 'string' || userMessage.content.trim().length === 0) {
-            console.log('Invalid input for similarity search, skipping')
+            console.log('Invalid input for embeddings, skipping similarity search')
           } else {
+            // First, get embeddings from OpenAI
+            const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                input: userMessage.content,
+                model: 'text-embedding-ada-002'
+              })
+            });
+
+            if (!embeddingResponse.ok) {
+              throw new Error('Failed to generate embeddings');
+            }
+
+            const embeddingData = await embeddingResponse.json();
+            const embedding = embeddingData.data[0].embedding;
+
+            // Now use the embedding for similarity search
             const { data: similarContent, error } = await supabase.rpc('match_content', {
-              query_embedding: userMessage.content,
+              query_embedding: embedding,
               match_threshold: 0.5,
               match_count: 5,
               content_type: 'personal'
             })
 
             if (error) {
-              if (error.code === '22P02') {
-                console.log('Invalid vector format, skipping similarity search')
-              } else {
-                console.error('Error searching similar content:', error)
-                throw error
-              }
-            }
-
-            if (similarContent?.length > 0) {
+              console.error('Error in similarity search:', error)
+            } else if (similarContent?.length > 0) {
               console.log('Found similar content:', similarContent.length, 'items')
               contextMessages = similarContent.map(item => ({
                 role: 'system',
@@ -88,7 +101,7 @@ serve(async (req) => {
             }
           }
         } catch (error) {
-          console.error('Error in similarity search:', error)
+          console.error('Error in embeddings process:', error)
           // Continue without similar content rather than failing the whole request
         }
       }
@@ -96,23 +109,37 @@ serve(async (req) => {
 
     if (teamId) {
       try {
+        // Get embeddings for team content search
+        const lastMessage = messages[messages.length - 1];
+        const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            input: lastMessage.content,
+            model: 'text-embedding-ada-002'
+          })
+        });
+
+        if (!embeddingResponse.ok) {
+          throw new Error('Failed to generate embeddings for team content');
+        }
+
+        const embeddingData = await embeddingResponse.json();
+        const embedding = embeddingData.data[0].embedding;
+
         const { data: teamContent, error } = await supabase.rpc('match_content', {
-          query_embedding: messages[messages.length - 1].content,
+          query_embedding: embedding,
           match_threshold: 0.5,
           match_count: 5,
           content_type: 'team'
         })
 
         if (error) {
-          if (error.code === '22P02') {
-            console.log('Invalid vector format for team content, skipping')
-          } else {
-            console.error('Error matching team content:', error)
-            throw error
-          }
-        }
-
-        if (teamContent?.length > 0) {
+          console.error('Error in team content search:', error)
+        } else if (teamContent?.length > 0) {
           console.log('Found team content:', teamContent.length, 'items')
           contextMessages = [
             ...contextMessages,
