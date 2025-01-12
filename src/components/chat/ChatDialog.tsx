@@ -21,6 +21,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [userName, setUserName] = useState<string>("");
   const [isReady, setIsReady] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [currentTeamId, setCurrentTeamId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { systemMessage } = useChatContext();
 
@@ -38,9 +39,9 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       }
     ] as Message[],
     body: {
-      teamId: null as string | null,
-      platformId: null as string | null,
-      currentTeamId: null as string | null,
+      teamId: currentTeamId,
+      platformId: null,
+      currentTeamId: currentTeamId,
       userId: userId
     },
     onResponse: (response: Response) => {
@@ -86,6 +87,21 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         }
         setSessionToken(session.access_token);
         setUserId(session.user.id);
+
+        // Lade das aktuelle Team des Users
+        const { data: teamMembers, error: teamError } = await supabase
+          .from('team_members')
+          .select('team_id')
+          .eq('user_id', session.user.id)
+          .limit(1)
+          .single();
+
+        if (teamError) {
+          console.error("Error fetching team:", teamError);
+        } else if (teamMembers) {
+          setCurrentTeamId(teamMembers.team_id);
+          console.log("Set current team ID:", teamMembers.team_id);
+        }
 
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
