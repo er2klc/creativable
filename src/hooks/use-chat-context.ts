@@ -24,45 +24,29 @@ export const useChatContext = () => {
     },
   });
 
-  const { data: platforms } = useQuery({
-    queryKey: ["chat-context-platforms"],
+  const { data: teamContent } = useQuery({
+    queryKey: ["chat-context-team-content"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("elevate_platforms")
-        .select("*")
-        .order("created_at", { ascending: false });
+      if (!teams?.length) return [];
+
+      const teamIds = teams.map(team => team.id);
+      
+      const { data: content, error } = await supabase
+        .from('team_content_embeddings')
+        .select('*')
+        .in('team_id', teamIds)
+        .order('created_at', { ascending: false });
 
       if (error) {
-        console.error("Error loading platforms for chat context:", error);
+        console.error("Error loading team content for chat context:", error);
         return [];
       }
 
-      return data;
+      return content;
     },
+    enabled: !!teams?.length,
   });
 
-  const { data: profile } = useQuery({
-    queryKey: ["chat-context-profile"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error loading profile for chat context:", error);
-        return null;
-      }
-
-      return data;
-    },
-  });
-
-  // Fixed query for learning content - specifying the relationship
   const { data: learningContent } = useQuery({
     queryKey: ["chat-context-learning-content"],
     queryFn: async () => {
@@ -71,8 +55,10 @@ export const useChatContext = () => {
         .select(`
           id,
           title,
+          description,
           elevate_modules!elevate_lerninhalte_module_id_fkey (
-            title
+            title,
+            description
           )
         `)
         .not("video_url", "is", null)
@@ -91,8 +77,8 @@ export const useChatContext = () => {
   const buildSystemMessage = () => {
     const userInfo = settings ? `
       Persönliche Informationen:
-      - Name: ${profile?.display_name || "Nicht angegeben"}
-      - E-Mail: ${profile?.email || "Nicht angegeben"}
+      - Name: ${settings.display_name || "Nicht angegeben"}
+      - E-Mail: ${settings.email || "Nicht angegeben"}
       - Sprache: ${settings.language === "en" ? "Englisch" : "Deutsch"}
       
       Network Marketing Business:
@@ -101,7 +87,6 @@ export const useChatContext = () => {
       - Zielgruppe: ${settings.target_audience || "Nicht angegeben"}
       - USP: ${settings.usp || "Nicht angegeben"}
       - Geschäftsbeschreibung: ${settings.business_description || "Nicht angegeben"}
-      - Über mich: ${settings.about_me || "Nicht angegeben"}
     ` : "";
 
     const teamsInfo = teams?.length ? `
@@ -109,52 +94,42 @@ export const useChatContext = () => {
       ${teams.map(team => `- ${team.name}`).join("\n")}
     ` : "";
 
-    const platformsInfo = platforms?.length ? `
-      Lernplattformen (${platforms.length}):
-      ${platforms.map(platform => `- ${platform.name}`).join("\n")}
+    const teamContentInfo = teamContent?.length ? `
+      Relevante Team-Inhalte:
+      ${teamContent.map(content => {
+        const metadata = content.metadata || {};
+        return `- ${content.content_type}: ${metadata.title || 'Untitled'} (ID: ${content.content_id})`;
+      }).join("\n")}
     ` : "";
 
-    const leadsInfo = `Aktuelle Kontakte werden geladen...`;
-
-    const videoContent = learningContent?.length ? `
-      Relevante Lernvideos (Top ${learningContent.length}):
-      ${learningContent.map(content => `- ${content.title}`).join("\n")}
+    const learningContentInfo = learningContent?.length ? `
+      Relevante Lernvideos:
+      ${learningContent.map(content => 
+        `- ${content.title} (Modul: ${content.elevate_modules?.title})`
+      ).join("\n")}
     ` : "";
 
     return `
-      Du bist ein erfahrener Network Marketing & MLM Assistent. Deine Hauptaufgabe ist es, dem Benutzer dabei zu helfen, sein Network Marketing Business erfolgreich aufzubauen und zu skalieren.
+      Du bist ein erfahrener Network Marketing & MLM Assistent. Deine Hauptaufgabe ist es, dem Benutzer dabei zu helfen, 
+      sein Network Marketing Business erfolgreich aufzubauen und zu skalieren.
 
       Nutze diese Kontextinformationen:
       ${userInfo}
       ${teamsInfo}
-      ${platformsInfo}
-      ${leadsInfo}
-      ${videoContent}
-
-      Deine Kernkompetenzen:
-      1. Lead-Generierung & Kundengewinnung
-      2. Verkaufspsychologie & Gesprächsführung
-      3. Social Media Marketing & Content-Erstellung
-      4. Team-Aufbau & Leadership
-      5. Business-Strategie & Skalierung
-      6. Kontakt- und Lead-Management
-      7. Lernmaterial- und Video-Empfehlungen
+      ${teamContentInfo}
+      ${learningContentInfo}
 
       Wichtige Anweisungen:
       1. Sei proaktiv und gib konkrete, actionable Tipps
-      2. Sprich den Benutzer mit Namen an, wenn bekannt
-      3. Beziehe dich auf die spezifischen Produkte/Services
-      4. Passe deine Vorschläge an die Zielgruppe an
-      5. Antworte immer auf ${settings?.language === "en" ? "Englisch" : "Deutsch"}
-      6. Sei motivierend und lösungsorientiert
-      7. Teile Best Practices aus dem Network Marketing
-      8. Hilf bei der Formulierung überzeugender Nachrichten
-      9. Unterstütze bei der Einwandbehandlung
-      10. Gib Tipps zur Leadqualifizierung
-      11. Empfehle passende Lernvideos und Inhalte
-      12. Hilf bei der Kontaktverwaltung und Nachverfolgung
+      2. Beziehe dich auf die spezifischen Team-Inhalte und Lernmaterialien
+      3. Wenn nach bestimmten Modulen oder Inhalten gefragt wird, suche in den relevanten Team-Inhalten
+      4. Antworte immer auf ${settings?.language === "en" ? "Englisch" : "Deutsch"}
+      5. Sei motivierend und lösungsorientiert
+      6. Wenn Informationen fehlen, weise darauf hin und schlage vor, welche Inhalte hinzugefügt werden sollten
 
-      Du bist ein erfahrener Profi im Network Marketing und hilfst aktiv dabei, das Business zu entwickeln und neue Partner/Kunden zu gewinnen. Du kannst auch auf die Kontaktdaten und Lernvideos zugreifen, um bessere und personalisierte Empfehlungen zu geben.
+      Du bist ein erfahrener Profi im Network Marketing und hilfst aktiv dabei, das Business zu entwickeln.
+      Du hast Zugriff auf Team-Inhalte, Lernvideos und andere relevante Materialien, um bessere und 
+      personalisierte Empfehlungen zu geben.
     `.trim();
   };
 

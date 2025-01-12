@@ -559,7 +559,6 @@ export type Database = {
       leads: {
         Row: {
           business_description: string | null
-          chat_context: Json | null
           company_name: string | null
           contact_type: string | null
           created_at: string | null
@@ -586,7 +585,6 @@ export type Database = {
         }
         Insert: {
           business_description?: string | null
-          chat_context?: Json | null
           company_name?: string | null
           contact_type?: string | null
           created_at?: string | null
@@ -613,7 +611,6 @@ export type Database = {
         }
         Update: {
           business_description?: string | null
-          chat_context?: Json | null
           company_name?: string | null
           contact_type?: string | null
           created_at?: string | null
@@ -1204,6 +1201,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "team_categories_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_content_embeddings: {
+        Row: {
+          content: string
+          content_id: string
+          content_type: string
+          created_at: string | null
+          embedding: string | null
+          id: string
+          metadata: Json | null
+          team_id: string
+        }
+        Insert: {
+          content: string
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          team_id: string
+        }
+        Update: {
+          content?: string
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_content_embeddings_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
