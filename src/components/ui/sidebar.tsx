@@ -209,9 +209,11 @@ const Sidebar = React.forwardRef<
         </Sheet>
       )
     }
+const Sidebar = () => {
+  const divId = "myCustomId";
 
     return (
-   <div id="test"
+   <div id={divId}
   className={cn(
     "duration-200 relative bg-transparent transition-[width,height] ease-linear",
     "group-data-[collapsible=offcanvas]:w-0",
