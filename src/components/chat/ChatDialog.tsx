@@ -42,14 +42,25 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       currentTeamId: null as string | null,
       userId: null as string | null
     },
-    onResponse: (response: Response) => {
-      console.log("Chat response started");
+    onResponse: async (response: Response) => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      // Search for similar content before processing the response
+      try {
+        const { messages } = await response.clone().json();
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage?.role === 'user') {
+          const similarContent = await searchSimilarContent(lastMessage.content, 'personal');
+          console.log('Similar content found:', similarContent);
+          // You can use this similar content to enhance the response
+        }
+      } catch (error) {
+        console.error('Error searching similar content:', error);
+      }
     },
     onFinish: () => {
-      console.log("Chat response finished");
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
