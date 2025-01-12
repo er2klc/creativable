@@ -30,7 +30,7 @@ export const ChatButton = () => {
           onClick={handleClick}
           variant="outline" 
           size="icon" 
-          className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all p-0 overflow-hidden bg-white"
+          className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all p-0 overflow-hidden bg-white dark:bg-gray-800"
         >
           <img 
             src="/lovable-uploads/5dc8cb23-526f-4de9-bf3c-08e8627ccd65.png" 
