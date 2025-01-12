@@ -3,12 +3,17 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-openai-key',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Content-Type': 'text/event-stream',
+  'Cache-Control': 'no-cache',
+  'Connection': 'keep-alive'
 }
 
 console.log('Chat function loaded')
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -131,7 +136,7 @@ serve(async (req) => {
         },
         method: 'POST',
         body: JSON.stringify({
-          model: 'gpt-4o',
+          model: 'gpt-4',
           messages: [
             ...messages.slice(0, -1),
             ...contextMessages,
@@ -176,12 +181,7 @@ serve(async (req) => {
                 const content = json.choices[0]?.delta?.content || ''
                 
                 if (content) {
-                  await writer.write(encoder.encode(`data: ${JSON.stringify({
-                    id: crypto.randomUUID(),
-                    role: 'assistant',
-                    content,
-                    createdAt: new Date().toISOString()
-                  })}\n\n`))
+                  await writer.write(encoder.encode(`data: ${content}\n\n`))
                 }
               } catch (error) {
                 console.error('Error parsing chunk:', error)
@@ -201,8 +201,6 @@ serve(async (req) => {
         headers: {
           ...corsHeaders,
           'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
         },
       })
 
