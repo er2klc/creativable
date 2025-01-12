@@ -3,6 +3,8 @@ import { type Tables } from "@/integrations/supabase/types";
 import { TeamCard } from "./TeamCard";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 type TeamWithStats = Tables<"teams"> & {
   stats?: {
@@ -29,6 +31,23 @@ export const TeamList = ({
   const [copyingJoinCode, setCopyingJoinCode] = useState(false);
   const { toast } = useToast();
   const { settings } = useSettings();
+
+  // Query to check if user is super admin
+  const { data: profile } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_super_admin')
+        .eq('id', user.id)
+        .single();
+
+      return profile;
+    },
+  });
 
   const handleCopyJoinCode = async (joinCode: string) => {
     if (copyingJoinCode) return;
@@ -85,6 +104,7 @@ export const TeamList = ({
           onDelete={handleDelete}
           onLeave={handleLeave}
           onCopyJoinCode={handleCopyJoinCode}
+          isSuperAdmin={profile?.is_super_admin}
         />
       ))}
     </div>

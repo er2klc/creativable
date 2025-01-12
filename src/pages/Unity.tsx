@@ -12,14 +12,31 @@ const Unity = () => {
   const user = useUser();
   const queryClient = useQueryClient();
 
+  // First check if user is super admin
+  const { data: profile } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_super_admin')
+        .eq('id', user.id)
+        .single();
+      return profile;
+    },
+    enabled: !!user,
+  });
+
+  // Then fetch teams based on user role
   const { data: teamsWithStats = [], isLoading } = useQuery({
-    queryKey: ['teams-with-stats'],
+    queryKey: ['teams-with-stats', profile?.is_super_admin],
     queryFn: async () => {
       if (!user?.id) return [];
       
-      // Get teams using the RPC function
-      const { data: teams, error } = await supabase
-        .rpc('get_user_teams', { uid: user.id });
+      // If super admin, fetch all teams
+      const { data: teams, error } = profile?.is_super_admin 
+        ? await supabase.from('teams').select('*').order('order_index', { ascending: true })
+        : await supabase.rpc('get_user_teams', { uid: user.id });
 
       if (error) {
         console.error("Error loading teams:", error);
@@ -59,7 +76,7 @@ const Unity = () => {
 
       return teamsWithStats;
     },
-    enabled: !!user,
+    enabled: !!user && profile !== undefined,
   });
 
   const handleDeleteTeam = async (teamId: string) => {
