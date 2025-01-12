@@ -88,7 +88,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         setSessionToken(session.access_token);
         setUserId(session.user.id);
 
-        // Lade das aktuelle Team des Users
         const { data: teamMembers, error: teamError } = await supabase
           .from('team_members')
           .select('team_id')

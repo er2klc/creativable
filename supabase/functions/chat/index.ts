@@ -102,7 +102,6 @@ serve(async (req) => {
           }
         } catch (error) {
           console.error('Error in embeddings process:', error)
-          // Continue without similar content rather than failing the whole request
         }
       }
     }
@@ -168,7 +167,7 @@ serve(async (req) => {
         },
         method: 'POST',
         body: JSON.stringify({
-          model: 'gpt-4',
+          model: 'gpt-4o-mini',
           messages: [
             ...messages.slice(0, -1),
             ...contextMessages,
