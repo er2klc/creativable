@@ -84,7 +84,9 @@ export const DashboardSidebar = () => {
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
-      <div className={`absolute inset-0 w-[60px] transition-all duration-300 ${isExpanded ? 'w-[240px]' : ''} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl`} />
+      <div 
+        className={`absolute inset-0 w-[60px] transition-all duration-300 ${isExpanded ? 'w-[240px]' : ''} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl pointer-events-none`} 
+      />
       <SidebarContent className="flex flex-col h-full relative">
         <div className="sticky top-0 left-0 z-50 bg-[#111111]/80 w-full">
           <div className="w-full h-16 flex items-center px-4">
