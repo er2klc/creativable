@@ -32,7 +32,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     },
     initialMessages: [
       {
-        id: "system",
+        id: "system-1",
         role: "system" as const,
         content: systemMessage,
       }
@@ -84,7 +84,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
           return;
         }
         setSessionToken(session.access_token);
-        setUserId(session.user.id); // Set the userId here
+        setUserId(session.user.id);
 
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
@@ -130,12 +130,12 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       if (messages.length <= 1) {
         setMessages([
           {
-            id: "system",
+            id: "system-1",
             role: "system" as const,
             content: systemMessage,
           } as Message,
           {
-            id: "welcome",
+            id: "welcome-1",
             role: "assistant" as const,
             content: userName 
               ? `Hallo ${userName}! Ich bin Nexus, dein persönlicher KI-Assistent. Ich unterstütze dich gerne bei allen Fragen rund um dein Network Marketing Business. Wie kann ich dir heute helfen?` 
