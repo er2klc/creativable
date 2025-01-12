@@ -11,8 +11,8 @@ serve(async (req) => {
 
   try {
     const { messages, teamId, platformId, currentTeamId, userId } = await req.json()
-    const authHeader = req.headers.get('Authorization')
     const apiKey = req.headers.get('X-OpenAI-Key')
+    const authHeader = req.headers.get('Authorization')
 
     if (!authHeader) {
       throw new Error('Missing auth header')
@@ -22,8 +22,8 @@ serve(async (req) => {
       throw new Error('Missing OpenAI API key')
     }
 
-    console.log('Request received:', { 
-      messagesCount: messages?.length,
+    console.log('Processing chat request:', { 
+      messageCount: messages?.length,
       teamId,
       platformId,
       currentTeamId,
@@ -38,16 +38,24 @@ serve(async (req) => {
       throw new Error('Missing Supabase environment variables')
     }
 
-    const supabase = createClient(
-      supabaseUrl,
-      supabaseServiceKey
-    )
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Get user team memberships
+    const { data: teamMemberships } = await supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', userId)
+
+    const userTeamIds = teamMemberships?.map(tm => tm.team_id) || []
+    console.log('User team memberships:', userTeamIds)
 
     // Get similar content if available
     let contextMessages = []
     if (messages?.length > 0) {
       const userMessage = messages[messages.length - 1]
       if (userMessage.role === 'user') {
+        console.log('Generating embedding for message:', userMessage.content)
+        
         try {
           const { data: similarContent, error } = await supabase.rpc('match_content', {
             query_embedding: userMessage.content,
@@ -57,7 +65,7 @@ serve(async (req) => {
           })
 
           if (error) {
-            console.error('Error finding similar content:', error)
+            console.error('Error searching similar content:', error)
             throw error
           }
 
@@ -69,7 +77,7 @@ serve(async (req) => {
             }))
           }
         } catch (error) {
-          console.error('Error finding similar content:', error)
+          console.error('Error searching similar content:', error)
         }
       }
     }
@@ -85,7 +93,7 @@ serve(async (req) => {
         })
 
         if (error) {
-          console.error('Error finding team content:', error)
+          console.error('Error matching content:', error)
           throw error
         }
 
@@ -104,108 +112,102 @@ serve(async (req) => {
       }
     }
 
-    // Prepare messages for OpenAI
-    const allMessages = [
-      ...messages.slice(0, -1),
-      ...contextMessages,
-      messages[messages.length - 1]
-    ]
-
-    console.log('Sending messages to OpenAI:', allMessages.length)
+    console.log('Making request to OpenAI with', messages.length, 'messages')
 
     // Create stream transformer
     const encoder = new TextEncoder()
     const stream = new TransformStream()
     const writer = stream.writable.getWriter()
 
-    // Start OpenAI request
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      body: JSON.stringify({
-        model: 'gpt-4',
-        messages: allMessages,
-        stream: true,
-      }),
-    })
+    try {
+      const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            ...messages.slice(0, -1),
+            ...contextMessages,
+            messages[messages.length - 1]
+          ],
+          stream: true,
+        }),
+      })
 
-    if (!openAIResponse.ok) {
-      const error = await openAIResponse.json()
-      throw new Error(error.error?.message || 'OpenAI API error')
-    }
-
-    console.log('OpenAI response received, starting stream...')
-
-    // Process the stream
-    const reader = openAIResponse.body?.getReader()
-    if (!reader) {
-      throw new Error('No response body')
-    }
-
-    // Stream processing loop
-    const processStream = async () => {
-      try {
-        while (true) {
-          const { done, value } = await reader.read()
-          
-          if (done) {
-            console.log('Stream complete')
-            await writer.close()
-            break
-          }
-
-          // Decode the chunk
-          const chunk = new TextDecoder().decode(value)
-          const lines = chunk.split('\n').filter(line => line.trim() !== '')
-          
-          for (const line of lines) {
-            if (line.includes('[DONE]')) {
-              console.log('Received [DONE] signal')
-              continue
-            }
-            
-            try {
-              const json = JSON.parse(line.replace(/^data: /, ''))
-              const content = json.choices[0]?.delta?.content || ''
-              
-              if (content) {
-                const message = {
-                  id: crypto.randomUUID(),
-                  role: 'assistant',
-                  content,
-                  createdAt: new Date().toISOString()
-                }
-                
-                await writer.write(
-                  encoder.encode(`data: ${JSON.stringify(message)}\n\n`)
-                )
-              }
-            } catch (error) {
-              console.error('Error parsing chunk:', error)
-              console.error('Problematic line:', line)
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error processing stream:', error)
-        await writer.abort(error)
+      if (!openAIResponse.ok) {
+        const error = await openAIResponse.json()
+        throw new Error(error.error?.message || 'OpenAI API error')
       }
+
+      console.log('OpenAI response received, starting stream...')
+
+      const reader = openAIResponse.body?.getReader()
+      if (!reader) {
+        throw new Error('No response body')
+      }
+
+      // Process the stream
+      const processStream = async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read()
+            
+            if (done) {
+              console.log('Stream complete')
+              await writer.close()
+              break
+            }
+
+            const chunk = new TextDecoder().decode(value)
+            const lines = chunk.split('\n').filter(line => line.trim() !== '')
+            
+            for (const line of lines) {
+              if (line.includes('[DONE]')) continue
+              
+              try {
+                const json = JSON.parse(line.replace(/^data: /, ''))
+                const content = json.choices[0]?.delta?.content || ''
+                
+                if (content) {
+                  await writer.write(
+                    encoder.encode(`data: ${JSON.stringify({
+                      id: crypto.randomUUID(),
+                      role: 'assistant',
+                      content,
+                      createdAt: new Date().toISOString()
+                    })}\n\n`)
+                  )
+                }
+              } catch (error) {
+                console.error('Error parsing chunk:', error)
+                console.error('Problematic line:', line)
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error processing stream:', error)
+          await writer.abort(error)
+        }
+      }
+
+      processStream()
+
+      return new Response(stream.readable, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      })
+
+    } catch (error) {
+      console.error('Error in OpenAI request:', error)
+      throw error
     }
-
-    // Start processing the stream
-    processStream()
-
-    return new Response(stream.readable, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    })
 
   } catch (error) {
     console.error('Error in chat function:', error)
