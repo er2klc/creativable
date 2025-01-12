@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { corsHeaders } from '../_shared/cors.ts'
-import { createClient } from '@supabase/supabase-js'
 
 console.log('Chat function loaded')
 
@@ -30,6 +30,20 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Get user's team memberships
+    const { data: teamMemberships, error: teamError } = await supabaseClient
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', userId)
+
+    if (teamError) {
+      console.error('Error fetching team memberships:', teamError)
+      throw teamError
+    }
+
+    const teamIds = teamMemberships?.map(tm => tm.team_id) || []
+    console.log('User team memberships:', teamIds)
+
     // Get the last user message for context search
     const lastUserMessage = messages.slice().reverse().find(m => m.role === 'user')
 
@@ -58,21 +72,7 @@ serve(async (req) => {
         const { data: [{ embedding }] } = await embeddingResponse.json()
         console.log('Generated embedding successfully')
 
-        // Get user's team memberships
-        const { data: teamMemberships, error: teamError } = await supabaseClient
-          .from('team_members')
-          .select('team_id')
-          .eq('user_id', userId)
-
-        if (teamError) {
-          console.error('Error fetching team memberships:', teamError)
-          throw teamError
-        }
-
-        const teamIds = teamMemberships?.map(tm => tm.team_id) || []
-        console.log('User team memberships:', teamIds)
-
-        // Search for similar content in both personal and team content
+        // Search for similar content in team content
         const { data: similarContent, error: matchError } = await supabaseClient.rpc('match_content', {
           query_embedding: embedding,
           match_threshold: 0.7,

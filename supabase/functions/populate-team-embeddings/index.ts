@@ -1,10 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { corsHeaders } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+console.log('Populate team embeddings function loaded')
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,19 +10,24 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Fetch all teams
-    const { data: teams, error: teamsError } = await supabase
+    // Get all teams
+    const { data: teams, error: teamsError } = await supabaseClient
       .from('teams')
       .select('*')
 
     if (teamsError) throw teamsError
 
-    const results = []
+    const openAIKey = req.headers.get('x-openai-key')
+    if (!openAIKey) {
+      throw new Error('OpenAI API key is required')
+    }
+
+    console.log(`Processing ${teams.length} teams`)
 
     for (const team of teams) {
       try {
@@ -33,46 +36,39 @@ serve(async (req) => {
           const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${openAIKey}`,
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({
               input: team.description,
               model: 'text-embedding-3-small'
-            }),
+            })
           })
 
           if (!embeddingResponse.ok) {
-            throw new Error(`Failed to generate embedding for team ${team.id}`)
+            throw new Error('Failed to generate embedding')
           }
 
           const { data: [{ embedding }] } = await embeddingResponse.json()
 
-          // Store embedding
-          const { error: insertError } = await supabase
-            .from('content_embeddings')
+          // Store the embedding
+          const { error: insertError } = await supabaseClient
+            .from('team_content_embeddings')
             .insert({
+              team_id: team.id,
               content_type: 'team',
               content_id: team.id,
               content: team.description,
               embedding,
-              team_id: team.id,
-              metadata: {
-                type: 'team_description',
-                team_name: team.name
-              }
+              metadata: { type: 'description' }
             })
 
           if (insertError) throw insertError
-
-          results.push({
-            team_id: team.id,
-            status: 'success'
-          })
+          console.log(`Processed team description for team ${team.id}`)
         }
 
-        // Fetch and process team posts
-        const { data: posts, error: postsError } = await supabase
+        // Get and process team posts
+        const { data: posts, error: postsError } = await supabaseClient
           .from('team_posts')
           .select('*')
           .eq('team_id', team.id)
@@ -83,54 +79,46 @@ serve(async (req) => {
           const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${openAIKey}`,
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              input: `${post.title}\n${post.content}`,
+              input: `${post.title} ${post.content}`,
               model: 'text-embedding-3-small'
-            }),
+            })
           })
 
           if (!embeddingResponse.ok) {
-            throw new Error(`Failed to generate embedding for post ${post.id}`)
+            throw new Error('Failed to generate embedding')
           }
 
           const { data: [{ embedding }] } = await embeddingResponse.json()
 
-          const { error: insertError } = await supabase
-            .from('content_embeddings')
+          // Store the embedding
+          const { error: insertError } = await supabaseClient
+            .from('team_content_embeddings')
             .insert({
+              team_id: team.id,
               content_type: 'team',
               content_id: post.id,
-              content: `${post.title}\n${post.content}`,
+              content: `${post.title} ${post.content}`,
               embedding,
-              team_id: team.id,
-              metadata: {
-                type: 'team_post',
-                post_title: post.title
-              }
+              metadata: { type: 'post' }
             })
 
           if (insertError) throw insertError
-
-          results.push({
-            team_id: team.id,
-            post_id: post.id,
-            status: 'success'
-          })
+          console.log(`Processed post ${post.id} for team ${team.id}`)
         }
       } catch (error) {
         console.error(`Error processing team ${team.id}:`, error)
-        results.push({
-          team_id: team.id,
-          status: 'error',
-          error: error.message
-        })
+        // Continue with next team even if one fails
       }
     }
 
-    return new Response(JSON.stringify({ results }), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: 'Team embeddings population completed' 
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
