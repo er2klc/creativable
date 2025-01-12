@@ -559,6 +559,7 @@ export type Database = {
       leads: {
         Row: {
           business_description: string | null
+          chat_context: Json | null
           company_name: string | null
           contact_type: string | null
           created_at: string | null
@@ -585,6 +586,7 @@ export type Database = {
         }
         Insert: {
           business_description?: string | null
+          chat_context?: Json | null
           company_name?: string | null
           contact_type?: string | null
           created_at?: string | null
@@ -611,6 +613,7 @@ export type Database = {
         }
         Update: {
           business_description?: string | null
+          chat_context?: Json | null
           company_name?: string | null
           contact_type?: string | null
           created_at?: string | null
