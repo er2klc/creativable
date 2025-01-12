@@ -221,9 +221,9 @@ const Sidebar = React.forwardRef<
       : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
   )}
   style={{
-    height: "0px !important", // Force height to 0px for this instance
-    pointerEvents: "none", // Prevent any blocking interactions
-  }}
+  height: "0px !important", // Explicitly enforce 0px
+  pointerEvents: "none !important", // Ensure no interaction
+}}
 />
 <div
   className={cn(
