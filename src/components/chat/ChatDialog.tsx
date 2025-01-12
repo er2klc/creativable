@@ -17,10 +17,11 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const [isReady, setIsReady] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { systemMessage } = useChatContext();
 
-  const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
+  const chatConfig = {
     api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
     headers: {
       Authorization: `Bearer ${sessionToken}`,
@@ -47,7 +48,11 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       console.error("Chat error:", error);
       toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
     },
-  });
+  };
+
+  const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat(
+    isReady ? chatConfig : { api: '' }
+  );
 
   useEffect(() => {
     const setupChat = async () => {
@@ -86,7 +91,10 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
           console.log("OpenAI API key loaded successfully");
         } else {
           toast.error("Kein OpenAI API-Key gefunden. Bitte hinterlege ihn in den Einstellungen.");
+          return;
         }
+
+        setIsReady(true);
       } catch (error) {
         console.error("Error in setupChat:", error);
         toast.error("Fehler beim Einrichten des Chats.");
@@ -133,7 +141,21 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         content: systemMessage,
       }
     ]);
+    setIsReady(false);
   };
+
+  if (!isReady) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[500px]">
+          <ChatHeader onMinimize={onOpenChange} onClose={handleClose} />
+          <div className="flex items-center justify-center h-[600px]">
+            <p className="text-muted-foreground">Initialisiere Chat...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
