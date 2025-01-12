@@ -79,13 +79,22 @@ export const DashboardSidebar = () => {
   });
   
   return (
-    <Sidebar 
-      className={`fixed group w-[60px] hover:w-[240px] transition-all duration-300 ease-in-out ${isExpanded ? 'w-[240px] z-[999]' : 'z-[10]'}`}
-      onMouseEnter={() => setIsExpanded(true)}
-      onMouseLeave={() => setIsExpanded(false)}
-    >
-      <div className={`absolute inset-0 ${isExpanded ? 'w-[240px]' : 'w-[60px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
-      <SidebarContent className="flex flex-col h-full relative">
+    <Sidebar
+  className={`fixed group z-[10] ${
+    isExpanded ? "w-[240px]" : "w-[60px]"
+  } hover:w-[240px] transition-all duration-300 ease-in-out`}
+  onMouseEnter={() => setIsExpanded(true)}
+  onMouseLeave={() => setIsExpanded(false)}
+>
+  <div
+    className={`absolute inset-0 ${
+      isExpanded ? "w-[240px]" : "w-[60px]"
+    } bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300 pointer-events-auto`}
+    style={{
+      pointerEvents: isExpanded ? "auto" : "none", // Blockiert Klicks in den erweiterten Bereichen
+    }}
+  />
+  <SidebarContent className="flex flex-col h-full relative">
         <div className="sticky top-0 left-0 z-50 bg-[#111111]/80 w-full">
           <div className="w-full h-16 flex items-center px-4">
             <div className="absolute inset-0 bg-[url('/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png')] opacity-10 blur-2xl scale-150" />
