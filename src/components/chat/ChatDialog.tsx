@@ -52,10 +52,9 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
       
-      // Search for similar content after the message is complete
       try {
         if (message.role === 'assistant') {
-          const userMessage = messages[messages.length - 2]; // Get the user message that triggered this response
+          const userMessage = messages[messages.length - 2];
           if (userMessage?.role === 'user') {
             const similarContent = await searchSimilarContent(userMessage.content, 'personal');
             console.log('Similar content found:', similarContent);

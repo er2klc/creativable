@@ -1,9 +1,13 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-openai-key',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Content-Type': 'text/event-stream',
+  'Cache-Control': 'no-cache',
+  'Connection': 'keep-alive'
 };
 
 serve(async (req) => {
@@ -12,98 +16,48 @@ serve(async (req) => {
   }
 
   try {
-    const openaiApiKey = req.headers.get('x-openai-key');
-    if (!openaiApiKey) {
-      console.error('OpenAI API Key missing');
-      return new Response(JSON.stringify({ error: 'OpenAI API Key is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    const { messages, teamId, platformId, currentTeamId, userId } = await req.json();
+    const apiKey = req.headers.get('x-openai-key');
+
+    if (!apiKey) {
+      throw new Error('OpenAI API key is required');
     }
 
-    const { messages, language = 'de', teamIds = [], userId } = await req.json();
-    console.log('Processing chat request with messages:', messages);
-
-    const systemMessage = {
-      role: 'system',
-      content: `Du bist ein freundlicher KI-Assistent. Antworte immer auf ${language === 'de' ? 'Deutsch' : 'English'}.`
-    };
+    console.log('Processing chat request:', { 
+      messageCount: messages.length,
+      teamId,
+      platformId,
+      currentTeamId,
+      userId,
+      timestamp: new Date().toISOString()
+    });
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [systemMessage, ...messages],
+        model: 'gpt-4-turbo-preview',
+        messages,
         stream: true,
+        temperature: 0.7,
       }),
     });
 
     if (!response.ok) {
       const error = await response.json();
       console.error('OpenAI API error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to get response from OpenAI' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      throw new Error('Failed to get response from OpenAI');
     }
 
-    // Transform the response into a readable stream
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body!.getReader();
-        const decoder = new TextDecoder();
-        const encoder = new TextEncoder();
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
-
-            for (const line of lines) {
-              if (line.trim() === '') continue;
-              if (line.trim() === 'data: [DONE]') continue;
-              
-              if (line.startsWith('data: ')) {
-                try {
-                  const json = JSON.parse(line.slice(6));
-                  const content = json.choices[0]?.delta?.content || '';
-                  if (content) {
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
-                  }
-                } catch (error) {
-                  console.error('Error parsing JSON:', error);
-                }
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Stream processing error:', error);
-          controller.error(error);
-        } finally {
-          controller.close();
-          reader.releaseLock();
-        }
-      },
-    });
-
-    return new Response(stream, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
+    return new Response(response.body, {
+      headers: corsHeaders,
     });
 
   } catch (error) {
-    console.error('Error in chat function:', error);
+    console.error('Chat function error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
