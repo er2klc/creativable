@@ -39,11 +39,14 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     body: {
       teamId: null as string | null,
       platformId: null as string | null,
-      currentTeamId: null as string | null, // Add this for current team context
-      userId: null as string | null // Add this for user context
+      currentTeamId: null as string | null,
+      userId: null as string | null
     },
-    onResponse: () => {
+    onResponse: (response: Response) => {
       console.log("Chat response started");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
     },
     onFinish: () => {
       console.log("Chat response finished");
