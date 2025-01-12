@@ -8,8 +8,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-console.log('Chat function loaded');
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -44,9 +42,7 @@ serve(async (req) => {
         console.log('Processing message for embeddings:', userMessage.content);
         
         try {
-          if (typeof userMessage.content !== 'string' || userMessage.content.trim().length === 0) {
-            console.log('Invalid input for embeddings, skipping similarity search');
-          } else {
+          if (typeof userMessage.content === 'string' && userMessage.content.trim().length > 0) {
             const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
               method: 'POST',
               headers: {
@@ -66,6 +62,7 @@ serve(async (req) => {
             const embeddingData = await embeddingResponse.json();
             const embedding = embeddingData.data[0].embedding;
 
+            // Search for similar content in vector database
             const { data: similarContent, error } = await supabase.rpc('match_content', {
               query_embedding: embedding,
               match_threshold: 0.5,
@@ -76,10 +73,10 @@ serve(async (req) => {
             if (error) {
               console.error('Error in similarity search:', error);
             } else if (similarContent?.length > 0) {
-              console.log('Found similar content:', similarContent.length, 'items');
+              console.log('Found similar content:', similarContent);
               contextMessages = similarContent.map(item => ({
                 role: 'system',
-                content: `Related content: ${item.content}`
+                content: `Related context: ${item.content}`
               }));
             }
           }
@@ -101,7 +98,7 @@ serve(async (req) => {
         },
         method: 'POST',
         body: JSON.stringify({
-          model: 'gpt-4',
+          model: 'gpt-4o-mini',
           messages: [
             ...messages.slice(0, -1),
             ...contextMessages,
@@ -122,6 +119,7 @@ serve(async (req) => {
       }
 
       let buffer = '';
+      let currentContent = '';
       
       const processStream = async () => {
         try {
@@ -146,10 +144,11 @@ serve(async (req) => {
                   const json = JSON.parse(trimmedLine.slice(5));
                   const content = json.choices[0]?.delta?.content || '';
                   if (content) {
+                    currentContent += content;
                     await writer.write(encoder.encode(`data: ${JSON.stringify({
                       id: crypto.randomUUID(),
                       role: 'assistant',
-                      content: content,
+                      content: currentContent,
                       createdAt: new Date().toISOString()
                     })}\n\n`));
                   }

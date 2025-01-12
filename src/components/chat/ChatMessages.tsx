@@ -18,9 +18,7 @@ export const ChatMessages = ({ messages, scrollRef }: ChatMessagesProps) => {
     
     if (existingIndex >= 0) {
       // Update existing message content
-      if (current.role === 'assistant') {
-        acc[existingIndex] = current;
-      }
+      acc[existingIndex] = current;
       return acc;
     }
     
