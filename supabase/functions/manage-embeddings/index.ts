@@ -47,6 +47,11 @@ serve(async (req) => {
     }
 
     const { contentType, contentId, content, metadata, teamId } = await req.json();
+    
+    if (!content) {
+      throw new Error('Content is required');
+    }
+    
     console.log('Processing content:', { contentType, contentId, teamId });
 
     // Get embeddings from OpenAI

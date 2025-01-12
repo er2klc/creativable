@@ -29,8 +29,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 
-const APP_VERSION = "0.31";
-
 const personalItems = [
   { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
   { title: "Kontakte", icon: Users, url: "/leads" },
@@ -67,6 +65,33 @@ const adminItems = [
 export const DashboardSidebar = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [currentVersion, setCurrentVersion] = useState("0.31");
+
+  // Fetch latest version from changelog
+  const { data: latestVersion } = useQuery({
+    queryKey: ['latest-version'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('changelog_entries')
+        .select('version')
+        .order('version', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.error('Error fetching latest version:', error);
+        return currentVersion;
+      }
+
+      return data?.version || currentVersion;
+    },
+  });
+
+  useEffect(() => {
+    if (latestVersion) {
+      setCurrentVersion(latestVersion);
+    }
+  }, [latestVersion]);
 
   useEffect(() => {
     const checkSuperAdminStatus = async () => {
@@ -278,7 +303,7 @@ export const DashboardSidebar = () => {
 
         <div className={`sticky bottom-0 left-0 flex items-center justify-center px-4 py-2 text-sm text-gray-400 border-t border-white/10 bg-[#111111]/80 transition-all duration-300 ${isExpanded ? "justify-between w-full" : "w-[60px]"}`}>
           <div className="flex items-center gap-2">
-            <span className="text-white">{APP_VERSION}</span>
+            <span className="text-white">{currentVersion}</span>
             {isExpanded && (
               <a href="/changelog" className="whitespace-nowrap text-gray-400 hover:text-white transition-opacity duration-300">
                 Changelog
