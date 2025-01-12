@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 console.log('Chat function loaded')
 
@@ -172,14 +176,12 @@ serve(async (req) => {
                 const content = json.choices[0]?.delta?.content || ''
                 
                 if (content) {
-                  await writer.write(
-                    encoder.encode(`data: ${JSON.stringify({
-                      id: crypto.randomUUID(),
-                      role: 'assistant',
-                      content,
-                      createdAt: new Date().toISOString()
-                    })}\n\n`)
-                  )
+                  await writer.write(encoder.encode(`data: ${JSON.stringify({
+                    id: crypto.randomUUID(),
+                    role: 'assistant',
+                    content,
+                    createdAt: new Date().toISOString()
+                  })}\n\n`))
                 }
               } catch (error) {
                 console.error('Error parsing chunk:', error)
