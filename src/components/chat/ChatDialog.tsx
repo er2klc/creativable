@@ -137,7 +137,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]" onClick={handleDialogClick}>
+      <DialogContent className="sm:max-w-[500px]" onClick={handleDialogClick} hideClose>
         <ChatHeader onMinimize={onOpenChange} onClose={handleClose} />
         <div className="flex flex-col h-[600px]">
           <ChatMessages messages={messages} scrollRef={scrollRef} />
