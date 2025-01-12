@@ -74,16 +74,31 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     experimental_onFunctionCall: undefined,
     parser: (text: string) => {
       try {
-        const lines = text.split('\n').filter(line => line.trim() !== '');
-        return lines.map(line => {
-          if (line.startsWith('data: ')) {
-            const jsonStr = line.replace('data: ', '');
-            return JSON.parse(jsonStr);
-          }
-          return null;
-        }).filter(Boolean);
+        return text
+          .split('\n')
+          .filter(line => line.trim() !== '')
+          .map(line => {
+            if (line.startsWith('data: ')) {
+              try {
+                const jsonStr = line.replace('data: ', '');
+                if (jsonStr === '[DONE]') return null;
+                const parsed = JSON.parse(jsonStr);
+                return {
+                  id: parsed.id || crypto.randomUUID(),
+                  role: parsed.role || 'assistant',
+                  content: parsed.content || '',
+                  createdAt: parsed.createdAt || new Date().toISOString()
+                };
+              } catch (e) {
+                console.error('Error parsing line:', line, e);
+                return null;
+              }
+            }
+            return null;
+          })
+          .filter(Boolean);
       } catch (error) {
-        console.error('Error parsing stream:', error);
+        console.error('Error in stream parser:', error);
         return [];
       }
     }
@@ -104,7 +119,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         setSessionToken(session.access_token);
         setUserId(session.user.id);
 
-        // Update team member query to use maybeSingle()
         const { data: teamMembers, error: teamError } = await supabase
           .from('team_members')
           .select('team_id')
