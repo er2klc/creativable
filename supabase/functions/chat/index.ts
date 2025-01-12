@@ -50,11 +50,10 @@ serve(async (req) => {
     const teamIds = teamMemberships?.map(tm => tm.team_id) || []
     console.log('User team memberships:', teamIds)
 
-    // Get the last user message for context search
-    const lastUserMessage = messages.slice().reverse().find(m => m.role === 'user')
-
     // Search for similar content if we have a user message
+    const lastUserMessage = messages.slice().reverse().find(m => m.role === 'user')
     let contextMessages = []
+
     if (lastUserMessage) {
       try {
         console.log('Generating embedding for message:', lastUserMessage.content)
@@ -79,12 +78,15 @@ serve(async (req) => {
         console.log('Generated embedding successfully')
 
         // Search for similar content in team content
-        const { data: similarContent, error: matchError } = await supabaseClient.rpc('match_content', {
-          query_embedding: embedding,
-          match_threshold: 0.7,
-          match_count: 5,
-          content_type: 'team'
-        })
+        const { data: similarContent, error: matchError } = await supabaseClient.rpc(
+          'match_content',
+          {
+            query_embedding: embedding,
+            match_threshold: 0.7,
+            match_count: 5,
+            content_type: 'team'
+          }
+        )
 
         if (matchError) {
           console.error('Error matching content:', matchError)
@@ -126,13 +128,13 @@ serve(async (req) => {
         Authorization: `Bearer ${req.headers.get('x-openai-key')}`,
         'Content-Type': 'application/json',
       },
+      method: 'POST',
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: processedMessages.map(({ role, content }) => ({ role, content })),
         stream: true,
         temperature: 0.7,
       }),
-      method: 'POST',
     })
 
     if (!response.ok) {
@@ -147,20 +149,19 @@ serve(async (req) => {
     const transformStream = new TransformStream({
       async transform(chunk, controller) {
         const text = new TextDecoder().decode(chunk)
-        const lines = text.split('\n').filter(line => line.trim())
+        const lines = text.split('\n').filter(line => line.trim() !== '')
         
         for (const line of lines) {
-          const trimmedLine = line.replace(/^data: /, '')
+          if (line.includes('[DONE]')) continue
           
-          // Skip [DONE] marker
-          if (trimmedLine === '[DONE]') {
-            return
-          }
-
           try {
+            const trimmedLine = line.replace(/^data: /, '')
+            if (!trimmedLine) continue
+            
             const parsed = JSON.parse(trimmedLine)
             const content = parsed.choices[0]?.delta?.content || ''
             if (content) {
+              // Format the response as expected by the AI library
               controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`))
             }
           } catch (error) {
