@@ -35,9 +35,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setHasSession(!!session);
+      const hasValidSession = !!session;
+      setHasSession(hasValidSession);
       setIsSessionChecked(true);
-      console.log("[Auth] Session check:", { hasSession: !!session, isAuthenticated });
+      console.log("[Auth] Session check:", { hasSession: hasValidSession, isAuthenticated });
     };
     
     checkSession();
@@ -59,6 +60,9 @@ const App = () => {
   const location = useLocation();
   
   const publicRoutes = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram", "/news", "/support"];
+  const shouldShowChatButton = isAuthenticated && !publicRoutes.includes(location.pathname);
+
+  console.log("[App] Chat button visibility:", { isAuthenticated, path: location.pathname, shouldShow: shouldShowChatButton });
 
   return (
     <AppProvider>
@@ -122,7 +126,7 @@ const App = () => {
           </ProtectedRoute>
         } />
       </Routes>
-      {isAuthenticated && !publicRoutes.includes(location.pathname) && <ChatButton />}
+      {shouldShowChatButton && <ChatButton />}
     </AppProvider>
   );
 };
