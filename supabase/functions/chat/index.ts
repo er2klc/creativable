@@ -26,8 +26,14 @@ serve(async (req) => {
       throw new Error('User ID is required');
     }
 
+    // Ensure all messages have IDs
+    const processedMessages = messages.map((msg: any) => ({
+      ...msg,
+      id: msg.id || `${msg.role}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    }));
+
     console.log('Processing chat request:', { 
-      messageCount: messages.length,
+      messageCount: processedMessages.length,
       teamId,
       platformId,
       currentTeamId,
@@ -42,8 +48,8 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
-        messages,
+        model: 'gpt-4o',
+        messages: processedMessages.map(({ role, content }) => ({ role, content })),
         stream: true,
         temperature: 0.7,
       }),
