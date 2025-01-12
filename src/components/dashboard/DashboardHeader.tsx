@@ -15,24 +15,17 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
   const { toast } = useToast();
   const [dailyQuote, setDailyQuote] = useState<string>("");
 
-  const { data: settings } = useQuery({
-    queryKey: ["settings"],
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      // First try to get the name from user metadata
-      const fullName = user.user_metadata?.full_name;
-      if (fullName) {
-        return { name: fullName };
-      }
-
-      // If not found in metadata, try to get from settings table
       const { data, error } = await supabase
-        .from("settings")
+        .from("profiles")
         .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .eq("id", user.id)
+        .single();
 
       if (error) throw error;
       return data;
@@ -69,18 +62,14 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
     fetchDailyQuote();
   }, [supabase.functions]);
 
-  const displayName = settings?.name || userEmail?.split('@')[0] || "Benutzer";
+  const displayName = profile?.display_name || userEmail?.split('@')[0] || "Benutzer";
 
   const handleSignOut = async () => {
     try {
-      // Clear local storage first
       localStorage.clear();
-      
-      // Try to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        // If we get a session_not_found error, we can still proceed with local cleanup
         if (error.message.includes('session_not_found')) {
           console.info('Session already expired, proceeding with cleanup');
         } else {
@@ -88,18 +77,15 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
         }
       }
 
-      // Always show success message and redirect
       toast({
         title: "Erfolgreich abgemeldet",
         description: "Auf Wiedersehen!",
       });
 
-      // Force navigation to auth page
       navigate("/auth", { replace: true });
       
     } catch (error) {
       console.error("Logout error:", error);
-      // Even if there's an error, try to redirect to auth
       toast({
         title: "Abmeldung",
         description: "Sie wurden aus Sicherheitsgründen abgemeldet.",

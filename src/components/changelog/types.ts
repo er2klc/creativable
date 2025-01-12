@@ -3,3 +3,9 @@ export interface ChangelogItem {
   status: "completed" | "planned" | "in-progress";
   description: string;
 }
+
+export interface ChangelogEntry {
+  version: string;
+  date: string;
+  changes: ChangelogItem[];
+}
