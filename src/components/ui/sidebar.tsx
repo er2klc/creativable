@@ -222,8 +222,8 @@ const Sidebar = React.forwardRef<
   )}
   style={{
     width: state === "collapsed" ? "60px" : "240px",
-    height: state === "collapsed" ? "0px" : "100%", // Höhe dynamisch anpassen
-    pointerEvents: state === "collapsed" ? "none" : "auto", // Verhindert Blockierung
+    height: "0px !important", // Set to 0px to avoid blocking
+    pointerEvents: state === "collapsed" ? "none" : "auto",
   }}
 />
 <div
