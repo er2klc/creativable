@@ -20,6 +20,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [isReady, setIsReady] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { systemMessage } = useChatContext();
 
@@ -40,7 +41,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       teamId: null as string | null,
       platformId: null as string | null,
       currentTeamId: null as string | null,
-      userId: null as string | null
+      userId: userId
     },
     onResponse: (response: Response) => {
       if (!response.ok) {
@@ -83,6 +84,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
           return;
         }
         setSessionToken(session.access_token);
+        setUserId(session.user.id); // Set the userId here
 
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
@@ -115,11 +117,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
           toast.error("Kein OpenAI API-Key gefunden. Bitte hinterlege ihn in den Einstellungen.");
           return;
         }
-
-        chatConfig.body = {
-          ...chatConfig.body,
-          userId: session.user.id
-        };
 
         setIsReady(true);
       } catch (error) {
