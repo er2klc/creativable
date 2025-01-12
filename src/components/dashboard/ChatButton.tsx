@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 export const ChatButton = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [minimized, setMinimized] = useState(false);
 
   const handleClick = () => {
     setIsOpen(!isOpen);
@@ -43,17 +42,7 @@ export const ChatButton = () => {
         </Button>
       </div>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Chat</DialogTitle>
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
-              <X />
-            </Button>
-          </DialogHeader>
-          <ChatDialog minimized={minimized} setMinimized={setMinimized} />
-        </DialogContent>
-      </Dialog>
+      <ChatDialog open={isOpen} onOpenChange={setIsOpen} />
     </>
   );
 };
