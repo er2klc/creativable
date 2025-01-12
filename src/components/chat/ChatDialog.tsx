@@ -121,13 +121,24 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   }, [messages]);
 
   const handleDialogClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent click from bubbling up
+    e.stopPropagation();
+  };
+
+  const handleClose = () => {
+    onOpenChange(false);
+    setMessages([
+      {
+        id: "system",
+        role: "system",
+        content: systemMessage,
+      }
+    ]);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]" onClick={handleDialogClick}>
-        <ChatHeader onMinimize={onOpenChange} />
+        <ChatHeader onMinimize={onOpenChange} onClose={handleClose} />
         <div className="flex flex-col h-[600px]">
           <ChatMessages messages={messages} scrollRef={scrollRef} />
           <ChatInput 

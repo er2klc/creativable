@@ -12,20 +12,6 @@ export const ChatButton = () => {
     setIsOpen(!isOpen);
   };
 
-  useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (isOpen && !target.closest('.chat-dialog')) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
-    };
-  }, [isOpen]);
-
   return (
     <>
       <div className="fixed bottom-4 right-4 z-50">
