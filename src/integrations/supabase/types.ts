@@ -75,6 +75,7 @@ export type Database = {
           id: string
           order_index: number
           target_id: string | null
+          target_slug: string | null
           title: string
           type: Database["public"]["Enums"]["shortcut_type"]
           updated_at: string | null
@@ -85,7 +86,8 @@ export type Database = {
           id?: string
           order_index?: number
           target_id?: string | null
-          title: string
+          target_slug?: string | null
+          title?: string
           type: Database["public"]["Enums"]["shortcut_type"]
           updated_at?: string | null
           user_id: string
@@ -95,6 +97,7 @@ export type Database = {
           id?: string
           order_index?: number
           target_id?: string | null
+          target_slug?: string | null
           title?: string
           type?: Database["public"]["Enums"]["shortcut_type"]
           updated_at?: string | null

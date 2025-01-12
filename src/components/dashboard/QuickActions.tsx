@@ -17,6 +17,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { forwardRef } from "react";
 
 const getShortcutIcon = (type: string) => {
   switch (type) {
@@ -65,16 +66,19 @@ const SortableShortcut = ({ shortcut, onClick }) => {
   );
 };
 
-const EmptyShortcutButton = ({ onClick }) => (
+const EmptyShortcutButton = forwardRef<HTMLButtonElement, { onClick: () => void }>((props, ref) => (
   <Button
+    ref={ref}
     variant="outline"
     className="flex items-center gap-2"
-    onClick={onClick}
+    onClick={props.onClick}
   >
     <Plus className="h-4 w-4" />
     Add Shortcut
   </Button>
-);
+));
+
+EmptyShortcutButton.displayName = 'EmptyShortcutButton';
 
 export const QuickActions = () => {
   const navigate = useNavigate();
