@@ -36,7 +36,7 @@ export const ChatButton = () => {
           className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all p-0 overflow-hidden bg-white dark:bg-gray-800"
         >
           <img 
-            src="/lovable-uploads/5dc8cb23-526f-4de9-bf3c-08e8627ccd65.png" 
+            src="/lovable-uploads/cccafff6-9621-43ff-a997-1c2d8d3e744d.png" 
             alt="Chat" 
             className="w-full h-full object-cover"
           />

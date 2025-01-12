@@ -1,4 +1,4 @@
-import { Info, X, ChevronUp, Bot } from "lucide-react";
+import { Info, ChevronUp, Bot } from "lucide-react";
 import { DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
