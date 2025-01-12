@@ -27,7 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 
-const APP_VERSION = "0.3";
+const APP_VERSION = "0.31";
 
 const personalItems = [
   { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
