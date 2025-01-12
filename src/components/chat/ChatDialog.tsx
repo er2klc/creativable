@@ -7,6 +7,7 @@ import { useChatContext } from "@/hooks/use-chat-context";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
 import { ChatInput } from "./ChatInput";
+import type { Message } from "ai";
 
 interface ChatDialogProps {
   open: boolean;
@@ -30,10 +31,10 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     initialMessages: [
       {
         id: "system",
-        role: "system",
+        role: "system" as const,
         content: systemMessage,
       }
-    ],
+    ] as Message[],
     streamProtocol: 'text',
     onResponse: () => {
       console.log("Chat response started");
@@ -64,16 +65,20 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         }
         setSessionToken(session.access_token);
 
-        const { data: profile } = await supabase
+        // Fetch user profile information
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("display_name")
           .eq("id", session.user.id)
           .single();
 
-        if (profile?.display_name) {
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+        } else if (profile?.display_name) {
           setUserName(profile.display_name.split(" ")[0]); // Get first name
         }
 
+        // Fetch chatbot settings
         const { data: chatbotSettings, error } = await supabase
           .from("chatbot_settings")
           .select("openai_api_key")
@@ -109,14 +114,14 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
             id: "system",
             role: "system",
             content: systemMessage,
-          },
+          } as Message,
           {
             id: "welcome",
             role: "assistant",
             content: userName 
               ? `Hallo ${userName}! Ich bin Nexus, dein persönlicher KI-Assistent. Ich unterstütze dich gerne bei allen Fragen rund um dein Network Marketing Business. Wie kann ich dir heute helfen?` 
               : "Hallo! Ich bin Nexus, dein persönlicher KI-Assistent. Wie kann ich dir heute helfen?"
-          }
+          } as Message
         ]);
       }
     }
@@ -139,7 +144,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         id: "system",
         role: "system",
         content: systemMessage,
-      }
+      } as Message
     ]);
     setIsReady(false);
   };
