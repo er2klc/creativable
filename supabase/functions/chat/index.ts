@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -39,7 +38,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-4o-mini',
         messages,
         stream: true,
         temperature: 0.7,
@@ -52,24 +51,12 @@ serve(async (req) => {
       throw new Error('Failed to get response from OpenAI');
     }
 
-    // Transform the response stream
-    const transformStream = new TransformStream({
-      async transform(chunk, controller) {
-        const text = new TextDecoder().decode(chunk);
-        // Forward the data as-is
-        controller.enqueue(text);
-      },
-    });
-
-    return new Response(
-      response.body?.pipeThrough(transformStream),
-      { 
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'text/event-stream',
-        }
+    return new Response(response.body, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
       }
-    );
+    });
 
   } catch (error) {
     console.error('Chat function error:', error);
