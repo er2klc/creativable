@@ -209,44 +209,9 @@ const Sidebar = React.forwardRef<
         </Sheet>
       )
     }
-const Sidebar = () => {
-  const divId = "myCustomId";
 
     return (
-   <div
-        id="mySidebarDiv" // Added ID here
-  className={cn(
-    "duration-200 relative bg-transparent transition-[width,height] ease-linear",
-    "group-data-[collapsible=offcanvas]:w-0",
-    "group-data-[side=right]:rotate-180",
-    variant === "floating" || variant === "inset"
-      ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
-      : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
-  )}
-  style={{
-  height: "0px !important", // Explicitly enforce 0px
-  pointerEvents: "none !important", // Ensure no interaction
-}}
-/>
-<div
-        id="mySidebarDiv1" // Added ID here
-  className={cn(
-    "duration-200 fixed inset-y-0 z-10 hidden transition-[left,right,width,height] ease-linear md:flex",
-    side === "left"
-      ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-      : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-    variant === "floating" || variant === "inset"
-      ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
-      : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
-    className
-  )}
-  style={{
-    width: state === "collapsed" ? "60px" : "240px",
-    height: state === "collapsed" ? "0px" : "100%",
-    pointerEvents: state === "collapsed" ? "none" : "auto",
-  }}
-  {...props}
-/>
+  
 
 
           <div
