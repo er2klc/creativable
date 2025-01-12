@@ -33,15 +33,31 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [hasSession, setHasSession] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+    
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const hasValidSession = !!session;
-      setHasSession(hasValidSession);
-      setIsSessionChecked(true);
-      console.log("[Auth] Session check:", { hasSession: hasValidSession, isAuthenticated });
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted) {
+          const hasValidSession = !!session;
+          setHasSession(hasValidSession);
+          setIsSessionChecked(true);
+          console.log("[Auth] Session check:", { hasSession: hasValidSession, isAuthenticated, userId: session?.user?.id });
+        }
+      } catch (error) {
+        console.error("[Auth] Session check error:", error);
+        if (mounted) {
+          setIsSessionChecked(true);
+          setHasSession(false);
+        }
+      }
     };
     
     checkSession();
+    
+    return () => {
+      mounted = false;
+    };
   }, [isAuthenticated]);
 
   if (isLoading || !isSessionChecked) {
@@ -58,11 +74,20 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
+  const [showChat, setShowChat] = useState(false);
   
   const publicRoutes = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram", "/news", "/support"];
-  const shouldShowChatButton = isAuthenticated && !publicRoutes.includes(location.pathname);
-
-  console.log("[App] Chat button visibility:", { isAuthenticated, path: location.pathname, shouldShow: shouldShowChatButton });
+  
+  useEffect(() => {
+    const shouldShow = isAuthenticated && !publicRoutes.includes(location.pathname);
+    console.log("[App] Chat button visibility:", { 
+      isAuthenticated, 
+      path: location.pathname, 
+      shouldShow,
+      timestamp: new Date().toISOString()
+    });
+    setShowChat(shouldShow);
+  }, [isAuthenticated, location.pathname]);
 
   return (
     <AppProvider>
@@ -126,7 +151,7 @@ const App = () => {
           </ProtectedRoute>
         } />
       </Routes>
-      {shouldShowChatButton && <ChatButton />}
+      {showChat && <ChatButton />}
     </AppProvider>
   );
 };
