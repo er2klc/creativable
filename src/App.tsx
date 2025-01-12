@@ -42,7 +42,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
           const hasValidSession = !!session;
           setHasSession(hasValidSession);
           setIsSessionChecked(true);
-          console.log("[Auth] Session check:", { hasSession: hasValidSession, isAuthenticated, userId: session?.user?.id });
+          console.log("[Auth] Session check:", { 
+            hasSession: hasValidSession, 
+            isAuthenticated, 
+            userId: session?.user?.id,
+            timestamp: new Date().toISOString()
+          });
         }
       } catch (error) {
         console.error("[Auth] Session check error:", error);
@@ -53,10 +58,24 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       }
     };
     
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (mounted) {
+        const hasValidSession = !!session;
+        setHasSession(hasValidSession);
+        console.log("[Auth] Auth state changed in ProtectedRoute:", { 
+          event, 
+          hasSession: hasValidSession,
+          userId: session?.user?.id,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+    
     checkSession();
     
     return () => {
       mounted = false;
+      subscription.unsubscribe();
     };
   }, [isAuthenticated]);
 
@@ -79,15 +98,43 @@ const App = () => {
   const publicRoutes = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram", "/news", "/support"];
   
   useEffect(() => {
-    const shouldShow = isAuthenticated && !publicRoutes.includes(location.pathname);
-    console.log("[App] Chat button visibility:", { 
-      isAuthenticated, 
-      path: location.pathname, 
-      shouldShow,
-      timestamp: new Date().toISOString()
-    });
-    setShowChat(shouldShow);
-  }, [isAuthenticated, location.pathname]);
+    let mounted = true;
+
+    const handleAuthChange = (event: string, session: any) => {
+      if (mounted) {
+        const isAuth = !!session;
+        const shouldShow = isAuth && !publicRoutes.includes(location.pathname);
+        console.log("[App] Auth state changed:", {
+          event,
+          isAuthenticated: isAuth,
+          path: location.pathname,
+          shouldShow,
+          userId: session?.user?.id,
+          timestamp: new Date().toISOString()
+        });
+        setShowChat(shouldShow);
+      }
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+
+    // Initial check
+    const checkInitialState = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (mounted) {
+        const isAuth = !!session;
+        const shouldShow = isAuth && !publicRoutes.includes(location.pathname);
+        setShowChat(shouldShow);
+      }
+    };
+
+    checkInitialState();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [location.pathname, publicRoutes]);
 
   return (
     <AppProvider>
