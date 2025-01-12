@@ -22,6 +22,10 @@ serve(async (req) => {
       throw new Error('OpenAI API key is required');
     }
 
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
     console.log('Processing chat request:', { 
       messageCount: messages.length,
       teamId,
@@ -38,7 +42,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages,
         stream: true,
         temperature: 0.7,
