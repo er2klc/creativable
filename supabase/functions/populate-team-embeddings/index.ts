@@ -35,7 +35,7 @@ serve(async (req) => {
     // Get user's OpenAI API key from settings
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
-      .select('openai_api_key, company_name, products_services, target_audience, usp, business_description')
+      .select('openai_api_key')
       .eq('user_id', user.id)
       .single();
 
@@ -51,72 +51,95 @@ serve(async (req) => {
     if (processPersonalData) {
       console.log('Processing personal data for user:', user.id);
       
-      const personalInfo = {
-        company_name: settings.company_name || '',
-        products_services: settings.products_services || '',
-        target_audience: settings.target_audience || '',
-        usp: settings.usp || '',
-        business_description: settings.business_description || '',
+      // Get all user's personal data
+      const { data: personalData, error: personalError } = await supabaseClient
+        .from('settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (personalError) {
+        console.error('Error fetching personal data:', personalError);
+        throw personalError;
+      }
+
+      // Get user's tasks
+      const { data: tasks, error: tasksError } = await supabaseClient
+        .from('tasks')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (tasksError) {
+        console.error('Error fetching tasks:', tasksError);
+      }
+
+      // Get user's leads
+      const { data: leads, error: leadsError } = await supabaseClient
+        .from('leads')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (leadsError) {
+        console.error('Error fetching leads:', leadsError);
+      }
+
+      const personalContent = {
+        settings: personalData,
+        tasks: tasks || [],
+        leads: leads || []
       };
 
-      const personalContent = Object.entries(personalInfo)
-        .filter(([_, value]) => value)
-        .map(([key, value]) => `${key}: ${value}`)
-        .join('\n\n');
+      try {
+        const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${settings.openai_api_key}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            input: JSON.stringify(personalContent),
+            model: 'text-embedding-3-small'
+          }),
+        });
 
-      if (personalContent) {
-        try {
-          const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${settings.openai_api_key}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              input: personalContent,
-              model: 'text-embedding-3-small'
-            }),
-          });
-
-          if (!embeddingResponse.ok) {
-            const error = await embeddingResponse.json();
-            console.error('OpenAI API error:', error);
-            throw new Error(`Failed to generate embedding: ${error.error?.message || 'Unknown error'}`);
-          }
-
-          const embeddingData = await embeddingResponse.json();
-          const embedding = embeddingData.data[0].embedding;
-
-          const { data: storedEmbedding, error: storeError } = await supabaseClient
-            .from('content_embeddings')
-            .insert({
-              content_type: 'personal',
-              content_id: user.id,
-              content: personalContent,
-              embedding: embedding,
-              metadata: personalInfo
-            })
-            .select()
-            .single();
-
-          if (storeError) {
-            console.error('Error storing personal embedding:', storeError);
-            throw storeError;
-          }
-
-          results.personal.push({
-            success: true,
-            embedding_id: storedEmbedding.id
-          });
-
-          console.log('Successfully stored personal embedding for user:', user.id);
-        } catch (error) {
-          console.error('Error processing personal data:', error);
-          results.personal.push({
-            success: false,
-            error: error.message
-          });
+        if (!embeddingResponse.ok) {
+          const error = await embeddingResponse.json();
+          console.error('OpenAI API error:', error);
+          throw new Error(`Failed to generate embedding: ${error.error?.message || 'Unknown error'}`);
         }
+
+        const embeddingData = await embeddingResponse.json();
+        const embedding = embeddingData.data[0].embedding;
+
+        const { data: storedEmbedding, error: storeError } = await supabaseClient
+          .from('content_embeddings')
+          .insert({
+            content_type: 'personal',
+            content_id: user.id,
+            content: JSON.stringify(personalContent),
+            embedding: embedding,
+            metadata: personalContent
+          })
+          .select()
+          .single();
+
+        if (storeError) {
+          console.error('Error storing personal embedding:', storeError);
+          throw storeError;
+        }
+
+        results.personal.push({
+          success: true,
+          embedding_id: storedEmbedding.id
+        });
+
+        console.log('Successfully stored personal embedding for user:', user.id);
+      } catch (error) {
+        console.error('Error processing personal data:', error);
+        results.personal.push({
+          success: false,
+          error: error.message
+        });
       }
     }
 
@@ -136,154 +159,105 @@ serve(async (req) => {
       console.log('Processing teams:', teamIds);
 
       for (const teamId of teamIds) {
-        // Process team posts
-        const { data: teamPosts, error: postsError } = await supabaseClient
-          .from('team_posts')
-          .select('id, title, content, team_id')
-          .eq('team_id', teamId);
+        try {
+          // Get comprehensive team data
+          const { data: teamData, error: teamError } = await supabaseClient
+            .from('teams')
+            .select(`
+              *,
+              team_members (
+                id,
+                role
+              ),
+              team_calendar_events (
+                id,
+                title,
+                description,
+                start_time,
+                end_time
+              ),
+              team_posts (
+                id,
+                title,
+                content
+              ),
+              team_news (
+                id,
+                title,
+                content
+              )
+            `)
+            .eq('id', teamId)
+            .single();
 
-        if (postsError) {
-          console.error(`Error fetching posts for team ${teamId}:`, postsError);
-          continue;
-        }
-
-        for (const post of teamPosts || []) {
-          try {
-            const combinedContent = `${post.title}\n\n${post.content}`;
-            
-            const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${settings.openai_api_key}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                input: combinedContent,
-                model: 'text-embedding-3-small'
-              }),
-            });
-
-            if (!embeddingResponse.ok) {
-              const error = await embeddingResponse.json();
-              console.error('OpenAI API error:', error);
-              throw new Error(`Failed to generate embedding: ${error.error?.message || 'Unknown error'}`);
-            }
-
-            const embeddingData = await embeddingResponse.json();
-            const embedding = embeddingData.data[0].embedding;
-
-            const { data: storedEmbedding, error: storeError } = await supabaseClient
-              .from('content_embeddings')
-              .insert({
-                team_id: teamId,
-                content_type: 'team_post',
-                content_id: post.id,
-                content: combinedContent,
-                embedding: embedding,
-                metadata: {
-                  title: post.title,
-                  type: 'post'
-                }
-              })
-              .select()
-              .single();
-
-            if (storeError) {
-              console.error('Error storing embedding:', storeError);
-              throw storeError;
-            }
-
-            results.team.push({
-              id: post.id,
-              success: true,
-              type: 'post',
-              embedding_id: storedEmbedding.id
-            });
-
-          } catch (error) {
-            console.error(`Error processing post ${post.id}:`, error);
-            results.team.push({
-              id: post.id,
-              success: false,
-              type: 'post',
-              error: error.message
-            });
+          if (teamError) {
+            console.error(`Error fetching team data for ${teamId}:`, teamError);
+            continue;
           }
-        }
 
-        // Process team news
-        const { data: teamNews, error: newsError } = await supabaseClient
-          .from('team_news')
-          .select('id, title, content, team_id')
-          .eq('team_id', teamId);
+          const combinedTeamContent = {
+            id: teamData.id,
+            name: teamData.name,
+            description: teamData.description,
+            memberCount: teamData.team_members?.length || 0,
+            events: teamData.team_calendar_events || [],
+            posts: teamData.team_posts || [],
+            news: teamData.team_news || []
+          };
 
-        if (newsError) {
-          console.error(`Error fetching news for team ${teamId}:`, newsError);
-          continue;
-        }
+          const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${settings.openai_api_key}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              input: JSON.stringify(combinedTeamContent),
+              model: 'text-embedding-3-small'
+            }),
+          });
 
-        for (const news of teamNews || []) {
-          try {
-            const combinedContent = `${news.title}\n\n${news.content}`;
-            
-            const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${settings.openai_api_key}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                input: combinedContent,
-                model: 'text-embedding-3-small'
-              }),
-            });
-
-            if (!embeddingResponse.ok) {
-              const error = await embeddingResponse.json();
-              console.error('OpenAI API error:', error);
-              throw new Error(`Failed to generate embedding: ${error.error?.message || 'Unknown error'}`);
-            }
-
-            const embeddingData = await embeddingResponse.json();
-            const embedding = embeddingData.data[0].embedding;
-
-            const { data: storedEmbedding, error: storeError } = await supabaseClient
-              .from('content_embeddings')
-              .insert({
-                team_id: teamId,
-                content_type: 'team_news',
-                content_id: news.id,
-                content: combinedContent,
-                embedding: embedding,
-                metadata: {
-                  title: news.title,
-                  type: 'news'
-                }
-              })
-              .select()
-              .single();
-
-            if (storeError) {
-              console.error('Error storing embedding:', storeError);
-              throw storeError;
-            }
-
-            results.team.push({
-              id: news.id,
-              success: true,
-              type: 'news',
-              embedding_id: storedEmbedding.id
-            });
-
-          } catch (error) {
-            console.error(`Error processing news ${news.id}:`, error);
-            results.team.push({
-              id: news.id,
-              success: false,
-              type: 'news',
-              error: error.message
-            });
+          if (!embeddingResponse.ok) {
+            const error = await embeddingResponse.json();
+            console.error('OpenAI API error:', error);
+            throw new Error(`Failed to generate embedding: ${error.error?.message || 'Unknown error'}`);
           }
+
+          const embeddingData = await embeddingResponse.json();
+          const embedding = embeddingData.data[0].embedding;
+
+          const { data: storedEmbedding, error: storeError } = await supabaseClient
+            .from('content_embeddings')
+            .insert({
+              team_id: teamId,
+              content_type: 'team',
+              content_id: teamId,
+              content: JSON.stringify(combinedTeamContent),
+              embedding: embedding,
+              metadata: combinedTeamContent
+            })
+            .select()
+            .single();
+
+          if (storeError) {
+            console.error('Error storing team embedding:', storeError);
+            throw storeError;
+          }
+
+          results.team.push({
+            id: teamId,
+            success: true,
+            embedding_id: storedEmbedding.id
+          });
+
+          console.log(`Successfully stored team embedding for team ${teamId}`);
+        } catch (error) {
+          console.error(`Error processing team ${teamId}:`, error);
+          results.team.push({
+            id: teamId,
+            success: false,
+            error: error.message
+          });
         }
       }
     }
