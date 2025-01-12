@@ -51,12 +51,17 @@ serve(async (req) => {
       const userMessage = messages[messages.length - 1]
       if (userMessage.role === 'user') {
         try {
-          const { data: similarContent } = await supabase.rpc('match_content', {
+          const { data: similarContent, error } = await supabase.rpc('match_content', {
             query_embedding: userMessage.content,
             match_threshold: 0.5,
             match_count: 5,
             content_type: 'personal'
           })
+
+          if (error) {
+            console.error('Error finding similar content:', error)
+            throw error
+          }
 
           if (similarContent?.length > 0) {
             console.log('Found similar content:', similarContent.length, 'items')
@@ -74,12 +79,17 @@ serve(async (req) => {
     // Get team context if available
     if (teamId) {
       try {
-        const { data: teamContent } = await supabase.rpc('match_team_content', {
+        const { data: teamContent, error } = await supabase.rpc('match_team_content', {
           query_embedding: messages[messages.length - 1].content,
           match_threshold: 0.5,
           match_count: 5,
           team_id: teamId
         })
+
+        if (error) {
+          console.error('Error finding team content:', error)
+          throw error
+        }
 
         if (teamContent?.length > 0) {
           console.log('Found team content:', teamContent.length, 'items')
@@ -118,7 +128,7 @@ serve(async (req) => {
       },
       method: 'POST',
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: allMessages,
         stream: true,
       }),

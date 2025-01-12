@@ -1,32 +1,31 @@
-CREATE OR REPLACE FUNCTION match_team_content(
-  query_embedding vector(1536),
-  match_threshold float,
-  match_count int,
-  team_id uuid
+CREATE OR REPLACE FUNCTION match_content(
+  query_embedding vector,
+  match_threshold double precision,
+  match_count integer,
+  content_type text
 )
 RETURNS TABLE (
   id uuid,
   content text,
-  similarity float,
-  content_type text,
-  content_id uuid,
-  metadata jsonb
+  similarity double precision,
+  metadata jsonb,
+  team_id uuid
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
   RETURN QUERY
   SELECT
-    tce.id,
-    tce.content,
-    1 - (tce.embedding <=> query_embedding) as similarity,
-    tce.content_type,
-    tce.content_id,
-    tce.metadata
-  FROM team_content_embeddings tce
-  WHERE tce.team_id = team_id
-  AND 1 - (tce.embedding <=> query_embedding) > match_threshold
-  ORDER BY tce.embedding <=> query_embedding
+    ce.id,
+    ce.content,
+    1 - (ce.embedding <=> query_embedding) as similarity,
+    ce.metadata,
+    ce.team_id
+  FROM content_embeddings ce
+  WHERE 
+    ce.content_type = content_type
+    AND 1 - (ce.embedding <=> query_embedding) > match_threshold
+  ORDER BY ce.embedding <=> query_embedding
   LIMIT match_count;
 END;
 $$;
