@@ -38,7 +38,9 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     ] as Message[],
     body: {
       teamId: null as string | null,
-      platformId: null as string | null
+      platformId: null as string | null,
+      currentTeamId: null as string | null, // Add this for current team context
+      userId: null as string | null // Add this for user context
     },
     onResponse: () => {
       console.log("Chat response started");
@@ -109,12 +111,12 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
           .select('team_id')
           .eq('user_id', session.user.id);
 
-        const teamIds = teamMemberships?.map(tm => tm.team_id) || [];
+        const currentTeamId = teamMemberships?.[0]?.team_id || null;
 
         // Update chat config with context
         chatConfig.body = {
           ...chatConfig.body,
-          teamIds,
+          currentTeamId,
           userId: session.user.id
         };
 
