@@ -6,6 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-openai-key',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Content-Type': 'text/event-stream',
+  'Cache-Control': 'no-cache',
+  'Connection': 'keep-alive'
 };
 
 console.log('Chat function loaded')
@@ -145,46 +148,44 @@ serve(async (req) => {
 
     console.log('OpenAI response received, starting stream...')
 
-    // Transform the response stream
-    const transformStream = new TransformStream({
+    let buffer = '';
+    const stream = new TransformStream({
       async transform(chunk, controller) {
-        const text = new TextDecoder().decode(chunk)
-        const lines = text.split('\n').filter(line => line.trim() !== '')
+        buffer += new TextDecoder().decode(chunk);
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
         
         for (const line of lines) {
-          if (line.includes('[DONE]')) continue
+          if (line.trim() === '') continue;
+          if (line.trim() === 'data: [DONE]') {
+            controller.terminate();
+            return;
+          }
+          if (!line.startsWith('data: ')) continue;
           
           try {
-            const trimmedLine = line.replace(/^data: /, '')
-            if (!trimmedLine) continue
-            
-            const parsed = JSON.parse(trimmedLine)
-            const content = parsed.choices[0]?.delta?.content || ''
+            const json = JSON.parse(line.slice(6));
+            const content = json.choices[0]?.delta?.content || '';
             if (content) {
-              // Format the response as expected by the AI library
-              const aiResponse = {
+              const message = {
                 id: crypto.randomUUID(),
                 role: 'assistant',
                 content,
                 createdAt: new Date().toISOString()
-              }
-              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(aiResponse)}\n\n`))
+              };
+              controller.enqueue(`data: ${JSON.stringify(message)}\n\n`);
             }
           } catch (error) {
-            console.error('Error parsing chunk:', error)
+            console.error('Error parsing chunk:', error);
+            console.error('Problematic line:', line);
           }
         }
-      }
-    })
-
-    return new Response(response.body?.pipeThrough(transformStream), {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive'
       },
-    })
+    });
+
+    return new Response(response.body?.pipeThrough(stream), {
+      headers: corsHeaders
+    });
 
   } catch (error) {
     console.error('Error in chat function:', error)
