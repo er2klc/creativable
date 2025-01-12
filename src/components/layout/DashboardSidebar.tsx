@@ -77,20 +77,14 @@ export const DashboardSidebar = () => {
     },
     refetchInterval: 30000,
   });
-
+  
   return (
-    <Sidebar
-      className={`fixed top-0 left-0 h-full transition-all duration-300 ${
-        isExpanded ? "w-[240px]" : "w-[60px]"
-      } bg-[#0A0A0A]/95 backdrop-blur-xl z-[10]`}
+    <Sidebar 
+      className={`fixed group w-[60px] hover:w-[240px] transition-all duration-300 ease-in-out ${isExpanded ? 'w-[240px] z-[999]' : 'z-[10]'}`}
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
-      <div
-        className={`absolute inset-0 ${
-          isExpanded ? "pointer-events-auto" : "pointer-events-none"
-        }`}
-      />
+      <div className={`absolute inset-0 ${isExpanded ? 'w-[240px]' : 'w-[60px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
       <SidebarContent className="flex flex-col h-full relative">
         <div className="sticky top-0 left-0 z-50 bg-[#111111]/80 w-full">
           <div className="w-full h-16 flex items-center px-4">
@@ -122,16 +116,17 @@ export const DashboardSidebar = () => {
                 {personalItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 hover:text-white">
-                        <item.icon className="h-[25px] w-[25px]" />
-                        <span className={`text-white transition-opacity duration-300 whitespace-nowrap ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
+                        <item.icon className="h-[25px] w-[25px] shrink-0 group-hover/item:h-[23px] group-hover/item:w-[23px] transition-all duration-300" />
+                        <span className={`transition-opacity duration-300 whitespace-nowrap text-sm text-white ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
                           {item.title}
                         </span>
                         {item.badge && unreadCount > 0 && (
-                          <Badge variant="destructive">
+                          <Badge variant="destructive" className={`absolute right-2 -top-1 transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
                             {unreadCount}
                           </Badge>
                         )}
+                        <div className="absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -140,19 +135,82 @@ export const DashboardSidebar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {/* Other Sections */}
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
+
           {/* Teams & Groups Section */}
           <SidebarGroup>
+            <div className="flex items-center px-4 py-1.5">
+              <SidebarGroupLabel className={`transition-opacity duration-300 text-white/70 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                Teams & Gruppen
+              </SidebarGroupLabel>
+            </div>
             <SidebarGroupContent>
               <SidebarMenu>
                 {teamItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white">
-                        <item.icon className="h-[25px] w-[25px]" />
-                        <span className={`text-white transition-opacity ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
+                        <item.icon className="h-[25px] w-[25px] shrink-0 group-hover/item:h-[23px] group-hover/item:w-[23px] transition-all duration-300" />
+                        <span className={`transition-opacity duration-300 whitespace-nowrap text-sm text-white ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
                           {item.title}
                         </span>
+                        <div className="absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
+
+          {/* Analysis & Tools Section */}
+          <SidebarGroup>
+            <div className="flex items-center px-4 py-1.5">
+              <SidebarGroupLabel className={`transition-opacity duration-300 text-white/70 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                Analyse & Tools
+              </SidebarGroupLabel>
+            </div>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {analysisItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
+                        <item.icon className="h-[25px] w-[25px] shrink-0 group-hover/item:h-[23px] group-hover/item:w-[23px] transition-all duration-300" />
+                        <span className={`transition-opacity duration-300 whitespace-nowrap text-sm text-white ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                          {item.title}
+                        </span>
+                        <div className="absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
+
+          {/* Legal Section */}
+          <SidebarGroup>
+            <div className="flex items-center px-4 py-1.5">
+              <SidebarGroupLabel className={`transition-opacity duration-300 text-white/70 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                Rechtliches
+              </SidebarGroupLabel>
+            </div>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {legalItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
+                        <item.icon className="h-[25px] w-[25px] shrink-0 group-hover/item:h-[23px] group-hover/item:w-[23px] transition-all duration-300" />
+                        <span className={`transition-opacity duration-300 whitespace-nowrap text-sm text-white ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                          {item.title}
+                        </span>
+                        <div className="absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -161,6 +219,24 @@ export const DashboardSidebar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
         </div>
+
+        <div
+  className={`sticky bottom-0 left-0 flex items-center justify-center px-4 py-2 text-sm text-gray-400 border-t border-white/10 bg-[#111111]/80 transition-all duration-300 ${
+    isExpanded ? "justify-between w-full" : "w-[60px]"
+  }`}
+>
+  <div className="flex items-center gap-2">
+    <span className="text-white">{APP_VERSION}</span>
+    {isExpanded && (
+      <a
+        href="/changelog"
+        className="whitespace-nowrap text-gray-400 hover:text-white transition-opacity duration-300"
+      >
+        Changelog
+      </a>
+    )}
+  </div>
+</div>
       </SidebarContent>
     </Sidebar>
   );
