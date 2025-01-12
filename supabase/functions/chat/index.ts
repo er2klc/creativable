@@ -130,7 +130,7 @@ serve(async (req) => {
       },
       method: 'POST',
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: processedMessages.map(({ role, content }) => ({ role, content })),
         stream: true,
         temperature: 0.7,
@@ -162,7 +162,13 @@ serve(async (req) => {
             const content = parsed.choices[0]?.delta?.content || ''
             if (content) {
               // Format the response as expected by the AI library
-              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`))
+              const aiResponse = {
+                id: crypto.randomUUID(),
+                role: 'assistant',
+                content,
+                createdAt: new Date().toISOString()
+              }
+              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(aiResponse)}\n\n`))
             }
           } catch (error) {
             console.error('Error parsing chunk:', error)
