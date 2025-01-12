@@ -1,196 +1,84 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { EmbeddingsManager } from "@/components/dashboard/EmbeddingsManager";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@supabase/auth-helpers-react";
 
 const Admin = () => {
-  const navigate = useNavigate();
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [changelogTitle, setChangelogTitle] = useState("");
-  const [changelogDescription, setChangelogDescription] = useState("");
-  const [changelogVersion, setChangelogVersion] = useState("");
-  const [changelogStatus, setChangelogStatus] = useState<"completed" | "in-progress" | "planned">("planned");
+  const session = useSession();
 
-  useEffect(() => {
-    checkSuperAdminStatus();
-  }, []);
-
-  const checkSuperAdminStatus = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_super_admin")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.is_super_admin) {
-      navigate("/dashboard");
-      return;
-    }
-
-    setIsSuperAdmin(true);
-  };
-
-  const processAllData = async () => {
+  const processPersonalData = async () => {
     try {
-      setIsProcessing(true);
-      const { error } = await supabase.functions.invoke('manage-embeddings', {
-        body: { processAll: true }
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/populate-team-embeddings`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            userId: session?.user?.id,
+            processPersonalData: true 
+          })
+        }
+      );
 
-      if (error) throw error;
-      toast.success("Data processing started successfully");
+      if (!response.ok) {
+        throw new Error("Fehler beim Verarbeiten der persönlichen Daten");
+      }
+
+      toast.success("Verarbeitung der persönlichen Daten wurde gestartet");
     } catch (error) {
-      console.error("Error processing data:", error);
-      toast.error("Error processing data");
-    } finally {
-      setIsProcessing(false);
+      console.error('Error processing personal data:', error);
+      toast.error("Fehler beim Verarbeiten der persönlichen Daten");
     }
   };
 
-  const addChangelogEntry = async () => {
+  const processTeamData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/populate-team-embeddings`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            userId: session?.user?.id,
+            processTeamData: true 
+          })
+        }
+      );
 
-      const { error } = await supabase
-        .from("changelog_entries")
-        .insert({
-          version: changelogVersion,
-          title: changelogTitle,
-          description: changelogDescription,
-          status: changelogStatus,
-          created_by: user.id
-        });
+      if (!response.ok) {
+        throw new Error("Fehler beim Verarbeiten der Team-Daten");
+      }
 
-      if (error) throw error;
-
-      toast.success("Changelog entry added successfully");
-      setChangelogTitle("");
-      setChangelogDescription("");
-      setChangelogVersion("");
-      setChangelogStatus("planned");
+      toast.success("Verarbeitung der Team-Daten wurde gestartet");
     } catch (error) {
-      console.error("Error adding changelog entry:", error);
-      toast.error("Error adding changelog entry");
+      console.error('Error processing team data:', error);
+      toast.error("Fehler beim Verarbeiten der Team-Daten");
     }
   };
-
-  if (!isSuperAdmin) return null;
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Super Admin Dashboard</h1>
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
       
-      <Tabs defaultValue="data">
-        <TabsList>
-          <TabsTrigger value="data">Data Management</TabsTrigger>
-          <TabsTrigger value="changelog">Changelog</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="data">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Data Processing</CardTitle>
-                <CardDescription>
-                  Process all data across the platform including teams, platforms, and user content
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  onClick={processAllData} 
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? "Processing..." : "Process All Data"}
-                </Button>
-              </CardContent>
-            </Card>
-
-            <EmbeddingsManager />
+      <div className="space-y-6">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">Datenverarbeitung</h2>
+          <div className="flex gap-4">
+            <Button onClick={processPersonalData}>
+              Persönliche Daten verarbeiten
+            </Button>
+            <Button onClick={processTeamData}>
+              Team-Daten verarbeiten
+            </Button>
           </div>
-        </TabsContent>
-
-        <TabsContent value="changelog">
-          <Card>
-            <CardHeader>
-              <CardTitle>Add Changelog Entry</CardTitle>
-              <CardDescription>
-                Create a new changelog entry to keep users informed about updates
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Version</label>
-                  <Input
-                    placeholder="e.g. 1.0.0"
-                    value={changelogVersion}
-                    onChange={(e) => setChangelogVersion(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Status</label>
-                  <Select
-                    value={changelogStatus}
-                    onValueChange={(value: "completed" | "in-progress" | "planned") => 
-                      setChangelogStatus(value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="in-progress">In Progress</SelectItem>
-                      <SelectItem value="planned">Planned</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Title</label>
-                <Input
-                  placeholder="Feature or update title"
-                  value={changelogTitle}
-                  onChange={(e) => setChangelogTitle(e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Description</label>
-                <Textarea
-                  placeholder="Detailed description of the changes"
-                  value={changelogDescription}
-                  onChange={(e) => setChangelogDescription(e.target.value)}
-                  rows={4}
-                />
-              </div>
-
-              <Button 
-                onClick={addChangelogEntry}
-                disabled={!changelogTitle || !changelogDescription || !changelogVersion}
-              >
-                Add Entry
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 };
