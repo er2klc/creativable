@@ -28,14 +28,6 @@ serve(async (req) => {
       throw new Error('Missing OpenAI API key');
     }
 
-    console.log('Processing chat request:', { 
-      messageCount: messages?.length,
-      teamId,
-      platformId,
-      currentTeamId,
-      userId
-    });
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -109,7 +101,7 @@ serve(async (req) => {
         },
         method: 'POST',
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4',
           messages: [
             ...messages.slice(0, -1),
             ...contextMessages,
@@ -129,49 +121,40 @@ serve(async (req) => {
         throw new Error('No response body');
       }
 
+      let buffer = '';
+      
       const processStream = async () => {
         try {
-          let accumulatedContent = '';
-          
           while (true) {
             const { done, value } = await reader.read();
             
             if (done) {
-              if (accumulatedContent) {
-                await writer.write(encoder.encode(`data: ${JSON.stringify({
-                  id: crypto.randomUUID(),
-                  role: 'assistant',
-                  content: accumulatedContent,
-                  createdAt: new Date().toISOString()
-                })}\n\n`));
-              }
               await writer.close();
               break;
             }
 
-            const chunk = new TextDecoder().decode(value);
-            const lines = chunk.split('\n').filter(line => line.trim() !== '');
-            
+            buffer += new TextDecoder().decode(value);
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
             for (const line of lines) {
-              if (line.includes('[DONE]')) continue;
-              
-              if (line.startsWith('data: ')) {
+              const trimmedLine = line.trim();
+              if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
+
+              if (trimmedLine.startsWith('data: ')) {
                 try {
-                  const json = JSON.parse(line.replace('data: ', ''));
+                  const json = JSON.parse(trimmedLine.slice(5));
                   const content = json.choices[0]?.delta?.content || '';
-                  
                   if (content) {
-                    accumulatedContent += content;
                     await writer.write(encoder.encode(`data: ${JSON.stringify({
                       id: crypto.randomUUID(),
                       role: 'assistant',
-                      content: accumulatedContent,
+                      content: content,
                       createdAt: new Date().toISOString()
                     })}\n\n`));
                   }
                 } catch (error) {
                   console.error('Error parsing chunk:', error);
-                  console.error('Problematic line:', line);
                 }
               }
             }

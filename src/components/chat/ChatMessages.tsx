@@ -10,20 +10,21 @@ interface ChatMessagesProps {
 }
 
 export const ChatMessages = ({ messages, scrollRef }: ChatMessagesProps) => {
-  // Filter out system messages and duplicates for display
+  // Only show the latest message for each role to create typing effect
   const displayMessages = messages.reduce((acc, current) => {
     if (!current.content.trim() || current.role === 'system') return acc;
     
-    const existingMessage = acc.find(msg => 
-      msg.role === current.role && 
-      msg.content === current.content.trim()
-    );
+    const existingIndex = acc.findIndex(msg => msg.role === current.role);
     
-    if (!existingMessage) {
-      return [...acc, current];
+    if (existingIndex >= 0) {
+      // Update existing message content
+      if (current.role === 'assistant') {
+        acc[existingIndex] = current;
+      }
+      return acc;
     }
     
-    return acc;
+    return [...acc, current];
   }, [] as Message[]);
 
   return (
