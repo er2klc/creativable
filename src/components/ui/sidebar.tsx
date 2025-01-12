@@ -211,7 +211,7 @@ const Sidebar = React.forwardRef<
     }
 
     return (
-   <div
+   <div id="test"
   className={cn(
     "duration-200 relative bg-transparent transition-[width,height] ease-linear",
     "group-data-[collapsible=offcanvas]:w-0",
