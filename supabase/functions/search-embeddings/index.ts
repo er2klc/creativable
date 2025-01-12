@@ -36,21 +36,13 @@ serve(async (req) => {
     const embeddingData = await embeddingResponse.json();
     const embedding = embeddingData.data[0].embedding;
 
-    // Search for similar content with proper filtering
-    let query_builder = supabase
-      .rpc('match_content', {
-        query_embedding: embedding,
-        match_threshold: 0.7,
-        match_count: 10,
-        content_type: contentType
-      });
-
-    // Add team filter if searching team content
-    if (contentType === 'team' && teamId) {
-      query_builder = query_builder.eq('team_id', teamId);
-    }
-
-    const { data, error } = await query_builder;
+    // Search for similar content with proper parameter order
+    const { data, error } = await supabase.rpc('match_content', {
+      query_embedding: embedding,
+      match_threshold: 0.7,
+      match_count: 10,
+      search_content_type: contentType
+    });
 
     if (error) throw error;
 

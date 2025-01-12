@@ -1748,7 +1748,7 @@ export type Database = {
           query_embedding: string
           match_threshold: number
           match_count: number
-          content_type: string
+          search_content_type: string
         }
         Returns: {
           id: string
