@@ -71,6 +71,22 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       console.error("Chat error:", error);
       toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
     },
+    experimental_onFunctionCall: undefined,
+    parser: (text: string) => {
+      try {
+        const lines = text.split('\n').filter(line => line.trim() !== '');
+        return lines.map(line => {
+          if (line.startsWith('data: ')) {
+            const jsonStr = line.replace('data: ', '');
+            return JSON.parse(jsonStr);
+          }
+          return null;
+        }).filter(Boolean);
+      } catch (error) {
+        console.error('Error parsing stream:', error);
+        return [];
+      }
+    }
   };
 
   const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat(
