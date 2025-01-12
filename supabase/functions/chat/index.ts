@@ -20,7 +20,7 @@ serve(async (req) => {
       });
     }
 
-    const { messages, language = 'de' } = await req.json();
+    const { messages, language = 'de', teamIds = [], userId } = await req.json();
     console.log('Processing chat request with messages:', messages);
 
     const systemMessage = {
@@ -35,7 +35,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: [systemMessage, ...messages],
         stream: true,
       }),

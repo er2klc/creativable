@@ -7,6 +7,7 @@ import { useChatContext } from "@/hooks/use-chat-context";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
 import { ChatInput } from "./ChatInput";
+import { searchSimilarContent } from "@/utils/embeddings";
 import type { Message } from "ai";
 
 interface ChatDialogProps {
@@ -35,7 +36,10 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         content: systemMessage,
       }
     ] as Message[],
-    streamProtocol: 'text' as const,
+    body: {
+      teamId: null as string | null,
+      platformId: null as string | null
+    },
     onResponse: () => {
       console.log("Chat response started");
     },
@@ -98,6 +102,21 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
           toast.error("Kein OpenAI API-Key gefunden. Bitte hinterlege ihn in den Einstellungen.");
           return;
         }
+
+        // Get team memberships
+        const { data: teamMemberships } = await supabase
+          .from('team_members')
+          .select('team_id')
+          .eq('user_id', session.user.id);
+
+        const teamIds = teamMemberships?.map(tm => tm.team_id) || [];
+
+        // Update chat config with context
+        chatConfig.body = {
+          ...chatConfig.body,
+          teamIds,
+          userId: session.user.id
+        };
 
         setIsReady(true);
       } catch (error) {
