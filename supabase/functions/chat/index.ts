@@ -1,5 +1,4 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import { corsHeaders } from '../_shared/cors.ts'
 
 console.log('Chat function loaded')
@@ -21,7 +20,7 @@ serve(async (req) => {
     }
 
     // Ensure all messages have IDs
-    const processedMessages = messages.map((msg: any) => ({
+    const processedMessages = messages.map(msg => ({
       ...msg,
       id: msg.id || `${msg.role}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     }));
@@ -49,10 +48,40 @@ serve(async (req) => {
       method: 'POST',
     })
 
-    return new Response(response.body, {
+    // Transform the response stream
+    const transformStream = new TransformStream({
+      transform(chunk, controller) {
+        const text = new TextDecoder().decode(chunk)
+        const lines = text.split('\n').filter(line => line.trim())
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            
+            // Handle the [DONE] message
+            if (data === '[DONE]') {
+              controller.enqueue('data: [DONE]\n\n')
+              continue
+            }
+
+            try {
+              // Validate and forward the JSON data
+              JSON.parse(data)
+              controller.enqueue(line + '\n\n')
+            } catch (error) {
+              console.error('Error parsing JSON:', error)
+            }
+          }
+        }
+      }
+    })
+
+    return new Response(response.body?.pipeThrough(transformStream), {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
       },
     })
   } catch (error) {
