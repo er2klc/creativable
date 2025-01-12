@@ -44,9 +44,18 @@ serve(async (req) => {
       search_content_type: contentType
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error in similarity search:', error);
+      throw error;
+    }
 
-    return new Response(JSON.stringify(data), {
+    // Filter by team ID if provided and content type is 'team'
+    let results = data;
+    if (contentType === 'team' && teamId) {
+      results = data.filter((item) => item.team_id === teamId);
+    }
+
+    return new Response(JSON.stringify(results), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
