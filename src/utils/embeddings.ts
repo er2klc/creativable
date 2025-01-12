@@ -1,20 +1,22 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export type ContentType = 'personal' | 'team' | 'platform';
+
 export const generateEmbeddings = async (
-  teamId: string,
-  contentType: 'video_transcript' | 'learning_content' | 'document',
+  contentType: ContentType,
   contentId: string,
   content: string,
-  metadata: Record<string, any> = {}
+  metadata: Record<string, any> = {},
+  teamId?: string
 ) => {
   try {
-    const { data, error } = await supabase.functions.invoke('manage-team-embeddings', {
+    const { data, error } = await supabase.functions.invoke('manage-embeddings', {
       body: JSON.stringify({
-        teamId,
         contentType,
         contentId,
         content,
-        metadata
+        metadata,
+        teamId
       }),
     });
 
@@ -26,27 +28,15 @@ export const generateEmbeddings = async (
   }
 };
 
-export const searchSimilarContent = async (query: string, teamId: string) => {
+export const searchSimilarContent = async (query: string, contentType: ContentType, teamId?: string) => {
   try {
-    const { data: { embedding } } = await (await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
+    const { data, error } = await supabase.functions.invoke('search-embeddings', {
       body: JSON.stringify({
-        input: query,
-        model: 'text-embedding-3-small'
-      }),
-    })).json();
-
-    const { data, error } = await supabase
-      .rpc('match_team_content', {
-        query_embedding: embedding,
-        match_threshold: 0.7,
-        match_count: 5,
-        team_id: teamId
-      });
+        query,
+        contentType,
+        teamId
+      })
+    });
 
     if (error) throw error;
     return data;

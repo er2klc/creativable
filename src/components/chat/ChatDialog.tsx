@@ -35,7 +35,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         content: systemMessage,
       }
     ] as Message[],
-    streamProtocol: 'text',
+    streamProtocol: 'text' as const,
     onResponse: () => {
       console.log("Chat response started");
     },
@@ -45,7 +45,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Chat error:", error);
       toast.error("Fehler beim Senden der Nachricht. Bitte versuchen Sie es später erneut.");
     },
@@ -112,12 +112,12 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         setMessages([
           {
             id: "system",
-            role: "system",
+            role: "system" as const,
             content: systemMessage,
           } as Message,
           {
             id: "welcome",
-            role: "assistant",
+            role: "assistant" as const,
             content: userName 
               ? `Hallo ${userName}! Ich bin Nexus, dein persönlicher KI-Assistent. Ich unterstütze dich gerne bei allen Fragen rund um dein Network Marketing Business. Wie kann ich dir heute helfen?` 
               : "Hallo! Ich bin Nexus, dein persönlicher KI-Assistent. Wie kann ich dir heute helfen?"
@@ -142,7 +142,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     setMessages([
       {
         id: "system",
-        role: "system",
+        role: "system" as const,
         content: systemMessage,
       } as Message
     ]);
