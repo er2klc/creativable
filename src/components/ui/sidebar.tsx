@@ -211,16 +211,7 @@ const Sidebar = React.forwardRef<
     }
 
     return (
-      <div
-        ref={ref}
-        className="group peer hidden md:block text-sidebar-foreground"
-        data-state={state}
-        data-collapsible={state === "collapsed" ? collapsible : ""}
-        data-variant={variant}
-        data-side={side}
-      >
-        {/* This is what handles the sidebar gap on desktop */}
-        <div
+     <div
   className={cn(
     "duration-200 relative bg-transparent transition-[width,height] ease-linear",
     "group-data-[collapsible=offcanvas]:w-0",
@@ -230,11 +221,12 @@ const Sidebar = React.forwardRef<
       : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
   )}
   style={{
-    width: state === "collapsed" ? "60px" : "240px", // Dynamische Breite
-    height: state === "collapsed" ? "0px" : "100%", // Dynamische Höhe
-    pointerEvents: state === "collapsed" ? "none" : "auto", // Verhindert Blockierung
+    width: state === "collapsed" ? "60px" : "240px",
+    height: state === "collapsed" ? "0px" : "100%",
+    pointerEvents: state === "collapsed" ? "none" : "auto",
   }}
 />
+
 <div
   className={cn(
     "duration-200 fixed inset-y-0 z-10 hidden h-svh transition-[left,right,width,height] ease-linear md:flex",
@@ -247,12 +239,13 @@ const Sidebar = React.forwardRef<
     className
   )}
   style={{
-    width: state === "collapsed" ? "60px" : "240px", // Dynamische Breite
-    height: state === "collapsed" ? "0px" : "100%", // Dynamische Höhe
-    pointerEvents: state === "collapsed" ? "none" : "auto", // Verhindert Blockierung
+    width: state === "collapsed" ? "60px" : "240px",
+    height: state === "collapsed" ? "0px" : "100%",
+    pointerEvents: state === "collapsed" ? "none" : "auto",
   }}
   {...props}
 />
+
 
           <div
             data-sidebar="sidebar"
