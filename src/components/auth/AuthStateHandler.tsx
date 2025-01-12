@@ -39,11 +39,13 @@ export const AuthStateHandler = () => {
         // Set up auth state listener
         const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
           async (event: AuthChangeEvent, currentSession) => {
-            console.log("[Auth] State changed:", event);
+            console.log("[Auth] State changed:", event, currentSession?.user?.id);
 
-            if (event === "SIGNED_IN") {
-              if (location.pathname === "/auth") {
-                navigate("/dashboard");
+            if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+              if (currentSession) {
+                if (location.pathname === "/auth") {
+                  navigate("/dashboard");
+                }
               }
             } else if (event === "SIGNED_OUT") {
               if (!PUBLIC_ROUTES.includes(location.pathname)) {

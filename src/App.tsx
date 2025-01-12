@@ -24,15 +24,29 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { ChatButton } from "@/components/dashboard/ChatButton";
 import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  const [isSessionChecked, setIsSessionChecked] = useState(false);
+  const [hasSession, setHasSession] = useState(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setHasSession(!!session);
+      setIsSessionChecked(true);
+    };
+    
+    checkSession();
+  }, []);
+
+  if (isLoading || !isSessionChecked) {
     return null;
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !hasSession) {
     return <Navigate to="/auth" replace />;
   }
 
@@ -42,8 +56,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
-  
-  console.log("Auth state:", { isAuthenticated, currentPath: location.pathname });
   
   const publicRoutes = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram", "/news", "/support"];
 
