@@ -1,19 +1,14 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from '@supabase/supabase-js'
 import { corsHeaders } from '../_shared/cors.ts'
-import { Database } from '../_shared/types.ts'
 
-const headers = {
-  ...corsHeaders,
-  'Content-Type': 'text/event-stream',
-  'Cache-Control': 'no-cache',
-  'Connection': 'keep-alive'
-};
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
 
 console.log('Chat function loaded')
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
@@ -45,7 +40,7 @@ Deno.serve(async (req) => {
       throw new Error('Missing Supabase environment variables')
     }
 
-    const supabase = createClient<Database>(
+    const supabase = createClient(
       supabaseUrl,
       supabaseServiceKey
     )
@@ -110,70 +105,108 @@ Deno.serve(async (req) => {
 
     console.log('Sending messages to OpenAI:', allMessages.length)
 
-    // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Create stream transformer
+    const encoder = new TextEncoder()
+    const stream = new TransformStream()
+    const writer = stream.writable.getWriter()
+
+    // Start OpenAI request
+    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       method: 'POST',
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: allMessages,
         stream: true,
       }),
     })
 
-    if (!response.ok) {
-      const error = await response.json()
+    if (!openAIResponse.ok) {
+      const error = await openAIResponse.json()
       throw new Error(error.error?.message || 'OpenAI API error')
     }
 
     console.log('OpenAI response received, starting stream...')
 
-    const encoder = new TextEncoder()
-    const stream = new TransformStream({
-      async transform(chunk, controller) {
-        const text = new TextDecoder().decode(chunk)
-        const lines = text.split('\n').filter(line => line.trim() !== '')
-        
-        for (const line of lines) {
-          if (line.includes('[DONE]')) {
-            controller.terminate()
-            return
-          }
+    // Process the stream
+    const reader = openAIResponse.body?.getReader()
+    if (!reader) {
+      throw new Error('No response body')
+    }
+
+    // Stream processing loop
+    const processStream = async () => {
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
           
-          try {
-            const json = JSON.parse(line.replace(/^data: /, ''))
-            const content = json.choices[0]?.delta?.content || ''
-            
-            if (content) {
-              const message = {
-                id: crypto.randomUUID(),
-                role: 'assistant',
-                content,
-                createdAt: new Date().toISOString()
-              }
-              
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`))
+          if (done) {
+            console.log('Stream complete')
+            await writer.close()
+            break
+          }
+
+          // Decode the chunk
+          const chunk = new TextDecoder().decode(value)
+          const lines = chunk.split('\n').filter(line => line.trim() !== '')
+          
+          for (const line of lines) {
+            if (line.includes('[DONE]')) {
+              console.log('Received [DONE] signal')
+              continue
             }
-          } catch (error) {
-            console.error('Error parsing chunk:', error)
-            console.error('Problematic line:', line)
+            
+            try {
+              const json = JSON.parse(line.replace(/^data: /, ''))
+              const content = json.choices[0]?.delta?.content || ''
+              
+              if (content) {
+                const message = {
+                  id: crypto.randomUUID(),
+                  role: 'assistant',
+                  content,
+                  createdAt: new Date().toISOString()
+                }
+                
+                await writer.write(
+                  encoder.encode(`data: ${JSON.stringify(message)}\n\n`)
+                )
+              }
+            } catch (error) {
+              console.error('Error parsing chunk:', error)
+              console.error('Problematic line:', line)
+            }
           }
         }
+      } catch (error) {
+        console.error('Error processing stream:', error)
+        await writer.abort(error)
       }
-    })
+    }
 
-    return new Response(response.body?.pipeThrough(stream), {
-      headers
+    // Start processing the stream
+    processStream()
+
+    return new Response(stream.readable, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
     })
 
   } catch (error) {
     console.error('Error in chat function:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      status: 500
-    })
+    return new Response(
+      JSON.stringify({ error: error.message }), 
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500 
+      }
+    )
   }
 })
