@@ -44,10 +44,10 @@ serve(async (req) => {
     });
 
     // Call match_content with parameters in the correct order
-    const { data, error } = await supabase.rpc('match_content', {
-      match_count: 10,
-      match_threshold: 0.7,
+    const { data: matchResults, error } = await supabase.rpc('match_content', {
       query_embedding: embedding,
+      match_threshold: 0.7,
+      match_count: 10,
       search_content_type: contentType
     });
 
@@ -57,9 +57,9 @@ serve(async (req) => {
     }
 
     // Filter by team ID if provided and content type is 'team'
-    let results = data;
+    let results = matchResults;
     if (contentType === 'team' && teamId) {
-      results = data.filter((item) => item.team_id === teamId);
+      results = results.filter((item) => item.team_id === teamId);
     }
 
     return new Response(JSON.stringify(results), {
