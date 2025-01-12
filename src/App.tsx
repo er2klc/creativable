@@ -37,10 +37,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       const { data: { session } } = await supabase.auth.getSession();
       setHasSession(!!session);
       setIsSessionChecked(true);
+      console.log("[Auth] Session check:", { hasSession: !!session, isAuthenticated });
     };
     
     checkSession();
-  }, []);
+  }, [isAuthenticated]);
 
   if (isLoading || !isSessionChecked) {
     return null;
