@@ -14,6 +14,7 @@ import Settings from "./pages/Settings";
 import Changelog from "./pages/Changelog";
 import Calendar from "./pages/Calendar";
 import TodoList from "./pages/TodoList";
+import Admin from "./pages/Admin";
 import LinkedInCallback from "./pages/auth/callback/LinkedIn";
 import InstagramCallback from "./pages/auth/callback/Instagram";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
@@ -135,7 +136,7 @@ const App = () => {
       subscription.unsubscribe();
     };
   }, [location.pathname, publicRoutes]);
-
+  
   return (
     <AppProvider>
       <Routes>
@@ -150,6 +151,11 @@ const App = () => {
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <AppLayout><Dashboard /></AppLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/admin" element={
+          <ProtectedRoute>
+            <AppLayout><Admin /></AppLayout>
           </ProtectedRoute>
         } />
         <Route path="/calendar" element={

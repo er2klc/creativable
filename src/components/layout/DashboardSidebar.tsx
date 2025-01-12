@@ -21,11 +21,12 @@ import {
   Globe2,
   Infinity,
   GraduationCap,
+  Crown,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const APP_VERSION = "0.31";
 
@@ -58,8 +59,30 @@ const legalItems = [
   { title: "Datenlöschung", icon: Globe2, url: "/auth/data-deletion/instagram" },
 ];
 
+const adminItems = [
+  { title: "Admin Dashboard", icon: Crown, url: "/admin" },
+];
+
 export const DashboardSidebar = () => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkSuperAdminStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_super_admin")
+        .eq("id", user.id)
+        .single();
+
+      setIsSuperAdmin(profile?.is_super_admin || false);
+    };
+
+    checkSuperAdminStatus();
+  }, []);
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-messages-count'],
