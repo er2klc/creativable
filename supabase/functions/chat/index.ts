@@ -10,7 +10,6 @@ const corsHeaders = {
 console.log('Chat function loaded')
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -36,7 +35,6 @@ serve(async (req) => {
       userId
     })
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
@@ -46,7 +44,6 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get user team memberships
     const { data: teamMemberships } = await supabase
       .from('team_members')
       .select('team_id')
@@ -55,7 +52,6 @@ serve(async (req) => {
     const userTeamIds = teamMemberships?.map(tm => tm.team_id) || []
     console.log('User team memberships:', userTeamIds)
 
-    // Get similar content if available
     let contextMessages = []
     if (messages?.length > 0) {
       const userMessage = messages[messages.length - 1]
@@ -63,32 +59,41 @@ serve(async (req) => {
         console.log('Generating embedding for message:', userMessage.content)
         
         try {
-          const { data: similarContent, error } = await supabase.rpc('match_content', {
-            query_embedding: userMessage.content,
-            match_threshold: 0.5,
-            match_count: 5,
-            content_type: 'personal'
-          })
+          // Validate input before searching
+          if (typeof userMessage.content !== 'string' || userMessage.content.trim().length === 0) {
+            console.log('Invalid input for similarity search, skipping')
+          } else {
+            const { data: similarContent, error } = await supabase.rpc('match_content', {
+              query_embedding: userMessage.content,
+              match_threshold: 0.5,
+              match_count: 5,
+              content_type: 'personal'
+            })
 
-          if (error) {
-            console.error('Error searching similar content:', error)
-            throw error
-          }
+            if (error) {
+              if (error.code === '22P02') {
+                console.log('Invalid vector format, skipping similarity search')
+              } else {
+                console.error('Error searching similar content:', error)
+                throw error
+              }
+            }
 
-          if (similarContent?.length > 0) {
-            console.log('Found similar content:', similarContent.length, 'items')
-            contextMessages = similarContent.map(item => ({
-              role: 'system',
-              content: `Related content: ${item.content}`
-            }))
+            if (similarContent?.length > 0) {
+              console.log('Found similar content:', similarContent.length, 'items')
+              contextMessages = similarContent.map(item => ({
+                role: 'system',
+                content: `Related content: ${item.content}`
+              }))
+            }
           }
         } catch (error) {
-          console.error('Error searching similar content:', error)
+          console.error('Error in similarity search:', error)
+          // Continue without similar content rather than failing the whole request
         }
       }
     }
 
-    // Get team context if available
     if (teamId) {
       try {
         const { data: teamContent, error } = await supabase.rpc('match_content', {
@@ -99,8 +104,12 @@ serve(async (req) => {
         })
 
         if (error) {
-          console.error('Error matching content:', error)
-          throw error
+          if (error.code === '22P02') {
+            console.log('Invalid vector format for team content, skipping')
+          } else {
+            console.error('Error matching team content:', error)
+            throw error
+          }
         }
 
         if (teamContent?.length > 0) {
@@ -120,7 +129,6 @@ serve(async (req) => {
 
     console.log('Making request to OpenAI with', messages.length, 'messages')
 
-    // Create stream transformer
     const encoder = new TextEncoder()
     const stream = new TransformStream()
     const writer = stream.writable.getWriter()
@@ -155,7 +163,6 @@ serve(async (req) => {
         throw new Error('No response body')
       }
 
-      // Process the stream
       const processStream = async () => {
         try {
           while (true) {
