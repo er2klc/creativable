@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { EmbeddingsManager } from "@/components/dashboard/EmbeddingsManager";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -101,22 +102,26 @@ const Admin = () => {
         </TabsList>
 
         <TabsContent value="data">
-          <Card>
-            <CardHeader>
-              <CardTitle>Data Processing</CardTitle>
-              <CardDescription>
-                Process all data across the platform including teams, platforms, and user content
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                onClick={processAllData} 
-                disabled={isProcessing}
-              >
-                {isProcessing ? "Processing..." : "Process All Data"}
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Data Processing</CardTitle>
+                <CardDescription>
+                  Process all data across the platform including teams, platforms, and user content
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  onClick={processAllData} 
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? "Processing..." : "Process All Data"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <EmbeddingsManager />
+          </div>
         </TabsContent>
 
         <TabsContent value="changelog">
