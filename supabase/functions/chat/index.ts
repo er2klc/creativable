@@ -59,7 +59,32 @@ serve(async (req) => {
         
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            controller.enqueue(line + '\n\n');
+            try {
+              // Skip "[DONE]" message
+              if (line === 'data: [DONE]') {
+                controller.enqueue('data: [DONE]\n\n');
+                continue;
+              }
+
+              // Validate JSON content
+              const content = line.substring(6);
+              JSON.parse(content);
+              
+              // Ensure proper SSE format with double newlines
+              controller.enqueue(line + '\n\n');
+              
+              console.log('Processed stream chunk:', {
+                timestamp: new Date().toISOString(),
+                chunkSize: content.length,
+                isValid: true
+              });
+            } catch (error) {
+              console.error('Invalid JSON in stream:', {
+                line,
+                error: error.message,
+                timestamp: new Date().toISOString()
+              });
+            }
           }
         }
       },
@@ -67,13 +92,16 @@ serve(async (req) => {
 
     return new Response(
       response.body?.pipeThrough(transformStream),
-      { 
-        headers: corsHeaders
-      }
+      { headers: corsHeaders }
     );
 
   } catch (error) {
-    console.error('Chat function error:', error);
+    console.error('Chat function error:', {
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+    
     return new Response(
       JSON.stringify({ error: error.message }), 
       {
