@@ -14,11 +14,17 @@ export const ChatMessages = ({ messages, scrollRef }: ChatMessagesProps) => {
   const displayMessages = messages.reduce((acc, current) => {
     if (!current.content.trim() || current.role === 'system') return acc;
     
+    // Find existing message with same role
     const existingIndex = acc.findIndex(msg => msg.role === current.role);
     
     if (existingIndex >= 0) {
-      // Update existing message content
-      acc[existingIndex] = current;
+      // For assistant messages, only update if content is different
+      // This prevents unnecessary re-renders during streaming
+      if (current.role === 'assistant' && acc[existingIndex].content !== current.content) {
+        acc[existingIndex] = current;
+      } else if (current.role === 'user') {
+        acc[existingIndex] = current;
+      }
       return acc;
     }
     
