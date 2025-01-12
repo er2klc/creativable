@@ -108,7 +108,7 @@ const App = () => {
           </ProtectedRoute>
         } />
       </Routes>
-      {showChatButton && <ChatButton />}
+      {isAuthenticated && <ChatButton />}
     </AppProvider>
   );
 };
