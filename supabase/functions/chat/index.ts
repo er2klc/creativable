@@ -12,6 +12,10 @@ serve(async (req) => {
   try {
     const { messages, teamId, platformId, currentTeamId, userId } = await req.json()
     
+    if (!userId) {
+      throw new Error('User ID is required')
+    }
+
     console.log('Processing chat request:', {
       messageCount: messages.length,
       teamId,
@@ -33,6 +37,8 @@ serve(async (req) => {
     let contextMessages = []
     if (lastUserMessage) {
       try {
+        console.log('Generating embedding for message:', lastUserMessage.content)
+        
         const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
           method: 'POST',
           headers: {
@@ -50,20 +56,49 @@ serve(async (req) => {
         }
 
         const { data: [{ embedding }] } = await embeddingResponse.json()
+        console.log('Generated embedding successfully')
 
-        // Search for similar content
-        const { data: similarContent } = await supabaseClient.rpc('match_content', {
+        // Get user's team memberships
+        const { data: teamMemberships, error: teamError } = await supabaseClient
+          .from('team_members')
+          .select('team_id')
+          .eq('user_id', userId)
+
+        if (teamError) {
+          console.error('Error fetching team memberships:', teamError)
+          throw teamError
+        }
+
+        const teamIds = teamMemberships?.map(tm => tm.team_id) || []
+        console.log('User team memberships:', teamIds)
+
+        // Search for similar content in both personal and team content
+        const { data: similarContent, error: matchError } = await supabaseClient.rpc('match_content', {
           query_embedding: embedding,
           match_threshold: 0.7,
           match_count: 5,
-          content_type: teamId ? 'team' : 'personal'
+          content_type: 'team'
         })
 
+        if (matchError) {
+          console.error('Error matching content:', matchError)
+          throw matchError
+        }
+
+        console.log('Found similar content:', similarContent?.length || 0, 'items')
+
         if (similarContent && similarContent.length > 0) {
-          contextMessages = similarContent.map(content => ({
+          // Filter content to only include teams the user is a member of
+          const relevantContent = similarContent.filter(content => 
+            teamIds.includes(content.team_id)
+          )
+
+          contextMessages = relevantContent.map(content => ({
             role: 'system',
             content: `Relevant context: ${content.content}`
           }))
+
+          console.log('Added context messages:', contextMessages.length)
         }
       } catch (error) {
         console.error('Error searching similar content:', error)
@@ -78,7 +113,7 @@ serve(async (req) => {
       ...messages.slice(1) // User messages
     ]
 
-    console.log('Making request to OpenAI...')
+    console.log('Making request to OpenAI with', processedMessages.length, 'messages')
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       headers: {
