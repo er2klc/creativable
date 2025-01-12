@@ -35,7 +35,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [systemMessage, ...messages],
         stream: true,
       }),
@@ -50,12 +50,12 @@ serve(async (req) => {
       });
     }
 
+    // Transform the response into a readable stream
     const stream = new ReadableStream({
       async start(controller) {
         const reader = response.body!.getReader();
         const decoder = new TextDecoder();
         const encoder = new TextEncoder();
-        let fullContent = '';
 
         try {
           while (true) {
@@ -66,16 +66,15 @@ serve(async (req) => {
             const lines = chunk.split('\n');
 
             for (const line of lines) {
+              if (line.trim() === '') continue;
+              if (line.trim() === 'data: [DONE]') continue;
+              
               if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                if (data === '[DONE]') continue;
-
                 try {
-                  const parsed = JSON.parse(data);
-                  const content = parsed.choices?.[0]?.delta?.content || '';
+                  const json = JSON.parse(line.slice(6));
+                  const content = json.choices[0]?.delta?.content || '';
                   if (content) {
-                    fullContent += content;
-                    controller.enqueue(encoder.encode(content));
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
                   }
                 } catch (error) {
                   console.error('Error parsing JSON:', error);
@@ -87,19 +86,19 @@ serve(async (req) => {
           console.error('Stream processing error:', error);
           controller.error(error);
         } finally {
-          reader.releaseLock();
           controller.close();
+          reader.releaseLock();
         }
-      }
+      },
     });
 
     return new Response(stream, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'text/plain',
+        'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-      }
+      },
     });
 
   } catch (error) {
