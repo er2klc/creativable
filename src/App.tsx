@@ -43,8 +43,9 @@ const App = () => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
   
+  console.log("Auth state:", { isAuthenticated, currentPath: location.pathname });
+  
   const publicRoutes = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram", "/news", "/support"];
-  const showChatButton = isAuthenticated && !publicRoutes.includes(location.pathname);
 
   return (
     <AppProvider>
@@ -108,7 +109,7 @@ const App = () => {
           </ProtectedRoute>
         } />
       </Routes>
-      {isAuthenticated && <ChatButton />}
+      {isAuthenticated && !publicRoutes.includes(location.pathname) && <ChatButton />}
     </AppProvider>
   );
 };

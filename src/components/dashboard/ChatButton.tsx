@@ -5,7 +5,10 @@ import { ChatDialog } from "@/components/chat/ChatDialog";
 export const ChatButton = () => {
   const [isOpen, setIsOpen] = useState(false);
 
+  console.log("ChatButton rendered, isOpen:", isOpen);
+
   const handleClick = () => {
+    console.log("ChatButton clicked, toggling dialog");
     setIsOpen(!isOpen);
   };
 
