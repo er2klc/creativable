@@ -20,32 +20,9 @@ export const SignaturePersonalInfo = ({ data, onChange }: SignaturePersonalInfoP
     });
   };
 
-  const handleFontChange = (value: string) => {
-    onChange({
-      ...data,
-      font: value,
-    });
-  };
-
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="font">Schriftart</Label>
-        <Select value={data.font} onValueChange={handleFontChange}>
-          <SelectTrigger>
-            <SelectValue placeholder="Wähle eine Schriftart" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Arial">Arial</SelectItem>
-            <SelectItem value="Helvetica">Helvetica</SelectItem>
-            <SelectItem value="Times New Roman">Times New Roman</SelectItem>
-            <SelectItem value="Georgia">Georgia</SelectItem>
-            <SelectItem value="Verdana">Verdana</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <div className="space-y-2">
           <Label htmlFor="name" className="flex items-center gap-2">
             <User className="w-4 h-4" />
@@ -73,9 +50,7 @@ export const SignaturePersonalInfo = ({ data, onChange }: SignaturePersonalInfoP
             className="bg-white/5 backdrop-blur-sm border-white/10"
           />
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="company" className="flex items-center gap-2">
             <Briefcase className="w-4 h-4" />
@@ -89,7 +64,9 @@ export const SignaturePersonalInfo = ({ data, onChange }: SignaturePersonalInfoP
             className="bg-white/5 backdrop-blur-sm border-white/10"
           />
         </div>
+      </div>
 
+      <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor="email" className="flex items-center gap-2">
             <Mail className="w-4 h-4" />
@@ -104,9 +81,7 @@ export const SignaturePersonalInfo = ({ data, onChange }: SignaturePersonalInfoP
             className="bg-white/5 backdrop-blur-sm border-white/10"
           />
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="phone" className="flex items-center gap-2">
             <Phone className="w-4 h-4" />

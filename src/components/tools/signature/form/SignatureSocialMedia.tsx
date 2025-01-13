@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SignatureData } from "@/types/signature";
-import { Linkedin, Instagram, Youtube, Twitter, MessageSquare } from "lucide-react";
+import { Linkedin, Instagram, Youtube, Twitter, MessageSquare, Music2 } from "lucide-react";
 
 interface SignatureSocialMediaProps {
   data: SignatureData;
@@ -21,7 +21,7 @@ export const SignatureSocialMedia = ({ data, onChange }: SignatureSocialMediaPro
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Social Media</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor="linkedin" className="flex items-center gap-2">
             <Linkedin className="w-4 h-4" /> LinkedIn
@@ -79,6 +79,18 @@ export const SignatureSocialMedia = ({ data, onChange }: SignatureSocialMediaPro
             placeholder="WhatsApp Number"
             value={data.whatsapp || ""}
             onChange={handleChange("whatsapp")}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="sing" className="flex items-center gap-2">
+            <Music2 className="w-4 h-4" /> Sing
+          </Label>
+          <Input
+            id="sing"
+            placeholder="Sing URL"
+            value={data.sing || ""}
+            onChange={handleChange("sing")}
           />
         </div>
       </div>

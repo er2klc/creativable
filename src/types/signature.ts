@@ -13,6 +13,7 @@ export interface SignatureData {
   youtube: string;
   twitter: string;
   whatsapp: string;
+  sing?: string;
   logoUrl: string | null;
   themeColor: string;
   textColor: string;

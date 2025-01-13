@@ -1,7 +1,6 @@
 import { SignatureData } from "@/types/signature";
 import { Button } from "@/components/ui/button";
 import { SignaturePersonalInfo } from "./form/SignaturePersonalInfo";
-import { SignatureContactInfo } from "./form/SignatureContactInfo";
 import { SignatureSocialMedia } from "./form/SignatureSocialMedia";
 import { SignatureLogoUpload } from "./form/SignatureLogoUpload";
 import { SignatureColorSettings } from "./form/SignatureColorSettings";
@@ -25,24 +24,24 @@ export const SignatureForm = ({
 }: SignatureFormProps) => {
   return (
     <div className="space-y-8">
-      <SignatureLogoUpload
-        logoUrl={signatureData.logoUrl}
-        onLogoChange={onLogoChange}
-        onLogoRemove={onLogoRemove}
-        logoPreview={logoPreview}
-      />
+      <div className="flex gap-6">
+        <div className="w-1/3">
+          <SignatureLogoUpload
+            logoUrl={signatureData.logoUrl}
+            onLogoChange={onLogoChange}
+            onLogoRemove={onLogoRemove}
+            logoPreview={logoPreview}
+          />
+        </div>
+        <div className="w-2/3">
+          <SignatureColorSettings
+            data={signatureData}
+            onChange={onChange}
+          />
+        </div>
+      </div>
 
       <SignaturePersonalInfo
-        data={signatureData}
-        onChange={onChange}
-      />
-
-      <SignatureContactInfo
-        data={signatureData}
-        onChange={onChange}
-      />
-
-      <SignatureColorSettings
         data={signatureData}
         onChange={onChange}
       />
