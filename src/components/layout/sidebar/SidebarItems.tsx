@@ -11,7 +11,8 @@ import {
   Globe2,
   Infinity,
   GraduationCap,
-  Database
+  Database,
+  Wrench
 } from "lucide-react";
 
 export const personalItems = [
@@ -25,6 +26,7 @@ export const personalItems = [
   },
   { title: "Kalender", icon: Calendar, url: "/calendar" },
   { title: "Todo Liste", icon: CheckSquare, url: "/todo" },
+  { title: "Tools", icon: Wrench, url: "/tools" },
 ];
 
 export const teamItems = [
