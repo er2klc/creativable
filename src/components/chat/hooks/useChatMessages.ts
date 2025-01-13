@@ -41,20 +41,6 @@ export const useChatMessages = ({
     },
     onFinish: (message) => {
       console.log("Chat message finished:", message);
-      setMessages((prevMessages) => {
-        const lastMessage = prevMessages[prevMessages.length - 1];
-        if (lastMessage?.role === 'assistant') {
-          return [
-            ...prevMessages.slice(0, -1),
-            { ...lastMessage, content: message.content }
-          ];
-        } else {
-          return [
-            ...prevMessages,
-            message
-          ];
-        }
-      });
     },
     onError: (error) => {
       console.error("Chat error:", error);

@@ -1,5 +1,6 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { ChatOpenAI } from "npm:langchain/chat_models/openai";
+import { HumanMessage, SystemMessage } from "npm:langchain/schema";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,102 +27,54 @@ serve(async (req) => {
     }
 
     console.log('Starting chat request with messages:', JSON.stringify(messages));
-    
+
+    const chat = new ChatOpenAI({
+      openAIApiKey: apiKey,
+      streaming: true,
+      modelName: "gpt-4",
+      temperature: 0.7,
+    });
+
+    const formattedMessages = messages.map((msg: any) => {
+      if (msg.role === 'system') {
+        return new SystemMessage(msg.content);
+      }
+      return new HumanMessage(msg.content);
+    });
+
+    const stream = await chat.stream(formattedMessages);
+
     const encoder = new TextEncoder();
-    const stream = new TransformStream();
-    const writer = stream.writable.getWriter();
-
-    try {
-      const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: messages,
-          stream: true,
-        }),
-      });
-
-      if (!openAIResponse.ok) {
-        const error = await openAIResponse.json();
-        console.error('OpenAI API error:', error);
-        throw new Error(error.error?.message || 'OpenAI API error');
-      }
-
-      const reader = openAIResponse.body?.getReader();
-      if (!reader) {
-        throw new Error('No response body');
-      }
-
-      let buffer = '';
-      let currentContent = '';
-      
-      const processStream = async () => {
+    const readable = new ReadableStream({
+      async start(controller) {
         try {
-          while (true) {
-            const { done, value } = await reader.read();
-            
-            if (done) {
-              console.log('Stream complete, final content:', currentContent);
-              console.log('Final message buffer:', buffer);
-              await writer.close();
-              break;
-            }
-
-            buffer += new TextDecoder().decode(value);
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              const trimmedLine = line.trim();
-              if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
-
-              if (trimmedLine.startsWith('data: ')) {
-                try {
-                  console.log('Processing line:', trimmedLine);
-                  const json = JSON.parse(trimmedLine.slice(5));
-                  const content = json.choices[0]?.delta?.content || '';
-                  if (content) {
-                    currentContent += content;
-                    const message = {
-                      id: crypto.randomUUID(),
-                      role: 'assistant',
-                      content: currentContent,
-                      createdAt: new Date().toISOString()
-                    };
-                    console.log('Sending message:', JSON.stringify(message));
-                    await writer.write(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
-                  }
-                } catch (error) {
-                  console.error('Error parsing chunk:', error, 'Line:', trimmedLine);
-                }
-              }
-            }
+          let currentContent = '';
+          for await (const chunk of stream) {
+            currentContent += chunk.content;
+            const message = {
+              id: crypto.randomUUID(),
+              role: 'assistant',
+              content: currentContent,
+              createdAt: new Date().toISOString()
+            };
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
           }
+          controller.close();
         } catch (error) {
-          console.error('Error processing stream:', error);
-          await writer.abort(error);
+          console.error('Error in stream processing:', error);
+          controller.error(error);
         }
-      };
+      }
+    });
 
-      processStream();
-
-      return new Response(stream.readable, {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-        },
-      });
-
-    } catch (error) {
-      console.error('Error in OpenAI request:', error);
-      throw error;
-    }
+    return new Response(readable, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
 
   } catch (error) {
     console.error('Error in chat function:', error);
