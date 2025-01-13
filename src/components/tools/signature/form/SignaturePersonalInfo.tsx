@@ -1,9 +1,7 @@
-import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SignatureData } from "@/types/signature";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Briefcase, Mail, Phone, Globe } from 'lucide-react';
+import { User, Briefcase, Building, Mail, Phone, Globe } from "lucide-react";
 
 interface SignaturePersonalInfoProps {
   data: SignatureData;
@@ -21,8 +19,8 @@ export const SignaturePersonalInfo = ({ data, onChange }: SignaturePersonalInfoP
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-6">
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="name" className="flex items-center gap-2">
             <User className="w-4 h-4" />
@@ -33,7 +31,6 @@ export const SignaturePersonalInfo = ({ data, onChange }: SignaturePersonalInfoP
             value={data.name}
             onChange={handleChange("name")}
             placeholder="Max Mustermann"
-            className="bg-white/5 backdrop-blur-sm border-white/10"
           />
         </div>
 
@@ -47,13 +44,14 @@ export const SignaturePersonalInfo = ({ data, onChange }: SignaturePersonalInfoP
             value={data.position}
             onChange={handleChange("position")}
             placeholder="Marketing Manager"
-            className="bg-white/5 backdrop-blur-sm border-white/10"
           />
         </div>
+      </div>
 
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="company" className="flex items-center gap-2">
-            <Briefcase className="w-4 h-4" />
+            <Building className="w-4 h-4" />
             Unternehmen
           </Label>
           <Input
@@ -61,12 +59,9 @@ export const SignaturePersonalInfo = ({ data, onChange }: SignaturePersonalInfoP
             value={data.company}
             onChange={handleChange("company")}
             placeholder="Musterfirma GmbH"
-            className="bg-white/5 backdrop-blur-sm border-white/10"
           />
         </div>
-      </div>
 
-      <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor="email" className="flex items-center gap-2">
             <Mail className="w-4 h-4" />
@@ -78,10 +73,11 @@ export const SignaturePersonalInfo = ({ data, onChange }: SignaturePersonalInfoP
             value={data.email}
             onChange={handleChange("email")}
             placeholder="max@musterfirma.de"
-            className="bg-white/5 backdrop-blur-sm border-white/10"
           />
         </div>
+      </div>
 
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="phone" className="flex items-center gap-2">
             <Phone className="w-4 h-4" />
@@ -92,21 +88,19 @@ export const SignaturePersonalInfo = ({ data, onChange }: SignaturePersonalInfoP
             value={data.phone}
             onChange={handleChange("phone")}
             placeholder="+49 123 456789"
-            className="bg-white/5 backdrop-blur-sm border-white/10"
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="website" className="flex items-center gap-2">
             <Globe className="w-4 h-4" />
-            Webseite
+            Website
           </Label>
           <Input
             id="website"
             value={data.website}
             onChange={handleChange("website")}
             placeholder="www.musterfirma.de"
-            className="bg-white/5 backdrop-blur-sm border-white/10"
           />
         </div>
       </div>

@@ -9,11 +9,10 @@ export interface SignatureData {
   website: string;
   linkedin: string;
   instagram: string;
-  tiktok: string;
+  xing: string;
   youtube: string;
   twitter: string;
   whatsapp: string;
-  sing?: string;
   logoUrl: string | null;
   themeColor: string;
   textColor: string;
