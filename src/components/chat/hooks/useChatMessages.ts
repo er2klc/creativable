@@ -45,7 +45,7 @@ export const useChatMessages = ({
     onError: (error) => {
       console.error("Chat error:", error);
     },
-    onStreamingMessage: (message) => {
+    experimental_onStreamMessage: (message) => {
       console.log("Streaming message received:", message);
       setMessages((prevMessages) => {
         const lastMessage = prevMessages[prevMessages.length - 1];
