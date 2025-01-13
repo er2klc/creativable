@@ -16,9 +16,7 @@ export const ChatMessages = ({ messages, scrollRef }: ChatMessagesProps) => {
     }
   }, [messages]);
 
-  // Filter out system messages and log the messages we're actually displaying
   const displayMessages = messages.filter((m) => m.role !== "system");
-  console.log("Messages to display:", displayMessages);
 
   if (displayMessages.length === 0) {
     return (

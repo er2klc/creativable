@@ -1,5 +1,4 @@
 import { useChat } from "ai/react";
-import { Message } from "ai";
 import { toast } from "sonner";
 
 interface UseChatMessagesProps {
@@ -30,13 +29,13 @@ export const useChatMessages = ({
     initialMessages: [
       {
         id: "system",
-        role: "system" as const,
+        role: "system",
         content: systemMessage,
       }
     ],
     onResponse: (response) => {
-      console.log("Chat response received:", response.status);
       if (!response.ok) {
+        console.error("Chat response error:", response.status);
         toast.error("Fehler beim Senden der Nachricht");
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -54,7 +53,7 @@ export const useChatMessages = ({
     setMessages([
       {
         id: "system",
-        role: "system" as const,
+        role: "system",
         content: systemMessage,
       }
     ]);
@@ -67,7 +66,6 @@ export const useChatMessages = ({
     handleSubmit: (e: React.FormEvent) => {
       e.preventDefault();
       if (!input.trim()) return;
-      
       handleSubmit(e);
     },
     setMessages,
