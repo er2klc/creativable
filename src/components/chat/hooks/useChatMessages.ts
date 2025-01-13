@@ -41,32 +41,23 @@ export const useChatMessages = ({
     },
     onFinish: (message) => {
       console.log("Chat message finished:", message);
-    },
-    onError: (error) => {
-      console.error("Chat error:", error);
-    },
-    onStreamMessage: (message) => {
-      console.log("Streaming message received:", message);
       setMessages((prevMessages) => {
         const lastMessage = prevMessages[prevMessages.length - 1];
         if (lastMessage?.role === 'assistant') {
-          // Update existing assistant message
           return [
             ...prevMessages.slice(0, -1),
-            { ...lastMessage, content: lastMessage.content + message.content }
+            { ...lastMessage, content: message.content }
           ];
         } else {
-          // Create new assistant message
           return [
             ...prevMessages,
-            { 
-              id: crypto.randomUUID(), 
-              role: 'assistant', 
-              content: message.content 
-            }
+            message
           ];
         }
       });
+    },
+    onError: (error) => {
+      console.error("Chat error:", error);
     }
   });
 
