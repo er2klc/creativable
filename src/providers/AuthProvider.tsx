@@ -36,9 +36,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     let subscription: any = null;
     
+    const handleAuthError = (error: any) => {
+      console.error("[Auth] Error:", error);
+      
+      // Check for JWT expiration or invalid token
+      const isTokenExpired = 
+        error?.message?.includes("JWT expired") ||
+        error?.message?.includes("invalid JWT") ||
+        error?.message?.includes("token is expired") ||
+        error?.status === 401;
+
+      if (isTokenExpired) {
+        setUser(null);
+        setIsAuthenticated(false);
+        
+        // Only show toast and redirect if on a protected path
+        if (protectedPaths.includes(location.pathname)) {
+          toast.error("Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.");
+          navigate("/auth", { 
+            replace: true,
+            state: { 
+              returnTo: location.pathname,
+              sessionExpired: true 
+            }
+          });
+        }
+      }
+    };
+    
     const setupAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          handleAuthError(sessionError);
+          return;
+        }
         
         if (session?.user) {
           setUser(session.user);
@@ -66,12 +99,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 navigate("/dashboard");
               }
             }
-          } else if (event === "SIGNED_OUT") {
-            setUser(null);
-            setIsAuthenticated(false);
-            navigate("/auth");
-          } else if (event === "TOKEN_REFRESHED") {
-            if (session?.user) {
+          } else if (event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
+            if (!session?.user) {
+              setUser(null);
+              setIsAuthenticated(false);
+              navigate("/auth");
+            } else {
               setUser(session.user);
               setIsAuthenticated(true);
             }
@@ -80,11 +113,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         subscription = authSubscription;
       } catch (error: any) {
-        console.error("[Auth] Setup error:", error);
-        if (protectedPaths.includes(location.pathname)) {
-          toast.error("Sitzung abgelaufen. Bitte erneut anmelden.");
-          navigate("/auth");
-        }
+        handleAuthError(error);
       } finally {
         setIsLoading(false);
       }
@@ -97,11 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const { data: { session }, error } = await supabase.auth.refreshSession();
         if (error) {
-          console.error("[Auth] Session refresh error:", error);
-          if (protectedPaths.includes(location.pathname)) {
-            toast.error("Sitzung abgelaufen. Bitte erneut anmelden.");
-            navigate("/auth");
-          }
+          handleAuthError(error);
           return;
         }
         
@@ -110,7 +135,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setIsAuthenticated(true);
         }
       } catch (error) {
-        console.error("[Auth] Session refresh error:", error);
+        handleAuthError(error);
       }
     }, 2 * 60 * 1000); // 2 minutes
 
