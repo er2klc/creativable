@@ -22,6 +22,9 @@ export const ChatMessages = ({ messages, scrollRef }: ChatMessagesProps) => {
     (message) => message.content.trim() && message.role !== 'system'
   );
 
+  console.log('All messages:', messages);
+  console.log('Filtered messages:', displayMessages);
+
   return (
     <div className="flex-1 overflow-y-auto pr-4" ref={scrollRef}>
       <div className="space-y-4 mb-4">

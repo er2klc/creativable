@@ -30,6 +30,8 @@ serve(async (req) => {
     const writer = stream.writable.getWriter();
 
     try {
+      console.log('Starting OpenAI request with messages:', messages);
+      
       const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
@@ -45,6 +47,7 @@ serve(async (req) => {
 
       if (!openAIResponse.ok) {
         const error = await openAIResponse.json();
+        console.error('OpenAI API error:', error);
         throw new Error(error.error?.message || 'OpenAI API error');
       }
 
@@ -62,6 +65,7 @@ serve(async (req) => {
             const { done, value } = await reader.read();
             
             if (done) {
+              console.log('Stream complete, final content:', currentContent);
               await writer.close();
               break;
             }
@@ -86,6 +90,7 @@ serve(async (req) => {
                       content: currentContent,
                       createdAt: new Date().toISOString()
                     };
+                    console.log('Streaming message:', message);
                     await writer.write(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
                   }
                 } catch (error) {
