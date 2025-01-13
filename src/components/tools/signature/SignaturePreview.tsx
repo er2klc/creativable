@@ -27,6 +27,37 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
     return icons[platform] || '';
   };
 
+  const formatSocialUrl = (url: string, platform: string): string => {
+    if (!url) return '';
+    
+    // If URL already starts with http/https, return as is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    // Handle WhatsApp numbers
+    if (platform === 'whatsapp') {
+      const cleanNumber = url.replace(/[^0-9]/g, '');
+      return `https://wa.me/${cleanNumber}`;
+    }
+
+    // Add https:// for website URLs
+    if (platform === 'website') {
+      return `https://${url}`;
+    }
+
+    // Platform-specific URL formatting
+    const platformUrls: Record<string, string> = {
+      linkedin: `https://www.linkedin.com/in/${url.replace(/^@/, '')}`,
+      instagram: `https://www.instagram.com/${url.replace(/^@/, '')}`,
+      twitter: `https://twitter.com/${url.replace(/^@/, '')}`,
+      youtube: `https://www.youtube.com/${url.replace(/^@/, '')}`,
+      xing: `https://www.xing.com/profile/${url.replace(/^@/, '')}`
+    };
+
+    return platformUrls[platform] || url;
+  };
+
   const getTemplateHtml = () => {
     const socialLinks = [];
     if (data.linkedin) socialLinks.push({ url: data.linkedin, platform: 'linkedin' });
@@ -34,10 +65,10 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
     if (data.instagram) socialLinks.push({ url: data.instagram, platform: 'instagram' });
     if (data.twitter) socialLinks.push({ url: data.twitter, platform: 'twitter' });
     if (data.youtube) socialLinks.push({ url: data.youtube, platform: 'youtube' });
-    if (data.whatsapp) socialLinks.push({ url: `https://wa.me/${data.whatsapp.replace(/[^0-9]/g, '')}`, platform: 'whatsapp' });
+    if (data.whatsapp) socialLinks.push({ url: data.whatsapp, platform: 'whatsapp' });
 
     const contactStyle = `color: ${data.textColor || '#2d3748'}; text-decoration: none; display: flex; align-items: center; gap: 8px; margin: 5px 0;`;
-    const iconStyle = 'display: inline-flex; margin-right: 8px;';
+    const logoStyle = 'width: 100px; height: 100px; object-fit: contain;';
 
     switch (template) {
       case "modern":
@@ -45,7 +76,7 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
           <table style="font-family: ${data.font || 'Arial'}, sans-serif; color: ${data.textColor || '#333333'}; width: 100%; max-width: 600px;">
             <tr>
               <td style="display: flex; align-items: start; gap: 20px;">
-                ${data.logoUrl ? `<div style="flex-shrink: 0; width: 100px; height: 100px;"><img src="${data.logoUrl}" alt="" style="width: 100%; height: 100%; object-fit: contain;"/></div>` : ''}
+                ${data.logoUrl ? `<div style="flex-shrink: 0; width: 100px; height: 100px;"><img src="${data.logoUrl}" style="${logoStyle}"/></div>` : ''}
                 <div style="flex-grow: 1; border-left: 1px solid ${data.textColor || '#2d3748'}; padding-left: 20px;">
                   <h2 style="margin: 0; color: ${data.textColor || '#2d3748'}; font-size: 24px; font-weight: 600;">${data.name}</h2>
                   <p style="margin: 5px 0; color: ${data.linkColor || '#7075db'}; font-size: 16px;">${data.position}</p>
@@ -56,12 +87,12 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
                       <a href="tel:${data.phone}" style="${contactStyle}">${data.phone}</a>
                     </div>
                     <div>
-                      <a href="${data.website?.startsWith('http') ? data.website : 'https://' + data.website}" style="${contactStyle}">${data.website}</a>
+                      <a href="${formatSocialUrl(data.website, 'website')}" style="${contactStyle}" target="_blank">${data.website}</a>
                     </div>
                   </div>
                   <div style="margin-top: 15px; display: flex; gap: 12px;">
                     ${socialLinks.map(({ url, platform }) => `
-                      <a href="${url}" style="text-decoration: none;" target="_blank">
+                      <a href="${formatSocialUrl(url, platform)}" style="text-decoration: none;" target="_blank">
                         ${getSocialIcon(platform)}
                       </a>
                     `).join('')}
@@ -76,7 +107,7 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
           <table style="font-family: ${data.font || 'Arial'}, sans-serif; color: ${data.textColor || '#2d3748'}; width: 100%; max-width: 600px;">
             <tr>
               <td style="display: flex; align-items: start; gap: 20px;">
-                ${data.logoUrl ? `<div style="flex-shrink: 0; width: 100px; height: 100px;"><img src="${data.logoUrl}" alt="" style="width: 100%; height: 100%; object-fit: contain;"/></div>` : ''}
+                ${data.logoUrl ? `<div style="flex-shrink: 0; width: 100px; height: 100px;"><img src="${data.logoUrl}" style="${logoStyle}"/></div>` : ''}
                 <div style="flex-grow: 1; padding-left: 20px; border-left: 1px solid ${data.linkColor || '#7075db'};">
                   <h2 style="margin: 0; font-size: 22px; color: ${data.textColor || '#2d3748'};">${data.name}</h2>
                   <p style="margin: 5px 0; color: ${data.linkColor || '#7075db'};">${data.position}</p>
@@ -87,12 +118,12 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
                       <a href="tel:${data.phone}" style="${contactStyle}">${data.phone}</a>
                     </div>
                     <div>
-                      <a href="${data.website?.startsWith('http') ? data.website : 'https://' + data.website}" style="${contactStyle}">${data.website}</a>
+                      <a href="${formatSocialUrl(data.website, 'website')}" style="${contactStyle}" target="_blank">${data.website}</a>
                     </div>
                   </div>
                   <div style="margin-top: 15px; display: flex; gap: 12px;">
                     ${socialLinks.map(({ url, platform }) => `
-                      <a href="${url}" style="text-decoration: none;" target="_blank">
+                      <a href="${formatSocialUrl(url, platform)}" style="text-decoration: none;" target="_blank">
                         ${getSocialIcon(platform)}
                       </a>
                     `).join('')}
@@ -107,7 +138,7 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
           <table style="font-family: ${data.font || 'Arial'}, sans-serif; color: ${data.textColor || '#2d3748'}; width: 100%; max-width: 600px;">
             <tr>
               <td style="display: flex; align-items: start; gap: 20px;">
-                ${data.logoUrl ? `<div style="flex-shrink: 0; width: 100px; height: 100px;"><img src="${data.logoUrl}" alt="" style="width: 100%; height: 100%; object-fit: contain;"/></div>` : ''}
+                ${data.logoUrl ? `<div style="flex-shrink: 0; width: 100px; height: 100px;"><img src="${data.logoUrl}" style="${logoStyle}"/></div>` : ''}
                 <div style="flex-grow: 1;">
                   <h2 style="margin: 0; font-size: 20px; color: ${data.textColor || '#2d3748'};">${data.name}</h2>
                   <p style="margin: 5px 0; color: ${data.linkColor || '#7075db'};">${data.position} · ${data.company}</p>
@@ -117,12 +148,12 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
                       <a href="tel:${data.phone}" style="${contactStyle}">${data.phone}</a>
                     </div>
                     <div>
-                      <a href="${data.website?.startsWith('http') ? data.website : 'https://' + data.website}" style="${contactStyle}">${data.website}</a>
+                      <a href="${formatSocialUrl(data.website, 'website')}" style="${contactStyle}" target="_blank">${data.website}</a>
                     </div>
                   </div>
                   <div style="margin-top: 15px; display: flex; gap: 12px;">
                     ${socialLinks.map(({ url, platform }) => `
-                      <a href="${url}" style="text-decoration: none;" target="_blank">
+                      <a href="${formatSocialUrl(url, platform)}" style="text-decoration: none;" target="_blank">
                         ${getSocialIcon(platform)}
                       </a>
                     `).join('')}
