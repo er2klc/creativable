@@ -15,8 +15,6 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log("OpenAI-like role separation!");
-
   try {
     const { messages } = await req.json();
     const apiKey = req.headers.get("X-OpenAI-Key");
@@ -54,15 +52,18 @@ serve(async (req) => {
 
               const firstChunk = {
                 id: responseId,
-                object: "chat.completion.chunk",
+                object: "chat.completion",
                 created: Math.floor(Date.now() / 1000),
                 model: "gpt-3.5-turbo",
                 choices: [
                   {
                     delta: {
-                      role: "assistant"
+                      role: "assistant",
+                      content: ""
                     },
-                    index: 0
+                    index: 0,
+                    logprobs: null,
+                    finish_reason: null
                   }
                 ]
               };
@@ -77,7 +78,7 @@ serve(async (req) => {
 
               const nextChunk = {
                 id: responseId,
-                object: "chat.completion.chunk",
+                object: "chat.completion",
                 created: Math.floor(Date.now() / 1000),
                 model: "gpt-3.5-turbo",
                 choices: [
@@ -85,7 +86,9 @@ serve(async (req) => {
                     delta: {
                       content: chunk.content
                     },
-                    index: 0
+                    index: 0,
+                    logprobs: null,
+                    finish_reason: null
                   }
                 ]
               };
@@ -98,13 +101,14 @@ serve(async (req) => {
           // Final chunk with finish_reason
           const doneChunk = {
             id: responseId,
-            object: "chat.completion.chunk",
+            object: "chat.completion",
             created: Math.floor(Date.now() / 1000),
             model: "gpt-3.5-turbo",
             choices: [
               {
                 delta: {},
                 index: 0,
+                logprobs: null,
                 finish_reason: "stop"
               }
             ]
