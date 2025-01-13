@@ -53,12 +53,15 @@ export function MobileMenu() {
             onClick={() => handleNavigation(item.path)}
             className={cn(
               "flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors relative group",
-              location.pathname === item.path && "text-white bg-sidebar-accent"
+              location.pathname === item.path && "text-white"
             )}
           >
             <item.icon className="h-[25px] w-[25px] shrink-0 group-hover:h-[23px] group-hover:w-[23px] transition-all duration-300" />
             <span>{item.name}</span>
-            <div className="absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover:w-full transition-all duration-300" />
+            <div className={cn(
+              "absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 transition-all duration-300",
+              location.pathname === item.path ? "w-full" : "group-hover:w-full"
+            )} />
           </button>
         ))}
       </div>
@@ -74,9 +77,9 @@ export function MobileMenu() {
       </SheetTrigger>
       <SheetContent 
         side="top" 
-        className="w-full p-0 border-none bg-[#1A1F2C] text-white"
+        className="w-full p-0 border-none bg-[#111111] text-white"
       >
-        <div className="flex flex-col h-[90vh] bg-[#1A1F2C] overflow-y-auto">
+        <div className="flex flex-col h-[90vh] bg-[#111111] overflow-y-auto">
           <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
             <img 
               src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
