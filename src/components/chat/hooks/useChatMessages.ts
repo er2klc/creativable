@@ -46,9 +46,6 @@ export const useChatMessages = ({
     onError: (error) => {
       console.error("Chat error:", error);
       toast.error("Fehler beim Senden der Nachricht");
-    },
-    experimental_onFunctionCall: async (message) => {
-      console.log("Function call received:", message);
     }
   });
 

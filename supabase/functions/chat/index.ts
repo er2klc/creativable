@@ -20,63 +20,79 @@ serve(async (req) => {
       throw new Error("OpenAI API key is required");
     }
 
-    const chat = new ChatOpenAI({
-      openAIApiKey: apiKey,
-      modelName: "gpt-4o-mini",
-      streaming: false,
-      temperature: 0.7,
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages,
+        stream: true,
+      }),
     });
 
-    const response = await chat.call(messages);
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
 
-    const fullResponse = {
-      id: "chatcmpl-" + crypto.randomUUID().slice(0, 6),
-      object: "chat.completion",
-      created: Math.floor(Date.now() / 1000),
-      model: "gpt-4o-mini",
-      choices: [
-        {
-          index: 0,
-          message: {
-            role: "assistant",
-            content: response.text,
-            refusal: null
-          },
-          logprobs: null,
-          finish_reason: "stop"
-        }
-      ],
-      usage: {
-        prompt_tokens: 0,
-        completion_tokens: 0,
-        total_tokens: 0,
-        prompt_tokens_details: {
-          cached_tokens: 0
-        },
-        completion_tokens_details: {
-          reasoning_tokens: 0,
-          accepted_prediction_tokens: 0,
-          rejected_prediction_tokens: 0
+    const stream = response.body;
+    const reader = stream?.getReader();
+    const encoder = new TextEncoder();
+
+    const readableStream = new ReadableStream({
+      async start(controller) {
+        try {
+          while (true) {
+            const { done, value } = await reader?.read();
+            
+            if (done) {
+              controller.close();
+              break;
+            }
+
+            const chunk = new TextDecoder().decode(value);
+            const payloads = chunk.split("\n");
+            
+            for (const payload of payloads) {
+              if (payload.trim() === "") continue;
+              if (payload.includes("[DONE]")) continue;
+              
+              if (payload.startsWith("data: ")) {
+                try {
+                  const data = JSON.parse(payload.replace("data: ", ""));
+                  const text = data.choices[0]?.delta?.content || "";
+                  if (text) {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`));
+                  }
+                } catch (error) {
+                  console.error("Error parsing payload:", error);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Stream reading error:", error);
+          controller.error(error);
         }
       },
-      system_fingerprint: "fp_" + crypto.randomUUID().slice(0, 8)
-    };
+    });
 
-    return new Response(JSON.stringify(fullResponse), {
+    return new Response(readableStream, {
       headers: {
         ...corsHeaders,
-        "Content-Type": "application/json",
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
       },
     });
 
   } catch (error) {
     console.error("Error in chat function:", error);
     return new Response(JSON.stringify({ error: error.message }), {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json",
-      },
       status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
