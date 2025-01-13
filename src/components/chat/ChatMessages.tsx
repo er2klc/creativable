@@ -24,7 +24,7 @@ export const ChatMessages = ({ messages, scrollRef }: ChatMessagesProps) => {
   );
 
   return (
-    <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
+    <div className="flex-1 overflow-y-auto pr-4" ref={scrollRef}>
       <div className="space-y-4 mb-4">
         {displayMessages.map((message) => (
           <div
@@ -61,6 +61,6 @@ export const ChatMessages = ({ messages, scrollRef }: ChatMessagesProps) => {
           </div>
         ))}
       </div>
-    </ScrollArea>
+    </div>
   );
 };
