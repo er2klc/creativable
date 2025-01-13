@@ -20,33 +20,35 @@ export const SignatureContactInfo = ({ data, onChange }: SignatureContactInfoPro
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="email" className="flex items-center gap-2">
-          <Mail className="w-4 h-4" />
-          E-Mail
-        </Label>
-        <Input
-          id="email"
-          type="email"
-          value={data.email}
-          onChange={handleChange("email")}
-          placeholder="max@musterfirma.de"
-          className="bg-white/5 backdrop-blur-sm border-white/10"
-        />
-      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="email" className="flex items-center gap-2">
+            <Mail className="w-4 h-4" />
+            E-Mail
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            value={data.email}
+            onChange={handleChange("email")}
+            placeholder="max@musterfirma.de"
+            className="bg-white/5 backdrop-blur-sm border-white/10"
+          />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="phone" className="flex items-center gap-2">
-          <Phone className="w-4 h-4" />
-          Telefon
-        </Label>
-        <Input
-          id="phone"
-          value={data.phone}
-          onChange={handleChange("phone")}
-          placeholder="+49 123 456789"
-          className="bg-white/5 backdrop-blur-sm border-white/10"
-        />
+        <div className="space-y-2">
+          <Label htmlFor="phone" className="flex items-center gap-2">
+            <Phone className="w-4 h-4" />
+            Telefon
+          </Label>
+          <Input
+            id="phone"
+            value={data.phone}
+            onChange={handleChange("phone")}
+            placeholder="+49 123 456789"
+            className="bg-white/5 backdrop-blur-sm border-white/10"
+          />
+        </div>
       </div>
 
       <div className="space-y-2">
