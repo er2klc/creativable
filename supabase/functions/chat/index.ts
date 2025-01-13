@@ -58,7 +58,8 @@ serve(async (req) => {
                 choices: [
                   {
                     delta: {
-                      role: "assistant"
+                      role: "assistant",
+                      content: ""
                     },
                     index: 0,
                     logprobs: null,
