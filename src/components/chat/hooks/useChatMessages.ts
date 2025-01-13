@@ -32,7 +32,19 @@ export const useChatMessages = ({
         role: "system" as const,
         content: systemMessage,
       }
-    ]
+    ],
+    onResponse: (response) => {
+      console.log("Chat response received:", response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    },
+    onFinish: (message) => {
+      console.log("Chat message finished:", message);
+    },
+    onError: (error) => {
+      console.error("Chat error:", error);
+    }
   });
 
   const resetMessages = () => {
