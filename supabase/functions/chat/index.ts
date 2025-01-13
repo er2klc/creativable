@@ -25,13 +25,13 @@ serve(async (req) => {
       throw new Error('Missing OpenAI API key');
     }
 
+    console.log('Starting chat request with messages:', JSON.stringify(messages));
+    
     const encoder = new TextEncoder();
     const stream = new TransformStream();
     const writer = stream.writable.getWriter();
 
     try {
-      console.log('Starting OpenAI request with messages:', messages);
-      
       const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
@@ -65,7 +65,8 @@ serve(async (req) => {
             const { done, value } = await reader.read();
             
             if (done) {
-              console.log('Stream complete');
+              console.log('Stream complete, final content:', currentContent);
+              console.log('Final message buffer:', buffer);
               await writer.close();
               break;
             }
@@ -80,6 +81,7 @@ serve(async (req) => {
 
               if (trimmedLine.startsWith('data: ')) {
                 try {
+                  console.log('Processing line:', trimmedLine);
                   const json = JSON.parse(trimmedLine.slice(5));
                   const content = json.choices[0]?.delta?.content || '';
                   if (content) {
@@ -90,6 +92,7 @@ serve(async (req) => {
                       content: currentContent,
                       createdAt: new Date().toISOString()
                     };
+                    console.log('Sending message:', JSON.stringify(message));
                     await writer.write(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
                   }
                 } catch (error) {
