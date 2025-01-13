@@ -1577,54 +1577,75 @@ export type Database = {
           company: string | null
           created_at: string | null
           email: string | null
+          font: string | null
+          font_size: string | null
           id: string
           instagram: string | null
+          link_color: string | null
           linkedin: string | null
           logo_url: string | null
           name: string
           phone: string | null
           position: string | null
           template: string
+          text_color: string | null
+          theme_color: string | null
           tiktok: string | null
+          twitter: string | null
           updated_at: string | null
           user_id: string
           website: string | null
+          whatsapp: string | null
           youtube: string | null
         }
         Insert: {
           company?: string | null
           created_at?: string | null
           email?: string | null
+          font?: string | null
+          font_size?: string | null
           id?: string
           instagram?: string | null
+          link_color?: string | null
           linkedin?: string | null
           logo_url?: string | null
           name: string
           phone?: string | null
           position?: string | null
           template: string
+          text_color?: string | null
+          theme_color?: string | null
           tiktok?: string | null
+          twitter?: string | null
           updated_at?: string | null
           user_id: string
           website?: string | null
+          whatsapp?: string | null
           youtube?: string | null
         }
         Update: {
           company?: string | null
           created_at?: string | null
           email?: string | null
+          font?: string | null
+          font_size?: string | null
           id?: string
           instagram?: string | null
+          link_color?: string | null
           linkedin?: string | null
           logo_url?: string | null
           name?: string
           phone?: string | null
           position?: string | null
           template?: string
+          text_color?: string | null
+          theme_color?: string | null
           tiktok?: string | null
+          twitter?: string | null
           updated_at?: string | null
           user_id?: string
           website?: string | null
+          whatsapp?: string | null
           youtube?: string | null
         }
         Relationships: []
