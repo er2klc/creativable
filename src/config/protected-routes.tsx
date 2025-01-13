@@ -1,4 +1,3 @@
-import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Admin from "@/pages/Admin";
 import Calendar from "@/pages/Calendar";
@@ -24,5 +23,5 @@ export const protectedRoutes = [
   { path: "/leads", element: <Leads /> },
   { path: "/messages", element: <Messages /> },
   { path: "/settings", element: <Settings /> },
-  { path: "/changelog", element: <Changelog /> },
+  { path: "/changelog", element: <Changelog /> }
 ];
