@@ -5,8 +5,9 @@ import { SignaturePreview } from "@/components/tools/signature/SignaturePreview"
 import { SignatureTemplateSelector } from "@/components/tools/signature/SignatureTemplateSelector";
 import { SignatureData, Template } from "@/types/signature";
 import { supabase } from "@/integrations/supabase/client";
+import { useSignature } from "@/hooks/use-signature";
+import { useSignatureActions } from "@/hooks/use-signature-actions";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
 
 const SignatureGenerator = () => {
   const { toast } = useToast();
@@ -33,33 +34,8 @@ const SignatureGenerator = () => {
   });
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
-  const { data: existingSignature } = useQuery({
-    queryKey: ['signature-data'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-
-      const { data, error } = await supabase
-        .from('user_signatures')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching signature:', error);
-        toast({
-          title: "Fehler beim Laden",
-          description: "Deine Signatur konnte nicht geladen werden.",
-          variant: "destructive",
-        });
-        return null;
-      }
-
-      return data;
-    },
-  });
+  const { data: existingSignature } = useSignature();
+  const { saveSignature } = useSignatureActions();
 
   useEffect(() => {
     if (existingSignature) {
@@ -140,52 +116,6 @@ const SignatureGenerator = () => {
     setLogoPreview(null);
   };
 
-  const saveSignature = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { error } = await supabase
-        .from('user_signatures')
-        .upsert({
-          user_id: user.id,
-          name: signatureData.name,
-          position: signatureData.position,
-          company: signatureData.company,
-          email: signatureData.email,
-          phone: signatureData.phone,
-          website: signatureData.website,
-          linkedin: signatureData.linkedin,
-          instagram: signatureData.instagram,
-          tiktok: signatureData.tiktok,
-          youtube: signatureData.youtube,
-          twitter: signatureData.twitter,
-          whatsapp: signatureData.whatsapp,
-          logo_url: signatureData.logoUrl,
-          template: selectedTemplate,
-          theme_color: signatureData.themeColor,
-          text_color: signatureData.textColor,
-          link_color: signatureData.linkColor,
-          font: signatureData.font,
-          font_size: signatureData.fontSize,
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Signatur gespeichert",
-        description: "Deine Signatur wurde erfolgreich gespeichert.",
-      });
-    } catch (error) {
-      console.error('Error saving signature:', error);
-      toast({
-        title: "Fehler beim Speichern",
-        description: "Die Signatur konnte nicht gespeichert werden.",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="container mx-auto p-6 max-w-[1200px]">
       <div className="mb-8">
@@ -211,7 +141,7 @@ const SignatureGenerator = () => {
               onLogoChange={handleLogoChange}
               onLogoRemove={handleLogoRemove}
               logoPreview={logoPreview}
-              onSave={saveSignature}
+              onSave={() => saveSignature(signatureData, selectedTemplate)}
             />
           </Card>
 
