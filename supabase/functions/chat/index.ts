@@ -1,44 +1,34 @@
 /**
  * supabase/functions/chat/index.ts
  */
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ChatOpenAI } from "npm:@langchain/openai";
 
-// --------------------------------------------------------
-// KORREKTE CORS HEADERS
-// --------------------------------------------------------
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-openai-key",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-openai-key",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Lese JSON-Body aus dem Request
     const { messages, teamId } = await req.json();
-
-    // OpenAI-API-Key aus dem Header
     const apiKey = req.headers.get("X-OpenAI-Key");
     if (!apiKey) {
       throw new Error("OpenAI API key is required");
     }
 
-    // -- Debug-Log im Function-Dashboard --
     console.log("Processing chat request with messages:", JSON.stringify(messages));
     if (teamId) {
       console.log("Team ID:", teamId);
     }
 
-    // --------------------------------------------------------
-    // 1) LangChain Chat-Instanz mit streaming=true
-    // --------------------------------------------------------
+    // 1) Erzeuge eine ChatOpenAI-Instanz mit streaming
     const chat = new ChatOpenAI({
       openAIApiKey: apiKey,
       modelName: "gpt-4o-mini",
@@ -46,26 +36,38 @@ serve(async (req) => {
       temperature: 0.7,
     });
 
-    // Hier rufen wir .stream() auf, um Token-für-Token zu erhalten.
+    // Starte den LangChain-Stream
     const langChainStream = await chat.stream(messages);
     const encoder = new TextEncoder();
 
-    // --------------------------------------------------------
-    // 2) Wir erzeugen einen SSE-ReadableStream für den Response
-    // --------------------------------------------------------
+    // **Erzeuge eine konstante ID** für alle Partials
+    const responseId = crypto.randomUUID();
+
     const readable = new ReadableStream({
       async start(controller) {
         try {
-          // Wir lesen asynchron jedes Chunk/Tokens aus dem LangChain-Stream
+          let hasEmittedContent = false;
+
           for await (const chunk of langChainStream) {
+            // chunk.content könnte am Anfang leer sein
+            if (!chunk.content && !hasEmittedContent) {
+              // Falls das erste Token leer ist, kann man es skippen.
+              // Optional: Wenn du es nicht skippen willst, lass das if einfach weg.
+              continue;
+            }
+            hasEmittedContent = true;
+
+            // 2) Baue den SSE-Chunk
             const openAiStyleChunk = {
-              id: crypto.randomUUID(),
+              // **immer dieselbe** ID, nicht pro Token neu
+              id: responseId, 
               object: "chat.completion.chunk",
               created: Math.floor(Date.now() / 1000),
               model: "gpt-4o-mini",
               choices: [
                 {
                   delta: {
+                    // Partial-Token
                     content: chunk.content,
                   },
                   index: 0,
@@ -74,16 +76,15 @@ serve(async (req) => {
               ],
             };
 
-            // Als SSE-Event
             const sseMessage = `data: ${JSON.stringify(openAiStyleChunk)}\n\n`;
             controller.enqueue(encoder.encode(sseMessage));
           }
 
-          // --------------------------------------------------------
-          // 3) Abschluss-Chunk senden (finish_reason: "stop")
-          // --------------------------------------------------------
+          // 3) Abschluss-Chunk mit finish_reason = "stop"
           const doneChunk = {
+            id: responseId,
             object: "chat.completion.chunk",
+            created: Math.floor(Date.now() / 1000),
             model: "gpt-4o-mini",
             choices: [
               {
@@ -93,13 +94,9 @@ serve(async (req) => {
               },
             ],
           };
-
           const doneMessage = `data: ${JSON.stringify(doneChunk)}\n\n`;
           controller.enqueue(encoder.encode(doneMessage));
-
-          // SSE-Stream schließen
           controller.close();
-
         } catch (error) {
           console.error("Error in stream processing:", error);
           controller.error(error);
@@ -107,18 +104,14 @@ serve(async (req) => {
       },
     });
 
-    // --------------------------------------------------------
-    // 4) Gib den SSE-ReadableStream zurück
-    // --------------------------------------------------------
     return new Response(readable, {
       headers: {
         ...corsHeaders,
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
+        Connection: "keep-alive",
       },
     });
-
   } catch (error) {
     console.error("Error in chat function:", error);
     return new Response(JSON.stringify({ error: error.message }), {
