@@ -31,7 +31,7 @@ serve(async (req) => {
 
     const chat = new ChatOpenAI({
       openAIApiKey: apiKey,
-      modelName: "gpt-4o-mini",
+      modelName: "gpt-3.5-turbo",
       streaming: true,
       temperature: 0.7,
     });
@@ -40,8 +40,8 @@ serve(async (req) => {
     const encoder = new TextEncoder();
 
     // Generate one constant ID for the entire response
-    const responseId = crypto.randomUUID();
-    console.log("Generated constant response ID:", responseId); // Log the ID we'll use
+    const responseId = "chatcmpl-" + crypto.randomUUID().slice(0, 8);
+    console.log("Generated constant response ID:", responseId);
     let hasEmittedContent = false;
 
     const readable = new ReadableStream({
@@ -56,39 +56,38 @@ serve(async (req) => {
             hasEmittedContent = true;
 
             const openAiStyleChunk = {
-              id: responseId, // Using the same ID for all chunks
+              id: responseId,
               object: "chat.completion.chunk",
               created: Math.floor(Date.now() / 1000),
-              model: "gpt-4o-mini",
+              model: "gpt-3.5-turbo",
               choices: [
                 {
                   delta: {
                     content: chunk.content,
                   },
-                  index: 0,
-                  finish_reason: null,
-                },
-              ],
+                  index: 0
+                }
+              ]
             };
 
-            console.log("Sending chunk with ID:", responseId); // Log each chunk's ID to verify consistency
+            console.log("Sending chunk with ID:", responseId);
             const sseMessage = `data: ${JSON.stringify(openAiStyleChunk)}\n\n`;
             controller.enqueue(encoder.encode(sseMessage));
           }
 
-          // Final chunk with the same ID
+          // Final chunk with finish_reason
           const doneChunk = {
-            id: responseId, // Same ID here too
+            id: responseId,
             object: "chat.completion.chunk",
             created: Math.floor(Date.now() / 1000),
-            model: "gpt-4o-mini",
+            model: "gpt-3.5-turbo",
             choices: [
               {
                 delta: {},
                 index: 0,
-                finish_reason: "stop",
-              },
-            ],
+                finish_reason: "stop"
+              }
+            ]
           };
           
           console.log("Sending final chunk with ID:", responseId);
