@@ -52,14 +52,13 @@ serve(async (req) => {
 
               const firstChunk = {
                 id: responseId,
-                object: "chat.completion",
+                object: "chat.completion.chunk",
                 created: Math.floor(Date.now() / 1000),
                 model: "gpt-4o-mini",
                 choices: [
                   {
                     delta: {
-                      role: "assistant",
-                      content: ""
+                      role: "assistant"
                     },
                     index: 0,
                     logprobs: null,
@@ -78,9 +77,9 @@ serve(async (req) => {
 
               const nextChunk = {
                 id: responseId,
-                object: "chat.completion",
+                object: "chat.completion.chunk",
                 created: Math.floor(Date.now() / 1000),
-                model: "gpt-3.5-turbo",
+                model: "gpt-4o-mini",
                 choices: [
                   {
                     delta: {
@@ -101,9 +100,9 @@ serve(async (req) => {
           // Final chunk with finish_reason
           const doneChunk = {
             id: responseId,
-            object: "chat.completion",
+            object: "chat.completion.chunk",
             created: Math.floor(Date.now() / 1000),
-            model: "gpt-3.5-turbo",
+            model: "gpt-4o-mini",
             choices: [
               {
                 delta: {},
