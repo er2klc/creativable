@@ -58,7 +58,7 @@ export function TeamHeaderTitle({
               </SheetDescription>
             </SheetHeader>
             <div className="mt-6">
-              <TeamLogoUpload teamId={team.id} currentLogoUrl={team.logo_url} />
+              <TeamLogoUpload currentLogoUrl={team.logo_url} />
             </div>
           </SheetContent>
         )}
