@@ -17,7 +17,7 @@ export const SignatureLogoUpload = ({
   return (
     <div className="space-y-4">
       <Label className="text-lg">Logo</Label>
-      <div className="aspect-square w-full">
+      <div className="w-full aspect-square">
         <TeamLogoUpload
           currentLogoUrl={logoUrl}
           onLogoChange={onLogoChange}

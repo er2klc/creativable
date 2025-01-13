@@ -26,10 +26,10 @@ export const SignatureColorSettings = ({ data, onChange }: SignatureColorSetting
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <h3 className="text-lg font-semibold">Design</h3>
       
-      <div className="grid grid-cols-4 gap-6">
+      <div className="grid grid-cols-3 gap-6">
         <div className="space-y-2">
           <Label htmlFor="font">Schriftart</Label>
           <Select value={data.font} onValueChange={handleFontChange}>
@@ -43,25 +43,6 @@ export const SignatureColorSettings = ({ data, onChange }: SignatureColorSetting
               <SelectItem value="Georgia">Georgia</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="themeColor">Theme Color</Label>
-          <div className="flex gap-2">
-            <Input
-              type="color"
-              id="themeColor"
-              value={data.themeColor}
-              onChange={handleChange("themeColor")}
-              className="w-12 h-12 p-1"
-            />
-            <Input
-              type="text"
-              value={data.themeColor}
-              onChange={handleChange("themeColor")}
-              className="flex-1"
-            />
-          </div>
         </div>
 
         <div className="space-y-2">

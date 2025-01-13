@@ -46,7 +46,7 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
             <tr>
               <td style="display: flex; align-items: start; gap: 20px;">
                 ${data.logoUrl ? `<div style="flex-shrink: 0;"><img src="${data.logoUrl}" alt="Logo" style="width: 100px; height: 100px; object-fit: contain;"/></div>` : ''}
-                <div style="flex-grow: 1;">
+                <div style="flex-grow: 1; border-left: 1px solid ${data.textColor || '#2d3748'}; padding-left: 20px;">
                   <h2 style="margin: 0; color: ${data.textColor || '#2d3748'}; font-size: 24px; font-weight: 600;">${data.name}</h2>
                   <p style="margin: 5px 0; color: ${data.linkColor || '#7075db'}; font-size: 16px;">${data.position}</p>
                   <p style="margin: 5px 0; color: ${data.textColor || '#4a5568'}; font-weight: 500;">${data.company}</p>
@@ -77,7 +77,7 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
             <tr>
               <td style="display: flex; align-items: start; gap: 20px;">
                 ${data.logoUrl ? `<div style="flex-shrink: 0;"><img src="${data.logoUrl}" alt="Logo" style="width: 100px; height: 100px; object-fit: contain;"/></div>` : ''}
-                <div style="flex-grow: 1; padding-left: 20px; border-left: 3px solid ${data.linkColor || '#7075db'};">
+                <div style="flex-grow: 1; padding-left: 20px; border-left: 1px solid ${data.linkColor || '#7075db'};">
                   <h2 style="margin: 0; font-size: 22px; color: ${data.textColor || '#2d3748'};">${data.name}</h2>
                   <p style="margin: 5px 0; color: ${data.linkColor || '#7075db'};">${data.position}</p>
                   <p style="margin: 5px 0; font-weight: 500;">${data.company}</p>

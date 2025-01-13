@@ -23,7 +23,7 @@ export const SignatureForm = ({
   onSave
 }: SignatureFormProps) => {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex gap-6">
         <div className="w-1/4">
           <SignatureLogoUpload
@@ -41,18 +41,22 @@ export const SignatureForm = ({
         </div>
       </div>
 
-      <SignatureSocialMedia
-        data={signatureData}
-        onChange={onChange}
-      />
+      <div className="mt-4">
+        <SignatureSocialMedia
+          data={signatureData}
+          onChange={onChange}
+        />
+      </div>
 
-      <SignatureColorSettings
-        data={signatureData}
-        onChange={onChange}
-      />
+      <div className="mt-4">
+        <SignatureColorSettings
+          data={signatureData}
+          onChange={onChange}
+        />
+      </div>
 
       {onSave && (
-        <div className="flex justify-end pt-6">
+        <div className="flex justify-end pt-4">
           <Button 
             onClick={onSave}
             className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600"
