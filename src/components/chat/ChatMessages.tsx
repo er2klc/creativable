@@ -10,14 +10,12 @@ interface ChatMessagesProps {
 }
 
 export const ChatMessages = ({ messages, scrollRef }: ChatMessagesProps) => {
-  // Scroll to bottom when messages change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
-  // Filter out empty messages and system messages
   const displayMessages = messages.filter(
     (message) => message.content.trim() && message.role !== 'system'
   );
