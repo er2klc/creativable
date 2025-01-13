@@ -60,15 +60,15 @@ serve(async (req) => {
         completion_tokens: 0,
         total_tokens: 0,
         prompt_tokens_details: {
-          cached_tokens: 0,
+          cached_tokens: 0
         },
         completion_tokens_details: {
           reasoning_tokens: 0,
           accepted_prediction_tokens: 0,
-          rejected_prediction_tokens: 0,
+          rejected_prediction_tokens: 0
         },
       },
-      system_fingerprint: "fp_" + crypto.randomUUID().slice(0, 5),
+      system_fingerprint: "fp_" + crypto.randomUUID().slice(0, 8),
     };
 
     // Diesen JSON-Response senden wir jetzt ohne SSE
