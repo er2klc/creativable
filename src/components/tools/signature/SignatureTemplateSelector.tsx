@@ -14,17 +14,17 @@ export const SignatureTemplateSelector = ({
     {
       id: "modern",
       name: "Modern",
-      description: "Klares Design mit farbigen Akzenten",
+      description: "Zentriertes Design mit farbigen Akzenten",
     },
     {
       id: "classic",
-      name: "Klassisch",
-      description: "Traditionelles Layout mit professioneller Ausstrahlung",
+      name: "Professional",
+      description: "Zweispaltiges Layout mit eleganter Linie",
     },
     {
       id: "minimal",
       name: "Minimalistisch",
-      description: "Reduziertes Design, fokussiert auf das Wesentliche",
+      description: "Schlankes Design mit subtilen Details",
     },
   ];
 
@@ -35,15 +35,15 @@ export const SignatureTemplateSelector = ({
         {templates.map((template) => (
           <Card
             key={template.id}
-            className={`p-4 cursor-pointer transition-all duration-200 ${
+            className={`p-6 cursor-pointer transition-all duration-200 hover:shadow-lg ${
               selectedTemplate === template.id
-                ? "ring-2 ring-primary"
-                : "hover:bg-muted/50"
+                ? "ring-2 ring-blue-500 bg-blue-50/10"
+                : "hover:bg-gray-50/10"
             }`}
             onClick={() => onSelect(template.id)}
           >
-            <h3 className="font-medium">{template.name}</h3>
-            <p className="text-sm text-muted-foreground mt-1">
+            <h3 className="font-medium text-lg mb-2">{template.name}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {template.description}
             </p>
           </Card>

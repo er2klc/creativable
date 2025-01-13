@@ -12,8 +12,8 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
   const [copied, setCopied] = useState(false);
 
   const getSocialIcon = (platform: string) => {
-    const iconSize = "16";
-    const iconColor = template === "modern" ? "#2563eb" : "#000000";
+    const iconSize = "24";
+    const iconColor = "#7075db"; // Consistent brand color for social icons
     
     const icons: Record<string, string> = {
       linkedin: `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="${iconColor}"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>`,
@@ -35,21 +35,43 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
     switch (template) {
       case "modern":
         return `
-          <table style="font-family: 'Segoe UI', Arial, sans-serif; color: #333333; background: linear-gradient(to right, #ffffff, #f8f9fa); border-radius: 8px; padding: 20px;">
+          <table style="font-family: 'Arial', sans-serif; color: #333333; background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); border-radius: 12px; padding: 24px; max-width: 600px;">
             <tr>
-              <td style="padding-right: 20px; border-right: 3px solid #2563eb;">
-                ${data.logoUrl ? `<img src="${data.logoUrl}" alt="Logo" style="width: 100px; height: auto; margin-bottom: 10px;"/>` : ''}
-                <h2 style="margin: 0; color: #2563eb; font-size: 20px; font-weight: 600;">${data.name}</h2>
-                <p style="margin: 5px 0; color: #64748b; font-size: 14px;">${data.position}</p>
-                <p style="margin: 5px 0; color: #64748b; font-size: 14px; font-weight: 500;">${data.company}</p>
+              <td style="text-align: center; padding-bottom: 20px;">
+                ${data.logoUrl ? `<img src="${data.logoUrl}" alt="Logo" style="width: 120px; height: auto; margin-bottom: 15px;"/>` : ''}
+                <h2 style="margin: 0; color: #2d3748; font-size: 24px; font-weight: 600;">${data.name}</h2>
+                <p style="margin: 5px 0; color: #7075db; font-size: 16px;">${data.position}</p>
+                <p style="margin: 5px 0; color: #4a5568; font-weight: 500;">${data.company}</p>
               </td>
-              <td style="padding-left: 20px;">
-                <p style="margin: 3px 0;"><a href="mailto:${data.email}" style="color: #2563eb; text-decoration: none;">${data.email}</a></p>
-                <p style="margin: 3px 0;"><a href="tel:${data.phone}" style="color: #2563eb; text-decoration: none;">${data.phone}</a></p>
-                <p style="margin: 3px 0;"><a href="https://${data.website}" style="color: #2563eb; text-decoration: none;">${data.website}</a></p>
-                <div style="margin-top: 10px;">
+            </tr>
+            <tr>
+              <td style="padding-top: 20px; border-top: 2px solid #e2e8f0;">
+                <table style="width: 100%;">
+                  <tr>
+                    <td style="padding: 5px 0;">
+                      <a href="mailto:${data.email}" style="color: #2d3748; text-decoration: none; display: flex; align-items: center;">
+                        <span style="color: #7075db; margin-right: 10px;">✉</span> ${data.email}
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 5px 0;">
+                      <a href="tel:${data.phone}" style="color: #2d3748; text-decoration: none; display: flex; align-items: center;">
+                        <span style="color: #7075db; margin-right: 10px;">📞</span> ${data.phone}
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 5px 0;">
+                      <a href="https://${data.website}" style="color: #2d3748; text-decoration: none; display: flex; align-items: center;">
+                        <span style="color: #7075db; margin-right: 10px;">🌐</span> ${data.website}
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+                <div style="margin-top: 15px;">
                   ${socialLinks.map(({ url, platform }) => `
-                    <a href="${url}" style="text-decoration: none; margin-right: 8px;" target="_blank">
+                    <a href="${url}" style="text-decoration: none; margin: 0 8px;" target="_blank">
                       ${getSocialIcon(platform)}
                     </a>
                   `).join('')}
@@ -60,23 +82,23 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
         `;
       case "classic":
         return `
-          <table style="font-family: 'Georgia', serif; color: #2d3748; background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%); padding: 24px; border-radius: 8px;">
+          <table style="font-family: 'Arial', sans-serif; color: #2d3748; background: linear-gradient(to right, #ffffff, #f7fafc); padding: 24px; border-radius: 8px; max-width: 600px;">
             <tr>
-              <td style="text-align: center; padding-bottom: 15px; border-bottom: 2px solid #cbd5e0;">
-                ${data.logoUrl ? `<img src="${data.logoUrl}" alt="Logo" style="width: 120px; height: auto; margin-bottom: 15px;"/>` : ''}
-                <h2 style="margin: 0; font-size: 24px; color: #1a202c;">${data.name}</h2>
-                <p style="margin: 5px 0; font-style: italic; color: #4a5568;">${data.position}</p>
-                <p style="margin: 5px 0; font-weight: bold; color: #2d3748;">${data.company}</p>
+              <td style="padding-right: 24px; border-right: 3px solid #7075db;">
+                ${data.logoUrl ? `<img src="${data.logoUrl}" alt="Logo" style="width: 100px; height: auto; margin-bottom: 15px;"/>` : ''}
+                <h2 style="margin: 0; font-size: 22px; color: #2d3748;">${data.name}</h2>
+                <p style="margin: 5px 0; color: #7075db;">${data.position}</p>
+                <p style="margin: 5px 0; font-weight: 500;">${data.company}</p>
               </td>
-            </tr>
-            <tr>
-              <td style="padding-top: 15px; text-align: center;">
-                <p style="margin: 5px 0;"><a href="mailto:${data.email}" style="color: #2d3748; text-decoration: none;">${data.email}</a></p>
-                <p style="margin: 5px 0;"><a href="tel:${data.phone}" style="color: #2d3748; text-decoration: none;">${data.phone}</a></p>
-                <p style="margin: 5px 0;"><a href="https://${data.website}" style="color: #2d3748; text-decoration: none;">${data.website}</a></p>
-                <div style="margin-top: 12px;">
+              <td style="padding-left: 24px;">
+                <div style="margin-bottom: 15px;">
+                  <p style="margin: 5px 0;"><a href="mailto:${data.email}" style="color: #2d3748; text-decoration: none;">${data.email}</a></p>
+                  <p style="margin: 5px 0;"><a href="tel:${data.phone}" style="color: #2d3748; text-decoration: none;">${data.phone}</a></p>
+                  <p style="margin: 5px 0;"><a href="https://${data.website}" style="color: #2d3748; text-decoration: none;">${data.website}</a></p>
+                </div>
+                <div style="margin-top: 15px;">
                   ${socialLinks.map(({ url, platform }) => `
-                    <a href="${url}" style="text-decoration: none; margin: 0 6px;" target="_blank">
+                    <a href="${url}" style="text-decoration: none; margin-right: 10px;" target="_blank">
                       ${getSocialIcon(platform)}
                     </a>
                   `).join('')}
@@ -87,22 +109,37 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
         `;
       case "minimal":
         return `
-          <table style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #000000; background: linear-gradient(to right, #f8f9fa, #ffffff); padding: 16px; border-left: 4px solid #000000;">
+          <table style="font-family: 'Arial', sans-serif; color: #2d3748; background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%); padding: 24px; border-left: 4px solid #7075db; max-width: 600px;">
             <tr>
-              <td style="padding-left: 16px;">
-                ${data.logoUrl ? `<img src="${data.logoUrl}" alt="Logo" style="width: 80px; height: auto; margin-bottom: 12px;"/>` : ''}
-                <p style="margin: 0; font-size: 16px; font-weight: 500;">${data.name}</p>
-                <p style="margin: 2px 0; color: #666666; font-size: 14px;">${data.position} · ${data.company}</p>
-                <p style="margin: 8px 0; font-size: 14px;">
-                  <a href="mailto:${data.email}" style="color: #000000; text-decoration: none;">${data.email}</a>
-                  ${data.phone ? ` · <a href="tel:${data.phone}" style="color: #000000; text-decoration: none;">${data.phone}</a>` : ''}
-                </p>
-                <div style="margin-top: 8px;">
-                  ${socialLinks.map(({ url, platform }) => `
-                    <a href="${url}" style="text-decoration: none; margin-right: 8px;" target="_blank">
-                      ${getSocialIcon(platform)}
-                    </a>
-                  `).join('')}
+              <td>
+                <table style="width: 100%;">
+                  <tr>
+                    <td style="padding-bottom: 20px;">
+                      ${data.logoUrl ? `<img src="${data.logoUrl}" alt="Logo" style="width: 80px; height: auto;"/>` : ''}
+                    </td>
+                    <td style="text-align: right;">
+                      <div style="margin-bottom: 15px;">
+                        ${socialLinks.map(({ url, platform }) => `
+                          <a href="${url}" style="text-decoration: none; margin-left: 8px;" target="_blank">
+                            ${getSocialIcon(platform)}
+                          </a>
+                        `).join('')}
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                <h2 style="margin: 0; font-size: 20px; color: #2d3748;">${data.name}</h2>
+                <p style="margin: 5px 0; color: #7075db;">${data.position} · ${data.company}</p>
+                <div style="margin-top: 15px;">
+                  <p style="margin: 3px 0;">
+                    <a href="mailto:${data.email}" style="color: #2d3748; text-decoration: none;">${data.email}</a>
+                  </p>
+                  <p style="margin: 3px 0;">
+                    <a href="tel:${data.phone}" style="color: #2d3748; text-decoration: none;">${data.phone}</a>
+                  </p>
+                  <p style="margin: 3px 0;">
+                    <a href="https://${data.website}" style="color: #2d3748; text-decoration: none;">${data.website}</a>
+                  </p>
                 </div>
               </td>
             </tr>
