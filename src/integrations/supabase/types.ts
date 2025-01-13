@@ -1596,6 +1596,7 @@ export type Database = {
           user_id: string
           website: string | null
           whatsapp: string | null
+          xing: string | null
           youtube: string | null
         }
         Insert: {
@@ -1621,6 +1622,7 @@ export type Database = {
           user_id: string
           website?: string | null
           whatsapp?: string | null
+          xing?: string | null
           youtube?: string | null
         }
         Update: {
@@ -1646,6 +1648,7 @@ export type Database = {
           user_id?: string
           website?: string | null
           whatsapp?: string | null
+          xing?: string | null
           youtube?: string | null
         }
         Relationships: []
