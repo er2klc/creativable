@@ -37,10 +37,16 @@ const SignatureGenerator = () => {
         .from('user_signatures')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .order('created_at', { ascending: false })
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching signature:', error);
+        toast({
+          title: "Fehler beim Laden",
+          description: "Deine Signatur konnte nicht geladen werden.",
+          variant: "destructive",
+        });
         return null;
       }
 
@@ -162,10 +168,6 @@ const SignatureGenerator = () => {
     }
   };
 
-  useEffect(() => {
-    saveSignature();
-  }, [signatureData, selectedTemplate]);
-
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
@@ -187,6 +189,7 @@ const SignatureGenerator = () => {
             onLogoChange={handleLogoChange}
             onLogoRemove={handleLogoRemove}
             logoPreview={logoPreview}
+            onSave={saveSignature}
           />
         </Card>
 
