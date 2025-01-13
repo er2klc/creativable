@@ -16,10 +16,12 @@ export const ChatMessages = ({ messages, scrollRef }: ChatMessagesProps) => {
     }
   }, [messages]);
 
-  // Nur System-Nachrichten filtern, alle anderen anzeigen
+  // Filter out system messages, show all others
   const displayMessages = messages.filter(
     (message) => message.role !== 'system'
   );
+
+  console.log('Rendering messages:', displayMessages); // Debug log
 
   return (
     <div className="flex-1 overflow-y-auto pr-4" ref={scrollRef}>

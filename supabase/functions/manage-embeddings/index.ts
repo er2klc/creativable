@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1/dist/module/index.js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,105 +13,79 @@ serve(async (req) => {
   }
 
   try {
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const { content_type, content_id, content, team_id } = await req.json();
+    console.log('Received request:', { content_type, content_id, content, team_id });
 
-    // Get user from auth header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
+    // Validate required fields
+    if (!content_type || !content_id || !content) {
+      throw new Error('Missing required fields');
     }
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    // Create embedding
+    const embedding = await createEmbedding(content);
+    console.log('Created embedding');
 
-    if (userError || !user) {
-      console.error('User auth error:', userError);
-      throw new Error('Invalid authorization token');
+    // Store in appropriate table based on content type
+    if (content_type === 'team') {
+      await storeTeamEmbedding(content_type, content_id, content, embedding, team_id);
+    } else if (content_type === 'personal') {
+      await storePersonalEmbedding(content_type, content_id, content, embedding);
     }
 
-    // Get user's OpenAI API key from chatbot_settings
-    const { data: settings, error: settingsError } = await supabaseClient
-      .from('chatbot_settings')
-      .select('openai_api_key')
-      .eq('user_id', user.id)
-      .single();
-
-    if (settingsError || !settings?.openai_api_key) {
-      console.error('Settings error:', settingsError);
-      throw new Error('OpenAI API key not found in settings');
-    }
-
-    const { contentType, contentId, content, metadata, teamId } = await req.json();
-    
-    if (!content) {
-      throw new Error('Content is required');
-    }
-    
-    console.log('Processing content:', { contentType, contentId, teamId });
-
-    // Get embeddings from OpenAI
-    const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${settings.openai_api_key}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        input: content,
-        model: 'text-embedding-3-small'
-      }),
-    });
-
-    if (!embeddingResponse.ok) {
-      const error = await embeddingResponse.json();
-      console.error('OpenAI API error:', error);
-      throw new Error(`Failed to generate embedding: ${error.error?.message || 'Unknown error'}`);
-    }
-
-    const embeddingData = await embeddingResponse.json();
-    const embedding = embeddingData.data[0].embedding;
-
-    // Store embedding in database
-    const { data, error } = await supabaseClient
-      .from('content_embeddings')
-      .insert({
-        content_type: contentType,
-        content_id: contentId,
-        content: content,
-        embedding: embedding,
-        metadata: metadata || {},
-        team_id: teamId
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error storing embedding:', error);
-      throw error;
-    }
-
-    console.log('Successfully stored embedding for content:', contentId);
-
-    return new Response(JSON.stringify({ success: true, data }), {
+    return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Error in manage-embeddings function:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: 'Please make sure you have set up your OpenAI API key in the settings'
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    console.error('Error in manage-embeddings:', error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });
+
+async function createEmbedding(text: string) {
+  // Implementation for creating embeddings
+  return [];  // Placeholder
+}
+
+async function storeTeamEmbedding(
+  content_type: string,
+  content_id: string,
+  content: string,
+  embedding: number[],
+  team_id: string
+) {
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+
+  await supabase.from('team_content_embeddings').insert({
+    content_type,
+    content_id,
+    content,
+    embedding,
+    team_id,
+  });
+}
+
+async function storePersonalEmbedding(
+  content_type: string,
+  content_id: string,
+  content: string,
+  embedding: number[]
+) {
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+
+  await supabase.from('content_embeddings').insert({
+    content_type,
+    content_id,
+    content,
+    embedding,
+  });
+}
