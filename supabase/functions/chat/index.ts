@@ -51,7 +51,7 @@ serve(async (req) => {
     // Set up streaming chat
     const chat = new ChatOpenAI({
       openAIApiKey: apiKey,
-      modelName: "gpt-4o",
+      modelName: "gpt-4",
       streaming: true,
       temperature: 0.7,
     });
@@ -64,16 +64,18 @@ serve(async (req) => {
     const readable = new ReadableStream({
       async start(controller) {
         try {
-          let currentContent = '';
           for await (const chunk of stream) {
-            currentContent += chunk.content;
+            // Format the message according to the SSE specification
             const message = {
               id: crypto.randomUUID(),
               role: 'assistant',
-              content: currentContent,
+              content: chunk.content,
               createdAt: new Date().toISOString()
             };
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
+            
+            // Properly format the SSE data
+            const sseMessage = `data: ${JSON.stringify(message)}\n\n`;
+            controller.enqueue(encoder.encode(sseMessage));
           }
           controller.close();
         } catch (error) {
