@@ -15,18 +15,13 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log("Using CONSTANT ID approach - v2!");  // Updated log to verify new deployment
+  console.log("Using final approach with first-chunk role!");
 
   try {
-    const { messages, teamId } = await req.json();
+    const { messages } = await req.json();
     const apiKey = req.headers.get("X-OpenAI-Key");
     if (!apiKey) {
       throw new Error("OpenAI API key is required");
-    }
-
-    console.log("Processing chat request with messages:", JSON.stringify(messages));
-    if (teamId) {
-      console.log("Team ID:", teamId);
     }
 
     const chat = new ChatOpenAI({
@@ -36,46 +31,60 @@ serve(async (req) => {
       temperature: 0.7,
     });
 
+    // Rufe LangChain-Stream ab
     const langChainStream = await chat.stream(messages);
     const encoder = new TextEncoder();
 
-    // Generate one constant ID for the entire response
+    // EINE ID pro Antwort
     const responseId = "chatcmpl-" + crypto.randomUUID().slice(0, 8);
-    console.log("Generated constant response ID:", responseId);
+
     let hasEmittedContent = false;
+    let isFirstChunk = true;
 
     const readable = new ReadableStream({
       async start(controller) {
         try {
           for await (const chunk of langChainStream) {
-            // Skip empty content blocks if nothing has been emitted yet
+            // Überspringe komplett leere Tokens am Anfang
             if (!chunk.content && !hasEmittedContent) {
-              console.log("Skipping empty initial chunk");
               continue;
             }
+            // Falls chunk.content "" ist, kannst du es auch skippen
+            if (!chunk.content?.trim()) {
+              continue;
+            }
+
             hasEmittedContent = true;
 
-            const openAiStyleChunk = {
+            const delta: Record<string, string> = {
+              content: chunk.content,
+            };
+
+            // Beim allerersten Partial => "assistant"-Rolle hinzufügen
+            if (isFirstChunk) {
+              delta.role = "assistant";
+              isFirstChunk = false;
+            }
+
+            const openAiChunk = {
               id: responseId,
               object: "chat.completion.chunk",
               created: Math.floor(Date.now() / 1000),
               model: "gpt-3.5-turbo",
               choices: [
                 {
-                  delta: {
-                    content: chunk.content,
-                  },
+                  delta,
                   index: 0
                 }
               ]
             };
 
-            console.log("Sending chunk with ID:", responseId);
-            const sseMessage = `data: ${JSON.stringify(openAiStyleChunk)}\n\n`;
+            // SSE
+            const sseMessage = `data: ${JSON.stringify(openAiChunk)}\n\n`;
             controller.enqueue(encoder.encode(sseMessage));
           }
 
-          // Final chunk with finish_reason
+          // Am Ende: STOP-Chunk
           const doneChunk = {
             id: responseId,
             object: "chat.completion.chunk",
@@ -89,8 +98,6 @@ serve(async (req) => {
               }
             ]
           };
-          
-          console.log("Sending final chunk with ID:", responseId);
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(doneChunk)}\n\n`));
           controller.close();
         } catch (error) {
@@ -111,12 +118,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Error in chat function:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
   }
 });
