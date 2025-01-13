@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ChatOpenAI } from "npm:@langchain/openai";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -6,9 +5,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-openai-key',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -28,7 +29,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Query relevant content from the database directly
+    // Query relevant content from the database
     const { data: relevantContent } = await supabase
       .from('content_embeddings')
       .select('content, metadata')
@@ -65,7 +66,6 @@ serve(async (req) => {
       async start(controller) {
         try {
           for await (const chunk of stream) {
-            // Format the message according to the SSE specification
             const message = {
               id: crypto.randomUUID(),
               role: 'assistant',
@@ -73,7 +73,7 @@ serve(async (req) => {
               createdAt: new Date().toISOString()
             };
             
-            // Properly format the SSE data
+            // Properly format the SSE data with double newlines
             const sseMessage = `data: ${JSON.stringify(message)}\n\n`;
             controller.enqueue(encoder.encode(sseMessage));
           }
