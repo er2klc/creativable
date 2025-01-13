@@ -39,7 +39,7 @@ export const useChatMessages = ({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     },
-    experimental_onStreamMessage: (message) => {
+    onMessage: (message) => {
       console.log("Streaming message received:", message);
       
       setMessages((prevMessages) => {
