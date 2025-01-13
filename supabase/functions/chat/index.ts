@@ -6,8 +6,7 @@ import { ChatOpenAI } from "npm:@langchain/openai";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-openai-key",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-openai-key",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -15,6 +14,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  console.log("Using CONSTANT ID approach!");  // <--- Eindeutiger Log
 
   try {
     const { messages, teamId } = await req.json();
@@ -28,7 +29,7 @@ serve(async (req) => {
       console.log("Team ID:", teamId);
     }
 
-    // 1) Erzeuge eine ChatOpenAI-Instanz mit streaming
+    // ChatOpenAI mit streaming aktiv
     const chat = new ChatOpenAI({
       openAIApiKey: apiKey,
       modelName: "gpt-4o-mini",
@@ -36,38 +37,33 @@ serve(async (req) => {
       temperature: 0.7,
     });
 
-    // Starte den LangChain-Stream
+    // Hole asynchrone Tokens
     const langChainStream = await chat.stream(messages);
     const encoder = new TextEncoder();
 
-    // **Erzeuge eine konstante ID** für alle Partials
+    // Eine feste ID pro Komplette-Antwort
     const responseId = crypto.randomUUID();
+    let hasEmittedContent = false;
 
     const readable = new ReadableStream({
       async start(controller) {
         try {
-          let hasEmittedContent = false;
-
           for await (const chunk of langChainStream) {
-            // chunk.content könnte am Anfang leer sein
+            // Überspringe leere content-Blöcke, wenn noch nichts gesendet wurde
             if (!chunk.content && !hasEmittedContent) {
-              // Falls das erste Token leer ist, kann man es skippen.
-              // Optional: Wenn du es nicht skippen willst, lass das if einfach weg.
               continue;
             }
             hasEmittedContent = true;
 
-            // 2) Baue den SSE-Chunk
             const openAiStyleChunk = {
-              // **immer dieselbe** ID, nicht pro Token neu
-              id: responseId, 
+              // immer dieselbe ID!
+              id: responseId,
               object: "chat.completion.chunk",
               created: Math.floor(Date.now() / 1000),
               model: "gpt-4o-mini",
               choices: [
                 {
                   delta: {
-                    // Partial-Token
                     content: chunk.content,
                   },
                   index: 0,
@@ -80,8 +76,9 @@ serve(async (req) => {
             controller.enqueue(encoder.encode(sseMessage));
           }
 
-          // 3) Abschluss-Chunk mit finish_reason = "stop"
+          // Abschluss-Chunk
           const doneChunk = {
+            // wieder dieselbe ID
             id: responseId,
             object: "chat.completion.chunk",
             created: Math.floor(Date.now() / 1000),
@@ -94,8 +91,7 @@ serve(async (req) => {
               },
             ],
           };
-          const doneMessage = `data: ${JSON.stringify(doneChunk)}\n\n`;
-          controller.enqueue(encoder.encode(doneMessage));
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(doneChunk)}\n\n`));
           controller.close();
         } catch (error) {
           console.error("Error in stream processing:", error);
@@ -112,11 +108,15 @@ serve(async (req) => {
         Connection: "keep-alive",
       },
     });
+
   } catch (error) {
     console.error("Error in chat function:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
   }
 });
