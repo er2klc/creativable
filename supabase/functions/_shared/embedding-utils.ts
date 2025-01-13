@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.3.0'
 
 // Initialize OpenAI
-const initOpenAI = (apiKey: string) => {
+export const initOpenAI = (apiKey: string) => {
   const configuration = new Configuration({ apiKey })
   return new OpenAIApi(configuration)
 }
