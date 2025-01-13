@@ -6,13 +6,15 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { TeamCardImage } from "./TeamCardImage";
 import { TeamCardContent } from "./TeamCardContent";
 
-interface TeamCardProps {
-  team: Tables<"teams"> & {
-    stats?: {
-      totalMembers: number;
-      admins: number;
-    };
+interface TeamWithStats extends Tables<"teams"> {
+  stats?: {
+    totalMembers: number;
+    admins: number;
   };
+}
+
+export interface TeamCardProps {
+  team: TeamWithStats;
   onDelete: (id: string) => void;
   onLeave: (id: string) => void;
   onCopyJoinCode: (code: string) => void;
