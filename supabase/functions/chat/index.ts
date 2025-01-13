@@ -62,12 +62,12 @@ serve(async (req) => {
             const embeddingData = await embeddingResponse.json();
             const embedding = embeddingData.data[0].embedding;
 
-            // Search for similar content in vector database
+            // Search for similar content with correct parameter order
             const { data: similarContent, error } = await supabase.rpc('match_content', {
               query_embedding: embedding,
               match_threshold: 0.5,
               match_count: 5,
-              content_type: 'personal'
+              search_content_type: 'personal'
             });
 
             if (error) {
@@ -145,12 +145,13 @@ serve(async (req) => {
                   const content = json.choices[0]?.delta?.content || '';
                   if (content) {
                     currentContent += content;
-                    await writer.write(encoder.encode(`data: ${JSON.stringify({
+                    const message = {
                       id: crypto.randomUUID(),
                       role: 'assistant',
                       content: currentContent,
                       createdAt: new Date().toISOString()
-                    })}\n\n`));
+                    };
+                    await writer.write(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
                   }
                 } catch (error) {
                   console.error('Error parsing chunk:', error);
