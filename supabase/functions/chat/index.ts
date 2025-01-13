@@ -90,7 +90,6 @@ serve(async (req) => {
                       content: currentContent,
                       createdAt: new Date().toISOString()
                     };
-                    console.log('Streaming message:', message);
                     await writer.write(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
                   }
                 } catch (error) {
