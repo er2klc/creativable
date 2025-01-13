@@ -62,7 +62,6 @@ serve(async (req) => {
             const embeddingData = await embeddingResponse.json();
             const embedding = embeddingData.data[0].embedding;
 
-            // Search for similar content with correct parameter order
             const { data: similarContent, error } = await supabase.rpc('match_content', {
               query_embedding: embedding,
               match_threshold: 0.5,
