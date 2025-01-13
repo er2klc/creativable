@@ -65,7 +65,7 @@ serve(async (req) => {
             const { done, value } = await reader.read();
             
             if (done) {
-              console.log('Stream complete, final content:', currentContent);
+              console.log('Stream complete');
               await writer.close();
               break;
             }
