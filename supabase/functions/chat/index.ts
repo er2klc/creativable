@@ -15,14 +15,12 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log("Using final approach with first-chunk role!");
+  console.log("OpenAI-like role separation!");
 
   try {
     const { messages } = await req.json();
     const apiKey = req.headers.get("X-OpenAI-Key");
-    if (!apiKey) {
-      throw new Error("OpenAI API key is required");
-    }
+    if (!apiKey) throw new Error("OpenAI API key is required");
 
     const chat = new ChatOpenAI({
       openAIApiKey: apiKey,
@@ -31,60 +29,73 @@ serve(async (req) => {
       temperature: 0.7,
     });
 
-    // Rufe LangChain-Stream ab
     const langChainStream = await chat.stream(messages);
     const encoder = new TextEncoder();
 
-    // EINE ID pro Antwort
+    // One consistent ID for the entire response
     const responseId = "chatcmpl-" + crypto.randomUUID().slice(0, 8);
 
-    let hasEmittedContent = false;
+    let hasEmittedAnything = false;
     let isFirstChunk = true;
 
     const readable = new ReadableStream({
       async start(controller) {
         try {
           for await (const chunk of langChainStream) {
-            // Überspringe komplett leere Tokens am Anfang
-            if (!chunk.content && !hasEmittedContent) {
-              continue;
-            }
-            // Falls chunk.content "" ist, kannst du es auch skippen
-            if (!chunk.content?.trim()) {
+            // Skip empty chunks at the start
+            if (!chunk.content && !hasEmittedAnything) {
               continue;
             }
 
-            hasEmittedContent = true;
-
-            const delta: Record<string, string> = {
-              content: chunk.content,
-            };
-
-            // Beim allerersten Partial => "assistant"-Rolle hinzufügen
+            // Step 1: For the first chunk, only send the role
             if (isFirstChunk) {
-              delta.role = "assistant";
               isFirstChunk = false;
+              hasEmittedAnything = true;
+
+              const firstChunk = {
+                id: responseId,
+                object: "chat.completion.chunk",
+                created: Math.floor(Date.now() / 1000),
+                model: "gpt-3.5-turbo",
+                choices: [
+                  {
+                    delta: {
+                      role: "assistant"
+                    },
+                    index: 0
+                  }
+                ]
+              };
+
+              const firstSse = `data: ${JSON.stringify(firstChunk)}\n\n`;
+              controller.enqueue(encoder.encode(firstSse));
             }
 
-            const openAiChunk = {
-              id: responseId,
-              object: "chat.completion.chunk",
-              created: Math.floor(Date.now() / 1000),
-              model: "gpt-3.5-turbo",
-              choices: [
-                {
-                  delta,
-                  index: 0
-                }
-              ]
-            };
+            // Step 2: Then send content-only chunks
+            if (chunk.content?.trim()) {
+              hasEmittedAnything = true;
 
-            // SSE
-            const sseMessage = `data: ${JSON.stringify(openAiChunk)}\n\n`;
-            controller.enqueue(encoder.encode(sseMessage));
+              const nextChunk = {
+                id: responseId,
+                object: "chat.completion.chunk",
+                created: Math.floor(Date.now() / 1000),
+                model: "gpt-3.5-turbo",
+                choices: [
+                  {
+                    delta: {
+                      content: chunk.content
+                    },
+                    index: 0
+                  }
+                ]
+              };
+
+              const sse = `data: ${JSON.stringify(nextChunk)}\n\n`;
+              controller.enqueue(encoder.encode(sse));
+            }
           }
 
-          // Am Ende: STOP-Chunk
+          // Final chunk with finish_reason
           const doneChunk = {
             id: responseId,
             object: "chat.completion.chunk",
