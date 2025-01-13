@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ChatButton } from "@/components/dashboard/ChatButton";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import { publicRoutes, protectedRoutes } from "@/config/routes";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 const App = () => {
   const { isAuthenticated } = useAuth();
@@ -20,7 +21,15 @@ const App = () => {
         
         {/* Protected Routes */}
         {protectedRoutes.map(route => (
-          <Route key={route.path} path={route.path} element={route.element} />
+          <Route 
+            key={route.path} 
+            path={route.path} 
+            element={
+              <ProtectedRoute>
+                {route.element}
+              </ProtectedRoute>
+            } 
+          />
         ))}
 
         {/* Catch all route - redirect to dashboard if authenticated, otherwise to auth */}
