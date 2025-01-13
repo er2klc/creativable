@@ -22,19 +22,15 @@ const App = () => {
         ))}
         
         {/* Protected Routes */}
-        {protectedRoutes.map(route => (
-          <Route 
-            key={route.path} 
-            path={route.path} 
-            element={
-              <ProtectedRoute>
-                <AppLayout>
-                  {route.element}
-                </AppLayout>
-              </ProtectedRoute>
-            } 
-          />
-        ))}
+        <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          {protectedRoutes.map(route => (
+            <Route 
+              key={route.path} 
+              path={route.path} 
+              element={route.element}
+            />
+          ))}
+        </Route>
 
         {/* Catch all route - redirect to dashboard if authenticated, otherwise to auth */}
         <Route path="*" element={
