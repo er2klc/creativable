@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { SignatureData, Template } from "@/types/signature";
 import { useState, useRef } from "react";
-import { Check, Copy, Mail } from "lucide-react";
+import { Check, Copy, Mail, Globe, Phone, MapPin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface SignaturePreviewProps {
@@ -119,6 +119,8 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
 
     const contactStyle = `color: ${data.textColor || '#2d3748'}; text-decoration: none; display: flex; align-items: center; gap: 8px; margin: 5px 0;`;
     const logoStyle = 'width: 100px; height: 100px; object-fit: contain;';
+    const iconStyle = `width: 16px; height: 16px; color: ${data.textColor || '#2d3748'};`;
+    const positionStyle = `color: ${data.themeColor || '#7075db'}; margin: 5px 0; font-size: 16px;`;
     const borderColor = data.themeColor || '#7075db';
 
     switch (template) {
@@ -130,16 +132,21 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
                 ${data.logoUrl ? `<div style="flex-shrink: 0; width: 100px; height: 100px;"><img src="${data.logoUrl}" style="${logoStyle}"/></div>` : ''}
                 <div style="flex-grow: 1; border-left: 2px solid ${borderColor}; padding-left: 20px;">
                   <h2 style="margin: 0; color: ${data.textColor || '#2d3748'}; font-size: 24px; font-weight: 600;">${data.name}</h2>
-                  <p style="margin: 5px 0; color: ${data.themeColor || '#7075db'}; font-size: 16px;">${data.position}</p>
+                  <p style="${positionStyle}">${data.position}</p>
                   <p style="margin: 5px 0; color: ${data.textColor || '#4a5568'}; font-weight: 500;">${data.company}</p>
-                  <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-                    <div>
-                      <a href="mailto:${data.email}" style="${contactStyle}">${data.email}</a>
-                      <a href="tel:${data.phone}" style="${contactStyle}">${data.phone}</a>
-                    </div>
-                    <div>
-                      <a href="${formatSocialUrl(data.website, 'website')}" style="${contactStyle}" target="_blank">${data.website}</a>
-                    </div>
+                  <div style="margin-top: 10px;">
+                    <a href="mailto:${data.email}" style="${contactStyle}">
+                      <svg xmlns="http://www.w3.org/2000/svg" style="${iconStyle}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                      ${data.email}
+                    </a>
+                    <a href="tel:${data.phone}" style="${contactStyle}">
+                      <svg xmlns="http://www.w3.org/2000/svg" style="${iconStyle}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                      ${data.phone}
+                    </a>
+                    <a href="${data.website}" style="${contactStyle}" target="_blank">
+                      <svg xmlns="http://www.w3.org/2000/svg" style="${iconStyle}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                      ${data.website}
+                    </a>
                   </div>
                   <div style="margin-top: 15px; display: flex; gap: 12px;">
                     ${socialLinks.map(({ url, platform }) => `
@@ -160,18 +167,23 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
             <tr>
               <td style="display: flex; align-items: start; gap: 20px;">
                 ${data.logoUrl ? `<div style="flex-shrink: 0; width: 100px; height: 100px;"><img src="${data.logoUrl}" style="${logoStyle}"/></div>` : ''}
-                <div style="flex-grow: 1; padding-left: 20px; border-left: 1px solid ${data.themeColor || '#7075db'};">
+                <div style="flex-grow: 1; padding-left: 20px; border-left: 1px solid ${borderColor};">
                   <h2 style="margin: 0; font-size: 22px; color: ${data.textColor || '#2d3748'};">${data.name}</h2>
-                  <p style="margin: 5px 0; color: ${data.themeColor || '#7075db'};">${data.position}</p>
+                  <p style="${positionStyle}">${data.position}</p>
                   <p style="margin: 5px 0; font-weight: 500;">${data.company}</p>
-                  <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-                    <div>
-                      <a href="mailto:${data.email}" style="${contactStyle}">${data.email}</a>
-                      <a href="tel:${data.phone}" style="${contactStyle}">${data.phone}</a>
-                    </div>
-                    <div>
-                      <a href="${formatSocialUrl(data.website, 'website')}" style="${contactStyle}" target="_blank">${data.website}</a>
-                    </div>
+                  <div style="margin-top: 10px;">
+                    <a href="mailto:${data.email}" style="${contactStyle}">
+                      <svg xmlns="http://www.w3.org/2000/svg" style="${iconStyle}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                      ${data.email}
+                    </a>
+                    <a href="tel:${data.phone}" style="${contactStyle}">
+                      <svg xmlns="http://www.w3.org/2000/svg" style="${iconStyle}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                      ${data.phone}
+                    </a>
+                    <a href="${data.website}" style="${contactStyle}" target="_blank">
+                      <svg xmlns="http://www.w3.org/2000/svg" style="${iconStyle}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                      ${data.website}
+                    </a>
                   </div>
                   <div style="margin-top: 15px; display: flex; gap: 12px;">
                     ${socialLinks.map(({ url, platform }) => `
@@ -193,15 +205,20 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
                 ${data.logoUrl ? `<div style="flex-shrink: 0; width: 100px; height: 100px;"><img src="${data.logoUrl}" style="${logoStyle}"/></div>` : ''}
                 <div style="flex-grow: 1;">
                   <h2 style="margin: 0; font-size: 20px; color: ${data.textColor || '#2d3748'};">${data.name}</h2>
-                  <p style="margin: 5px 0; color: ${data.themeColor || '#7075db'};">${data.position} · ${data.company}</p>
-                  <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-                    <div>
-                      <a href="mailto:${data.email}" style="${contactStyle}">${data.email}</a>
-                      <a href="tel:${data.phone}" style="${contactStyle}">${data.phone}</a>
-                    </div>
-                    <div>
-                      <a href="${formatSocialUrl(data.website, 'website')}" style="${contactStyle}" target="_blank">${data.website}</a>
-                    </div>
+                  <p style="${positionStyle}">${data.position} · ${data.company}</p>
+                  <div style="margin-top: 10px;">
+                    <a href="mailto:${data.email}" style="${contactStyle}">
+                      <svg xmlns="http://www.w3.org/2000/svg" style="${iconStyle}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                      ${data.email}
+                    </a>
+                    <a href="tel:${data.phone}" style="${contactStyle}">
+                      <svg xmlns="http://www.w3.org/2000/svg" style="${iconStyle}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                      ${data.phone}
+                    </a>
+                    <a href="${data.website}" style="${contactStyle}" target="_blank">
+                      <svg xmlns="http://www.w3.org/2000/svg" style="${iconStyle}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                      ${data.website}
+                    </a>
                   </div>
                   <div style="margin-top: 15px; display: flex; gap: 12px;">
                     ${socialLinks.map(({ url, platform }) => `
