@@ -32,6 +32,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
   const [isSessionChecked, setIsSessionChecked] = useState(false);
   const [hasSession, setHasSession] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     let mounted = true;
@@ -47,6 +48,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
             hasSession: hasValidSession, 
             isAuthenticated, 
             userId: session?.user?.id,
+            path: location.pathname,
             timestamp: new Date().toISOString()
           });
         }
@@ -67,6 +69,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
           event, 
           hasSession: hasValidSession,
           userId: session?.user?.id,
+          path: location.pathname,
           timestamp: new Date().toISOString()
         });
       }
@@ -78,14 +81,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, location.pathname]);
 
   if (isLoading || !isSessionChecked) {
     return null;
   }
 
   if (!isAuthenticated && !hasSession) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth" replace state={{ from: location }} />;
   }
 
   return <>{children}</>;
@@ -140,68 +143,108 @@ const App = () => {
   return (
     <AppProvider>
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/register" element={<Register />} />
         <Route path="/news" element={<News />} />
         <Route path="/support" element={<Support />} />
-        <Route path="/changelog" element={<AppLayout><Changelog /></AppLayout>} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/auth/data-deletion/instagram" element={<InstagramDataDeletion />} />
+        <Route path="/auth/callback/linkedin" element={<LinkedInCallback />} />
+        <Route path="/auth/callback/instagram" element={<InstagramCallback />} />
         
         {/* Protected Routes */}
         <Route path="/dashboard" element={
           <ProtectedRoute>
-            <AppLayout><Dashboard /></AppLayout>
+            <AppLayout>
+              <Dashboard />
+            </AppLayout>
           </ProtectedRoute>
         } />
         <Route path="/admin" element={
           <ProtectedRoute>
-            <AppLayout><Admin /></AppLayout>
+            <AppLayout>
+              <Admin />
+            </AppLayout>
           </ProtectedRoute>
         } />
         <Route path="/calendar" element={
           <ProtectedRoute>
-            <AppLayout><Calendar /></AppLayout>
+            <AppLayout>
+              <Calendar />
+            </AppLayout>
           </ProtectedRoute>
         } />
         <Route path="/todo" element={
           <ProtectedRoute>
-            <AppLayout><TodoList /></AppLayout>
+            <AppLayout>
+              <TodoList />
+            </AppLayout>
           </ProtectedRoute>
         } />
         <Route path="/unity" element={
           <ProtectedRoute>
-            <AppLayout><Unity /></AppLayout>
+            <AppLayout>
+              <Unity />
+            </AppLayout>
           </ProtectedRoute>
         } />
         <Route path="/unity/team/:teamSlug" element={
           <ProtectedRoute>
-            <AppLayout><TeamDetail /></AppLayout>
+            <AppLayout>
+              <TeamDetail />
+            </AppLayout>
           </ProtectedRoute>
         } />
         <Route path="/elevate" element={
           <ProtectedRoute>
-            <AppLayout><Elevate /></AppLayout>
+            <AppLayout>
+              <Elevate />
+            </AppLayout>
           </ProtectedRoute>
         } />
         <Route path="/elevate/modul/:moduleSlug" element={
           <ProtectedRoute>
-            <AppLayout><PlatformDetail /></AppLayout>
+            <AppLayout>
+              <PlatformDetail />
+            </AppLayout>
           </ProtectedRoute>
         } />
         <Route path="/leads" element={
           <ProtectedRoute>
-            <AppLayout><Leads /></AppLayout>
+            <AppLayout>
+              <Leads />
+            </AppLayout>
           </ProtectedRoute>
         } />
         <Route path="/messages" element={
           <ProtectedRoute>
-            <AppLayout><Messages /></AppLayout>
+            <AppLayout>
+              <Messages />
+            </AppLayout>
           </ProtectedRoute>
         } />
         <Route path="/settings" element={
           <ProtectedRoute>
-            <AppLayout><Settings /></AppLayout>
+            <AppLayout>
+              <Settings />
+            </AppLayout>
           </ProtectedRoute>
+        } />
+        <Route path="/changelog" element={
+          <ProtectedRoute>
+            <AppLayout>
+              <Changelog />
+            </AppLayout>
+          </ProtectedRoute>
+        } />
+
+        {/* Catch all route - redirect to dashboard if authenticated, otherwise to auth */}
+        <Route path="*" element={
+          isAuthenticated ? 
+            <Navigate to="/dashboard" replace /> : 
+            <Navigate to="/auth" replace />
         } />
       </Routes>
       {showChat && <ChatButton />}
