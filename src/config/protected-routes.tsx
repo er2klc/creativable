@@ -11,6 +11,7 @@ import Messages from "@/pages/Messages";
 import Settings from "@/pages/Settings";
 import Changelog from "@/pages/Changelog";
 import Tools from "@/pages/Tools";
+import SignatureGenerator from "@/pages/SignatureGenerator";
 
 export const protectedRoutes = [
   { path: "/dashboard", element: <Dashboard /> },
@@ -25,5 +26,6 @@ export const protectedRoutes = [
   { path: "/messages", element: <Messages /> },
   { path: "/settings", element: <Settings /> },
   { path: "/changelog", element: <Changelog /> },
-  { path: "/tools", element: <Tools /> }
+  { path: "/tools", element: <Tools /> },
+  { path: "/tools/signature", element: <SignatureGenerator /> }
 ];
