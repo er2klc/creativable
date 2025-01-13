@@ -1,11 +1,13 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ChatOpenAI } from "npm:@langchain/openai";
-import { HumanMessage, SystemMessage } from "npm:@langchain/core/messages";
+import { SupabaseVectorStore } from "npm:@langchain/community/vectorstores/supabase";
+import { OpenAIEmbeddings } from "npm:@langchain/openai";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-openai-key',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req) => {
@@ -14,36 +16,42 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, teamId, userId } = await req.json();
+    const { messages, teamId } = await req.json();
     const apiKey = req.headers.get('X-OpenAI-Key');
-    const authHeader = req.headers.get('Authorization');
-
-    if (!authHeader) {
-      throw new Error('Missing auth header');
-    }
-
+    
     if (!apiKey) {
-      throw new Error('Missing OpenAI API key');
+      throw new Error('OpenAI API key is required');
     }
 
-    console.log('Starting chat request with messages:', JSON.stringify(messages));
+    console.log('Processing chat request with messages:', JSON.stringify(messages));
 
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Initialize vector store
+    const vectorStore = new SupabaseVectorStore(
+      new OpenAIEmbeddings({ openAIApiKey: apiKey }),
+      {
+        client: supabase,
+        tableName: 'content_embeddings',
+        queryName: 'match_content'
+      }
+    );
+
+    // Set up streaming chat
     const chat = new ChatOpenAI({
       openAIApiKey: apiKey,
+      modelName: "gpt-4o",
       streaming: true,
-      modelName: "gpt-4",
       temperature: 0.7,
     });
 
-    const formattedMessages = messages.map((msg: any) => {
-      if (msg.role === 'system') {
-        return new SystemMessage(msg.content);
-      }
-      return new HumanMessage(msg.content);
-    });
+    // Create response stream
+    const stream = await chat.stream(messages);
 
-    const stream = await chat.stream(formattedMessages);
-
+    // Set up streaming response
     const encoder = new TextEncoder();
     const readable = new ReadableStream({
       async start(controller) {
