@@ -1,5 +1,6 @@
 import { useChat } from "ai/react";
 import { Message } from "ai";
+import { toast } from "sonner";
 
 interface UseChatMessagesProps {
   sessionToken: string | null;
@@ -36,6 +37,7 @@ export const useChatMessages = ({
     onResponse: (response) => {
       console.log("Chat response received:", response.status);
       if (!response.ok) {
+        toast.error("Fehler beim Senden der Nachricht");
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     },
@@ -44,6 +46,7 @@ export const useChatMessages = ({
     },
     onError: (error) => {
       console.error("Chat error:", error);
+      toast.error("Fehler beim Senden der Nachricht");
     }
   });
 
@@ -61,7 +64,12 @@ export const useChatMessages = ({
     messages,
     input,
     handleInputChange,
-    handleSubmit,
+    handleSubmit: (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!input.trim()) return;
+      
+      handleSubmit(e);
+    },
     setMessages,
     resetMessages
   };

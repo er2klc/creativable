@@ -15,8 +15,9 @@ export const ChatInput = ({ input, handleInputChange, handleSubmit }: ChatInputP
         placeholder="Schreibe eine Nachricht..."
         value={input}
         onChange={handleInputChange}
+        className="flex-1"
       />
-      <Button type="submit" size="icon">
+      <Button type="submit" size="icon" disabled={!input.trim()}>
         <SendHorizontal className="h-4 w-4" />
       </Button>
     </form>

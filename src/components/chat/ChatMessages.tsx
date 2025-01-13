@@ -16,10 +16,17 @@ export const ChatMessages = ({ messages, scrollRef }: ChatMessagesProps) => {
     }
   }, [messages]);
 
-  // Filter out system messages
+  // Filter out system messages and log the messages we're actually displaying
   const displayMessages = messages.filter((m) => m.role !== "system");
+  console.log("Messages to display:", displayMessages);
 
-  console.log("Displaying messages:", displayMessages);
+  if (displayMessages.length === 0) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-muted-foreground">Keine Nachrichten vorhanden</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-y-auto pr-4" ref={scrollRef}>
