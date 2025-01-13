@@ -2,13 +2,9 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const useChatSetup = (
-  open: boolean, 
-  systemMessage: string
-) => {
+export const useChatSetup = (open: boolean) => {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string>("");
   const [isReady, setIsReady] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [currentTeamId, setCurrentTeamId] = useState<string | null>(null);
@@ -36,18 +32,6 @@ export const useChatSetup = (
         } else if (teamMembers) {
           setCurrentTeamId(teamMembers.team_id);
           console.log("Set current team ID:", teamMembers.team_id);
-        }
-
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("display_name")
-          .eq("id", session.user.id)
-          .single();
-
-        if (profileError) {
-          console.error("Error fetching profile:", profileError);
-        } else if (profile?.display_name) {
-          setUserName(profile.display_name.split(" ")[0]);
         }
 
         const { data: settings, error: settingsError } = await supabase
@@ -80,7 +64,7 @@ export const useChatSetup = (
     if (open) {
       setupChat();
     }
-  }, [open, systemMessage]);
+  }, [open]);
 
   return {
     sessionToken,

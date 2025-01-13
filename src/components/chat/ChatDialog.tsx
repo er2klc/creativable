@@ -1,12 +1,11 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useChat } from "ai/react";
 import { useRef } from "react";
 import { useChatContext } from "@/hooks/use-chat-context";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
 import { ChatInput } from "./ChatInput";
 import { useChatSetup } from "./hooks/useChatSetup";
-import { useChatConfig } from "./hooks/useChatConfig";
+import { useChatMessages } from "./hooks/useChatMessages";
 
 interface ChatDialogProps {
   open: boolean;
@@ -23,36 +22,21 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     isReady,
     userId,
     currentTeamId,
-  } = useChatSetup(open, systemMessage);
+  } = useChatSetup(open);
 
-  const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
-    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
-    headers: {
-      Authorization: `Bearer ${sessionToken}`,
-      'X-OpenAI-Key': apiKey || '',
-    },
-    body: {
-      teamId: currentTeamId,
-      userId: userId
-    },
-    initialMessages: [
-      {
-        id: "system",
-        role: "system" as const,
-        content: systemMessage,
-      }
-    ]
-  });
-
-  const chatConfig = useChatConfig(
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    resetMessages
+  } = useChatMessages({
     sessionToken,
     apiKey,
     userId,
     currentTeamId,
-    systemMessage,
-    scrollRef,
-    messages
-  );
+    systemMessage
+  });
 
   const handleDialogClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -60,13 +44,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
   const handleClose = () => {
     onOpenChange(false);
-    setMessages([
-      {
-        id: "system",
-        role: "system" as const,
-        content: systemMessage,
-      }
-    ]);
+    resetMessages();
   };
 
   if (!isReady) {

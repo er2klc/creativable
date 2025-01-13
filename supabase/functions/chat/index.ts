@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, teamId, platformId, currentTeamId, userId } = await req.json();
+    const { messages, teamId, userId } = await req.json();
     const apiKey = req.headers.get('X-OpenAI-Key');
     const authHeader = req.headers.get('Authorization');
 
@@ -24,65 +24,6 @@ serve(async (req) => {
 
     if (!apiKey) {
       throw new Error('Missing OpenAI API key');
-    }
-
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Missing Supabase environment variables');
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    let contextMessages = [];
-    if (messages?.length > 0) {
-      const userMessage = messages[messages.length - 1];
-      if (userMessage.role === 'user') {
-        console.log('Processing message for embeddings:', userMessage.content);
-        
-        try {
-          if (typeof userMessage.content === 'string' && userMessage.content.trim().length > 0) {
-            const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                input: userMessage.content,
-                model: 'text-embedding-3-small'
-              })
-            });
-
-            if (!embeddingResponse.ok) {
-              throw new Error('Failed to generate embeddings');
-            }
-
-            const embeddingData = await embeddingResponse.json();
-            const embedding = embeddingData.data[0].embedding;
-
-            const { data: similarContent, error } = await supabase.rpc('match_content', {
-              query_embedding: embedding,
-              match_threshold: 0.5,
-              match_count: 5,
-              search_content_type: 'personal'
-            });
-
-            if (error) {
-              console.error('Error in similarity search:', error);
-            } else if (similarContent?.length > 0) {
-              console.log('Found similar content:', similarContent);
-              contextMessages = similarContent.map(item => ({
-                role: 'system',
-                content: `Related context: ${item.content}`
-              }));
-            }
-          }
-        } catch (error) {
-          console.error('Error in embeddings process:', error);
-        }
-      }
     }
 
     const encoder = new TextEncoder();
@@ -98,11 +39,7 @@ serve(async (req) => {
         method: 'POST',
         body: JSON.stringify({
           model: 'gpt-4o-mini',
-          messages: [
-            ...messages.slice(0, -1),
-            ...contextMessages,
-            messages[messages.length - 1]
-          ],
+          messages: messages,
           stream: true,
         }),
       });
