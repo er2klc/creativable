@@ -11,47 +11,72 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Body aus dem Request auslesen
     const { messages } = await req.json();
+
+    // OpenAI-API-Key aus Header holen
     const apiKey = req.headers.get("X-OpenAI-Key");
     if (!apiKey) {
       throw new Error("OpenAI API key is required");
     }
 
-    // IMPORTANT: streaming = false
+    // ChatOpenAI erstellen - streaming = false
     const chat = new ChatOpenAI({
       openAIApiKey: apiKey,
-      modelName: "gpt-4o-mini",
-      streaming: false,   // <= Streaming aus
+      modelName: "gpt-4o-mini", // Dein gewünschtes Model (laut deinem Code)
+      streaming: false,         // <--- KEIN Streaming
       temperature: 0.7,
     });
 
-    // Ruf das Modell einfach ohne Stream auf:
+    // Wir rufen das Modell synchron (nicht gestreamt) auf
     const response = await chat.call(messages);
 
-    // Bau ein einfaches JSON, das eine "fertige" Antwort enthält
-    const jsonResponse = {
-      id: "chatcmpl-" + crypto.randomUUID().slice(0, 8),
+    // => response.text enthält die Antwort des Modells als String
+
+    // Jetzt bauen wir ein JSON, das an das Beispiel von OpenAI angelehnt ist
+    const fullResponse = {
+      id: "chatcmpl-" + crypto.randomUUID().slice(0, 6), // z.B. "chatcmpl-123abc"
       object: "chat.completion",
       created: Math.floor(Date.now() / 1000),
-      model: "gpt-4o-mini",
+      model: "gpt-4o-mini",  // oder z.B. "gpt-4o-2024-08-06"
       choices: [
         {
+          index: 0,
           message: {
             role: "assistant",
             content: response.text,
+            // Bei OpenAI-Beispielen steht hier "refusal": null,
+            // falls es um Policy-Verweigerungen o.Ä. geht.
+            refusal: null,
           },
+          logprobs: null,
           finish_reason: "stop",
         },
       ],
+      usage: {
+        prompt_tokens: 0, // Nur Platzhalter
+        completion_tokens: 0, // Nur Platzhalter
+        total_tokens: 0, // Nur Platzhalter
+        prompt_tokens_details: {
+          cached_tokens: 0,
+        },
+        completion_tokens_details: {
+          reasoning_tokens: 0,
+          accepted_prediction_tokens: 0,
+          rejected_prediction_tokens: 0,
+        },
+      },
+      system_fingerprint: "fp_" + crypto.randomUUID().slice(0, 5),
     };
 
-    // Sende diese fertige Antwort OHNE SSE an den Client
-    return new Response(JSON.stringify(jsonResponse), {
+    // Diesen JSON-Response senden wir jetzt ohne SSE
+    return new Response(JSON.stringify(fullResponse), {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/json",
@@ -61,7 +86,10 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error in chat function:", error);
     return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+      },
       status: 500,
     });
   }
