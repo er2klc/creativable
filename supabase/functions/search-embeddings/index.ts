@@ -36,14 +36,14 @@ serve(async (req) => {
     const embeddingData = await embeddingResponse.json();
     const embedding = embeddingData.data[0].embedding;
 
-    console.log('Calling match_content with parameters:', {
-      match_count: 10,
-      match_threshold: 0.7,
+    console.log('Calling match_content with parameters in correct order:', {
       query_embedding: embedding,
+      match_threshold: 0.7,
+      match_count: 10,
       search_content_type: contentType
     });
 
-    // Call match_content with parameters in the correct order
+    // Call match_content with parameters in the EXACT order as defined in the function
     const { data: matchResults, error } = await supabase.rpc('match_content', {
       query_embedding: embedding,
       match_threshold: 0.7,
