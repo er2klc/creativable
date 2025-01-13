@@ -81,11 +81,14 @@ export function MobileMenu() {
       >
         <div className="flex flex-col h-[90vh] bg-[#111111] overflow-y-auto">
           <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
-            <img 
-              src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
-              alt="Logo" 
-              className="h-8 w-8"
-            />
+            <div className="flex items-center gap-2">
+              <img 
+                src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
+                alt="Logo" 
+                className="h-8 w-8"
+              />
+              <span className="text-sm text-white font-light">creativable</span>
+            </div>
             <Button 
               variant="ghost" 
               size="icon" 
