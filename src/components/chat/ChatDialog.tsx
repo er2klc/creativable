@@ -18,7 +18,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const { systemMessage } = useChatContext();
 
   const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
-    api: '',
+    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
     initialMessages: [
       {
         id: "system",
