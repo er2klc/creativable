@@ -29,12 +29,12 @@ export function MobileMenu() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden">
+        <Button variant="ghost" size="icon" className="md:hidden text-white">
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-full p-0">
-        <div className="flex flex-col h-full bg-sidebar">
+        <div className="flex flex-col h-full bg-[#1A1F2C]">
           <div className="p-4 border-b border-sidebar-border">
             <img 
               src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
@@ -53,7 +53,7 @@ export function MobileMenu() {
                       "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                       location.pathname === item.path
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "text-sidebar-foreground"
+                        : "text-white"
                     )}
                   >
                     {item.name}
