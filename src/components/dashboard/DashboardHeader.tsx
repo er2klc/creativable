@@ -95,25 +95,25 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
   };
 
   return (
-    <div className="flex flex-col gap-4 mb-8">
-      <div className="flex justify-between items-center">
+    <div className="flex flex-col gap-4 mb-4 md:mb-8">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
             Willkommen, {displayName}
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-sm md:text-base text-muted-foreground mt-1">
             Hier ist Ihr aktueller Überblick
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <Button onClick={handleSignOut} variant="outline">
+          <Button onClick={handleSignOut} variant="outline" size="sm" className="w-full md:w-auto">
             Abmelden
           </Button>
         </div>
       </div>
       {dailyQuote && (
-        <div className="bg-primary/5 p-4 rounded-lg">
-          <p className="text-lg text-primary italic text-center">
+        <div className="bg-primary/5 p-3 md:p-4 rounded-lg">
+          <p className="text-base md:text-lg text-primary italic text-center">
             "{dailyQuote}"
           </p>
         </div>

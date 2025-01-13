@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { MobileMenu } from "./MobileMenu";
 
 interface MainContentProps {
   children: React.ReactNode;
@@ -7,8 +8,17 @@ interface MainContentProps {
 
 export const MainContent = ({ children, className }: MainContentProps) => {
   return (
-    <main className={cn("flex-1 p-8", className)}>
-      <div className="max-w-7xl mx-auto">
+    <main className={cn("flex-1", className)}>
+      <div className="sticky top-0 z-50 flex items-center justify-between bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-2 border-b md:hidden">
+        <MobileMenu />
+        <img 
+          src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
+          alt="Logo" 
+          className="h-8 w-8"
+        />
+        <div className="w-8" /> {/* Spacer for centering */}
+      </div>
+      <div className="max-w-7xl mx-auto p-4 md:p-8">
         {children}
       </div>
     </main>
