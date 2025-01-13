@@ -63,6 +63,21 @@ export const SignaturePersonalInfo = ({ data, onChange }: SignaturePersonalInfoP
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="phone" className="flex items-center gap-2">
+            <Phone className="w-4 h-4" />
+            Telefon
+          </Label>
+          <Input
+            id="phone"
+            value={data.phone}
+            onChange={handleChange("phone")}
+            placeholder="+49 123 456789"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
           <Label htmlFor="email" className="flex items-center gap-2">
             <Mail className="w-4 h-4" />
             E-Mail
@@ -73,21 +88,6 @@ export const SignaturePersonalInfo = ({ data, onChange }: SignaturePersonalInfoP
             value={data.email}
             onChange={handleChange("email")}
             placeholder="max@musterfirma.de"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="phone" className="flex items-center gap-2">
-            <Phone className="w-4 h-4" />
-            Telefon
-          </Label>
-          <Input
-            id="phone"
-            value={data.phone}
-            onChange={handleChange("phone")}
-            placeholder="+49 123 456789"
           />
         </div>
 

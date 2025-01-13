@@ -25,7 +25,7 @@ export const SignatureForm = ({
   return (
     <div className="space-y-8">
       <div className="flex gap-6">
-        <div className="w-1/3">
+        <div className="w-1/4">
           <SignatureLogoUpload
             logoUrl={signatureData.logoUrl}
             onLogoChange={onLogoChange}
@@ -33,20 +33,20 @@ export const SignatureForm = ({
             logoPreview={logoPreview}
           />
         </div>
-        <div className="w-2/3">
-          <SignatureColorSettings
+        <div className="w-3/4">
+          <SignaturePersonalInfo
             data={signatureData}
             onChange={onChange}
           />
         </div>
       </div>
 
-      <SignaturePersonalInfo
+      <SignatureSocialMedia
         data={signatureData}
         onChange={onChange}
       />
 
-      <SignatureSocialMedia
+      <SignatureColorSettings
         data={signatureData}
         onChange={onChange}
       />

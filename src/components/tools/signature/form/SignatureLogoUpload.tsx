@@ -17,12 +17,14 @@ export const SignatureLogoUpload = ({
   return (
     <div className="space-y-4">
       <Label className="text-lg">Logo</Label>
-      <TeamLogoUpload
-        currentLogoUrl={logoUrl}
-        onLogoChange={onLogoChange}
-        onLogoRemove={onLogoRemove}
-        logoPreview={logoPreview}
-      />
+      <div className="aspect-square w-full">
+        <TeamLogoUpload
+          currentLogoUrl={logoUrl}
+          onLogoChange={onLogoChange}
+          onLogoRemove={onLogoRemove}
+          logoPreview={logoPreview}
+        />
+      </div>
     </div>
   );
 };

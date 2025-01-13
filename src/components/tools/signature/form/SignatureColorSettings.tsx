@@ -1,6 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { SignatureData } from "@/types/signature";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface SignatureColorSettingsProps {
   data: SignatureData;
@@ -17,11 +18,33 @@ export const SignatureColorSettings = ({ data, onChange }: SignatureColorSetting
     });
   };
 
+  const handleFontChange = (value: string) => {
+    onChange({
+      ...data,
+      font: value
+    });
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <h3 className="text-lg font-semibold">Design</h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-4 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="font">Schriftart</Label>
+          <Select value={data.font} onValueChange={handleFontChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Wähle eine Schriftart" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Arial">Arial</SelectItem>
+              <SelectItem value="Helvetica">Helvetica</SelectItem>
+              <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+              <SelectItem value="Georgia">Georgia</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="themeColor">Theme Color</Label>
           <div className="flex gap-2">
