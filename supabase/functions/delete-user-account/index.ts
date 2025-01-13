@@ -1,8 +1,5 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1/dist/module/index.js'
 import { corsHeaders } from '../_shared/cors.ts'
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
 Deno.serve(async (req) => {
   // Handle CORS
@@ -15,12 +12,16 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization')!
     
     // Create clients with the user JWT
-    const supabaseClient = createClient(supabaseUrl, serviceRoleKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    )
 
     // Get the user from the auth header
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''))
