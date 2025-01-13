@@ -1,13 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Message } from "ai";
 
 export const useChatSetup = (
   open: boolean, 
-  systemMessage: string, 
-  setMessages: (messages: Message[]) => void,
-  messages: Message[]
+  systemMessage: string
 ) => {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
@@ -82,24 +79,8 @@ export const useChatSetup = (
 
     if (open) {
       setupChat();
-      if (messages.length <= 1) {
-        setMessages([
-          {
-            id: "system-1",
-            role: "system" as const,
-            content: systemMessage,
-          } as Message,
-          {
-            id: "welcome-1",
-            role: "assistant" as const,
-            content: userName 
-              ? `Hallo ${userName}! Ich bin Nexus, dein persönlicher KI-Assistent. Ich unterstütze dich gerne bei allen Fragen rund um dein Network Marketing Business. Wie kann ich dir heute helfen?` 
-              : "Hallo! Ich bin Nexus, dein persönlicher KI-Assistent. Wie kann ich dir heute helfen?"
-          } as Message
-        ]);
-      }
     }
-  }, [open, setMessages, systemMessage, userName, messages.length]);
+  }, [open, systemMessage]);
 
   return {
     sessionToken,

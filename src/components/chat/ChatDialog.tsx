@@ -17,8 +17,24 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { systemMessage } = useChatContext();
 
+  const {
+    sessionToken,
+    apiKey,
+    isReady,
+    userId,
+    currentTeamId,
+  } = useChatSetup(open, systemMessage);
+
   const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
     api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
+    headers: {
+      Authorization: `Bearer ${sessionToken}`,
+      'X-OpenAI-Key': apiKey || '',
+    },
+    body: {
+      teamId: currentTeamId,
+      userId: userId
+    },
     initialMessages: [
       {
         id: "system",
@@ -27,14 +43,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
       }
     ]
   });
-
-  const {
-    sessionToken,
-    apiKey,
-    isReady,
-    userId,
-    currentTeamId,
-  } = useChatSetup(open, systemMessage, setMessages, messages);
 
   const chatConfig = useChatConfig(
     sessionToken,
