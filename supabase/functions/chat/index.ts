@@ -15,7 +15,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log("Using CONSTANT ID approach!");  // <--- Eindeutiger Log
+  console.log("Using CONSTANT ID approach - v2!");  // Updated log to verify new deployment
 
   try {
     const { messages, teamId } = await req.json();
@@ -29,7 +29,6 @@ serve(async (req) => {
       console.log("Team ID:", teamId);
     }
 
-    // ChatOpenAI mit streaming aktiv
     const chat = new ChatOpenAI({
       openAIApiKey: apiKey,
       modelName: "gpt-4o-mini",
@@ -37,27 +36,27 @@ serve(async (req) => {
       temperature: 0.7,
     });
 
-    // Hole asynchrone Tokens
     const langChainStream = await chat.stream(messages);
     const encoder = new TextEncoder();
 
-    // Eine feste ID pro Komplette-Antwort
+    // Generate one constant ID for the entire response
     const responseId = crypto.randomUUID();
+    console.log("Generated constant response ID:", responseId); // Log the ID we'll use
     let hasEmittedContent = false;
 
     const readable = new ReadableStream({
       async start(controller) {
         try {
           for await (const chunk of langChainStream) {
-            // Überspringe leere content-Blöcke, wenn noch nichts gesendet wurde
+            // Skip empty content blocks if nothing has been emitted yet
             if (!chunk.content && !hasEmittedContent) {
+              console.log("Skipping empty initial chunk");
               continue;
             }
             hasEmittedContent = true;
 
             const openAiStyleChunk = {
-              // immer dieselbe ID!
-              id: responseId,
+              id: responseId, // Using the same ID for all chunks
               object: "chat.completion.chunk",
               created: Math.floor(Date.now() / 1000),
               model: "gpt-4o-mini",
@@ -72,14 +71,14 @@ serve(async (req) => {
               ],
             };
 
+            console.log("Sending chunk with ID:", responseId); // Log each chunk's ID to verify consistency
             const sseMessage = `data: ${JSON.stringify(openAiStyleChunk)}\n\n`;
             controller.enqueue(encoder.encode(sseMessage));
           }
 
-          // Abschluss-Chunk
+          // Final chunk with the same ID
           const doneChunk = {
-            // wieder dieselbe ID
-            id: responseId,
+            id: responseId, // Same ID here too
             object: "chat.completion.chunk",
             created: Math.floor(Date.now() / 1000),
             model: "gpt-4o-mini",
@@ -91,6 +90,8 @@ serve(async (req) => {
               },
             ],
           };
+          
+          console.log("Sending final chunk with ID:", responseId);
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(doneChunk)}\n\n`));
           controller.close();
         } catch (error) {
