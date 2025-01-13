@@ -79,7 +79,7 @@ export function MobileMenu() {
         side="top" 
         className="w-full p-0 border-none bg-[#111111] text-white"
       >
-        <div className="flex flex-col h-[90vh] bg-[#111111] overflow-y-auto">
+        <div className="flex flex-col h-[95vh] bg-[#111111] overflow-y-auto">
           <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
             <div className="flex items-center gap-2">
               <img 
