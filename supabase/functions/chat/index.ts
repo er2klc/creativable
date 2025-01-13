@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { ChatOpenAI } from "npm:langchain/chat_models/openai";
-import { HumanMessage, SystemMessage } from "npm:langchain/schema";
+import { ChatOpenAI } from "npm:@langchain/openai";
+import { HumanMessage, SystemMessage } from "npm:@langchain/core/messages";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
