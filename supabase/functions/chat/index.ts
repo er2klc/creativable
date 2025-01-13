@@ -28,90 +28,66 @@ serve(async (req) => {
     const langChainStream = await chat.stream(messages);
     const encoder = new TextEncoder();
 
-    // One consistent ID for the entire response
+    // Generate a consistent ID for the entire response
     const responseId = "chatcmpl-" + crypto.randomUUID().slice(0, 8);
-
-    let hasEmittedAnything = false;
-    let isFirstChunk = true;
+    const timestamp = Math.floor(Date.now() / 1000);
 
     const readable = new ReadableStream({
       async start(controller) {
         try {
+          // First chunk always includes role
+          const firstChunk = {
+            id: responseId,
+            object: "chat.completion.chunk",
+            created: timestamp,
+            model: "gpt-4o-mini",
+            choices: [{
+              delta: {
+                role: "assistant",
+                content: ""
+              },
+              index: 0,
+              logprobs: null,
+              finish_reason: null
+            }]
+          };
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(firstChunk)}\n\n`));
+
+          // Stream content chunks
           for await (const chunk of langChainStream) {
-            // Skip empty chunks at the start
-            if (!chunk.content && !hasEmittedAnything) {
-              continue;
-            }
-
-            // Step 1: For the first chunk, emit role and empty content
-            if (isFirstChunk) {
-              isFirstChunk = false;
-              hasEmittedAnything = true;
-
-              const firstChunk = {
-                id: responseId,
-                object: "chat.completion.chunk",
-                created: Math.floor(Date.now() / 1000),
-                model: "gpt-4o-mini",
-                choices: [
-                  {
-                    delta: {
-                      role: "assistant",
-                      content: ""
-                    },
-                    index: 0,
-                    logprobs: null,
-                    finish_reason: null
-                  }
-                ]
-              };
-
-              const firstSse = `data: ${JSON.stringify(firstChunk)}\n\n`;
-              controller.enqueue(encoder.encode(firstSse));
-            }
-
-            // Step 2: Then send content-only chunks
             if (chunk.content?.trim()) {
-              hasEmittedAnything = true;
-
-              const nextChunk = {
+              const contentChunk = {
                 id: responseId,
                 object: "chat.completion.chunk",
-                created: Math.floor(Date.now() / 1000),
+                created: timestamp,
                 model: "gpt-4o-mini",
-                choices: [
-                  {
-                    delta: {
-                      content: chunk.content
-                    },
-                    index: 0,
-                    logprobs: null,
-                    finish_reason: null
-                  }
-                ]
+                choices: [{
+                  delta: {
+                    content: chunk.content
+                  },
+                  index: 0,
+                  logprobs: null,
+                  finish_reason: null
+                }]
               };
-
-              const sse = `data: ${JSON.stringify(nextChunk)}\n\n`;
-              controller.enqueue(encoder.encode(sse));
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(contentChunk)}\n\n`));
             }
           }
 
           // Final chunk with finish_reason
-          const doneChunk = {
+          const finalChunk = {
             id: responseId,
             object: "chat.completion.chunk",
-            created: Math.floor(Date.now() / 1000),
+            created: timestamp,
             model: "gpt-4o-mini",
-            choices: [
-              {
-                delta: {},
-                index: 0,
-                logprobs: null,
-                finish_reason: "stop"
-              }
-            ]
+            choices: [{
+              delta: {},
+              index: 0,
+              logprobs: null,
+              finish_reason: "stop"
+            }]
           };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(doneChunk)}\n\n`));
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalChunk)}\n\n`));
           controller.close();
         } catch (error) {
           console.error("Error in stream processing:", error);
