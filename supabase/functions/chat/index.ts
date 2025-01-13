@@ -1,8 +1,6 @@
-/**
- * supabase/functions/chat/index.ts
- */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ChatOpenAI } from "npm:@langchain/openai";
+import { AIMessage, HumanMessage, SystemMessage } from "npm:@langchain/core/messages";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -45,7 +43,7 @@ serve(async (req) => {
               continue;
             }
 
-            // Step 1: For the first chunk, only send the role
+            // Step 1: For the first chunk, emit role and empty content
             if (isFirstChunk) {
               isFirstChunk = false;
               hasEmittedAnything = true;
