@@ -22,7 +22,7 @@ serve(async (req) => {
 
     const chat = new ChatOpenAI({
       openAIApiKey: apiKey,
-      modelName: "gpt-3.5-turbo",
+      modelName: "gpt-4o",
       streaming: true,
       temperature: 0.7,
     });
@@ -54,7 +54,7 @@ serve(async (req) => {
                 id: responseId,
                 object: "chat.completion",
                 created: Math.floor(Date.now() / 1000),
-                model: "gpt-3.5-turbo",
+                model: "gpt-4o",
                 choices: [
                   {
                     delta: {
