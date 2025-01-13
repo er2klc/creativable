@@ -35,24 +35,6 @@ serve(async (req) => {
     const readable = new ReadableStream({
       async start(controller) {
         try {
-          // First chunk always includes role
-          const firstChunk = {
-            id: responseId,
-            object: "chat.completion.chunk",
-            created: timestamp,
-            model: "gpt-4o-mini",
-            choices: [{
-              delta: {
-                role: "assistant",
-                content: ""
-              },
-              index: 0,
-              logprobs: null,
-              finish_reason: null
-            }]
-          };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(firstChunk)}\n\n`));
-
           // Stream content chunks
           for await (const chunk of langChainStream) {
             if (chunk.content?.trim()) {
@@ -63,6 +45,7 @@ serve(async (req) => {
                 model: "gpt-4o-mini",
                 choices: [{
                   delta: {
+                    role: "assistant",
                     content: chunk.content
                   },
                   index: 0,
