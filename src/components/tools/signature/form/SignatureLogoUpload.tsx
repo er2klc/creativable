@@ -14,7 +14,7 @@ export const SignatureLogoUpload = ({
   logoPreview
 }: SignatureLogoUploadProps) => {
   return (
-    <div className="h-[152px] w-full">
+    <div className="h-full w-full">
       <TeamLogoUpload
         currentLogoUrl={logoUrl}
         onLogoChange={onLogoChange}
