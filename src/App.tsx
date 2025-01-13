@@ -3,8 +3,10 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { ChatButton } from "@/components/dashboard/ChatButton";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
-import { publicRoutes, protectedRoutes } from "@/config/routes";
+import { publicRoutes } from "@/config/public-routes";
+import { protectedRoutes } from "@/config/protected-routes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 const App = () => {
   const { isAuthenticated } = useAuth();
@@ -26,7 +28,9 @@ const App = () => {
             path={route.path} 
             element={
               <ProtectedRoute>
-                {route.element}
+                <AppLayout>
+                  {route.element}
+                </AppLayout>
               </ProtectedRoute>
             } 
           />
