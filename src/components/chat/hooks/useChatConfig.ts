@@ -1,5 +1,6 @@
 import { Message } from "ai";
 import { searchSimilarContent } from "@/utils/embeddings";
+import { toast } from "sonner";
 
 export const useChatConfig = (
   sessionToken: string | null,
@@ -7,7 +8,8 @@ export const useChatConfig = (
   userId: string | null,
   currentTeamId: string | null,
   systemMessage: string,
-  scrollRef: React.RefObject<HTMLDivElement>
+  scrollRef: React.RefObject<HTMLDivElement>,
+  messages: Message[]
 ) => {
   return {
     api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,

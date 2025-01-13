@@ -3,7 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Message } from "ai";
 
-export const useChatSetup = (open: boolean, systemMessage: string, setMessages: (messages: Message[]) => void) => {
+export const useChatSetup = (
+  open: boolean, 
+  systemMessage: string, 
+  setMessages: (messages: Message[]) => void,
+  messages: Message[]
+) => {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");

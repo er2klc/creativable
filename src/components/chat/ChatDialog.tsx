@@ -1,7 +1,6 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useChat } from "ai/react";
 import { useRef } from "react";
-import { toast } from "sonner";
 import { useChatContext } from "@/hooks/use-chat-context";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
@@ -18,13 +17,24 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { systemMessage } = useChatContext();
 
+  const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
+    api: '',
+    initialMessages: [
+      {
+        id: "system",
+        role: "system" as const,
+        content: systemMessage,
+      }
+    ]
+  });
+
   const {
     sessionToken,
     apiKey,
     isReady,
     userId,
     currentTeamId,
-  } = useChatSetup(open, systemMessage, setMessages);
+  } = useChatSetup(open, systemMessage, setMessages, messages);
 
   const chatConfig = useChatConfig(
     sessionToken,
@@ -32,11 +42,8 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     userId,
     currentTeamId,
     systemMessage,
-    scrollRef
-  );
-
-  const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat(
-    isReady ? chatConfig : { api: '' }
+    scrollRef,
+    messages
   );
 
   const handleDialogClick = (e: React.MouseEvent) => {
