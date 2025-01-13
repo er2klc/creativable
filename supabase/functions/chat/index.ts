@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ChatOpenAI } from "npm:@langchain/openai";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1/dist/module/index.js";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,36 +22,14 @@ serve(async (req) => {
 
     console.log('Processing chat request with messages:', JSON.stringify(messages));
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    const { data: relevantContent } = await supabase
-      .from('content_embeddings')
-      .select('content, metadata')
-      .eq('team_id', teamId)
-      .limit(5);
-
-    const contextEnhancedMessages = messages.map(msg => {
-      if (msg.role === 'system') {
-        return {
-          ...msg,
-          content: `${msg.content}\n\nRelevant context:\n${
-            relevantContent?.map(c => c.content).join('\n') || 'No additional context available.'
-          }`
-        };
-      }
-      return msg;
-    });
-
     const chat = new ChatOpenAI({
       openAIApiKey: apiKey,
-      modelName: "gpt-4",
+      modelName: "gpt-4o-mini",
       streaming: true,
       temperature: 0.7,
     });
 
-    const stream = await chat.stream(contextEnhancedMessages);
+    const stream = await chat.stream(messages);
     const encoder = new TextEncoder();
 
     const readable = new ReadableStream({
