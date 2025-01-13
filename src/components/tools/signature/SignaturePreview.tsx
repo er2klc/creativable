@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { SignatureData, Template } from "@/types/signature";
 import { useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Mail } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface SignaturePreviewProps {
   template: Template;
@@ -10,6 +11,7 @@ interface SignaturePreviewProps {
 
 export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
   const [copied, setCopied] = useState(false);
+  const [copiedPlain, setCopiedPlain] = useState(false);
 
   const getSocialIcon = (platform: string) => {
     const iconSize = "24";
@@ -58,6 +60,31 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
     return platformUrls[platform] || url;
   };
 
+  const getPlainTextSignature = () => {
+    const lines = [];
+    lines.push(data.name);
+    if (data.position) lines.push(data.position);
+    if (data.company) lines.push(data.company);
+    if (data.email) lines.push(data.email);
+    if (data.phone) lines.push(data.phone);
+    if (data.website) lines.push(data.website);
+    
+    const socialLinks = [];
+    if (data.linkedin) socialLinks.push(`LinkedIn: ${formatSocialUrl(data.linkedin, 'linkedin')}`);
+    if (data.xing) socialLinks.push(`Xing: ${formatSocialUrl(data.xing, 'xing')}`);
+    if (data.instagram) socialLinks.push(`Instagram: ${formatSocialUrl(data.instagram, 'instagram')}`);
+    if (data.twitter) socialLinks.push(`Twitter: ${formatSocialUrl(data.twitter, 'twitter')}`);
+    if (data.youtube) socialLinks.push(`YouTube: ${formatSocialUrl(data.youtube, 'youtube')}`);
+    if (data.whatsapp) socialLinks.push(`WhatsApp: ${formatSocialUrl(data.whatsapp, 'whatsapp')}`);
+
+    if (socialLinks.length > 0) {
+      lines.push('');
+      lines.push(...socialLinks);
+    }
+
+    return lines.join('\n');
+  };
+
   const getTemplateHtml = () => {
     const socialLinks = [];
     if (data.linkedin) socialLinks.push({ url: data.linkedin, platform: 'linkedin' });
@@ -69,6 +96,7 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
 
     const contactStyle = `color: ${data.textColor || '#2d3748'}; text-decoration: none; display: flex; align-items: center; gap: 8px; margin: 5px 0;`;
     const logoStyle = 'width: 100px; height: 100px; object-fit: contain;';
+    const borderColor = data.themeColor || data.linkColor || '#7075db';
 
     switch (template) {
       case "modern":
@@ -77,9 +105,9 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
             <tr>
               <td style="display: flex; align-items: start; gap: 20px;">
                 ${data.logoUrl ? `<div style="flex-shrink: 0; width: 100px; height: 100px;"><img src="${data.logoUrl}" style="${logoStyle}"/></div>` : ''}
-                <div style="flex-grow: 1; border-left: 1px solid ${data.textColor || '#2d3748'}; padding-left: 20px;">
+                <div style="flex-grow: 1; border-left: 2px solid ${borderColor}; padding-left: 20px;">
                   <h2 style="margin: 0; color: ${data.textColor || '#2d3748'}; font-size: 24px; font-weight: 600;">${data.name}</h2>
-                  <p style="margin: 5px 0; color: ${data.linkColor || '#7075db'}; font-size: 16px;">${data.position}</p>
+                  <p style="margin: 5px 0; color: ${data.themeColor || '#7075db'}; font-size: 16px;">${data.position}</p>
                   <p style="margin: 5px 0; color: ${data.textColor || '#4a5568'}; font-weight: 500;">${data.company}</p>
                   <div style="display: flex; flex-wrap: wrap; gap: 20px;">
                     <div>
@@ -102,6 +130,7 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
             </tr>
           </table>
         `;
+
       case "classic":
         return `
           <table style="font-family: ${data.font || 'Arial'}, sans-serif; color: ${data.textColor || '#2d3748'}; width: 100%; max-width: 600px;">
@@ -163,8 +192,6 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
             </tr>
           </table>
         `;
-      default:
-        return "";
     }
   };
 
@@ -172,9 +199,37 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
     try {
       await navigator.clipboard.writeText(getTemplateHtml());
       setCopied(true);
+      toast({
+        title: "HTML Signatur kopiert",
+        description: "Die HTML-Signatur wurde in die Zwischenablage kopiert.",
+      });
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy signature:", err);
+      toast({
+        title: "Fehler beim Kopieren",
+        description: "Die Signatur konnte nicht kopiert werden.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCopyPlainText = async () => {
+    try {
+      await navigator.clipboard.writeText(getPlainTextSignature());
+      setCopiedPlain(true);
+      toast({
+        title: "Text-Signatur kopiert",
+        description: "Die Text-Signatur wurde in die Zwischenablage kopiert.",
+      });
+      setTimeout(() => setCopiedPlain(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy plain text signature:", err);
+      toast({
+        title: "Fehler beim Kopieren",
+        description: "Die Signatur konnte nicht kopiert werden.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -182,24 +237,44 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Vorschau</h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleCopy}
-          className="flex items-center gap-2"
-        >
-          {copied ? (
-            <>
-              <Check className="w-4 h-4" />
-              Kopiert
-            </>
-          ) : (
-            <>
-              <Copy className="w-4 h-4" />
-              HTML kopieren
-            </>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopyPlainText}
+            className="flex items-center gap-2"
+          >
+            {copiedPlain ? (
+              <>
+                <Check className="w-4 h-4" />
+                Text kopiert
+              </>
+            ) : (
+              <>
+                <Mail className="w-4 h-4" />
+                Text kopieren
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopy}
+            className="flex items-center gap-2"
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4" />
+                HTML kopiert
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                HTML kopieren
+              </>
+            )}
+          </Button>
+        </div>
       </div>
       
       <div className="border rounded-lg p-6 w-full overflow-x-auto">
