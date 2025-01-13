@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { type Tables } from "@/integrations/supabase/types";
-import { TeamCard } from "./TeamCard";
+import { TeamCard } from "./card/TeamCard";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
 import { useQuery } from "@tanstack/react-query";
