@@ -1,6 +1,8 @@
+/**
+ * supabase/functions/chat/index.ts
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ChatOpenAI } from "npm:@langchain/openai";
-import { AIMessage, HumanMessage, SystemMessage } from "npm:@langchain/core/messages";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,75 +18,43 @@ serve(async (req) => {
   try {
     const { messages } = await req.json();
     const apiKey = req.headers.get("X-OpenAI-Key");
-    if (!apiKey) throw new Error("OpenAI API key is required");
+    if (!apiKey) {
+      throw new Error("OpenAI API key is required");
+    }
 
+    // IMPORTANT: streaming = false
     const chat = new ChatOpenAI({
       openAIApiKey: apiKey,
       modelName: "gpt-4o-mini",
-      streaming: false,
+      streaming: false,   // <= Streaming aus
       temperature: 0.7,
     });
 
-    const langChainStream = await chat.stream(messages);
-    const encoder = new TextEncoder();
+    // Ruf das Modell einfach ohne Stream auf:
+    const response = await chat.call(messages);
 
-    // Generate a consistent ID for the entire response
-    const responseId = "chatcmpl-" + crypto.randomUUID().slice(0, 8);
-    const timestamp = Math.floor(Date.now() / 1000);
+    // Bau ein einfaches JSON, das eine "fertige" Antwort enthält
+    const jsonResponse = {
+      id: "chatcmpl-" + crypto.randomUUID().slice(0, 8),
+      object: "chat.completion",
+      created: Math.floor(Date.now() / 1000),
+      model: "gpt-4o-mini",
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: response.text,
+          },
+          finish_reason: "stop",
+        },
+      ],
+    };
 
-    const readable = new ReadableStream({
-      async start(controller) {
-        try {
-          // Stream content chunks
-          for await (const chunk of langChainStream) {
-            if (chunk.content?.trim()) {
-              const contentChunk = {
-                id: responseId,
-                object: "chat.completion.chunk",
-                created: timestamp,
-                model: "gpt-4o-mini",
-                choices: [{
-                  delta: {
-                    role: "assistant",
-                    content: chunk.content
-                  },
-                  index: 0,
-                  logprobs: null,
-                  finish_reason: null
-                }]
-              };
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify(contentChunk)}\n\n`));
-            }
-          }
-
-          // Final chunk with finish_reason
-          const finalChunk = {
-            id: responseId,
-            object: "chat.completion.chunk",
-            created: timestamp,
-            model: "gpt-4o-mini",
-            choices: [{
-              delta: {},
-              index: 0,
-              logprobs: null,
-              finish_reason: "stop"
-            }]
-          };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalChunk)}\n\n`));
-          controller.close();
-        } catch (error) {
-          console.error("Error in stream processing:", error);
-          controller.error(error);
-        }
-      },
-    });
-
-    return new Response(readable, {
+    // Sende diese fertige Antwort OHNE SSE an den Client
+    return new Response(JSON.stringify(jsonResponse), {
       headers: {
         ...corsHeaders,
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+        "Content-Type": "application/json",
       },
     });
 
