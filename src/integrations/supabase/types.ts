@@ -1572,6 +1572,63 @@ export type Database = {
         }
         Relationships: []
       }
+      user_signatures: {
+        Row: {
+          company: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          instagram: string | null
+          linkedin: string | null
+          logo_url: string | null
+          name: string
+          phone: string | null
+          position: string | null
+          template: string
+          tiktok: string | null
+          updated_at: string | null
+          user_id: string
+          website: string | null
+          youtube: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          position?: string | null
+          template: string
+          tiktok?: string | null
+          updated_at?: string | null
+          user_id: string
+          website?: string | null
+          youtube?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          position?: string | null
+          template?: string
+          tiktok?: string | null
+          updated_at?: string | null
+          user_id?: string
+          website?: string | null
+          youtube?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       elevate_platforms_access: {

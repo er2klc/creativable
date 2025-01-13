@@ -7,5 +7,9 @@ export interface SignatureData {
   email: string;
   phone: string;
   website: string;
-  linkedIn: string;
+  linkedin: string;
+  instagram: string;
+  tiktok: string;
+  youtube: string;
+  logoUrl: string | null;
 }
