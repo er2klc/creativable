@@ -34,52 +34,16 @@ export const publicRoutes = [
 ];
 
 export const protectedRoutes = [
-  { 
-    path: "/dashboard", 
-    element: <AppLayout><Dashboard /></AppLayout>
-  },
-  { 
-    path: "/admin", 
-    element: <AppLayout><Admin /></AppLayout>
-  },
-  { 
-    path: "/calendar", 
-    element: <AppLayout><Calendar /></AppLayout>
-  },
-  { 
-    path: "/todo", 
-    element: <AppLayout><TodoList /></AppLayout>
-  },
-  { 
-    path: "/unity", 
-    element: <AppLayout><Unity /></AppLayout>
-  },
-  { 
-    path: "/unity/team/:teamSlug", 
-    element: <AppLayout><TeamDetail /></AppLayout>
-  },
-  { 
-    path: "/elevate", 
-    element: <AppLayout><Elevate /></AppLayout>
-  },
-  { 
-    path: "/elevate/modul/:moduleSlug", 
-    element: <AppLayout><PlatformDetail /></AppLayout>
-  },
-  { 
-    path: "/leads", 
-    element: <AppLayout><Leads /></AppLayout>
-  },
-  { 
-    path: "/messages", 
-    element: <AppLayout><Messages /></AppLayout>
-  },
-  { 
-    path: "/settings", 
-    element: <AppLayout><Settings /></AppLayout>
-  },
-  { 
-    path: "/changelog", 
-    element: <AppLayout><Changelog /></AppLayout>
-  },
+  { path: "/dashboard", element: <AppLayout><Dashboard /></AppLayout> },
+  { path: "/admin", element: <AppLayout><Admin /></AppLayout> },
+  { path: "/calendar", element: <AppLayout><Calendar /></AppLayout> },
+  { path: "/todo", element: <AppLayout><TodoList /></AppLayout> },
+  { path: "/unity", element: <AppLayout><Unity /></AppLayout> },
+  { path: "/unity/team/:teamSlug", element: <AppLayout><TeamDetail /></AppLayout> },
+  { path: "/elevate", element: <AppLayout><Elevate /></AppLayout> },
+  { path: "/elevate/modul/:moduleSlug", element: <AppLayout><PlatformDetail /></AppLayout> },
+  { path: "/leads", element: <AppLayout><Leads /></AppLayout> },
+  { path: "/messages", element: <AppLayout><Messages /></AppLayout> },
+  { path: "/settings", element: <AppLayout><Settings /></AppLayout> },
+  { path: "/changelog", element: <AppLayout><Changelog /></AppLayout> },
 ];
