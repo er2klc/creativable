@@ -12,9 +12,9 @@ export const TeamLogoUpload = ({
   logoPreview
 }: TeamLogoUploadProps) => {
   return (
-    <div className="h-full">
+    <div className="h-full w-full">
       {logoPreview ? (
-        <div className="relative h-full">
+        <div className="relative h-full w-full">
           <img src={logoPreview} alt="" className="h-full w-full object-cover rounded-md" />
           <button
             type="button"
@@ -27,7 +27,7 @@ export const TeamLogoUpload = ({
           </button>
         </div>
       ) : currentLogoUrl ? (
-        <div className="relative h-full">
+        <div className="relative h-full w-full">
           <img src={currentLogoUrl} alt="" className="h-full w-full object-cover rounded-md" />
           <button
             type="button"
@@ -40,7 +40,7 @@ export const TeamLogoUpload = ({
           </button>
         </div>
       ) : (
-        <div className="h-full border-dashed border-2 border-gray-300 flex items-center justify-center rounded-md">
+        <div className="h-full w-full border-dashed border-2 border-gray-300 flex items-center justify-center rounded-md">
           <label className="cursor-pointer">
             <input
               type="file"
