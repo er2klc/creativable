@@ -20,7 +20,6 @@ import PrivacyPolicy from "@/pages/legal/PrivacyPolicy";
 import InstagramDataDeletion from "@/pages/legal/InstagramDataDeletion";
 import News from "@/pages/News";
 import Support from "@/pages/Support";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 export const publicRoutes = [
   { path: "/", element: <Index /> },
@@ -37,122 +36,50 @@ export const publicRoutes = [
 export const protectedRoutes = [
   { 
     path: "/dashboard", 
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <Dashboard />
-        </AppLayout>
-      </ProtectedRoute>
-    )
+    element: <AppLayout><Dashboard /></AppLayout>
   },
   { 
     path: "/admin", 
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <Admin />
-        </AppLayout>
-      </ProtectedRoute>
-    )
+    element: <AppLayout><Admin /></AppLayout>
   },
   { 
     path: "/calendar", 
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <Calendar />
-        </AppLayout>
-      </ProtectedRoute>
-    )
+    element: <AppLayout><Calendar /></AppLayout>
   },
   { 
     path: "/todo", 
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <TodoList />
-        </AppLayout>
-      </ProtectedRoute>
-    )
+    element: <AppLayout><TodoList /></AppLayout>
   },
   { 
     path: "/unity", 
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <Unity />
-        </AppLayout>
-      </ProtectedRoute>
-    )
+    element: <AppLayout><Unity /></AppLayout>
   },
   { 
     path: "/unity/team/:teamSlug", 
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <TeamDetail />
-        </AppLayout>
-      </ProtectedRoute>
-    )
+    element: <AppLayout><TeamDetail /></AppLayout>
   },
   { 
     path: "/elevate", 
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <Elevate />
-        </AppLayout>
-      </ProtectedRoute>
-    )
+    element: <AppLayout><Elevate /></AppLayout>
   },
   { 
     path: "/elevate/modul/:moduleSlug", 
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <PlatformDetail />
-        </AppLayout>
-      </ProtectedRoute>
-    )
+    element: <AppLayout><PlatformDetail /></AppLayout>
   },
   { 
     path: "/leads", 
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <Leads />
-        </AppLayout>
-      </ProtectedRoute>
-    )
+    element: <AppLayout><Leads /></AppLayout>
   },
   { 
     path: "/messages", 
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <Messages />
-        </AppLayout>
-      </ProtectedRoute>
-    )
+    element: <AppLayout><Messages /></AppLayout>
   },
   { 
     path: "/settings", 
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <Settings />
-        </AppLayout>
-      </ProtectedRoute>
-    )
+    element: <AppLayout><Settings /></AppLayout>
   },
   { 
     path: "/changelog", 
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <Changelog />
-        </AppLayout>
-      </ProtectedRoute>
-    )
+    element: <AppLayout><Changelog /></AppLayout>
   },
 ];
