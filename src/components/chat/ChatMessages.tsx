@@ -16,25 +16,10 @@ export const ChatMessages = ({ messages, scrollRef }: ChatMessagesProps) => {
     }
   }, [messages]);
 
-  // Filter out system messages and combine assistant messages
-  const displayMessages = messages
-    .filter((message) => message.role !== 'system')
-    .reduce((acc: Message[], current) => {
-      if (acc.length === 0) {
-        return [current];
-      }
+  // Filter out system messages
+  const displayMessages = messages.filter((m) => m.role !== "system");
 
-      const lastMessage = acc[acc.length - 1];
-      if (lastMessage.role === current.role) {
-        // Combine content of messages with the same role
-        lastMessage.content += current.content;
-        return acc;
-      }
-
-      return [...acc, current];
-    }, []);
-
-  console.log('Displaying messages:', displayMessages); // Debug log
+  console.log("Displaying messages:", displayMessages);
 
   return (
     <div className="flex-1 overflow-y-auto pr-4" ref={scrollRef}>
