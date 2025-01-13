@@ -94,7 +94,7 @@ serve(async (req) => {
                     await writer.write(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
                   }
                 } catch (error) {
-                  console.error('Error parsing chunk:', error);
+                  console.error('Error parsing chunk:', error, 'Line:', trimmedLine);
                 }
               }
             }
