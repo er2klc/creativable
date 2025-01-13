@@ -83,22 +83,21 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
                 const jsonStr = line.replace('data: ', '');
                 if (jsonStr === '[DONE]') return null;
                 
+                // Parse the exact format we're receiving
                 const parsed = JSON.parse(jsonStr);
-                if (!parsed || !parsed.choices?.[0]?.delta?.content) return null;
                 
-                const content = parsed.choices[0].delta.content;
-                const lastMessage = messages[messages.length - 1];
-                
-                // Only create a new message if content is different
-                if (lastMessage?.role === 'assistant' && lastMessage.content === content) {
+                // Validate the parsed data has all required fields
+                if (!parsed || !parsed.id || !parsed.role || !parsed.content || !parsed.createdAt) {
+                  console.log('Invalid message format:', parsed);
                   return null;
                 }
                 
+                // Return the message in the exact format we received
                 return {
-                  id: crypto.randomUUID(),
-                  role: 'assistant' as const,
-                  content: content,
-                  createdAt: new Date().toISOString()
+                  id: parsed.id,
+                  role: parsed.role as 'assistant',
+                  content: parsed.content,
+                  createdAt: parsed.createdAt
                 };
               } catch (e) {
                 console.error('Error parsing line:', line, e);
