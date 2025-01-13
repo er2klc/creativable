@@ -32,23 +32,19 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
   const formatSocialUrl = (url: string, platform: string): string => {
     if (!url) return '';
     
-    // If URL already starts with http/https, return as is
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
 
-    // Handle WhatsApp numbers
     if (platform === 'whatsapp') {
       const cleanNumber = url.replace(/[^0-9]/g, '');
       return `https://wa.me/${cleanNumber}`;
     }
 
-    // Add https:// for website URLs
     if (platform === 'website') {
       return `https://${url}`;
     }
 
-    // Platform-specific URL formatting
     const platformUrls: Record<string, string> = {
       linkedin: `https://www.linkedin.com/in/${url.replace(/^@/, '')}`,
       instagram: `https://www.instagram.com/${url.replace(/^@/, '')}`,
@@ -137,9 +133,9 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
             <tr>
               <td style="display: flex; align-items: start; gap: 20px;">
                 ${data.logoUrl ? `<div style="flex-shrink: 0; width: 100px; height: 100px;"><img src="${data.logoUrl}" style="${logoStyle}"/></div>` : ''}
-                <div style="flex-grow: 1; padding-left: 20px; border-left: 1px solid ${data.linkColor || '#7075db'};">
+                <div style="flex-grow: 1; padding-left: 20px; border-left: 1px solid ${data.themeColor || '#7075db'};">
                   <h2 style="margin: 0; font-size: 22px; color: ${data.textColor || '#2d3748'};">${data.name}</h2>
-                  <p style="margin: 5px 0; color: ${data.linkColor || '#7075db'};">${data.position}</p>
+                  <p style="margin: 5px 0; color: ${data.themeColor || '#7075db'};">${data.position}</p>
                   <p style="margin: 5px 0; font-weight: 500;">${data.company}</p>
                   <div style="display: flex; flex-wrap: wrap; gap: 20px;">
                     <div>
@@ -170,7 +166,7 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
                 ${data.logoUrl ? `<div style="flex-shrink: 0; width: 100px; height: 100px;"><img src="${data.logoUrl}" style="${logoStyle}"/></div>` : ''}
                 <div style="flex-grow: 1;">
                   <h2 style="margin: 0; font-size: 20px; color: ${data.textColor || '#2d3748'};">${data.name}</h2>
-                  <p style="margin: 5px 0; color: ${data.linkColor || '#7075db'};">${data.position} · ${data.company}</p>
+                  <p style="margin: 5px 0; color: ${data.themeColor || '#7075db'};">${data.position} · ${data.company}</p>
                   <div style="display: flex; flex-wrap: wrap; gap: 20px;">
                     <div>
                       <a href="mailto:${data.email}" style="${contactStyle}">${data.email}</a>
@@ -219,8 +215,8 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
       await navigator.clipboard.writeText(getPlainTextSignature());
       setCopiedPlain(true);
       toast({
-        title: "Text-Signatur kopiert",
-        description: "Die Text-Signatur wurde in die Zwischenablage kopiert.",
+        title: "Signatur kopiert",
+        description: "Die Signatur wurde in die Zwischenablage kopiert.",
       });
       setTimeout(() => setCopiedPlain(false), 2000);
     } catch (err) {
@@ -247,12 +243,12 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
             {copiedPlain ? (
               <>
                 <Check className="w-4 h-4" />
-                Text kopiert
+                Signatur kopiert
               </>
             ) : (
               <>
                 <Mail className="w-4 h-4" />
-                Text kopieren
+                Signatur kopieren
               </>
             )}
           </Button>

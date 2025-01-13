@@ -84,7 +84,7 @@ export const SignatureColorSettings = ({ data, onChange }: SignatureColorSetting
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="linkColor">Link Color</Label>
+          <Label htmlFor="linkColor">Social Color</Label>
           <div className="flex gap-2">
             <Input
               type="color"
