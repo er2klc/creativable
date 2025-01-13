@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Message } from "ai";
+import { useEffect } from "react";
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -10,26 +11,17 @@ interface ChatMessagesProps {
 }
 
 export const ChatMessages = ({ messages, scrollRef }: ChatMessagesProps) => {
-  // Only show the latest message for each role to create typing effect
-  const displayMessages = messages.reduce((acc, current) => {
-    if (!current.content.trim() || current.role === 'system') return acc;
-    
-    // Find existing message with same role
-    const existingIndex = acc.findIndex(msg => msg.role === current.role);
-    
-    if (existingIndex >= 0) {
-      // For assistant messages, only update if content is different
-      // This prevents unnecessary re-renders during streaming
-      if (current.role === 'assistant' && acc[existingIndex].content !== current.content) {
-        acc[existingIndex] = current;
-      } else if (current.role === 'user') {
-        acc[existingIndex] = current;
-      }
-      return acc;
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-    
-    return [...acc, current];
-  }, [] as Message[]);
+  }, [messages]);
+
+  // Filter out empty messages and system messages
+  const displayMessages = messages.filter(
+    (message) => message.content.trim() && message.role !== 'system'
+  );
 
   return (
     <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
