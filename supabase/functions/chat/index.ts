@@ -1,9 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ChatOpenAI } from "npm:@langchain/openai";
-import { SupabaseVectorStore } from "npm:@langchain/community/vectorstores/supabase";
-import { OpenAIEmbeddings } from "npm:@langchain/openai";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,15 +28,25 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Initialize vector store
-    const vectorStore = new SupabaseVectorStore(
-      new OpenAIEmbeddings({ openAIApiKey: apiKey }),
-      {
-        client: supabase,
-        tableName: 'content_embeddings',
-        queryName: 'match_content'
+    // Query relevant content from the database directly
+    const { data: relevantContent } = await supabase
+      .from('content_embeddings')
+      .select('content, metadata')
+      .eq('team_id', teamId)
+      .limit(5);
+
+    // Add context to the system message
+    const contextEnhancedMessages = messages.map(msg => {
+      if (msg.role === 'system') {
+        return {
+          ...msg,
+          content: `${msg.content}\n\nRelevant context:\n${
+            relevantContent?.map(c => c.content).join('\n') || 'No additional context available.'
+          }`
+        };
       }
-    );
+      return msg;
+    });
 
     // Set up streaming chat
     const chat = new ChatOpenAI({
@@ -49,7 +57,7 @@ serve(async (req) => {
     });
 
     // Create response stream
-    const stream = await chat.stream(messages);
+    const stream = await chat.stream(contextEnhancedMessages);
 
     // Set up streaming response
     const encoder = new TextEncoder();
