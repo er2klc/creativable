@@ -9,7 +9,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -24,19 +23,16 @@ serve(async (req) => {
 
     console.log('Processing chat request with messages:', JSON.stringify(messages));
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Query relevant content from the database
     const { data: relevantContent } = await supabase
       .from('content_embeddings')
       .select('content, metadata')
       .eq('team_id', teamId)
       .limit(5);
 
-    // Add context to the system message
     const contextEnhancedMessages = messages.map(msg => {
       if (msg.role === 'system') {
         return {
@@ -49,7 +45,6 @@ serve(async (req) => {
       return msg;
     });
 
-    // Set up streaming chat
     const chat = new ChatOpenAI({
       openAIApiKey: apiKey,
       modelName: "gpt-4",
@@ -57,15 +52,15 @@ serve(async (req) => {
       temperature: 0.7,
     });
 
-    // Create response stream
     const stream = await chat.stream(contextEnhancedMessages);
-
-    // Set up streaming response
     const encoder = new TextEncoder();
+
     const readable = new ReadableStream({
       async start(controller) {
         try {
+          let fullContent = '';
           for await (const chunk of stream) {
+            fullContent += chunk.content;
             const message = {
               id: crypto.randomUUID(),
               role: 'assistant',
@@ -73,7 +68,6 @@ serve(async (req) => {
               createdAt: new Date().toISOString()
             };
             
-            // Properly format the SSE data with double newlines
             const sseMessage = `data: ${JSON.stringify(message)}\n\n`;
             controller.enqueue(encoder.encode(sseMessage));
           }
