@@ -22,7 +22,6 @@ serve(async (req) => {
 
   try {
     // Lese JSON-Body aus dem Request
-    // (z.B. { messages, teamId }, je nachdem was dein Frontend schickt)
     const { messages, teamId } = await req.json();
 
     // OpenAI-API-Key aus dem Header
@@ -42,7 +41,7 @@ serve(async (req) => {
     // --------------------------------------------------------
     const chat = new ChatOpenAI({
       openAIApiKey: apiKey,
-      modelName: "gpt-4o-mini", // Oder was du verwenden möchtest
+      modelName: "gpt-4o-mini",
       streaming: true,
       temperature: 0.7,
     });
@@ -59,27 +58,6 @@ serve(async (req) => {
         try {
           // Wir lesen asynchron jedes Chunk/Tokens aus dem LangChain-Stream
           for await (const chunk of langChainStream) {
-            /**
-             * chunk ist ein { content: "...", ... }-Objekt
-             * Wir müssen es in das "OpenAI SSE Format" umwandeln, das
-             * useChat() standardmäßig erwartet:
-             *
-             *  {
-             *    "id": "<irgendeine-id>",
-             *    "object": "chat.completion.chunk",
-             *    "created": 1689364731,
-             *    "model": "gpt-4",
-             *    "choices": [
-             *      {
-             *        "delta": {
-             *          "content": "Hallo"
-             *        },
-             *        "index": 0,
-             *        "finish_reason": null
-             *      }
-             *    ]
-             *  }
-             */
             const openAiStyleChunk = {
               id: crypto.randomUUID(),
               object: "chat.completion.chunk",
@@ -88,7 +66,7 @@ serve(async (req) => {
               choices: [
                 {
                   delta: {
-                    content: chunk.content, // Hier das eigentliche Token
+                    content: chunk.content,
                   },
                   index: 0,
                   finish_reason: null,
