@@ -15,7 +15,7 @@ export const TeamLogoUpload = ({
     <div className="h-full w-full">
       {logoPreview ? (
         <div className="relative h-full w-full">
-          <img src={logoPreview} alt="" className="h-full w-full object-cover rounded-md" />
+          <img src={logoPreview} alt="" className="h-full w-full object-cover rounded-md" style={{ height: '100%', width: '100%' }}/>
           <button
             type="button"
             onClick={onLogoRemove}
