@@ -38,6 +38,13 @@ const App = () => {
           ))}
         </Route>
 
+        {/* Redirect root to dashboard if authenticated, otherwise to auth */}
+        <Route path="/" element={
+          isAuthenticated ? 
+            <Navigate to="/dashboard" replace /> : 
+            <Navigate to="/auth" replace />
+        } />
+
         {/* Catch all route - redirect to dashboard if authenticated, otherwise to auth */}
         <Route path="*" element={
           isAuthenticated ? 
