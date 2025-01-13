@@ -38,18 +38,14 @@ const App = () => {
           ))}
         </Route>
 
-        {/* Redirect root to dashboard if authenticated, otherwise to auth */}
+        {/* Root route */}
         <Route path="/" element={
-          isAuthenticated ? 
-            <Navigate to="/dashboard" replace /> : 
-            <Navigate to="/auth" replace />
+          <Navigate to={isAuthenticated ? "/dashboard" : "/auth"} />
         } />
 
-        {/* Catch all route - redirect to dashboard if authenticated, otherwise to auth */}
+        {/* Catch all route */}
         <Route path="*" element={
-          isAuthenticated ? 
-            <Navigate to="/dashboard" replace /> : 
-            <Navigate to="/auth" replace />
+          <Navigate to={isAuthenticated ? "/dashboard" : "/auth"} />
         } />
       </Routes>
       {showChat && <ChatButton />}
