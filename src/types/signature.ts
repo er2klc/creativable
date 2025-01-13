@@ -11,5 +11,12 @@ export interface SignatureData {
   instagram: string;
   tiktok: string;
   youtube: string;
+  twitter: string;
+  whatsapp: string;
   logoUrl: string | null;
+  themeColor: string;
+  textColor: string;
+  linkColor: string;
+  font: string;
+  fontSize: string;
 }
