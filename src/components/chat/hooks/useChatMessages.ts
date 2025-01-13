@@ -39,29 +39,6 @@ export const useChatMessages = ({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     },
-    onMessage: (message) => {
-      console.log("Streaming message received:", message);
-      
-      setMessages((prevMessages) => {
-        const lastMessage = prevMessages[prevMessages.length - 1];
-        
-        if (lastMessage?.role === 'assistant') {
-          return [
-            ...prevMessages.slice(0, -1),
-            { ...lastMessage, content: lastMessage.content + message.content },
-          ];
-        }
-        
-        return [
-          ...prevMessages,
-          { 
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            content: message.content,
-          },
-        ];
-      });
-    },
     onFinish: (message) => {
       console.log("Chat message finished:", message);
     },
