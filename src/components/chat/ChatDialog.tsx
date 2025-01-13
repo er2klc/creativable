@@ -84,18 +84,21 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
                 if (jsonStr === '[DONE]') return null;
                 
                 const parsed = JSON.parse(jsonStr);
+                if (!parsed || !parsed.choices?.[0]?.delta?.content) return null;
+                
+                const content = parsed.choices[0].delta.content;
                 const lastMessage = messages[messages.length - 1];
                 
                 // Only create a new message if content is different
-                if (lastMessage?.role === 'assistant' && lastMessage.content === parsed.content) {
+                if (lastMessage?.role === 'assistant' && lastMessage.content === content) {
                   return null;
                 }
                 
                 return {
-                  id: parsed.id || crypto.randomUUID(),
-                  role: parsed.role || 'assistant',
-                  content: parsed.content || '',
-                  createdAt: parsed.createdAt || new Date().toISOString()
+                  id: crypto.randomUUID(),
+                  role: 'assistant' as const,
+                  content: content,
+                  createdAt: new Date().toISOString()
                 };
               } catch (e) {
                 console.error('Error parsing line:', line, e);
