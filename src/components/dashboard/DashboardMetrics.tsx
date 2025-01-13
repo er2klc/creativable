@@ -50,7 +50,7 @@ export const DashboardMetrics = () => {
     <div className="grid grid-cols-3 gap-6 w-full mb-8">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium">
+          <CardTitle className="text-lg font-medium truncate">
             {settings?.language === "en" ? "Active Leads" : "Leads in Bearbeitung"}
           </CardTitle>
         </CardHeader>
@@ -61,7 +61,7 @@ export const DashboardMetrics = () => {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium">
+          <CardTitle className="text-lg font-medium truncate">
             {settings?.language === "en" ? "Open Tasks" : "Offene Aufgaben"}
           </CardTitle>
         </CardHeader>
@@ -72,7 +72,7 @@ export const DashboardMetrics = () => {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium">
+          <CardTitle className="text-lg font-medium truncate">
             {settings?.language === "en" ? "Completion Rate" : "Abschlussquote"}
           </CardTitle>
         </CardHeader>
