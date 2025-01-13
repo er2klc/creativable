@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { SignatureData, Template } from "@/types/signature";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Check, Copy, Mail } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -12,6 +12,7 @@ interface SignaturePreviewProps {
 export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
   const [copied, setCopied] = useState(false);
   const [copiedPlain, setCopiedPlain] = useState(false);
+  const signatureRef = useRef<HTMLDivElement>(null);
 
   const getSocialIcon = (platform: string) => {
     const iconSize = "24";
@@ -56,29 +57,55 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
     return platformUrls[platform] || url;
   };
 
-  const getPlainTextSignature = () => {
-    const lines = [];
-    lines.push(data.name);
-    if (data.position) lines.push(data.position);
-    if (data.company) lines.push(data.company);
-    if (data.email) lines.push(data.email);
-    if (data.phone) lines.push(data.phone);
-    if (data.website) lines.push(data.website);
-    
-    const socialLinks = [];
-    if (data.linkedin) socialLinks.push(`LinkedIn: ${formatSocialUrl(data.linkedin, 'linkedin')}`);
-    if (data.xing) socialLinks.push(`Xing: ${formatSocialUrl(data.xing, 'xing')}`);
-    if (data.instagram) socialLinks.push(`Instagram: ${formatSocialUrl(data.instagram, 'instagram')}`);
-    if (data.twitter) socialLinks.push(`Twitter: ${formatSocialUrl(data.twitter, 'twitter')}`);
-    if (data.youtube) socialLinks.push(`YouTube: ${formatSocialUrl(data.youtube, 'youtube')}`);
-    if (data.whatsapp) socialLinks.push(`WhatsApp: ${formatSocialUrl(data.whatsapp, 'whatsapp')}`);
-
-    if (socialLinks.length > 0) {
-      lines.push('');
-      lines.push(...socialLinks);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(getTemplateHtml());
+      setCopied(true);
+      toast({
+        title: "HTML Signatur kopiert",
+        description: "Die HTML-Signatur wurde in die Zwischenablage kopiert.",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy signature:", err);
+      toast({
+        title: "Fehler beim Kopieren",
+        description: "Die Signatur konnte nicht kopiert werden.",
+        variant: "destructive",
+      });
     }
+  };
 
-    return lines.join('\n');
+  const handleCopyRendered = async () => {
+    if (!signatureRef.current) return;
+
+    try {
+      const range = document.createRange();
+      range.selectNode(signatureRef.current);
+      
+      const selection = window.getSelection();
+      if (!selection) return;
+      
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      document.execCommand('copy');
+      selection.removeAllRanges();
+      
+      setCopiedPlain(true);
+      toast({
+        title: "Signatur kopiert",
+        description: "Die Signatur wurde in die Zwischenablage kopiert.",
+      });
+      setTimeout(() => setCopiedPlain(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy signature:", err);
+      toast({
+        title: "Fehler beim Kopieren",
+        description: "Die Signatur konnte nicht kopiert werden.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getTemplateHtml = () => {
@@ -92,7 +119,7 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
 
     const contactStyle = `color: ${data.textColor || '#2d3748'}; text-decoration: none; display: flex; align-items: center; gap: 8px; margin: 5px 0;`;
     const logoStyle = 'width: 100px; height: 100px; object-fit: contain;';
-    const borderColor = data.themeColor || data.linkColor || '#7075db';
+    const borderColor = data.themeColor || '#7075db';
 
     switch (template) {
       case "modern":
@@ -191,44 +218,6 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
     }
   };
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(getTemplateHtml());
-      setCopied(true);
-      toast({
-        title: "HTML Signatur kopiert",
-        description: "Die HTML-Signatur wurde in die Zwischenablage kopiert.",
-      });
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy signature:", err);
-      toast({
-        title: "Fehler beim Kopieren",
-        description: "Die Signatur konnte nicht kopiert werden.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCopyPlainText = async () => {
-    try {
-      await navigator.clipboard.writeText(getPlainTextSignature());
-      setCopiedPlain(true);
-      toast({
-        title: "Signatur kopiert",
-        description: "Die Signatur wurde in die Zwischenablage kopiert.",
-      });
-      setTimeout(() => setCopiedPlain(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy plain text signature:", err);
-      toast({
-        title: "Fehler beim Kopieren",
-        description: "Die Signatur konnte nicht kopiert werden.",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -237,7 +226,7 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleCopyPlainText}
+            onClick={handleCopyRendered}
             className="flex items-center gap-2"
           >
             {copiedPlain ? (
@@ -274,7 +263,7 @@ export const SignaturePreview = ({ template, data }: SignaturePreviewProps) => {
       </div>
       
       <div className="border rounded-lg p-6 w-full overflow-x-auto">
-        <div dangerouslySetInnerHTML={{ __html: getTemplateHtml() }} />
+        <div ref={signatureRef} dangerouslySetInnerHTML={{ __html: getTemplateHtml() }} />
       </div>
     </div>
   );
