@@ -127,16 +127,16 @@ export function GeneralSettings() {
 
       if (userUpdateError) throw userUpdateError;
 
-      // Update profile settings
-      const { error } = await supabaseClient
-        .from("profiles")
+      // Update settings table for whatsapp number and language
+      const { error: settingsError } = await supabaseClient
+        .from("settings")
         .update({
-          display_name: values.displayName,
           whatsapp_number: values.phoneNumber,
+          language: values.language,
         })
-        .eq("id", user?.id);
+        .eq("user_id", user?.id);
 
-      if (error) throw error;
+      if (settingsError) throw settingsError;
 
       toast({
         title: "Erfolg",
