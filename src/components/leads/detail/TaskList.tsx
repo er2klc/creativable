@@ -19,25 +19,34 @@ export function TaskList({ leadId }: TaskListProps) {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
 
-  const { data: tasks = [] } = useQuery({
+  const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["tasks", leadId],
     queryFn: async () => {
-      const query = supabase
-        .from("tasks")
-        .select("*, leads(name)")
-        .order("order_index", { ascending: true })
-        .order("created_at", { ascending: false });
+      try {
+        const query = supabase
+          .from("tasks")
+          .select("*, leads(name)")
+          .order("order_index", { ascending: true })
+          .order("created_at", { ascending: false });
 
-      if (leadId) {
-        query.eq("lead_id", leadId);
+        if (leadId) {
+          query.eq("lead_id", leadId);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error("Error fetching tasks:", error);
+          throw error;
+        }
+
+        return data as (Tables<"tasks"> & {
+          leads?: Tables<"leads">;
+        })[];
+      } catch (error) {
+        console.error("Error in task query:", error);
+        throw error;
       }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data as (Tables<"tasks"> & {
-        leads?: Tables<"leads">;
-      })[];
     },
   });
 
@@ -52,7 +61,8 @@ export function TaskList({ leadId }: TaskListProps) {
           schema: 'public',
           table: 'tasks'
         },
-        () => {
+        (payload) => {
+          console.log('Task change received:', payload);
           queryClient.invalidateQueries({ queryKey: ["tasks", leadId] });
         }
       )
@@ -65,12 +75,17 @@ export function TaskList({ leadId }: TaskListProps) {
 
   const updateTask = useMutation({
     mutationFn: async (task: Tables<"tasks">) => {
-      const { error } = await supabase
-        .from("tasks")
-        .update({ completed: !task.completed })
-        .eq("id", task.id);
+      try {
+        const { error } = await supabase
+          .from("tasks")
+          .update({ completed: !task.completed })
+          .eq("id", task.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } catch (error) {
+        console.error("Error updating task:", error);
+        throw error;
+      }
     },
     onSuccess: (_, task) => {
       queryClient.invalidateQueries({ queryKey: ["tasks", leadId] });
@@ -100,11 +115,16 @@ export function TaskList({ leadId }: TaskListProps) {
 
   const updateTaskOrder = useMutation({
     mutationFn: async (updates: Tables<"tasks">[]) => {
-      const { error } = await supabase
-        .from("tasks")
-        .upsert(updates);
+      try {
+        const { error } = await supabase
+          .from("tasks")
+          .upsert(updates);
 
-      if (error) throw error;
+        if (error) throw error;
+      } catch (error) {
+        console.error("Error updating task order:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks", leadId] });
@@ -128,6 +148,19 @@ export function TaskList({ leadId }: TaskListProps) {
   };
 
   const incompleteTasks = tasks.filter(task => !task.completed);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5" />
+            {settings?.language === "en" ? "Loading tasks..." : "Lade Aufgaben..."}
+          </CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
     <Card>
