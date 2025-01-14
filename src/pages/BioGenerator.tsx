@@ -90,12 +90,15 @@ const BioGenerator = () => {
 
       if (bioError) throw bioError;
 
+      // Use upsert instead of insert
       const { error: saveError } = await supabase
         .from('user_bios')
         .upsert({
           ...values,
           generated_bio: bioData.bio,
           user_id: userData.user.id
+        }, {
+          onConflict: 'user_id'
         });
 
       if (saveError) throw saveError;
