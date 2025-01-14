@@ -30,7 +30,17 @@ const BioGenerator = () => {
       
       if (data) {
         console.info("Loaded saved bio data:", data);
-        setSavedFormData(data);
+        setSavedFormData({
+          role: data.role || "",
+          target_audience: data.target_audience || "",
+          unique_strengths: data.unique_strengths || "",
+          mission: data.mission || "",
+          social_proof: data.social_proof || "",
+          cta_goal: data.cta_goal || "",
+          url: data.url || "",
+          preferred_emojis: data.preferred_emojis || "",
+          language: data.language || "Deutsch"
+        });
         setGeneratedBio(data.generated_bio || "");
       } else {
         console.info("No saved bio data found");
