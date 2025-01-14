@@ -51,10 +51,11 @@ export function MLMSettings() {
 
   const handleSave = async (value: string, field: keyof Settings) => {
     try {
-      await updateSettings.mutateAsync({ [field]: value });
+      await updateSettings.mutateAsync({ [String(field)]: value });
+      toast.success(`${String(field)} wurde erfolgreich gespeichert`);
     } catch (error) {
-      console.error(`Error updating ${field}:`, error);
-      toast.error(`Fehler beim Speichern von ${field}`);
+      console.error(`Error updating ${String(field)}:`, error);
+      toast.error(`Fehler beim Speichern von ${String(field)}`);
     }
   };
 

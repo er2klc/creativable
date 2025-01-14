@@ -29,7 +29,6 @@ export function GeneralSettings() {
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Fetch current settings and user data
   const { data: settings, isLoading } = useQuery({
     queryKey: ["settings", session?.user?.id],
     queryFn: async () => {
@@ -194,7 +193,7 @@ export function GeneralSettings() {
             <div className="mb-6">
               <div className="flex items-start gap-4">
                 <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
-                  <Avatar className="h-20 w-20">
+                  <Avatar className="h-20 w-20 ring-2 ring-[#9b87f5] dark:ring-[#7E69AB] ring-offset-2 ring-offset-background">
                     <AvatarImage src={avatarUrl || "/placeholder.svg"} />
                     <AvatarFallback>
                       {session?.user?.user_metadata?.display_name?.charAt(0) || "U"}
