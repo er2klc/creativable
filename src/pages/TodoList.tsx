@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AddTaskDialog } from "@/components/todo/AddTaskDialog";
 import { Button } from "@/components/ui/button";
-import { Plus, CheckSquare } from "lucide-react";
+import { Plus, CheckSquare, User } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
@@ -25,15 +25,10 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
+import { Tables } from "@/integrations/supabase/types";
 
-interface Task {
-  id: string;
-  title: string;
-  completed: boolean;
-  lead_id: string | null;
-  created_at: string;
-  priority: string;
-  order_index: number;
+interface Task extends Tables<"tasks"> {
+  leads?: Tables<"leads">;
 }
 
 function SortableTask({ task, updateTaskMutation, settings }: { task: Task, updateTaskMutation: any, settings: any }) {
@@ -89,17 +84,25 @@ function SortableTask({ task, updateTaskMutation, settings }: { task: Task, upda
       style={style}
       {...attributes}
       {...listeners}
-      className="flex items-center gap-4 p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+      className="flex items-center gap-4 p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing"
     >
       <input
         type="checkbox"
-        checked={task.completed}
+        checked={task.completed || false}
         onChange={(e) => handleTaskComplete(task.id, e.target.checked)}
-        className="h-4 w-4"
+        className="h-4 w-4 cursor-pointer"
       />
-      <span className={task.completed ? "line-through text-gray-500" : "flex-1"}>
-        {task.title}
-      </span>
+      <div className="flex-1">
+        <span className={task.completed ? "line-through text-gray-500" : ""}>
+          {task.title}
+        </span>
+        {task.leads && (
+          <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+            <User className="h-4 w-4" />
+            {task.leads.name}
+          </div>
+        )}
+      </div>
       <Select
         value={task.priority}
         onValueChange={(value) => handlePriorityChange(task.id, value)}
@@ -122,13 +125,16 @@ export default function TodoList() {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
-  // Set up real-time subscription
   useEffect(() => {
     const channel = supabase
       .channel('tasks-changes')
@@ -154,33 +160,58 @@ export default function TodoList() {
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user found');
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('No user found');
 
-      const { data: tasks, error } = await supabase
-        .from('tasks')
-        .select('*, leads(name)')
-        .eq('user_id', user.id)
-        .order('order_index', { ascending: true })
-        .order('priority', { ascending: false })
-        .order('created_at', { ascending: false });
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('*, leads(name)')
+          .eq('user_id', user.id)
+          .order('order_index', { ascending: true })
+          .order('priority', { ascending: false })
+          .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return tasks as Task[];
+        if (error) {
+          console.error('Error fetching tasks:', error);
+          throw error;
+        }
+
+        return data as Task[];
+      } catch (error) {
+        console.error('Error in task query:', error);
+        throw error;
+      }
     }
   });
 
   const updateTaskMutation = useMutation({
-    mutationFn: async ({ taskId, data }: { taskId: string; data: any }) => {
-      const { error } = await supabase
-        .from('tasks')
-        .update(data)
-        .eq('id', taskId);
+    mutationFn: async ({ taskId, data }: { taskId: string; data: Partial<Task> }) => {
+      try {
+        const { error } = await supabase
+          .from('tasks')
+          .update(data)
+          .eq('id', taskId);
 
-      if (error) throw error;
+        if (error) {
+          console.error('Error updating task:', error);
+          throw error;
+        }
+      } catch (error) {
+        console.error('Error in updateTaskMutation:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+    onError: (error) => {
+      console.error('Mutation error:', error);
+      toast.error(
+        settings?.language === "en"
+          ? "Failed to update task"
+          : "Fehler beim Aktualisieren der Aufgabe"
+      );
     }
   });
 
@@ -193,14 +224,35 @@ export default function TodoList() {
       
       const newTasks = arrayMove(tasks, oldIndex, newIndex);
       
-      const updates = newTasks.map((task, index) => 
-        updateTaskMutation.mutateAsync({
-          taskId: task.id,
-          data: { order_index: index }
-        })
-      );
+      try {
+        const updates = newTasks.map((task, index) => ({
+          id: task.id,
+          order_index: index,
+          user_id: task.user_id,
+          title: task.title,
+          priority: task.priority || 'Medium',
+          completed: task.completed || false,
+          lead_id: task.lead_id
+        }));
 
-      await Promise.all(updates);
+        const { error } = await supabase
+          .from('tasks')
+          .upsert(updates);
+
+        if (error) {
+          console.error('Error updating task order:', error);
+          throw error;
+        }
+
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      } catch (error) {
+        console.error('Error in handleDragEnd:', error);
+        toast.error(
+          settings?.language === "en"
+            ? "Failed to reorder tasks"
+            : "Fehler beim Neuordnen der Aufgaben"
+        );
+      }
     }
   };
 
