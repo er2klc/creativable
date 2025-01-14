@@ -14,58 +14,56 @@ const BioGenerator = () => {
   const [savedFormData, setSavedFormData] = useState(null);
 
   useEffect(() => {
-  if (savedFormData) {
-    form.reset(savedFormData);
-  }
-}, [savedFormData, form]);
+    loadSavedBio();
+  }, []);
 
   const loadSavedBio = async () => {
-  try {
-    console.info("Loading saved bio data...");
-    const { data: userData } = await supabase.auth.getUser();
-    
-    if (!userData.user?.id) {
-      console.error("No user ID found");
-      return;
-    }
+    try {
+      console.info("Loading saved bio data...");
+      const { data: userData } = await supabase.auth.getUser();
 
-    const { data, error } = await supabase
-      .from('user_bios')
-      .select('*')
-      .eq('user_id', userData.user.id)
-      .maybeSingle();
+      if (!userData.user?.id) {
+        console.error("No user ID found");
+        return;
+      }
 
-    if (error) {
-      console.error("Error loading bio:", error.message, error.hint);
-      throw error;
-    }
-    
-    if (data) {
-      console.info("Found saved bio data:", data);
-      setSavedFormData({
-        role: data.role || "",
-        target_audience: data.target_audience || "",
-        unique_strengths: data.unique_strengths || "",
-        mission: data.mission || "",
-        social_proof: data.social_proof || "",
-        cta_goal: data.cta_goal || "",
-        url: data.url || "",
-        preferred_emojis: data.preferred_emojis || "",
-        language: data.language || "Deutsch"
+      const { data, error } = await supabase
+        .from("user_bios")
+        .select("*")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error loading bio:", error.message, error.hint);
+        throw error;
+      }
+
+      if (data) {
+        console.info("Found saved bio data:", data);
+        setSavedFormData({
+          role: data.role || "",
+          target_audience: data.target_audience || "",
+          unique_strengths: data.unique_strengths || "",
+          mission: data.mission || "",
+          social_proof: data.social_proof || "",
+          cta_goal: data.cta_goal || "",
+          url: data.url || "",
+          preferred_emojis: data.preferred_emojis || "",
+          language: data.language || "Deutsch",
+        });
+        setGeneratedBio(data.generated_bio || "");
+      } else {
+        console.info("No saved bio data found");
+      }
+    } catch (error) {
+      console.error("Error loading bio:", error);
+      toast({
+        title: "Fehler",
+        description: "Bio konnte nicht geladen werden.",
+        variant: "destructive",
       });
-      setGeneratedBio(data.generated_bio || "");
-    } else {
-      console.info("No saved bio data found");
     }
-  } catch (error) {
-    console.error("Error loading bio:", error);
-    toast({
-      title: "Fehler",
-      description: "Bio konnte nicht geladen werden.",
-      variant: "destructive",
-    });
-  }
-};
+  };
 
   const generateBio = async (values: any) => {
     if (!settings?.openai_api_key) {
@@ -81,32 +79,36 @@ const BioGenerator = () => {
     try {
       console.info("Generating bio with values:", values);
       const { data: userData } = await supabase.auth.getUser();
-      
+
       if (!userData.user?.id) {
         throw new Error("No user ID found");
       }
 
-      const { data: bioData, error: bioError } = await supabase.functions.invoke("generate-bio", {
-        body: JSON.stringify(values),
-      });
+      const { data: bioData, error: bioError } = await supabase.functions.invoke(
+        "generate-bio",
+        {
+          body: JSON.stringify(values),
+        }
+      );
 
       if (bioError) throw bioError;
 
-      const { error: saveError } = await supabase
-        .from('user_bios')
-        .upsert({
+      const { error: saveError } = await supabase.from("user_bios").upsert(
+        {
           ...values,
           generated_bio: bioData.bio,
-          user_id: userData.user.id
-        }, {
-          onConflict: 'user_id'
-        });
+          user_id: userData.user.id,
+        },
+        {
+          onConflict: "user_id",
+        }
+      );
 
       if (saveError) throw saveError;
 
       setGeneratedBio(bioData.bio);
       setSavedFormData(values);
-      
+
       toast({
         title: "Bio generiert",
         description: "Ihre Bio wurde erfolgreich erstellt.",
@@ -115,7 +117,8 @@ const BioGenerator = () => {
       console.error("Error generating bio:", error);
       toast({
         title: "Fehler",
-        description: "Bio konnte nicht generiert werden. Bitte versuchen Sie es später erneut.",
+        description:
+          "Bio konnte nicht generiert werden. Bitte versuchen Sie es später erneut.",
         variant: "destructive",
       });
     } finally {
@@ -143,13 +146,13 @@ const BioGenerator = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <BioGeneratorForm 
-          onSubmit={generateBio} 
+        <BioGeneratorForm
+          onSubmit={generateBio}
           isGenerating={isGenerating}
           initialData={savedFormData}
         />
-        <BioPreview 
-          generatedBio={generatedBio} 
+        <BioPreview
+          generatedBio={generatedBio}
           onRegenerate={regenerateBio}
           isGenerating={isGenerating}
         />
