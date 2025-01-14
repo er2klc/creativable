@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Shuffle } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,8 +16,17 @@ interface VisionBoardImage {
   order_index: number;
 }
 
-const getRandomSize = () => {
-  // Increase size variations for better board coverage
+const getRandomSize = (totalImages: number) => {
+  if (totalImages <= 2) {
+    // Für wenige Bilder größere Formate bevorzugen
+    const sizes = [
+      'col-span-3 row-span-2', // Extra Large
+      'col-span-2 row-span-2', // Large
+    ];
+    return sizes[Math.floor(Math.random() * sizes.length)];
+  }
+  
+  // Für mehr Bilder verschiedene Größen mischen
   const sizes = [
     'col-span-2 row-span-2', // Large
     'col-span-2 row-span-1', // Wide
@@ -31,6 +40,7 @@ export const VisionBoardGrid = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [theme, setTheme] = useState("");
+  const [layoutKey, setLayoutKey] = useState(0); // Für Layout-Neuberechnung
 
   const { data: images, isLoading: isLoadingImages, refetch } = useQuery({
     queryKey: ["vision-board-images"],
@@ -84,8 +94,8 @@ export const VisionBoardGrid = () => {
       const canvas = await html2canvas(board, {
         backgroundColor: '#0A0A0A',
         scale: 2,
-        width: 1200, // A4 landscape width at 150 DPI
-        height: 848,  // A4 landscape height at 150 DPI
+        width: 1200,
+        height: 848,
       });
       
       const link = document.createElement('a');
@@ -201,6 +211,11 @@ export const VisionBoardGrid = () => {
     }
   };
 
+  const handleRandomizeLayout = () => {
+    setLayoutKey(prev => prev + 1);
+    toast.success("Layout wurde neu angeordnet");
+  };
+
   if (isLoadingImages) {
     return (
       <div className="flex items-center justify-center h-[200px]">
@@ -226,20 +241,20 @@ export const VisionBoardGrid = () => {
       />
 
       <div id="vision-board" className="relative w-[1200px] h-[848px] mx-auto bg-black p-4 shadow-xl print:shadow-none">
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden opacity-30">
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
           <img 
             src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
             alt="Logo" 
-            className="w-1/2 object-contain filter blur-sm"
+            className="w-3/4 h-3/4 object-contain opacity-30 filter blur-sm"
           />
         </div>
-        <div className="grid grid-cols-6 grid-rows-3 gap-2 absolute inset-0 p-4">
+        <div key={layoutKey} className="grid grid-cols-6 grid-rows-3 gap-2 absolute inset-0 p-4">
           {images?.map((image: VisionBoardImage) => (
             <div key={image.id} 
-                 className={`relative transform hover:z-10 transition-all duration-200 ${getRandomSize()}`}
+                 className={`relative transform hover:z-10 transition-all duration-200 ${getRandomSize(images.length)}`}
                  style={{
-                   transform: `rotate(${Math.random() * 10 - 5}deg)`, // Reduced rotation for better fit
-                   margin: `${Math.random() * 10}px`, // Reduced margins for better space usage
+                   transform: `rotate(${Math.random() * 6 - 3}deg)`,
+                   margin: `${Math.random() * 4}px`,
                  }}>
               <VisionBoardImage
                 id={image.id}
@@ -255,20 +270,32 @@ export const VisionBoardGrid = () => {
         </div>
       </div>
 
-      <Button
-        onClick={() => setIsDialogOpen(true)}
-        disabled={isLoading}
-        className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-gray-400 bg-transparent text-gray-600 hover:text-gray-700 p-8"
-      >
-        <Plus className="h-8 w-8" />
-        <span>Neues Bild hinzufügen</span>
-      </Button>
+      <div className="flex gap-4 justify-center">
+        <Button
+          onClick={() => setIsDialogOpen(true)}
+          disabled={isLoading}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Neues Bild hinzufügen
+        </Button>
+        
+        <Button
+          onClick={handleRandomizeLayout}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <Shuffle className="h-4 w-4" />
+          Layout neu anordnen
+        </Button>
+      </div>
 
       <style>
         {`
           @media print {
             @page {
               size: landscape;
+              margin: 0;
             }
             body * {
               visibility: hidden;
