@@ -54,13 +54,13 @@ serve(async (req) => {
     const { role, target_audience, unique_strengths, mission, social_proof, cta_goal, url, preferred_emojis, language } = await req.json();
 
    const prompt = `
-You are a professional bio writer specializing in creating concise and engaging Instagram bios. 
-Please create a bio with the following structure and using the provided inputs. Each line should be a maximum of 40 characters:
+You are a professional bio writer specializing in creating concise and engaging Instagram bios in German. 
+Create a bio with the following structure, ensuring that each line begins with a relevant emoji based on the content:
 
-Line 1: Clearly state who the user is and what they do. This should grab the attention of their audience.
-Line 2: Highlight what makes them unique, their mission, or their values.
-Line 3 (optional): Include social proof, achievements, or certifications.
-Line 4: Provide a compelling call-to-action (CTA) with a link, accompanied by relevant emojis.
+1️⃣ Line 1: Clearly state who the user is and what they do. Use an emoji that represents their profession or focus.
+2️⃣ Line 2: Highlight what makes them unique, their mission, or their values. Use an emoji that reflects these aspects.
+3️⃣ Line 3 (optional): Include social proof, achievements, or certifications. Use an emoji that conveys credibility or success.
+4️⃣ Line 4: Provide a compelling call-to-action (CTA) with a link, accompanied by attention-grabbing emojis.
 
 Here is the information provided:
 - Role: ${role}
@@ -72,11 +72,13 @@ Here is the information provided:
 - URL: ${url}
 - Preferred Emojis: ${preferred_emojis}
 
-The bio should include emojis, with each line starting with an appropriate emoji. 
-If no emojis are explicitly provided, choose emojis that fit the context of each line.
+Example structure:
+1️⃣ 🚀 Helping coaches master online sales
+2️⃣ 🌟 Empowering growth through unique tools
+3️⃣ 🏆 100+ clients | Featured in Forbes
+4️⃣ 🔗 Try it free: example.com
 
-Output an Instagram bio exactly 150 characters long, following the structure above and divided into 4 lines. 
-Ensure the tone is professional yet engaging, suitable for the provided target audience.
+Now generate a 150-character bio in this format, divided into 4 lines, and starting each line with an appropriate emoji. Ensure the tone is professional and engaging.
 `;
 
     console.log('Creating OpenAI request with prompt:', prompt);
