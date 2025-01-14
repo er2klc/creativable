@@ -24,21 +24,23 @@ serve(async (req) => {
       language
     } = await req.json()
 
-    const prompt = `Erstelle eine Instagram-Bio basierend auf den folgenden Informationen. 
-    Nutze kreative und relevante Emojis, um die Bio visuell ansprechend zu gestalten. 
-    Halte die Bio klar, prägnant und maximal 150 Zeichen lang. 
-    Die Bio sollte professionell wirken und zum Benutzer passen.
+    const prompt = `Create a professional bio based on the following information.
+    The bio MUST be EXACTLY 150 characters or less - this is a strict requirement.
+    Use creative and relevant emojis to make the bio visually appealing.
+    The bio should be professional and match the user's profile.
 
-    - Beruf/Rolle: ${role}
-    - Zielgruppe: ${target_audience}
-    - Einzigartige Stärken/Dienstleistungen: ${unique_strengths}
-    - Mission/Ziel: ${mission}
-    - Soziale Beweise/Erfolge: ${social_proof}
+    - Role/Profession: ${role}
+    - Target Audience: ${target_audience}
+    - Unique Strengths/Services: ${unique_strengths}
+    - Mission/Goal: ${mission}
+    - Social Proof/Achievements: ${social_proof}
     - Call-to-Action (CTA): ${cta_goal}
     - Link: ${url}
-    ${preferred_emojis ? `- Bevorzugte Emojis: ${preferred_emojis}` : ''}
+    ${preferred_emojis ? `- Preferred Emojis: ${preferred_emojis}` : ''}
 
-    Schreibe die Bio auf ${language}. Nutze passende Emojis, aber nicht übertrieben viele.`
+    Write the bio in ${language}. Use appropriate emojis, but not too many.
+    IMPORTANT: Count the characters and ensure the final bio is 150 characters or less.
+    If needed, prioritize the most important information to stay within the character limit.`
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -47,11 +49,11 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
-            content: 'Du bist ein erfahrener Social Media Manager, der sich auf das Erstellen professioneller Instagram-Bios spezialisiert hat.'
+            content: 'You are a professional bio writer who specializes in creating concise, impactful bios that are exactly 150 characters or less.'
           },
           {
             role: 'user',

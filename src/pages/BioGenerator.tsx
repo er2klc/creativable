@@ -90,7 +90,6 @@ const BioGenerator = () => {
 
       if (bioError) throw bioError;
 
-      // Use upsert instead of insert
       const { error: saveError } = await supabase
         .from('user_bios')
         .upsert({
@@ -108,7 +107,7 @@ const BioGenerator = () => {
       
       toast({
         title: "Bio generiert",
-        description: "Ihre Instagram-Bio wurde erfolgreich erstellt.",
+        description: "Ihre Bio wurde erfolgreich erstellt.",
       });
     } catch (error) {
       console.error("Error generating bio:", error);
@@ -135,9 +134,9 @@ const BioGenerator = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Instagram Bio Generator</h1>
+        <h1 className="text-3xl font-bold">Bio Generator</h1>
         <p className="text-muted-foreground mt-2">
-          Erstellen Sie eine professionelle Instagram-Bio mit KI-Unterstützung.
+          Erstellen Sie eine professionelle Bio mit KI-Unterstützung.
         </p>
       </div>
 
