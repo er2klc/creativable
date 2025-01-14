@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Download, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import html2canvas from 'html2canvas';
 
 interface VisionBoardImage {
   id: string;
@@ -162,6 +163,32 @@ export const VisionBoardGrid = () => {
     }
   };
 
+  const handleDownload = async () => {
+    const board = document.getElementById('vision-board');
+    if (!board) return;
+
+    try {
+      const canvas = await html2canvas(board, {
+        backgroundColor: '#0A0A0A',
+        scale: 2, // Higher quality
+      });
+      
+      const link = document.createElement('a');
+      link.download = 'vision-board.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      toast.success("Vision Board wurde erfolgreich heruntergeladen");
+    } catch (error) {
+      console.error("Error downloading vision board:", error);
+      toast.error("Fehler beim Herunterladen des Vision Boards");
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (isLoadingImages) {
     return (
       <div className="flex items-center justify-center h-[200px]">
@@ -205,7 +232,29 @@ export const VisionBoardGrid = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Mein Vision Board</h2>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleDownload}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Herunterladen
+          </Button>
+          <Button
+            onClick={handlePrint}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Printer className="h-4 w-4" />
+            Drucken
+          </Button>
+        </div>
+      </div>
+
+      <div id="vision-board" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {images?.map((image: VisionBoardImage) => (
           <Card key={image.id} className="relative aspect-square overflow-hidden group">
             <img
