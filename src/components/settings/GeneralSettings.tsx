@@ -15,12 +15,14 @@ import { formSchema, formatPhoneNumber } from "./schemas/settings-schema";
 import type { z } from "zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Camera } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function GeneralSettings() {
   const session = useSession();
   const queryClient = useQueryClient();
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Fetch current settings and user data
   const { data: settings, isLoading } = useQuery({
@@ -55,7 +57,6 @@ export function GeneralSettings() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       language: settings?.language || "Deutsch",
-      name: session?.user?.user_metadata?.full_name || "",
       phoneNumber: formatPhoneNumber(session?.user?.phone || ""),
       email: session?.user?.email || "",
       displayName: session?.user?.user_metadata?.display_name || "",
@@ -66,13 +67,16 @@ export function GeneralSettings() {
     if (settings?.language || session?.user) {
       form.reset({
         language: settings?.language || "Deutsch",
-        name: session?.user?.user_metadata?.full_name || "",
         phoneNumber: formatPhoneNumber(session?.user?.phone || ""),
         email: session?.user?.email || "",
         displayName: session?.user?.user_metadata?.display_name || "",
       });
     }
   }, [settings, session?.user, form]);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -114,10 +118,8 @@ export function GeneralSettings() {
         throw new Error("No user session found");
       }
 
-      // Format phone number to E.164 format if provided
       const formattedPhone = values.phoneNumber ? formatPhoneNumber(values.phoneNumber) : null;
 
-      // Update settings
       const { error: settingsError } = await supabase
         .from("settings")
         .upsert(
@@ -126,24 +128,19 @@ export function GeneralSettings() {
             language: values.language,
             updated_at: new Date().toISOString(),
           },
-          { 
-            onConflict: 'user_id'
-          }
+          { onConflict: 'user_id' }
         );
 
       if (settingsError) throw settingsError;
 
-      // Update user metadata and profile
       const { error: metadataError } = await supabase.auth.updateUser({
         data: { 
-          full_name: values.name,
           display_name: values.displayName
         }
       });
 
       if (metadataError) throw metadataError;
 
-      // Update profile display_name
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ display_name: values.displayName })
@@ -151,7 +148,6 @@ export function GeneralSettings() {
 
       if (profileError) throw profileError;
 
-      // Only try to update phone if it's provided and different
       if (formattedPhone && formattedPhone !== session.user.phone) {
         const { error: phoneError } = await supabase.auth.updateUser({
           phone: formattedPhone
@@ -164,7 +160,6 @@ export function GeneralSettings() {
         }
       }
 
-      // Invalidate and refetch settings
       await queryClient.invalidateQueries({ queryKey: ["settings", session.user.id] });
 
       toast.success("Einstellungen wurden gespeichert");
@@ -175,41 +170,109 @@ export function GeneralSettings() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Allgemeine Einstellungen</CardTitle>
-        <CardDescription>
-          Verwalten Sie hier Ihre persönlichen Daten und Spracheinstellungen.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-6">
-          <Label>Profilbild</Label>
-          <div className="flex items-center gap-4 mt-2">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={avatarUrl || "/placeholder.svg"} />
-              <AvatarFallback>
-                {session?.user?.user_metadata?.full_name?.charAt(0) || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarUpload}
-              className="max-w-[200px]"
-            />
-          </div>
-        </div>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <UserInfoFields form={form} />
-            <div className="flex justify-between items-center pt-4">
-              <Button type="submit">Speichern</Button>
-              <DeleteAccountButton />
+    <Tabs defaultValue="general" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="general">Allgemein</TabsTrigger>
+        <TabsTrigger value="integrations">Integrationen</TabsTrigger>
+        <TabsTrigger value="billing">Plan & Rechnung</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="general">
+        <Card>
+          <CardHeader>
+            <CardTitle>Allgemeine Einstellungen</CardTitle>
+            <CardDescription>
+              Verwalten Sie hier Ihre persönlichen Daten und Spracheinstellungen.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-6">
+              <div className="flex items-start gap-4">
+                <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage src={avatarUrl || "/placeholder.svg"} />
+                    <AvatarFallback>
+                      {session?.user?.user_metadata?.display_name?.charAt(0) || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-full flex items-center justify-center">
+                    <Camera className="text-white opacity-0 group-hover:opacity-100 h-6 w-6" />
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-lg font-medium">{form.getValues("displayName")}</span>
+                  <span className="text-sm text-gray-500">Wird in Unity und anderen Bereichen angezeigt</span>
+                </div>
+              </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                className="hidden"
+              />
             </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <UserInfoFields form={form} />
+                <div className="flex justify-between items-center pt-4">
+                  <Button type="submit">Speichern</Button>
+                  <DeleteAccountButton />
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="integrations">
+        <Card>
+          <CardHeader>
+            <CardTitle>Drittanbieter-Integrationen</CardTitle>
+            <CardDescription>
+              Verwalten Sie hier Ihre API-Keys und Social Media Verbindungen.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-8">
+            <div>
+              <h2 className="text-xl font-semibold mb-4">KI & API Integrationen</h2>
+              <OpenAIIntegration />
+            </div>
+            
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Social Media Integrationen</h2>
+              <div className="space-y-4">
+                <InstagramIntegration />
+                <LinkedInIntegration />
+                <TikTokIntegration />
+                <WhatsAppIntegration />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="billing">
+        <Card>
+          <CardHeader>
+            <CardTitle>Plan & Rechnung</CardTitle>
+            <CardDescription>
+              Verwalten Sie hier Ihre Abonnements und Zahlungsinformationen.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label>Vollständiger Name</Label>
+                <div className="text-lg">{session?.user?.user_metadata?.full_name || "Nicht angegeben"}</div>
+              </div>
+              <div className="text-sm text-gray-500">
+                Weitere Funktionen wie Stripe-Integration und verschiedene Pakete werden in Kürze verfügbar sein.
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
   );
 }

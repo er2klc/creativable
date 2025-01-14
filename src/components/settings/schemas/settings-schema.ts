@@ -2,7 +2,6 @@ import * as z from "zod";
 
 export const formSchema = z.object({
   language: z.string(),
-  name: z.string().min(1, "Name ist erforderlich"),
   displayName: z.string().min(1, "Display Name ist erforderlich"),
   phoneNumber: z.string()
     .refine(value => {
