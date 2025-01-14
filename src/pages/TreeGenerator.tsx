@@ -1,18 +1,24 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { toast } from "@/hooks/use-toast";
-import { ProfileImageUpload } from "@/components/tree/ProfileImageUpload";
-import { LinkEditor } from "@/components/tree/LinkEditor";
-import { PublicUrlDisplay } from "@/components/tree/PublicUrlDisplay";
-import { TreeLink } from "@/integrations/supabase/types/database";
+import { PlusCircle, Trash2, Link as LinkIcon } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface TreeLink {
+  id?: string;
+  title: string;
+  url: string;
+  order_index: number;
+}
 
 const TreeGenerator = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
   const [username, setUsername] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -267,38 +273,41 @@ const TreeGenerator = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30" />
-      <Card className="relative w-full max-w-[450px] bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm p-6 space-y-8">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-white">Tree Generator</h1>
-          <p className="text-sm text-gray-400">
-            Create your personalized link page
-          </p>
-        </div>
+    <div className="container max-w-md mx-auto p-4 space-y-8">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-2">Tree Generator</h1>
+        <p className="text-sm text-muted-foreground">
+          Create your personalized link page
+        </p>
+      </div>
 
-        <div className="space-y-6">
-          <ProfileImageUpload
-            avatarUrl={avatarUrl}
-            onAvatarChange={handleAvatarChange}
-            onAvatarRemove={handleAvatarRemove}
-            logoPreview={logoPreview}
-          />
+      <Card className="p-6 space-y-6">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Profile Picture</Label>
+            <div className="h-32 w-32 mx-auto">
+              <TeamLogoUpload
+                currentLogoUrl={avatarUrl}
+                onLogoChange={handleAvatarChange}
+                onLogoRemove={handleAvatarRemove}
+                logoPreview={logoPreview}
+              />
+            </div>
+          </div>
 
           <div className="space-y-2">
-            <Label htmlFor="username" className="text-white">Username</Label>
+            <Label htmlFor="username">Username</Label>
             <Input
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Your username"
-              className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
             />
           </div>
 
           <Button
             onClick={handleSaveProfile}
-            className="w-full bg-white/10 hover:bg-white/20 text-white"
+            className="w-full"
           >
             Save Profile
           </Button>
@@ -306,15 +315,79 @@ const TreeGenerator = () => {
 
         {profile && (
           <>
-            <LinkEditor
-              links={links}
-              onAddLink={addLink}
-              onRemoveLink={removeLink}
-              onUpdateLink={updateLink}
-              onSaveLinks={saveLinks}
-            />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Your Links</Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addLink}
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Add Link
+                </Button>
+              </div>
 
-            {profile.slug && <PublicUrlDisplay slug={profile.slug} />}
+              <div className="space-y-4">
+                {links.map((link, index) => (
+                  <div key={index} className="space-y-2">
+                    <Input
+                      placeholder="Link Title"
+                      value={link.title}
+                      onChange={(e) => updateLink(index, "title", e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="URL"
+                        value={link.url}
+                        onChange={(e) => updateLink(index, "url", e.target.value)}
+                      />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => removeLink(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {links.length > 0 && (
+                <Button
+                  onClick={saveLinks}
+                  className="w-full"
+                >
+                  Save Links
+                </Button>
+              )}
+            </div>
+
+            {profile.slug && (
+              <div className="pt-4 border-t">
+                <p className="text-sm text-muted-foreground">Your public URL:</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input 
+                    value={`${window.location.origin}/tree/${profile.slug}`}
+                    readOnly
+                    className="font-mono text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/tree/${profile.slug}`);
+                      toast({
+                        description: "URL copied to clipboard",
+                      });
+                    }}
+                  >
+                    <LinkIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </Card>
