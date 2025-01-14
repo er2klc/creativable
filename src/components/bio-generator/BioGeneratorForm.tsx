@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,10 +41,14 @@ interface BioGeneratorFormProps {
   initialData?: any;
 }
 
-export const BioGeneratorForm = ({ onSubmit, isGenerating, initialData }: BioGeneratorFormProps) => {
+export const BioGeneratorForm = ({
+  onSubmit,
+  isGenerating,
+  initialData,
+}: BioGeneratorFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
+    defaultValues: {
       role: "",
       target_audience: "",
       unique_strengths: "",
@@ -56,6 +61,13 @@ export const BioGeneratorForm = ({ onSubmit, isGenerating, initialData }: BioGen
     },
   });
 
+  // Reset form values when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      form.reset(initialData);
+    }
+  }, [initialData, form]);
+
   return (
     <Card className="p-6">
       <Form {...form}>
@@ -67,7 +79,10 @@ export const BioGeneratorForm = ({ onSubmit, isGenerating, initialData }: BioGen
               <FormItem>
                 <FormLabel>Beruf oder Rolle</FormLabel>
                 <FormControl>
-                  <Input placeholder="z.B. Business Coach, Designer, Fotograf" {...field} />
+                  <Input
+                    placeholder="z.B. Business Coach, Designer, Fotograf"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -81,7 +96,10 @@ export const BioGeneratorForm = ({ onSubmit, isGenerating, initialData }: BioGen
               <FormItem>
                 <FormLabel>Zielgruppe</FormLabel>
                 <FormControl>
-                  <Input placeholder="z.B. Unternehmer, Frauen, Sportler" {...field} />
+                  <Input
+                    placeholder="z.B. Unternehmer, Frauen, Sportler"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -95,7 +113,10 @@ export const BioGeneratorForm = ({ onSubmit, isGenerating, initialData }: BioGen
               <FormItem>
                 <FormLabel>Einzigartige Stärken</FormLabel>
                 <FormControl>
-                  <Input placeholder="z.B. NLP-Coach, holistische Wellness" {...field} />
+                  <Input
+                    placeholder="z.B. NLP-Coach, holistische Wellness"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -109,9 +130,9 @@ export const BioGeneratorForm = ({ onSubmit, isGenerating, initialData }: BioGen
               <FormItem>
                 <FormLabel>Mission oder Ziel</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="z.B. Menschen helfen, ihre Traumkarriere zu finden" 
-                    {...field} 
+                  <Textarea
+                    placeholder="z.B. Menschen helfen, ihre Traumkarriere zu finden"
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />
@@ -126,7 +147,10 @@ export const BioGeneratorForm = ({ onSubmit, isGenerating, initialData }: BioGen
               <FormItem>
                 <FormLabel>Soziale Beweise / Erfolge</FormLabel>
                 <FormControl>
-                  <Input placeholder="z.B. Zertifizierter Coach, 100+ Kunden" {...field} />
+                  <Input
+                    placeholder="z.B. Zertifizierter Coach, 100+ Kunden"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -140,7 +164,10 @@ export const BioGeneratorForm = ({ onSubmit, isGenerating, initialData }: BioGen
               <FormItem>
                 <FormLabel>Call-to-Action</FormLabel>
                 <FormControl>
-                  <Input placeholder="z.B. Website besuchen, Kontakt aufnehmen" {...field} />
+                  <Input
+                    placeholder="z.B. Website besuchen, Kontakt aufnehmen"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
