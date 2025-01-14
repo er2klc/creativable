@@ -24,25 +24,30 @@ serve(async (req) => {
       language
     } = await req.json()
 
-    const prompt = `Create a professional bio based on the following information.
-    The bio MUST be EXACTLY 150 characters or less - this is a strict requirement.
-    The bio must be in a single line, no line breaks.
-    Count each character (including spaces and emojis) carefully to ensure it's 150 or less.
-    Make it concise but impactful.
+    const prompt = `Generate a VERY CONCISE professional bio. 
+    CRITICAL: The bio MUST be EXACTLY 150 characters or less, including all spaces and emojis.
+    Format: Single line only, no line breaks.
+    Style: Professional, impactful, and concise.
 
-    - Role/Profession: ${role}
-    - Target Audience: ${target_audience}
-    - Unique Strengths/Services: ${unique_strengths}
-    - Mission/Goal: ${mission}
-    - Social Proof/Achievements: ${social_proof}
-    - Call-to-Action (CTA): ${cta_goal}
-    - Link: ${url}
-    ${preferred_emojis ? `- Preferred Emojis: ${preferred_emojis}` : ''}
+    Guidelines:
+    1. Use maximum 2-3 emojis total
+    2. Prioritize essential information only
+    3. Be extremely concise
+    4. Count EVERY character carefully
 
-    Write the bio in ${language}. Use appropriate emojis, but not too many.
-    IMPORTANT: Count the characters and ensure the final bio is 150 characters or less.
-    If needed, prioritize the most important information to stay within the character limit.
-    Return ONLY the bio text, nothing else.`
+    Information to include (prioritize in this order):
+    1. Role: ${role}
+    2. Target: ${target_audience}
+    3. Value: ${unique_strengths}
+    4. Proof: ${social_proof}
+    5. CTA: ${cta_goal}
+    6. URL: ${url}
+    ${preferred_emojis ? `Preferred emojis (use sparingly): ${preferred_emojis}` : ''}
+
+    Language: ${language}
+    
+    IMPORTANT: The final bio MUST be under 150 characters. This is a strict requirement.
+    Return ONLY the bio text, no explanations or additional content.`
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -66,13 +71,15 @@ serve(async (req) => {
     })
 
     const data = await response.json()
-    const generatedBio = data.choices[0].message.content
+    const generatedBio = data.choices[0].message.content.trim()
 
     // Verify the length is 150 or less
     if (generatedBio.length > 150) {
-      console.error('Generated bio exceeds 150 characters:', generatedBio.length)
-      throw new Error('Generated bio exceeds 150 characters')
+      console.error(`Generated bio exceeds 150 characters: ${generatedBio.length} chars: "${generatedBio}"`)
+      throw new Error(`Generated bio length (${generatedBio.length}) exceeds 150 characters`)
     }
+
+    console.log(`Successfully generated bio with ${generatedBio.length} characters: "${generatedBio}"`)
 
     return new Response(
       JSON.stringify({ bio: generatedBio }),
