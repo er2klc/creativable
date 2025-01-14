@@ -22,12 +22,15 @@ const BioGenerator = () => {
       console.info("Loading saved bio data...");
       const { data: userData } = await supabase.auth.getUser();
       
+      if (!userData.user?.id) {
+        console.error("No user ID found");
+        return;
+      }
+
       const { data, error } = await supabase
         .from('user_bios')
         .select('*')
-        .eq('user_id', userData.user?.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
+        .eq('user_id', userData.user.id)
         .maybeSingle();
 
       if (error) {
@@ -87,23 +90,30 @@ const BioGenerator = () => {
     try {
       console.info("Generating bio with values:", values);
       const { data: userData } = await supabase.auth.getUser();
+      
+      if (!userData.user?.id) {
+        throw new Error("No user ID found");
+      }
+
       const { data: bioData, error: bioError } = await supabase.functions.invoke("generate-bio", {
         body: JSON.stringify(values),
       });
 
       if (bioError) throw bioError;
 
-      // Save the form data and generated bio
+      // Save or update the form data and generated bio
       const saveData = {
         ...values,
         generated_bio: bioData.bio,
-        user_id: userData.user?.id
+        user_id: userData.user.id
       };
       
       console.info("Saving bio data:", saveData);
       const { error: saveError } = await supabase
         .from('user_bios')
-        .upsert(saveData);
+        .upsert(saveData, {
+          onConflict: 'user_id'
+        });
 
       if (saveError) throw saveError;
 
