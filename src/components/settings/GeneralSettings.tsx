@@ -34,11 +34,13 @@ export function GeneralSettings() {
 
       if (settingsError) throw settingsError;
 
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("avatar_url, display_name")
+        .select("*")
         .eq("id", session?.user?.id)
         .single();
+
+      if (profileError) throw profileError;
 
       if (profileData?.avatar_url) {
         setAvatarUrl(profileData.avatar_url);
