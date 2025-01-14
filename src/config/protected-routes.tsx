@@ -12,6 +12,7 @@ import Unity from "@/pages/Unity";
 import Elevate from "@/pages/Elevate";
 import TeamDetail from "@/pages/TeamDetail";
 import PlatformDetail from "@/pages/PlatformDetail";
+import SignatureGenerator from "@/pages/SignatureGenerator";
 
 export const protectedRoutes = [
   {
@@ -37,6 +38,10 @@ export const protectedRoutes = [
   {
     path: "/tools",
     element: <Tools />,
+  },
+  {
+    path: "/signature-generator",
+    element: <SignatureGenerator />,
   },
   {
     path: "/bio-generator",
@@ -67,7 +72,11 @@ export const protectedRoutes = [
     element: <Elevate />,
   },
   {
-    path: "/elevate/platform/:platformSlug",
+    path: "/elevate/platform/:moduleSlug",
+    element: <PlatformDetail />,
+  },
+  {
+    path: "/elevate/platform/:platformSlug/module/:moduleId",
     element: <PlatformDetail />,
   },
 ];
