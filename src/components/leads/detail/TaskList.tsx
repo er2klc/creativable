@@ -93,13 +93,22 @@ export function TaskList({ leadId }: TaskListProps) {
   });
 
   const updateTaskOrder = useMutation({
-    mutationFn: async (updates: { id: string; order_index: number }[]) => {
+    mutationFn: async (updates: Tables<"tasks">[]) => {
       const { error } = await supabase
         .from("tasks")
-        .upsert(updates.map(update => ({
-          id: update.id,
-          order_index: update.order_index
-        })));
+        .upsert(
+          updates.map(task => ({
+            id: task.id,
+            order_index: task.order_index,
+            title: task.title,
+            user_id: task.user_id,
+            lead_id: task.lead_id,
+            completed: task.completed,
+            color: task.color,
+            priority: task.priority,
+            meeting_type: task.meeting_type,
+          }))
+        );
 
       if (error) throw error;
     },
@@ -117,7 +126,7 @@ export function TaskList({ leadId }: TaskListProps) {
 
     // Update order indices
     const updates = items.map((task, index) => ({
-      id: task.id,
+      ...task,
       order_index: index
     }));
 
