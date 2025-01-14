@@ -17,9 +17,11 @@ export const AuthStateHandler = () => {
     let refreshInterval: NodeJS.Timeout;
     let retryCount = 0;
     const MAX_RETRIES = 3;
+    const RETRY_DELAY = 1000; // 1 second
     
     const setupAuth = async () => {
       try {
+        console.log("[Auth] Setting up auth state handler...");
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -27,7 +29,7 @@ export const AuthStateHandler = () => {
           if (retryCount < MAX_RETRIES) {
             retryCount++;
             console.log(`[Auth] Retrying setup (${retryCount}/${MAX_RETRIES})`);
-            setTimeout(setupAuth, 1000 * retryCount);
+            setTimeout(setupAuth, RETRY_DELAY * retryCount);
             return;
           }
           throw sessionError;
@@ -67,6 +69,7 @@ export const AuthStateHandler = () => {
         // Set up session refresh interval with exponential backoff
         const refreshWithRetry = async (attempt = 0) => {
           try {
+            console.log("[Auth] Attempting to refresh session...");
             const { error: refreshError } = await refreshSession();
             if (refreshError) {
               console.error("[Auth] Session refresh error:", refreshError);
@@ -85,7 +88,8 @@ export const AuthStateHandler = () => {
           }
         };
 
-        refreshInterval = setInterval(() => refreshWithRetry(), 4 * 60 * 1000); // Refresh every 4 minutes
+        // Refresh every 4 minutes to prevent token expiration
+        refreshInterval = setInterval(() => refreshWithRetry(), 4 * 60 * 1000);
 
       } catch (error) {
         console.error("[Auth] Setup error:", error);
