@@ -5,6 +5,9 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface VisionBoardImage {
   id: string;
@@ -15,11 +18,12 @@ interface VisionBoardImage {
 
 export const VisionBoardGrid = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [theme, setTheme] = useState("");
 
-  const { data: images, isLoading: isLoadingImages } = useQuery({
+  const { data: images, isLoading: isLoadingImages, refetch } = useQuery({
     queryKey: ["vision-board-images"],
     queryFn: async () => {
-      // Hole zuerst das Board des Users
       const { data: board, error: boardError } = await supabase
         .from("vision_boards")
         .select("id")
@@ -30,7 +34,6 @@ export const VisionBoardGrid = () => {
         throw boardError;
       }
 
-      // Wenn kein Board existiert, erstelle eines
       if (!board) {
         const { data: newBoard, error: createError } = await supabase
           .from("vision_boards")
@@ -48,7 +51,6 @@ export const VisionBoardGrid = () => {
         return [];
       }
 
-      // Hole die Bilder des Boards
       const { data: images, error: imagesError } = await supabase
         .from("vision_board_images")
         .select("*")
@@ -64,10 +66,54 @@ export const VisionBoardGrid = () => {
   });
 
   const handleAddImage = async () => {
+    if (!theme.trim()) {
+      toast.error("Bitte geben Sie ein Thema ein");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Implementation for adding images will come in the next step
-      toast.info("Diese Funktion wird bald verfügbar sein");
+      const response = await fetch("/functions/v1/generate-vision-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ theme }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate image");
+      }
+
+      const { imageUrl } = await response.json();
+
+      const { data: board } = await supabase
+        .from("vision_boards")
+        .select("id")
+        .maybeSingle();
+
+      if (!board) {
+        throw new Error("No vision board found");
+      }
+
+      const { error: insertError } = await supabase
+        .from("vision_board_images")
+        .insert({
+          board_id: board.id,
+          theme,
+          image_url: imageUrl,
+          order_index: (images?.length || 0),
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      await refetch();
+      setIsDialogOpen(false);
+      setTheme("");
+      toast.success("Bild wurde erfolgreich hinzugefügt");
     } catch (error) {
       console.error("Error adding image:", error);
       toast.error("Fehler beim Hinzufügen des Bildes");
@@ -86,6 +132,39 @@ export const VisionBoardGrid = () => {
 
   return (
     <div className="space-y-6">
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Neues Visionsbild erstellen</DialogTitle>
+            <DialogDescription>
+              Geben Sie ein Thema ein, und wir generieren ein passendes Bild für Ihr Vision Board.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="theme">Thema</Label>
+              <Input
+                id="theme"
+                placeholder="z.B. Ein traumhaftes Strandhaus bei Sonnenuntergang"
+                value={theme}
+                onChange={(e) => setTheme(e.target.value)}
+              />
+            </div>
+            <Button
+              onClick={handleAddImage}
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+              ) : (
+                "Bild generieren"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {images?.map((image: VisionBoardImage) => (
           <Card key={image.id} className="relative aspect-square overflow-hidden group">
@@ -102,7 +181,7 @@ export const VisionBoardGrid = () => {
           </Card>
         ))}
         <Button
-          onClick={handleAddImage}
+          onClick={() => setIsDialogOpen(true)}
           disabled={isLoading}
           className="aspect-square h-full w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-gray-400 bg-transparent text-gray-600 hover:text-gray-700"
         >
