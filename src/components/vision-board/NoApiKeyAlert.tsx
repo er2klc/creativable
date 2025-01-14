@@ -9,7 +9,7 @@ export const NoApiKeyAlert = () => {
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>OpenAI API-Schlüssel fehlt</AlertTitle>
         <AlertDescription>
-          Um das Vision Board nutzen zu können, benötigst du einen OpenAI API-Schlüssel. 
+          Um das Inspirationsboard nutzen zu können, benötigst du einen OpenAI API-Schlüssel. 
           Du kannst deinen API-Schlüssel in den{" "}
           <Link to="/settings" className="font-medium underline underline-offset-4">
             Einstellungen
