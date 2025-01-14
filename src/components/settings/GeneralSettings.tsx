@@ -32,6 +32,7 @@ export function GeneralSettings() {
     },
   });
 
+  // Initialize form and avatar when settings and user data are available
   useEffect(() => {
     if (settings && user) {
       form.reset({
@@ -40,9 +41,21 @@ export function GeneralSettings() {
         phoneNumber: settings.whatsapp_number || "",
         language: settings.language || "Deutsch",
       });
-      setAvatarUrl(user.user_metadata?.avatar_url || null);
+      
+      // Set avatar URL from user metadata
+      const userAvatarUrl = user.user_metadata?.avatar_url;
+      if (userAvatarUrl) {
+        setAvatarUrl(userAvatarUrl);
+      }
     }
   }, [settings, user, form]);
+
+  // Ensure avatar URL is always set when user metadata changes
+  useEffect(() => {
+    if (user?.user_metadata?.avatar_url) {
+      setAvatarUrl(user.user_metadata.avatar_url);
+    }
+  }, [user?.user_metadata?.avatar_url]);
 
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -66,10 +79,10 @@ export function GeneralSettings() {
 
       const { data } = supabaseClient.storage.from("avatars").getPublicUrl(filePath);
 
-      const { error: updateError } = await supabaseClient
-        .from("profiles")
-        .update({ avatar_url: data.publicUrl })
-        .eq("id", user?.id);
+      // Update user metadata with new avatar URL
+      const { error: updateError } = await supabaseClient.auth.updateUser({
+        data: { avatar_url: data.publicUrl }
+      });
 
       if (updateError) {
         throw updateError;
@@ -107,6 +120,14 @@ export function GeneralSettings() {
 
   const onSubmit = async (values: FormData) => {
     try {
+      // Update user metadata with display name
+      const { error: userUpdateError } = await supabaseClient.auth.updateUser({
+        data: { display_name: values.displayName }
+      });
+
+      if (userUpdateError) throw userUpdateError;
+
+      // Update profile settings
       const { error } = await supabaseClient
         .from("profiles")
         .update({
