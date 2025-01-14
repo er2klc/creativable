@@ -57,16 +57,19 @@ serve(async (req) => {
 
     console.log('Generating image for theme:', theme);
     
-
-    // Generate image using DALL-E 3$ '{theme}'
+    // Optimierter Prompt, der das Thema klar darstellt aber trotzdem den Markenstil beibehält
     const prompt = `
-Create a modern, minimalist image for a vision board about the theme '${theme}'.
-- color palette (red, orange, yellow, green, blue, purple).
-- Set the image on a dark background to enhance focus and contrast.
-- Keep the design clear and focused on the theme: ${theme}.
+Create a clear and recognizable image of '${theme}' with these specifications:
+- The main subject/theme must be immediately recognizable and the central focus
+- Use vibrant colors including rainbow gradients as artistic accents, not overwhelming the main subject
+- Add subtle colorful swirls and dynamic elements in the background
+- Keep the composition balanced with 70% focus on the theme and 30% on artistic style
+- Set against a dark background for contrast
+- Maintain a modern, high-quality digital art style
+- The image should be detailed and professional, suitable for a vision board
 `;
 
-console.log('Generating image with Prompt:', prompt);
+    console.log('Generating image with Prompt:', prompt);
 
     const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
