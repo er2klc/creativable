@@ -20,52 +20,52 @@ const BioGenerator = () => {
 }, [savedFormData, form]);
 
   const loadSavedBio = async () => {
-    try {
-      console.info("Loading saved bio data...");
-      const { data: userData } = await supabase.auth.getUser();
-      
-      if (!userData.user?.id) {
-        console.error("No user ID found");
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('user_bios')
-        .select('*')
-        .eq('user_id', userData.user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error loading bio:", error);
-        throw error;
-      }
-      
-      if (data) {
-        console.info("Found saved bio data:", data);
-        setSavedFormData({
-          role: data.role || "",
-          target_audience: data.target_audience || "",
-          unique_strengths: data.unique_strengths || "",
-          mission: data.mission || "",
-          social_proof: data.social_proof || "",
-          cta_goal: data.cta_goal || "",
-          url: data.url || "",
-          preferred_emojis: data.preferred_emojis || "",
-          language: data.language || "Deutsch"
-        });
-        setGeneratedBio(data.generated_bio || "");
-      } else {
-        console.info("No saved bio data found");
-      }
-    } catch (error) {
-      console.error("Error loading bio:", error);
-      toast({
-        title: "Fehler",
-        description: "Bio konnte nicht geladen werden.",
-        variant: "destructive",
-      });
+  try {
+    console.info("Loading saved bio data...");
+    const { data: userData } = await supabase.auth.getUser();
+    
+    if (!userData.user?.id) {
+      console.error("No user ID found");
+      return;
     }
-  };
+
+    const { data, error } = await supabase
+      .from('user_bios')
+      .select('*')
+      .eq('user_id', userData.user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error loading bio:", error.message, error.hint);
+      throw error;
+    }
+    
+    if (data) {
+      console.info("Found saved bio data:", data);
+      setSavedFormData({
+        role: data.role || "",
+        target_audience: data.target_audience || "",
+        unique_strengths: data.unique_strengths || "",
+        mission: data.mission || "",
+        social_proof: data.social_proof || "",
+        cta_goal: data.cta_goal || "",
+        url: data.url || "",
+        preferred_emojis: data.preferred_emojis || "",
+        language: data.language || "Deutsch"
+      });
+      setGeneratedBio(data.generated_bio || "");
+    } else {
+      console.info("No saved bio data found");
+    }
+  } catch (error) {
+    console.error("Error loading bio:", error);
+    toast({
+      title: "Fehler",
+      description: "Bio konnte nicht geladen werden.",
+      variant: "destructive",
+    });
+  }
+};
 
   const generateBio = async (values: any) => {
     if (!settings?.openai_api_key) {
