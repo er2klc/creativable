@@ -73,20 +73,11 @@ export const VisionBoardGrid = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch("/functions/v1/generate-vision-image", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ theme }),
+      const { data, error } = await supabase.functions.invoke('generate-vision-image', {
+        body: { theme },
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to generate image");
-      }
-
-      const { imageUrl } = await response.json();
+      if (error) throw error;
 
       const { data: board } = await supabase
         .from("vision_boards")
@@ -102,7 +93,7 @@ export const VisionBoardGrid = () => {
         .insert({
           board_id: board.id,
           theme,
-          image_url: imageUrl,
+          image_url: data.imageUrl,
           order_index: (images?.length || 0),
         });
 
