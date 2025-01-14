@@ -1,89 +1,90 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.3.0'
-import { corsHeaders } from '../_shared/cors.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
-console.log("Bio Generator Edge Function started")
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { role, target_audience, unique_strengths, mission, social_proof, cta_goal, url, preferred_emojis, language } = await req.json()
+    const {
+      role,
+      target_audience,
+      unique_strengths,
+      mission,
+      social_proof,
+      cta_goal,
+      url,
+      preferred_emojis,
+      language
+    } = await req.json()
 
-    // Get user ID from auth header
-    const authHeader = req.headers.get('Authorization')?.replace('Bearer ', '')
-    if (!authHeader) {
-      throw new Error('No authorization header')
-    }
+    const prompt = `Create a professional bio based on the following information.
+    The bio MUST be EXACTLY 150 characters or less - this is a strict requirement.
+    The bio must be in a single line, no line breaks.
+    Count each character (including spaces and emojis) carefully to ensure it's 150 or less.
+    Make it concise but impactful.
 
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: `Bearer ${authHeader}` },
-        },
-      }
-    )
+    - Role/Profession: ${role}
+    - Target Audience: ${target_audience}
+    - Unique Strengths/Services: ${unique_strengths}
+    - Mission/Goal: ${mission}
+    - Social Proof/Achievements: ${social_proof}
+    - Call-to-Action (CTA): ${cta_goal}
+    - Link: ${url}
+    ${preferred_emojis ? `- Preferred Emojis: ${preferred_emojis}` : ''}
 
-    // Get user's OpenAI API key from settings
-    const { data: settings, error: settingsError } = await supabaseClient
-      .from('settings')
-      .select('openai_api_key')
-      .single()
+    Write the bio in ${language}. Use appropriate emojis, but not too many.
+    IMPORTANT: Count the characters and ensure the final bio is 150 characters or less.
+    If needed, prioritize the most important information to stay within the character limit.
+    Return ONLY the bio text, nothing else.`
 
-    if (settingsError || !settings?.openai_api_key) {
-      return new Response(
-        JSON.stringify({
-          error: 'OpenAI API key not found in settings. Please add your API key in the settings page.',
-          details: 'Go to Settings -> Integrations -> OpenAI Integration to add your API key.'
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      )
-    }
-
-    const prompt = `Create a professional ${language === 'English' ? 'English' : 'German'} bio for a ${role} that is exactly 150 characters long, split into 4 lines (max 40 chars per line). Target audience: ${target_audience}. Strengths: ${unique_strengths}. Mission: ${mission}. Social proof: ${social_proof}. Call-to-action: ${cta_goal}. URL: ${url}. ${preferred_emojis ? `Use these emojis: ${preferred_emojis}` : ''}`
-
-    console.log('Creating OpenAI configuration...')
-    const configuration = new Configuration({ apiKey: settings.openai_api_key })
-    const openai = new OpenAIApi(configuration)
-
-    console.log('Sending request to OpenAI...')
-    const completion = await openai.createChatCompletion({
-      model: "gpt-4",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-      max_tokens: 200,
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a professional bio writer who specializes in creating concise, impactful bios that are exactly 150 characters or less.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+      }),
     })
 
-    const generatedBio = completion.data.choices[0]?.message?.content || ''
+    const data = await response.json()
+    const generatedBio = data.choices[0].message.content
+
+    // Verify the length is 150 or less
+    if (generatedBio.length > 150) {
+      console.error('Generated bio exceeds 150 characters:', generatedBio.length)
+      throw new Error('Generated bio exceeds 150 characters')
+    }
 
     return new Response(
       JSON.stringify({ bio: generatedBio }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
-
   } catch (error) {
-    console.error('Error:', error.message)
+    console.error('Error:', error)
     return new Response(
-      JSON.stringify({
-        error: error.message,
-        details: error.response?.data?.error?.message || 'Unknown error occurred'
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      JSON.stringify({ error: error.message }),
+      { 
         status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       },
     )
   }
