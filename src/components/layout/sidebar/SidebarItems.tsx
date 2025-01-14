@@ -26,7 +26,6 @@ export const personalItems = [
   },
   { title: "Kalender", icon: Calendar, url: "/calendar" },
   { title: "Todo Liste", icon: CheckSquare, url: "/todo" },
-  { title: "Tools", icon: Wrench, url: "/tools" },
 ];
 
 export const teamItems = [
@@ -36,6 +35,7 @@ export const teamItems = [
 
 export const analysisItems = [
   { title: "Berichte", icon: BarChart, url: "/reports" },
+  { title: "Tools", icon: Wrench, url: "/tools" },
   { title: "Einstellungen", icon: Settings, url: "/settings" },
 ];
 

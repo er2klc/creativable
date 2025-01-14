@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LayoutGrid, Users, MessageSquare, Calendar, CheckSquare, BarChart, Settings, FileText, Shield, Globe2, Database } from "lucide-react";
+import { Menu, X, LayoutGrid, Users, MessageSquare, Calendar, CheckSquare, BarChart, Settings, FileText, Shield, Globe2, Database, Wrench } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const personalItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutGrid },
-  { name: "Leads", path: "/leads", icon: Users },
-  { name: "Messages", path: "/messages", icon: MessageSquare },
-  { name: "Calendar", path: "/calendar", icon: Calendar },
-  { name: "Todo", path: "/todo", icon: CheckSquare },
+  { name: "Kontakte", path: "/leads", icon: Users },
+  { name: "Nachrichten", path: "/messages", icon: MessageSquare },
+  { name: "Kalender", path: "/calendar", icon: Calendar },
+  { name: "Todo Liste", path: "/todo", icon: CheckSquare },
 ];
 
 const teamItems = [
@@ -19,8 +19,9 @@ const teamItems = [
 ];
 
 const analysisItems = [
-  { name: "Reports", path: "/reports", icon: BarChart },
-  { name: "Settings", path: "/settings", icon: Settings },
+  { name: "Berichte", path: "/reports", icon: BarChart },
+  { name: "Tools", path: "/tools", icon: Wrench },
+  { name: "Einstellungen", path: "/settings", icon: Settings },
 ];
 
 const legalItems = [
