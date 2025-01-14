@@ -24,6 +24,7 @@ export const VisionBoardImage = ({
   onDelete,
   onMove,
 }: VisionBoardImageProps) => {
+  // Get the public URL for the image from Supabase Storage
   const { data: { publicUrl } } = supabase.storage
     .from('vision-board-images')
     .getPublicUrl(imageUrl);
