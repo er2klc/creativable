@@ -126,13 +126,6 @@ const SignatureGenerator = () => {
       </div>
 
       <div className="space-y-6">
-        <Card className="p-6">
-          <SignatureTemplateSelector 
-            selectedTemplate={selectedTemplate}
-            onSelect={setSelectedTemplate}
-          />
-        </Card>
-
         <div className="grid grid-cols-1 gap-6">
           <Card className="p-6">
             <SignatureForm 
@@ -146,10 +139,16 @@ const SignatureGenerator = () => {
           </Card>
 
           <Card className="p-6">
-            <SignaturePreview 
-              template={selectedTemplate}
-              data={signatureData}
+            <SignatureTemplateSelector 
+              selectedTemplate={selectedTemplate}
+              onSelect={setSelectedTemplate}
             />
+            <div className="mt-6">
+              <SignaturePreview 
+                template={selectedTemplate}
+                data={signatureData}
+              />
+            </div>
           </Card>
         </div>
       </div>
