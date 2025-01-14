@@ -59,10 +59,12 @@ serve(async (req) => {
 
     // Generate image using DALL-E 3
     const prompt = `
-Generate an artistic, modern, and vibrant image based on the theme '${theme}'.
-- Use dynamic, flowing shapes inspired by a rainbow color palette.
-- Create a composition that evokes inspiration and positivity.
-- Set the image against a dark background to highlight the colors.
+Generate an artistic, modern, and vibrant image that visually represents the theme '${theme}'.
+- For '${theme}', use recognizable and symbolic elements to represent the concept.
+- Use dynamic, flowing shapes and textures inspired by a rainbow color palette.
+- Example for '${theme}': For "money", include symbolic elements such as coins, banknotes, and financial growth charts.
+- Ensure the composition is inspiring, positive, and visually aligned with the theme.
+- Use a dark background to make the colors and elements stand out prominently.
 `;
 
     const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
