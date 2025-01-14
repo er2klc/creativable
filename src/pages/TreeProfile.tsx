@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
+import { TreePreview } from "@/components/tree/TreePreview";
 
 interface TreeLink {
   id: string;
@@ -17,6 +15,7 @@ interface TreeProfile {
   username: string;
   avatar_url: string | null;
   slug: string;
+  bio: string | null;
 }
 
 const TreeProfile = () => {
@@ -58,53 +57,28 @@ const TreeProfile = () => {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#0A0A0A] text-white">
+        Loading...
+      </div>
+    );
   }
 
   if (!profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-[#0A0A0A] text-white">
         Profile not found
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-6 bg-gray-800/50 border-gray-700">
-        <div className="flex flex-col items-center space-y-4 mb-8">
-          <Avatar className="h-24 w-24">
-            {profile.avatar_url ? (
-              <AvatarImage src={profile.avatar_url} alt={profile.username} />
-            ) : (
-              <AvatarFallback className="bg-gray-700 text-white">
-                {profile.username[0].toUpperCase()}
-              </AvatarFallback>
-            )}
-          </Avatar>
-          <h1 className="text-2xl font-bold text-white">@{profile.username}</h1>
-        </div>
-
-        <div className="space-y-4">
-          {links.map((link) => (
-            <a
-              key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block"
-            >
-              <Button
-                variant="outline"
-                className="w-full text-center py-6 bg-white/5 border-white/10 text-white hover:bg-white/10 transition-colors"
-              >
-                {link.title}
-              </Button>
-            </a>
-          ))}
-        </div>
-      </Card>
-    </div>
+    <TreePreview
+      username={profile.username}
+      avatarUrl={profile.avatar_url}
+      bio={profile.bio}
+      links={links}
+    />
   );
 };
 
