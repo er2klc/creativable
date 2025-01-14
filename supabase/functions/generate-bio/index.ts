@@ -54,15 +54,16 @@ serve(async (req) => {
     const { role, target_audience, unique_strengths, mission, social_proof, cta_goal, url, preferred_emojis, language } = await req.json();
 
    const prompt = `
-You are a professional bio writer specializing in creating concise and engaging Instagram bios in German. 
-Create a bio with the following structure, ensuring that each line begins with a relevant emoji based on the content:
+You are a professional bio writer specializing in creating concise and engaging Instagram bios in ${language === 'English' ? 'English' : 'German'}. 
+Your primary focus is to ensure that **each line begins with a relevant emoji**. Emojis are essential for grabbing attention and conveying emotions. 
+Create a bio with the following structure:
 
-1️⃣ Line 1: Clearly state who the user is and what they do. Use an emoji that represents their profession or focus.
-2️⃣ Line 2: Highlight what makes them unique, their mission, or their values. Use an emoji that reflects these aspects.
-3️⃣ Line 3 (optional): Include social proof, achievements, or certifications. Use an emoji that conveys credibility or success.
-4️⃣ Line 4: Provide a compelling call-to-action (CTA) with a link, accompanied by attention-grabbing emojis.
+1️⃣ **Line 1**: Clearly state who the user is and what they do. Start with an emoji that reflects their profession or role.
+2️⃣ **Line 2**: Highlight what makes them unique, their mission, or values. Use an emoji that represents uniqueness or purpose.
+3️⃣ **Line 3 (optional)**: Include social proof, achievements, or certifications. Use emojis that indicate success or credibility.
+4️⃣ **Line 4**: Provide a compelling call-to-action (CTA) with a link. Use attention-grabbing emojis to encourage engagement.
 
-Here is the information provided:
+Here is the user information:
 - Role: ${role}
 - Target Audience: ${target_audience}
 - Unique Strengths: ${unique_strengths}
@@ -72,13 +73,18 @@ Here is the information provided:
 - URL: ${url}
 - Preferred Emojis: ${preferred_emojis}
 
-Example structure:
-1️⃣ 🚀 Helping coaches master online sales
-2️⃣ 🌟 Empowering growth through unique tools
-3️⃣ 🏆 100+ clients | Featured in Forbes
+**Key Requirements**:
+- Each line must start with an emoji.
+- Emojis must match the tone and content of the line.
+- If no preferred emojis are provided, choose emojis that are universally recognized and appropriate for the line content.
+
+**Example structure**:
+1️⃣ 🚀 Helping coaches achieve success
+2️⃣ 🌟 Empowering growth through innovation
+3️⃣ 🏆 Over 1000+ users growing with us
 4️⃣ 🔗 Try it free: example.com
 
-Now generate a 150-character bio in this format, divided into 4 lines, and starting each line with an appropriate emoji. Ensure the tone is professional and engaging.
+Now generate a 150-character bio using the structure above. Ensure it is split into 4 lines, each starting with an emoji. The tone must be professional yet engaging.
 `;
 
     console.log('Creating OpenAI request with prompt:', prompt);
