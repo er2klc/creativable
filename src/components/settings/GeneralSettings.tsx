@@ -17,6 +17,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Camera } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { OpenAIIntegration } from "./integrations/OpenAIIntegration";
+import { InstagramIntegration } from "./integrations/InstagramIntegration";
+import { LinkedInIntegration } from "./integrations/LinkedInIntegration";
+import { TikTokIntegration } from "./integrations/TikTokIntegration";
+import { WhatsAppIntegration } from "./integrations/WhatsAppIntegration";
 
 export function GeneralSettings() {
   const session = useSession();

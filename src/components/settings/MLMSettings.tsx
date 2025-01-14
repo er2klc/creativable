@@ -49,6 +49,15 @@ export function MLMSettings() {
     }
   };
 
+  const handleSave = async (value: string, field: keyof Settings) => {
+    try {
+      await updateSettings.mutateAsync({ [field]: value });
+    } catch (error) {
+      console.error(`Error updating ${field}:`, error);
+      toast.error(`Fehler beim Speichern von ${field}`);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -66,7 +75,7 @@ export function MLMSettings() {
             <div className="flex-1">
               <CompanyNameField
                 initialValue={settings?.company_name || ""}
-                onSave={(value) => updateSettings.mutateAsync({ company_name: value })}
+                onSave={(value) => handleSave(value, 'company_name')}
               />
             </div>
             <Button 
@@ -95,7 +104,7 @@ export function MLMSettings() {
           <div className="pl-8">
             <ProductsServicesField
               initialValue={settings?.products_services || ""}
-              onSave={(value) => updateSettings.mutateAsync({ products_services: value })}
+              onSave={(value) => handleSave(value, 'products_services')}
             />
           </div>
         </div>
@@ -105,7 +114,7 @@ export function MLMSettings() {
           <div className="pl-8">
             <TargetAudienceField
               initialValue={settings?.target_audience || ""}
-              onSave={(value) => updateSettings.mutateAsync({ target_audience: value })}
+              onSave={(value) => handleSave(value, 'target_audience')}
             />
           </div>
         </div>
@@ -115,7 +124,7 @@ export function MLMSettings() {
           <div className="pl-8">
             <UspField
               initialValue={settings?.usp || ""}
-              onSave={(value) => updateSettings.mutateAsync({ usp: value })}
+              onSave={(value) => handleSave(value, 'usp')}
             />
           </div>
         </div>
@@ -125,7 +134,7 @@ export function MLMSettings() {
           <div className="pl-8">
             <BusinessDescriptionField
               initialValue={settings?.business_description || ""}
-              onSave={(value) => updateSettings.mutateAsync({ business_description: value })}
+              onSave={(value) => handleSave(value, 'business_description')}
             />
           </div>
         </div>
