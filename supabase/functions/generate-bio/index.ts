@@ -52,6 +52,7 @@ serve(async (req) => {
     const configuration = new Configuration({ apiKey: openAIKey })
     const openai = new OpenAIApi(configuration)
 
+    console.log('Sending request to OpenAI...')
     const completion = await openai.createChatCompletion({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
