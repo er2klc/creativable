@@ -14,14 +14,8 @@ import { UserInfoFields } from "./form-fields/UserInfoFields";
 import { formSchema, formatPhoneNumber } from "./schemas/settings-schema";
 import type { z } from "zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Label } from "@/components/ui/label";
 import { Camera } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { OpenAIIntegration } from "./integrations/OpenAIIntegration";
-import { InstagramIntegration } from "./integrations/InstagramIntegration";
-import { LinkedInIntegration } from "./integrations/LinkedInIntegration";
-import { TikTokIntegration } from "./integrations/TikTokIntegration";
-import { WhatsAppIntegration } from "./integrations/WhatsAppIntegration";
 
 export function GeneralSettings() {
   const session = useSession();
@@ -191,9 +185,9 @@ export function GeneralSettings() {
           </CardHeader>
           <CardContent>
             <div className="mb-6">
-              <div className="flex items-start gap-4">
+              <div className="flex items-center gap-4">
                 <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
-                  <Avatar className="h-20 w-20 ring-2 ring-[#9b87f5] dark:ring-[#7E69AB] ring-offset-2 ring-offset-background">
+                  <Avatar className="h-20 w-20 ring-2 ring-gradient-to-r from-[#F97316] via-[#0EA5E9] to-[#ea384c] ring-offset-2 ring-offset-background">
                     <AvatarImage src={avatarUrl || "/placeholder.svg"} />
                     <AvatarFallback>
                       {session?.user?.user_metadata?.display_name?.charAt(0) || "U"}
@@ -203,7 +197,7 @@ export function GeneralSettings() {
                     <Camera className="text-white opacity-0 group-hover:opacity-100 h-6 w-6" />
                   </div>
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-col justify-center">
                   <span className="text-lg font-medium">{form.getValues("displayName")}</span>
                   <span className="text-sm text-gray-500">Wird in Unity und anderen Bereichen angezeigt</span>
                 </div>
@@ -237,21 +231,8 @@ export function GeneralSettings() {
               Verwalten Sie hier Ihre API-Keys und Social Media Verbindungen.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-8">
-            <div>
-              <h2 className="text-xl font-semibold mb-4">KI & API Integrationen</h2>
-              <OpenAIIntegration />
-            </div>
-            
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Social Media Integrationen</h2>
-              <div className="space-y-4">
-                <InstagramIntegration />
-                <LinkedInIntegration />
-                <TikTokIntegration />
-                <WhatsAppIntegration />
-              </div>
-            </div>
+          <CardContent>
+            {/* Integration content will be moved to a separate component */}
           </CardContent>
         </Card>
       </TabsContent>
@@ -267,7 +248,6 @@ export function GeneralSettings() {
           <CardContent>
             <div className="space-y-4">
               <div>
-                <Label>Vollständiger Name</Label>
                 <div className="text-lg">{session?.user?.user_metadata?.full_name || "Nicht angegeben"}</div>
               </div>
               <div className="text-sm text-gray-500">
