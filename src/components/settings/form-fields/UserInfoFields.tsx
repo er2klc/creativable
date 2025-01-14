@@ -3,14 +3,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { languages } from "../constants/languages";
 import { UseFormReturn } from "react-hook-form";
-import { z } from "zod";
-import { formSchema } from "../schemas/settings-schema";
+import { FormData } from "../schemas/settings-schema";
 import { Mail, Phone, Globe, UserRound } from "lucide-react";
 
-type FormType = z.infer<typeof formSchema>;
-
 interface UserInfoFieldsProps {
-  form: UseFormReturn<FormType>;
+  form: UseFormReturn<FormData>;
 }
 
 export function UserInfoFields({ form }: UserInfoFieldsProps) {

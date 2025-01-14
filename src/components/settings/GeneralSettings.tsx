@@ -9,7 +9,7 @@ import { DeleteAccountButton } from "./DeleteAccountButton";
 import { UserInfoFields } from "./form-fields/UserInfoFields";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { formSchema } from "./schemas/settings-schema";
+import { formSchema, type FormData } from "./schemas/settings-schema";
 import { Form } from "@/components/ui/form";
 
 export function GeneralSettings() {
@@ -20,7 +20,7 @@ export function GeneralSettings() {
   const [uploading, setUploading] = useState(false);
   const { settings, refetchSettings } = useSettings();
 
-  const form = useForm({
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       displayName: "",
@@ -31,16 +31,14 @@ export function GeneralSettings() {
   });
 
   useEffect(() => {
-    if (settings) {
+    if (settings && user) {
       form.reset({
         displayName: settings.display_name || "",
-        email: user?.email || "",
+        email: user.email || "",
         phoneNumber: settings.whatsapp_number || "",
         language: settings.language || "Deutsch",
       });
-      if (settings.avatar_url) {
-        setAvatarUrl(settings.avatar_url);
-      }
+      setAvatarUrl(settings.avatar_url || null);
     }
   }, [settings, user, form]);
 
@@ -105,7 +103,7 @@ export function GeneralSettings() {
     input.click();
   };
 
-  const onSubmit = async (values: any) => {
+  const onSubmit = async (values: FormData) => {
     try {
       const { error } = await supabaseClient
         .from("profiles")
