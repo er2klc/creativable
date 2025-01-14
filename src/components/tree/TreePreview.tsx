@@ -12,7 +12,7 @@ interface TreePreviewProps {
 }
 
 export const TreePreview = ({ username, avatarUrl, bio, links }: TreePreviewProps) => {
-  const getLinkType = (url: string): LinkType => {
+  const getLinkType = (url: string): LinkType | null => {
     const urlLower = url.toLowerCase();
     if (urlLower.includes('facebook.com')) return 'facebook';
     if (urlLower.includes('instagram.com')) return 'instagram';
@@ -25,7 +25,7 @@ export const TreePreview = ({ username, avatarUrl, bio, links }: TreePreviewProp
     if (urlLower.includes('tiktok.com')) return 'video';
     if (urlLower.includes('amazon.com') || urlLower.includes('shop')) return 'shop';
     if (urlLower.includes('calendar') || urlLower.includes('meet')) return 'calendar';
-    return 'website';
+    return null;
   };
 
   return (
@@ -64,28 +64,31 @@ export const TreePreview = ({ username, avatarUrl, bio, links }: TreePreviewProp
           )}
           
           <div className="w-full space-y-4">
-            {links.map((link, index) => (
-              <a
-                key={link.id || index}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full"
-              >
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full bg-white/10 hover:bg-white/20 text-white border border-white/20",
-                    "flex items-center gap-2 relative transition-all duration-300",
-                    "after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-full",
-                    "after:bg-gradient-to-r after:from-red-500 after:via-yellow-500 after:to-blue-500"
-                  )}
+            {links.map((link, index) => {
+              const linkType = getLinkType(link.url);
+              return (
+                <a
+                  key={link.id || index}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full"
                 >
-                  <LinkTypeIcon type={getLinkType(link.url)} className="h-4 w-4" />
-                  {link.title}
-                </Button>
-              </a>
-            ))}
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full bg-white/10 hover:bg-white/20 text-white border border-white/20",
+                      "flex items-center gap-2 relative transition-all duration-300",
+                      "after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-full",
+                      "after:bg-gradient-to-r after:from-red-500 after:via-yellow-500 after:to-blue-500"
+                    )}
+                  >
+                    {linkType && <LinkTypeIcon type={linkType} className="h-4 w-4" />}
+                    {link.title}
+                  </Button>
+                </a>
+              );
+            })}
           </div>
         </div>
       </Card>
