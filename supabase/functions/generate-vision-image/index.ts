@@ -60,7 +60,6 @@ serve(async (req) => {
     // Generate image using DALL-E 3
     const prompt = `
 Create an artistic and vibrant image about the theme '${theme}'.
-- Use a consistent abstract style with flowing, dynamic shapes.
 - Apply a color palette dominated by blue, green, orange, and yellow tones.
 - The image should feel modern, cohesive, and visually inspiring.
 - Set the image against a dark background to enhance contrast and highlight the colors.
