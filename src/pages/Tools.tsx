@@ -30,7 +30,7 @@ const Tools = () => {
       description: "Erstelle eine professionelle Instagram-Bio mit KI-Unterstützung.",
       icon: MessageSquareText,
       url: "/tools/bio",
-      gradient: "from-yellow-500 to-orange-500"
+      gradient: "from-violet-500 to-purple-500" // Changed color to violet/purple
     },
     {
       title: "Inspirationsboard",
