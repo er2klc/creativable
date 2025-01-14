@@ -16,35 +16,35 @@ import {
 } from "lucide-react";
 
 export const personalItems = [
-  { name: "Dashboard", icon: LayoutGrid, path: "/dashboard" },
-  { name: "Kontakte", icon: Users, path: "/leads" },
+  { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
+  { title: "Kontakte", icon: Users, url: "/leads" },
   { 
-    name: "Nachrichten", 
+    title: "Nachrichten", 
     icon: MessageSquare, 
-    path: "/messages",
+    url: "/messages",
     badge: true 
   },
-  { name: "Kalender", icon: Calendar, path: "/calendar" },
-  { name: "Todo Liste", icon: CheckSquare, path: "/todo" },
+  { title: "Kalender", icon: Calendar, url: "/calendar" },
+  { title: "Todo Liste", icon: CheckSquare, url: "/todo" },
 ];
 
 export const teamItems = [
-  { name: "Unity", icon: Infinity, path: "/unity" },
-  { name: "Elevate", icon: GraduationCap, path: "/elevate" },
+  { title: "Unity", icon: Infinity, url: "/unity" },
+  { title: "Elevate", icon: GraduationCap, url: "/elevate" },
 ];
 
 export const analysisItems = [
-  { name: "Berichte", icon: BarChart, path: "/reports" },
-  { name: "Tools", icon: Wrench, path: "/tools" },
-  { name: "Einstellungen", icon: Settings, path: "/settings" },
+  { title: "Berichte", icon: BarChart, url: "/reports" },
+  { title: "Tools", icon: Wrench, url: "/tools" },
+  { title: "Einstellungen", icon: Settings, url: "/settings" },
 ];
 
 export const legalItems = [
-  { name: "Impressum", icon: FileText, path: "/impressum" },
-  { name: "Datenschutz", icon: Shield, path: "/privacy-policy" },
-  { name: "Datenlöschung", icon: Globe2, path: "/auth/data-deletion/instagram" },
+  { title: "Impressum", icon: FileText, url: "/impressum" },
+  { title: "Datenschutz", icon: Shield, url: "/privacy-policy" },
+  { title: "Datenlöschung", icon: Globe2, url: "/auth/data-deletion/instagram" },
 ];
 
 export const adminItems = [
-  { name: "Admin Dashboard", icon: Database, path: "/admin" },
+  { title: "Admin Dashboard", icon: Database, url: "/admin" },
 ];
