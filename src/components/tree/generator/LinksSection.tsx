@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Trash2, Plus } from "lucide-react";
 import { TreeLink } from "@/pages/TreeGenerator";
 
 interface LinksSectionProps {
@@ -30,7 +31,7 @@ export const LinksSection: React.FC<LinksSectionProps> = ({
           size="sm"
           onClick={onAddLink}
         >
-          <PlusCircle className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 mr-2" />
           Add Link
         </Button>
       </div>
