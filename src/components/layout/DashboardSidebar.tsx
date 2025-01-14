@@ -46,16 +46,30 @@ export const DashboardSidebar = () => {
 
   useEffect(() => {
     const checkSuperAdminStatus = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setIsSuperAdmin(false);
+          return;
+        }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_super_admin')
-        .eq('id', user.id)
-        .single();
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('is_super_admin')
+          .eq('id', user.id)
+          .single();
 
-      setIsSuperAdmin(profile?.is_super_admin || false);
+        if (error) {
+          console.error('Error fetching super admin status:', error);
+          setIsSuperAdmin(false);
+          return;
+        }
+
+        setIsSuperAdmin(profile?.is_super_admin || false);
+      } catch (error) {
+        console.error('Error checking super admin status:', error);
+        setIsSuperAdmin(false);
+      }
     };
 
     checkSuperAdminStatus();
