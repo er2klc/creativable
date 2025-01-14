@@ -47,7 +47,7 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
             </Avatar>
             <div className="flex flex-col">
               <span className="text-sm font-medium">
-                {member.profiles?.display_name || 'Unbekannter Benutzer'}
+                {member.profiles?.display_name || 'Kein Name angegeben'}
               </span>
               <Badge variant={member.role === 'owner' ? 'default' : 'secondary'} className="mt-1">
                 {member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Mitglied'}
