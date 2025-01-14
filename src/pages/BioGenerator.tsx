@@ -24,12 +24,16 @@ const BioGenerator = () => {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      
       if (data) {
+        console.info("Loaded saved bio data:", data);
         setSavedFormData(data);
         setGeneratedBio(data.generated_bio || "");
+      } else {
+        console.info("No saved bio data found");
       }
     } catch (error) {
       console.error("Error loading bio:", error);
