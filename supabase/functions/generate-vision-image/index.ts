@@ -14,27 +14,27 @@ serve(async (req) => {
 
   try {
     const { theme } = await req.json()
-    
+
     if (!theme) {
       throw new Error('Theme is required')
     }
 
-    // Get user's OpenAI API key from settings
+    // Get the user's OpenAI API key from their settings
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      throw new Error('No authorization header')
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const authHeader = req.headers.get('Authorization')
-    const token = authHeader?.replace('Bearer ', '')
-
-    if (!token) {
-      throw new Error('No authorization token')
-    }
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token)
+    // Get user from auth header
+    const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
     if (userError || !user) throw new Error('Error getting user')
 
+    // Get user's OpenAI API key from settings
     const { data: settings, error: settingsError } = await supabase
       .from('settings')
       .select('openai_api_key')
@@ -45,8 +45,8 @@ serve(async (req) => {
       throw new Error('OpenAI API key not found in settings')
     }
 
-    // Generate image with DALL-E using the user's API key
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
+    // Generate image with DALL-E
+    const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -60,14 +60,19 @@ serve(async (req) => {
       })
     })
 
-    const data = await response.json()
-    
-    if (!data.data?.[0]?.url) {
-      throw new Error('No image URL received from OpenAI')
+    if (!openaiResponse.ok) {
+      const error = await openaiResponse.json()
+      console.error('OpenAI API error:', error)
+      throw new Error('Failed to generate image with DALL-E')
     }
 
-    // Download the image
-    const imageResponse = await fetch(data.data[0].url)
+    const { data: imageData } = await openaiResponse.json()
+    if (!imageData?.[0]?.url) {
+      throw new Error('No image URL in OpenAI response')
+    }
+
+    // Download the generated image
+    const imageResponse = await fetch(imageData[0].url)
     const imageBlob = await imageResponse.blob()
 
     // Upload to Supabase Storage
@@ -80,7 +85,8 @@ serve(async (req) => {
       })
 
     if (uploadError) {
-      throw uploadError
+      console.error('Storage upload error:', uploadError)
+      throw new Error('Failed to upload image to storage')
     }
 
     // Get public URL
@@ -93,7 +99,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error in generate-vision-image function:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
