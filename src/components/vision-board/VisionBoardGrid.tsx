@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -122,6 +122,55 @@ export const VisionBoardGrid = () => {
     }
   };
 
+  const handleDeleteImage = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("vision_board_images")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      await refetch();
+      toast.success("Bild wurde erfolgreich gelöscht");
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      toast.error("Fehler beim Löschen des Bildes");
+    }
+  };
+
+  const handleMoveImage = async (id: string, direction: 'up' | 'down') => {
+    try {
+      const currentImage = images?.find(img => img.id === id);
+      if (!currentImage) return;
+
+      const otherImage = images?.find(img => 
+        direction === 'up' 
+          ? img.order_index === currentImage.order_index - 1
+          : img.order_index === currentImage.order_index + 1
+      );
+
+      if (!otherImage) return;
+
+      const { error: error1 } = await supabase
+        .from("vision_board_images")
+        .update({ order_index: otherImage.order_index })
+        .eq("id", currentImage.id);
+
+      const { error: error2 } = await supabase
+        .from("vision_board_images")
+        .update({ order_index: currentImage.order_index })
+        .eq("id", otherImage.id);
+
+      if (error1 || error2) throw error1 || error2;
+
+      await refetch();
+    } catch (error) {
+      console.error("Error moving image:", error);
+      toast.error("Fehler beim Verschieben des Bildes");
+    }
+  };
+
   if (isLoadingImages) {
     return (
       <div className="flex items-center justify-center h-[200px]">
@@ -176,6 +225,31 @@ export const VisionBoardGrid = () => {
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
               <div className="absolute bottom-4 left-4 text-white">
                 <p className="font-semibold">{image.theme}</p>
+              </div>
+              <div className="absolute top-4 right-4 flex gap-2">
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => handleDeleteImage(image.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={() => handleMoveImage(image.id, 'up')}
+                  disabled={image.order_index === 0}
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={() => handleMoveImage(image.id, 'down')}
+                  disabled={image.order_index === (images.length - 1)}
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           </Card>
