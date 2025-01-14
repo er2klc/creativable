@@ -19,28 +19,45 @@ export const VisionBoardGrid = () => {
   const { data: images, isLoading: isLoadingImages } = useQuery({
     queryKey: ["vision-board-images"],
     queryFn: async () => {
-      const { data: board } = await supabase
+      // Hole zuerst das Board des Users
+      const { data: board, error: boardError } = await supabase
         .from("vision_boards")
         .select("id")
-        .single();
+        .maybeSingle();
 
+      if (boardError) {
+        console.error("Error fetching board:", boardError);
+        throw boardError;
+      }
+
+      // Wenn kein Board existiert, erstelle eines
       if (!board) {
-        const { data: newBoard } = await supabase
+        const { data: newBoard, error: createError } = await supabase
           .from("vision_boards")
-          .insert({})
+          .insert({
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+          })
           .select()
           .single();
 
-        if (!newBoard) {
-          throw new Error("Failed to create vision board");
+        if (createError) {
+          console.error("Error creating board:", createError);
+          throw createError;
         }
+
         return [];
       }
 
-      const { data: images } = await supabase
+      // Hole die Bilder des Boards
+      const { data: images, error: imagesError } = await supabase
         .from("vision_board_images")
         .select("*")
         .order("order_index");
+
+      if (imagesError) {
+        console.error("Error fetching images:", imagesError);
+        throw imagesError;
+      }
 
       return images || [];
     },
