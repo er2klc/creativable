@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
 
 interface TreeLink {
   id: string;
@@ -69,36 +70,40 @@ const TreeProfile = () => {
   }
 
   return (
-    <div className="container max-w-md mx-auto p-4 min-h-screen">
-      <div className="flex flex-col items-center space-y-4 mb-8">
-        <Avatar className="h-24 w-24">
-          {profile.avatar_url ? (
-            <AvatarImage src={profile.avatar_url} alt={profile.username} />
-          ) : (
-            <AvatarFallback>{profile.username[0].toUpperCase()}</AvatarFallback>
-          )}
-        </Avatar>
-        <h1 className="text-2xl font-bold">@{profile.username}</h1>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md p-6 bg-gray-800/50 border-gray-700">
+        <div className="flex flex-col items-center space-y-4 mb-8">
+          <Avatar className="h-24 w-24">
+            {profile.avatar_url ? (
+              <AvatarImage src={profile.avatar_url} alt={profile.username} />
+            ) : (
+              <AvatarFallback className="bg-gray-700 text-white">
+                {profile.username[0].toUpperCase()}
+              </AvatarFallback>
+            )}
+          </Avatar>
+          <h1 className="text-2xl font-bold text-white">@{profile.username}</h1>
+        </div>
 
-      <div className="space-y-4">
-        {links.map((link) => (
-          <a
-            key={link.id}
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block"
-          >
-            <Button
-              variant="outline"
-              className="w-full text-center py-6"
+        <div className="space-y-4">
+          {links.map((link) => (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block"
             >
-              {link.title}
-            </Button>
-          </a>
-        ))}
-      </div>
+              <Button
+                variant="outline"
+                className="w-full text-center py-6 bg-white/5 border-white/10 text-white hover:bg-white/10 transition-colors"
+              >
+                {link.title}
+              </Button>
+            </a>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 };

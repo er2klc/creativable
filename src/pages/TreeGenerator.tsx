@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, Link as LinkIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface TreeLink {
@@ -24,6 +24,7 @@ const TreeGenerator = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [links, setLinks] = useState<TreeLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -43,6 +44,7 @@ const TreeGenerator = () => {
         setProfile(profile);
         setUsername(profile.username);
         setAvatarUrl(profile.avatar_url);
+        setLogoPreview(profile.avatar_url);
 
         const { data: links } = await supabase
           .from("tree_links")
@@ -72,6 +74,10 @@ const TreeGenerator = () => {
     const file = e.target.files[0];
     const fileExt = file.name.split(".").pop();
     const filePath = `${user?.id}/${crypto.randomUUID()}.${fileExt}`;
+
+    // Create a preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setLogoPreview(previewUrl);
 
     try {
       const { error: uploadError } = await supabase.storage
@@ -121,6 +127,7 @@ const TreeGenerator = () => {
         if (updateError) throw updateError;
 
         setAvatarUrl(null);
+        setLogoPreview(null);
         toast({
           title: "Success",
           description: "Profile picture removed successfully",
@@ -139,13 +146,12 @@ const TreeGenerator = () => {
   const handleSaveProfile = async () => {
     try {
       if (!profile) {
-        // For new profiles, the slug will be generated automatically by the database trigger
         const { data, error } = await supabase
           .from("tree_profiles")
           .insert({ 
             user_id: user?.id, 
             username,
-            slug: username.toLowerCase().replace(/[^a-z0-9]+/g, '-') // Provide initial slug
+            slug: username.toLowerCase().replace(/[^a-z0-9]+/g, '-')
           })
           .select()
           .single();
@@ -251,7 +257,7 @@ const TreeGenerator = () => {
         description: "Links saved successfully",
       });
 
-      loadProfile(); // Reload to get the updated links with IDs
+      loadProfile();
     } catch (error) {
       console.error("Error saving links:", error);
       toast({
@@ -284,6 +290,7 @@ const TreeGenerator = () => {
                 currentLogoUrl={avatarUrl}
                 onLogoChange={handleAvatarChange}
                 onLogoRemove={handleAvatarRemove}
+                logoPreview={logoPreview}
               />
             </div>
           </div>
@@ -360,9 +367,25 @@ const TreeGenerator = () => {
             {profile.slug && (
               <div className="pt-4 border-t">
                 <p className="text-sm text-muted-foreground">Your public URL:</p>
-                <p className="text-sm font-mono break-all">
-                  {window.location.origin}/tree/{profile.slug}
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input 
+                    value={`${window.location.origin}/tree/${profile.slug}`}
+                    readOnly
+                    className="font-mono text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/tree/${profile.slug}`);
+                      toast({
+                        description: "URL copied to clipboard",
+                      });
+                    }}
+                  >
+                    <LinkIcon className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </>
