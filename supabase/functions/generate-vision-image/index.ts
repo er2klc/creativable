@@ -14,6 +14,10 @@ serve(async (req) => {
   try {
     const { theme } = await req.json()
     
+    if (!theme) {
+      throw new Error('Theme is required')
+    }
+
     // Generate image with DALL-E
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
