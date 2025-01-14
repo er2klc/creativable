@@ -24,7 +24,7 @@ export const VisionBoardImage = ({
   onDelete,
   onMove,
 }: VisionBoardImageProps) => {
-  const { data: publicUrl } = supabase.storage
+  const { data: { publicUrl } } = supabase.storage
     .from('vision-board-images')
     .getPublicUrl(imageUrl);
 
@@ -32,7 +32,7 @@ export const VisionBoardImage = ({
     <Card className="relative aspect-square overflow-hidden group" 
           style={{ transform: `rotate(${rotation}deg)` }}>
       <img
-        src={publicUrl?.publicUrl}
+        src={publicUrl}
         alt={theme}
         className="w-full h-full object-cover transition-transform group-hover:scale-105"
       />

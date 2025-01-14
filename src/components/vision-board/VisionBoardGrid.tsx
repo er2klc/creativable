@@ -218,7 +218,14 @@ export const VisionBoardGrid = () => {
         onPrint={handlePrint}
       />
 
-      <div id="vision-board" className="relative w-[1200px] h-[848px] mx-auto bg-white p-8 shadow-xl print:shadow-none">
+      <div id="vision-board" className="relative w-[1200px] h-[848px] mx-auto bg-black p-8 shadow-xl print:shadow-none">
+        <div className="absolute inset-0 w-full h-32 overflow-hidden opacity-10">
+          <img 
+            src="/logo.png" 
+            alt="Logo" 
+            className="w-full h-full object-cover filter blur-lg"
+          />
+        </div>
         <div className="grid grid-cols-3 gap-4 absolute inset-0 p-8">
           {images?.map((image: VisionBoardImage, index: number) => (
             <div key={image.id} 
@@ -250,23 +257,25 @@ export const VisionBoardGrid = () => {
         <span>Neues Bild hinzufügen</span>
       </Button>
 
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden;
+      <style>
+        {`
+          @media print {
+            body * {
+              visibility: hidden;
+            }
+            #vision-board, #vision-board * {
+              visibility: visible;
+            }
+            #vision-board {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 297mm;
+              height: 210mm;
+            }
           }
-          #vision-board, #vision-board * {
-            visibility: visible;
-          }
-          #vision-board {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 297mm;
-            height: 210mm;
-          }
-        }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };
