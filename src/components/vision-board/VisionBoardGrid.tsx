@@ -17,10 +17,12 @@ interface VisionBoardImage {
 }
 
 const getRandomSize = () => {
+  // Increase size variations for better board coverage
   const sizes = [
-    'col-span-1 row-span-1',
-    'col-span-2 row-span-1',
-    'col-span-1 row-span-2',
+    'col-span-2 row-span-2', // Large
+    'col-span-2 row-span-1', // Wide
+    'col-span-1 row-span-2', // Tall
+    'col-span-1 row-span-1', // Small
   ];
   return sizes[Math.floor(Math.random() * sizes.length)];
 };
@@ -73,6 +75,34 @@ export const VisionBoardGrid = () => {
       return images || [];
     },
   });
+
+  const handleDownload = async () => {
+    const board = document.getElementById('vision-board');
+    if (!board) return;
+
+    try {
+      const canvas = await html2canvas(board, {
+        backgroundColor: '#0A0A0A',
+        scale: 2,
+        width: 1200, // A4 landscape width at 150 DPI
+        height: 848,  // A4 landscape height at 150 DPI
+      });
+      
+      const link = document.createElement('a');
+      link.download = 'vision-board.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      toast.success("Vision Board wurde erfolgreich heruntergeladen");
+    } catch (error) {
+      console.error("Error downloading vision board:", error);
+      toast.error("Fehler beim Herunterladen des Vision Boards");
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   const handleAddImage = async () => {
     if (!theme.trim()) {
@@ -171,34 +201,6 @@ export const VisionBoardGrid = () => {
     }
   };
 
-  const handleDownload = async () => {
-    const board = document.getElementById('vision-board');
-    if (!board) return;
-
-    try {
-      const canvas = await html2canvas(board, {
-        backgroundColor: '#0A0A0A',
-        scale: 2,
-        width: 1200, // A4 landscape width at 150 DPI
-        height: 848,  // A4 landscape height at 150 DPI
-      });
-      
-      const link = document.createElement('a');
-      link.download = 'vision-board.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      
-      toast.success("Vision Board wurde erfolgreich heruntergeladen");
-    } catch (error) {
-      console.error("Error downloading vision board:", error);
-      toast.error("Fehler beim Herunterladen des Vision Boards");
-    }
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
   if (isLoadingImages) {
     return (
       <div className="flex items-center justify-center h-[200px]">
@@ -206,10 +208,6 @@ export const VisionBoardGrid = () => {
       </div>
     );
   }
-
-  const getRandomRotation = () => {
-    return Math.random() * 20 - 10; // Random rotation between -10 and 10 degrees
-  };
 
   return (
     <div className="space-y-6">
@@ -227,21 +225,21 @@ export const VisionBoardGrid = () => {
         onPrint={handlePrint}
       />
 
-      <div id="vision-board" className="relative w-[1200px] h-[848px] mx-auto bg-black p-8 shadow-xl print:shadow-none">
-        <div className="absolute inset-0 w-full h-32 overflow-hidden opacity-30">
+      <div id="vision-board" className="relative w-[1200px] h-[848px] mx-auto bg-black p-4 shadow-xl print:shadow-none">
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden opacity-30">
           <img 
             src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
             alt="Logo" 
-            className="w-full h-full object-cover filter blur-md"
+            className="w-1/2 object-contain filter blur-sm"
           />
         </div>
-        <div className="grid grid-cols-6 grid-rows-3 gap-4 absolute inset-0 p-8">
-          {images?.map((image: VisionBoardImage, index: number) => (
+        <div className="grid grid-cols-6 grid-rows-3 gap-2 absolute inset-0 p-4">
+          {images?.map((image: VisionBoardImage) => (
             <div key={image.id} 
                  className={`relative transform hover:z-10 transition-all duration-200 ${getRandomSize()}`}
                  style={{
-                   transform: `rotate(${Math.random() * 20 - 10}deg)`,
-                   margin: `${Math.random() * 20}px`,
+                   transform: `rotate(${Math.random() * 10 - 5}deg)`, // Reduced rotation for better fit
+                   margin: `${Math.random() * 10}px`, // Reduced margins for better space usage
                  }}>
               <VisionBoardImage
                 id={image.id}
@@ -269,6 +267,9 @@ export const VisionBoardGrid = () => {
       <style>
         {`
           @media print {
+            @page {
+              size: landscape;
+            }
             body * {
               visibility: hidden;
             }
@@ -281,6 +282,8 @@ export const VisionBoardGrid = () => {
               top: 0;
               width: 297mm;
               height: 210mm;
+              padding: 0;
+              margin: 0;
             }
           }
         `}
