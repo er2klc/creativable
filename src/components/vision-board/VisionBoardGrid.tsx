@@ -16,6 +16,15 @@ interface VisionBoardImage {
   order_index: number;
 }
 
+const getRandomSize = () => {
+  const sizes = [
+    'col-span-1 row-span-1',
+    'col-span-2 row-span-1',
+    'col-span-1 row-span-2',
+  ];
+  return sizes[Math.floor(Math.random() * sizes.length)];
+};
+
 export const VisionBoardGrid = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -219,19 +228,19 @@ export const VisionBoardGrid = () => {
       />
 
       <div id="vision-board" className="relative w-[1200px] h-[848px] mx-auto bg-black p-8 shadow-xl print:shadow-none">
-        <div className="absolute inset-0 w-full h-32 overflow-hidden opacity-10">
+        <div className="absolute inset-0 w-full h-32 overflow-hidden opacity-30">
           <img 
-            src="/logo.png" 
+            src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
             alt="Logo" 
-            className="w-full h-full object-cover filter blur-lg"
+            className="w-full h-full object-cover filter blur-md"
           />
         </div>
-        <div className="grid grid-cols-3 gap-4 absolute inset-0 p-8">
+        <div className="grid grid-cols-6 grid-rows-3 gap-4 absolute inset-0 p-8">
           {images?.map((image: VisionBoardImage, index: number) => (
             <div key={image.id} 
-                 className="relative transform hover:z-10 transition-all duration-200"
+                 className={`relative transform hover:z-10 transition-all duration-200 ${getRandomSize()}`}
                  style={{
-                   transform: `rotate(${getRandomRotation()}deg)`,
+                   transform: `rotate(${Math.random() * 20 - 10}deg)`,
                    margin: `${Math.random() * 20}px`,
                  }}>
               <VisionBoardImage

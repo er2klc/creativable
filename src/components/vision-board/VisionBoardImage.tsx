@@ -29,7 +29,7 @@ export const VisionBoardImage = ({
     .getPublicUrl(imageUrl);
 
   return (
-    <Card className="relative aspect-square overflow-hidden group" 
+    <Card className="relative w-full h-full overflow-hidden group" 
           style={{ transform: `rotate(${rotation}deg)` }}>
       <img
         src={publicUrl}
