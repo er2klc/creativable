@@ -57,12 +57,12 @@ serve(async (req) => {
 
     console.log('Generating image for theme:', theme);
 
-    // Generate image using DALL-E 3
+    // Generate image using DALL-E 3$ '{theme}'
     const prompt = `
-Create an artistic and vibrant image about the theme '${theme}'.
-- Apply a color palette dominated by blue, green, orange, and yellow tones.
-- The image should feel modern, cohesive, and visually inspiring.
-- Set the image against a dark background to enhance contrast and highlight the colors.
+Create a modern, minimalist image for a vision board about the theme '${theme}'.
+- Use a vibrant color palette (red, orange, yellow, green, blue, purple).
+- Set the image on a dark background to enhance focus and contrast.
+- Keep the design visually clear and focused on the theme: ${theme}.
 `;
 
     const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
