@@ -9,6 +9,8 @@ import SignatureGenerator from "@/pages/SignatureGenerator";
 import BioGenerator from "@/pages/BioGenerator";
 import TreeGenerator from "@/pages/TreeGenerator";
 import TodoList from "@/pages/TodoList";
+import Unity from "@/pages/Unity";
+import Elevate from "@/pages/Elevate";
 
 export const protectedRoutes = [
   {
@@ -54,5 +56,13 @@ export const protectedRoutes = [
   {
     path: "/vision-board",
     element: <VisionBoard />,
+  },
+  {
+    path: "/unity",
+    element: <Unity />,
+  },
+  {
+    path: "/elevate",
+    element: <Elevate />,
   },
 ];
