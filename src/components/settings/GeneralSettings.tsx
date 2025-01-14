@@ -179,8 +179,8 @@ export function GeneralSettings() {
           <div className="flex items-center gap-4">
             <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
               <Avatar className="h-20 w-20 ring-2 ring-offset-2 ring-offset-background transition-all duration-300 bg-gradient-to-r from-[#F97316] via-[#0EA5E9] to-[#ea384c]">
-                <AvatarImage src={avatarUrl || "/placeholder.svg"} />
-                <AvatarFallback>
+                <AvatarImage src={avatarUrl || "/placeholder.svg"} alt="Profile" className="object-cover" />
+                <AvatarFallback className="bg-gradient-to-r from-[#F97316] via-[#0EA5E9] to-[#ea384c]">
                   {session?.user?.user_metadata?.display_name?.charAt(0) || "U"}
                 </AvatarFallback>
               </Avatar>
