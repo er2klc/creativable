@@ -43,7 +43,7 @@ export const BioPreview = ({ generatedBio, onRegenerate, isGenerating }: BioPrev
       <div className="min-h-[200px] p-4 bg-muted rounded-lg relative">
         {generatedBio ? (
           <>
-            <p className="whitespace-pre-wrap">{generatedBio}</p>
+            <div className="whitespace-pre-line">{generatedBio}</div>
             <Button
               variant="outline"
               size="sm"

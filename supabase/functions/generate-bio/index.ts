@@ -1,16 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import "https://deno.land/x/xhr@0.1.0/mod.ts"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.2.1'
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
-
   try {
     const {
       role,
@@ -25,70 +17,53 @@ serve(async (req) => {
     } = await req.json()
 
     const prompt = `Generate a PROFESSIONAL and IMPACTFUL Instagram bio.
-    CRITICAL: The bio MUST be EXACTLY 150 characters or less, including all spaces and emojis.
-    Format: Single line only, no line breaks.
+    CRITICAL: Format in exactly 4 lines, with each line under 40 characters.
+    Total bio must be under 150 characters including line breaks.
 
-    Follow this structure STRICTLY but combine into ONE LINE:
-    1. What you do (Role): ${role}
-    2. Target audience: ${target_audience}
-    3. Value/Uniqueness: ${unique_strengths}
-    4. Social proof: ${social_proof}
-    5. CTA with URL: ${cta_goal} ${url}
+    Follow this structure STRICTLY:
+    Line 1: Role and main value: ${role}
+    Line 2: Target and unique strength: ${target_audience}, ${unique_strengths}
+    Line 3: Social proof: ${social_proof}
+    Line 4: CTA with URL: ${cta_goal} ${url}
 
     Guidelines:
     - Use MAXIMUM 3 emojis from these (if provided): ${preferred_emojis || "🚀,⭐,✨,💫,💪"}
-    - Make it punchy and memorable
+    - Make each line impactful and clear
     - Focus on benefits and results
-    - Be extremely concise
     - Language: ${language}
     
-    IMPORTANT: The final bio MUST be under 150 characters. This is a strict requirement.
-    Return ONLY the bio text, no explanations or additional content.`
+    IMPORTANT: Return the bio with actual line breaks using \n between lines.
+    Each line must be complete and meaningful on its own.`
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a professional bio writer who specializes in creating concise, impactful bios that are exactly 150 characters or less.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-      }),
+    // Initialize OpenAI
+    const openAIKey = Deno.env.get('OPENAI_API_KEY')
+    if (!openAIKey) throw new Error('OPENAI_API_KEY is not set')
+
+    const configuration = new Configuration({ apiKey: openAIKey })
+    const openai = new OpenAIApi(configuration)
+
+    const completion = await openai.createChatCompletion({
+      model: "gpt-4",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
+      max_tokens: 150,
     })
 
-    const data = await response.json()
-    const generatedBio = data.choices[0].message.content.trim()
+    const bio = completion.data.choices[0]?.message?.content?.trim()
+    if (!bio) throw new Error('No bio was generated')
 
-    // Verify the length is 150 or less
-    if (generatedBio.length > 150) {
-      console.error(`Generated bio exceeds 150 characters: ${generatedBio.length} chars: "${generatedBio}"`)
-      throw new Error(`Generated bio length (${generatedBio.length}) exceeds 150 characters`)
+    // Verify character count
+    if (bio.length > 150) {
+      throw new Error('Generated bio exceeds 150 characters')
     }
 
-    console.log(`Successfully generated bio with ${generatedBio.length} characters: "${generatedBio}"`)
-
-    return new Response(
-      JSON.stringify({ bio: generatedBio }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    )
+    return new Response(JSON.stringify({ bio }), {
+      headers: { 'Content-Type': 'application/json' },
+    })
   } catch (error) {
-    console.error('Error:', error)
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      },
-    )
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 })
