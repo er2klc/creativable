@@ -72,7 +72,7 @@ export const protectedRoutes = [
     element: <Elevate />,
   },
   {
-    path: "/elevate/platform/:moduleSlug",
+    path: "/elevate/modul/:slug",
     element: <PlatformDetail />,
   },
   {
