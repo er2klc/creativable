@@ -41,4 +41,5 @@ export interface TeamEvent extends Appointment {
   recurring_pattern: string;
   recurring_day_of_week?: number;
   team_id: string;
+  isRecurring?: boolean;
 }
