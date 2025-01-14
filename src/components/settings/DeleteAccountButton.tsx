@@ -22,13 +22,20 @@ export function DeleteAccountButton() {
   const supabaseClient = useSupabaseClient();
 
   const handleDeleteAccount = async () => {
+    if (isDeleting) return; // Prevent multiple clicks
+
     try {
       setIsDeleting(true);
 
       // Get the session
       const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-      if (sessionError) throw sessionError;
-      if (!session) throw new Error("No session found");
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error("Keine aktive Sitzung gefunden");
+      }
+      if (!session) throw new Error("Keine Sitzung gefunden");
+
+      console.log('Deleting account for user:', session.user.id);
 
       // Call the Edge Function to delete the account
       const { error: deleteError } = await supabaseClient.functions.invoke('delete-user-account', {
@@ -38,6 +45,7 @@ export function DeleteAccountButton() {
       });
 
       if (deleteError) {
+        console.error('Delete error:', deleteError);
         throw deleteError;
       }
 
@@ -55,7 +63,7 @@ export function DeleteAccountButton() {
       toast({
         variant: "destructive",
         title: "Fehler",
-        description: "Beim Löschen Ihres Accounts ist ein Fehler aufgetreten.",
+        description: error.message || "Beim Löschen Ihres Accounts ist ein Fehler aufgetreten.",
       });
     } finally {
       setIsDeleting(false);
