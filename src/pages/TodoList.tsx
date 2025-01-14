@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AddTaskDialog } from "@/components/todo/AddTaskDialog";
@@ -24,6 +24,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Task {
   id: string;
@@ -79,7 +80,11 @@ function SortableTask({ task, updateTaskMutation, settings }: { task: Task, upda
   };
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.2 }}
       ref={setNodeRef}
       style={style}
       {...attributes}
@@ -108,7 +113,7 @@ function SortableTask({ task, updateTaskMutation, settings }: { task: Task, upda
           <SelectItem value="Low">Low</SelectItem>
         </SelectContent>
       </Select>
-    </div>
+    </motion.div>
   );
 }
 
@@ -123,13 +128,39 @@ export default function TodoList() {
     })
   );
 
-  const { data: tasks = [] } = useQuery({
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('tasks-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        (payload) => {
+          console.log('Task change received:', payload);
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
       const { data: tasks, error } = await supabase
         .from('tasks')
         .select('*, leads(name)')
-        .is('lead_id', null)
+        .eq('user_id', user.id)
         .order('order_index', { ascending: true })
         .order('priority', { ascending: false })
         .order('created_at', { ascending: false });
@@ -162,7 +193,6 @@ export default function TodoList() {
       
       const newTasks = arrayMove(tasks, oldIndex, newIndex);
       
-      // Update order_index for all affected tasks
       const updates = newTasks.map((task, index) => 
         updateTaskMutation.mutateAsync({
           taskId: task.id,
@@ -173,6 +203,14 @@ export default function TodoList() {
       await Promise.all(updates);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-8 flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   // Filter out completed tasks for display
   const incompleteTasks = tasks.filter(task => !task.completed);
@@ -199,16 +237,18 @@ export default function TodoList() {
           items={incompleteTasks.map(task => task.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="space-y-4">
-            {incompleteTasks.map((task) => (
-              <SortableTask 
-                key={task.id} 
-                task={task} 
-                updateTaskMutation={updateTaskMutation}
-                settings={settings}
-              />
-            ))}
-          </div>
+          <AnimatePresence>
+            <div className="space-y-4">
+              {incompleteTasks.map((task) => (
+                <SortableTask 
+                  key={task.id} 
+                  task={task} 
+                  updateTaskMutation={updateTaskMutation}
+                  settings={settings}
+                />
+              ))}
+            </div>
+          </AnimatePresence>
         </SortableContext>
       </DndContext>
 

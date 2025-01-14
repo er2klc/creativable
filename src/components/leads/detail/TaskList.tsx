@@ -8,6 +8,7 @@ import { TaskItem } from "./tasks/TaskItem";
 import { ClipboardList } from "lucide-react";
 import confetti from "canvas-confetti";
 import { Tables } from "@/integrations/supabase/types";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface TaskListProps {
   leadId: string;
@@ -70,15 +71,24 @@ export function TaskList({ leadId }: TaskListProps) {
       </CardHeader>
       <CardContent>
         <TaskForm leadId={leadId} />
-        <div className="space-y-2 mt-4">
-          {tasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              onToggle={() => updateTask.mutate(task)}
-            />
-          ))}
-        </div>
+        <AnimatePresence>
+          <div className="space-y-2 mt-4">
+            {tasks.map((task) => (
+              <motion.div
+                key={task.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <TaskItem
+                  task={task}
+                  onToggle={() => updateTask.mutate(task)}
+                />
+              </motion.div>
+            ))}
+          </div>
+        </AnimatePresence>
       </CardContent>
     </Card>
   );
