@@ -19,17 +19,24 @@ const BioGenerator = () => {
 
   const loadSavedBio = async () => {
     try {
+      console.info("Loading saved bio data...");
+      const { data: userData } = await supabase.auth.getUser();
+      
       const { data, error } = await supabase
         .from('user_bios')
         .select('*')
+        .eq('user_id', userData.user?.id)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error loading bio:", error);
+        throw error;
+      }
       
       if (data) {
-        console.info("Loaded saved bio data:", data);
+        console.info("Found saved bio data:", data);
         setSavedFormData({
           role: data.role || "",
           target_audience: data.target_audience || "",
@@ -44,9 +51,25 @@ const BioGenerator = () => {
         setGeneratedBio(data.generated_bio || "");
       } else {
         console.info("No saved bio data found");
+        setSavedFormData({
+          role: "",
+          target_audience: "",
+          unique_strengths: "",
+          mission: "",
+          social_proof: "",
+          cta_goal: "",
+          url: "",
+          preferred_emojis: "",
+          language: "Deutsch"
+        });
       }
     } catch (error) {
       console.error("Error loading bio:", error);
+      toast({
+        title: "Fehler",
+        description: "Bio konnte nicht geladen werden.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -62,6 +85,8 @@ const BioGenerator = () => {
 
     setIsGenerating(true);
     try {
+      console.info("Generating bio with values:", values);
+      const { data: userData } = await supabase.auth.getUser();
       const { data: bioData, error: bioError } = await supabase.functions.invoke("generate-bio", {
         body: JSON.stringify(values),
       });
@@ -69,17 +94,22 @@ const BioGenerator = () => {
       if (bioError) throw bioError;
 
       // Save the form data and generated bio
+      const saveData = {
+        ...values,
+        generated_bio: bioData.bio,
+        user_id: userData.user?.id
+      };
+      
+      console.info("Saving bio data:", saveData);
       const { error: saveError } = await supabase
         .from('user_bios')
-        .upsert({
-          ...values,
-          generated_bio: bioData.bio,
-          user_id: (await supabase.auth.getUser()).data.user?.id
-        });
+        .upsert(saveData);
 
       if (saveError) throw saveError;
 
       setGeneratedBio(bioData.bio);
+      setSavedFormData(values);
+      
       toast({
         title: "Bio generiert",
         description: "Ihre Instagram-Bio wurde erfolgreich erstellt.",
