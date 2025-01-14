@@ -14,8 +14,10 @@ const BioGenerator = () => {
   const [savedFormData, setSavedFormData] = useState(null);
 
   useEffect(() => {
-    loadSavedBio();
-  }, []);
+  if (savedFormData) {
+    form.reset(savedFormData);
+  }
+}, [savedFormData, form]);
 
   const loadSavedBio = async () => {
     try {
