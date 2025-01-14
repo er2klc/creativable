@@ -70,14 +70,22 @@ const TreeProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-6 bg-gray-800/50 border-gray-700">
+    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30" />
+      <div className="absolute inset-0 flex items-center justify-center opacity-5">
+        <img 
+          src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
+          alt="Background Logo" 
+          className="w-[800px] h-[800px] blur-3xl"
+        />
+      </div>
+      <Card className="relative w-full max-w-md p-6 bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
         <div className="flex flex-col items-center space-y-4 mb-8">
           <Avatar className="h-24 w-24">
             {profile.avatar_url ? (
               <AvatarImage src={profile.avatar_url} alt={profile.username} />
             ) : (
-              <AvatarFallback className="bg-gray-700 text-white">
+              <AvatarFallback className="bg-white/10 text-white">
                 {profile.username[0].toUpperCase()}
               </AvatarFallback>
             )}
