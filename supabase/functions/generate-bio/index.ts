@@ -1,12 +1,14 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.3.0'
-import { corsHeaders } from '../_shared/cors.ts'
 
-console.log("Bio Generator Edge Function started")
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
-  // Handle CORS
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -38,6 +40,7 @@ serve(async (req) => {
       .single()
 
     if (settingsError || !settings?.openai_api_key) {
+      console.error('Error fetching OpenAI API key:', settingsError)
       return new Response(
         JSON.stringify({
           error: 'OpenAI API key not found in settings. Please add your API key in the settings page.',
@@ -50,7 +53,7 @@ serve(async (req) => {
       )
     }
 
-    const prompt = `Create a professional ${language === 'English' ? 'English' : 'German'} bio for a ${role} that is exactly 150 characters long, split into 4 lines (max 40 chars per line). Target audience: ${target_audience}. Strengths: ${unique_strengths}. Mission: ${mission}. Social proof: ${social_proof}. Call-to-action: ${cta_goal}. URL: ${url}. ${preferred_emojis ? `Use these emojis: ${preferred_emojis}` : ''}`
+    const prompt = `Create a professional ${language === 'English' ? 'English' : 'German'} bio that is exactly 150 characters long, split into 4 lines (max 40 chars per line). Target audience: ${target_audience}. Strengths: ${unique_strengths}. Mission: ${mission}. Social proof: ${social_proof}. Call-to-action: ${cta_goal}. URL: ${url}. ${preferred_emojis ? `Use these emojis: ${preferred_emojis}` : ''}`
 
     console.log('Creating OpenAI configuration...')
     const configuration = new Configuration({ apiKey: settings.openai_api_key })
@@ -58,7 +61,7 @@ serve(async (req) => {
 
     console.log('Sending request to OpenAI...')
     const completion = await openai.createChatCompletion({
-      model: "gpt-4",
+      model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
       max_tokens: 200,
