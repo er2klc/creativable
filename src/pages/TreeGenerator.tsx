@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
@@ -231,13 +231,28 @@ const TreeGenerator = () => {
     if (!profile) return;
 
     try {
-      // Delete existing links that are not in the current list
-      const existingLinkIds = links.filter(l => l.id).map(l => l.id);
-      await supabase
+      // First, get all existing links
+      const { data: existingLinks } = await supabase
         .from("tree_links")
-        .delete()
-        .eq("profile_id", profile.id)
-        .not("id", "in", existingLinkIds);
+        .select("id")
+        .eq("profile_id", profile.id);
+
+      // Create a set of current link IDs
+      const currentLinkIds = new Set(links.filter(l => l.id).map(l => l.id));
+
+      // Find links to delete (those that exist in DB but not in current list)
+      const linksToDelete = existingLinks?.filter(link => !currentLinkIds.has(link.id)) || [];
+
+      // Delete old links if any exist
+      if (linksToDelete.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("tree_links")
+          .delete()
+          .eq("profile_id", profile.id)
+          .in("id", linksToDelete.map(l => l.id));
+
+        if (deleteError) throw deleteError;
+      }
 
       // Update or insert links
       for (const link of links) {
