@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Plus, Trash2, ArrowUp, ArrowDown, Download, Printer } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import html2canvas from 'html2canvas';
+import { AddImageDialog } from "./AddImageDialog";
+import { VisionBoardHeader } from "./VisionBoardHeader";
+import { VisionBoardImage } from "./VisionBoardImage";
 
 interface VisionBoardImage {
   id: string;
@@ -170,7 +169,7 @@ export const VisionBoardGrid = () => {
     try {
       const canvas = await html2canvas(board, {
         backgroundColor: '#0A0A0A',
-        scale: 2, // Higher quality
+        scale: 2,
       });
       
       const link = document.createElement('a');
@@ -199,100 +198,32 @@ export const VisionBoardGrid = () => {
 
   return (
     <div className="space-y-6">
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Neues Visionsbild erstellen</DialogTitle>
-            <DialogDescription>
-              Geben Sie ein Thema ein, und wir generieren ein passendes Bild für Ihr Vision Board.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="theme">Thema</Label>
-              <Input
-                id="theme"
-                placeholder="z.B. Ein traumhaftes Strandhaus bei Sonnenuntergang"
-                value={theme}
-                onChange={(e) => setTheme(e.target.value)}
-              />
-            </div>
-            <Button
-              onClick={handleAddImage}
-              disabled={isLoading}
-              className="w-full"
-            >
-              {isLoading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-              ) : (
-                "Bild generieren"
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AddImageDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        isLoading={isLoading}
+        theme={theme}
+        onThemeChange={setTheme}
+        onAddImage={handleAddImage}
+      />
 
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Mein Vision Board</h2>
-        <div className="flex gap-2">
-          <Button
-            onClick={handleDownload}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Herunterladen
-          </Button>
-          <Button
-            onClick={handlePrint}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <Printer className="h-4 w-4" />
-            Drucken
-          </Button>
-        </div>
-      </div>
+      <VisionBoardHeader
+        onDownload={handleDownload}
+        onPrint={handlePrint}
+      />
 
       <div id="vision-board" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {images?.map((image: VisionBoardImage) => (
-          <Card key={image.id} className="relative aspect-square overflow-hidden group">
-            <img
-              src={image.image_url}
-              alt={image.theme}
-              className="w-full h-full object-cover transition-transform group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="absolute bottom-4 left-4 text-white">
-                <p className="font-semibold">{image.theme}</p>
-              </div>
-              <div className="absolute top-4 right-4 flex gap-2">
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => handleDeleteImage(image.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  onClick={() => handleMoveImage(image.id, 'up')}
-                  disabled={image.order_index === 0}
-                >
-                  <ArrowUp className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  onClick={() => handleMoveImage(image.id, 'down')}
-                  disabled={image.order_index === (images.length - 1)}
-                >
-                  <ArrowDown className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
+          <VisionBoardImage
+            key={image.id}
+            id={image.id}
+            theme={image.theme}
+            imageUrl={image.image_url}
+            orderIndex={image.order_index}
+            totalImages={images.length}
+            onDelete={handleDeleteImage}
+            onMove={handleMoveImage}
+          />
         ))}
         <Button
           onClick={() => setIsDialogOpen(true)}
