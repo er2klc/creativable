@@ -59,12 +59,11 @@ serve(async (req) => {
 
     // Generate image using DALL-E 3
     const prompt = `
-Create an artistic, modern, and vibrant image inspired by the theme '${theme}'.
-- Use dynamic, flowing shapes and textures inspired by a rainbow color palette.
-- Incorporate abstract and symbolic elements that evoke a sense of '${theme}', but keep the overall style consistent and minimalistic.
-- Focus on creating a visually cohesive and inspiring composition.
-- Use a dark background to highlight the vivid colors and ensure all images look cohesive as part of a series.
-
+Create an artistic and vibrant image about the theme '${theme}'.
+- Use a consistent abstract style with flowing, dynamic shapes.
+- Apply a color palette dominated by blue, green, orange, and yellow tones.
+- The image should feel modern, cohesive, and visually inspiring.
+- Set the image against a dark background to enhance contrast and highlight the colors.
 `;
 
     const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
