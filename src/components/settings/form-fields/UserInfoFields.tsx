@@ -25,14 +25,12 @@ export function UserInfoFields({ form }: UserInfoFieldsProps) {
               <UserRound className="h-4 w-4" />
               Display Name
             </FormLabel>
-            <div className="flex items-center gap-4">
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <span className="text-sm text-muted-foreground whitespace-nowrap">
-                Wird in Unity und anderen Bereichen angezeigt
-              </span>
-            </div>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <p className="text-sm text-muted-foreground">
+              Wird in Unity und anderen Bereichen angezeigt
+            </p>
             <FormMessage />
           </FormItem>
         )}

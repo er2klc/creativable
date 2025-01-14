@@ -3,6 +3,7 @@ import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { MLMSettings } from "@/components/settings/MLMSettings";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
 import { AboutSettings } from "@/components/settings/AboutSettings";
+import { BillingSettings } from "@/components/settings/BillingSettings";
 import { useSettings } from "@/hooks/use-settings";
 
 export default function Settings() {
@@ -30,6 +31,7 @@ export default function Settings() {
           <TabsTrigger value="general">Allgemein</TabsTrigger>
           <TabsTrigger value="mlm">Über mein Business</TabsTrigger>
           <TabsTrigger value="about">Über mich</TabsTrigger>
+          <TabsTrigger value="billing">Plan & Rechnung</TabsTrigger>
           <TabsTrigger value="integrations">Integrationen</TabsTrigger>
         </TabsList>
 
@@ -43,6 +45,10 @@ export default function Settings() {
 
         <TabsContent value="about" className="space-y-4">
           <AboutSettings />
+        </TabsContent>
+
+        <TabsContent value="billing" className="space-y-4">
+          <BillingSettings />
         </TabsContent>
 
         <TabsContent value="integrations" className="space-y-4">
