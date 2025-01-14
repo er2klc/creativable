@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { SidebarGroup, SidebarGroupContent, SidebarGroupTitle } from "@/components/ui/sidebar";
+import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel } from "@/components/ui/sidebar";
 
 interface SidebarMenuSectionProps {
   title: string;
@@ -24,9 +24,9 @@ export const SidebarMenuSection = ({
   return (
     <SidebarGroup>
       {isExpanded && (
-        <SidebarGroupTitle>
+        <SidebarGroupLabel>
           {title}
-        </SidebarGroupTitle>
+        </SidebarGroupLabel>
       )}
       <SidebarGroupContent>
         {items.map((item) => {
