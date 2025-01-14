@@ -1,16 +1,14 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, Trash2, Link as LinkIcon } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { TreePreview } from "@/components/tree/TreePreview";
 import { IconSelector } from "@/components/tree/IconSelector";
+import { TreeGeneratorHeader } from "@/components/tree/generator/TreeGeneratorHeader";
+import { ProfileSection } from "@/components/tree/generator/ProfileSection";
+import { LinksSection } from "@/components/tree/generator/LinksSection";
+import { PublicUrlSection } from "@/components/tree/generator/PublicUrlSection";
 
 export interface TreeLink {
   id?: string;
@@ -21,7 +19,6 @@ export interface TreeLink {
 
 const TreeGenerator = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
@@ -80,7 +77,6 @@ const TreeGenerator = () => {
     const fileExt = file.name.split(".").pop();
     const filePath = `${user?.id}/${crypto.randomUUID()}.${fileExt}`;
 
-    // Create a preview URL
     const previewUrl = URL.createObjectURL(file);
     setLogoPreview(previewUrl);
 
@@ -232,19 +228,14 @@ const TreeGenerator = () => {
     if (!profile) return;
 
     try {
-      // First, get all existing links
       const { data: existingLinks } = await supabase
         .from("tree_links")
         .select("id")
         .eq("profile_id", profile.id);
 
-      // Create a set of current link IDs
       const currentLinkIds = new Set(links.filter(l => l.id).map(l => l.id));
-
-      // Find links to delete (those that exist in DB but not in current list)
       const linksToDelete = existingLinks?.filter(link => !currentLinkIds.has(link.id)) || [];
 
-      // Delete old links if any exist
       if (linksToDelete.length > 0) {
         const { error: deleteError } = await supabase
           .from("tree_links")
@@ -255,7 +246,6 @@ const TreeGenerator = () => {
         if (deleteError) throw deleteError;
       }
 
-      // Update or insert links
       for (const link of links) {
         if (link.id) {
           const { error } = await supabase
@@ -305,132 +295,38 @@ const TreeGenerator = () => {
   return (
     <div className="container mx-auto p-4 flex flex-col lg:flex-row gap-8">
       <div className="w-full lg:w-1/2 space-y-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Tree Generator</h1>
-          <p className="text-sm text-muted-foreground">
-            Create your personalized link page
-          </p>
-        </div>
+        <TreeGeneratorHeader 
+          username={username}
+          bio={bio}
+          onUsernameChange={setUsername}
+          onBioChange={setBio}
+        />
 
         <Card className="p-6 space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Profile Picture</Label>
-              <div className="h-32 w-32 mx-auto">
-                <TeamLogoUpload
-                  currentLogoUrl={avatarUrl}
-                  onLogoChange={handleAvatarChange}
-                  onLogoRemove={handleAvatarRemove}
-                  logoPreview={logoPreview}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Your username"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="Tell us about yourself"
-                className="resize-none"
-                rows={3}
-              />
-            </div>
-
-            <Button
-              onClick={handleSaveProfile}
-              className="w-full"
-            >
-              Save Profile
-            </Button>
-          </div>
+          <ProfileSection
+            username={username}
+            bio={bio}
+            avatarUrl={avatarUrl}
+            logoPreview={logoPreview}
+            onUsernameChange={setUsername}
+            onBioChange={setBio}
+            onAvatarChange={handleAvatarChange}
+            onAvatarRemove={handleAvatarRemove}
+            onSaveProfile={handleSaveProfile}
+          />
 
           {profile && (
             <>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Your Links</Label>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={addLink}
-                  >
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Add Link
-                  </Button>
-                </div>
+              <LinksSection
+                profile={profile}
+                links={links}
+                onAddLink={addLink}
+                onRemoveLink={removeLink}
+                onUpdateLink={updateLink}
+                onSaveLinks={saveLinks}
+              />
 
-                <div className="space-y-4">
-                  {links.map((link, index) => (
-                    <div key={index} className="space-y-2">
-                      <Input
-                        placeholder="Link Title"
-                        value={link.title}
-                        onChange={(e) => updateLink(index, "title", e.target.value)}
-                      />
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="URL"
-                          value={link.url}
-                          onChange={(e) => updateLink(index, "url", e.target.value)}
-                        />
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => removeLink(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {links.length > 0 && (
-                  <Button
-                    onClick={saveLinks}
-                    className="w-full"
-                  >
-                    Save Links
-                  </Button>
-                )}
-              </div>
-
-              {profile.slug && (
-                <div className="pt-4 border-t">
-                  <p className="text-sm text-muted-foreground">Your public URL:</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Input 
-                      value={`${window.location.origin}/tree/${profile.slug}`}
-                      readOnly
-                      className="font-mono text-sm"
-                    />
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => {
-                        navigator.clipboard.writeText(`${window.location.origin}/tree/${profile.slug}`);
-                        toast({
-                          description: "URL copied to clipboard",
-                        });
-                      }}
-                    >
-                      <LinkIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <PublicUrlSection profile={profile} />
             </>
           )}
         </Card>
