@@ -1,5 +1,3 @@
-// src/components/calendar/CalendarView.tsx
-
 import { useState } from "react";
 import { format, addMonths, subMonths } from "date-fns";
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
@@ -9,13 +7,16 @@ import { useCalendarEvents } from "./hooks/useCalendarEvents";
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarGrid } from "./CalendarGrid";
 import { NewAppointmentDialog } from "./NewAppointmentDialog";
+import { TeamEventDetailsDialog } from "./TeamEventDetailsDialog";
 import { Switch } from "@/components/ui/switch";
-import { Appointment, AppointmentToEdit } from "./types/calendar";
+import { Appointment, AppointmentToEdit, TeamEvent } from "./types/calendar";
 
 export const CalendarView = () => {
-  console.log("CalendarView geladen version 1.0"); // Füge dieses Log hinzu
+  console.log("CalendarView geladen version 1.0");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isTeamEventDialogOpen, setIsTeamEventDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentToEdit | null>(null);
+  const [selectedTeamEvent, setSelectedTeamEvent] = useState<TeamEvent | null>(null);
   const [showTeamEvents, setShowTeamEvents] = useState(true);
 
   const {
@@ -76,7 +77,6 @@ export const CalendarView = () => {
           </div>
         </div>
 
-        {/* Anzeigen von Ladezuständen */}
         {(isLoadingAppointments || isLoadingTeamEvents) && (
           <div className="text-center text-gray-500">Lade Termine...</div>
         )}
@@ -91,7 +91,10 @@ export const CalendarView = () => {
           }}
           onAppointmentClick={(e, appointment) => {
             e.stopPropagation();
-            if (!appointment.isTeamEvent) {
+            if (appointment.isTeamEvent) {
+              setSelectedTeamEvent(appointment as TeamEvent);
+              setIsTeamEventDialogOpen(true);
+            } else {
               setSelectedDate(new Date(appointment.due_date));
               setSelectedAppointment({
                 id: appointment.id,
@@ -102,8 +105,6 @@ export const CalendarView = () => {
                 meeting_type: appointment.meeting_type,
               });
               setIsDialogOpen(true);
-            } else {
-              toast.error("Team-Termine können nur im Team-Kalender bearbeitet werden");
             }
           }}
           activeId={activeId}
@@ -116,6 +117,12 @@ export const CalendarView = () => {
           onOpenChange={setIsDialogOpen}
           initialSelectedDate={selectedDate}
           appointmentToEdit={selectedAppointment}
+        />
+
+        <TeamEventDetailsDialog
+          open={isTeamEventDialogOpen}
+          onOpenChange={setIsTeamEventDialogOpen}
+          event={selectedTeamEvent}
         />
       </div>
     </DndContext>
