@@ -13,6 +13,7 @@ import Changelog from "@/pages/Changelog";
 import Tools from "@/pages/Tools";
 import SignatureGenerator from "@/pages/SignatureGenerator";
 import TreeGenerator from "@/pages/TreeGenerator";
+import BioGenerator from "@/pages/BioGenerator";
 
 export const protectedRoutes = [
   { path: "/dashboard", element: <Dashboard /> },
@@ -29,5 +30,6 @@ export const protectedRoutes = [
   { path: "/changelog", element: <Changelog /> },
   { path: "/tools", element: <Tools /> },
   { path: "/tools/signature", element: <SignatureGenerator /> },
-  { path: "/tools/tree", element: <TreeGenerator /> }
+  { path: "/tools/tree", element: <TreeGenerator /> },
+  { path: "/tools/bio", element: <BioGenerator /> }
 ];
