@@ -53,7 +53,8 @@ export function TeamHeader({ team }: TeamHeaderProps) {
           user_id,
           profiles:user_id (
             id,
-            display_name
+            display_name,
+            avatar_url
           )
         `)
         .eq('team_id', team.id);
