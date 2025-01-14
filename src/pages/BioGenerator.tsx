@@ -54,17 +54,6 @@ const BioGenerator = () => {
         setGeneratedBio(data.generated_bio || "");
       } else {
         console.info("No saved bio data found");
-        setSavedFormData({
-          role: "",
-          target_audience: "",
-          unique_strengths: "",
-          mission: "",
-          social_proof: "",
-          cta_goal: "",
-          url: "",
-          preferred_emojis: "",
-          language: "Deutsch"
-        });
       }
     } catch (error) {
       console.error("Error loading bio:", error);
