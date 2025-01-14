@@ -37,12 +37,13 @@ const formSchema = z.object({
 interface BioGeneratorFormProps {
   onSubmit: (values: z.infer<typeof formSchema>) => Promise<void>;
   isGenerating: boolean;
+  initialData?: any;
 }
 
-export const BioGeneratorForm = ({ onSubmit, isGenerating }: BioGeneratorFormProps) => {
+export const BioGeneratorForm = ({ onSubmit, isGenerating, initialData }: BioGeneratorFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: initialData || {
       role: "",
       target_audience: "",
       unique_strengths: "",

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,30 @@ const BioGenerator = () => {
   const { settings } = useSettings();
   const [generatedBio, setGeneratedBio] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [savedFormData, setSavedFormData] = useState(null);
+
+  useEffect(() => {
+    loadSavedBio();
+  }, []);
+
+  const loadSavedBio = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_bios')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        setSavedFormData(data);
+        setGeneratedBio(data.generated_bio || "");
+      }
+    } catch (error) {
+      console.error("Error loading bio:", error);
+    }
+  };
 
   const generateBio = async (values: any) => {
     if (!settings?.openai_api_key) {
@@ -24,12 +48,24 @@ const BioGenerator = () => {
 
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-bio", {
+      const { data: bioData, error: bioError } = await supabase.functions.invoke("generate-bio", {
         body: JSON.stringify(values),
       });
 
-      if (error) throw error;
-      setGeneratedBio(data.bio);
+      if (bioError) throw bioError;
+
+      // Save the form data and generated bio
+      const { error: saveError } = await supabase
+        .from('user_bios')
+        .upsert({
+          ...values,
+          generated_bio: bioData.bio,
+          user_id: (await supabase.auth.getUser()).data.user?.id
+        });
+
+      if (saveError) throw saveError;
+
+      setGeneratedBio(bioData.bio);
       toast({
         title: "Bio generiert",
         description: "Ihre Instagram-Bio wurde erfolgreich erstellt.",
@@ -43,6 +79,12 @@ const BioGenerator = () => {
       });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const regenerateBio = async () => {
+    if (savedFormData) {
+      await generateBio(savedFormData);
     }
   };
 
@@ -60,8 +102,16 @@ const BioGenerator = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <BioGeneratorForm onSubmit={generateBio} isGenerating={isGenerating} />
-        <BioPreview generatedBio={generatedBio} />
+        <BioGeneratorForm 
+          onSubmit={generateBio} 
+          isGenerating={isGenerating}
+          initialData={savedFormData}
+        />
+        <BioPreview 
+          generatedBio={generatedBio} 
+          onRegenerate={regenerateBio}
+          isGenerating={isGenerating}
+        />
       </div>
     </div>
   );

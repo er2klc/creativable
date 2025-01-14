@@ -1607,6 +1607,57 @@ export type Database = {
         }
         Relationships: []
       }
+      user_bios: {
+        Row: {
+          created_at: string | null
+          cta_goal: string | null
+          generated_bio: string | null
+          id: string
+          language: string | null
+          mission: string | null
+          preferred_emojis: string | null
+          role: string | null
+          social_proof: string | null
+          target_audience: string | null
+          unique_strengths: string | null
+          updated_at: string | null
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          cta_goal?: string | null
+          generated_bio?: string | null
+          id?: string
+          language?: string | null
+          mission?: string | null
+          preferred_emojis?: string | null
+          role?: string | null
+          social_proof?: string | null
+          target_audience?: string | null
+          unique_strengths?: string | null
+          updated_at?: string | null
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          cta_goal?: string | null
+          generated_bio?: string | null
+          id?: string
+          language?: string | null
+          mission?: string | null
+          preferred_emojis?: string | null
+          role?: string | null
+          social_proof?: string | null
+          target_audience?: string | null
+          unique_strengths?: string | null
+          updated_at?: string | null
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_documents: {
         Row: {
           created_at: string | null
