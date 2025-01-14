@@ -24,16 +24,16 @@ export const VisionBoardImage = ({
   onDelete,
   onMove,
 }: VisionBoardImageProps) => {
-  // Get the public URL for the image from Supabase Storage
-  const { data: { publicUrl } } = supabase.storage
-    .from('vision-board-images')
-    .getPublicUrl(imageUrl);
+  // Determine if the URL is a direct URL or needs to be fetched from Supabase
+  const isDirectUrl = imageUrl.startsWith('http');
+  const imageSource = isDirectUrl ? imageUrl : 
+    supabase.storage.from('vision-board-images').getPublicUrl(imageUrl).data.publicUrl;
 
   return (
     <Card className="relative w-full h-full overflow-hidden group" 
           style={{ transform: `rotate(${rotation}deg)` }}>
       <img
-        src={publicUrl}
+        src={imageSource}
         alt={theme}
         className="w-full h-full object-cover transition-transform group-hover:scale-105"
       />
