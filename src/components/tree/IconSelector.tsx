@@ -47,12 +47,13 @@ export const IconSelector = () => {
         {ICON_OPTIONS.map((option) => (
           <Button
             key={option.name}
-            variant="outline"
-            className="flex flex-col items-center gap-2 p-4 bg-white/5 hover:bg-white/10 border-white/10"
+            variant="glassy"
+            size="icon"
+            className="h-12 w-12"
             onClick={() => handleCopyUrl(option.url)}
+            title={option.name}
           >
-            <option.icon className="h-6 w-6 text-white" />
-            <span className="text-xs text-white/80">{option.name}</span>
+            <option.icon className="h-6 w-6" />
           </Button>
         ))}
       </div>
