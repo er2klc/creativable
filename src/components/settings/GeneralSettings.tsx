@@ -3,27 +3,46 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useSettings } from "@/hooks/use-settings";
 import { DeleteAccountButton } from "./DeleteAccountButton";
 import { UserInfoFields } from "./form-fields/UserInfoFields";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { formSchema } from "./schemas/settings-schema";
+import { Form } from "@/components/ui/form";
 
 export function GeneralSettings() {
-  const { session } = useAuth();
+  const { user } = useAuth();
   const supabaseClient = useSupabaseClient();
   const { toast } = useToast();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const { settings, refetchSettings } = useSettings();
 
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      displayName: "",
+      email: "",
+      phoneNumber: "",
+      language: "Deutsch",
+    },
+  });
+
   useEffect(() => {
-    if (settings?.avatar_url) {
-      setAvatarUrl(settings.avatar_url);
+    if (settings) {
+      form.reset({
+        displayName: settings.display_name || "",
+        email: user?.email || "",
+        phoneNumber: settings.whatsapp_number || "",
+        language: settings.language || "Deutsch",
+      });
+      if (settings.avatar_url) {
+        setAvatarUrl(settings.avatar_url);
+      }
     }
-  }, [settings?.avatar_url]);
+  }, [settings, user, form]);
 
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -35,7 +54,7 @@ export function GeneralSettings() {
 
       const file = event.target.files[0];
       const fileExt = file.name.split(".").pop();
-      const filePath = `${session?.user?.id}/${Math.random()}.${fileExt}`;
+      const filePath = `${user?.id}/${Math.random()}.${fileExt}`;
 
       const { error: uploadError } = await supabaseClient.storage
         .from("avatars")
@@ -50,7 +69,7 @@ export function GeneralSettings() {
       const { error: updateError } = await supabaseClient
         .from("profiles")
         .update({ avatar_url: data.publicUrl })
-        .eq("id", session?.user?.id);
+        .eq("id", user?.id);
 
       if (updateError) {
         throw updateError;
@@ -86,6 +105,33 @@ export function GeneralSettings() {
     input.click();
   };
 
+  const onSubmit = async (values: any) => {
+    try {
+      const { error } = await supabaseClient
+        .from("profiles")
+        .update({
+          display_name: values.displayName,
+          whatsapp_number: values.phoneNumber,
+        })
+        .eq("id", user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Erfolg",
+        description: "Profil wurde erfolgreich aktualisiert.",
+      });
+
+      await refetchSettings();
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: "Profil konnte nicht aktualisiert werden.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -95,41 +141,43 @@ export function GeneralSettings() {
         </p>
       </div>
       <Card className="p-6">
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
-              <Avatar className="h-20 w-20 ring-2 ring-offset-2 ring-offset-background transition-all duration-300 bg-gradient-to-r from-[#F97316] via-[#0EA5E9] to-[#ea384c]">
-                <AvatarImage 
-                  src={avatarUrl || "/placeholder.svg"} 
-                  alt="Profile" 
-                  className="object-cover"
-                />
-                <AvatarFallback className="bg-gradient-to-r from-[#F97316] via-[#0EA5E9] to-[#ea384c] text-white">
-                  {session?.user?.user_metadata?.display_name?.charAt(0)?.toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 bg-black/60 flex items-center justify-center text-white text-sm transition-opacity">
-                Ändern
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
+                <Avatar className="h-20 w-20 ring-2 ring-offset-2 ring-offset-background transition-all duration-300 bg-gradient-to-r from-[#F97316] via-[#0EA5E9] to-[#ea384c]">
+                  <AvatarImage 
+                    src={avatarUrl || "/placeholder.svg"} 
+                    alt="Profile" 
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="bg-gradient-to-r from-[#F97316] via-[#0EA5E9] to-[#ea384c] text-white">
+                    {user?.email?.charAt(0)?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 bg-black/60 flex items-center justify-center text-white text-sm transition-opacity">
+                  Ändern
+                </div>
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-sm font-medium">Profilbild</h4>
+                <p className="text-sm text-muted-foreground">
+                  Klicken Sie auf das Bild, um es zu ändern
+                </p>
+                {uploading && <p className="text-sm text-muted-foreground">Wird hochgeladen...</p>}
               </div>
             </div>
-            <div className="space-y-1">
-              <h4 className="text-sm font-medium">Profilbild</h4>
-              <p className="text-sm text-muted-foreground">
-                Klicken Sie auf das Bild, um es zu ändern
-              </p>
-              {uploading && <p className="text-sm text-muted-foreground">Wird hochgeladen...</p>}
-            </div>
-          </div>
 
-          <UserInfoFields />
+            <UserInfoFields form={form} />
 
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-sm font-medium mb-4">Konto löschen</h4>
-              <DeleteAccountButton />
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium mb-4">Konto löschen</h4>
+                <DeleteAccountButton />
+              </div>
             </div>
-          </div>
-        </div>
+          </form>
+        </Form>
       </Card>
     </div>
   );
