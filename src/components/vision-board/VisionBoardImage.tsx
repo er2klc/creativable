@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VisionBoardImageProps {
   id: string;
@@ -8,6 +9,7 @@ interface VisionBoardImageProps {
   imageUrl: string;
   orderIndex: number;
   totalImages: number;
+  rotation?: number;
   onDelete: (id: string) => Promise<void>;
   onMove: (id: string, direction: 'up' | 'down') => Promise<void>;
 }
@@ -18,13 +20,19 @@ export const VisionBoardImage = ({
   imageUrl,
   orderIndex,
   totalImages,
+  rotation = 0,
   onDelete,
   onMove,
 }: VisionBoardImageProps) => {
+  const { data: publicUrl } = supabase.storage
+    .from('vision-board-images')
+    .getPublicUrl(imageUrl);
+
   return (
-    <Card className="relative aspect-square overflow-hidden group">
+    <Card className="relative aspect-square overflow-hidden group" 
+          style={{ transform: `rotate(${rotation}deg)` }}>
       <img
-        src={imageUrl}
+        src={publicUrl?.publicUrl}
         alt={theme}
         className="w-full h-full object-cover transition-transform group-hover:scale-105"
       />

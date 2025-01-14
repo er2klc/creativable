@@ -170,6 +170,8 @@ export const VisionBoardGrid = () => {
       const canvas = await html2canvas(board, {
         backgroundColor: '#0A0A0A',
         scale: 2,
+        width: 1200, // A4 landscape width at 150 DPI
+        height: 848,  // A4 landscape height at 150 DPI
       });
       
       const link = document.createElement('a');
@@ -196,6 +198,10 @@ export const VisionBoardGrid = () => {
     );
   }
 
+  const getRandomRotation = () => {
+    return Math.random() * 20 - 10; // Random rotation between -10 and 10 degrees
+  };
+
   return (
     <div className="space-y-6">
       <AddImageDialog
@@ -212,28 +218,55 @@ export const VisionBoardGrid = () => {
         onPrint={handlePrint}
       />
 
-      <div id="vision-board" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {images?.map((image: VisionBoardImage) => (
-          <VisionBoardImage
-            key={image.id}
-            id={image.id}
-            theme={image.theme}
-            imageUrl={image.image_url}
-            orderIndex={image.order_index}
-            totalImages={images.length}
-            onDelete={handleDeleteImage}
-            onMove={handleMoveImage}
-          />
-        ))}
-        <Button
-          onClick={() => setIsDialogOpen(true)}
-          disabled={isLoading}
-          className="aspect-square h-full w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-gray-400 bg-transparent text-gray-600 hover:text-gray-700"
-        >
-          <Plus className="h-8 w-8" />
-          <span>Neues Bild hinzufügen</span>
-        </Button>
+      <div id="vision-board" className="relative w-[1200px] h-[848px] mx-auto bg-white p-8 shadow-xl print:shadow-none">
+        <div className="grid grid-cols-3 gap-4 absolute inset-0 p-8">
+          {images?.map((image: VisionBoardImage, index: number) => (
+            <div key={image.id} 
+                 className="relative transform hover:z-10 transition-all duration-200"
+                 style={{
+                   transform: `rotate(${getRandomRotation()}deg)`,
+                   margin: `${Math.random() * 20}px`,
+                 }}>
+              <VisionBoardImage
+                id={image.id}
+                theme={image.theme}
+                imageUrl={image.image_url}
+                orderIndex={image.order_index}
+                totalImages={images.length}
+                onDelete={handleDeleteImage}
+                onMove={handleMoveImage}
+              />
+            </div>
+          ))}
+        </div>
       </div>
+
+      <Button
+        onClick={() => setIsDialogOpen(true)}
+        disabled={isLoading}
+        className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-gray-400 bg-transparent text-gray-600 hover:text-gray-700 p-8"
+      >
+        <Plus className="h-8 w-8" />
+        <span>Neues Bild hinzufügen</span>
+      </Button>
+
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #vision-board, #vision-board * {
+            visibility: visible;
+          }
+          #vision-board {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 297mm;
+            height: 210mm;
+          }
+        }
+      `}</style>
     </div>
   );
 };
