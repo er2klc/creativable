@@ -139,9 +139,14 @@ const TreeGenerator = () => {
   const handleSaveProfile = async () => {
     try {
       if (!profile) {
+        // For new profiles, the slug will be generated automatically by the database trigger
         const { data, error } = await supabase
           .from("tree_profiles")
-          .insert({ user_id: user?.id, username })
+          .insert({ 
+            user_id: user?.id, 
+            username,
+            slug: username.toLowerCase().replace(/[^a-z0-9]+/g, '-') // Provide initial slug
+          })
           .select()
           .single();
 
