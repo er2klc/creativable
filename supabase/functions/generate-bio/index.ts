@@ -24,27 +24,23 @@ serve(async (req) => {
       language
     } = await req.json()
 
-    const prompt = `Generate a VERY CONCISE professional bio. 
+    const prompt = `Generate a PROFESSIONAL and IMPACTFUL Instagram bio.
     CRITICAL: The bio MUST be EXACTLY 150 characters or less, including all spaces and emojis.
     Format: Single line only, no line breaks.
-    Style: Professional, impactful, and concise.
+
+    Follow this structure STRICTLY but combine into ONE LINE:
+    1. What you do (Role): ${role}
+    2. Target audience: ${target_audience}
+    3. Value/Uniqueness: ${unique_strengths}
+    4. Social proof: ${social_proof}
+    5. CTA with URL: ${cta_goal} ${url}
 
     Guidelines:
-    1. Use maximum 2-3 emojis total
-    2. Prioritize essential information only
-    3. Be extremely concise
-    4. Count EVERY character carefully
-
-    Information to include (prioritize in this order):
-    1. Role: ${role}
-    2. Target: ${target_audience}
-    3. Value: ${unique_strengths}
-    4. Proof: ${social_proof}
-    5. CTA: ${cta_goal}
-    6. URL: ${url}
-    ${preferred_emojis ? `Preferred emojis (use sparingly): ${preferred_emojis}` : ''}
-
-    Language: ${language}
+    - Use MAXIMUM 3 emojis from these (if provided): ${preferred_emojis || "🚀,⭐,✨,💫,💪"}
+    - Make it punchy and memorable
+    - Focus on benefits and results
+    - Be extremely concise
+    - Language: ${language}
     
     IMPORTANT: The final bio MUST be under 150 characters. This is a strict requirement.
     Return ONLY the bio text, no explanations or additional content.`
