@@ -56,6 +56,7 @@ serve(async (req) => {
     }
 
     console.log('Generating image for theme:', theme);
+    
 
     // Generate image using DALL-E 3$ '{theme}'
     const prompt = `
@@ -64,6 +65,8 @@ Create a modern, minimalist image for a vision board about the theme '${theme}'.
 - Set the image on a dark background to enhance focus and contrast.
 - Keep the design clear and focused on the theme: ${theme}.
 `;
+
+console.log('Generating image with Prompt:', prompt);
 
     const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
