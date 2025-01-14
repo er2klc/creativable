@@ -1,15 +1,20 @@
-import { Check, Calendar } from "lucide-react";
+import { Check, Calendar, User } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface TaskItemProps {
-  task: Tables<"tasks">;
+  task: Tables<"tasks"> & {
+    leads?: Tables<"leads">;
+  };
   onToggle: () => void;
 }
 
 export const TaskItem = ({ task, onToggle }: TaskItemProps) => {
   const { settings } = useSettings();
+  const navigate = useNavigate();
 
   const getMeetingTypeLabel = (type: string) => {
     const labels: Record<string, { en: string; de: string; emoji: string }> = {
@@ -25,10 +30,21 @@ export const TaskItem = ({ task, onToggle }: TaskItemProps) => {
     return `${label[settings?.language === "en" ? "en" : "de"]} ${label.emoji}`;
   };
 
+  const handleContactClick = () => {
+    if (task.lead_id) {
+      navigate(`/leads?leadId=${task.lead_id}`);
+    }
+  };
+
   return (
     <div
-      className="flex flex-col gap-2 p-4 rounded-lg shadow-md transition-all hover:shadow-lg transform hover:-translate-y-1"
-      style={{ backgroundColor: task.color || "#FEF7CD" }}
+      className={`flex flex-col gap-2 p-4 rounded-lg shadow-md transition-all hover:shadow-lg transform hover:-translate-y-1 cursor-grab active:cursor-grabbing ${
+        task.completed ? "opacity-75" : ""
+      }`}
+      style={{ 
+        backgroundColor: task.color || "#FEF7CD",
+        border: "1px solid rgba(0,0,0,0.1)"
+      }}
     >
       <div className="flex items-start gap-3">
         <button
@@ -43,6 +59,19 @@ export const TaskItem = ({ task, onToggle }: TaskItemProps) => {
         </button>
         <div className={`flex-1 ${task.completed ? "line-through text-gray-500" : ""}`}>
           <div className="font-medium">{task.title}</div>
+          
+          {task.leads && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2 flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+              onClick={handleContactClick}
+            >
+              <User className="h-4 w-4" />
+              {task.leads.name}
+            </Button>
+          )}
+
           {task.due_date && (
             <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
               <Badge variant="outline" className="flex items-center gap-1">
@@ -57,6 +86,7 @@ export const TaskItem = ({ task, onToggle }: TaskItemProps) => {
               </Badge>
             </div>
           )}
+          
           {task.meeting_type && (
             <div className="mt-2">
               <Badge variant="secondary" className="text-sm">

@@ -9,9 +9,10 @@ import { ClipboardList } from "lucide-react";
 import confetti from "canvas-confetti";
 import { Tables } from "@/integrations/supabase/types";
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
 
 interface TaskListProps {
-  leadId: string;
+  leadId?: string;
 }
 
 export function TaskList({ leadId }: TaskListProps) {
@@ -19,18 +20,48 @@ export function TaskList({ leadId }: TaskListProps) {
   const queryClient = useQueryClient();
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ["lead", leadId, "tasks"],
+    queryKey: ["tasks", leadId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const query = supabase
         .from("tasks")
-        .select("*")
-        .eq("lead_id", leadId)
+        .select("*, leads(name)")
+        .order("order_index", { ascending: true })
         .order("created_at", { ascending: false });
 
+      if (leadId) {
+        query.eq("lead_id", leadId);
+      }
+
+      const { data, error } = await query;
+
       if (error) throw error;
-      return data as Tables<"tasks">[];
+      return data as (Tables<"tasks"> & {
+        leads?: Tables<"leads">;
+      })[];
     },
   });
+
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('tasks-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["tasks", leadId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, leadId]);
 
   const updateTask = useMutation({
     mutationFn: async (task: Tables<"tasks">) => {
@@ -42,7 +73,7 @@ export function TaskList({ leadId }: TaskListProps) {
       if (error) throw error;
     },
     onSuccess: (_, task) => {
-      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", leadId] });
       
       if (!task.completed) {
         confetti({
@@ -61,19 +92,53 @@ export function TaskList({ leadId }: TaskListProps) {
     },
   });
 
+  const updateTaskOrder = useMutation({
+    mutationFn: async (updates: { id: string; order_index: number }[]) => {
+      const { error } = await supabase
+        .from("tasks")
+        .upsert(updates.map(update => ({
+          id: update.id,
+          order_index: update.order_index
+        })));
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", leadId] });
+    },
+  });
+
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+
+    const items = Array.from(tasks);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    // Update order indices
+    const updates = items.map((task, index) => ({
+      id: task.id,
+      order_index: index
+    }));
+
+    updateTaskOrder.mutate(updates);
+  };
+
+  const incompleteTasks = tasks.filter(task => !task.completed);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ClipboardList className="h-5 w-5" />
-          {settings?.language === "en" ? "Tasks" : "Aufgaben"} ({tasks.length})
+          {settings?.language === "en" ? "Tasks" : "Aufgaben"} ({incompleteTasks.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
         <TaskForm leadId={leadId} />
         <AnimatePresence>
           <div className="space-y-2 mt-4">
-            {tasks.map((task) => (
+            {incompleteTasks.map((task) => (
               <motion.div
                 key={task.id}
                 initial={{ opacity: 0, y: 20 }}
