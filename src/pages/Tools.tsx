@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { Signature, Link2, QrCode, Image } from "lucide-react";
+import { Signature, Link2, QrCode, Image, MessageSquareText } from "lucide-react";
 
 const Tools = () => {
   const tools = [
@@ -24,6 +24,13 @@ const Tools = () => {
       icon: QrCode,
       url: "/tools/qr-code",
       gradient: "from-green-500 to-emerald-500"
+    },
+    {
+      title: "Bio Generator",
+      description: "Erstelle eine professionelle Instagram-Bio mit KI-Unterstützung.",
+      icon: MessageSquareText,
+      url: "/tools/bio",
+      gradient: "from-yellow-500 to-orange-500"
     },
     {
       title: "Inspirationsboard",
