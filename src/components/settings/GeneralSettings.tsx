@@ -13,23 +13,38 @@ import { DeleteAccountButton } from "./DeleteAccountButton";
 import { UserInfoFields } from "./form-fields/UserInfoFields";
 import { formSchema, formatPhoneNumber } from "./schemas/settings-schema";
 import type { z } from "zod";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 export function GeneralSettings() {
   const session = useSession();
   const queryClient = useQueryClient();
+  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
 
   // Fetch current settings and user data
-  const { data: settings } = useQuery({
+  const { data: settings, isLoading } = useQuery({
     queryKey: ["settings", session?.user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: settingsData, error: settingsError } = await supabase
         .from("settings")
         .select("*")
         .eq("user_id", session?.user?.id)
         .maybeSingle();
 
-      if (error) throw error;
-      return data as Settings | null;
+      if (settingsError) throw settingsError;
+
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("avatar_url, display_name")
+        .eq("id", session?.user?.id)
+        .single();
+
+      if (profileData?.avatar_url) {
+        setAvatarUrl(profileData.avatar_url);
+      }
+
+      return settingsData as Settings | null;
     },
     enabled: !!session?.user?.id,
   });
@@ -41,6 +56,7 @@ export function GeneralSettings() {
       name: session?.user?.user_metadata?.full_name || "",
       phoneNumber: formatPhoneNumber(session?.user?.phone || ""),
       email: session?.user?.email || "",
+      displayName: session?.user?.user_metadata?.display_name || "",
     },
   });
 
@@ -51,9 +67,44 @@ export function GeneralSettings() {
         name: session?.user?.user_metadata?.full_name || "",
         phoneNumber: formatPhoneNumber(session?.user?.phone || ""),
         email: session?.user?.email || "",
+        displayName: session?.user?.user_metadata?.display_name || "",
       });
     }
   }, [settings, session?.user, form]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (!e.target.files || !e.target.files[0]) return;
+
+      const file = e.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${session?.user?.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', session?.user?.id);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(publicUrl);
+      toast.success("Avatar erfolgreich aktualisiert");
+    } catch (error: any) {
+      console.error('Error uploading avatar:', error);
+      toast.error(error.message || "Fehler beim Hochladen des Avatars");
+    }
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -80,12 +131,23 @@ export function GeneralSettings() {
 
       if (settingsError) throw settingsError;
 
-      // Update user metadata first
+      // Update user metadata and profile
       const { error: metadataError } = await supabase.auth.updateUser({
-        data: { full_name: values.name }
+        data: { 
+          full_name: values.name,
+          display_name: values.displayName
+        }
       });
 
       if (metadataError) throw metadataError;
+
+      // Update profile display_name
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ display_name: values.displayName })
+        .eq('id', session.user.id);
+
+      if (profileError) throw profileError;
 
       // Only try to update phone if it's provided and different
       if (formattedPhone && formattedPhone !== session.user.phone) {
@@ -104,9 +166,9 @@ export function GeneralSettings() {
       await queryClient.invalidateQueries({ queryKey: ["settings", session.user.id] });
 
       toast.success("Einstellungen wurden gespeichert");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving settings:", error);
-      toast.error("Einstellungen konnten nicht gespeichert werden");
+      toast.error(error.message || "Einstellungen konnten nicht gespeichert werden");
     }
   };
 
@@ -119,6 +181,23 @@ export function GeneralSettings() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="mb-6">
+          <Label>Profilbild</Label>
+          <div className="flex items-center gap-4 mt-2">
+            <Avatar className="h-20 w-20">
+              <AvatarImage src={avatarUrl || "/placeholder.svg"} />
+              <AvatarFallback>
+                {session?.user?.user_metadata?.full_name?.charAt(0) || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="max-w-[200px]"
+            />
+          </div>
+        </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <UserInfoFields form={form} />

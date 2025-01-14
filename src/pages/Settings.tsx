@@ -28,7 +28,7 @@ export default function Settings() {
       <Tabs defaultValue="general" className="space-y-4">
         <TabsList>
           <TabsTrigger value="general">Allgemein</TabsTrigger>
-          <TabsTrigger value="mlm">MLM-Informationen</TabsTrigger>
+          <TabsTrigger value="mlm">Über mein Business</TabsTrigger>
           <TabsTrigger value="about">Über mich</TabsTrigger>
           <TabsTrigger value="integrations">Integrationen</TabsTrigger>
         </TabsList>

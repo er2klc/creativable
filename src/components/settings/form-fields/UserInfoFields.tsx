@@ -5,7 +5,7 @@ import { languages } from "../constants/languages";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { formSchema } from "../schemas/settings-schema";
-import { User, Mail, Phone, Globe } from "lucide-react";
+import { User, Mail, Phone, Globe, UserRound } from "lucide-react";
 
 type FormType = z.infer<typeof formSchema>;
 
@@ -16,6 +16,23 @@ interface UserInfoFieldsProps {
 export function UserInfoFields({ form }: UserInfoFieldsProps) {
   return (
     <div className="space-y-4 max-w-md">
+      <FormField
+        control={form.control}
+        name="displayName"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <UserRound className="h-4 w-4" />
+              Display Name
+            </FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       <FormField
         control={form.control}
         name="name"
