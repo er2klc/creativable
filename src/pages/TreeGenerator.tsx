@@ -371,8 +371,6 @@ const TreeGenerator = () => {
                   </Button>
                 </div>
 
-                <IconSelector />
-
                 <div className="space-y-4">
                   {links.map((link, index) => (
                     <div key={index} className="space-y-2">
@@ -438,13 +436,14 @@ const TreeGenerator = () => {
         </Card>
       </div>
 
-      <div className="w-full lg:w-1/2 sticky top-4">
+      <div className="w-full lg:w-1/2 sticky top-4 space-y-6">
         <TreePreview 
           username={username}
           avatarUrl={logoPreview || avatarUrl}
           bio={bio}
           links={links}
         />
+        <IconSelector />
       </div>
     </div>
   );
