@@ -1,29 +1,22 @@
-import VisionBoard from "@/pages/VisionBoard";
 import Dashboard from "@/pages/Dashboard";
-import Settings from "@/pages/Settings";
-import Calendar from "@/pages/Calendar";
 import Leads from "@/pages/Leads";
 import Messages from "@/pages/Messages";
+import Calendar from "@/pages/Calendar";
+import Settings from "@/pages/Settings";
 import Tools from "@/pages/Tools";
-import SignatureGenerator from "@/pages/SignatureGenerator";
+import VisionBoard from "@/pages/VisionBoard";
 import BioGenerator from "@/pages/BioGenerator";
 import TreeGenerator from "@/pages/TreeGenerator";
 import TodoList from "@/pages/TodoList";
 import Unity from "@/pages/Unity";
 import Elevate from "@/pages/Elevate";
+import TeamDetail from "@/pages/TeamDetail";
+import PlatformDetail from "@/pages/PlatformDetail";
 
 export const protectedRoutes = [
   {
     path: "/dashboard",
     element: <Dashboard />,
-  },
-  {
-    path: "/settings",
-    element: <Settings />,
-  },
-  {
-    path: "/calendar",
-    element: <Calendar />,
   },
   {
     path: "/leads",
@@ -34,12 +27,16 @@ export const protectedRoutes = [
     element: <Messages />,
   },
   {
-    path: "/tools",
-    element: <Tools />,
+    path: "/calendar",
+    element: <Calendar />,
   },
   {
-    path: "/signature-generator",
-    element: <SignatureGenerator />,
+    path: "/settings",
+    element: <Settings />,
+  },
+  {
+    path: "/tools",
+    element: <Tools />,
   },
   {
     path: "/bio-generator",
@@ -62,7 +59,15 @@ export const protectedRoutes = [
     element: <Unity />,
   },
   {
+    path: "/unity/team/:teamSlug",
+    element: <TeamDetail />,
+  },
+  {
     path: "/elevate",
     element: <Elevate />,
+  },
+  {
+    path: "/elevate/platform/:platformSlug",
+    element: <PlatformDetail />,
   },
 ];
