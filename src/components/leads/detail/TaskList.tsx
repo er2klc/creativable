@@ -82,13 +82,19 @@ export function TaskList({ leadId }: TaskListProps) {
           origin: { y: 0.6 },
           colors: ['#FFD700', '#FFA500', '#FF6347', '#98FB98', '#87CEEB'],
         });
+
+        toast.success(
+          settings?.language === "en"
+            ? "Task completed! 🎉"
+            : "Aufgabe erledigt! 🎉"
+        );
+      } else {
+        toast.success(
+          settings?.language === "en"
+            ? "Task uncompleted"
+            : "Aufgabe nicht erledigt"
+        );
       }
-      
-      toast.success(
-        settings?.language === "en"
-          ? task.completed ? "Task uncompleted" : "Task completed! 🎉"
-          : task.completed ? "Aufgabe nicht erledigt" : "Aufgabe erledigt! 🎉"
-      );
     },
   });
 
@@ -96,19 +102,7 @@ export function TaskList({ leadId }: TaskListProps) {
     mutationFn: async (updates: Tables<"tasks">[]) => {
       const { error } = await supabase
         .from("tasks")
-        .upsert(
-          updates.map(task => ({
-            id: task.id,
-            order_index: task.order_index,
-            title: task.title,
-            user_id: task.user_id,
-            lead_id: task.lead_id,
-            completed: task.completed,
-            color: task.color,
-            priority: task.priority,
-            meeting_type: task.meeting_type,
-          }))
-        );
+        .upsert(updates);
 
       if (error) throw error;
     },
@@ -127,7 +121,7 @@ export function TaskList({ leadId }: TaskListProps) {
     // Update order indices
     const updates = items.map((task, index) => ({
       ...task,
-      order_index: index
+      order_index: index,
     }));
 
     updateTaskOrder.mutate(updates);
