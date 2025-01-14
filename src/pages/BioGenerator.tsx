@@ -101,18 +101,12 @@ const BioGenerator = () => {
 
       if (bioError) throw bioError;
 
-      // Save or update the form data and generated bio
-      const saveData = {
-        ...values,
-        generated_bio: bioData.bio,
-        user_id: userData.user.id
-      };
-      
-      console.info("Saving bio data:", saveData);
       const { error: saveError } = await supabase
         .from('user_bios')
-        .upsert(saveData, {
-          onConflict: 'user_id'
+        .upsert({
+          ...values,
+          generated_bio: bioData.bio,
+          user_id: userData.user.id
         });
 
       if (saveError) throw saveError;
