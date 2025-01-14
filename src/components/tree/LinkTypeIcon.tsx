@@ -15,7 +15,7 @@ import {
   type LucideIcon
 } from "lucide-react";
 
-type LinkType = 
+export type LinkType = 
   | "facebook" 
   | "instagram" 
   | "linkedin" 
@@ -55,5 +55,3 @@ export const LinkTypeIcon = ({ type, className }: LinkTypeIconProps) => {
   const Icon = LINK_ICONS[type] || LINK_ICONS.other;
   return <Icon className={className} />;
 };
-
-export type { LinkType };

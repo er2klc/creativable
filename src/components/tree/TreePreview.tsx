@@ -6,10 +6,11 @@ import { TreeLink } from "@/pages/TreeGenerator";
 interface TreePreviewProps {
   username: string;
   avatarUrl: string | null;
+  bio?: string | null;
   links: TreeLink[];
 }
 
-export const TreePreview = ({ username, avatarUrl, links }: TreePreviewProps) => {
+export const TreePreview = ({ username, avatarUrl, bio, links }: TreePreviewProps) => {
   const getLinkType = (url: string): LinkType => {
     const urlLower = url.toLowerCase();
     if (urlLower.includes('facebook.com')) return 'facebook';
@@ -50,6 +51,10 @@ export const TreePreview = ({ username, avatarUrl, links }: TreePreviewProps) =>
           )}
           
           <h2 className="text-xl font-medium text-white">@{username}</h2>
+          
+          {bio && (
+            <p className="text-white/80 text-center max-w-sm">{bio}</p>
+          )}
           
           <div className="w-full space-y-4">
             {links.map((link, index) => (

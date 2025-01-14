@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Trash2, Link as LinkIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TreePreview } from "@/components/tree/TreePreview";
@@ -22,6 +23,7 @@ const TreeGenerator = () => {
   const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
   const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [links, setLinks] = useState<TreeLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,6 +46,7 @@ const TreeGenerator = () => {
       if (profile) {
         setProfile(profile);
         setUsername(profile.username);
+        setBio(profile.bio || "");
         setAvatarUrl(profile.avatar_url);
         setLogoPreview(profile.avatar_url);
 
@@ -152,6 +155,7 @@ const TreeGenerator = () => {
           .insert({ 
             user_id: user?.id, 
             username,
+            bio,
             slug: username.toLowerCase().replace(/[^a-z0-9]+/g, '-')
           })
           .select()
@@ -166,7 +170,7 @@ const TreeGenerator = () => {
       } else {
         const { error } = await supabase
           .from("tree_profiles")
-          .update({ username })
+          .update({ username, bio })
           .eq("id", profile.id);
 
         if (error) throw error;
@@ -227,6 +231,15 @@ const TreeGenerator = () => {
     if (!profile) return;
 
     try {
+      // Delete existing links that are not in the current list
+      const existingLinkIds = links.filter(l => l.id).map(l => l.id);
+      await supabase
+        .from("tree_links")
+        .delete()
+        .eq("profile_id", profile.id)
+        .not("id", "in", existingLinkIds);
+
+      // Update or insert links
       for (const link of links) {
         if (link.id) {
           const { error } = await supabase
@@ -304,6 +317,18 @@ const TreeGenerator = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Your username"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Tell us about yourself"
+                className="resize-none"
+                rows={3}
               />
             </div>
 
@@ -399,6 +424,7 @@ const TreeGenerator = () => {
         <TreePreview 
           username={username}
           avatarUrl={logoPreview || avatarUrl}
+          bio={bio}
           links={links}
         />
       </div>
