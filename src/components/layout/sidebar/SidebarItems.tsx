@@ -1,81 +1,50 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { SidebarMenuSection } from "./SidebarMenuSection";
-import {
-  LayoutDashboard,
-  Users,
-  MessageSquare,
+import { 
+  LayoutGrid, 
+  Users, 
+  MessageSquare, 
   Calendar,
+  CheckSquare,
+  BarChart, 
   Settings,
-  Briefcase,
-  GraduationCap,
+  FileText,
   Shield,
-  Wrench,
+  Globe2,
+  Infinity,
+  GraduationCap,
+  Database,
+  Wrench
 } from "lucide-react";
 
-export const SidebarItems = () => {
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+export const personalItems = [
+  { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
+  { title: "Kontakte", icon: Users, url: "/leads" },
+  { 
+    title: "Nachrichten", 
+    icon: MessageSquare, 
+    url: "/messages",
+    badge: true 
+  },
+  { title: "Kalender", icon: Calendar, url: "/calendar" },
+  { title: "Todo Liste", icon: CheckSquare, url: "/todo" },
+];
 
-  useEffect(() => {
-    const checkSuperAdminStatus = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) {
-          setIsSuperAdmin(false);
-          return;
-        }
+export const teamItems = [
+  { title: "Unity", icon: Infinity, url: "/unity" },
+  { title: "Elevate", icon: GraduationCap, url: "/elevate" },
+];
 
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('is_super_admin')
-          .eq('id', session.user.id)
-          .single();
+export const analysisItems = [
+  { title: "Berichte", icon: BarChart, url: "/reports" },
+  { title: "Tools", icon: Wrench, url: "/tools" },
+  { title: "Einstellungen", icon: Settings, url: "/settings" },
+];
 
-        if (error) {
-          console.error('Error fetching super admin status:', error);
-          setIsSuperAdmin(false);
-          return;
-        }
+export const legalItems = [
+  { title: "Impressum", icon: FileText, url: "/impressum" },
+  { title: "Datenschutz", icon: Shield, url: "/privacy-policy" },
+  { title: "Datenlöschung", icon: Globe2, url: "/auth/data-deletion/instagram" },
+];
 
-        setIsSuperAdmin(profile?.is_super_admin || false);
-      } catch (error) {
-        console.error('Error checking super admin status:', error);
-        setIsSuperAdmin(false);
-      }
-    };
-
-    checkSuperAdminStatus();
-  }, []);
-
-  const mainItems = [
-    { href: "/dashboard", icon: LayoutDashboard, title: "Dashboard" },
-    { href: "/leads", icon: Users, title: "Leads" },
-    { href: "/messages", icon: MessageSquare, title: "Messages" },
-    { href: "/calendar", icon: Calendar, title: "Calendar" },
-  ];
-
-  const platformItems = [
-    { href: "/unity", icon: Briefcase, title: "Unity" },
-    { href: "/elevate", icon: GraduationCap, title: "Elevate" },
-  ];
-
-  const settingsItems = [
-    { href: "/settings", icon: Settings, title: "Settings" },
-  ];
-
-  const adminItems = [
-    { href: "/admin", icon: Shield, title: "Admin" },
-    { href: "/tools", icon: Wrench, title: "Tools" },
-  ];
-
-  return (
-    <div className="space-y-6 px-3">
-      <SidebarMenuSection title="Menu" items={mainItems} />
-      <SidebarMenuSection title="Platform" items={platformItems} />
-      <SidebarMenuSection title="Settings" items={settingsItems} />
-      {isSuperAdmin && (
-        <SidebarMenuSection title="Super Admin" items={adminItems} />
-      )}
-    </div>
-  );
-};
+export const adminItems = [
+  { title: "Admin Dashboard", icon: Database, url: "/admin" },
+];
