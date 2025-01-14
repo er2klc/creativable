@@ -33,7 +33,7 @@ const Tools = () => {
       gradient: "from-violet-500 to-purple-500"
     },
     {
-      title: "Inspirationsboard",
+      title: "VisionBoard",
       description: "Sammle und organisiere deine Ideen, Zitate und Ziele in einem visuellen Board.",
       icon: Image,
       url: "/vision-board",
