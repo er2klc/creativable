@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -40,6 +40,7 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
         <div key={member.id} className="flex items-center justify-between p-2 border rounded">
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
+              <AvatarImage src={member.profiles?.avatar_url} alt={member.profiles?.display_name || 'Avatar'} />
               <AvatarFallback>
                 {member.profiles?.display_name?.substring(0, 2).toUpperCase() || '??'}
               </AvatarFallback>

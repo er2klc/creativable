@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface TeamAdminListProps {
   admins: any[];
@@ -12,13 +12,14 @@ export function TeamAdminList({ admins }: TeamAdminListProps) {
         <div key={admin.id} className="flex items-center justify-between p-2 border rounded">
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
+              <AvatarImage src={admin.profiles?.avatar_url} alt={admin.profiles?.display_name || 'Avatar'} />
               <AvatarFallback>
-                {admin.display_name?.substring(0, 2).toUpperCase() || '??'}
+                {admin.profiles?.display_name?.substring(0, 2).toUpperCase() || '??'}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
               <span className="text-sm font-medium">
-                {admin.display_name}
+                {admin.profiles?.display_name || 'Unbekannter Benutzer'}
               </span>
               <Badge variant={admin.role === 'owner' ? 'default' : 'secondary'} className="mt-1">
                 {admin.role === 'owner' ? 'Owner' : 'Admin'}
