@@ -11,6 +11,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formSchema, type FormData } from "./schemas/settings-schema";
 import { Form } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 
 export function GeneralSettings() {
   const { user } = useAuth();
@@ -33,12 +35,12 @@ export function GeneralSettings() {
   useEffect(() => {
     if (settings && user) {
       form.reset({
-        displayName: settings.display_name || "",
+        displayName: user.user_metadata?.display_name || "",
         email: user.email || "",
         phoneNumber: settings.whatsapp_number || "",
         language: settings.language || "Deutsch",
       });
-      setAvatarUrl(settings.avatar_url || null);
+      setAvatarUrl(user.user_metadata?.avatar_url || null);
     }
   }, [settings, user, form]);
 
@@ -143,13 +145,13 @@ export function GeneralSettings() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="flex items-center gap-4">
               <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
-                <Avatar className="h-20 w-20 ring-2 ring-offset-2 ring-offset-background transition-all duration-300 bg-gradient-to-r from-[#F97316] via-[#0EA5E9] to-[#ea384c]">
+                <Avatar className="h-20 w-20 ring-2 ring-offset-2 ring-offset-background ring-[#ea384c] transition-all duration-300">
                   <AvatarImage 
                     src={avatarUrl || "/placeholder.svg"} 
                     alt="Profile" 
                     className="object-cover"
                   />
-                  <AvatarFallback className="bg-gradient-to-r from-[#F97316] via-[#0EA5E9] to-[#ea384c] text-white">
+                  <AvatarFallback className="bg-background text-foreground">
                     {user?.email?.charAt(0)?.toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
@@ -168,11 +170,12 @@ export function GeneralSettings() {
 
             <UserInfoFields form={form} />
 
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium mb-4">Konto löschen</h4>
-                <DeleteAccountButton />
-              </div>
+            <div className="flex justify-between items-center pt-4">
+              <Button type="submit" className="flex items-center gap-2">
+                <Save className="h-4 w-4" />
+                Speichern
+              </Button>
+              <DeleteAccountButton />
             </div>
           </form>
         </Form>
