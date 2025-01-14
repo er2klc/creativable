@@ -13,7 +13,9 @@ export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
   const navigate = useNavigate();
   
   const handleClick = () => {
-    navigate(`/elevate/platform/${platform.slug}/module/${platform.elevate_modules?.[0]?.id}`);
+    if (platform.elevate_modules?.[0]?.id) {
+      navigate(`/elevate/modul/${platform.slug}`);
+    }
   };
 
   return (

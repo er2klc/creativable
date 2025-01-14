@@ -74,9 +74,5 @@ export const protectedRoutes = [
   {
     path: "/elevate/modul/:slug",
     element: <PlatformDetail />,
-  },
-  {
-    path: "/elevate/platform/:platformSlug/module/:moduleId",
-    element: <PlatformDetail />,
-  },
+  }
 ];
