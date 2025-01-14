@@ -53,7 +53,31 @@ serve(async (req) => {
 
     const { role, target_audience, unique_strengths, mission, social_proof, cta_goal, url, preferred_emojis, language } = await req.json();
 
-    const prompt = `Create a professional ${language === 'English' ? 'English' : 'German'} bio that is exactly 150 characters long, split into 4 lines (max 40 chars per line). Target audience: ${target_audience}. Strengths: ${unique_strengths}. Mission: ${mission}. Social proof: ${social_proof}. Call-to-action: ${cta_goal}. URL: ${url}. ${preferred_emojis ? `Use these emojis: ${preferred_emojis}` : ''}`;
+   const prompt = `
+You are a professional bio writer specializing in creating concise and engaging Instagram bios. 
+Please create a bio with the following structure and using the provided inputs. Each line should be a maximum of 40 characters:
+
+Line 1: Clearly state who the user is and what they do. This should grab the attention of their audience.
+Line 2: Highlight what makes them unique, their mission, or their values.
+Line 3 (optional): Include social proof, achievements, or certifications.
+Line 4: Provide a compelling call-to-action (CTA) with a link, accompanied by relevant emojis.
+
+Here is the information provided:
+- Role: ${role}
+- Target Audience: ${target_audience}
+- Unique Strengths: ${unique_strengths}
+- Mission: ${mission}
+- Social Proof: ${social_proof}
+- Call-to-Action (CTA): ${cta_goal}
+- URL: ${url}
+- Preferred Emojis: ${preferred_emojis}
+
+The bio should include emojis, with each line starting with an appropriate emoji. 
+If no emojis are explicitly provided, choose emojis that fit the context of each line.
+
+Output an Instagram bio exactly 150 characters long, following the structure above and divided into 4 lines. 
+Ensure the tone is professional yet engaging, suitable for the provided target audience.
+`;
 
     console.log('Creating OpenAI request with prompt:', prompt);
     
