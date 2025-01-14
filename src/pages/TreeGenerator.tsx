@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Trash2, Link as LinkIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TreePreview } from "@/components/tree/TreePreview";
+import { IconSelector } from "@/components/tree/IconSelector";
 
 export interface TreeLink {
   id?: string;
@@ -369,6 +370,8 @@ const TreeGenerator = () => {
                     Add Link
                   </Button>
                 </div>
+
+                <IconSelector />
 
                 <div className="space-y-4">
                   {links.map((link, index) => (

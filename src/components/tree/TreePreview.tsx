@@ -54,7 +54,10 @@ export const TreePreview = ({ username, avatarUrl, bio, links }: TreePreviewProp
             </div>
           )}
           
-          <h2 className="text-xl font-medium text-white">@{username}</h2>
+          <div className="text-center">
+            <h2 className="text-xl font-medium text-white">@{username}</h2>
+            <div className="h-[1px] w-32 mx-auto mt-2 bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+          </div>
           
           {bio && (
             <p className="text-white/80 text-center max-w-sm">{bio}</p>
