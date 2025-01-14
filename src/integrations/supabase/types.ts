@@ -1775,6 +1775,62 @@ export type Database = {
         }
         Relationships: []
       }
+      vision_board_images: {
+        Row: {
+          board_id: string
+          created_at: string | null
+          id: string
+          image_url: string
+          order_index: number
+          theme: string
+        }
+        Insert: {
+          board_id: string
+          created_at?: string | null
+          id?: string
+          image_url: string
+          order_index?: number
+          theme: string
+        }
+        Update: {
+          board_id?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          order_index?: number
+          theme?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vision_board_images_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "vision_boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vision_boards: {
+        Row: {
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       elevate_platforms_access: {
