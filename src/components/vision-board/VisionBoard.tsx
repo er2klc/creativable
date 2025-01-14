@@ -1,5 +1,6 @@
 import { useOpenAIKey } from "@/hooks/use-openai-key";
 import { NoApiKeyAlert } from "./NoApiKeyAlert";
+import { VisionBoardGrid } from "./VisionBoardGrid";
 
 export const VisionBoard = () => {
   const { apiKey, isLoading } = useOpenAIKey();
@@ -22,7 +23,7 @@ export const VisionBoard = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Inspirationsboard</h1>
         </div>
-        {/* Vision Board content will be added here */}
+        <VisionBoardGrid />
       </div>
     </div>
   );
