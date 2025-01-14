@@ -12,6 +12,7 @@ import Settings from "@/pages/Settings";
 import Changelog from "@/pages/Changelog";
 import Tools from "@/pages/Tools";
 import SignatureGenerator from "@/pages/SignatureGenerator";
+import TreeGenerator from "@/pages/TreeGenerator";
 
 export const protectedRoutes = [
   { path: "/dashboard", element: <Dashboard /> },
@@ -27,5 +28,6 @@ export const protectedRoutes = [
   { path: "/settings", element: <Settings /> },
   { path: "/changelog", element: <Changelog /> },
   { path: "/tools", element: <Tools /> },
-  { path: "/tools/signature", element: <SignatureGenerator /> }
+  { path: "/tools/signature", element: <SignatureGenerator /> },
+  { path: "/tools/tree", element: <TreeGenerator /> }
 ];

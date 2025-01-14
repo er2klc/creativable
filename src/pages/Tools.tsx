@@ -12,10 +12,10 @@ const Tools = () => {
       gradient: "from-purple-500 to-pink-500"
     },
     {
-      title: "Linktree-Generator",
+      title: "Tree-Generator",
       description: "Erstelle eine personalisierte Seite mit all deinen wichtigen Links für Social Media.",
       icon: Link2,
-      url: "/tools/linktree",
+      url: "/tools/tree",
       gradient: "from-blue-500 to-cyan-500"
     },
     {

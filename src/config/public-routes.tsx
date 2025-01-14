@@ -7,6 +7,7 @@ import PrivacyPolicy from "@/pages/legal/PrivacyPolicy";
 import InstagramDataDeletion from "@/pages/legal/InstagramDataDeletion";
 import LinkedInCallback from "@/pages/auth/callback/LinkedIn";
 import InstagramCallback from "@/pages/auth/callback/Instagram";
+import TreeProfile from "@/pages/TreeProfile";
 
 export const publicRoutes = [
   { path: "/", element: <Index /> },
@@ -18,4 +19,5 @@ export const publicRoutes = [
   { path: "/auth/data-deletion/instagram", element: <InstagramDataDeletion /> },
   { path: "/auth/callback/linkedin", element: <LinkedInCallback /> },
   { path: "/auth/callback/instagram", element: <InstagramCallback /> },
+  { path: "/tree/:slug", element: <TreeProfile /> },
 ];

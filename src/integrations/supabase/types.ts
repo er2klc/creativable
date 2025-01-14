@@ -1536,6 +1536,74 @@ export type Database = {
         }
         Relationships: []
       }
+      tree_links: {
+        Row: {
+          created_at: string | null
+          id: string
+          order_index: number | null
+          profile_id: string
+          title: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          order_index?: number | null
+          profile_id: string
+          title: string
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          order_index?: number | null
+          profile_id?: string
+          title?: string
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tree_links_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "tree_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tree_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          id: string
+          slug: string
+          updated_at: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          slug: string
+          updated_at?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          slug?: string
+          updated_at?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       user_documents: {
         Row: {
           created_at: string | null
