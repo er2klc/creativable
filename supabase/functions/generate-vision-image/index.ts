@@ -4,7 +4,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-openai-key',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req) => {
@@ -14,49 +15,42 @@ serve(async (req) => {
   }
 
   try {
-    // Get user ID from auth header
-    const authHeader = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!authHeader) {
-      throw new Error('No authorization header');
+    // Only allow POST requests
+    if (req.method !== 'POST') {
+      throw new Error(`Method ${req.method} not allowed`);
     }
 
-    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: `Bearer ${authHeader}` },
+          headers: { Authorization: req.headers.get('Authorization')! },
         },
       }
     );
 
     // Get user's OpenAI API key from settings
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
       .select('openai_api_key')
+      .eq('user_id', user.id)
       .single();
 
     if (settingsError || !settings?.openai_api_key) {
       console.error('Error fetching OpenAI API key:', settingsError);
-      return new Response(
-        JSON.stringify({
-          error: 'OpenAI API key not found in settings. Please add your API key in the settings page.',
-          details: 'Go to Settings -> Integrations -> OpenAI Integration to add your API key.'
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
+      throw new Error('OpenAI API key not found in settings');
     }
 
     const { theme } = await req.json();
+    if (!theme) throw new Error('Theme is required');
 
-    if (!theme) {
-      throw new Error('Theme is required');
-    }
+    console.log('Generating image for theme:', theme);
 
+    // Generate image using DALL-E 3
     const prompt = `
 Generate an artistic, modern, and vibrant image based on the theme '${theme}'.
 - Use dynamic, flowing shapes inspired by a rainbow color palette.
@@ -65,9 +59,7 @@ Generate an artistic, modern, and vibrant image based on the theme '${theme}'.
 - Set the image against a dark background to highlight the colors.
 `;
 
-    console.log('Creating OpenAI request with prompt:', prompt);
-
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
+    const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${settings.openai_api_key}`,
@@ -81,18 +73,20 @@ Generate an artistic, modern, and vibrant image based on the theme '${theme}'.
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
+    if (!openaiResponse.ok) {
+      const errorData = await openaiResponse.json();
       console.error('OpenAI API error:', errorData);
       throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
     }
 
-    const data = await response.json();
-    const imageUrl = data.data?.[0]?.url;
+    const imageData = await openaiResponse.json();
+    const imageUrl = imageData.data?.[0]?.url;
 
     if (!imageUrl) {
       throw new Error('No image URL was generated');
     }
+
+    console.log('Successfully generated image:', imageUrl);
 
     return new Response(
       JSON.stringify({ imageUrl }),
