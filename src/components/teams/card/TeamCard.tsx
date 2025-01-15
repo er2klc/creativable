@@ -6,27 +6,23 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { TeamCardImage } from "./TeamCardImage";
 import { TeamCardContent } from "./TeamCardContent";
 
-interface TeamWithStats extends Tables<"teams"> {
-  stats?: {
-    totalMembers: number;
-    admins: number;
+interface TeamCardProps {
+  team: Tables<"teams"> & {
+    stats?: {
+      totalMembers: number;
+      admins: number;
+    };
   };
-}
-
-export interface TeamCardProps {
-  team: TeamWithStats;
   onDelete: (id: string) => void;
   onLeave: (id: string) => void;
   onCopyJoinCode: (code: string) => void;
-  isSuperAdmin?: boolean;
 }
 
 export const TeamCard = ({ 
   team, 
   onDelete, 
   onLeave, 
-  onCopyJoinCode,
-  isSuperAdmin = false
+  onCopyJoinCode 
 }: TeamCardProps) => {
   const navigate = useNavigate();
   const user = useUser();
@@ -42,10 +38,10 @@ export const TeamCard = ({
       return;
     }
     
-    navigate(`/unity/team/${team.slug}`);
+    navigate(`/team/${team.slug}`);
   };
 
-  const isTeamOwner = isSuperAdmin || user?.id === team.created_by;
+  const isTeamOwner = user?.id === team.created_by;
 
   return (
     <Card
