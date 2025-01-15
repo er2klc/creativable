@@ -1,6 +1,6 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3"
-import { createEvent, createEvents } from "https://esm.sh/ics@3.7.2"
+import { createEvents } from "https://esm.sh/ics@3.7.2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,37 +8,27 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
+    const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "No authorization header" }),
-        { 
-          status: 401,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders,
-          },
-        }
-      )
+      throw new Error('No authorization header')
     }
 
+    // Create a Supabase client with the Auth context of the logged in user
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
-        global: { 
-          headers: { 
-            Authorization: authHeader,
-          },
-        },
+        global: { headers: { Authorization: authHeader } },
       }
     )
 
+    // Get the user from the request
     const {
       data: { user },
       error: userError,
@@ -46,20 +36,12 @@ serve(async (req) => {
 
     if (userError || !user) {
       console.error("Auth error:", userError)
-      return new Response(
-        JSON.stringify({ error: "Unauthorized", details: userError }),
-        { 
-          status: 401,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders,
-          },
-        }
-      )
+      throw new Error('Unauthorized')
     }
 
     console.log("Authenticated user:", user.id)
 
+    // Fetch user's appointments
     const { data: appointments, error: appointmentsError } = await supabaseClient
       .from('tasks')
       .select('*, leads(name)')
@@ -69,20 +51,12 @@ serve(async (req) => {
 
     if (appointmentsError) {
       console.error("Error fetching appointments:", appointmentsError)
-      return new Response(
-        JSON.stringify({ error: "Error fetching appointments", details: appointmentsError }),
-        { 
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders,
-          },
-        }
-      )
+      throw new Error('Error fetching appointments')
     }
 
     console.log(`Found ${appointments.length} appointments`)
 
+    // Format appointments for iCal
     const events = appointments.map((appointment) => {
       const startDate = new Date(appointment.due_date)
       return {
@@ -101,20 +75,12 @@ serve(async (req) => {
       }
     })
 
+    // Generate iCal content
     const { error: icsError, value: icsContent } = createEvents(events)
 
     if (icsError || !icsContent) {
       console.error('ICS error:', icsError)
-      return new Response(
-        JSON.stringify({ error: "Error generating iCal feed", details: icsError }),
-        { 
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders,
-          },
-        }
-      )
+      throw new Error('Error generating iCal feed')
     }
 
     const fileName = `calendar-${user.id}.ics`
@@ -127,16 +93,7 @@ serve(async (req) => {
 
     if (uploadError) {
       console.error('Upload error:', uploadError)
-      return new Response(
-        JSON.stringify({ error: "Failed to upload calendar file", details: uploadError }),
-        { 
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders,
-          },
-        }
-      )
+      throw new Error('Failed to upload calendar file')
     }
 
     const { data: { publicUrl } } = supabaseClient.storage
