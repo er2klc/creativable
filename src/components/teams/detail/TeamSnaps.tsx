@@ -1,10 +1,13 @@
-import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, BarChart, Users, Settings } from "lucide-react";
+import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, Users, Settings } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { SnapCard } from "./snap-cards/SnapCard";
 import { HiddenSnapCard } from "./snap-cards/HiddenSnapCard";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
+import { LeaderBoardCard } from "./snap-cards/LeaderBoardCard";
+import { MemberActivityDialog } from "./activity/MemberActivityDialog";
+import { useState } from "react";
 
 interface TeamSnapsProps {
   isAdmin: boolean;
@@ -16,6 +19,7 @@ interface TeamSnapsProps {
 export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: TeamSnapsProps) => {
   const session = useSession();
   const queryClient = useQueryClient();
+  const [selectedMember, setSelectedMember] = useState<string | null>(null);
 
   const { data: hiddenSnaps = [] } = useQuery({
     queryKey: ["team-hidden-snaps", teamId],
@@ -92,34 +96,17 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: Team
       description: "Verwalten Sie gemeinsame Dokumente",
       gradient: "from-yellow-500 to-yellow-600",
     },
-  ];
-
-  const adminSnaps = [
     {
-      id: "members",
-      icon: <Users className="h-8 w-8" />,
-      label: "Mitglieder",
-      description: "Verwalten Sie Teammitglieder",
-      gradient: "from-pink-500 to-pink-600",
-    },
-    {
-      id: "analytics",
-      icon: <BarChart className="h-8 w-8" />,
-      label: "Statistiken",
-      description: "Analysieren Sie Team-Aktivitäten",
-      gradient: "from-indigo-500 to-indigo-600",
-    },
-    {
-      id: "settings",
-      icon: <Settings className="h-8 w-8" />,
-      label: "Einstellungen",
-      description: "Konfigurieren Sie Team-Einstellungen",
-      gradient: "from-gray-500 to-gray-600",
+      id: "leaderboard",
+      icon: <Trophy className="h-8 w-8" />,
+      label: "Leaderboard",
+      description: "Team Rangliste & Aktivitäten",
+      gradient: "from-yellow-500 to-yellow-600",
+      component: LeaderBoardCard,
     },
   ];
 
   const visibleRegularSnaps = regularSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
-  const visibleAdminSnaps = isAdmin ? adminSnaps : [];
   const hiddenRegularSnaps = regularSnaps.filter(snap => hiddenSnaps.includes(snap.id));
 
   return (
@@ -127,38 +114,34 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: Team
       {visibleRegularSnaps.length > 0 && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
-            {visibleRegularSnaps.map((snap) => (
-              <SnapCard
-                key={snap.id}
-                snap={snap}
-                isManaging={isManaging}
-                onHide={hideSnapMutation.mutate}
-                canHide={true}
-              />
-            ))}
+            {visibleRegularSnaps.map((snap) => {
+              if (snap.component) {
+                const Component = snap.component;
+                return (
+                  <Component
+                    key={snap.id}
+                    teamId={teamId}
+                    onMemberClick={setSelectedMember}
+                  />
+                );
+              }
+              return (
+                <SnapCard
+                  key={snap.id}
+                  snap={snap}
+                  isManaging={isManaging}
+                  onHide={hideSnapMutation.mutate}
+                  canHide={true}
+                />
+              );
+            })}
           </div>
         </div>
       )}
 
-      {isAdmin && visibleAdminSnaps.length > 0 && (
+      {isAdmin && hiddenRegularSnaps.length > 0 && (
         <div className="space-y-4">
           <Separator className="my-6" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
-            {visibleAdminSnaps.map((snap) => (
-              <SnapCard
-                key={snap.id}
-                snap={snap}
-                isManaging={isManaging}
-                isAdmin={true}
-                canHide={false}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {isManaging && hiddenRegularSnaps.length > 0 && (
-        <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
             {hiddenRegularSnaps.map((snap) => (
               <HiddenSnapCard
@@ -170,6 +153,12 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: Team
           </div>
         </div>
       )}
+
+      <MemberActivityDialog
+        userId={selectedMember}
+        teamId={teamId}
+        onClose={() => setSelectedMember(null)}
+      />
     </div>
   );
 };

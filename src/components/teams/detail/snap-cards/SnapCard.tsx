@@ -10,6 +10,7 @@ interface SnapCardProps {
     description: string;
     gradient: string;
     onClick?: () => void;
+    component?: React.ComponentType<any>;
   };
   isManaging?: boolean;
   isAdmin?: boolean;
@@ -18,6 +19,10 @@ interface SnapCardProps {
 }
 
 export const SnapCard = ({ snap, isManaging, isAdmin, canHide = true, onHide }: SnapCardProps) => {
+  if (snap.component) {
+    return null; // Custom components handle their own rendering
+  }
+
   const handleClick = (e: React.MouseEvent) => {
     if (snap.onClick) {
       e.preventDefault();
