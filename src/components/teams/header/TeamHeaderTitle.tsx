@@ -1,10 +1,13 @@
-import { Crown, Image, Users } from "lucide-react";
+import { Crown, Image, Users, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { TeamMemberList } from "./TeamMemberList";
 import { TeamAdminList } from "./TeamAdminList";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 interface TeamHeaderTitleProps {
   team: {
@@ -19,6 +22,11 @@ interface TeamHeaderTitleProps {
   adminMembers: any[];
 }
 
+interface OnlineMember {
+  user_id: string;
+  online_at: string;
+}
+
 export function TeamHeaderTitle({ 
   team, 
   isAdmin, 
@@ -27,6 +35,40 @@ export function TeamHeaderTitle({
   members,
   adminMembers 
 }: TeamHeaderTitleProps) {
+  const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([]);
+  const [showOnlineMembers, setShowOnlineMembers] = useState(false);
+
+  useEffect(() => {
+    // Subscribe to presence updates for this team
+    const channel = supabase.channel(`team_${team.id}`)
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const online: OnlineMember[] = [];
+        
+        // Convert presence state to array of online members
+        Object.values(state).forEach((presences: any) => {
+          presences.forEach((presence: any) => {
+            online.push(presence);
+          });
+        });
+        
+        setOnlineMembers(online);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          // Track this user's presence
+          await channel.track({
+            user_id: supabase.auth.user()?.id,
+            online_at: new Date().toISOString(),
+          });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [team.id]);
+
   return (
     <div className="flex items-center gap-6">
       <Sheet>
@@ -102,6 +144,49 @@ export function TeamHeaderTitle({
                 </SheetDescription>
               </SheetHeader>
               <TeamAdminList admins={adminMembers} />
+            </SheetContent>
+          </Sheet>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                <Radio className="h-4 w-4 text-green-500 animate-pulse" />
+                <span>{onlineMembers.length} LIVE</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Online Mitglieder</SheetTitle>
+                <SheetDescription>
+                  Aktuell aktive Mitglieder in diesem Team
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-4 space-y-4">
+                {members.filter(member => 
+                  onlineMembers.some(online => online.user_id === member.user_id)
+                ).map((member) => (
+                  <div key={member.id} className="flex items-center justify-between p-2 border rounded">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={member.profiles?.avatar_url} alt={member.profiles?.display_name || 'Avatar'} />
+                        <AvatarFallback>
+                          {member.profiles?.display_name?.substring(0, 2).toUpperCase() || '??'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">
+                          {member.profiles?.display_name || 'Kein Name angegeben'}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="mt-1">
+                            {member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Mitglied'}
+                          </Badge>
+                          <Badge variant="default" className="bg-green-500 mt-1">LIVE</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </SheetContent>
           </Sheet>
         </div>
