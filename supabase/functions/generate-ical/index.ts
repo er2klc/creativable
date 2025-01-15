@@ -57,15 +57,31 @@ serve(async (req) => {
 
     console.log("Found appointments:", appointments?.length);
 
-    // Convert appointments to iCal events
-    const events = appointments.map((appointment) => ({
-      start: new Date(appointment.due_date),
-      end: appointment.end_date ? new Date(appointment.end_date) : new Date(appointment.due_date),
-      title: appointment.title,
-      description: `Meeting with ${appointment.leads?.name || 'Unknown'}`,
-      location: appointment.meeting_type || '',
-      status: appointment.completed ? 'COMPLETED' : 'CONFIRMED',
-    }));
+    // Convert appointments to iCal events with proper date formatting
+    const events = appointments.map((appointment) => {
+      const startDate = new Date(appointment.due_date);
+      const endDate = appointment.end_date ? new Date(appointment.end_date) : new Date(appointment.due_date);
+      
+      // Format dates as arrays: [year, month, day, hour, minute]
+      const formatDateToArray = (date: Date) => [
+        date.getFullYear(),
+        date.getMonth() + 1, // months are 0-based
+        date.getDate(),
+        date.getHours(),
+        date.getMinutes()
+      ];
+
+      return {
+        start: formatDateToArray(startDate),
+        end: formatDateToArray(endDate),
+        title: appointment.title,
+        description: `Meeting with ${appointment.leads?.name || 'Unknown'}`,
+        location: appointment.meeting_type || '',
+        status: appointment.completed ? 'COMPLETED' : 'CONFIRMED',
+      };
+    });
+
+    console.log("Formatted events:", events);
 
     // Generate iCal file
     const { error: icsError, value: icsContent } = createEvents(events);
@@ -88,7 +104,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }), 
       { 
-        status: 401, 
+        status: 500, 
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/json' 
