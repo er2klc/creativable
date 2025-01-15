@@ -18,7 +18,7 @@ import {
 import { format } from "date-fns";
 
 // Debugging-Log hinzufügen
-console.log("AppointmentItem.tsx version 1.2 geladen");
+console.log("AppointmentItem.tsx version 1.3 geladen");
 
 interface AppointmentItemProps {
   appointment: any;
@@ -93,6 +93,17 @@ export const AppointmentItem = ({
     return getMeetingTypeIcon(appointment.meeting_type);
   };
 
+  // Format time range
+  const formatTimeRange = () => {
+    if (!appointment.start_time) return null;
+    const startTime = format(new Date(appointment.start_time), "HH:mm");
+    if (appointment.end_time && appointment.end_time !== appointment.start_time) {
+      const endTime = format(new Date(appointment.end_time), "HH:mm");
+      return `${startTime} - ${endTime}`;
+    }
+    return startTime;
+  };
+
   // Determine if the appointment should be draggable
   const shouldBeDraggable = !appointment.isTeamEvent || isAdmin;
   const dragAttributes = shouldBeDraggable ? { ...listeners, ...attributes } : {};
@@ -132,14 +143,12 @@ export const AppointmentItem = ({
         )}
       </div>
 
-      {(!isMultiDayEvent || (isMultiDayEvent && isStartDay)) &&
-        !appointment.isTeamEvent &&
-        appointment.start_time && (
-          <div className="flex items-center gap-1 text-xs text-gray-600">
-            <Clock className="h-3 w-3" />
-            {format(new Date(appointment.start_time), "HH:mm")}
-          </div>
-        )}
+      {(!isMultiDayEvent || (isMultiDayEvent && isStartDay)) && (
+        <div className="flex items-center gap-1 text-xs text-gray-600">
+          <Clock className="h-3 w-3" />
+          {formatTimeRange()}
+        </div>
+      )}
 
       {appointment.leads?.name && (
         <div className="flex items-center gap-1 text-xs text-gray-600">
