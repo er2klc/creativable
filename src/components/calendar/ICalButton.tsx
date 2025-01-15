@@ -18,6 +18,7 @@ export const ICalButton = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const generateICalUrl = async () => {
+    console.log("Starting iCal URL generation process...");
     try {
       setIsLoading(true);
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -50,6 +51,7 @@ export const ICalButton = () => {
         throw new Error("Keine URL in der Antwort gefunden");
       }
 
+      console.log("Successfully generated iCal URL:", data.url);
       setICalUrl(data.url);
       setIsDialogOpen(true);
     } catch (error) {

@@ -5,6 +5,8 @@ import { createEvents } from "https://esm.sh/ics@3.7.2"
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Content-Type': 'application/json',
 }
 
 serve(async (req) => {
@@ -14,10 +16,17 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Received request for iCal generation");
+    
+    // Check for authorization header
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      throw new Error('No authorization header')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error("Missing or invalid authorization header");
+      throw new Error('Unauthorized: Invalid authorization header')
     }
+
+    const token = authHeader.replace('Bearer ', '')
+    console.log("Extracted token, attempting to create Supabase client");
 
     // Create a Supabase client with the Auth context of the logged in user
     const supabaseClient = createClient(
@@ -29,6 +38,7 @@ serve(async (req) => {
     )
 
     // Get the user from the request
+    console.log("Attempting to get user from token");
     const {
       data: { user },
       error: userError,
@@ -36,12 +46,13 @@ serve(async (req) => {
 
     if (userError || !user) {
       console.error("Auth error:", userError)
-      throw new Error('Unauthorized')
+      throw new Error('Unauthorized: Invalid user token')
     }
 
     console.log("Authenticated user:", user.id)
 
     // Fetch user's appointments
+    console.log("Fetching appointments for user");
     const { data: appointments, error: appointmentsError } = await supabaseClient
       .from('tasks')
       .select('*, leads(name)')
@@ -76,6 +87,7 @@ serve(async (req) => {
     })
 
     // Generate iCal content
+    console.log("Generating iCal content");
     const { error: icsError, value: icsContent } = createEvents(events)
 
     if (icsError || !icsContent) {
@@ -84,6 +96,8 @@ serve(async (req) => {
     }
 
     const fileName = `calendar-${user.id}.ics`
+    console.log("Uploading calendar file:", fileName);
+    
     const { error: uploadError } = await supabaseClient.storage
       .from('calendars')
       .upload(fileName, icsContent, {
@@ -114,9 +128,12 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error generating iCal feed:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }),
       {
-        status: 500,
+        status: error.message.includes('Unauthorized') ? 401 : 500,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders,
