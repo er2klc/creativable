@@ -23,11 +23,10 @@ export const ICalButton = () => {
         return;
       }
 
-      const { data: functionData } = await supabase.functions.invoke('generate-ical', {
-        method: 'GET',
-      });
+      // Get the base URL for the Supabase project
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://agqaitxlmxztqyhpcjau.supabase.co';
+      const functionUrl = `${supabaseUrl}/functions/v1/generate-ical?token=${session.access_token}`;
       
-      const functionUrl = `${window.location.protocol}//${window.location.host}/functions/v1/generate-ical?token=${session.access_token}`;
       setICalUrl(functionUrl);
       setIsDialogOpen(true);
     } catch (error) {
