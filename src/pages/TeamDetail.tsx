@@ -17,6 +17,7 @@ const TeamDetail = () => {
   const navigate = useNavigate();
   const [activeSnapView, setActiveSnapView] = useState<string | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [isManaging, setIsManaging] = useState(false);
 
   const { data: team, isLoading } = useQuery({
     queryKey: ["team", teamSlug],
@@ -61,14 +62,6 @@ const TeamDetail = () => {
 
   const isAdmin = memberRole === 'admin' || memberRole === 'owner' || team?.created_by === user?.id;
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!team) {
-    return <div>Team not found</div>;
-  }
-
   const handleCalendarClick = () => {
     setShowCalendar(true);
     setActiveSnapView('calendar');
@@ -83,6 +76,18 @@ const TeamDetail = () => {
     setShowCalendar(false);
   };
 
+  const toggleManaging = () => {
+    setIsManaging(!isManaging);
+  };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!team) {
+    return <div>Team not found</div>;
+  }
+
   return (
     <div className="space-y-6">
       <div className={cn(
@@ -90,9 +95,12 @@ const TeamDetail = () => {
         activeSnapView ? "opacity-0 -translate-y-full h-0 overflow-hidden" : "opacity-100 translate-y-0 h-auto"
       )}>
         <div className="container py-4">
-          <div className="flex items-center justify-between">
-            <TeamHeader team={team} isInSnapView={!!activeSnapView} />
-          </div>
+          <TeamHeader 
+            team={team} 
+            isInSnapView={!!activeSnapView}
+            onManageSnaps={toggleManaging}
+            isManaging={isManaging}
+          />
           <TeamTabs defaultValue="posts" isAdmin={isAdmin}>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Team Snaps</h2>
@@ -105,7 +113,7 @@ const TeamDetail = () => {
         <TeamSnaps 
           teamId={team.id}
           isAdmin={isAdmin}
-          isManaging={false}
+          isManaging={isManaging}
           onCalendarClick={handleCalendarClick}
           onSnapClick={handleSnapClick}
           onBack={handleBack}
