@@ -50,6 +50,29 @@ export const CalendarView = () => {
     setCurrentDate(direction === 'prev' ? subMonths(currentDate, 1) : addMonths(currentDate, 1));
   };
 
+  const handleAppointmentClick = (e: React.MouseEvent, appointment: Appointment) => {
+    e.stopPropagation();
+    
+    // If it's a team event, show the team event dialog
+    if (appointment.isTeamEvent) {
+      setSelectedTeamEvent(appointment as TeamEvent);
+      setIsTeamEventDialogOpen(true);
+      return;
+    }
+
+    // For personal appointments, show the edit dialog
+    setSelectedDate(new Date(appointment.due_date));
+    setSelectedAppointment({
+      id: appointment.id,
+      leadId: appointment.lead_id,
+      time: format(new Date(appointment.due_date), "HH:mm"),
+      title: appointment.title,
+      color: appointment.color,
+      meeting_type: appointment.meeting_type,
+    });
+    setIsDialogOpen(true);
+  };
+
   const draggedAppointment = activeId ? getDayAppointments(currentDate).find(app => app.id === activeId) : null;
 
   return (
@@ -89,24 +112,7 @@ export const CalendarView = () => {
             setSelectedAppointment(null);
             setIsDialogOpen(true);
           }}
-          onAppointmentClick={(e, appointment) => {
-            e.stopPropagation();
-            if (appointment.isTeamEvent) {
-              setSelectedTeamEvent(appointment as TeamEvent);
-              setIsTeamEventDialogOpen(true);
-            } else {
-              setSelectedDate(new Date(appointment.due_date));
-              setSelectedAppointment({
-                id: appointment.id,
-                leadId: appointment.lead_id,
-                time: format(new Date(appointment.due_date), "HH:mm"),
-                title: appointment.title,
-                color: appointment.color,
-                meeting_type: appointment.meeting_type,
-              });
-              setIsDialogOpen(true);
-            }
-          }}
+          onAppointmentClick={handleAppointmentClick}
           activeId={activeId}
           overDate={overDate}
           draggedAppointment={draggedAppointment}
