@@ -1,18 +1,21 @@
-import { Navigate, RouteObject } from "react-router-dom";
 import Dashboard from "@/pages/Dashboard";
 import Leads from "@/pages/Leads";
-import Calendar from "@/pages/Calendar";
 import Messages from "@/pages/Messages";
+import Calendar from "@/pages/Calendar";
 import Settings from "@/pages/Settings";
 import Tools from "@/pages/Tools";
-import Support from "@/pages/Support";
+import VisionBoard from "@/pages/VisionBoard";
+import BioGenerator from "@/pages/BioGenerator";
+import TreeGenerator from "@/pages/TreeGenerator";
+import TodoList from "@/pages/TodoList";
 import Unity from "@/pages/Unity";
-import TeamDetail from "@/pages/TeamDetail";
-import Leaderboard from "@/pages/LeaderBoard";
 import Elevate from "@/pages/Elevate";
+import TeamDetail from "@/pages/TeamDetail";
 import PlatformDetail from "@/pages/PlatformDetail";
+import SignatureGenerator from "@/pages/SignatureGenerator";
+import LeaderBoard from "@/pages/LeaderBoard";
 
-const protectedRoutes: RouteObject[] = [
+export const protectedRoutes = [
   {
     path: "/dashboard",
     element: <Dashboard />,
@@ -22,12 +25,12 @@ const protectedRoutes: RouteObject[] = [
     element: <Leads />,
   },
   {
-    path: "/calendar",
-    element: <Calendar />,
-  },
-  {
     path: "/messages",
     element: <Messages />,
+  },
+  {
+    path: "/calendar",
+    element: <Calendar />,
   },
   {
     path: "/settings",
@@ -38,33 +41,43 @@ const protectedRoutes: RouteObject[] = [
     element: <Tools />,
   },
   {
-    path: "/support",
-    element: <Support />,
+    path: "/signature-generator",
+    element: <SignatureGenerator />,
+  },
+  {
+    path: "/bio-generator",
+    element: <BioGenerator />,
+  },
+  {
+    path: "/tree-generator",
+    element: <TreeGenerator />,
+  },
+  {
+    path: "/todo",
+    element: <TodoList />,
+  },
+  {
+    path: "/vision-board",
+    element: <VisionBoard />,
   },
   {
     path: "/unity",
     element: <Unity />,
   },
   {
-    path: "/team/:teamSlug",
+    path: "/unity/team/:teamSlug",
     element: <TeamDetail />,
-  },
-  {
-    path: "/leaderboard/:teamId",
-    element: <Leaderboard />,
   },
   {
     path: "/elevate",
     element: <Elevate />,
   },
   {
-    path: "/platform/:platformId",
+    path: "/elevate/modul/:slug",
     element: <PlatformDetail />,
   },
   {
-    path: "*",
-    element: <Navigate to="/dashboard" replace />,
-  },
+    path: "/leaderboard/:teamId",
+    element: <LeaderBoard />,
+  }
 ];
-
-export default protectedRoutes;

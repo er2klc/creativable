@@ -78,8 +78,8 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: Team
     {
       id: "posts",
       icon: <MessageSquare className="h-8 w-8" />,
-      label: "Pulse",
-      description: "Für den Herzschlag der Community",
+      label: "Diskussionen & Beiträge",
+      description: "Teilen Sie Ideen und Diskussionen mit Ihrem Team",
       gradient: "from-blue-500 to-blue-600",
     },
     {

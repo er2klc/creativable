@@ -4,11 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { TeamHeaderTitle } from "./header/TeamHeaderTitle";
 import { TeamActions } from "./header/TeamActions";
-import { useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { ChevronLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface TeamHeaderProps {
   team: {
@@ -21,13 +16,6 @@ interface TeamHeaderProps {
 
 export function TeamHeader({ team }: TeamHeaderProps) {
   const user = useUser();
-  const location = useLocation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const isInSnap = location.hash !== "";
-
-  useEffect(() => {
-    setIsCollapsed(isInSnap);
-  }, [isInSnap]);
 
   const { data: memberRole } = useQuery({
     queryKey: ['team-member-role', team.id],
@@ -76,53 +64,35 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
+      // Add console log to debug the data
+      console.log('Team members data:', teamMembers);
+
       return teamMembers;
     },
     enabled: !!team.id,
   });
 
+  // Filter admins from the full members list
   const adminMembers = members.filter(member => 
     member.role === 'admin' || member.role === 'owner'
   );
 
+  // Calculate counts
   const membersCount = members.length;
   const adminsCount = adminMembers.length;
 
-  const handleBackToSnaps = () => {
-    window.location.hash = "";
-    setIsCollapsed(false);
-  };
-
   return (
-    <div className={cn(
-      "bg-background border-b transition-all duration-300 ease-in-out",
-      isCollapsed ? "h-16" : "h-auto"
-    )}>
+    <div className="bg-background border-b">
       <div className="container py-4">
         <div className="flex items-center justify-between">
-          {isInSnap && (
-            <Button 
-              variant="ghost" 
-              className="mr-4"
-              onClick={handleBackToSnaps}
-            >
-              <ChevronLeft className="h-4 w-4 mr-2" />
-              Zurück zu Snaps
-            </Button>
-          )}
-          <div className={cn(
-            "flex-1 transition-all duration-300",
-            isCollapsed ? "opacity-0 invisible" : "opacity-100 visible"
-          )}>
-            <TeamHeaderTitle 
-              team={team}
-              isAdmin={isAdmin}
-              membersCount={membersCount}
-              adminsCount={adminsCount}
-              members={members}
-              adminMembers={adminMembers}
-            />
-          </div>
+          <TeamHeaderTitle 
+            team={team}
+            isAdmin={isAdmin}
+            membersCount={membersCount}
+            adminsCount={adminsCount}
+            members={members}
+            adminMembers={adminMembers}
+          />
           <TeamActions 
             teamId={team.id}
             isAdmin={isAdmin}
@@ -130,10 +100,7 @@ export function TeamHeader({ team }: TeamHeaderProps) {
             members={members}
           />
         </div>
-        <Separator className={cn(
-          "my-4 transition-all duration-300",
-          isCollapsed ? "opacity-0" : "opacity-100"
-        )} />
+        <Separator className="my-4" />
       </div>
     </div>
   );
