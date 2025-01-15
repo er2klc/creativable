@@ -24,7 +24,6 @@ export const ICalButton = () => {
         return;
       }
 
-      // Get the base URL from Supabase client
       const { data: { publicUrl } } = await supabase.storage.from('public').getPublicUrl('');
       const baseUrl = publicUrl.split('/storage/')[0];
       const functionUrl = `${baseUrl}/functions/v1/generate-ical`;
@@ -32,22 +31,26 @@ export const ICalButton = () => {
       console.log("Making request to:", functionUrl);
       console.log("With auth token:", session.access_token);
 
-      const { data, error } = await supabase.functions.invoke('generate-ical', {
+      const response = await fetch(functionUrl, {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        }
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
       });
 
-      if (error) {
-        console.error("Error response:", error);
-        throw error;
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+        throw new Error(`Fehler beim Abrufen der iCal-Daten: ${response.statusText}`);
       }
 
-      if (!data?.url) {
+      const responseData = await response.json();
+      if (!responseData.url) {
         throw new Error("Keine URL in der Antwort gefunden");
       }
 
-      setICalUrl(data.url);
+      setICalUrl(responseData.url);
       setIsDialogOpen(true);
     } catch (error) {
       console.error("Error generating iCal URL:", error);

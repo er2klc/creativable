@@ -14,9 +14,9 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: "Invalid authorization header" }),
+        JSON.stringify({ error: "No authorization header" }),
         { 
           status: 401,
           headers: {
@@ -27,27 +27,25 @@ serve(async (req) => {
       )
     }
 
-    // Create a Supabase client with the Auth context of the logged in user
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: { 
           headers: { 
-            Authorization: authHeader
+            Authorization: authHeader,
           },
         },
       }
     )
 
-    // Get the user from the request
     const {
       data: { user },
       error: userError,
     } = await supabaseClient.auth.getUser()
 
     if (userError || !user) {
-      console.error("Auth error:", userError);
+      console.error("Auth error:", userError)
       return new Response(
         JSON.stringify({ error: "Unauthorized", details: userError }),
         { 
@@ -60,9 +58,8 @@ serve(async (req) => {
       )
     }
 
-    console.log("Authenticated user:", user.id);
+    console.log("Authenticated user:", user.id)
 
-    // Fetch user's appointments
     const { data: appointments, error: appointmentsError } = await supabaseClient
       .from('tasks')
       .select('*, leads(name)')
@@ -71,7 +68,7 @@ serve(async (req) => {
       .order('due_date', { ascending: true })
 
     if (appointmentsError) {
-      console.error("Error fetching appointments:", appointmentsError);
+      console.error("Error fetching appointments:", appointmentsError)
       return new Response(
         JSON.stringify({ error: "Error fetching appointments", details: appointmentsError }),
         { 
@@ -84,9 +81,8 @@ serve(async (req) => {
       )
     }
 
-    console.log(`Found ${appointments.length} appointments`);
+    console.log(`Found ${appointments.length} appointments`)
 
-    // Format appointments for iCal
     const events = appointments.map((appointment) => {
       const startDate = new Date(appointment.due_date)
       return {
@@ -97,13 +93,7 @@ serve(async (req) => {
           startDate.getHours(),
           startDate.getMinutes()
         ],
-        end: [
-          startDate.getFullYear(),
-          startDate.getMonth() + 1,
-          startDate.getDate(),
-          startDate.getHours() + 1,
-          startDate.getMinutes()
-        ],
+        duration: { hours: 1 },
         title: appointment.title,
         description: `Meeting with ${appointment.leads?.name || 'Client'}`,
         location: appointment.meeting_type || 'on_site',
@@ -111,7 +101,6 @@ serve(async (req) => {
       }
     })
 
-    // Generate iCal content
     const { error: icsError, value: icsContent } = createEvents(events)
 
     if (icsError || !icsContent) {
@@ -128,13 +117,12 @@ serve(async (req) => {
       )
     }
 
-    // Store the iCal file in Supabase Storage
-    const fileName = `${user.id}/calendar.ics`
+    const fileName = `calendar-${user.id}.ics`
     const { error: uploadError } = await supabaseClient.storage
       .from('calendars')
       .upload(fileName, icsContent, {
         contentType: 'text/calendar',
-        upsert: true // Override if exists
+        upsert: true
       })
 
     if (uploadError) {
@@ -151,14 +139,12 @@ serve(async (req) => {
       )
     }
 
-    // Get the public URL for the uploaded file
     const { data: { publicUrl } } = supabaseClient.storage
       .from('calendars')
       .getPublicUrl(fileName)
 
-    console.log("Generated calendar URL:", publicUrl);
+    console.log("Generated calendar URL:", publicUrl)
 
-    // Return the public URL
     return new Response(
       JSON.stringify({ url: publicUrl }),
       {
