@@ -27,8 +27,9 @@ export const ICalButton = () => {
       const { data: { publicUrl } } = await supabase.storage.from('public').getPublicUrl('');
       const baseUrl = publicUrl.split('/storage/')[0];
       const functionUrl = `${baseUrl}/functions/v1/generate-ical`;
+      const completeUrl = `${functionUrl}?auth=${session.access_token}`;
       
-      setICalUrl(functionUrl);
+      setICalUrl(completeUrl);
       setIsDialogOpen(true);
     } catch (error) {
       console.error("Error generating iCal URL:", error);
@@ -38,16 +39,7 @@ export const ICalButton = () => {
 
   const handleCopyUrl = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Bitte melde dich an, um die URL zu kopieren");
-        return;
-      }
-
-      // Create the complete URL with the authorization header
-      const completeUrl = `${iCalUrl}\nAuthorization: Bearer ${session.access_token}`;
-      
-      await navigator.clipboard.writeText(completeUrl);
+      await navigator.clipboard.writeText(iCalUrl);
       setCopied(true);
       toast.success("URL wurde in die Zwischenablage kopiert");
       setTimeout(() => setCopied(false), 2000);
