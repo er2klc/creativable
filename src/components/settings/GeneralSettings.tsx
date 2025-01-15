@@ -84,6 +84,16 @@ export function GeneralSettings() {
         throw updateError;
       }
 
+      // Update profiles table with new avatar URL
+      const { error: profileUpdateError } = await supabaseClient
+        .from('profiles')
+        .update({ avatar_url: data.publicUrl })
+        .eq('id', user?.id);
+
+      if (profileUpdateError) {
+        throw profileUpdateError;
+      }
+
       setAvatarUrl(data.publicUrl);
       await refetchSettings();
 
@@ -116,7 +126,6 @@ export function GeneralSettings() {
 
   const onSubmit = async (values: FormData) => {
     try {
-      // Update user metadata with display name
       const { error: userUpdateError } = await supabaseClient.auth.updateUser({
         data: { display_name: values.displayName }
       });
