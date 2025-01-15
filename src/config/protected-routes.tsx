@@ -4,6 +4,8 @@ import Dashboard from "@/pages/Dashboard";
 import Settings from "@/pages/Settings";
 import Leads from "@/pages/Leads";
 import Messages from "@/pages/Messages";
+import TeamDetail from "@/pages/TeamDetail";
+import TeamDiscussions from "@/pages/TeamDiscussions";
 
 const ProtectedLayout = () => {
   const user = useUser();
