@@ -16,13 +16,15 @@ interface TeamCardProps {
   onDelete: (id: string) => void;
   onLeave: (id: string) => void;
   onCopyJoinCode: (code: string) => void;
+  isSuperAdmin?: boolean;
 }
 
 export const TeamCard = ({ 
   team, 
   onDelete, 
   onLeave, 
-  onCopyJoinCode 
+  onCopyJoinCode,
+  isSuperAdmin 
 }: TeamCardProps) => {
   const navigate = useNavigate();
   const user = useUser();
@@ -38,7 +40,7 @@ export const TeamCard = ({
       return;
     }
     
-    navigate(`/team/${team.slug}`);
+    navigate(`/unity/team/${team.slug}`);
   };
 
   const isTeamOwner = user?.id === team.created_by;
