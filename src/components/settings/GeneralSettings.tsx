@@ -32,7 +32,6 @@ export function GeneralSettings() {
     },
   });
 
-  // Initialize form and avatar when settings and user data are available
   useEffect(() => {
     if (settings && user) {
       form.reset({
@@ -42,7 +41,6 @@ export function GeneralSettings() {
         language: settings.language || "Deutsch",
       });
       
-      // Set avatar URL from user metadata
       const userAvatarUrl = user.user_metadata?.avatar_url;
       if (userAvatarUrl) {
         setAvatarUrl(userAvatarUrl);
@@ -50,7 +48,6 @@ export function GeneralSettings() {
     }
   }, [settings, user, form]);
 
-  // Ensure avatar URL is always set when user metadata changes
   useEffect(() => {
     if (user?.user_metadata?.avatar_url) {
       setAvatarUrl(user.user_metadata.avatar_url);
@@ -79,7 +76,6 @@ export function GeneralSettings() {
 
       const { data } = supabaseClient.storage.from("avatars").getPublicUrl(filePath);
 
-      // Update user metadata with new avatar URL
       const { error: updateError } = await supabaseClient.auth.updateUser({
         data: { avatar_url: data.publicUrl }
       });
@@ -126,6 +122,14 @@ export function GeneralSettings() {
       });
 
       if (userUpdateError) throw userUpdateError;
+
+      // Update profiles table with display name
+      const { error: profileUpdateError } = await supabaseClient
+        .from('profiles')
+        .update({ display_name: values.displayName })
+        .eq('id', user?.id);
+
+      if (profileUpdateError) throw profileUpdateError;
 
       // Update settings table for whatsapp number and language
       const { error: settingsError } = await supabaseClient
