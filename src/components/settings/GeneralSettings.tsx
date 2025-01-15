@@ -76,6 +76,7 @@ export function GeneralSettings() {
 
       const { data } = supabaseClient.storage.from("avatars").getPublicUrl(filePath);
 
+      // First update auth user metadata
       const { error: updateError } = await supabaseClient.auth.updateUser({
         data: { avatar_url: data.publicUrl }
       });
@@ -84,7 +85,7 @@ export function GeneralSettings() {
         throw updateError;
       }
 
-      // Update profiles table with new avatar URL
+      // Then update profiles table with new avatar URL
       const { error: profileUpdateError } = await supabaseClient
         .from('profiles')
         .update({ avatar_url: data.publicUrl })
@@ -102,6 +103,7 @@ export function GeneralSettings() {
         description: "Avatar wurde erfolgreich aktualisiert.",
       });
     } catch (error) {
+      console.error("Error updating avatar:", error);
       toast({
         title: "Fehler",
         description: "Avatar konnte nicht aktualisiert werden.",
@@ -158,6 +160,7 @@ export function GeneralSettings() {
 
       await refetchSettings();
     } catch (error) {
+      console.error("Error updating profile:", error);
       toast({
         title: "Fehler",
         description: "Profil konnte nicht aktualisiert werden.",
