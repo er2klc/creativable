@@ -16,11 +16,20 @@ interface TeamHeaderProps {
     logo_url?: string;
     created_by: string;
   };
+  isInSnapView?: boolean;
 }
 
-export function TeamHeader({ team }: TeamHeaderProps) {
+export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const user = useUser();
+
+  useEffect(() => {
+    if (isInSnapView) {
+      setIsCollapsed(true);
+    } else {
+      setIsCollapsed(false);
+    }
+  }, [isInSnapView]);
 
   const { data: memberRole } = useQuery({
     queryKey: ['team-member-role', team.id],
@@ -69,20 +78,15 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
-      // Add console log to debug the data
-      console.log('Team members data:', teamMembers);
-
       return teamMembers;
     },
     enabled: !!team.id,
   });
 
-  // Filter admins from the full members list
   const adminMembers = members.filter(member => 
     member.role === 'admin' || member.role === 'owner'
   );
 
-  // Calculate counts
   const membersCount = members.length;
   const adminsCount = adminMembers.length;
 
@@ -111,21 +115,23 @@ export function TeamHeader({ team }: TeamHeaderProps) {
             members={members}
           />
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className={cn(
-            "absolute right-4 transition-all duration-300",
-            isCollapsed ? "bottom-2" : "-bottom-4"
-          )}
-        >
-          {isCollapsed ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronUp className="h-4 w-4" />
-          )}
-        </Button>
+        {isInSnapView && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className={cn(
+              "absolute right-4 transition-all duration-300",
+              isCollapsed ? "bottom-2" : "-bottom-4"
+            )}
+          >
+            {isCollapsed ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronUp className="h-4 w-4" />
+            )}
+          </Button>
+        )}
         <Separator className={cn(
           "my-4 transition-opacity duration-300",
           isCollapsed ? "opacity-0" : "opacity-100"

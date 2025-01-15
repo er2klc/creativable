@@ -18,6 +18,7 @@ const TeamDetail = () => {
   const user = useUser();
   const [isManaging, setIsManaging] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [activeSnapView, setActiveSnapView] = useState<string | null>(null);
 
   const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ["team", teamSlug],
@@ -80,7 +81,7 @@ const TeamDetail = () => {
       <div className="bg-background border-b">
         <div className="container py-4">
           <div className="flex items-center justify-between">
-            <TeamHeader team={team} />
+            <TeamHeader team={team} isInSnapView={!!activeSnapView} />
             {isAdmin && !showCalendar && (
               <Button
                 variant={isManaging ? "default" : "outline"}
@@ -102,14 +103,23 @@ const TeamDetail = () => {
             <TeamCalendarView
               teamId={team.id}
               isAdmin={isAdmin}
-              onBack={() => setShowCalendar(false)}
+              onBack={() => {
+                setShowCalendar(false);
+                setActiveSnapView(null);
+              }}
             />
           ) : (
             <TeamSnaps 
               isAdmin={isAdmin}
               isManaging={isManaging}
               teamId={team.id}
-              onCalendarClick={() => setShowCalendar(true)}
+              onCalendarClick={() => {
+                setShowCalendar(true);
+                setActiveSnapView('calendar');
+              }}
+              onSnapClick={(snapId) => setActiveSnapView(snapId)}
+              onBack={() => setActiveSnapView(null)}
+              activeSnapView={activeSnapView}
             />
           )}
 

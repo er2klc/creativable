@@ -13,9 +13,20 @@ interface TeamSnapsProps {
   isManaging: boolean;
   teamId: string;
   onCalendarClick: () => void;
+  onSnapClick: (snapId: string) => void;
+  onBack: () => void;
+  activeSnapView: string | null;
 }
 
-export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: TeamSnapsProps) => {
+export const TeamSnaps = ({ 
+  isAdmin, 
+  isManaging, 
+  teamId, 
+  onCalendarClick,
+  onSnapClick,
+  onBack,
+  activeSnapView 
+}: TeamSnapsProps) => {
   const session = useSession();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -81,6 +92,7 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: Team
       label: "Pulse",
       description: "Für den Herzschlag der Community",
       gradient: "from-blue-500 to-blue-600",
+      onClick: () => onSnapClick("posts"),
     },
     {
       id: "news",
@@ -88,6 +100,7 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: Team
       label: "News & Updates",
       description: "Bleiben Sie über wichtige Updates informiert",
       gradient: "from-purple-500 to-purple-600",
+      onClick: () => onSnapClick("news"),
     },
     {
       id: "files",
@@ -95,6 +108,7 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: Team
       label: "Dateien",
       description: "Verwalten Sie gemeinsame Dokumente",
       gradient: "from-yellow-500 to-yellow-600",
+      onClick: () => onSnapClick("files"),
     },
     {
       id: "leaderboard",
@@ -121,6 +135,8 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: Team
                 isManaging={isManaging}
                 onHide={hideSnapMutation.mutate}
                 canHide={true}
+                onBack={onBack}
+                showBackButton={activeSnapView === snap.id}
               />
             ))}
           </div>
