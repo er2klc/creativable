@@ -1,5 +1,3 @@
-// src/components/calendar/AppointmentItem.tsx
-
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import {
@@ -20,12 +18,13 @@ import {
 import { format } from "date-fns";
 
 // Debugging-Log hinzufügen
-console.log("AppointmentItem.tsx version 1.1 geladen");
+console.log("AppointmentItem.tsx version 1.2 geladen");
 
 interface AppointmentItemProps {
   appointment: any;
   onClick: (e: React.MouseEvent) => void;
   isDragging?: boolean;
+  isAdmin?: boolean;
 }
 
 const getMeetingTypeIcon = (type: string) => {
@@ -51,6 +50,7 @@ export const AppointmentItem = ({
   appointment,
   onClick,
   isDragging,
+  isAdmin = false,
 }: AppointmentItemProps) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: appointment.id,
@@ -93,15 +93,19 @@ export const AppointmentItem = ({
     return getMeetingTypeIcon(appointment.meeting_type);
   };
 
+  // Determine if the appointment should be draggable
+  const shouldBeDraggable = !appointment.isTeamEvent || isAdmin;
+  const dragAttributes = shouldBeDraggable ? { ...listeners, ...attributes } : {};
+
   return (
     <div
       ref={setNodeRef}
       style={{
         ...style,
         backgroundColor: appointment.color || "#FEF7CD",
-        cursor: appointment.isTeamEvent ? "default" : "pointer",
+        cursor: shouldBeDraggable ? "pointer" : "default",
       }}
-      {...(appointment.isTeamEvent ? {} : { ...listeners, ...attributes })}
+      {...dragAttributes}
       className={cn(
         "p-2 rounded hover:opacity-80 space-y-1",
         appointment.isRecurring && "border-l-4 border-primary",
@@ -109,7 +113,7 @@ export const AppointmentItem = ({
         !appointment.isTeamEvent && "text-black",
         (appointment.completed || appointment.cancelled) && "opacity-50"
       )}
-      onClick={(e) => !appointment.isTeamEvent && onClick(e)}
+      onClick={(e) => onClick(e)}
     >
       <div className="flex items-center gap-1 text-xs">
         <div className="flex items-center gap-1 flex-1">

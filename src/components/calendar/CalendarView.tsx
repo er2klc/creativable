@@ -10,14 +10,16 @@ import { NewAppointmentDialog } from "./NewAppointmentDialog";
 import { TeamEventDetailsDialog } from "./TeamEventDetailsDialog";
 import { Switch } from "@/components/ui/switch";
 import { Appointment, AppointmentToEdit, TeamEvent } from "./types/calendar";
+import { useUser } from "@supabase/auth-helpers-react";
 
 export const CalendarView = () => {
-  console.log("CalendarView geladen version 1.0");
+  console.log("CalendarView geladen version 1.1");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isTeamEventDialogOpen, setIsTeamEventDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentToEdit | null>(null);
   const [selectedTeamEvent, setSelectedTeamEvent] = useState<TeamEvent | null>(null);
   const [showTeamEvents, setShowTeamEvents] = useState(true);
+  const user = useUser();
 
   const {
     currentDate,
@@ -53,7 +55,7 @@ export const CalendarView = () => {
   const handleAppointmentClick = (e: React.MouseEvent, appointment: Appointment) => {
     e.stopPropagation();
     
-    // If it's a team event, show the team event dialog
+    // Always show team event details dialog for team events
     if (appointment.isTeamEvent) {
       setSelectedTeamEvent(appointment as TeamEvent);
       setIsTeamEventDialogOpen(true);
@@ -116,6 +118,7 @@ export const CalendarView = () => {
           activeId={activeId}
           overDate={overDate}
           draggedAppointment={draggedAppointment}
+          isAdmin={user?.id === draggedAppointment?.created_by}
         />
 
         <NewAppointmentDialog
