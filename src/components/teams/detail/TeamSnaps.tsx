@@ -30,7 +30,6 @@ export const TeamSnaps = ({
   const session = useSession();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [selectedMember, setSelectedMember] = useState<string | null>(null);
 
   const { data: hiddenSnaps = [] } = useQuery({
     queryKey: ["team-hidden-snaps", teamId],
@@ -126,23 +125,21 @@ export const TeamSnaps = ({
 
   return (
     <div className="space-y-8">
-      {visibleRegularSnaps.length > 0 && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
-            {visibleRegularSnaps.map((snap) => (
-              <SnapCard
-                key={snap.id}
-                snap={snap}
-                isManaging={isManaging}
-                onHide={hideSnapMutation.mutate}
-                canHide={isAdmin}
-                onBack={onBack}
-                showBackButton={activeSnapView === snap.id}
-              />
-            ))}
-          </div>
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+          {visibleRegularSnaps.map((snap) => (
+            <SnapCard
+              key={snap.id}
+              snap={snap}
+              isManaging={isManaging}
+              onHide={hideSnapMutation.mutate}
+              canHide={isAdmin}
+              onBack={onBack}
+              showBackButton={activeSnapView === snap.id}
+            />
+          ))}
         </div>
-      )}
+      </div>
 
       {isAdmin && hiddenRegularSnaps.length > 0 && (
         <div className="space-y-4">
