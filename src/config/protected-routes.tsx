@@ -10,6 +10,7 @@ import Unity from "@/pages/Unity";
 import TodoList from "@/pages/TodoList";
 import Calendar from "@/pages/Calendar";
 import Elevate from "@/pages/Elevate";
+import PlatformDetail from "@/pages/PlatformDetail";
 
 const ProtectedLayout = () => {
   const user = useUser();
@@ -46,7 +47,7 @@ export const protectedRoutes = [
         element: <TeamDetail />,
       },
       {
-        path: "/team/:teamId/discussions",
+        path: "/team/:teamSlug/discussions",
         element: <TeamDiscussions />,
       },
       {
@@ -64,6 +65,10 @@ export const protectedRoutes = [
       {
         path: "/elevate",
         element: <Elevate />,
+      },
+      {
+        path: "/elevate/modul/:platformSlug",
+        element: <PlatformDetail />,
       }
     ],
   },
