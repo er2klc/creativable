@@ -24,10 +24,12 @@ export const VisionBoardImage = ({
   onDelete,
   onMove,
 }: VisionBoardImageProps) => {
-  // Determine if the URL is a direct URL or needs to be fetched from Supabase
-  const isDirectUrl = imageUrl.startsWith('http');
-  const imageSource = isDirectUrl ? imageUrl : 
-    supabase.storage.from('vision-board-images').getPublicUrl(imageUrl).data.publicUrl;
+  // Get the public URL for the image
+  const imageSource = imageUrl.startsWith('http') 
+    ? imageUrl 
+    : supabase.storage.from('vision-board-images').getPublicUrl(imageUrl).data.publicUrl;
+
+  console.log('Vision Board Image Source:', imageSource); // Debug log
 
   return (
     <Card className="relative w-full h-full overflow-hidden group" 
@@ -36,6 +38,11 @@ export const VisionBoardImage = ({
         src={imageSource}
         alt={theme}
         className="w-full h-full object-cover transition-transform group-hover:scale-105"
+        onError={(e) => {
+          console.error('Image load error:', e);
+          // Fallback to a placeholder if image fails to load
+          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2264&auto=format&fit=crop';
+        }}
       />
       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
         <div className="absolute bottom-4 left-4 text-white">
