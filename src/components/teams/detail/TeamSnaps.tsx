@@ -141,7 +141,7 @@ export const TeamSnaps = ({
 
   const allSnaps = [...regularSnaps, ...adminSnaps];
   const visibleSnaps = allSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
-  const hiddenSnaps = allSnaps.filter(snap => hiddenSnaps.includes(snap.id));
+  const hiddenSnapsList = allSnaps.filter(snap => hiddenSnaps.includes(snap.id));
 
   return (
     <div className="space-y-8">
@@ -163,11 +163,11 @@ export const TeamSnaps = ({
         </div>
       )}
 
-      {isAdmin && hiddenSnaps.length > 0 && (
+      {isAdmin && hiddenSnapsList.length > 0 && (
         <div className="space-y-4">
           <Separator className="my-6" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
-            {hiddenSnaps.map((snap) => (
+            {hiddenSnapsList.map((snap) => (
               <HiddenSnapCard
                 key={snap.id}
                 snap={snap}
