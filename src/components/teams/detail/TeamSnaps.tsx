@@ -1,4 +1,4 @@
-import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, Users, Settings } from "lucide-react";
+import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, Users, Settings, Trophy } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { SnapCard } from "./snap-cards/SnapCard";
 import { HiddenSnapCard } from "./snap-cards/HiddenSnapCard";
