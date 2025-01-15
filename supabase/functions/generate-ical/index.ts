@@ -15,10 +15,12 @@ serve(async (req) => {
   }
 
   try {
-    // Get the user's token from the request
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
+    // Get the token from query parameter
+    const url = new URL(req.url);
+    const token = url.searchParams.get('token');
+    
+    if (!token) {
+      throw new Error('No authorization token provided');
     }
 
     // Create Supabase client
@@ -27,11 +29,10 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Verify the token and get the user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
+      console.error('Auth error:', authError);
       throw new Error('Invalid token');
     }
 
@@ -44,6 +45,7 @@ serve(async (req) => {
       .order('due_date', { ascending: true });
 
     if (fetchError) {
+      console.error('Fetch error:', fetchError);
       throw fetchError;
     }
 
@@ -61,6 +63,7 @@ serve(async (req) => {
     const { error: icsError, value: icsContent } = createEvents(events);
 
     if (icsError) {
+      console.error('ICS error:', icsError);
       throw icsError;
     }
 
