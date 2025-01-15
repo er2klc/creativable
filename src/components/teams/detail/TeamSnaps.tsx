@@ -135,7 +135,7 @@ export const TeamSnaps = ({
                 snap={snap}
                 isManaging={isManaging}
                 onHide={hideSnapMutation.mutate}
-                canHide={true}
+                canHide={isAdmin}
                 onBack={onBack}
                 showBackButton={activeSnapView === snap.id}
               />
