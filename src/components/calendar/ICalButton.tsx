@@ -23,9 +23,12 @@ export const ICalButton = () => {
         return;
       }
 
-      const functionUrl = new URL('generate-ical', supabase.functions.url).toString();
-      const url = `${functionUrl}?token=${session.access_token}`;
-      setICalUrl(url);
+      const { data: functionData } = await supabase.functions.invoke('generate-ical', {
+        method: 'GET',
+      });
+      
+      const functionUrl = `${window.location.protocol}//${window.location.host}/functions/v1/generate-ical?token=${session.access_token}`;
+      setICalUrl(functionUrl);
       setIsDialogOpen(true);
     } catch (error) {
       console.error("Error generating iCal URL:", error);
