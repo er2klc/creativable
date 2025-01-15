@@ -16,14 +16,14 @@ serve(async (req) => {
   try {
     console.log("[iCal] Starting iCal generation process");
     
-    // Log headers for debugging
+    // Get auth header
     const authHeader = req.headers.get('Authorization');
     console.log("[iCal] Auth header present:", !!authHeader);
     
     if (!authHeader) {
       throw new Error('No authorization header');
     }
-    
+
     // Create a Supabase client with the Auth context of the logged in user
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
