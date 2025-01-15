@@ -24,9 +24,9 @@ export const ICalButton = () => {
         return;
       }
 
-      // Get the base URL for the Supabase project
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://agqaitxlmxztqyhpcjau.supabase.co';
-      const functionUrl = `${supabaseUrl}/functions/v1/generate-ical?token=${session.access_token}`;
+      const { data: { publicUrl } } = await supabase.storage.from('public').getPublicUrl('');
+      const baseUrl = publicUrl.split('/storage/')[0];
+      const functionUrl = `${baseUrl}/functions/v1/generate-ical`;
       
       setICalUrl(functionUrl);
       setIsDialogOpen(true);
@@ -38,7 +38,16 @@ export const ICalButton = () => {
 
   const handleCopyUrl = async () => {
     try {
-      await navigator.clipboard.writeText(iCalUrl);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Bitte melde dich an, um die URL zu kopieren");
+        return;
+      }
+
+      // Create the complete URL with the authorization header
+      const completeUrl = `${iCalUrl}\nAuthorization: Bearer ${session.access_token}`;
+      
+      await navigator.clipboard.writeText(completeUrl);
       setCopied(true);
       toast.success("URL wurde in die Zwischenablage kopiert");
       setTimeout(() => setCopied(false), 2000);
