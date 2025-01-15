@@ -21,7 +21,7 @@ interface TeamSnapsProps {
 export const TeamSnaps = ({ 
   isAdmin, 
   isManaging, 
-  teamId, 
+  teamId,
   onCalendarClick,
   onSnapClick,
   onBack,
@@ -43,6 +43,7 @@ export const TeamSnaps = ({
       if (error) throw error;
       return data.map(snap => snap.snap_id);
     },
+    enabled: !!teamId
   });
 
   const hideSnapMutation = useMutation({

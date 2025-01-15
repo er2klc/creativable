@@ -16,6 +16,7 @@ const TeamDetail = () => {
   const user = useUser();
   const navigate = useNavigate();
   const [activeSnapView, setActiveSnapView] = useState<string | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const { data: team, isLoading } = useQuery({
     queryKey: ["team", teamSlug],
@@ -36,9 +37,51 @@ const TeamDetail = () => {
     },
   });
 
+  const { data: memberRole } = useQuery({
+    queryKey: ['team-member-role', team?.id],
+    queryFn: async () => {
+      if (!user?.id || !team?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('team_id', team.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching member role:', error);
+        return null;
+      }
+
+      return data?.role;
+    },
+    enabled: !!user?.id && !!team?.id,
+  });
+
+  const isAdmin = memberRole === 'admin' || memberRole === 'owner' || team?.created_by === user?.id;
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
+
+  if (!team) {
+    return <div>Team not found</div>;
+  }
+
+  const handleCalendarClick = () => {
+    setShowCalendar(true);
+    setActiveSnapView('calendar');
+  };
+
+  const handleSnapClick = (snapId: string) => {
+    setActiveSnapView(snapId);
+  };
+
+  const handleBack = () => {
+    setActiveSnapView(null);
+    setShowCalendar(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -50,12 +93,33 @@ const TeamDetail = () => {
           <div className="flex items-center justify-between">
             <TeamHeader team={team} isInSnapView={!!activeSnapView} />
           </div>
-          <TeamTabs team={team} />
+          <TeamTabs defaultValue="posts" isAdmin={isAdmin}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Team Snaps</h2>
+            </div>
+          </TeamTabs>
         </div>
       </div>
 
-      <TeamSnaps teamSlug={teamSlug} activeSnapView={activeSnapView} setActiveSnapView={setActiveSnapView} />
-      <TeamCalendarView teamSlug={teamSlug} />
+      {!showCalendar && (
+        <TeamSnaps 
+          teamId={team.id}
+          isAdmin={isAdmin}
+          isManaging={false}
+          onCalendarClick={handleCalendarClick}
+          onSnapClick={handleSnapClick}
+          onBack={handleBack}
+          activeSnapView={activeSnapView}
+        />
+      )}
+
+      {showCalendar && (
+        <TeamCalendarView 
+          teamId={team.id}
+          isAdmin={isAdmin}
+          onBack={handleBack}
+        />
+      )}
     </div>
   );
 };
