@@ -1,21 +1,24 @@
+import { Navigate, RouteObject } from "react-router-dom";
 import Dashboard from "@/pages/Dashboard";
 import Leads from "@/pages/Leads";
-import Messages from "@/pages/Messages";
 import Calendar from "@/pages/Calendar";
+import Messages from "@/pages/Messages";
 import Settings from "@/pages/Settings";
 import Tools from "@/pages/Tools";
-import VisionBoard from "@/pages/VisionBoard";
-import BioGenerator from "@/pages/BioGenerator";
-import TreeGenerator from "@/pages/TreeGenerator";
-import TodoList from "@/pages/TodoList";
+import Support from "@/pages/Support";
 import Unity from "@/pages/Unity";
-import Elevate from "@/pages/Elevate";
 import TeamDetail from "@/pages/TeamDetail";
+import TeamDiscussions from "@/pages/TeamDiscussions";
+import Leaderboard from "@/pages/LeaderBoard";
+import Elevate from "@/pages/Elevate";
 import PlatformDetail from "@/pages/PlatformDetail";
-import SignatureGenerator from "@/pages/SignatureGenerator";
-import LeaderBoard from "@/pages/LeaderBoard";
+import VisionBoard from "@/pages/tools/VisionBoard";
+import SignatureGenerator from "@/pages/tools/SignatureGenerator";
+import TreeGenerator from "@/pages/tools/TreeGenerator";
+import BioGenerator from "@/pages/tools/BioGenerator";
+import QrCodeGenerator from "@/pages/tools/QrCodeGenerator";
 
-export const protectedRoutes = [
+const protectedRoutes: RouteObject[] = [
   {
     path: "/dashboard",
     element: <Dashboard />,
@@ -25,12 +28,12 @@ export const protectedRoutes = [
     element: <Leads />,
   },
   {
-    path: "/messages",
-    element: <Messages />,
-  },
-  {
     path: "/calendar",
     element: <Calendar />,
+  },
+  {
+    path: "/messages",
+    element: <Messages />,
   },
   {
     path: "/settings",
@@ -41,43 +44,57 @@ export const protectedRoutes = [
     element: <Tools />,
   },
   {
-    path: "/signature-generator",
-    element: <SignatureGenerator />,
-  },
-  {
-    path: "/bio-generator",
-    element: <BioGenerator />,
-  },
-  {
-    path: "/tree-generator",
-    element: <TreeGenerator />,
-  },
-  {
-    path: "/todo",
-    element: <TodoList />,
-  },
-  {
-    path: "/vision-board",
-    element: <VisionBoard />,
+    path: "/support",
+    element: <Support />,
   },
   {
     path: "/unity",
     element: <Unity />,
   },
   {
-    path: "/unity/team/:teamSlug",
+    path: "/team/:teamSlug",
     element: <TeamDetail />,
+  },
+  {
+    path: "/team/:teamSlug/discussions",
+    element: <TeamDiscussions />,
+  },
+  {
+    path: "/leaderboard/:teamId",
+    element: <Leaderboard />,
   },
   {
     path: "/elevate",
     element: <Elevate />,
   },
   {
-    path: "/elevate/modul/:slug",
+    path: "/platform/:platformId",
     element: <PlatformDetail />,
   },
   {
-    path: "/leaderboard/:teamId",
-    element: <LeaderBoard />,
-  }
+    path: "/tools/vision-board",
+    element: <VisionBoard />,
+  },
+  {
+    path: "/tools/signature-generator",
+    element: <SignatureGenerator />,
+  },
+  {
+    path: "/tools/tree-generator",
+    element: <TreeGenerator />,
+  },
+  {
+    path: "/tools/bio-generator",
+    element: <BioGenerator />,
+  },
+  {
+    path: "/tools/qr-code-generator",
+    element: <QrCodeGenerator />,
+  },
+  {
+    path: "*",
+    element: <Navigate to="/dashboard" replace />,
+  },
 ];
+
+export default protectedRoutes;
