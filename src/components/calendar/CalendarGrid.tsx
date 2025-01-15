@@ -13,6 +13,7 @@ interface CalendarGridProps {
   activeId: string | null;
   overDate: string | null;
   draggedAppointment: Appointment | null;
+  isAdmin?: boolean;
 }
 
 export const CalendarGrid = ({
@@ -23,6 +24,7 @@ export const CalendarGrid = ({
   activeId,
   overDate,
   draggedAppointment,
+  isAdmin = false,
 }: CalendarGridProps) => {
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 }); // Start week on Monday
@@ -74,6 +76,7 @@ export const CalendarGrid = ({
               }}
               onClick={(e) => onAppointmentClick(e, appointment)}
               isDragging={activeId === appointment.id}
+              isAdmin={isAdmin}
             />
           ))}
         </div>
@@ -112,6 +115,7 @@ export const CalendarGrid = ({
             <AppointmentItem
               appointment={draggedAppointment}
               onClick={() => {}}
+              isAdmin={isAdmin}
             />
           </div>
         ) : null}
