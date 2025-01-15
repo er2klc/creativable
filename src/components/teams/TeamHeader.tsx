@@ -95,10 +95,13 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
       "bg-background border-b transition-all duration-300 ease-in-out",
       isCollapsed ? "h-16" : "h-auto"
     )}>
-      <div className="container py-4 relative">
+      <div className={cn(
+        "container py-4 relative",
+        isCollapsed ? "pointer-events-none" : ""
+      )}>
         <div className={cn(
           "flex items-center justify-between transition-all duration-300",
-          isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
+          isCollapsed ? "opacity-0" : "opacity-100"
         )}>
           <TeamHeaderTitle 
             team={team}
@@ -121,7 +124,7 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
             size="sm"
             onClick={() => setIsCollapsed(!isCollapsed)}
             className={cn(
-              "absolute right-4 transition-all duration-300",
+              "absolute right-4 transition-all duration-300 pointer-events-auto",
               isCollapsed ? "bottom-2" : "-bottom-4"
             )}
           >
