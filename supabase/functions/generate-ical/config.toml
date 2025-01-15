@@ -1,1 +1,3 @@
 project_id = "agqaitxlmxztqyhpcjau"
+[functions.generate-ical]
+verify_jwt = false
