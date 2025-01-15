@@ -11,11 +11,6 @@ import TodoList from "@/pages/TodoList";
 import Calendar from "@/pages/Calendar";
 import Elevate from "@/pages/Elevate";
 import PlatformDetail from "@/pages/PlatformDetail";
-import Tools from "@/pages/Tools";
-import SignatureGenerator from "@/pages/SignatureGenerator";
-import TreeGenerator from "@/pages/TreeGenerator";
-import BioGenerator from "@/pages/BioGenerator";
-import VisionBoard from "@/pages/VisionBoard";
 
 const ProtectedLayout = () => {
   const user = useUser();
@@ -74,26 +69,6 @@ export const protectedRoutes = [
       {
         path: "/elevate/modul/:platformSlug",
         element: <PlatformDetail />,
-      },
-      {
-        path: "/tools",
-        element: <Tools />,
-      },
-      {
-        path: "/signature-generator",
-        element: <SignatureGenerator />,
-      },
-      {
-        path: "/tree-generator",
-        element: <TreeGenerator />,
-      },
-      {
-        path: "/bio-generator",
-        element: <BioGenerator />,
-      },
-      {
-        path: "/vision-board",
-        element: <VisionBoard />,
       }
     ],
   },

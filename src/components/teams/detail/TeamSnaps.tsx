@@ -1,4 +1,4 @@
-import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, Users, Settings, Trophy, MessageCircle, FileText } from "lucide-react";
+import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, Users, Settings, Trophy } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { SnapCard } from "./snap-cards/SnapCard";
 import { HiddenSnapCard } from "./snap-cards/HiddenSnapCard";
@@ -77,10 +77,10 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: Team
     },
     {
       id: "posts",
-      icon: <MessageCircle className="h-8 w-8" />,
-      label: "Community",
+      icon: <MessageSquare className="h-8 w-8" />,
+      label: "Diskussionen & Beiträge",
       description: "Teilen Sie Ideen und Diskussionen mit Ihrem Team",
-      gradient: "from-blue-500 to-blue-600",
+      gradient: "from-rose-500 to-rose-600",
       onClick: () => navigate(`/team/${teamId}/discussions`),
     },
     {
@@ -92,7 +92,7 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: Team
     },
     {
       id: "files",
-      icon: <FileText className="h-8 w-8" />,
+      icon: <FolderOpenIcon className="h-8 w-8" />,
       label: "Dateien",
       description: "Verwalten Sie gemeinsame Dokumente",
       gradient: "from-yellow-500 to-yellow-600",
@@ -102,7 +102,7 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: Team
       icon: <Trophy className="h-8 w-8" />,
       label: "Leaderboard",
       description: "Team Rangliste & Aktivitäten",
-      gradient: "from-indigo-500 to-indigo-600",
+      gradient: "from-red-500 to-red-600",
       onClick: () => navigate(`/leaderboard/${teamId}`),
     },
   ];
