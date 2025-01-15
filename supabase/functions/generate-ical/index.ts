@@ -1,65 +1,48 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3"
-import { createEvents } from "https://esm.sh/ics@3.7.2"
+import { createEvent, createEvents } from "https://esm.sh/ics@3.7.2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Content-Type': 'application/json',
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    console.log("Received request for iCal generation");
-    
-    // Check for authorization header
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error("Missing or invalid authorization header");
-      throw new Error('Unauthorized: Invalid authorization header')
-    }
-
-    const token = authHeader.replace('Bearer ', '')
-    console.log("Extracted token, attempting to create Supabase client");
-
-    // Create a Supabase client with the service role key
-    const supabaseAdmin = createClient(
+    // Create a Supabase client with the Auth context of the logged in user
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: { headers: { Authorization: req.headers.get('Authorization')! } },
+      }
     )
 
-    // Get the user from the JWT token
-    console.log("Attempting to get user from token");
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
+    // Get the user from the request
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseClient.auth.getUser()
 
     if (userError || !user) {
-      console.error("Auth error:", userError)
-      throw new Error('Unauthorized: Invalid user token')
+      throw new Error('Unauthorized')
     }
 
-    console.log("Authenticated user:", user.id)
-
     // Fetch user's appointments
-    console.log("Fetching appointments for user");
-    const { data: appointments, error: appointmentsError } = await supabaseAdmin
+    const { data: appointments, error: appointmentsError } = await supabaseClient
       .from('tasks')
-      .select('*, leads(name)')
+      .select('*')
       .eq('user_id', user.id)
       .eq('cancelled', false)
       .order('due_date', { ascending: true })
 
     if (appointmentsError) {
-      console.error("Error fetching appointments:", appointmentsError)
       throw new Error('Error fetching appointments')
     }
-
-    console.log(`Found ${appointments.length} appointments`)
 
     // Format appointments for iCal
     const events = appointments.map((appointment) => {
@@ -72,16 +55,21 @@ serve(async (req) => {
           startDate.getHours(),
           startDate.getMinutes()
         ],
-        duration: { hours: 1 },
+        end: [
+          startDate.getFullYear(),
+          startDate.getMonth() + 1,
+          startDate.getDate(),
+          startDate.getHours() + 1,
+          startDate.getMinutes()
+        ],
         title: appointment.title,
-        description: `Meeting with ${appointment.leads?.name || 'Client'}`,
+        description: Meeting with ${appointment.lead_id ? 'Client' : 'Unknown'},
         location: appointment.meeting_type || 'on_site',
         status: appointment.completed ? 'COMPLETED' : 'CONFIRMED',
       }
     })
 
     // Generate iCal content
-    console.log("Generating iCal content");
     const { error: icsError, value: icsContent } = createEvents(events)
 
     if (icsError || !icsContent) {
@@ -89,14 +77,13 @@ serve(async (req) => {
       throw new Error('Error generating iCal feed')
     }
 
-    const fileName = `calendar-${user.id}.ics`
-    console.log("Uploading calendar file:", fileName);
-    
-    const { error: uploadError } = await supabaseAdmin.storage
+    // Store the iCal file in Supabase Storage
+    const fileName = ${user.id}/calendar.ics
+    const { error: uploadError } = await supabaseClient.storage
       .from('calendars')
       .upload(fileName, icsContent, {
         contentType: 'text/calendar',
-        upsert: true
+        upsert: true // Override if exists
       })
 
     if (uploadError) {
@@ -104,12 +91,12 @@ serve(async (req) => {
       throw new Error('Failed to upload calendar file')
     }
 
-    const { data: { publicUrl } } = supabaseAdmin.storage
+    // Get the public URL for the uploaded file
+    const { data: { publicUrl } } = supabaseClient.storage
       .from('calendars')
       .getPublicUrl(fileName)
 
-    console.log("Generated calendar URL:", publicUrl)
-
+    // Return the public URL
     return new Response(
       JSON.stringify({ url: publicUrl }),
       {
@@ -122,12 +109,9 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error generating iCal feed:', error)
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: error.toString()
-      }),
+      JSON.stringify({ error: error.message }),
       {
-        status: error.message.includes('Unauthorized') ? 401 : 500,
+        status: 500,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders,
