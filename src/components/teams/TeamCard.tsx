@@ -16,15 +16,13 @@ interface TeamCardProps {
   onDelete: (id: string) => void;
   onLeave: (id: string) => void;
   onCopyJoinCode: (code: string) => void;
-  isSuperAdmin?: boolean;
 }
 
 export const TeamCard = ({ 
   team, 
   onDelete, 
   onLeave, 
-  onCopyJoinCode,
-  isSuperAdmin 
+  onCopyJoinCode 
 }: TeamCardProps) => {
   const navigate = useNavigate();
   const user = useUser();

@@ -80,8 +80,7 @@ export const TeamSnaps = ({ isAdmin, isManaging, teamId, onCalendarClick }: Team
       icon: <MessageSquare className="h-8 w-8" />,
       label: "Diskussionen & Beiträge",
       description: "Teilen Sie Ideen und Diskussionen mit Ihrem Team",
-      gradient: "from-rose-500 to-rose-600",
-      onClick: () => navigate(`/team/${teamId}/discussions`),
+      gradient: "from-blue-500 to-blue-600",
     },
     {
       id: "news",

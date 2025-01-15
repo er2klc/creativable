@@ -25,16 +25,15 @@ const PlatformDetailWrapper = () => {
 };
 
 const PlatformDetailContent = () => {
-  const { platformSlug } = useParams();
+  const { slug } = useParams();
   const user = useUser();
   const [activeUnitId, setActiveUnitId] = useState<string>('');
   const { isCompleted, markAsCompleted } = useLearningProgress();
   const [videoProgressMap, setVideoProgressMap] = useState<Record<string, number>>({});
 
   const { data: platform, isLoading, refetch } = useQuery({
-    queryKey: ['platform', platformSlug],
+    queryKey: ['platform', slug],
     queryFn: async () => {
-      console.log("Fetching platform with slug:", platformSlug);
       const { data, error } = await supabase
         .from('elevate_platforms')
         .select(`
@@ -52,18 +51,13 @@ const PlatformDetailContent = () => {
             )
           )
         `)
-        .eq('slug', platformSlug)
-        .single();
+        .eq('slug', slug)
+        .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching platform:", error);
-        throw error;
-      }
-      
-      console.log("Platform data:", data);
+      if (error) throw error;
       return data;
     },
-    enabled: !!platformSlug && !!user
+    enabled: !!slug && !!user
   });
 
   const sortedSubmodules = platform?.elevate_modules

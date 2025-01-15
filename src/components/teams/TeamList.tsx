@@ -43,7 +43,7 @@ export const TeamList = ({
         .from('profiles')
         .select('is_super_admin')
         .eq('id', user.id)
-        .maybeSingle();
+        .single();
 
       return profile;
     },

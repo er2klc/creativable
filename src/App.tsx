@@ -29,7 +29,7 @@ const App = () => {
             </AppLayout>
           </ProtectedRoute>
         }>
-          {protectedRoutes[0].children.map(route => (
+          {protectedRoutes.map(route => (
             <Route 
               key={route.path} 
               path={route.path} 
