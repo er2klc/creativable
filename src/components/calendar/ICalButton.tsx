@@ -23,8 +23,8 @@ export const ICalButton = () => {
         return;
       }
 
-      // Use the full Supabase function URL
-      const url = `https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/generate-ical`;
+      // Use the full Supabase function URL with auth token
+      const url = `https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/generate-ical?token=${session.access_token}`;
       setICalUrl(url);
       setIsDialogOpen(true);
     } catch (error) {
