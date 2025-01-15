@@ -17,26 +17,28 @@ export const ICalButton = () => {
   const [copied, setCopied] = useState(false);
 
   const generateICalUrl = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Bitte melde dich an, um eine iCal URL zu generieren");
-        return;
-      }
-
-      // Get the base URL for the Edge Function
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-ical`;
-      
-      // Create URL with auth token as query parameter
-      const completeUrl = `${functionUrl}?auth=${session.access_token}`;
-      
-      setICalUrl(completeUrl);
-      setIsDialogOpen(true);
-    } catch (error) {
-      console.error("Error generating iCal URL:", error);
-      toast.error("Fehler beim Generieren der iCal URL");
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error("Bitte melde dich an, um eine iCal URL zu generieren");
+      return;
     }
-  };
+
+    const { data: { publicUrl } } = await supabase.storage.from('public').getPublicUrl('');
+    const baseUrl = publicUrl.split('/storage/')[0];
+    const functionUrl = `${baseUrl}/functions/v1/generate-ical`;
+
+    // Speichere die URL und den Token separat
+    setICalUrl(functionUrl);
+
+    // Öffne den Dialog, um die manuelle Eingabe des Headers zu erklären
+    setIsDialogOpen(true);
+  } catch (error) {
+    console.error("Error generating iCal URL:", error);
+    toast.error("Fehler beim Generieren der iCal URL");
+  }
+};
+
 
   const handleCopyUrl = async () => {
     try {
