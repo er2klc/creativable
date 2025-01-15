@@ -29,29 +29,24 @@ export const ICalButton = () => {
       const baseUrl = publicUrl.split('/storage/')[0];
       const functionUrl = `${baseUrl}/functions/v1/generate-ical`;
 
-      console.log("Making request to:", functionUrl);
-      console.log("With auth token:", session.access_token);
+      console.log("[iCal] Making request to:", functionUrl);
+      console.log("[iCal] With auth token:", session.access_token);
 
-      // Make the request to generate iCal
-      const response = await fetch(functionUrl, {
-        method: 'POST',
+      const { data, error } = await supabase.functions.invoke('generate-ical', {
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error response:", errorText);
-        throw new Error(`Fehler beim Abrufen der iCal-Daten: ${response.statusText}`);
+      if (error) {
+        console.error("[iCal] Error response:", error);
+        throw error;
       }
 
-      const { url } = await response.json();
-      setICalUrl(url);
+      setICalUrl(data.url);
       setIsDialogOpen(true);
     } catch (error) {
-      console.error("Error generating iCal URL:", error);
+      console.error("[iCal] Error generating iCal URL:", error);
       toast.error("Fehler beim Generieren der iCal URL");
     }
   };
@@ -63,7 +58,7 @@ export const ICalButton = () => {
       toast.success("URL wurde in die Zwischenablage kopiert");
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error("Error copying URL:", error);
+      console.error("[iCal] Error copying URL:", error);
       toast.error("Fehler beim Kopieren der URL");
     }
   };

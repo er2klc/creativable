@@ -8,19 +8,28 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    console.log("Starting iCal generation process");
+    console.log("[iCal] Starting iCal generation process");
+    
+    // Log headers for debugging
+    const authHeader = req.headers.get('Authorization');
+    console.log("[iCal] Auth header present:", !!authHeader);
+    
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
     
     // Create a Supabase client with the Auth context of the logged in user
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
-        global: { headers: { Authorization: req.headers.get('Authorization')! } },
+        global: { headers: { Authorization: authHeader } },
       }
     )
 
@@ -30,12 +39,17 @@ serve(async (req) => {
       error: userError,
     } = await supabaseClient.auth.getUser()
 
-    if (userError || !user) {
-      console.error("User authentication error:", userError);
-      throw new Error('Unauthorized')
+    if (userError) {
+      console.error("[iCal] User authentication error:", userError);
+      throw new Error('Unauthorized: Invalid token');
     }
 
-    console.log("Fetching appointments for user:", user.id);
+    if (!user) {
+      console.error("[iCal] No user found in token");
+      throw new Error('Unauthorized: No user found');
+    }
+
+    console.log("[iCal] Fetching appointments for user:", user.id);
 
     // Fetch user's appointments
     const { data: appointments, error: appointmentsError } = await supabaseClient
@@ -46,16 +60,16 @@ serve(async (req) => {
       .order('due_date', { ascending: true })
 
     if (appointmentsError) {
-      console.error("Error fetching appointments:", appointmentsError);
-      throw new Error('Error fetching appointments')
+      console.error("[iCal] Error fetching appointments:", appointmentsError);
+      throw new Error('Error fetching appointments');
     }
 
-    console.log(`Found ${appointments?.length || 0} appointments`);
+    console.log(`[iCal] Found ${appointments?.length || 0} appointments`);
 
     // Format appointments for iCal
     const events = appointments.map((appointment) => {
-      const startDate = new Date(appointment.due_date)
-      const endDate = new Date(startDate.getTime() + 60 * 60 * 1000) // 1 hour duration
+      const startDate = new Date(appointment.due_date);
+      const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hour duration
 
       return {
         start: [
@@ -78,40 +92,40 @@ serve(async (req) => {
         status: appointment.completed ? 'COMPLETED' : 'CONFIRMED',
         busyStatus: 'BUSY'
       }
-    })
+    });
 
-    console.log("Generating iCal content");
+    console.log("[iCal] Generating iCal content");
 
     // Generate iCal content
-    const { error: icsError, value: icsContent } = createEvents(events)
+    const { error: icsError, value: icsContent } = createEvents(events);
 
     if (icsError || !icsContent) {
-      console.error('ICS generation error:', icsError)
-      throw new Error('Error generating iCal feed')
+      console.error('[iCal] ICS generation error:', icsError);
+      throw new Error('Error generating iCal feed');
     }
 
     // Store the iCal file in Supabase Storage
-    const fileName = `${user.id}/calendar.ics`
+    const fileName = `${user.id}/calendar.ics`;
     const { error: uploadError } = await supabaseClient.storage
       .from('calendars')
       .upload(fileName, icsContent, {
         contentType: 'text/calendar',
         upsert: true // Override if exists
-      })
+      });
 
     if (uploadError) {
-      console.error('Upload error:', uploadError)
-      throw new Error('Failed to upload calendar file')
+      console.error('[iCal] Upload error:', uploadError);
+      throw new Error('Failed to upload calendar file');
     }
 
-    console.log("Calendar file uploaded successfully");
+    console.log("[iCal] Calendar file uploaded successfully");
 
     // Get the public URL for the uploaded file
     const { data: { publicUrl } } = supabaseClient.storage
       .from('calendars')
-      .getPublicUrl(fileName)
+      .getPublicUrl(fileName);
 
-    console.log("Generated public URL:", publicUrl);
+    console.log("[iCal] Generated public URL:", publicUrl);
 
     // Return the public URL
     return new Response(
@@ -124,11 +138,14 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Error in generate-ical function:', error)
+    console.error('[iCal] Error in generate-ical function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error instanceof Error ? error.stack : undefined
+      }),
       {
-        status: 500,
+        status: error.message.includes('Unauthorized') ? 401 : 500,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders,
