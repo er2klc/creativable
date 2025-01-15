@@ -1,152 +1,100 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { MessageSquare, ChevronRight } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { MessageSquare, ChevronRight, Megaphone, Lightbulb } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
-import { useNavigate } from "react-router-dom";
 
-interface CategoryOverviewProps {
-  teamId: string;
+interface PostsAndDiscussionsProps {
+  categories: any[];
 }
 
-export function CategoryOverview({ teamId }: CategoryOverviewProps) {
+export function CategoryOverview({ categories }: PostsAndDiscussionsProps) {
   const navigate = useNavigate();
-  
-  const { data: categories = [], isLoading } = useQuery({
-    queryKey: ["team-categories-with-posts", teamId],
-    queryFn: async () => {
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from("team_categories")
-        .select(`
-          *,
-          team_posts (
-            id,
-            title,
-            created_at,
-            created_by,
-            team_post_comments (count)
-          )
-        `)
-        .eq("team_id", teamId)
-        .order("order_index");
 
-      if (categoriesError) throw categoriesError;
-
-      // Fetch display names for post creators in a separate query
-      const postsWithCreators = await Promise.all(
-        categoriesData.map(async (category) => {
-          const postsWithCreatorInfo = await Promise.all(
-            (category.team_posts || []).map(async (post) => {
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("display_name")
-                .eq("id", post.created_by)
-                .single();
-              
-              return {
-                ...post,
-                creator_name: profileData?.display_name
-              };
-            })
-          );
-
-          return {
-            ...category,
-            team_posts: postsWithCreatorInfo
-          };
-        })
-      );
-      
-      return postsWithCreators;
-    },
-  });
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  if (!categories?.length) {
-    return (
-      <div className="text-center text-muted-foreground py-8">
-        Keine Kategorien gefunden
-      </div>
-    );
-  }
+  const getCategoryIcon = (name: string) => {
+    if (name.toLowerCase().includes('ankündigung')) return <Megaphone className="h-8 w-8" />;
+    if (name.toLowerCase().includes('idee')) return <Lightbulb className="h-8 w-8" />;
+    return <MessageSquare className="h-8 w-8" />;
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {categories.map((category) => {
         const topPosts = category.team_posts
           ?.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
           .slice(0, 3) || [];
 
+        const totalComments = topPosts.reduce((acc: number, post: any) => 
+          acc + (post.team_post_comments?.[0]?.count || 0), 0
+        );
+
         return (
-          <Card key={category.id} className="group">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>{category.name}</CardTitle>
-                {category.description && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {category.description}
-                  </p>
-                )}
+          <Card 
+            key={category.id} 
+            className="group hover:shadow-lg transition-all duration-200 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border-0 shadow-md"
+          >
+            <div className="p-6 space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-primary/10 rounded-xl">
+                    {getCategoryIcon(category.name)}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                      {category.name}
+                    </h3>
+                    {category.description && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {category.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {totalComments > 0 && (
+                    <span className="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full">
+                      {totalComments} Kommentare
+                    </span>
+                  )}
+                  <button
+                    onClick={() => navigate(`category/${category.slug}`)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-accent rounded-full"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(`category/${category.slug}`)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent>
+
               {topPosts.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {topPosts.map((post: any) => (
                     <div
                       key={post.id}
-                      className="flex items-start justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
                       onClick={() => navigate(`category/${category.slug}`)}
+                      className="flex items-start justify-between p-3 rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-colors cursor-pointer shadow-sm"
                     >
-                      <div>
-                        <h4 className="font-medium">{post.title}</h4>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium truncate">{post.title}</h4>
                         <div className="text-sm text-muted-foreground mt-1">
                           {formatDistanceToNow(new Date(post.created_at), {
                             addSuffix: true,
                             locale: de,
-                          })}{" "}
-                          von {post.creator_name || "Unbekannt"}
+                          })}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 text-muted-foreground">
+                      <div className="flex items-center gap-1 text-muted-foreground ml-4">
                         <MessageSquare className="h-4 w-4" />
                         <span className="text-sm">{post.team_post_comments?.[0]?.count || 0}</span>
                       </div>
                     </div>
                   ))}
-                  {category.team_posts?.length > 3 && (
-                    <Button
-                      variant="ghost"
-                      className="w-full text-muted-foreground"
-                      onClick={() => navigate(`category/${category.slug}`)}
-                    >
-                      Alle {category.team_posts.length} Beiträge anzeigen
-                    </Button>
-                  )}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground py-4">
-                  Noch keine Beiträge in dieser Kategorie
-                </p>
+                <div className="text-center text-muted-foreground py-8 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                  <p>Noch keine Beiträge in dieser Kategorie</p>
+                </div>
               )}
-            </CardContent>
+            </div>
           </Card>
         );
       })}
