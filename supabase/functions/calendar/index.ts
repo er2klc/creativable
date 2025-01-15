@@ -1,43 +1,44 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { format } from "https://esm.sh/date-fns@2.30.0";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { format } from "https://esm.sh/date-fns@2.30.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
-};
+}
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const url = new URL(req.url);
-    const userId = url.pathname.split('/').pop();
+    const url = new URL(req.url)
+    const userId = url.pathname.split('/').pop()
 
     if (!userId) {
-      throw new Error("User ID is required");
+      throw new Error("User ID is required")
     }
 
-    console.log("[Calendar] Generating calendar for user:", userId);
+    console.log("[Calendar] Generating calendar for user:", userId)
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    );
+    )
 
     // Fetch user's tasks (appointments)
     const { data: tasks, error: tasksError } = await supabaseAdmin
       .from('tasks')
       .select('*, leads(name)')
       .eq('user_id', userId)
-      .not('due_date', 'is', null);
+      .not('due_date', 'is', null)
 
     if (tasksError) {
-      console.error("[Calendar] Error fetching tasks:", tasksError);
-      throw tasksError;
+      console.error("[Calendar] Error fetching tasks:", tasksError)
+      throw tasksError
     }
 
     // Generate iCal content
@@ -47,12 +48,12 @@ serve(async (req) => {
       'PRODID:-//Lovable//Calendar//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
-    ];
+    ]
 
     tasks.forEach((task) => {
-      const dueDate = new Date(task.due_date);
-      const formattedDate = format(dueDate, "yyyyMMdd'T'HHmmss'Z'");
-      const leadName = task.leads?.name || '';
+      const dueDate = new Date(task.due_date)
+      const formattedDate = format(dueDate, "yyyyMMdd'T'HHmmss'Z'")
+      const leadName = task.leads?.name || ''
       
       iCalContent = iCalContent.concat([
         'BEGIN:VEVENT',
@@ -61,10 +62,10 @@ serve(async (req) => {
         `DTSTART:${formattedDate}`,
         `SUMMARY:${task.title}${leadName ? ` mit ${leadName}` : ''}`,
         'END:VEVENT',
-      ]);
-    });
+      ])
+    })
 
-    iCalContent.push('END:VCALENDAR');
+    iCalContent.push('END:VCALENDAR')
 
     return new Response(iCalContent.join('\r\n'), {
       headers: {
@@ -72,10 +73,10 @@ serve(async (req) => {
         'Content-Type': 'text/calendar',
         'Content-Disposition': 'attachment; filename=calendar.ics',
       },
-    });
+    })
 
   } catch (error) {
-    console.error("[Calendar] Error:", error);
+    console.error("[Calendar] Error:", error)
     
     return new Response(
       JSON.stringify({ error: error.message || 'Internal server error' }),
@@ -86,6 +87,6 @@ serve(async (req) => {
         },
         status: 500,
       },
-    );
+    )
   }
-});
+})
