@@ -28,21 +28,15 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '')
     console.log("Extracted token, attempting to create Supabase client");
 
-    // Create a Supabase client with the Auth context of the logged in user
-    const supabaseClient = createClient(
+    // Create a Supabase client with the service role key
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: { headers: { Authorization: authHeader } },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    // Get the user from the request
+    // Get the user from the JWT token
     console.log("Attempting to get user from token");
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser()
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
 
     if (userError || !user) {
       console.error("Auth error:", userError)
@@ -53,7 +47,7 @@ serve(async (req) => {
 
     // Fetch user's appointments
     console.log("Fetching appointments for user");
-    const { data: appointments, error: appointmentsError } = await supabaseClient
+    const { data: appointments, error: appointmentsError } = await supabaseAdmin
       .from('tasks')
       .select('*, leads(name)')
       .eq('user_id', user.id)
@@ -98,7 +92,7 @@ serve(async (req) => {
     const fileName = `calendar-${user.id}.ics`
     console.log("Uploading calendar file:", fileName);
     
-    const { error: uploadError } = await supabaseClient.storage
+    const { error: uploadError } = await supabaseAdmin.storage
       .from('calendars')
       .upload(fileName, icsContent, {
         contentType: 'text/calendar',
@@ -110,7 +104,7 @@ serve(async (req) => {
       throw new Error('Failed to upload calendar file')
     }
 
-    const { data: { publicUrl } } = supabaseClient.storage
+    const { data: { publicUrl } } = supabaseAdmin.storage
       .from('calendars')
       .getPublicUrl(fileName)
 
