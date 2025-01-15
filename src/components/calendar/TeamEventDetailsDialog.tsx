@@ -8,8 +8,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { TeamEvent } from "./types/calendar";
-import { CalendarDays, Clock, FileText, User, Users, Crown, Rocket, Flame } from "lucide-react";
+import { CalendarDays, Clock, FileText, Crown, Rocket, Flame } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TeamEventDetailsDialogProps {
   open: boolean;
@@ -23,6 +25,20 @@ export const TeamEventDetailsDialog = ({
   event,
 }: TeamEventDetailsDialogProps) => {
   if (!event) return null;
+
+  // Fetch creator's display name
+  const { data: creatorProfile } = useQuery({
+    queryKey: ["profile", event.created_by],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", event.created_by)
+        .single();
+      return data;
+    },
+    enabled: !!event.created_by,
+  });
 
   const formatDate = (date: string) => {
     return format(new Date(date), "dd. MMMM yyyy", { locale: de });
@@ -38,32 +54,47 @@ export const TeamEventDetailsDialog = ({
     return <Flame className="h-5 w-5 text-orange-500" />;
   };
 
+  // Function to make URLs in text clickable
+  const renderDescriptionWithLinks = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    
+    return parts.map((part, index) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a 
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <DialogTitle className="text-xl font-bold">Team Termin Details</DialogTitle>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              {getEventTypeIcon()}
+              {event.title}
+            </DialogTitle>
             {event.is_admin_only && (
               <Badge variant="secondary">Nur für Admins</Badge>
             )}
           </div>
           <DialogDescription>
-            Details zum ausgewählten Team Termin
+            Details zum ausgewählten Termin
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 mt-4">
-          <div className="flex items-start gap-2">
-            {getEventTypeIcon()}
-            <div>
-              <p className="font-medium">Termin Typ</p>
-              <p className="text-sm text-muted-foreground">
-                {event.is_90_day_run ? "90-Tage-Run" : 
-                 event.is_admin_only ? "Admin Termin" : "Team Termin"}
-              </p>
-            </div>
-          </div>
-
           <div className="flex items-start gap-2">
             <CalendarDays className="h-5 w-5 text-muted-foreground mt-0.5" />
             <div>
@@ -90,43 +121,25 @@ export const TeamEventDetailsDialog = ({
             </div>
           </div>
 
-          <div className="flex items-start gap-2">
-            <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
-            <div>
-              <p className="font-medium">Titel</p>
-              <p className="text-sm text-muted-foreground">{event.title}</p>
-            </div>
-          </div>
-
           {event.description && (
             <div className="flex items-start gap-2">
               <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
                 <p className="font-medium">Beschreibung</p>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{event.description}</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {renderDescriptionWithLinks(event.description)}
+                </p>
               </div>
             </div>
           )}
 
-          {event.created_by && (
+          {event.created_by && creatorProfile && (
             <div className="flex items-start gap-2">
-              <User className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
                 <p className="font-medium">Erstellt von</p>
-                <p className="text-sm text-muted-foreground">{event.created_by}</p>
-              </div>
-            </div>
-          )}
-
-          {event.recurring_pattern !== 'none' && (
-            <div className="flex items-start gap-2">
-              <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="font-medium">Wiederholung</p>
                 <p className="text-sm text-muted-foreground">
-                  {event.recurring_pattern === 'daily' ? 'Täglich' :
-                   event.recurring_pattern === 'weekly' ? 'Wöchentlich' :
-                   event.recurring_pattern === 'monthly' ? 'Monatlich' : ''}
+                  {creatorProfile.display_name}
                 </p>
               </div>
             </div>
