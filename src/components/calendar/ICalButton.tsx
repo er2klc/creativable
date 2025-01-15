@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
+import { Calendar, Copy, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 export const ICalButton = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [iCalUrl, setICalUrl] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   const generateICalUrl = async () => {
     try {
@@ -32,6 +33,18 @@ export const ICalButton = () => {
     } catch (error) {
       console.error("Error generating iCal URL:", error);
       toast.error("Fehler beim Generieren der iCal URL");
+    }
+  };
+
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(iCalUrl);
+      setCopied(true);
+      toast.success("URL wurde in die Zwischenablage kopiert");
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Error copying URL:", error);
+      toast.error("Fehler beim Kopieren der URL");
     }
   };
 
@@ -62,8 +75,22 @@ export const ICalButton = () => {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="p-4 bg-muted rounded-lg break-all">
-              <code className="text-sm">{iCalUrl}</code>
+            <div className="flex gap-2">
+              <div className="p-4 bg-muted rounded-lg break-all flex-1">
+                <code className="text-sm">{iCalUrl}</code>
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleCopyUrl}
+                className="flex-shrink-0"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
             </div>
 
             <div className="space-y-2">
