@@ -8,14 +8,14 @@ const Tools = () => {
       title: "Signatur-Ersteller",
       description: "Erstelle und passe deine digitale Signatur an. Wähle aus verschiedenen Schriftarten und Stilen.",
       icon: Signature,
-      url: "/signature-generator",
+      url: "/tools/signature-generator",
       gradient: "from-purple-500 to-pink-500"
     },
     {
       title: "Tree-Generator",
       description: "Erstelle eine personalisierte Seite mit all deinen wichtigen Links für Social Media.",
       icon: Link2,
-      url: "/tree-generator",
+      url: "/tools/tree-generator",
       gradient: "from-blue-500 to-cyan-500"
     },
     {
@@ -29,14 +29,14 @@ const Tools = () => {
       title: "Bio Generator",
       description: "Erstelle eine professionelle Instagram-Bio mit KI-Unterstützung.",
       icon: MessageSquareText,
-      url: "/bio-generator",
+      url: "/tools/bio-generator",
       gradient: "from-violet-500 to-purple-500"
     },
     {
       title: "VisionBoard",
       description: "Sammle und organisiere deine Ideen, Zitate und Ziele in einem visuellen Board.",
       icon: Image,
-      url: "/vision-board",
+      url: "/tools/vision-board",
       gradient: "from-orange-500 to-yellow-500"
     }
   ];

@@ -12,6 +12,11 @@ import Calendar from "@/pages/Calendar";
 import Elevate from "@/pages/Elevate";
 import PlatformDetail from "@/pages/PlatformDetail";
 import Tools from "@/pages/Tools";
+import SignatureGenerator from "@/pages/tools/SignatureGenerator";
+import TreeGenerator from "@/pages/tools/TreeGenerator";
+import QrCodeGenerator from "@/pages/tools/QrCodeGenerator";
+import BioGenerator from "@/pages/tools/BioGenerator";
+import VisionBoard from "@/pages/tools/VisionBoard";
 
 const ProtectedLayout = () => {
   const user = useUser();
@@ -74,6 +79,26 @@ export const protectedRoutes = [
       {
         path: "/tools",
         element: <Tools />,
+      },
+      {
+        path: "/tools/signature-generator",
+        element: <SignatureGenerator />,
+      },
+      {
+        path: "/tools/tree-generator",
+        element: <TreeGenerator />,
+      },
+      {
+        path: "/tools/qr-code",
+        element: <QrCodeGenerator />,
+      },
+      {
+        path: "/tools/bio-generator",
+        element: <BioGenerator />,
+      },
+      {
+        path: "/tools/vision-board",
+        element: <VisionBoard />,
       }
     ],
   },
