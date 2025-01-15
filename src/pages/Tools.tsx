@@ -1,43 +1,40 @@
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Link } from "react-router-dom";
-import { Signature, Link2, QrCode, Image, MessageSquareText } from "lucide-react";
+import { 
+  Wand2,
+  Signature,
+  TreePine,
+  FileText,
+  ImageIcon
+} from "lucide-react";
 
 const Tools = () => {
+  const navigate = useNavigate();
+
   const tools = [
     {
-      title: "Signatur-Ersteller",
-      description: "Erstelle und passe deine digitale Signatur an. Wähle aus verschiedenen Schriftarten und Stilen.",
-      icon: Signature,
-      url: "/signature-generator",
-      gradient: "from-purple-500 to-pink-500"
+      title: "Signatur Generator",
+      description: "Erstellen Sie professionelle E-Mail-Signaturen",
+      icon: <Signature className="w-8 h-8" />,
+      path: "/signature-generator"
     },
     {
-      title: "Tree-Generator",
-      description: "Erstelle eine personalisierte Seite mit all deinen wichtigen Links für Social Media.",
-      icon: Link2,
-      url: "/tree-generator",
-      gradient: "from-blue-500 to-cyan-500"
-    },
-    {
-      title: "QR-Code-Generator",
-      description: "Generiere anpassbare QR-Codes für URLs, Texte, Kontakte oder Wi-Fi-Zugänge.",
-      icon: QrCode,
-      url: "/tools/qr-code",
-      gradient: "from-green-500 to-emerald-500"
+      title: "Tree Generator",
+      description: "Erstellen Sie Ihre eigene Link-Landingpage",
+      icon: <TreePine className="w-8 h-8" />,
+      path: "/tree-generator"
     },
     {
       title: "Bio Generator",
-      description: "Erstelle eine professionelle Instagram-Bio mit KI-Unterstützung.",
-      icon: MessageSquareText,
-      url: "/bio-generator",
-      gradient: "from-violet-500 to-purple-500"
+      description: "Generieren Sie optimierte Social Media Bios",
+      icon: <FileText className="w-8 h-8" />,
+      path: "/bio-generator"
     },
     {
-      title: "VisionBoard",
-      description: "Sammle und organisiere deine Ideen, Zitate und Ziele in einem visuellen Board.",
-      icon: Image,
-      url: "/vision-board",
-      gradient: "from-orange-500 to-yellow-500"
+      title: "Vision Board",
+      description: "Visualisieren Sie Ihre Ziele",
+      icon: <ImageIcon className="w-8 h-8" />,
+      path: "/vision-board"
     }
   ];
 
@@ -46,28 +43,29 @@ const Tools = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Tools</h1>
         <p className="text-muted-foreground mt-2">
-          Nutze unsere Tools, um dein Business zu optimieren und professioneller zu gestalten.
+          Nutzen Sie unsere Tools, um Ihre Arbeit zu optimieren
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {tools.map((tool) => (
-          <Link to={tool.url} key={tool.title}>
-            <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-105">
-              <div className={`absolute inset-0 opacity-10 bg-gradient-to-br ${tool.gradient}`} />
-              <div className="relative p-6 space-y-4">
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br shadow-lg ${tool.gradient}`}>
-                  <tool.icon className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">{tool.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {tool.description}
-                  </p>
-                </div>
+          <Card
+            key={tool.path}
+            className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
+            onClick={() => navigate(tool.path)}
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                {tool.icon}
               </div>
-            </Card>
-          </Link>
+              <div>
+                <h3 className="font-semibold text-lg">{tool.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {tool.description}
+                </p>
+              </div>
+            </div>
+          </Card>
         ))}
       </div>
     </div>
