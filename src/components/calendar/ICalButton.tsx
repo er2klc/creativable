@@ -25,9 +25,7 @@ export const ICalButton = () => {
       }
 
       // Get the base URL for the Edge Function
-      const { data: { publicUrl } } = await supabase.storage.from('public').getPublicUrl('');
-      const baseUrl = publicUrl.split('/storage/')[0];
-      const functionUrl = `${baseUrl}/functions/v1/generate-ical`;
+      const functionUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-ical`;
 
       // Create URL with auth token as query parameter
       const completeUrl = `${functionUrl}?auth=${session.access_token}`;

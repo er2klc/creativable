@@ -14,13 +14,12 @@ serve(async (req) => {
   }
 
   try {
-    // Get auth token from header or query parameter
-    const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
+    // Get auth token from query parameter
     const url = new URL(req.url)
-    const queryToken = url.searchParams.get('auth')
-    const authToken = authHeader || queryToken
+    const authToken = url.searchParams.get('auth')
 
     if (!authToken) {
+      console.error('No auth token provided')
       throw new Error('No authorization token provided')
     }
 
@@ -78,7 +77,7 @@ serve(async (req) => {
     return new Response(icsContent, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'text/calendar',
+        'Content-Type': 'text/calendar; charset=utf-8',
         'Content-Disposition': 'attachment; filename="calendar.ics"',
       },
     })
@@ -87,7 +86,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }), 
       { 
-        status: 500, 
+        status: 401, 
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/json' 
