@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 const TeamDiscussions = () => {
   const { teamId } = useParams<{ teamId: string }>();
 
-  const { data: categories, isLoading } = useQuery({
+  const { data: categories, isLoading, isError } = useQuery({
     queryKey: ["team-categories", teamId],
     queryFn: async () => {
       if (!teamId) return [];
@@ -42,6 +42,14 @@ const TeamDiscussions = () => {
     );
   }
 
+  if (isError || !teamId) {
+    return (
+      <Card className="p-6 text-center text-muted-foreground">
+        <p>Ein Fehler ist aufgetreten</p>
+      </Card>
+    );
+  }
+
   return (
     <div className="container py-6 space-y-6">
       <div className="flex flex-col gap-2">
@@ -51,7 +59,7 @@ const TeamDiscussions = () => {
         </p>
       </div>
 
-      <CategoryList teamId={teamId!} />
+      <CategoryList teamId={teamId} />
 
       {categories?.length === 0 ? (
         <Card className="p-6 text-center text-muted-foreground">
@@ -61,7 +69,7 @@ const TeamDiscussions = () => {
           </p>
         </Card>
       ) : (
-        <PostsAndDiscussions categories={categories || []} teamId={teamId!} />
+        <PostsAndDiscussions categories={categories || []} teamId={teamId} />
       )}
     </div>
   );
