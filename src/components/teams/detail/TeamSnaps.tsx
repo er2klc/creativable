@@ -1,4 +1,4 @@
-import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, Users, Settings, Trophy } from "lucide-react";
+import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, Users, Settings, Trophy, BarChart3 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { SnapCard } from "./snap-cards/SnapCard";
 import { HiddenSnapCard } from "./snap-cards/HiddenSnapCard";
@@ -116,7 +116,7 @@ export const TeamSnaps = ({
       label: "Leaderboard",
       description: "Team Rangliste & Aktivitäten",
       gradient: "from-red-500 to-red-600",
-      onClick: () => navigate(`/leaderboard/${teamId}`),
+      onClick: () => onSnapClick("leaderboard"),
     },
   ];
 
@@ -137,18 +137,29 @@ export const TeamSnaps = ({
       gradient: "from-pink-500 to-pink-600",
       onClick: () => onSnapClick("settings"),
     },
+    {
+      id: "analytics",
+      icon: <BarChart3 className="h-8 w-8" />,
+      label: "Analyse",
+      description: "Team Statistiken & Analysen",
+      gradient: "from-indigo-500 to-indigo-600",
+      onClick: () => onSnapClick("analytics"),
+    },
   ] : [];
 
   const allSnaps = [...regularSnaps, ...adminSnaps];
   const visibleSnaps = allSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
   const hiddenSnapsList = allSnaps.filter(snap => hiddenSnaps.includes(snap.id));
 
+  const visibleRegularSnaps = regularSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
+  const visibleAdminSnaps = adminSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
+
   return (
     <div className="space-y-8">
-      {visibleSnaps.length > 0 && (
+      {visibleRegularSnaps.length > 0 && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
-            {visibleSnaps.map((snap) => (
+            {visibleRegularSnaps.map((snap) => (
               <SnapCard
                 key={snap.id}
                 snap={snap}
@@ -161,6 +172,27 @@ export const TeamSnaps = ({
             ))}
           </div>
         </div>
+      )}
+
+      {isAdmin && visibleAdminSnaps.length > 0 && (
+        <>
+          <Separator className="my-6" />
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+              {visibleAdminSnaps.map((snap) => (
+                <SnapCard
+                  key={snap.id}
+                  snap={snap}
+                  isManaging={isManaging}
+                  onHide={hideSnapMutation.mutate}
+                  canHide={true}
+                  onBack={onBack}
+                  showBackButton={activeSnapView === snap.id}
+                />
+              ))}
+            </div>
+          </div>
+        </>
       )}
 
       {isAdmin && hiddenSnapsList.length > 0 && (
