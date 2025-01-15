@@ -5,7 +5,6 @@ import { createEvents } from "https://esm.sh/ics@3.7.2"
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Content-Type': 'text/calendar',
 }
 
 serve(async (req) => {
@@ -15,16 +14,17 @@ serve(async (req) => {
   }
 
   try {
-    // Get the authorization token from either header or query parameter
-    const url = new URL(req.url);
-    const authToken = req.headers.get('authorization')?.replace('Bearer ', '') || 
-                     url.searchParams.get('auth');
+    // Get auth token from header or query parameter
+    const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
+    const url = new URL(req.url)
+    const queryToken = url.searchParams.get('auth')
+    const authToken = authHeader || queryToken
 
     if (!authToken) {
       throw new Error('No authorization token provided')
     }
 
-    console.log('Auth token received:', authToken ? 'Yes' : 'No');
+    console.log('Processing iCal request with auth token')
 
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -74,17 +74,25 @@ serve(async (req) => {
       throw icsError
     }
 
+    // Return the iCal file with proper headers
     return new Response(icsContent, {
       headers: {
         ...corsHeaders,
+        'Content-Type': 'text/calendar',
         'Content-Disposition': 'attachment; filename="calendar.ics"',
       },
     })
   } catch (error) {
     console.error('Error generating iCal feed:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return new Response(
+      JSON.stringify({ error: error.message }), 
+      { 
+        status: 500, 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
+    )
   }
 })
