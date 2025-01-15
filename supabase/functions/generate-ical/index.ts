@@ -91,9 +91,9 @@ serve(async (req) => {
     }
 
     // Store the iCal file in Supabase Storage
-    const fileName = `calendar-${user.id}.ics`;
+    const fileName = `${user.id}/calendar.ics`;
     const { error: uploadError } = await supabase.storage
-      .from('public')
+      .from('calendars')  // Using the new 'calendars' bucket
       .upload(fileName, icsContent, {
         contentType: 'text/calendar',
         upsert: true // Override if exists
@@ -106,7 +106,7 @@ serve(async (req) => {
 
     // Get the public URL for the uploaded file
     const { data: { publicUrl } } = supabase.storage
-      .from('public')
+      .from('calendars')  // Using the new 'calendars' bucket
       .getPublicUrl(fileName);
 
     // Return the public URL
