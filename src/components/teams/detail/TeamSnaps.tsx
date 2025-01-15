@@ -21,7 +21,7 @@ interface TeamSnapsProps {
 export const TeamSnaps = ({ 
   isAdmin, 
   isManaging, 
-  teamId,
+  teamId, 
   onCalendarClick,
   onSnapClick,
   onBack,
@@ -30,6 +30,7 @@ export const TeamSnaps = ({
   const session = useSession();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [selectedMember, setSelectedMember] = useState<string | null>(null);
 
   const { data: hiddenSnaps = [] } = useQuery({
     queryKey: ["team-hidden-snaps", teamId],
@@ -42,7 +43,6 @@ export const TeamSnaps = ({
       if (error) throw error;
       return data.map(snap => snap.snap_id);
     },
-    enabled: !!teamId
   });
 
   const hideSnapMutation = useMutation({
@@ -125,21 +125,23 @@ export const TeamSnaps = ({
 
   return (
     <div className="space-y-8">
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
-          {visibleRegularSnaps.map((snap) => (
-            <SnapCard
-              key={snap.id}
-              snap={snap}
-              isManaging={isManaging}
-              onHide={hideSnapMutation.mutate}
-              canHide={isAdmin}
-              onBack={onBack}
-              showBackButton={activeSnapView === snap.id}
-            />
-          ))}
+      {visibleRegularSnaps.length > 0 && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+            {visibleRegularSnaps.map((snap) => (
+              <SnapCard
+                key={snap.id}
+                snap={snap}
+                isManaging={isManaging}
+                onHide={hideSnapMutation.mutate}
+                canHide={true}
+                onBack={onBack}
+                showBackButton={activeSnapView === snap.id}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {isAdmin && hiddenRegularSnaps.length > 0 && (
         <div className="space-y-4">
