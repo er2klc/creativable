@@ -8,6 +8,7 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -18,7 +19,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
-        global: { headers: { Authorization: req.headers.get('Authorization')! } },
+        global: { 
+          headers: { 
+            Authorization: req.headers.get('Authorization')!,
+          },
+        },
       }
     )
 
@@ -29,18 +34,29 @@ serve(async (req) => {
     } = await supabaseClient.auth.getUser()
 
     if (userError || !user) {
-      throw new Error('Unauthorized')
+      console.error("Auth error:", userError);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { 
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      )
     }
 
     // Fetch user's appointments
     const { data: appointments, error: appointmentsError } = await supabaseClient
       .from('tasks')
-      .select('*')
+      .select('*, leads(name)')
       .eq('user_id', user.id)
       .eq('cancelled', false)
       .order('due_date', { ascending: true })
 
     if (appointmentsError) {
+      console.error("Error fetching appointments:", appointmentsError);
       throw new Error('Error fetching appointments')
     }
 
@@ -63,7 +79,7 @@ serve(async (req) => {
           startDate.getMinutes()
         ],
         title: appointment.title,
-        description: `Meeting with ${appointment.lead_id ? 'Client' : 'Unknown'}`,
+        description: `Meeting with ${appointment.leads?.name || 'Client'}`,
         location: appointment.meeting_type || 'on_site',
         status: appointment.completed ? 'COMPLETED' : 'CONFIRMED',
       }

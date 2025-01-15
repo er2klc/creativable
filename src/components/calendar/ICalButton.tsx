@@ -32,7 +32,6 @@ export const ICalButton = () => {
       console.log("Making request to:", functionUrl);
       console.log("With auth token:", session.access_token);
 
-      // Make the request to generate iCal
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
@@ -47,8 +46,12 @@ export const ICalButton = () => {
         throw new Error(`Fehler beim Abrufen der iCal-Daten: ${response.statusText}`);
       }
 
-      const { url } = await response.json();
-      setICalUrl(url);
+      const responseData = await response.json();
+      if (!responseData.url) {
+        throw new Error("Keine URL in der Antwort gefunden");
+      }
+
+      setICalUrl(responseData.url);
       setIsDialogOpen(true);
     } catch (error) {
       console.error("Error generating iCal URL:", error);
