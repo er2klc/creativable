@@ -6,12 +6,13 @@ import Leads from "@/pages/Leads";
 import Messages from "@/pages/Messages";
 import TeamDetail from "@/pages/TeamDetail";
 import TeamDiscussions from "@/pages/TeamDiscussions";
+import Leaderboard from "@/pages/Leaderboard";
 
 const ProtectedLayout = () => {
   const user = useUser();
 
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/auth" />;
   }
 
   return <Outlet />;
@@ -22,7 +23,7 @@ export const protectedRoutes = [
     element: <ProtectedLayout />,
     children: [
       {
-        path: "/",
+        path: "/dashboard",
         element: <Dashboard />,
       },
       {
@@ -44,6 +45,10 @@ export const protectedRoutes = [
       {
         path: "/team/:teamId/discussions",
         element: <TeamDiscussions />,
+      },
+      {
+        path: "/leaderboard/:teamId",
+        element: <Leaderboard />,
       },
     ],
   },
