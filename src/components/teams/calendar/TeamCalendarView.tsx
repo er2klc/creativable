@@ -31,6 +31,7 @@ export const TeamCalendarView = ({ teamId, isAdmin, onBack }: TeamCalendarViewPr
     isDialogOpen,
     setIsDialogOpen,
     selectedEvent,
+    setSelectedEvent,
     activeId,
     overDate,
     events,
