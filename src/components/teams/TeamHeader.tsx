@@ -64,6 +64,9 @@ export function TeamHeader({ team }: TeamHeaderProps) {
         return [];
       }
 
+      // Add console log to debug the data
+      console.log('Team members data:', teamMembers);
+
       return teamMembers;
     },
     enabled: !!team.id,
