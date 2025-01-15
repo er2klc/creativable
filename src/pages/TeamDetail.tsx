@@ -12,6 +12,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { useState } from "react";
 import { TeamSnaps } from "@/components/teams/detail/TeamSnaps";
 import { TeamCalendarView } from "@/components/teams/calendar/TeamCalendarView";
+import { cn } from "@/lib/utils";
 
 const TeamDetail = () => {
   const { teamSlug } = useParams();
@@ -78,7 +79,10 @@ const TeamDetail = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-background border-b">
+      <div className={cn(
+        "bg-background border-b transition-all duration-300",
+        activeSnapView ? "h-0 overflow-hidden" : "h-auto"
+      )}>
         <div className="container py-4">
           <div className="flex items-center justify-between">
             <TeamHeader team={team} isInSnapView={!!activeSnapView} />
