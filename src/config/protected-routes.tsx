@@ -11,6 +11,7 @@ import TodoList from "@/pages/TodoList";
 import Calendar from "@/pages/Calendar";
 import Elevate from "@/pages/Elevate";
 import PlatformDetail from "@/pages/PlatformDetail";
+import Tools from "@/pages/Tools";
 
 const ProtectedLayout = () => {
   const user = useUser();
@@ -69,6 +70,10 @@ export const protectedRoutes = [
       {
         path: "/elevate/modul/:platformSlug",
         element: <PlatformDetail />,
+      },
+      {
+        path: "/tools",
+        element: <Tools />,
       }
     ],
   },
