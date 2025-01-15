@@ -39,7 +39,7 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
       {members?.map((member) => (
         <div key={member.id} className="flex items-center justify-between p-2 border rounded">
           <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
+            <Avatar className="h-12 w-12">
               <AvatarImage src={member.profiles?.avatar_url} alt={member.profiles?.display_name || 'Avatar'} />
               <AvatarFallback>
                 {member.profiles?.display_name?.substring(0, 2).toUpperCase() || '??'}

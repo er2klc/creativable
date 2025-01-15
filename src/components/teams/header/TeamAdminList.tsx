@@ -11,7 +11,7 @@ export function TeamAdminList({ admins }: TeamAdminListProps) {
       {admins?.filter(admin => ['admin', 'owner'].includes(admin.role)).map((admin) => (
         <div key={admin.id} className="flex items-center justify-between p-2 border rounded">
           <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
+            <Avatar className="h-12 w-12">
               <AvatarImage src={admin.profiles?.avatar_url} alt={admin.profiles?.display_name || 'Avatar'} />
               <AvatarFallback>
                 {admin.profiles?.display_name?.substring(0, 2).toUpperCase() || '??'}
