@@ -57,10 +57,13 @@ export function TeamHeaderTitle({
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           // Track this user's presence
-          await channel.track({
-            user_id: supabase.auth.user()?.id,
-            online_at: new Date().toISOString(),
-          });
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            await channel.track({
+              user_id: session.user.id,
+              online_at: new Date().toISOString(),
+            });
+          }
         }
       });
 
