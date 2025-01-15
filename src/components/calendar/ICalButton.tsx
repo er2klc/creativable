@@ -25,8 +25,8 @@ export const ICalButton = () => {
       }
 
       // Get the base URL for the Edge Function
-      const functionUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-ical`;
-
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-ical`;
+      
       // Create URL with auth token as query parameter
       const completeUrl = `${functionUrl}?auth=${session.access_token}`;
       
