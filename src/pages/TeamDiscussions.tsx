@@ -6,11 +6,13 @@ import { PostsAndDiscussions } from "@/components/teams/posts/PostsAndDiscussion
 import { Card } from "@/components/ui/card";
 
 const TeamDiscussions = () => {
-  const { teamId } = useParams();
+  const { teamId } = useParams<{ teamId: string }>();
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ["team-categories", teamId],
     queryFn: async () => {
+      if (!teamId) return [];
+      
       const { data, error } = await supabase
         .from("team_categories")
         .select(`

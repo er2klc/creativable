@@ -1,16 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { TeamCardImage } from "./TeamCardImage";
 import { TeamCardContent } from "./TeamCardContent";
 import { TeamCardActions } from "./TeamCardActions";
 import { TeamOrderButtons } from "./TeamOrderButtons";
 import { toast } from "sonner";
+import { type Tables } from "@/integrations/supabase/types";
 
-export interface TeamWithStats extends Team {
-  _count?: {
-    members: number;
+export interface TeamWithStats extends Tables<"teams"> {
+  stats?: {
+    totalMembers: number;
+    admins: number;
   };
 }
 
@@ -52,15 +53,17 @@ export const TeamCard = ({
         </div>
         
         <TeamCardActions 
-          team={team}
-          isTeamOwner={isTeamOwner}
-          onDelete={onDelete}
-          onLeave={onLeave}
+          teamId={team.id}
+          isOwner={isTeamOwner}
+          joinCode={team.join_code}
+          onDelete={() => onDelete(team.id)}
+          onLeave={() => onLeave(team.id)}
           onCopyJoinCode={onCopyJoinCode}
+          team={team}
         />
 
         {isTeamOwner && (
-          <TeamOrderButtons team={team} />
+          <TeamOrderButtons teamId={team.id} orderIndex={team.order_index} />
         )}
       </CardContent>
     </Card>
