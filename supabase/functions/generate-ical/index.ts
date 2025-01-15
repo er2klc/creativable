@@ -40,8 +40,13 @@ serve(async (req) => {
       throw new Error("Unauthorized: Invalid token");
     }
 
-    // Generate a unique URL for the user's calendar
-    const calendarUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/calendar/${user.id}`;
+    // Get request body to check if this is for a team calendar
+    const { teamId } = await req.json();
+    
+    // Generate the appropriate URL based on whether this is a team calendar or personal calendar
+    const calendarUrl = teamId
+      ? `${Deno.env.get('SUPABASE_URL')}/functions/v1/team-calendar/${teamId}/${user.id}`
+      : `${Deno.env.get('SUPABASE_URL')}/functions/v1/calendar/${user.id}`;
     
     console.log("[iCal] Successfully generated calendar URL");
 

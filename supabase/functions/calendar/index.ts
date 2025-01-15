@@ -22,7 +22,7 @@ serve(async (req) => {
       throw new Error("User ID is required")
     }
 
-    console.log("[Calendar] Generating calendar for user:", userId)
+    console.log("[Personal Calendar] Generating calendar for user:", userId)
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -37,7 +37,7 @@ serve(async (req) => {
       .not('due_date', 'is', null)
 
     if (tasksError) {
-      console.error("[Calendar] Error fetching tasks:", tasksError)
+      console.error("[Personal Calendar] Error fetching tasks:", tasksError)
       throw tasksError
     }
 
@@ -45,7 +45,7 @@ serve(async (req) => {
     let iCalContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Lovable//Calendar//EN',
+      'PRODID:-//Lovable//Personal Calendar//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
     ]
@@ -71,12 +71,12 @@ serve(async (req) => {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/calendar',
-        'Content-Disposition': 'attachment; filename=calendar.ics',
+        'Content-Disposition': 'attachment; filename=personal-calendar.ics',
       },
     })
 
   } catch (error) {
-    console.error("[Calendar] Error:", error)
+    console.error("[Personal Calendar] Error:", error)
     
     return new Response(
       JSON.stringify({ error: error.message || 'Internal server error' }),

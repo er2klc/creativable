@@ -12,7 +12,11 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 
-export const ICalButton = () => {
+interface ICalButtonProps {
+  teamId?: string;
+}
+
+export const ICalButton = ({ teamId }: ICalButtonProps) => {
   const session = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [calendarUrl, setCalendarUrl] = useState<string | null>(null);
@@ -28,6 +32,9 @@ export const ICalButton = () => {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
+        body: {
+          teamId: teamId
+        }
       });
 
       if (error) {
