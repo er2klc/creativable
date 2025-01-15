@@ -8,18 +8,15 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Create a Supabase client with the Auth context of the logged in user
     const authHeader = req.headers.get('Authorization');
-    
-    if (!authHeader) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
-        JSON.stringify({ error: "No authorization header" }),
+        JSON.stringify({ error: "Invalid authorization header" }),
         { 
           status: 401,
           headers: {
@@ -30,13 +27,14 @@ serve(async (req) => {
       )
     }
 
+    // Create a Supabase client with the Auth context of the logged in user
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: { 
           headers: { 
-            Authorization: authHeader,
+            Authorization: authHeader
           },
         },
       }
@@ -99,7 +97,13 @@ serve(async (req) => {
           startDate.getHours(),
           startDate.getMinutes()
         ],
-        duration: { hours: 1 },
+        end: [
+          startDate.getFullYear(),
+          startDate.getMonth() + 1,
+          startDate.getDate(),
+          startDate.getHours() + 1,
+          startDate.getMinutes()
+        ],
         title: appointment.title,
         description: `Meeting with ${appointment.leads?.name || 'Client'}`,
         location: appointment.meeting_type || 'on_site',
