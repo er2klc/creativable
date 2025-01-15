@@ -23,7 +23,8 @@ export const ICalButton = () => {
         return;
       }
 
-      const url = `${supabase.functions.url}/generate-ical?token=${session.access_token}`;
+      const functionUrl = new URL('generate-ical', supabase.functions.url).toString();
+      const url = `${functionUrl}?token=${session.access_token}`;
       setICalUrl(url);
       setIsDialogOpen(true);
     } catch (error) {
