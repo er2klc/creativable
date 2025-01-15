@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
-import { X } from "lucide-react";
+import { X, ChevronLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface SnapCardProps {
   snap: {
@@ -16,11 +17,21 @@ interface SnapCardProps {
   isAdmin?: boolean;
   canHide?: boolean;
   onHide?: (id: string) => void;
+  onBack?: () => void;
+  showBackButton?: boolean;
 }
 
-export const SnapCard = ({ snap, isManaging, isAdmin, canHide = true, onHide }: SnapCardProps) => {
+export const SnapCard = ({ 
+  snap, 
+  isManaging, 
+  isAdmin, 
+  canHide = true, 
+  onHide,
+  onBack,
+  showBackButton = false
+}: SnapCardProps) => {
   if (snap.component) {
-    return null; // Custom components handle their own rendering
+    return null;
   }
 
   const handleClick = (e: React.MouseEvent) => {
@@ -38,6 +49,21 @@ export const SnapCard = ({ snap, isManaging, isAdmin, canHide = true, onHide }: 
       }`}
       onClick={handleClick}
     >
+      {showBackButton && onBack && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onBack();
+          }}
+          className="absolute top-2 left-2 z-10"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Zurück
+        </Button>
+      )}
+      
       {isAdmin && (
         <Badge 
           variant="secondary" 
@@ -46,6 +72,7 @@ export const SnapCard = ({ snap, isManaging, isAdmin, canHide = true, onHide }: 
           Admin
         </Badge>
       )}
+      
       {isManaging && canHide && onHide && (
         <button
           onClick={(e) => {
@@ -57,6 +84,7 @@ export const SnapCard = ({ snap, isManaging, isAdmin, canHide = true, onHide }: 
           <X className="h-4 w-4 text-muted-foreground" />
         </button>
       )}
+      
       <div className={`absolute inset-0 opacity-10 bg-gradient-to-br ${snap.gradient}`} />
       <div className="relative p-6 space-y-4">
         <div className={`w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br shadow-lg ${snap.gradient}`}>

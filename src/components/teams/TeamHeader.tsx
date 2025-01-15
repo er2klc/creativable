@@ -4,6 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { TeamHeaderTitle } from "./header/TeamHeaderTitle";
 import { TeamActions } from "./header/TeamActions";
+import { useState, useEffect } from "react";
+import { ChevronUp, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface TeamHeaderProps {
   team: {
@@ -15,6 +19,7 @@ interface TeamHeaderProps {
 }
 
 export function TeamHeader({ team }: TeamHeaderProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const user = useUser();
 
   const { data: memberRole } = useQuery({
@@ -82,9 +87,15 @@ export function TeamHeader({ team }: TeamHeaderProps) {
   const adminsCount = adminMembers.length;
 
   return (
-    <div className="bg-background border-b">
-      <div className="container py-4">
-        <div className="flex items-center justify-between">
+    <div className={cn(
+      "bg-background border-b transition-all duration-300 ease-in-out",
+      isCollapsed ? "h-16" : "h-auto"
+    )}>
+      <div className="container py-4 relative">
+        <div className={cn(
+          "flex items-center justify-between transition-all duration-300",
+          isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
+        )}>
           <TeamHeaderTitle 
             team={team}
             isAdmin={isAdmin}
@@ -100,7 +111,25 @@ export function TeamHeader({ team }: TeamHeaderProps) {
             members={members}
           />
         </div>
-        <Separator className="my-4" />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={cn(
+            "absolute right-4 transition-all duration-300",
+            isCollapsed ? "bottom-2" : "-bottom-4"
+          )}
+        >
+          {isCollapsed ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronUp className="h-4 w-4" />
+          )}
+        </Button>
+        <Separator className={cn(
+          "my-4 transition-opacity duration-300",
+          isCollapsed ? "opacity-0" : "opacity-100"
+        )} />
       </div>
     </div>
   );
