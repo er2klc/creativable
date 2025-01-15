@@ -6,7 +6,10 @@ import Leads from "@/pages/Leads";
 import Messages from "@/pages/Messages";
 import TeamDetail from "@/pages/TeamDetail";
 import TeamDiscussions from "@/pages/TeamDiscussions";
-import Leaderboard from "@/pages/Leaderboard";
+import Unity from "@/pages/Unity";
+import TodoList from "@/pages/TodoList";
+import Calendar from "@/pages/Calendar";
+import Elevate from "@/pages/Elevate";
 
 const ProtectedLayout = () => {
   const user = useUser();
@@ -47,9 +50,21 @@ export const protectedRoutes = [
         element: <TeamDiscussions />,
       },
       {
-        path: "/leaderboard/:teamId",
-        element: <Leaderboard />,
+        path: "/unity",
+        element: <Unity />,
       },
+      {
+        path: "/todo",
+        element: <TodoList />,
+      },
+      {
+        path: "/calendar",
+        element: <Calendar />,
+      },
+      {
+        path: "/elevate",
+        element: <Elevate />,
+      }
     ],
   },
 ] as const;
