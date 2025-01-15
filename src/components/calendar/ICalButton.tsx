@@ -28,10 +28,23 @@ export const ICalButton = () => {
     const baseUrl = publicUrl.split('/storage/')[0];
     const functionUrl = `${baseUrl}/functions/v1/generate-ical`;
 
-    // Speichere die URL und den Token separat
-    setICalUrl(functionUrl);
+    // Rufe die iCal-Generierungsfunktion auf
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
 
-    // Öffne den Dialog, um die manuelle Eingabe des Headers zu erklären
+    if (!response.ok) {
+      throw new Error(`Fehler beim Abrufen der iCal-Daten: ${response.statusText}`);
+    }
+
+    const iCalData = await response.text(); // iCal-Inhalt als Text abrufen
+    const blob = new Blob([iCalData], { type: 'text/calendar' });
+    const iCalUrl = URL.createObjectURL(blob);
+
+    setICalUrl(iCalUrl);
     setIsDialogOpen(true);
   } catch (error) {
     console.error("Error generating iCal URL:", error);
