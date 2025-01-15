@@ -1,88 +1,85 @@
+import { Navigate, Outlet } from "react-router-dom";
+import { useUser } from "@supabase/auth-helpers-react";
 import Dashboard from "@/pages/Dashboard";
-import Leads from "@/pages/Leads";
-import Messages from "@/pages/Messages";
-import Calendar from "@/pages/Calendar";
 import Settings from "@/pages/Settings";
-import Tools from "@/pages/Tools";
-import VisionBoard from "@/pages/VisionBoard";
-import BioGenerator from "@/pages/BioGenerator";
-import TreeGenerator from "@/pages/TreeGenerator";
-import TodoList from "@/pages/TodoList";
-import Unity from "@/pages/Unity";
-import Elevate from "@/pages/Elevate";
+import Leads from "@/pages/Leads";
+import LeadDetail from "@/pages/LeadDetail";
+import Messages from "@/pages/Messages";
+import Tasks from "@/pages/Tasks";
+import Keywords from "@/pages/Keywords";
+import Documents from "@/pages/Documents";
+import Templates from "@/pages/Templates";
+import Teams from "@/pages/Teams";
 import TeamDetail from "@/pages/TeamDetail";
-import PlatformDetail from "@/pages/PlatformDetail";
-import SignatureGenerator from "@/pages/SignatureGenerator";
-import LeaderBoard from "@/pages/LeaderBoard";
 import TeamDiscussions from "@/pages/TeamDiscussions";
+import Leaderboard from "@/pages/Leaderboard";
+
+const ProtectedLayout = () => {
+  const user = useUser();
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  return <Outlet />;
+};
 
 export const protectedRoutes = [
   {
-    path: "/dashboard",
-    element: <Dashboard />,
+    element: <ProtectedLayout />,
+    children: [
+      {
+        path: "/",
+        element: <Dashboard />,
+      },
+      {
+        path: "/settings",
+        element: <Settings />,
+      },
+      {
+        path: "/leads",
+        element: <Leads />,
+      },
+      {
+        path: "/leads/:id",
+        element: <LeadDetail />,
+      },
+      {
+        path: "/messages",
+        element: <Messages />,
+      },
+      {
+        path: "/tasks",
+        element: <Tasks />,
+      },
+      {
+        path: "/keywords",
+        element: <Keywords />,
+      },
+      {
+        path: "/documents",
+        element: <Documents />,
+      },
+      {
+        path: "/templates",
+        element: <Templates />,
+      },
+      {
+        path: "/teams",
+        element: <Teams />,
+      },
+      {
+        path: "/team/:teamSlug",
+        element: <TeamDetail />,
+      },
+      {
+        path: "/team/:teamId/discussions",
+        element: <TeamDiscussions />,
+      },
+      {
+        path: "/leaderboard/:teamId",
+        element: <Leaderboard />,
+      },
+    ],
   },
-  {
-    path: "/leads",
-    element: <Leads />,
-  },
-  {
-    path: "/messages",
-    element: <Messages />,
-  },
-  {
-    path: "/calendar",
-    element: <Calendar />,
-  },
-  {
-    path: "/settings",
-    element: <Settings />,
-  },
-  {
-    path: "/tools",
-    element: <Tools />,
-  },
-  {
-    path: "/signature-generator",
-    element: <SignatureGenerator />,
-  },
-  {
-    path: "/bio-generator",
-    element: <BioGenerator />,
-  },
-  {
-    path: "/tree-generator",
-    element: <TreeGenerator />,
-  },
-  {
-    path: "/todo",
-    element: <TodoList />,
-  },
-  {
-    path: "/vision-board",
-    element: <VisionBoard />,
-  },
-  {
-    path: "/unity",
-    element: <Unity />,
-  },
-  {
-    path: "/unity/team/:teamSlug",
-    element: <TeamDetail />,
-  },
-  {
-    path: "/elevate",
-    element: <Elevate />,
-  },
-  {
-    path: "/elevate/modul/:slug",
-    element: <PlatformDetail />,
-  },
-  {
-    path: "/leaderboard/:teamId",
-    element: <LeaderBoard />,
-  },
-  {
-    path: "/team/:teamId/discussions",
-    element: <TeamDiscussions />,
-  }
-];
+] as const;
