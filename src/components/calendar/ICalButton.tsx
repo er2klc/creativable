@@ -15,22 +15,20 @@ export const ICalButton = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [iCalUrl, setICalUrl] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const generateICalUrl = async () => {
     try {
+      setIsLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
+      
       if (!session) {
         toast.error("Bitte melde dich an, um eine iCal URL zu generieren");
         return;
       }
 
-      const { data: { publicUrl } } = await supabase.storage.from('public').getPublicUrl('');
-      const baseUrl = publicUrl.split('/storage/')[0];
-      const functionUrl = `${baseUrl}/functions/v1/generate-ical`;
-
-      console.log("Making request to:", functionUrl);
-      console.log("With auth token:", session.access_token);
-
+      console.log("Making request with auth token:", session.access_token);
+      
       const { data, error } = await supabase.functions.invoke('generate-ical', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -51,6 +49,8 @@ export const ICalButton = () => {
     } catch (error) {
       console.error("Error generating iCal URL:", error);
       toast.error("Fehler beim Generieren der iCal URL");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,9 +73,10 @@ export const ICalButton = () => {
         size="sm"
         className="gap-2"
         onClick={generateICalUrl}
+        disabled={isLoading}
       >
         <Calendar className="h-4 w-4" />
-        Mit Handy synchronisieren
+        {isLoading ? "Wird generiert..." : "Mit Handy synchronisieren"}
       </Button>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
