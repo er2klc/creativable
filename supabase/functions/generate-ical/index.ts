@@ -1,8 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
 
-console.log("Loading iCal function...");
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,7 +15,6 @@ serve(async (req) => {
   try {
     console.log("[iCal] Starting iCal generation process");
     
-    // Get auth header and validate
     const authHeader = req.headers.get('Authorization');
     console.log("[iCal] Auth header present:", !!authHeader);
     
@@ -20,7 +22,6 @@ serve(async (req) => {
       throw new Error("Unauthorized: No Authorization header provided");
     }
 
-    // Create a Supabase client with the Auth context of the logged in user
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -29,7 +30,6 @@ serve(async (req) => {
       }
     );
 
-    // Get the user from the auth header
     const {
       data: { user },
       error: userError,
