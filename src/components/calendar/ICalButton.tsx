@@ -47,11 +47,8 @@ export const ICalButton = () => {
         throw new Error(`Fehler beim Abrufen der iCal-Daten: ${response.statusText}`);
       }
 
-      const iCalData = await response.text();
-      const blob = new Blob([iCalData], { type: 'text/calendar' });
-      const iCalUrl = URL.createObjectURL(blob);
-
-      setICalUrl(iCalUrl);
+      const { url } = await response.json();
+      setICalUrl(url);
       setIsDialogOpen(true);
     } catch (error) {
       console.error("Error generating iCal URL:", error);
@@ -59,107 +56,74 @@ export const ICalButton = () => {
     }
   };
 
-  // ... keep existing code (handleCopyUrl and render methods)
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(iCalUrl);
+      setCopied(true);
+      toast.success("URL wurde in die Zwischenablage kopiert");
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Error copying URL:", error);
+      toast.error("Fehler beim Kopieren der URL");
+    }
+  };
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        className="gap-2"
+        onClick={generateICalUrl}
+      >
+        <Calendar className="h-4 w-4" />
+        Mit Handy synchronisieren
+      </Button>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Kalender mit deinem Gerät synchronisieren</DialogTitle>
+            <DialogDescription>
+              Nutze diese URL, um deinen persönlichen Kalender mit deinem Gerät zu synchronisieren. 
+              Der Kalender wird automatisch aktualisiert, wenn du Termine hinzufügst oder änderst.
+              
+              Bitte beachte: Diese URL enthält nur deine persönlichen Termine. 
+              Team-Termine müssen separat über den Team-Kalender synchronisiert werden, 
+              um eine bessere Übersicht auf deinem Gerät zu gewährleisten.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <div className="p-4 bg-muted rounded-lg break-all flex-1">
+                <code className="text-sm">{iCalUrl}</code>
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleCopyUrl}
+                className="flex-shrink-0"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="font-semibold">Anleitung:</h3>
+              <div className="space-y-1 text-sm">
+                <p><strong>iPhone:</strong> Öffne Einstellungen → Kalender → Accounts → Account hinzufügen → Andere → Kalender-Abo hinzufügen → füge die URL ein</p>
+                <p><strong>Android:</strong> Öffne Google Kalender → Einstellungen → Kalender hinzufügen → Per URL → füge die URL ein</p>
+                <p><strong>Outlook:</strong> Einstellungen → Kalender → Freigegebene Kalender → Aus dem Web abonnieren → füge die URL ein</p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 };
-Now, let's update the Edge Function to properly handle the authorization:
-
-supabase/functions/generate-ical/index.ts
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
-import { createEvents } from "https://esm.sh/ics@3.7.2"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Content-Type': 'text/calendar',
-}
-
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
-  }
-
-  try {
-    console.log("Received request headers:", Object.fromEntries(req.headers.entries()));
-    
-    // Get auth token from header
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      console.error("No authorization header found");
-      throw new Error('No authorization token provided');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    console.log("Extracted token:", token ? "Token present" : "No token");
-
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Verify the token and get the user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      console.error("Auth error:", authError);
-      throw new Error('Invalid token');
-    }
-
-    console.log("Fetching appointments for user:", user.id);
-
-    // Fetch user's appointments
-    const { data: appointments, error: fetchError } = await supabase
-      .from('tasks')
-      .select('*, leads(name)')
-      .eq('user_id', user.id)
-      .eq('cancelled', false)
-      .order('due_date', { ascending: true });
-
-    if (fetchError) {
-      console.error("Fetch error:", fetchError);
-      throw fetchError;
-    }
-
-    console.log("Found appointments:", appointments?.length);
-
-    // Convert appointments to iCal events
-    const events = appointments.map((appointment) => ({
-      start: new Date(appointment.due_date),
-      end: appointment.end_date ? new Date(appointment.end_date) : new Date(appointment.due_date),
-      title: appointment.title,
-      description: `Meeting with ${appointment.leads?.name || 'Unknown'}`,
-      location: appointment.meeting_type || '',
-      status: appointment.completed ? 'COMPLETED' : 'CONFIRMED',
-    }));
-
-    // Generate iCal file
-    const { error: icsError, value: icsContent } = createEvents(events);
-
-    if (icsError) {
-      console.error("ICS error:", icsError);
-      throw icsError;
-    }
-
-    // Return the iCal file with proper headers
-    return new Response(icsContent, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/calendar; charset=utf-8',
-        'Content-Disposition': 'attachment; filename="calendar.ics"',
-      },
-    });
-  } catch (error) {
-    console.error("Error generating iCal feed:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }), 
-      { 
-        status: 401, 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
-    );
-  }
-})
