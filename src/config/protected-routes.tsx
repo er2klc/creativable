@@ -12,11 +12,11 @@ import Calendar from "@/pages/Calendar";
 import Elevate from "@/pages/Elevate";
 import PlatformDetail from "@/pages/PlatformDetail";
 import Tools from "@/pages/Tools";
-import SignatureGenerator from "@/pages/tools/SignatureGenerator";
-import TreeGenerator from "@/pages/tools/TreeGenerator";
+import SignatureGenerator from "@/pages/SignatureGenerator";
+import TreeGenerator from "@/pages/TreeGenerator";
 import QrCodeGenerator from "@/pages/tools/QrCodeGenerator";
-import BioGenerator from "@/pages/tools/BioGenerator";
-import VisionBoard from "@/pages/tools/VisionBoard";
+import BioGenerator from "@/pages/BioGenerator";
+import VisionBoard from "@/pages/VisionBoard";
 
 const ProtectedLayout = () => {
   const user = useUser();
