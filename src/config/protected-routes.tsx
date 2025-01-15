@@ -13,6 +13,7 @@ import Elevate from "@/pages/Elevate";
 import TeamDetail from "@/pages/TeamDetail";
 import PlatformDetail from "@/pages/PlatformDetail";
 import SignatureGenerator from "@/pages/SignatureGenerator";
+import LeaderBoard from "@/pages/LeaderBoard";
 
 export const protectedRoutes = [
   {
@@ -74,5 +75,9 @@ export const protectedRoutes = [
   {
     path: "/elevate/modul/:slug",
     element: <PlatformDetail />,
+  },
+  {
+    path: "/leaderboard/:teamId",
+    element: <LeaderBoard />,
   }
 ];
