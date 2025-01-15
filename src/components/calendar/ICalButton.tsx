@@ -23,9 +23,8 @@ export const ICalButton = () => {
         return;
       }
 
-      // Ensure we're using HTTPS
-      const baseUrl = window.location.origin.replace('http://', 'https://');
-      const url = `${baseUrl}/functions/v1/generate-ical`;
+      // Use the full Supabase function URL
+      const url = `https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/generate-ical`;
       setICalUrl(url);
       setIsDialogOpen(true);
     } catch (error) {
