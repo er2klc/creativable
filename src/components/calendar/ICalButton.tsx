@@ -19,16 +19,18 @@ export const ICalButton = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Please sign in to generate an iCal URL");
+        toast.error("Bitte melde dich an, um eine iCal URL zu generieren");
         return;
       }
 
-      const url = `${window.location.origin}/functions/v1/generate-ical`;
+      // Ensure we're using HTTPS
+      const baseUrl = window.location.origin.replace('http://', 'https://');
+      const url = `${baseUrl}/functions/v1/generate-ical`;
       setICalUrl(url);
       setIsDialogOpen(true);
     } catch (error) {
       console.error("Error generating iCal URL:", error);
-      toast.error("Failed to generate iCal URL");
+      toast.error("Fehler beim Generieren der iCal URL");
     }
   };
 
@@ -41,15 +43,20 @@ export const ICalButton = () => {
         onClick={generateICalUrl}
       >
         <Calendar className="h-4 w-4" />
-        Sync with Phone
+        Mit Handy synchronisieren
       </Button>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Sync Calendar with Your Device</DialogTitle>
+            <DialogTitle>Kalender mit deinem Gerät synchronisieren</DialogTitle>
             <DialogDescription>
-              Use this URL to sync your calendar with your device. The calendar will automatically update when you add or modify appointments.
+              Nutze diese URL, um deinen persönlichen Kalender mit deinem Gerät zu synchronisieren. 
+              Der Kalender wird automatisch aktualisiert, wenn du Termine hinzufügst oder änderst.
+              
+              Bitte beachte: Diese URL enthält nur deine persönlichen Termine. 
+              Team-Termine müssen separat über den Team-Kalender synchronisiert werden, 
+              um eine bessere Übersicht auf deinem Gerät zu gewährleisten.
             </DialogDescription>
           </DialogHeader>
 
@@ -59,11 +66,11 @@ export const ICalButton = () => {
             </div>
 
             <div className="space-y-2">
-              <h3 className="font-semibold">Instructions:</h3>
+              <h3 className="font-semibold">Anleitung:</h3>
               <div className="space-y-1 text-sm">
-                <p><strong>iPhone:</strong> Go to Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar → paste the URL</p>
-                <p><strong>Android:</strong> Open Google Calendar → Settings → Add calendar → From URL → paste the URL</p>
-                <p><strong>Outlook:</strong> Settings → Calendar → Shared calendars → Subscribe from web → paste the URL</p>
+                <p><strong>iPhone:</strong> Öffne Einstellungen → Kalender → Accounts → Account hinzufügen → Andere → Kalender-Abo hinzufügen → füge die URL ein</p>
+                <p><strong>Android:</strong> Öffne Google Kalender → Einstellungen → Kalender hinzufügen → Per URL → füge die URL ein</p>
+                <p><strong>Outlook:</strong> Einstellungen → Kalender → Freigegebene Kalender → Aus dem Web abonnieren → füge die URL ein</p>
               </div>
             </div>
           </div>
