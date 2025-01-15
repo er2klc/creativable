@@ -6,6 +6,8 @@ import { NewTeamEventDialog } from "./NewTeamEventDialog";
 import { CalendarHeader } from "@/components/calendar/CalendarHeader";
 import { CalendarGrid } from "@/components/calendar/CalendarGrid";
 import { useTeamCalendar } from "./hooks/useTeamCalendar";
+import { TeamEventDetailsDialog } from "@/components/calendar/TeamEventDetailsDialog";
+import { TeamEvent } from "@/components/calendar/types/calendar";
 
 interface TeamCalendarViewProps {
   teamId: string;
@@ -38,21 +40,31 @@ export const TeamCalendarView = ({ teamId, isAdmin, onBack }: TeamCalendarViewPr
     handleDragOver,
     handleDragEnd,
     disableEventInstance,
+    isDetailsDialogOpen,
+    setIsDetailsDialogOpen,
   } = useTeamCalendar(teamId, isAdmin);
 
   const getDayEvents = (date: Date) => {
-  return events?.filter((event) => {
-    const eventStart = new Date(event.start_time);
-    const eventEnd = event.end_date ? new Date(event.end_date) : eventStart;
+    return events?.filter((event) => {
+      const eventStart = new Date(event.start_time);
+      const eventEnd = event.end_date ? new Date(event.end_date) : eventStart;
 
-    // Prüfen, ob das aktuelle Datum im Zeitraum des Events liegt
-    return (
-      date >= new Date(eventStart.setHours(0, 0, 0, 0)) &&
-      date <= new Date(eventEnd.setHours(23, 59, 59, 999))
-    );
-  });
-};
+      return (
+        date >= new Date(eventStart.setHours(0, 0, 0, 0)) &&
+        date <= new Date(eventEnd.setHours(23, 59, 59, 999))
+      );
+    });
+  };
 
+  const handleAppointmentClick = (e: React.MouseEvent, appointment: TeamEvent) => {
+    e.stopPropagation();
+    if (isAdmin) {
+      handleEventClick(e, appointment);
+    } else {
+      setIsDetailsDialogOpen(true);
+      setSelectedEvent(appointment);
+    }
+  };
 
   const draggedEvent = activeId ? events?.find(event => event.id === activeId) : null;
 
@@ -88,10 +100,11 @@ export const TeamCalendarView = ({ teamId, isAdmin, onBack }: TeamCalendarViewPr
           currentDate={currentDate}
           getDayAppointments={getDayEvents}
           onDateClick={handleDateClick}
-          onAppointmentClick={handleEventClick}
+          onAppointmentClick={handleAppointmentClick}
           activeId={activeId}
           overDate={overDate}
           draggedAppointment={draggedEvent}
+          isAdmin={isAdmin}
         />
 
         <NewTeamEventDialog
@@ -110,6 +123,12 @@ export const TeamCalendarView = ({ teamId, isAdmin, onBack }: TeamCalendarViewPr
               ? (date: Date) => disableEventInstance(selectedEvent.id, date)
               : undefined
           }
+        />
+
+        <TeamEventDetailsDialog
+          open={isDetailsDialogOpen}
+          onOpenChange={setIsDetailsDialogOpen}
+          event={selectedEvent}
         />
       </div>
     </DndContext>

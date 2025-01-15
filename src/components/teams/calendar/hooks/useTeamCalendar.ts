@@ -9,6 +9,7 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overDate, setOverDate] = useState<string | null>(null);
@@ -179,6 +180,7 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
     isDialogOpen,
     setIsDialogOpen,
     selectedEvent,
+    setSelectedEvent,
     activeId,
     overDate,
     events,
@@ -188,5 +190,7 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
     handleDragOver,
     handleDragEnd,
     disableEventInstance,
+    isDetailsDialogOpen,
+    setIsDetailsDialogOpen,
   };
 };
