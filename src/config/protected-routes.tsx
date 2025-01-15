@@ -8,15 +8,9 @@ import Tools from "@/pages/Tools";
 import Support from "@/pages/Support";
 import Unity from "@/pages/Unity";
 import TeamDetail from "@/pages/TeamDetail";
-import TeamDiscussions from "@/pages/TeamDiscussions";
 import Leaderboard from "@/pages/LeaderBoard";
 import Elevate from "@/pages/Elevate";
 import PlatformDetail from "@/pages/PlatformDetail";
-import VisionBoard from "@/pages/tools/VisionBoard";
-import SignatureGenerator from "@/pages/tools/SignatureGenerator";
-import TreeGenerator from "@/pages/tools/TreeGenerator";
-import BioGenerator from "@/pages/tools/BioGenerator";
-import QrCodeGenerator from "@/pages/tools/QrCodeGenerator";
 
 const protectedRoutes: RouteObject[] = [
   {
@@ -56,10 +50,6 @@ const protectedRoutes: RouteObject[] = [
     element: <TeamDetail />,
   },
   {
-    path: "/team/:teamSlug/discussions",
-    element: <TeamDiscussions />,
-  },
-  {
     path: "/leaderboard/:teamId",
     element: <Leaderboard />,
   },
@@ -70,26 +60,6 @@ const protectedRoutes: RouteObject[] = [
   {
     path: "/platform/:platformId",
     element: <PlatformDetail />,
-  },
-  {
-    path: "/tools/vision-board",
-    element: <VisionBoard />,
-  },
-  {
-    path: "/tools/signature-generator",
-    element: <SignatureGenerator />,
-  },
-  {
-    path: "/tools/tree-generator",
-    element: <TreeGenerator />,
-  },
-  {
-    path: "/tools/bio-generator",
-    element: <BioGenerator />,
-  },
-  {
-    path: "/tools/qr-code-generator",
-    element: <QrCodeGenerator />,
   },
   {
     path: "*",
