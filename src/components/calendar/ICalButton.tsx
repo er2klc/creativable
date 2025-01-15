@@ -17,41 +17,47 @@ export const ICalButton = () => {
   const [copied, setCopied] = useState(false);
 
   const generateICalUrl = async () => {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      toast.error("Bitte melde dich an, um eine iCal URL zu generieren");
-      return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Bitte melde dich an, um eine iCal URL zu generieren");
+        return;
+      }
+
+      // Get the base URL from Supabase client
+      const { data: { publicUrl } } = await supabase.storage.from('public').getPublicUrl('');
+      const baseUrl = publicUrl.split('/storage/')[0];
+      const functionUrl = `${baseUrl}/functions/v1/generate-ical`;
+
+      console.log("Making request to:", functionUrl);
+      console.log("With auth token:", session.access_token);
+
+      // Make the request to generate iCal
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+        throw new Error(`Fehler beim Abrufen der iCal-Daten: ${response.statusText}`);
+      }
+
+      const iCalData = await response.text();
+      const blob = new Blob([iCalData], { type: 'text/calendar' });
+      const iCalUrl = URL.createObjectURL(blob);
+
+      setICalUrl(iCalUrl);
+      setIsDialogOpen(true);
+    } catch (error) {
+      console.error("Error generating iCal URL:", error);
+      toast.error("Fehler beim Generieren der iCal URL");
     }
-
-    const { data: { publicUrl } } = await supabase.storage.from('public').getPublicUrl('');
-    const baseUrl = publicUrl.split('/storage/')[0];
-    const functionUrl = `${baseUrl}/functions/v1/generate-ical`;
-
-    // Rufe die iCal-Generierungsfunktion auf
-    const response = await fetch(functionUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Fehler beim Abrufen der iCal-Daten: ${response.statusText}`);
-    }
-
-    const iCalData = await response.text(); // iCal-Inhalt als Text abrufen
-    const blob = new Blob([iCalData], { type: 'text/calendar' });
-    const iCalUrl = URL.createObjectURL(blob);
-
-    setICalUrl(iCalUrl);
-    setIsDialogOpen(true);
-  } catch (error) {
-    console.error("Error generating iCal URL:", error);
-    toast.error("Fehler beim Generieren der iCal URL");
-  }
-};
-
+  };
 
   const handleCopyUrl = async () => {
     try {

@@ -5,6 +5,8 @@ import { createEvents } from "https://esm.sh/ics@3.7.2"
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Content-Type': 'text/calendar',
 }
 
 serve(async (req) => {
@@ -14,31 +16,31 @@ serve(async (req) => {
   }
 
   try {
-    // Get auth token from query parameter
-    const url = new URL(req.url)
-    const authToken = url.searchParams.get('auth')
-
-    if (!authToken) {
-      console.error('No auth token provided')
-      throw new Error('No authorization token provided')
+    console.log("Received request headers:", Object.fromEntries(req.headers.entries()));
+    
+    // Get auth token from header
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      console.error("No authorization header found");
+      throw new Error('No authorization token provided');
     }
 
-    console.log('Processing iCal request with auth token')
+    const token = authHeader.replace('Bearer ', '');
+    console.log("Extracted token:", token ? "Token present" : "No token");
 
     // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Verify the token and get the user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authToken)
-
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
-      console.error('Auth error:', authError)
-      throw new Error('Invalid token')
+      console.error("Auth error:", authError);
+      throw new Error('Invalid token');
     }
 
-    console.log('Fetching appointments for user:', user.id)
+    console.log("Fetching appointments for user:", user.id);
 
     // Fetch user's appointments
     const { data: appointments, error: fetchError } = await supabase
@@ -46,14 +48,14 @@ serve(async (req) => {
       .select('*, leads(name)')
       .eq('user_id', user.id)
       .eq('cancelled', false)
-      .order('due_date', { ascending: true })
+      .order('due_date', { ascending: true });
 
     if (fetchError) {
-      console.error('Fetch error:', fetchError)
-      throw fetchError
+      console.error("Fetch error:", fetchError);
+      throw fetchError;
     }
 
-    console.log('Found appointments:', appointments?.length)
+    console.log("Found appointments:", appointments?.length);
 
     // Convert appointments to iCal events
     const events = appointments.map((appointment) => ({
@@ -63,14 +65,14 @@ serve(async (req) => {
       description: `Meeting with ${appointment.leads?.name || 'Unknown'}`,
       location: appointment.meeting_type || '',
       status: appointment.completed ? 'COMPLETED' : 'CONFIRMED',
-    }))
+    }));
 
     // Generate iCal file
-    const { error: icsError, value: icsContent } = createEvents(events)
+    const { error: icsError, value: icsContent } = createEvents(events);
 
     if (icsError) {
-      console.error('ICS error:', icsError)
-      throw icsError
+      console.error("ICS error:", icsError);
+      throw icsError;
     }
 
     // Return the iCal file with proper headers
@@ -80,9 +82,9 @@ serve(async (req) => {
         'Content-Type': 'text/calendar; charset=utf-8',
         'Content-Disposition': 'attachment; filename="calendar.ics"',
       },
-    })
+    });
   } catch (error) {
-    console.error('Error generating iCal feed:', error)
+    console.error("Error generating iCal feed:", error);
     return new Response(
       JSON.stringify({ error: error.message }), 
       { 
@@ -92,6 +94,6 @@ serve(async (req) => {
           'Content-Type': 'application/json' 
         } 
       }
-    )
+    );
   }
 })
