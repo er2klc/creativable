@@ -20,7 +20,13 @@ export const ICalButton = () => {
   const generateICalUrl = async () => {
     try {
       setIsLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        toast.error("Fehler beim Abrufen der Sitzung");
+        return;
+      }
       
       if (!session) {
         toast.error("Bitte melde dich an, um eine iCal URL zu generieren");
