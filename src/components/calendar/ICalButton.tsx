@@ -47,11 +47,8 @@ export const ICalButton = () => {
         throw new Error(`Fehler beim Abrufen der iCal-Daten: ${response.statusText}`);
       }
 
-      const iCalData = await response.text();
-      const blob = new Blob([iCalData], { type: 'text/calendar' });
-      const iCalUrl = URL.createObjectURL(blob);
-
-      setICalUrl(iCalUrl);
+      const { url } = await response.json();
+      setICalUrl(url);
       setIsDialogOpen(true);
     } catch (error) {
       console.error("Error generating iCal URL:", error);

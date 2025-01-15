@@ -6,7 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Content-Type': 'text/calendar',
 }
 
 serve(async (req) => {
@@ -91,14 +90,36 @@ serve(async (req) => {
       throw icsError;
     }
 
-    // Return the iCal file with proper headers
-    return new Response(icsContent, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/calendar; charset=utf-8',
-        'Content-Disposition': 'attachment; filename="calendar.ics"',
-      },
-    });
+    // Store the iCal file in Supabase Storage
+    const fileName = `calendar-${user.id}.ics`;
+    const { error: uploadError } = await supabase.storage
+      .from('public')
+      .upload(fileName, icsContent, {
+        contentType: 'text/calendar',
+        upsert: true // Override if exists
+      });
+
+    if (uploadError) {
+      console.error("Upload error:", uploadError);
+      throw new Error('Failed to upload calendar file');
+    }
+
+    // Get the public URL for the uploaded file
+    const { data: { publicUrl } } = supabase.storage
+      .from('public')
+      .getPublicUrl(fileName);
+
+    // Return the public URL
+    return new Response(
+      JSON.stringify({ url: publicUrl }), 
+      { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
   } catch (error) {
     console.error("Error generating iCal feed:", error);
     return new Response(
