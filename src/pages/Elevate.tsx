@@ -4,15 +4,16 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
 import { ElevateHeader } from "@/components/elevate/ElevateHeader";
 import { PlatformList } from "@/components/elevate/PlatformList";
+import { useState } from "react";
 
-const fetchPlatforms = async (userId: string) => {
+const fetchPlatforms = async (userId: string, selectedTeam: string | null) => {
   if (!userId) {
     console.log("[Debug] Kein Benutzer gefunden");
     return [];
   }
 
   try {
-    const { data: platforms, error } = await supabase
+    let query = supabase
       .from("elevate_platforms")
       .select(`
         *,
@@ -23,6 +24,15 @@ const fetchPlatforms = async (userId: string) => {
           order_index
         )
       `);
+
+    if (selectedTeam) {
+      query = query.in('id', supabase
+        .from('elevate_team_access')
+        .select('platform_id')
+        .eq('team_id', selectedTeam));
+    }
+
+    const { data: platforms, error } = await query;
 
     if (error) {
       console.error("[Debug] Error fetching platforms:", error);
@@ -46,10 +56,11 @@ const fetchPlatforms = async (userId: string) => {
 
 const Elevate = () => {
   const user = useUser();
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
 
   const { data: platforms = [], isLoading, error, refetch } = useQuery({
-    queryKey: ["platforms", user?.id],
-    queryFn: () => (user?.id ? fetchPlatforms(user.id) : Promise.resolve([])),
+    queryKey: ["platforms", user?.id, selectedTeam],
+    queryFn: () => (user?.id ? fetchPlatforms(user.id, selectedTeam) : Promise.resolve([])),
     enabled: !!user?.id,
     staleTime: 0,
     gcTime: 0,
@@ -82,7 +93,11 @@ const Elevate = () => {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <ElevateHeader onPlatformCreated={handlePlatformCreated} />
+      <ElevateHeader 
+        onPlatformCreated={handlePlatformCreated} 
+        selectedTeam={selectedTeam}
+        onTeamChange={setSelectedTeam}
+      />
       <PlatformList
         platforms={platforms}
         isLoading={isLoading}
