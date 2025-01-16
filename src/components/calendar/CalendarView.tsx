@@ -93,7 +93,6 @@ export const CalendarView = () => {
             />
           </div>
           <div className="flex items-center gap-6">
-            <ICalButton />
             <div className="flex items-center gap-2">
               <span className="text-sm">Team Termine</span>
               <Switch
@@ -101,6 +100,7 @@ export const CalendarView = () => {
                 onCheckedChange={setShowTeamEvents}
               />
             </div>
+            <ICalButton />
           </div>
         </div>
 
