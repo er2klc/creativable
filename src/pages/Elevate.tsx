@@ -38,7 +38,7 @@ const fetchPlatforms = async (userId: string, selectedTeam: string | null) => {
       }
     }
 
-    const { data: platforms, error } = await query;
+    const { data: platforms, error } = await query.order('created_at', { ascending: true });
 
     if (error) {
       console.error("[Debug] Error fetching platforms:", error);
