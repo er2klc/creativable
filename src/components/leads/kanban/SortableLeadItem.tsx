@@ -3,6 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Tables } from "@/integrations/supabase/types";
 import { LeadDetailView } from "../LeadDetailView";
 import { useState, useRef } from "react";
+import { cn } from "@/lib/utils";
 
 interface SortableLeadItemProps {
   lead: Tables<"leads">;
@@ -24,21 +25,25 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     data: lead,
   });
 
-  const style = {
-    transform: transform
-      ? `${CSS.Transform.toString(transform)} translate(-50%, -50%)` // Zentriert auf Mauszeiger
-      : undefined,
-    width: "200px", // Fixierte Breite
-    height: "60px", // Fixierte Höhe
-    opacity: isDragging ? 0.8 : 1,
-    position: isDragging ? "absolute" : "relative", // Absolut während Drag
-    zIndex: isDragging ? 1000 : "auto", // Highlight während Drag
-  };
+  const style = transform ? {
+    transform: CSS.Transform.toString({
+      ...transform,
+      x: transform.x,
+      y: transform.y,
+      scaleX: 1.02,
+      scaleY: 1.02,
+    }),
+    zIndex: isDragging ? 1000 : 1,
+    position: isDragging ? 'absolute' : 'relative',
+    width: '100%',
+    transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+    cursor: isDragging ? 'grabbing' : 'grab',
+  } : undefined;
 
   const handleMouseDown = () => {
     dragTimeoutRef.current = window.setTimeout(() => {
       setIsDragging(true);
-    }, 150); // 150ms Verzögerung für Dragging
+    }, 150);
   };
 
   const handleMouseUp = () => {
@@ -47,7 +52,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     }
 
     if (!isDragging) {
-      setIsEditDialogOpen(true); // Nur Klick öffnet Detailansicht
+      setIsEditDialogOpen(true);
     }
     setIsDragging(false);
   };
@@ -72,19 +77,22 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
       <div
         ref={setNodeRef}
         style={style}
-        className={`
-          p-2 rounded-lg border shadow-md hover:opacity-80 transition-shadow space-y-1
-          ${getBackgroundStyle()} 
-          ${isDragging ? "shadow-xl ring-2 ring-primary scale-105" : ""}
-        `}
+        className={cn(
+          "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200",
+          getBackgroundStyle(),
+          isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing",
+          !isDragging && "cursor-grab"
+        )}
         {...attributes}
         {...listeners}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
       >
-        <div className="font-medium">{lead.name}</div>
-        <div className="text-sm text-gray-500">
-          {lead.contact_type || "Nicht festgelegt"}
+        <div className="space-y-1.5">
+          <div className="font-medium text-sm">{lead.name}</div>
+          <div className="text-xs text-muted-foreground">
+            {lead.contact_type || "Nicht festgelegt"}
+          </div>
         </div>
       </div>
 
