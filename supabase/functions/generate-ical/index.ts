@@ -22,7 +22,8 @@ serve(async (req) => {
       throw new Error("Unauthorized: No Authorization header provided");
     }
 
-    const supabaseClient = createClient(
+    // Create a Supabase client with the user's JWT
+    const userClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
@@ -34,10 +35,22 @@ serve(async (req) => {
       }
     );
 
+    // Create an admin client with service role for storage operations
+    const adminClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false
+        }
+      }
+    );
+
     const {
       data: { user },
       error: userError,
-    } = await supabaseClient.auth.getUser();
+    } = await userClient.auth.getUser();
 
     if (userError || !user) {
       console.error("[iCal] User auth error:", userError);
@@ -52,7 +65,7 @@ serve(async (req) => {
       console.log("[iCal] Generating team calendar for team:", teamId);
       
       // Verify team membership
-      const { data: membership, error: membershipError } = await supabaseClient
+      const { data: membership, error: membershipError } = await userClient
         .from('team_members')
         .select('*')
         .eq('team_id', teamId)
@@ -65,7 +78,7 @@ serve(async (req) => {
       }
       
       // Generate team calendar content
-      const { data: events, error: eventsError } = await supabaseClient
+      const { data: events, error: eventsError } = await userClient
         .from('team_calendar_events')
         .select('*')
         .eq('team_id', teamId);
@@ -80,7 +93,7 @@ serve(async (req) => {
       console.log("[iCal] Generating personal calendar for user:", user.id);
       
       // Generate personal calendar content
-      const { data: tasks, error: tasksError } = await supabaseClient
+      const { data: tasks, error: tasksError } = await userClient
         .from('tasks')
         .select('*, leads(name)')
         .eq('user_id', user.id)
@@ -101,8 +114,8 @@ serve(async (req) => {
 
     console.log("[iCal] Uploading calendar file:", filename);
 
-    // Upload the calendar file to the storage bucket
-    const { data, error: uploadError } = await supabaseClient
+    // Use the admin client for storage operations
+    const { data, error: uploadError } = await adminClient
       .storage
       .from('calendars')
       .upload(filename, calendarContent, {
@@ -116,7 +129,7 @@ serve(async (req) => {
     }
 
     // Get the public URL for the uploaded file
-    const { data: { publicUrl }, error: urlError } = supabaseClient
+    const { data: { publicUrl }, error: urlError } = adminClient
       .storage
       .from('calendars')
       .getPublicUrl(filename);
