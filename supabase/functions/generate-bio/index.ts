@@ -18,7 +18,10 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       console.error('No authorization header found');
-      throw new Error('No authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Authorization header is missing' }),
+        { headers: corsHeaders, status: 401 },
+      );
     }
 
     // Initialize Supabase client with auth context
@@ -36,24 +39,41 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
       console.error('Error getting user:', userError);
-      throw new Error('Unauthorized');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: User session not found' }),
+        { headers: corsHeaders, status: 401 },
+      );
     }
 
     console.log('User authenticated:', user.id);
 
-    // Get user's OpenAI API key from settings
+    // Fetch user's OpenAI API key
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
       .select('openai_api_key')
       .eq('user_id', user.id)
       .single();
 
-    if (settingsError || !settings?.openai_api_key) {
+    if (settingsError) {
       console.error('Error fetching OpenAI API key:', settingsError);
-      throw new Error('OpenAI API key not found in settings');
+      return new Response(
+        JSON.stringify({ error: 'Failed to retrieve OpenAI API key from settings' }),
+        { headers: corsHeaders, status: 500 },
+      );
     }
 
+    if (!settings?.openai_api_key) {
+      console.error('OpenAI API key not found in settings for user:', user.id);
+      return new Response(
+        JSON.stringify({ error: 'OpenAI API key is missing' }),
+        { headers: corsHeaders, status: 403 },
+      );
+    }
+
+    const openaiApiKey = settings.openai_api_key;
+
     // Get request body
+    const requestBody = await req.json();
     const { 
       role, 
       target_audience, 
@@ -64,13 +84,12 @@ serve(async (req) => {
       url, 
       preferred_emojis, 
       language 
-    } = await req.json();
+    } = requestBody;
 
     console.log('Generating bio with parameters:', {
       role,
       target_audience,
       language,
-      // ... other parameters logged but not showing sensitive data
     });
 
     const prompt = `
@@ -79,10 +98,10 @@ The bio must:
 - Be exactly 150 characters, split into 4 lines
 - Start each line with a relevant emoji
 - Use the following structure:
-  1️⃣ Who they are and what they do (e.g., 🚀 Helping coaches achieve success)
-  2️⃣ What makes them unique or their mission (e.g., 🌟 Empowering growth through innovation)
-  3️⃣ Social proof or achievements (e.g., 🏆 Over 1000+ satisfied clients)
-  4️⃣ Call-to-action with a link (e.g., 🔗 Try it free: example.com)
+  1️⃣ Who they are and what they do
+  2️⃣ What makes them unique or their mission
+  3️⃣ Social proof or achievements
+  4️⃣ Call-to-action with a link
 
 Details:
 - Role: ${role}
@@ -97,12 +116,10 @@ Details:
 Generate the bio now, ensuring each line starts with an emoji.
 `;
 
-    console.log('Making OpenAI API request...');
-
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${settings.openai_api_key}`,
+        'Authorization': `Bearer ${openaiApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -114,7 +131,7 @@ Generate the bio now, ensuring each line starts with an emoji.
           },
           {
             role: 'user',
-            content: prompt
+            content: prompt,
           }
         ],
         temperature: 0.7,
@@ -125,17 +142,24 @@ Generate the bio now, ensuring each line starts with an emoji.
     if (!response.ok) {
       const errorData = await response.json();
       console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+      return new Response(
+        JSON.stringify({ error: `OpenAI API error: ${errorData.error?.message || 'Unknown error'}` }),
+        { headers: corsHeaders, status: 500 },
+      );
     }
 
     const data = await response.json();
     const generatedBio = data.choices[0]?.message?.content;
 
     if (!generatedBio) {
-      throw new Error('No bio was generated');
+      console.error('No bio generated');
+      return new Response(
+        JSON.stringify({ error: 'No bio was generated' }),
+        { headers: corsHeaders, status: 500 },
+      );
     }
 
-    console.log('Successfully generated bio');
+    console.log('Bio generated successfully:', generatedBio);
 
     // Save the generated bio
     const { error: saveError } = await supabaseClient
@@ -153,33 +177,22 @@ Generate the bio now, ensuring each line starts with an emoji.
         language,
         generated_bio: generatedBio,
       }, {
-        onConflict: 'user_id'
+        onConflict: 'user_id',
       });
 
     if (saveError) {
       console.error('Error saving bio:', saveError);
-      // Don't throw here, we still want to return the generated bio
     }
 
     return new Response(
       JSON.stringify({ bio: generatedBio }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
     );
-
   } catch (error) {
-    console.error('Error in generate-bio function:', error);
+    console.error('Error in generate-bio function:', error.message);
     return new Response(
-      JSON.stringify({
-        error: error.message,
-        details: error.response?.data?.error?.message || 'Unknown error occurred'
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      },
+      JSON.stringify({ error: error.message || 'An unknown error occurred' }),
+      { headers: corsHeaders, status: 500 },
     );
   }
 });
