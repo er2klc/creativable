@@ -42,7 +42,7 @@ export const SidebarMenuSection = ({
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
                 <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
-                  <item.icon className={`shrink-0 transition-all duration-300 ${isExpanded ? 'h-[400px] w-[400px]' : 'h-[40px] w-[40px]'} group-hover/item:h-[25px] group-hover/item:w-[25px]`} /> 
+                  <item.icon className={`shrink-0 transition-all duration-300 ${isExpanded ? 'h-[40px] w-[40px]' : 'h-[400px] w-[400px]'} group-hover/item:h-[25px] group-hover/item:w-[25px]`} /> 
                   <span className={`transition-opacity duration-300 whitespace-nowrap text-sm text-white ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
                     {item.title}
                   </span>
