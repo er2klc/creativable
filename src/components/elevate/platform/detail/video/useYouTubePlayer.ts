@@ -83,6 +83,11 @@ export const useYouTubePlayer = ({
     const playerId = `youtube-player-${videoId}`;
     const playerContainer = document.createElement('div');
     playerContainer.id = playerId;
+    playerContainer.style.position = 'absolute';
+    playerContainer.style.top = '0';
+    playerContainer.style.left = '0';
+    playerContainer.style.width = '100%';
+    playerContainer.style.height = '100%';
     
     containerElement.innerHTML = '';
     containerElement.appendChild(playerContainer);
@@ -91,7 +96,11 @@ export const useYouTubePlayer = ({
       if (progressIntervalRef.current) {
         window.clearInterval(progressIntervalRef.current);
       }
-      playerRef.current.destroy();
+      try {
+        playerRef.current.destroy();
+      } catch (error) {
+        console.error('Error destroying player:', error);
+      }
     }
 
     playerRef.current = new (window as any).YT.Player(playerId, {
