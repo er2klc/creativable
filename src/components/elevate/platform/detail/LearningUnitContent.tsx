@@ -40,7 +40,13 @@ export const LearningUnitContent = ({
   const [videoDuration, setVideoDuration] = useState(0);
   const [hasCompletedNotification, setHasCompletedNotification] = useState(false);
   const user = useUser();
-  const [documents, setDocuments] = useState<Array<{ id: string; file_name: string; file_path: string; file_type: string }>>([]);
+  const [documents, setDocuments] = useState<Array<{
+    id: string;
+    file_name: string;
+    file_path: string;
+    file_type: string;
+    preview_file_path: string;
+  }>>([]);
 
   const handleUpdate = async (data: { title: string; description: string; videoUrl: string }) => {
     try {
@@ -63,8 +69,14 @@ export const LearningUnitContent = ({
         .eq('lerninhalte_id', id);
 
       if (error) throw error;
-      console.log('Fetched documents:', data);
-      setDocuments(data || []);
+      
+      // Transform the data to include preview_file_path
+      const transformedData = data?.map(doc => ({
+        ...doc,
+        preview_file_path: doc.preview_file_path || doc.file_path // Use file_path as fallback if preview_file_path is null
+      })) || [];
+      
+      setDocuments(transformedData);
     } catch (error) {
       console.error('Error fetching documents:', error);
     }
