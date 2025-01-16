@@ -1,9 +1,8 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Tables } from "@/integrations/supabase/types";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useState } from "react";
 import { LeadDetailView } from "../LeadDetailView";
+import { useState } from "react";
 
 interface SortableLeadItemProps {
   lead: Tables<"leads">;
