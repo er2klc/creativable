@@ -100,8 +100,7 @@ export const CalendarView = () => {
         onCheckedChange={setShowTeamEvents}
       />
     </div>
-    {/* iCalButton wird nur im persönlichen Kalender angezeigt */}
-    {!showTeamEvents && <ICalButton />}
+   <ICalButton />
   </div>
 </div>
 
