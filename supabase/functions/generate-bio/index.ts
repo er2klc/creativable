@@ -14,57 +14,83 @@ serve(async (req) => {
   }
 
   try {
-    let userId: string | null = null;
+    // Get the authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('[Bio Generator] No authorization header');
+      throw new Error('No authorization header');
+    }
 
-    // Get Authorization header (for admin)
-    const authHeader = req.headers.get('Authorization')?.replace('Bearer ', '');
-
-    // Initialize Supabase client
+    // Initialize Supabase client with auth header
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: authHeader ? { Authorization: `Bearer ${authHeader}` } : {}, // Nur setzen, wenn vorhanden
+          headers: {
+            Authorization: authHeader,
+          },
         },
       }
     );
 
-    if (authHeader) {
-      // Admin: Benutzer aus Authorization-Header ermitteln
-      const { data: adminUser, error: adminError } = await supabaseClient.auth.getUser();
-      if (adminError || !adminUser) {
-        throw new Error('Admin authentication failed');
-      }
-      userId = adminUser.id;
-      console.log('Admin authenticated, user ID:', userId);
-    } else {
-      // Registrierte Benutzer: Benutzer-ID aus der aktuellen Supabase-Session holen
-      const { data: session, error: sessionError } = await supabaseClient.auth.getSession();
-      if (sessionError || !session?.user) {
-        throw new Error('User not authenticated');
-      }
-      userId = session.user.id;
-      console.log('User authenticated, user ID:', userId);
+    // Get the user to verify authentication
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      console.error('[Bio Generator] Authentication error:', userError);
+      return new Response(
+        JSON.stringify({
+          error: 'Authentication failed',
+          details: userError?.message || 'Failed to authenticate user'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401
+        }
+      );
     }
 
-    if (!userId) {
-      throw new Error('Unable to determine user ID');
-    }
+    console.log("[Bio Generator] User authenticated:", user.id);
 
-    // API key aus der settings-Tabelle holen
+    // Parse request body
+    const { role, target_audience, unique_strengths, mission, social_proof, cta_goal, url, preferred_emojis, language } = await req.json();
+    
+    // Get user's OpenAI API key from settings
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
       .select('openai_api_key')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .single();
 
-    if (settingsError || !settings?.openai_api_key) {
-      console.error('Error fetching OpenAI API key:', settingsError);
-      throw new Error('OpenAI API key not found for user');
+    if (settingsError) {
+      console.error('[Bio Generator] Error fetching settings:', settingsError);
+      return new Response(
+        JSON.stringify({
+          error: 'Failed to fetch settings',
+          details: settingsError.message
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        }
+      );
     }
 
-    const { role, target_audience, unique_strengths, mission, social_proof, cta_goal, url, preferred_emojis, language } = await req.json();
+    if (!settings?.openai_api_key) {
+      console.error('[Bio Generator] No OpenAI API key found in settings');
+      return new Response(
+        JSON.stringify({
+          error: 'OpenAI API key not found',
+          details: 'Please add your OpenAI API key in Settings -> Integrations'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
+
+    console.log("[Bio Generator] Successfully retrieved OpenAI API key");
 
     const prompt = `
 Write a professional ${language === 'English' ? 'English' : 'German'} Instagram bio. 
@@ -90,7 +116,7 @@ Details:
 Generate the bio now, ensuring each line starts with an emoji.
 `;
 
-    console.log('Creating OpenAI request with prompt:', prompt);
+    console.log('[Bio Generator] Creating OpenAI request');
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -99,7 +125,7 @@ Generate the bio now, ensuring each line starts with an emoji.
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           { 
             role: 'system', 
@@ -117,8 +143,17 @@ Generate the bio now, ensuring each line starts with an emoji.
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+      console.error('[Bio Generator] OpenAI API error:', errorData);
+      return new Response(
+        JSON.stringify({
+          error: 'OpenAI API error',
+          details: errorData.error?.message || 'Failed to generate bio'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: response.status
+        }
+      );
     }
 
     const data = await response.json();
@@ -126,6 +161,30 @@ Generate the bio now, ensuring each line starts with an emoji.
 
     if (!generatedBio) {
       throw new Error('No bio was generated');
+    }
+
+    console.log('[Bio Generator] Successfully generated bio');
+
+    // Save the generated bio
+    const { error: saveError } = await supabaseClient
+      .from('user_bios')
+      .upsert({
+        user_id: user.id,
+        role,
+        target_audience,
+        unique_strengths,
+        mission,
+        social_proof,
+        cta_goal,
+        url,
+        preferred_emojis,
+        language,
+        generated_bio: generatedBio
+      });
+
+    if (saveError) {
+      console.error('[Bio Generator] Error saving bio:', saveError);
+      // Continue even if save fails - we still want to return the generated bio
     }
 
     return new Response(
@@ -137,11 +196,11 @@ Generate the bio now, ensuring each line starts with an emoji.
     );
 
   } catch (error) {
-    console.error('Error in generate-bio function:', error);
+    console.error('[Bio Generator] Error:', error);
     return new Response(
       JSON.stringify({
-        error: error.message,
-        details: error.response?.data?.error?.message || 'Unknown error occurred'
+        error: error.message || 'Unknown error occurred',
+        details: error.response?.data?.error?.message || 'An unexpected error occurred'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
