@@ -9,6 +9,7 @@ import { CalendarGrid } from "./CalendarGrid";
 import { NewAppointmentDialog } from "./NewAppointmentDialog";
 import { TeamEventDetailsDialog } from "./TeamEventDetailsDialog";
 import { Switch } from "@/components/ui/switch";
+import { ICalButton } from "./ICalButton";
 import { Appointment, AppointmentToEdit, TeamEvent } from "./types/calendar";
 import { useUser } from "@supabase/auth-helpers-react";
 
@@ -55,14 +56,12 @@ export const CalendarView = () => {
   const handleAppointmentClick = (e: React.MouseEvent, appointment: Appointment) => {
     e.stopPropagation();
     
-    // Always show team event details dialog for team events
     if (appointment.isTeamEvent) {
       setSelectedTeamEvent(appointment as TeamEvent);
       setIsTeamEventDialogOpen(true);
       return;
     }
 
-    // For personal appointments, show the edit dialog
     setSelectedDate(new Date(appointment.due_date));
     setSelectedAppointment({
       id: appointment.id,
@@ -93,12 +92,15 @@ export const CalendarView = () => {
               onMonthChange={handleMonthChange}
             />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm">Team Termine</span>
-            <Switch
-              checked={showTeamEvents}
-              onCheckedChange={setShowTeamEvents}
-            />
+          <div className="flex items-center gap-6">
+            <ICalButton />
+            <div className="flex items-center gap-2">
+              <span className="text-sm">Team Termine</span>
+              <Switch
+                checked={showTeamEvents}
+                onCheckedChange={setShowTeamEvents}
+              />
+            </div>
           </div>
         </div>
 
