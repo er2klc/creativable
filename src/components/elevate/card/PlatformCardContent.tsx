@@ -20,16 +20,43 @@ export const PlatformCardContent = ({ platform }: PlatformCardContentProps) => {
   const { data: stats } = useQuery({
     queryKey: ["platform-stats", platform.id],
     queryFn: async () => {
+      // Get all lerninhalte for this platform
+      const { data: modules } = await supabase
+        .from('elevate_modules')
+        .select(`
+          id,
+          elevate_lerninhalte (
+            id
+          )
+        `)
+        .eq('platform_id', platform.id);
+
+      // Flatten all lerninhalte IDs
+      const lerninhalteIds = modules?.flatMap(module => 
+        module.elevate_lerninhalte?.map(item => item.id)
+      ) || [];
+
+      // Get completed lerninhalte count
+      const { data: completedLerninhalte } = await supabase
+        .from('elevate_user_progress')
+        .select('lerninhalte_id')
+        .eq('user_id', user?.id)
+        .eq('completed', true)
+        .in('lerninhalte_id', lerninhalteIds);
+
+      // Calculate progress
+      const totalUnits = lerninhalteIds.length;
+      const completedUnits = completedLerninhalte?.length || 0;
+      const progress = totalUnits > 0 ? Math.round((completedUnits / totalUnits) * 100) : 0;
+
       // Get team access count
-      const { data: teamAccess, error: teamError } = await supabase
+      const { data: teamAccess } = await supabase
         .from("elevate_team_access")
         .select("team_id")
         .eq("platform_id", platform.id);
 
-      if (teamError) throw teamError;
-
       // Get unique users from team members
-      const { data: teamMembers, error: membersError } = await supabase
+      const { data: teamMembers } = await supabase
         .from("team_members")
         .select("user_id")
         .in(
@@ -37,18 +64,16 @@ export const PlatformCardContent = ({ platform }: PlatformCardContentProps) => {
           teamAccess?.map((ta) => ta.team_id) || []
         );
 
-      if (membersError) throw membersError;
-
       // Get unique user count
       const uniqueUsers = new Set(teamMembers?.map((tm) => tm.user_id));
 
       return {
         totalTeams: teamAccess?.length || 0,
         totalUsers: uniqueUsers.size,
-        progress: 0, // Wir behalten dies bei 0, da es aktuell nicht implementiert ist
+        progress,
       };
     },
-    enabled: !!platform.id,
+    enabled: !!platform.id && !!user?.id,
   });
 
   return (
