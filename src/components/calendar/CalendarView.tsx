@@ -84,25 +84,26 @@ export const CalendarView = () => {
       onDragOver={handleDragOver}
     >
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <CalendarHeader 
-              currentDate={currentDate}
-              onDateChange={setCurrentDate}
-              onMonthChange={handleMonthChange}
-            />
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">Team Termine</span>
-              <Switch
-                checked={showTeamEvents}
-                onCheckedChange={setShowTeamEvents}
-              />
-            </div>
-            <ICalButton />
-          </div>
-        </div>
+       <div className="flex items-center justify-between">
+  <div className="flex-1">
+    <CalendarHeader 
+      currentDate={currentDate}
+      onDateChange={setCurrentDate}
+      onMonthChange={handleMonthChange}
+    />
+  </div>
+  <div className="flex items-center gap-6">
+    <div className="flex items-center gap-2">
+      <span className="text-sm">Team Termine</span>
+      <Switch
+        checked={showTeamEvents}
+        onCheckedChange={setShowTeamEvents}
+      />
+    </div>
+    {/* iCalButton wird nur im persönlichen Kalender angezeigt */}
+    {!showTeamEvents && <ICalButton />}
+  </div>
+</div>
 
         {(isLoadingAppointments || isLoadingTeamEvents) && (
           <div className="text-center text-gray-500">Lade Termine...</div>
