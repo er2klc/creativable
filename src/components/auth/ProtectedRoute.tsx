@@ -63,6 +63,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!isAuthenticated && !hasSession) {
+    // Store the attempted URL to redirect back after login
     return <Navigate to="/auth" replace state={{ from: location }} />;
   }
 
