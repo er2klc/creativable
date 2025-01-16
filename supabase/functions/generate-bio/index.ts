@@ -125,7 +125,7 @@ Generate the bio now, ensuring each line starts with an emoji.
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: [
           { 
             role: 'system', 
@@ -184,8 +184,19 @@ Generate the bio now, ensuring each line starts with an emoji.
 
     if (saveError) {
       console.error('[Bio Generator] Error saving bio:', saveError);
-      // Continue even if save fails - we still want to return the generated bio
+      return new Response(
+        JSON.stringify({
+          error: 'Failed to save bio',
+          details: saveError.message
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        }
+      );
     }
+
+    console.log('[Bio Generator] Successfully saved bio to database');
 
     return new Response(
       JSON.stringify({ bio: generatedBio }),
@@ -203,8 +214,8 @@ Generate the bio now, ensuring each line starts with an emoji.
         details: error.response?.data?.error?.message || 'An unexpected error occurred'
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       },
     );
   }
