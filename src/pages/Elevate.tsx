@@ -26,10 +26,16 @@ const fetchPlatforms = async (userId: string, selectedTeam: string | null) => {
       `);
 
     if (selectedTeam) {
-      query = query.in('id', supabase
+      const { data: teamAccess } = await supabase
         .from('elevate_team_access')
         .select('platform_id')
-        .eq('team_id', selectedTeam));
+        .eq('team_id', selectedTeam);
+      
+      const platformIds = teamAccess?.map(ta => ta.platform_id) || [];
+      
+      if (platformIds.length > 0) {
+        query = query.in('id', platformIds);
+      }
     }
 
     const { data: platforms, error } = await query;

@@ -35,14 +35,14 @@ export const ElevateHeader = ({ onPlatformCreated, selectedTeam, onTeamChange }:
       <div className="flex items-center gap-4">
         <h1 className="text-2xl font-semibold">Elevate</h1>
         <Select
-          value={selectedTeam || ""}
-          onValueChange={(value) => onTeamChange(value || null)}
+          value={selectedTeam || "all"}
+          onValueChange={(value) => onTeamChange(value === "all" ? null : value)}
         >
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Alle Teams" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">
+            <SelectItem value="all">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 <span>Alle Teams</span>
