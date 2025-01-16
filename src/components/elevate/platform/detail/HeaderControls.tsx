@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Trash2, FileText, CheckCircle2 } from "lucide-react";
+import { Trash2, Folder, CheckCircle2 } from "lucide-react";
 
 interface HeaderControlsProps {
   id: string;
@@ -22,12 +22,6 @@ export const HeaderControls = ({
 }: HeaderControlsProps) => {
   return (
     <div className="flex items-center gap-2">
-      {documentsCount > 0 && (
-        <div className="flex items-center gap-1 text-muted-foreground bg-white/50 px-2 py-1 rounded">
-          <FileText className="h-4 w-4" />
-          <span className="text-sm">{documentsCount}</span>
-        </div>
-      )}
       <Button
         variant={isCompleted ? "default" : "outline"}
         size="sm"
@@ -37,6 +31,12 @@ export const HeaderControls = ({
         <CheckCircle2 className="h-4 w-4" />
         {isCompleted ? 'Abgeschlossen' : 'Abschließen'}
       </Button>
+      {documentsCount > 0 && (
+        <div className="flex items-center gap-1 text-muted-foreground bg-white/50 px-2 py-1 rounded">
+          <Folder className="h-4 w-4" />
+          <span className="text-sm">{documentsCount}</span>
+        </div>
+      )}
       {isAdmin && (
         <Button
           variant="ghost"
