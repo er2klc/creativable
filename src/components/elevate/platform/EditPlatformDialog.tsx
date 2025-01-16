@@ -30,10 +30,10 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
         .from('elevate_platforms')
         .select('*')
         .eq('id', platformId)
-        .single();
+        .maybeSingle();
       
       if (platform) {
-        setName(platform.name);
+        setName(platform.name || "");
         setDescription(platform.description || "");
         setImageUrl(platform.image_url);
       }
@@ -41,6 +41,16 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
     },
     enabled: open,
   });
+
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setName("");
+      setDescription("");
+      setSelectedTeams([]);
+      setImageUrl(null);
+    }
+  }, [open]);
 
   // Fetch current team access
   useQuery({
