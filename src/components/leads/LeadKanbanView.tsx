@@ -105,7 +105,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
             }}
           >
             {phases.map((phase) => (
-              <div key={phase.id} className="flex-1 min-w-[280px] max-w-[280px]">
+              <div key={phase.id} className="flex-1 min-w-[180px] max-w-[200px]">
                 <PhaseColumn
                   phase={phase}
                   leads={leads.filter((lead) => lead.phase === phase.name)}
