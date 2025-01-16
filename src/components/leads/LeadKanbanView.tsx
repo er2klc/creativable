@@ -54,9 +54,14 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="w-full overflow-x-auto no-scrollbar">
-        <div className="flex gap-4 min-w-full" style={{ width: `max(100%, ${phases.length * 300}px)` }}>
+        <div 
+          className="flex gap-4 px-4 min-w-[1024px]" 
+          style={{ 
+            width: `max(100%, ${phases.length * 250}px)` // Reduced from 300px to 250px per phase
+          }}
+        >
           {phases.map((phase) => (
-            <div key={phase.id} className="flex-1 min-w-[300px]">
+            <div key={phase.id} className="flex-1 min-w-[250px]"> {/* Reduced from 300px to 250px */}
               <PhaseColumn
                 phase={phase}
                 leads={leads.filter(lead => lead.phase === phase.name)}
@@ -65,7 +70,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
               />
             </div>
           ))}
-          <div className="min-w-[300px] flex-1">
+          <div className="min-w-[250px] flex-1"> {/* Reduced from 300px to 250px */}
             <div className="bg-muted/50 p-4 rounded-lg h-full min-h-[500px] flex items-center justify-center">
               <Button
                 variant="ghost"
