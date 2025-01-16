@@ -37,8 +37,13 @@ serve(async (req) => {
       .select('openai_api_key')
       .single();
 
-    if (settingsError || !settings?.openai_api_key) {
+    if (settingsError) {
       console.error('Error fetching OpenAI API key:', settingsError);
+      throw new Error('Failed to fetch settings');
+    }
+
+    if (!settings?.openai_api_key) {
+      console.error('No OpenAI API key found in settings');
       return new Response(
         JSON.stringify({
           error: 'OpenAI API key not found in settings. Please add your API key in the settings page.',
@@ -53,7 +58,7 @@ serve(async (req) => {
 
     const { role, target_audience, unique_strengths, mission, social_proof, cta_goal, url, preferred_emojis, language } = await req.json();
 
-   const prompt = `
+    const prompt = `
 Write a professional ${language === 'English' ? 'English' : 'German'} Instagram bio. 
 The bio must:
 - Be exactly 150 characters, split into 4 lines.
@@ -76,7 +81,6 @@ Details:
 
 Generate the bio now, ensuring each line starts with an emoji.
 `;
-
 
     console.log('Creating OpenAI request with prompt:', prompt);
     
