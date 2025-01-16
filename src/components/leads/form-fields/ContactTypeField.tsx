@@ -33,7 +33,7 @@ export function ContactTypeField({ form }: ContactTypeFieldProps) {
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <div className={`p-2 rounded-lg transition-colors ${
-                  currentTypes.includes("Partner") ? "bg-blue-100" : ""
+                  currentTypes.includes("Partner") ? "bg-[#E5DEFF]/30" : ""
                 }`}>
                   <Checkbox
                     checked={currentTypes.includes("Partner")}
@@ -52,7 +52,7 @@ export function ContactTypeField({ form }: ContactTypeFieldProps) {
               </div>
               <div className="flex items-center gap-2">
                 <div className={`p-2 rounded-lg transition-colors ${
-                  currentTypes.includes("Kunde") ? "bg-green-100" : ""
+                  currentTypes.includes("Kunde") ? "bg-[#F2FCE2]/30" : ""
                 }`}>
                   <Checkbox
                     checked={currentTypes.includes("Kunde")}

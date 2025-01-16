@@ -21,12 +21,12 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
   return (
     <div 
       ref={setNodeRef}
-      className={`bg-muted/50 p-4 rounded-lg flex flex-col h-full min-h-[500px] relative ${
+      className={`bg-muted/50 rounded-lg flex flex-col h-full min-h-[500px] relative ${
         isOver ? 'ring-2 ring-primary/50 bg-primary/5' : ''
       }`}
     >
-      <div className="mb-4">
-        <div className="flex items-center justify-between border-b border-primary/20 pb-2">
+      <div className="sticky top-0 z-10 bg-muted/50 p-4 rounded-t-lg border-b border-primary/20">
+        <div className="flex items-center justify-between">
           <h3 className="font-medium text-lg tracking-tight">{phase.name}</h3>
           <Button
             variant="ghost"
@@ -38,19 +38,21 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
           </Button>
         </div>
       </div>
-      <SortableContext items={leads.map((l) => l.id)} strategy={rectSortingStrategy}>
-        <div className="space-y-2 flex-1">
-          {leads.map((lead) => (
-            <SortableLeadItem
-              key={lead.id}
-              lead={lead}
-              onLeadClick={onLeadClick}
-            />
-          ))}
+      <div className="p-4">
+        <SortableContext items={leads.map((l) => l.id)} strategy={rectSortingStrategy}>
+          <div className="space-y-2 flex-1">
+            {leads.map((lead) => (
+              <SortableLeadItem
+                key={lead.id}
+                lead={lead}
+                onLeadClick={onLeadClick}
+              />
+            ))}
+          </div>
+        </SortableContext>
+        <div className="mt-4">
+          <AddLeadButton phase={phase.name} />
         </div>
-      </SortableContext>
-      <div className="mt-4">
-        <AddLeadButton phase={phase.name} />
       </div>
     </div>
   );
