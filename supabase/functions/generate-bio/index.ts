@@ -33,7 +33,15 @@ serve(async (req) => {
       }
     );
 
-    console.log("[Bio Generator] Fetching user settings...");
+    // Get the user to verify authentication
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    
+    if (userError || !user) {
+      console.error('[Bio Generator] Error getting user:', userError);
+      throw new Error('Authentication failed');
+    }
+
+    console.log("[Bio Generator] Fetching settings for user:", user.id);
     
     // Get user's OpenAI API key from settings
     const { data: settings, error: settingsError } = await supabaseClient
@@ -41,9 +49,23 @@ serve(async (req) => {
       .select('openai_api_key')
       .single();
 
-    if (settingsError || !settings?.openai_api_key) {
-      console.error('[Bio Generator] Error fetching OpenAI API key:', settingsError);
-      throw new Error('OpenAI API key not found in settings');
+    if (settingsError) {
+      console.error('[Bio Generator] Error fetching settings:', settingsError);
+      throw new Error('Failed to fetch user settings');
+    }
+
+    if (!settings?.openai_api_key) {
+      console.error('[Bio Generator] No OpenAI API key found in settings');
+      return new Response(
+        JSON.stringify({
+          error: 'OpenAI API key not found',
+          details: 'Please add your OpenAI API key in Settings -> Integrations'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
     }
 
     console.log("[Bio Generator] Successfully retrieved OpenAI API key");
@@ -83,7 +105,7 @@ Generate the bio now, ensuring each line starts with an emoji.
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           { 
             role: 'system', 
@@ -113,6 +135,28 @@ Generate the bio now, ensuring each line starts with an emoji.
     }
 
     console.log('[Bio Generator] Successfully generated bio');
+
+    // Save the generated bio
+    const { error: saveError } = await supabaseClient
+      .from('user_bios')
+      .upsert({
+        user_id: user.id,
+        role,
+        target_audience,
+        unique_strengths,
+        mission,
+        social_proof,
+        cta_goal,
+        url,
+        preferred_emojis,
+        language,
+        generated_bio: generatedBio
+      });
+
+    if (saveError) {
+      console.error('[Bio Generator] Error saving bio:', saveError);
+      // Continue even if save fails - we still want to return the generated bio
+    }
 
     return new Response(
       JSON.stringify({ bio: generatedBio }),
