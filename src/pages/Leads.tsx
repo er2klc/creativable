@@ -86,7 +86,7 @@ const Leads = () => {
   return (
     <div className="w-full space-y-8">
       <div className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="max-w-full mx-auto">
+        <div className="max-w-full mx-auto overflow-x-hidden">
           <div className="flex items-center h-16 px-4">
             <h1 className="text-3xl font-bold shrink-0">
               {settings?.language === "en" ? "Contacts" : "Kontakte"}
