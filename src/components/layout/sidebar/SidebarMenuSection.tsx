@@ -31,7 +31,7 @@ export const SidebarMenuSection = ({
 }: SidebarMenuSectionProps) => {
   return (
     <SidebarGroup>
-      <div className="flex items-center px-4 py-1.5">
+      <div className="flex items-center px-4 py-2">
         <SidebarGroupLabel className={`transition-opacity duration-300 text-white/70 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
           {title}
         </SidebarGroupLabel>
