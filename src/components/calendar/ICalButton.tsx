@@ -28,6 +28,8 @@ export const ICalButton = ({ teamId }: ICalButtonProps) => {
         return;
       }
 
+      console.log("[iCal] Generating calendar URL for", teamId ? `team ${teamId}` : "personal calendar");
+
       const { data, error } = await supabase.functions.invoke('generate-ical', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -38,17 +40,18 @@ export const ICalButton = ({ teamId }: ICalButtonProps) => {
       });
 
       if (error) {
-        console.error("Error generating iCal URL:", error);
+        console.error("[iCal] Error generating iCal URL:", error);
         toast.error("Fehler beim Generieren der Kalender-URL");
         return;
       }
 
       if (data?.url) {
+        console.log("[iCal] Calendar URL generated:", data.url);
         setCalendarUrl(data.url);
         setIsOpen(true);
       }
     } catch (error) {
-      console.error("Error in handleGetICalURL:", error);
+      console.error("[iCal] Error in handleGetICalURL:", error);
       toast.error("Fehler beim Generieren der Kalender-URL");
     }
   };

@@ -45,18 +45,8 @@ serve(async (req) => {
     // Generate calendar content based on whether it's a team or personal calendar
     let calendarContent;
     if (teamId) {
-      // Verify team membership
-      const { data: teamMember, error: teamError } = await supabaseClient
-        .from('team_members')
-        .select('*')
-        .eq('team_id', teamId)
-        .eq('user_id', user.id)
-        .single();
-
-      if (teamError || !teamMember) {
-        throw new Error("Unauthorized: Not a team member");
-      }
-
+      console.log("[iCal] Generating team calendar for team:", teamId);
+      
       // Generate team calendar content
       const { data: events, error: eventsError } = await supabaseClient
         .from('team_calendar_events')
@@ -67,6 +57,8 @@ serve(async (req) => {
 
       calendarContent = generateICalContent(events, true);
     } else {
+      console.log("[iCal] Generating personal calendar for user:", user.id);
+      
       // Generate personal calendar content
       const { data: tasks, error: tasksError } = await supabaseClient
         .from('tasks')
@@ -83,6 +75,8 @@ serve(async (req) => {
     const filename = teamId 
       ? `team-${teamId}/calendar.ics`
       : `${user.id}/calendar.ics`;
+
+    console.log("[iCal] Uploading calendar file:", filename);
 
     // Upload the calendar file to the storage bucket
     const { data, error: uploadError } = await supabaseClient
