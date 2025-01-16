@@ -85,61 +85,64 @@ const Leads = () => {
 
   return (
     <div className="w-full overflow-hidden space-y-8 min-w-[600px]">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">
-          {settings?.language === "en" ? "Contacts" : "Kontakte"}
-        </h1>
-        <div className="flex items-center gap-4">
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === "kanban" ? "default" : "outline"}
-              size="icon"
-              onClick={() => setViewMode("kanban")}
-            >
-              <LayoutDashboard className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "outline"}
-              size="icon"
-              onClick={() => setViewMode("list")}
-            >
-              <LayoutList className="h-4 w-4" />
-            </Button>
-          </div>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Settings2 className="h-4 w-4" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>
-                  {settings?.language === "en" ? "Manage Phases" : "Phasen verwalten"}
-                </SheetTitle>
-                <SheetDescription>
-                  {settings?.language === "en"
-                    ? "Add new phases or modify existing ones. Drag and drop to reorder phases."
-                    : "Fügen Sie neue Phasen hinzu oder ändern Sie bestehende. Ziehen und ablegen zum Neuordnen der Phasen."}
-                </SheetDescription>
-              </SheetHeader>
-              <div className="mt-4">
-                <LeadPhaseManager />
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="flex flex-col gap-4 px-8 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">
+              {settings?.language === "en" ? "Contacts" : "Kontakte"}
+            </h1>
+            <div className="flex items-center gap-4">
+              <div className="flex gap-2">
+                <Button
+                  variant={viewMode === "kanban" ? "default" : "outline"}
+                  size="icon"
+                  onClick={() => setViewMode("kanban")}
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "default" : "outline"}
+                  size="icon"
+                  onClick={() => setViewMode("list")}
+                >
+                  <LayoutList className="h-4 w-4" />
+                </Button>
               </div>
-            </SheetContent>
-          </Sheet>
-          <AddLeadDialog />
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Settings2 className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>
+                      {settings?.language === "en" ? "Manage Phases" : "Phasen verwalten"}
+                    </SheetTitle>
+                    <SheetDescription>
+                      {settings?.language === "en"
+                        ? "Add new phases or modify existing ones. Drag and drop to reorder phases."
+                        : "Fügen Sie neue Phasen hinzu oder ändern Sie bestehende. Ziehen und ablegen zum Neuordnen der Phasen."}
+                    </SheetDescription>
+                  </SheetHeader>
+                  <div className="mt-4">
+                    <LeadPhaseManager />
+                  </div>
+                </SheetContent>
+              </Sheet>
+              <AddLeadDialog />
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <LeadSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+            <LeadFilters
+              selectedPhase={selectedPhase}
+              setSelectedPhase={setSelectedPhase}
+              selectedPlatform={selectedPlatform}
+              setSelectedPlatform={setSelectedPlatform}
+            />
+          </div>
         </div>
-      </div>
-
-      <div className="flex gap-4">
-        <LeadSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-        <LeadFilters
-          selectedPhase={selectedPhase}
-          setSelectedPhase={setSelectedPhase}
-          selectedPlatform={selectedPlatform}
-          setSelectedPlatform={setSelectedPlatform}
-        />
       </div>
 
       {viewMode === "kanban" ? (
