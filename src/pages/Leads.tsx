@@ -84,14 +84,25 @@ const Leads = () => {
   }
 
   return (
-    <div className="w-full overflow-hidden space-y-8 min-w-[600px]">
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="flex flex-col gap-4 px-8 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">
+    <div className="w-full space-y-8">
+      <div className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="max-w-full mx-auto">
+          <div className="flex items-center h-16 px-4">
+            <h1 className="text-3xl font-bold shrink-0">
               {settings?.language === "en" ? "Contacts" : "Kontakte"}
             </h1>
-            <div className="flex items-center gap-4">
+            
+            <div className="flex-1 px-4 mx-4">
+              <LeadSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+            </div>
+
+            <div className="flex items-center gap-4 shrink-0">
+              <LeadFilters
+                selectedPhase={selectedPhase}
+                setSelectedPhase={setSelectedPhase}
+                selectedPlatform={selectedPlatform}
+                setSelectedPlatform={setSelectedPlatform}
+              />
               <div className="flex gap-2">
                 <Button
                   variant={viewMode === "kanban" ? "default" : "outline"}
@@ -132,15 +143,6 @@ const Leads = () => {
               </Sheet>
               <AddLeadDialog />
             </div>
-          </div>
-          <div className="flex gap-4">
-            <LeadSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-            <LeadFilters
-              selectedPhase={selectedPhase}
-              setSelectedPhase={setSelectedPhase}
-              selectedPlatform={selectedPlatform}
-              setSelectedPlatform={setSelectedPlatform}
-            />
           </div>
         </div>
       </div>
