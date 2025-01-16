@@ -11,6 +11,7 @@ interface SortableLeadItemProps {
 
 export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const dragTimeoutRef = useRef<number | null>(null);
 
   const {
@@ -46,7 +47,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     }
 
     if (!isDragging) {
-      onLeadClick(lead.id); // Nur Klick ausführen, wenn nicht Dragging
+      setIsEditDialogOpen(true); // Nur Klick öffnet Detailansicht
     }
     setIsDragging(false);
   };
@@ -87,10 +88,12 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
         </div>
       </div>
 
-      <LeadDetailView
-        leadId={isDragging ? null : lead.id}
-        onClose={() => setIsDragging(false)}
-      />
+      {isEditDialogOpen && (
+        <LeadDetailView
+          leadId={lead.id}
+          onClose={() => setIsEditDialogOpen(false)}
+        />
+      )}
     </>
   );
 };
