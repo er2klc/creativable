@@ -79,9 +79,10 @@ export const PlatformCardContent = ({ platform }: PlatformCardContentProps) => {
   return (
     <div className="space-y-4 font-light">
       {platform.description && (
-        <p className="text-sm text-gray-300/90 line-clamp-2 font-normal">
-          {platform.description}
-        </p>
+        <div 
+          className="text-sm text-gray-300/90 line-clamp-2 font-normal"
+          dangerouslySetInnerHTML={{ __html: platform.description }}
+        />
       )}
       
       <div className="flex items-center gap-4 text-xs text-gray-300/90">
