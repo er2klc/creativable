@@ -14,6 +14,7 @@ import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { LeadPhaseManager } from "@/components/leads/LeadPhaseManager";
 import { Settings2, LayoutList, LayoutDashboard } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Sheet,
   SheetContent,
@@ -30,7 +31,8 @@ const Leads = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [showSendMessage, setShowSendMessage] = useState(false);
-  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
+  const isMobile = useIsMobile();
+  const [viewMode, setViewMode] = useState<"kanban" | "list">(isMobile ? "list" : "kanban");
   const { settings } = useSettings();
 
   useEffect(() => {
@@ -40,6 +42,10 @@ const Leads = () => {
       setSearchParams(searchParams);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    setViewMode(isMobile ? "list" : viewMode);
+  }, [isMobile]);
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ["leads", searchQuery, selectedPhase, selectedPlatform],

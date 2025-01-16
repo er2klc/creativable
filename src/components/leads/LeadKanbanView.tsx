@@ -56,45 +56,47 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
 
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="w-full overflow-x-auto">
-        <div 
-          className="flex gap-4 px-4" 
-          style={{ 
-            minWidth: `${totalWidth}px`,
-            width: '100%'
-          }}
-        >
-          {phases.map((phase) => (
+      <div className="w-full h-[calc(100vh-13rem)] overflow-hidden">
+        <div className="w-full h-full overflow-x-auto">
+          <div 
+            className="flex gap-4 px-4" 
+            style={{ 
+              minWidth: `${totalWidth}px`,
+              width: '100%'
+            }}
+          >
+            {phases.map((phase) => (
+              <div 
+                key={phase.id} 
+                className="flex-1" 
+                style={{ 
+                  minWidth: `${MIN_PHASE_WIDTH}px`
+                }}
+              >
+                <PhaseColumn
+                  phase={phase}
+                  leads={leads.filter(lead => lead.phase === phase.name)}
+                  onLeadClick={onLeadClick}
+                  onEditPhase={setEditingPhase}
+                />
+              </div>
+            ))}
             <div 
-              key={phase.id} 
               className="flex-1" 
               style={{ 
                 minWidth: `${MIN_PHASE_WIDTH}px`
               }}
             >
-              <PhaseColumn
-                phase={phase}
-                leads={leads.filter(lead => lead.phase === phase.name)}
-                onLeadClick={onLeadClick}
-                onEditPhase={setEditingPhase}
-              />
-            </div>
-          ))}
-          <div 
-            className="flex-1" 
-            style={{ 
-              minWidth: `${MIN_PHASE_WIDTH}px`
-            }}
-          >
-            <div className="bg-muted/50 p-4 rounded-lg h-full min-h-[500px] flex items-center justify-center">
-              <Button
-                variant="ghost"
-                className="h-full w-full flex flex-col gap-2 items-center justify-center hover:bg-primary/10"
-                onClick={() => addPhase.mutate()}
-              >
-                <Plus className="h-6 w-6" />
-                <span>{settings?.language === "en" ? "Add Phase" : "Phase hinzufügen"}</span>
-              </Button>
+              <div className="bg-muted/50 p-4 rounded-lg h-full min-h-[500px] flex items-center justify-center">
+                <Button
+                  variant="ghost"
+                  className="h-full w-full flex flex-col gap-2 items-center justify-center hover:bg-primary/10"
+                  onClick={() => addPhase.mutate()}
+                >
+                  <Plus className="h-6 w-6" />
+                  <span>{settings?.language === "en" ? "Add Phase" : "Phase hinzufügen"}</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
