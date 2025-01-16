@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, Trash2 } from "lucide-react";
+import { FileText, File, FileSpreadsheet, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -51,6 +51,23 @@ export const DocumentSection = ({ documents, isAdmin = false, onDocumentDeleted 
     }
   };
 
+  const getFileIcon = (fileType: string | undefined) => {
+    if (!fileType) return <FileText className="h-4 w-4" />;
+
+    switch (fileType.toLowerCase()) {
+      case 'application/pdf':
+        return <File className="h-4 w-4 text-red-600" />;
+      case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+      case 'application/vnd.ms-excel':
+        return <FileSpreadsheet className="h-4 w-4 text-green-600" />;
+      case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+      case 'application/msword':
+        return <FileText className="h-4 w-4 text-blue-600" />;
+      default:
+        return <FileText className="h-4 w-4" />;
+    }
+  };
+
   // If no documents exist, don't render anything
   if (!documents || documents.length === 0) {
     return null;
@@ -75,7 +92,7 @@ export const DocumentSection = ({ documents, isAdmin = false, onDocumentDeleted 
               }}
               className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900"
             >
-              <FileText className="h-4 w-4" />
+              {getFileIcon(doc.file_type)}
               <span>{doc.name}</span>
             </button>
             {isAdmin && (
