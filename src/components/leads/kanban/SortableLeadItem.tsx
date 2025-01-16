@@ -37,13 +37,33 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     }
   };
 
+  // Determine background style based on contact type
+  const getBackgroundStyle = () => {
+    const types = lead.contact_type?.split(',') || [];
+    const isPartner = types.includes('Partner');
+    const isKunde = types.includes('Kunde');
+
+    if (isPartner && isKunde) {
+      // Both partner and customer - gradient from partner to customer colors
+      return 'bg-gradient-to-r from-[#E5DEFF]/30 to-[#F2FCE2]/30';
+    } else if (isPartner) {
+      // Only partner - light purple gradient
+      return 'bg-gradient-to-r from-[#E5DEFF]/30 to-[#F1F0FB]/30';
+    } else if (isKunde) {
+      // Only customer - light green gradient
+      return 'bg-gradient-to-r from-[#F2FCE2]/30 to-[#E8F5D9]/30';
+    }
+    // Neither - white background
+    return 'bg-white';
+  };
+
   return (
     <>
       <div
         ref={setNodeRef}
         style={style}
         onClick={handleClick}
-        className={`bg-background rounded-lg border border-border/40 shadow-sm hover:shadow-md transition-all duration-200 group cursor-pointer ${
+        className={`${getBackgroundStyle()} rounded-lg border border-[#8E9196]/30 shadow-sm hover:shadow-md transition-all duration-200 group cursor-pointer ${
           isDragging ? 'shadow-lg ring-2 ring-primary cursor-grabbing scale-105' : ''
         }`}
         {...attributes}
