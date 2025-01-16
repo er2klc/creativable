@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 import { useSnapManagement } from "@/hooks/use-snap-management";
-import { SnapList } from "./SnapList";
+import { SnapList } from "./snap-lists/SnapList";
 import { SnapView } from "./SnapView";
 import { cn } from "@/lib/utils";
 

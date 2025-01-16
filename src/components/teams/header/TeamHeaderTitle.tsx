@@ -1,6 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Tables } from "@/integrations/supabase/types";
 import { TeamMemberList } from "./TeamMemberList";
 import { TeamAdminList } from "./TeamAdminList";
 
@@ -13,8 +12,26 @@ interface TeamHeaderTitleProps {
   isAdmin: boolean;
   membersCount: number;
   adminsCount: number;
-  members: Tables<"team_members">[];
-  adminMembers: Tables<"team_members">[];
+  members: {
+    id: string;
+    role: string;
+    user_id: string;
+    profiles: {
+      id: string;
+      display_name: string;
+      avatar_url: string;
+    };
+  }[];
+  adminMembers: {
+    id: string;
+    role: string;
+    user_id: string;
+    profiles: {
+      id: string;
+      display_name: string;
+      avatar_url: string;
+    };
+  }[];
 }
 
 export function TeamHeaderTitle({
@@ -39,7 +56,7 @@ export function TeamHeaderTitle({
               {membersCount} {membersCount === 1 ? "Mitglied" : "Mitglieder"}
             </HoverCardTrigger>
             <HoverCardContent align="start" className="w-80">
-              <TeamMemberList members={members} />
+              <TeamMemberList members={members} isAdmin={isAdmin} />
             </HoverCardContent>
           </HoverCard>
           <span>•</span>
@@ -48,7 +65,7 @@ export function TeamHeaderTitle({
               {adminsCount} {adminsCount === 1 ? "Admin" : "Admins"}
             </HoverCardTrigger>
             <HoverCardContent align="start" className="w-80">
-              <TeamAdminList members={adminMembers} />
+              <TeamAdminList adminMembers={adminMembers} />
             </HoverCardContent>
           </HoverCard>
         </div>
