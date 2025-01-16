@@ -35,7 +35,7 @@ export const VideoPlayer = ({
     <div 
       ref={containerRef} 
       style={CONTAINER_STYLES}
-      className="rounded-lg overflow-hidden bg-black/5"
+      className="w-full h-full rounded-lg overflow-hidden bg-black/5"
     />
   );
 };

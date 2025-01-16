@@ -15,8 +15,8 @@ export const VideoSection: React.FC<VideoSectionProps> = ({
   onDuration 
 }) => {
   return (
-    <div className="col-span-12">
-      <div className="w-full rounded-lg overflow-hidden bg-black/5">
+    <div className="col-span-12 lg:col-span-8">
+      <div className="w-full h-full rounded-lg overflow-hidden bg-black/5">
         <VideoPlayer 
           videoUrl={videoUrl} 
           onProgress={onVideoProgress} 
