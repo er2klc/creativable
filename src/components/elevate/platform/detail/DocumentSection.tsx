@@ -1,53 +1,44 @@
 import { useState } from "react";
-import { FileText, File, FileSpreadsheet, Trash2 } from "lucide-react";
+import { FileText, FilePdf, FileSpreadsheet, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DocumentPreview } from "./DocumentPreview";
 
 interface Document {
+  id: string;
   name: string;
-  url: string;
-  id?: string;
-  file_path?: string;
-  file_type?: string;
-  preview_file_path?: string;
-  preview_url?: string;
+  file_path: string;
+  file_type: string;
+  preview_file_path: string | null;
 }
 
 interface DocumentSectionProps {
   documents: Document[];
   isAdmin?: boolean;
-  onDocumentDeleted?: () => void;
+  onDelete?: (id: string) => void;
 }
 
-export const DocumentSection = ({ documents, isAdmin = false, onDocumentDeleted }: DocumentSectionProps) => {
+export const DocumentSection = ({ documents, isAdmin, onDelete }: DocumentSectionProps) => {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
 
-  const handleDelete = async (document: Document) => {
-    if (!document.id || !document.file_path) return;
-    
+  const handleDelete = async (id: string) => {
     try {
-      const { error: storageError } = await supabase.storage
-        .from('elevate-documents')
-        .remove([document.file_path]);
-
-      if (storageError) throw storageError;
-
-      const { error: dbError } = await supabase
+      const { error } = await supabase
         .from('elevate_lerninhalte_documents')
         .delete()
-        .eq('id', document.id);
+        .eq('id', id);
 
-      if (dbError) throw dbError;
+      if (error) throw error;
 
-      toast.success('Dokument erfolgreich gelöscht');
-      if (onDocumentDeleted) {
-        onDocumentDeleted();
+      toast.success("Dokument erfolgreich gelöscht");
+      
+      if (onDelete) {
+        onDelete(id);
       }
     } catch (error) {
       console.error('Error deleting document:', error);
-      toast.error('Fehler beim Löschen des Dokuments');
+      toast.error("Fehler beim Löschen des Dokuments");
     }
   };
 
@@ -56,7 +47,7 @@ export const DocumentSection = ({ documents, isAdmin = false, onDocumentDeleted 
 
     switch (fileType.toLowerCase()) {
       case 'application/pdf':
-        return <File className="h-4 w-4 text-red-600" />;
+        return <FilePdf className="h-4 w-4 text-red-600" />;
       case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
       case 'application/vnd.ms-excel':
         return <FileSpreadsheet className="h-4 w-4 text-green-600" />;
@@ -75,32 +66,27 @@ export const DocumentSection = ({ documents, isAdmin = false, onDocumentDeleted 
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Lerndokumente</h3>
-      <div className="space-y-0.5">
-        {documents.map((doc, index) => (
-          <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+      <div className="space-y-2">
+        {documents.map((doc) => (
+          <div
+            key={doc.id}
+            className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50"
+          >
             <button
               onClick={() => {
-                const previewUrl = doc.preview_file_path
-                  ? supabase.storage.from('elevate-documents').getPublicUrl(doc.preview_file_path).data.publicUrl
-                  : undefined;
-                
-                setSelectedDocument({
-                  ...doc,
-                  preview_url: previewUrl
-                });
+                setSelectedDocument(doc);
               }}
               className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900"
             >
               {getFileIcon(doc.file_type)}
-              <span>{doc.name}</span>
+              <span>{doc.file_name}</span>
             </button>
             {isAdmin && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleDelete(doc)}
-                className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                onClick={() => handleDelete(doc.id)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -108,11 +94,9 @@ export const DocumentSection = ({ documents, isAdmin = false, onDocumentDeleted 
           </div>
         ))}
       </div>
-
       <DocumentPreview
-        open={!!selectedDocument}
-        onOpenChange={(open) => !open && setSelectedDocument(null)}
-        document={selectedDocument || { name: "", url: "" }}
+        document={selectedDocument}
+        onClose={() => setSelectedDocument(null)}
       />
     </div>
   );
