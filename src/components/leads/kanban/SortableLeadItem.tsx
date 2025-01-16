@@ -12,6 +12,8 @@ interface SortableLeadItemProps {
 
 const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) => {
   const [isDragging, setIsDragging] = useState(false);
+  const dragTimeoutRef = useRef<number | null>(null);
+
   const {
     attributes,
     listeners,
@@ -25,31 +27,48 @@ const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) => {
   const style = transform
     ? {
         transform: CSS.Transform.toString(transform),
-        opacity: isDragging ? 0.5 : 1,
+        opacity: isDragging ? 0.8 : 1, // Transparenz beim Draggen
       }
     : undefined;
 
-  const handleDragStart = () => setIsDragging(true);
-  const handleDragEnd = () => setIsDragging(false);
+  const handleMouseDown = () => {
+    dragTimeoutRef.current = window.setTimeout(() => {
+      setIsDragging(true);
+    }, 150); // 150ms Verzögerung für Draggen
+  };
+
+  const handleMouseUp = () => {
+    if (dragTimeoutRef.current) {
+      clearTimeout(dragTimeoutRef.current);
+    }
+
+    if (!isDragging) {
+      onLeadClick(lead.id); // Nur auslösen, wenn kein Dragging stattgefunden hat
+    }
+    setIsDragging(false);
+  };
 
   return (
     <div
-  ref={setNodeRef}
-  style={style}
-  className={cn(
-    "p-3 rounded-lg bg-white shadow-md border hover:shadow-lg transition-shadow",
-    isDragging && "opacity-75"
-  )}
-  {...attributes}
-  {...listeners}
-  onClick={() => !isDragging && onLeadClick(lead.id)}
->
-  <div className="font-bold text-lg">{lead.name}</div>
-  <div className="text-sm text-gray-500">{lead.contact_type || "Nicht festgelegt"}</div>
-</div>
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "p-2 rounded-lg bg-white shadow-md border hover:shadow-lg transition-shadow",
+        isDragging && "shadow-xl ring-2 ring-primary scale-105"
+      )}
+      {...attributes}
+      {...listeners}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+    >
+      <div className="font-medium">{lead.name}</div>
+      <div className="text-sm text-gray-500">
+        {lead.contact_type || "Nicht festgelegt"}
+      </div>
     </div>
   );
 };
+
 
       <LeadDetailView
         leadId={isEditDialogOpen ? lead.id : null}
