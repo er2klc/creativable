@@ -6,20 +6,27 @@ interface UseYouTubePlayerProps {
   onProgress?: (progress: number) => void;
   savedProgress?: number;
   onDuration?: (duration: number) => void;
+  autoplay?: boolean;
 }
 
 export const useYouTubePlayer = ({ 
   videoUrl, 
   onProgress, 
-  savedProgress,
-  onDuration 
+  savedProgress = 0,
+  onDuration,
+  autoplay = true
 }: UseYouTubePlayerProps) => {
   const [isAPILoaded, setIsAPILoaded] = useState(false);
   const playerRef = useRef<any>(null);
-  const trackingIntervalRef = useRef<number>();
+  const progressIntervalRef = useRef<number>();
+  const savedProgressRef = useRef(savedProgress);
 
   useEffect(() => {
-    const loadYouTubeAPI = () => {
+    savedProgressRef.current = savedProgress;
+  }, [savedProgress]);
+
+  useEffect(() => {
+    if (!(window as any).YT) {
       const tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
       const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -28,20 +35,41 @@ export const useYouTubePlayer = ({
       (window as any).onYouTubeIframeAPIReady = () => {
         setIsAPILoaded(true);
       };
-    };
-
-    if (!(window as any).YT) {
-      loadYouTubeAPI();
     } else {
       setIsAPILoaded(true);
     }
 
     return () => {
-      if (trackingIntervalRef.current) {
-        clearInterval(trackingIntervalRef.current);
+      if (progressIntervalRef.current) {
+        window.clearInterval(progressIntervalRef.current);
+      }
+      if (playerRef.current) {
+        try {
+          playerRef.current.destroy();
+        } catch (error) {
+          console.error('Error destroying player:', error);
+        }
       }
     };
   }, []);
+
+  const startProgressTracking = useCallback(() => {
+    if (progressIntervalRef.current) {
+      window.clearInterval(progressIntervalRef.current);
+    }
+
+    progressIntervalRef.current = window.setInterval(() => {
+      if (!playerRef.current) return;
+
+      const currentTime = playerRef.current.getCurrentTime();
+      const duration = playerRef.current.getDuration();
+      
+      if (duration > 0) {
+        const progress = (currentTime / duration) * 100;
+        onProgress?.(progress);
+      }
+    }, 1000);
+  }, [onProgress]);
 
   const initializePlayer = useCallback((containerElement: HTMLElement) => {
     if (!videoUrl || !isAPILoaded) return;
@@ -60,40 +88,42 @@ export const useYouTubePlayer = ({
     containerElement.appendChild(playerContainer);
 
     if (playerRef.current) {
-      if (trackingIntervalRef.current) {
-        clearInterval(trackingIntervalRef.current);
+      if (progressIntervalRef.current) {
+        window.clearInterval(progressIntervalRef.current);
       }
       playerRef.current.destroy();
     }
 
     playerRef.current = new (window as any).YT.Player(playerId, {
       videoId,
-      playerVars: DEFAULT_PLAYER_VARS,
+      playerVars: {
+        ...DEFAULT_PLAYER_VARS,
+        start: Math.floor(savedProgressRef.current),
+        autoplay: autoplay ? 1 : 0,
+      },
       events: {
         onReady: (event: any) => {
           const duration = event.target.getDuration();
           if (onDuration && duration > 0) {
             onDuration(duration);
           }
-          if (savedProgress && savedProgress > 0) {
-            event.target.seekTo(savedProgress);
+          if (autoplay) {
+            event.target.playVideo();
           }
+          startProgressTracking();
         },
         onStateChange: (event: any) => {
           if (event.data === (window as any).YT.PlayerState.PLAYING) {
-            trackingIntervalRef.current = window.setInterval(() => {
-              const currentTime = playerRef.current?.getCurrentTime() || 0;
-              const duration = playerRef.current?.getDuration() || 0;
-              const progress = (currentTime / duration) * 100;
-              onProgress?.(progress);
-            }, 1000);
-          } else if (trackingIntervalRef.current) {
-            clearInterval(trackingIntervalRef.current);
+            startProgressTracking();
+          } else if (event.data === (window as any).YT.PlayerState.PAUSED) {
+            if (progressIntervalRef.current) {
+              window.clearInterval(progressIntervalRef.current);
+            }
           }
         }
       }
     });
-  }, [videoUrl, isAPILoaded, onProgress, savedProgress, onDuration]);
+  }, [videoUrl, isAPILoaded, onDuration, autoplay, startProgressTracking]);
 
   return {
     isAPILoaded,

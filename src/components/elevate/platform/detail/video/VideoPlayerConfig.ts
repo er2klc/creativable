@@ -1,12 +1,13 @@
 export const DEFAULT_PLAYER_VARS = {
-  autoplay: 0,
+  autoplay: 1,
   controls: 1,
+  disablekb: 1,
+  fs: 0,
   modestbranding: 1,
+  playsinline: 1,
   rel: 0,
   showinfo: 0,
-  fs: 0,
   iv_load_policy: 3,
-  disablekb: 1,
 } as const;
 
 export const PLAYER_STYLES = {

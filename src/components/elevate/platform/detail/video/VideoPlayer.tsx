@@ -20,7 +20,8 @@ export const VideoPlayer = ({
     videoUrl,
     onProgress,
     savedProgress,
-    onDuration
+    onDuration,
+    autoplay: true,
   });
 
   useEffect(() => {
