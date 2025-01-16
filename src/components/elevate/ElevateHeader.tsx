@@ -1,6 +1,6 @@
 import { GraduationCap } from "lucide-react";
 import { CreatePlatformDialog } from "./CreatePlatformDialog";
-import { Button } from "@/components/ui/button";
+import { JoinPlatformDialog } from "./JoinPlatformDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,9 +69,7 @@ export const ElevateHeader = ({
             ))}
           </SelectContent>
         </Select>
-        <Button variant="outline">
-          Modul beitreten
-        </Button>
+        <JoinPlatformDialog onPlatformJoined={onPlatformCreated} />
         <CreatePlatformDialog onPlatformCreated={onPlatformCreated} />
       </div>
     </div>
