@@ -94,15 +94,15 @@ export const DashboardSidebar = () => {
   
   return (
     <Sidebar 
-      className={`fixed group w-[60px] hover:w-[240px] transition-all duration-300 ease-in-out ${isExpanded ? 'w-[240px] z-[999]' : 'z-[10]'}`}
+      className={`fixed group w-[65px] hover:w-[240px] transition-all duration-300 ease-in-out ${isExpanded ? 'w-[240px] z-[999]' : 'z-[10]'}`}
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
-      <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[60px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
+      <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[65px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
       <SidebarContent className="flex flex-col h-full relative">
         <SidebarHeader isExpanded={isExpanded} />
 
-        <div className="flex-1 overflow-y-auto no-scrollbar pt-4">
+        <div className="flex-1 overflow-y-auto no-scrollbar pt-6">
           <SidebarMenuSection 
             title="Persönlich" 
             items={personalItems()} 
