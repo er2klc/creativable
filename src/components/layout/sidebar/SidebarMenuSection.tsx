@@ -48,8 +48,8 @@ export const SidebarMenuSection = ({
                 <a href={item.url} className="flex items-center gap-3 relative px-4 py-5 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
                   <div className="relative">
                     {item.showProgress ? (
-                      <div className="relative">
-  <svg className="w-12 h-12 relative" viewBox="0 0 36 36">
+                     <div className="relative">
+  <svg className="w-8 h-8 relative" viewBox="0 0 36 36">
     <path
       d="M18 2.0845
         a 15.9155 15.9155 0 0 1 0 31.831
@@ -70,7 +70,7 @@ export const SidebarMenuSection = ({
     />
   </svg>
   <item.icon
-    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6"
+    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-5 w-5"
   />
   {elevateProgress > 0 && (
     <span
