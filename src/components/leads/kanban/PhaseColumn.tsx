@@ -1,6 +1,6 @@
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
-import { Edit, ArrowDown } from "lucide-react";
+import { Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tables } from "@/integrations/supabase/types";
 import { SortableLeadItem } from "./SortableLeadItem";
@@ -49,13 +49,6 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
           ))}
         </div>
       </SortableContext>
-      {isOver && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-primary/90 text-primary-foreground rounded-full p-2 shadow-lg animate-bounce">
-            <ArrowDown className="h-6 w-6" />
-          </div>
-        </div>
-      )}
       <div className="mt-4">
         <AddLeadButton phase={phase.name} />
       </div>
