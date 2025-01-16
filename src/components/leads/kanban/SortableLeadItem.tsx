@@ -32,11 +32,13 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     zIndex: isDragging ? 50 : undefined,
   };
 
+  // Separate click handler from drag attributes
   const handleClick = (e: React.MouseEvent) => {
     if (!isDragging) {
+      e.preventDefault();
       e.stopPropagation();
-      onLeadClick(lead.id);
       setIsEditDialogOpen(true);
+      onLeadClick(lead.id);
     }
   };
 
@@ -61,14 +63,15 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
       <div
         ref={setNodeRef}
         style={style}
-        onClick={handleClick}
         className={`${getBackgroundStyle()} rounded-lg border border-[#8E9196]/30 shadow-sm hover:shadow-md transition-all duration-200 group ${
           isDragging ? 'shadow-lg ring-2 ring-primary cursor-grabbing scale-105' : ''
         }`}
-        {...attributes}
-        {...listeners}
       >
-        <div className="p-4">
+        <div 
+          {...attributes}
+          {...listeners}
+          className="p-4 cursor-grab active:cursor-grabbing"
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="font-medium">{lead.name}</span>
@@ -79,7 +82,10 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
             {lead.contact_type || "Nicht festgelegt"}
           </div>
         </div>
-        <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none" />
+        <div 
+          onClick={handleClick}
+          className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg cursor-pointer"
+        />
       </div>
 
       <LeadDetailView
