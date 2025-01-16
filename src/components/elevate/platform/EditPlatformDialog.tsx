@@ -35,7 +35,7 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
       if (error) throw error;
       return platform;
     },
-    enabled: open,
+    enabled: open && !!platformId,
   });
 
   // Update form when platform data is loaded
@@ -71,12 +71,11 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
       }
       return teamAccess;
     },
-    enabled: open,
+    enabled: open && !!platformId,
   });
 
   const handleSave = async () => {
     try {
-      // Update platform details
       const { error: platformError } = await supabase
         .from('elevate_platforms')
         .update({ 
