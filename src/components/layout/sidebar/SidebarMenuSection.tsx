@@ -49,36 +49,37 @@ export const SidebarMenuSection = ({
                   <div className="relative">
                     {item.showProgress ? (
                       <div className="relative">
-                        <svg className="w-8 h-8" viewBox="0 0 36 36">
-                          <path
-                            d="M18 2.0845
-                              a 15.9155 15.9155 0 0 1 0 31.831
-                              a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            stroke="#444"
-                            strokeWidth="2"
-                            strokeDasharray="100, 100"
-                          />
-                          <path
-                            d="M18 2.0845
-                              a 15.9155 15.9155 0 0 1 0 31.831
-                              a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            stroke="#F1C232"
-                            strokeWidth="2"
-                            strokeDasharray={`${elevateProgress}, 100`}
-                          />
-                          <item.icon className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-5 w-5" />
-                        </svg>
-                        {elevateProgress > 0 && (
-                          <Badge 
-                            variant="outline" 
-                            className="absolute -top-2 -right-2 text-xs min-w-[24px] h-[20px] flex items-center justify-center px-1 text-white border-none"
-                          >
-                            {elevateProgress}%
-                          </Badge>
-                        )}
-                      </div>
+  <svg className="w-12 h-12 relative" viewBox="0 0 36 36">
+    <path
+      d="M18 2.0845
+        a 15.9155 15.9155 0 0 1 0 31.831
+        a 15.9155 15.9155 0 0 1 0 -31.831"
+      fill="none"
+      stroke="#444"
+      strokeWidth="2"
+      strokeDasharray="100, 100"
+    />
+    <path
+      d="M18 2.0845
+        a 15.9155 15.9155 0 0 1 0 31.831
+        a 15.9155 15.9155 0 0 1 0 -31.831"
+      fill="none"
+      stroke="#F1C232" // Fortschrittsfarbe in Orange
+      strokeWidth="2"
+      strokeDasharray={`${elevateProgress}, 100`}
+    />
+  </svg>
+  <item.icon
+    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6"
+  />
+  {elevateProgress > 0 && (
+    <span
+      className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-[60%] text-xs text-[#F1C232]"
+    >
+      {elevateProgress}%
+    </span>
+  )}
+</div>
                     ) : (
                       <div className="relative">
                         <item.icon className={`shrink-0 transition-all duration-300 ${isExpanded ? 'h-[25px] w-[25px]' : 'h-[25px] w-[25px]'} group-hover/item:h-[32px] group-hover/item:w-[32px]`} /> 
