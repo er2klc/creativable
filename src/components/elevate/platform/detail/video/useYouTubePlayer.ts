@@ -20,6 +20,7 @@ export const useYouTubePlayer = ({
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<number>();
   const savedProgressRef = useRef(savedProgress);
+  const containerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     savedProgressRef.current = savedProgress;
@@ -72,8 +73,10 @@ export const useYouTubePlayer = ({
   }, [onProgress]);
 
   const initializePlayer = useCallback((containerElement: HTMLElement) => {
-    if (!videoUrl || !isAPILoaded) return;
-
+    if (!videoUrl || !isAPILoaded || containerRef.current === containerElement) return;
+    
+    containerRef.current = containerElement;
+    
     const videoId = videoUrl.includes('v=') 
       ? videoUrl.split('v=')[1].split('&')[0]
       : videoUrl.split('/').pop();
