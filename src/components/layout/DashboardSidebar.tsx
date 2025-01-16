@@ -105,7 +105,7 @@ export const DashboardSidebar = () => {
         <div className="flex-1 overflow-y-auto no-scrollbar pt-4">
           <SidebarMenuSection 
             title="Persönlich" 
-            items={personalItems} 
+            items={personalItems()} 
             isExpanded={isExpanded}
             unreadCount={unreadCount}
           />

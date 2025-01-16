@@ -13,7 +13,7 @@ interface MenuItem {
   title: string;
   icon: LucideIcon;
   url: string;
-  badge?: boolean;
+  badge?: boolean | number;
 }
 
 interface SidebarMenuSectionProps {
@@ -46,8 +46,19 @@ export const SidebarMenuSection = ({
                   <span className={`transition-opacity duration-300 whitespace-nowrap text-sm text-white ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
                     {item.title}
                   </span>
-                  {item.badge && unreadCount > 0 && (
-                    <Badge variant="destructive" className={`absolute right-2 -top-1 transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                  {typeof item.badge === 'number' && (
+                    <Badge 
+                      variant="outline" 
+                      className={`absolute right-2 -top-1 transition-opacity duration-300 bg-[#9b87f5] text-white border-none ${isExpanded ? 'opacity-100' : 'opacity-0'}`}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                  {item.badge === true && unreadCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className={`absolute right-2 -top-1 transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}
+                    >
                       {unreadCount}
                     </Badge>
                   )}
