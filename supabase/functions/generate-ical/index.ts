@@ -40,19 +40,67 @@ serve(async (req) => {
       throw new Error("Unauthorized: Invalid token");
     }
 
-    // Get request body to check if this is for a team calendar
     const { teamId } = await req.json();
-    
-    // Generate the appropriate URL based on whether this is a team calendar or personal calendar
-    const baseUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1`;
-    const calendarUrl = teamId
-      ? `${baseUrl}/team-calendar/${teamId}/${user.id}`
-      : `${baseUrl}/calendar/${user.id}`;
-    
+
+    // Generate calendar content based on whether it's a team or personal calendar
+    let calendarContent;
+    if (teamId) {
+      // Generate team calendar content
+      const { data: events, error: eventsError } = await supabaseClient
+        .from('team_calendar_events')
+        .select('*')
+        .eq('team_id', teamId);
+
+      if (eventsError) throw eventsError;
+
+      calendarContent = generateICalContent(events, true);
+    } else {
+      // Generate personal calendar content
+      const { data: tasks, error: tasksError } = await supabaseClient
+        .from('tasks')
+        .select('*, leads(name)')
+        .eq('user_id', user.id)
+        .not('due_date', 'is', null);
+
+      if (tasksError) throw tasksError;
+
+      calendarContent = generateICalContent(tasks, false);
+    }
+
+    // Create a unique filename for the calendar
+    const filename = teamId 
+      ? `team-${teamId}/calendar.ics`
+      : `${user.id}/calendar.ics`;
+
+    // Upload the calendar file to the storage bucket
+    const { data, error: uploadError } = await supabaseClient
+      .storage
+      .from('calendars')
+      .upload(filename, calendarContent, {
+        contentType: 'text/calendar',
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error("[iCal] Upload error:", uploadError);
+      throw uploadError;
+    }
+
+    // Get the public URL for the uploaded file
+    const { data: { publicUrl }, error: urlError } = supabaseClient
+      .storage
+      .from('calendars')
+      .getPublicUrl(filename);
+
+    if (urlError) {
+      console.error("[iCal] Error getting public URL:", urlError);
+      throw urlError;
+    }
+
     console.log("[iCal] Successfully generated calendar URL");
 
     return new Response(
-      JSON.stringify({ url: calendarUrl }),
+      JSON.stringify({ url: publicUrl }),
       {
         headers: {
           ...corsHeaders,
@@ -79,3 +127,52 @@ serve(async (req) => {
     );
   }
 });
+
+function generateICalContent(events: any[], isTeamCalendar: boolean): string {
+  let iCalContent = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Lovable//Calendar//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+  ];
+
+  events.forEach((event) => {
+    if (isTeamCalendar) {
+      // Handle team calendar events
+      const startDate = new Date(event.start_time);
+      const endDate = event.end_time ? new Date(event.end_time) : startDate;
+      
+      iCalContent = iCalContent.concat([
+        'BEGIN:VEVENT',
+        `UID:${event.id}`,
+        `DTSTAMP:${formatDate(startDate)}`,
+        `DTSTART:${formatDate(startDate)}`,
+        `DTEND:${formatDate(endDate)}`,
+        `SUMMARY:${event.title}`,
+        event.description ? `DESCRIPTION:${event.description}` : '',
+        'END:VEVENT',
+      ]);
+    } else {
+      // Handle personal calendar events (tasks)
+      const dueDate = new Date(event.due_date);
+      const leadName = event.leads?.name || '';
+      
+      iCalContent = iCalContent.concat([
+        'BEGIN:VEVENT',
+        `UID:${event.id}`,
+        `DTSTAMP:${formatDate(dueDate)}`,
+        `DTSTART:${formatDate(dueDate)}`,
+        `SUMMARY:${event.title}${leadName ? ` mit ${leadName}` : ''}`,
+        'END:VEVENT',
+      ]);
+    }
+  });
+
+  iCalContent.push('END:VCALENDAR');
+  return iCalContent.join('\r\n');
+}
+
+function formatDate(date: Date): string {
+  return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+}
