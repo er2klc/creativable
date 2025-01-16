@@ -34,22 +34,19 @@ const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) => {
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "p-2 rounded hover:opacity-80 space-y-1 border shadow-sm",
-        isDragging && "shadow-lg ring-2 ring-primary scale-[1.02]"
-      )}
-      {...attributes}
-      {...listeners}
-      onMouseDown={handleDragStart}
-      onMouseUp={handleDragEnd}
-      onClick={() => !isDragging && onLeadClick(lead.id)} // Nur wenn kein Drag
-    >
-      <div className="font-medium">{lead.name}</div>
-      <div className="text-sm text-muted-foreground">
-        {lead.contact_type || "Nicht festgelegt"}
-      </div>
+  ref={setNodeRef}
+  style={style}
+  className={cn(
+    "p-3 rounded-lg bg-white shadow-md border hover:shadow-lg transition-shadow",
+    isDragging && "opacity-75"
+  )}
+  {...attributes}
+  {...listeners}
+  onClick={() => !isDragging && onLeadClick(lead.id)}
+>
+  <div className="font-bold text-lg">{lead.name}</div>
+  <div className="text-sm text-gray-500">{lead.contact_type || "Nicht festgelegt"}</div>
+</div>
     </div>
   );
 };
