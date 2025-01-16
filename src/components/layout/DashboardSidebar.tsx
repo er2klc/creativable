@@ -6,7 +6,7 @@ import { SidebarHeader } from "./sidebar/SidebarHeader";
 import { SidebarFooter } from "./sidebar/SidebarFooter";
 import { SidebarMenuSection } from "./sidebar/SidebarMenuSection";
 import { 
-  personalItems, 
+  usePersonalItems, 
   teamItems, 
   analysisItems, 
   legalItems,
@@ -17,8 +17,8 @@ export const DashboardSidebar = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [currentVersion, setCurrentVersion] = useState("0.31");
+  const personalItems = usePersonalItems();
 
-  // Fetch latest version from changelog
   const { data: latestVersion } = useQuery({
     queryKey: ['latest-version'],
     queryFn: async () => {
@@ -105,7 +105,7 @@ export const DashboardSidebar = () => {
         <div className="flex-1 overflow-y-auto no-scrollbar pt-6">
           <SidebarMenuSection 
             title="Persönlich" 
-            items={personalItems()} 
+            items={personalItems} 
             isExpanded={isExpanded}
             unreadCount={unreadCount}
           />

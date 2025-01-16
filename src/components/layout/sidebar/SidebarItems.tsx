@@ -18,7 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, endOfDay } from "date-fns";
 
-const useTaskCount = () => {
+export const useTaskCount = () => {
   return useQuery({
     queryKey: ['task-count'],
     queryFn: async () => {
@@ -37,7 +37,7 @@ const useTaskCount = () => {
   });
 };
 
-const useAppointmentCount = () => {
+export const useAppointmentCount = () => {
   return useQuery({
     queryKey: ['todays-appointments'],
     queryFn: async () => {
@@ -63,7 +63,28 @@ const useAppointmentCount = () => {
   });
 };
 
-export const personalItems = () => {
+export const teamItems = [
+  { title: "Unity", icon: Infinity, url: "/unity" },
+  { title: "Elevate", icon: GraduationCap, url: "/elevate" },
+];
+
+export const analysisItems = [
+  { title: "Berichte", icon: BarChart, url: "/reports" },
+  { title: "Tools", icon: Wrench, url: "/tools" },
+  { title: "Einstellungen", icon: Settings, url: "/settings" },
+];
+
+export const legalItems = [
+  { title: "Impressum", icon: FileText, url: "/impressum" },
+  { title: "Datenschutz", icon: Shield, url: "/privacy-policy" },
+  { title: "Datenlöschung", icon: Globe2, url: "/auth/data-deletion/instagram" },
+];
+
+export const adminItems = [
+  { title: "Admin Dashboard", icon: Database, url: "/admin" },
+];
+
+export const usePersonalItems = () => {
   const { data: taskCount = 0 } = useTaskCount();
   const { data: appointmentCount = 0 } = useAppointmentCount();
 
@@ -90,24 +111,3 @@ export const personalItems = () => {
     },
   ];
 };
-
-export const teamItems = [
-  { title: "Unity", icon: Infinity, url: "/unity" },
-  { title: "Elevate", icon: GraduationCap, url: "/elevate" },
-];
-
-export const analysisItems = [
-  { title: "Berichte", icon: BarChart, url: "/reports" },
-  { title: "Tools", icon: Wrench, url: "/tools" },
-  { title: "Einstellungen", icon: Settings, url: "/settings" },
-];
-
-export const legalItems = [
-  { title: "Impressum", icon: FileText, url: "/impressum" },
-  { title: "Datenschutz", icon: Shield, url: "/privacy-policy" },
-  { title: "Datenlöschung", icon: Globe2, url: "/auth/data-deletion/instagram" },
-];
-
-export const adminItems = [
-  { title: "Admin Dashboard", icon: Database, url: "/admin" },
-];
