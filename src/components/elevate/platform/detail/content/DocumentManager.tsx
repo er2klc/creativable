@@ -7,6 +7,7 @@ interface DocumentManagerProps {
     file_name: string;
     file_path: string;
     file_type: string;
+    preview_file_path: string | null;
   }>;
   isAdmin?: boolean;
   onDocumentDeleted?: () => Promise<void>;
@@ -22,14 +23,9 @@ export const DocumentManager = ({
   return (
     <div className="col-span-4">
       <DocumentSection
-        documents={existingFiles?.map(file => ({
-          id: file.id,
-          name: file.file_name,
-          url: supabase.storage.from('elevate-documents').getPublicUrl(file.file_path).data.publicUrl,
-          file_path: file.file_path
-        })) || []}
+        documents={existingFiles}
         isAdmin={isAdmin}
-        onDocumentDeleted={onDocumentDeleted}
+        onDelete={onDocumentDeleted}
       />
     </div>
   );

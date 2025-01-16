@@ -73,9 +73,7 @@ export const DocumentSection = ({ documents, isAdmin, onDelete }: DocumentSectio
             className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50"
           >
             <button
-              onClick={() => {
-                setSelectedDocument(doc);
-              }}
+              onClick={() => setSelectedDocument(doc)}
               className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900"
             >
               {getFileIcon(doc.file_type)}
@@ -94,10 +92,20 @@ export const DocumentSection = ({ documents, isAdmin, onDelete }: DocumentSectio
           </div>
         ))}
       </div>
-      <DocumentPreview
-        document={selectedDocument}
-        onClose={() => setSelectedDocument(null)}
-      />
+      {selectedDocument && (
+        <DocumentPreview
+          document={{
+            name: selectedDocument.file_name,
+            url: supabase.storage.from('elevate-documents').getPublicUrl(selectedDocument.file_path).data.publicUrl,
+            file_type: selectedDocument.file_type,
+            preview_url: selectedDocument.preview_file_path 
+              ? supabase.storage.from('elevate-documents').getPublicUrl(selectedDocument.preview_file_path).data.publicUrl 
+              : undefined
+          }}
+          open={!!selectedDocument}
+          onOpenChange={(open) => !open && setSelectedDocument(null)}
+        />
+      )}
     </div>
   );
 };
