@@ -29,11 +29,11 @@ export const ICalButton = ({ teamId, teamName }: ICalButtonProps) => {
         return;
       }
 
-      console.log("[iCal] Generating calendar URL for", teamId ? team ${teamId} : "personal calendar");
+      console.log("[iCal] Generating calendar URL for", teamId ? `team ${teamId}` : "personal calendar");
 
       const { data, error } = await supabase.functions.invoke('generate-ical', {
         headers: {
-          Authorization: Bearer ${session.access_token},
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: {
           teamId: teamId,

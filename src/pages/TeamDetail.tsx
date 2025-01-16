@@ -106,7 +106,6 @@ const TeamDetail = () => {
           {showCalendar ? (
             <TeamCalendarView
               teamId={team.id}
-              teamName={team.name}
               isAdmin={isAdmin}
               onBack={() => {
                 setShowCalendar(false);
