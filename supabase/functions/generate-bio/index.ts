@@ -31,14 +31,39 @@ serve(async (req) => {
       }
     );
 
+    // Get user's session to verify authentication
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    
+    if (userError || !user) {
+      console.error('Error getting user:', userError);
+      throw new Error('Unauthorized');
+    }
+
+    console.log('Fetching settings for user:', user.id);
+
     // Get user's OpenAI API key from settings
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
       .select('openai_api_key')
+      .eq('user_id', user.id)
       .single();
 
-    if (settingsError || !settings?.openai_api_key) {
-      console.error('Error fetching OpenAI API key:', settingsError);
+    if (settingsError) {
+      console.error('Error fetching settings:', settingsError);
+      return new Response(
+        JSON.stringify({
+          error: 'Failed to fetch settings',
+          details: settingsError.message
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
+
+    if (!settings?.openai_api_key) {
+      console.error('No OpenAI API key found in settings');
       return new Response(
         JSON.stringify({
           error: 'OpenAI API key not found in settings. Please add your API key in the settings page.',
@@ -53,7 +78,7 @@ serve(async (req) => {
 
     const { role, target_audience, unique_strengths, mission, social_proof, cta_goal, url, preferred_emojis, language } = await req.json();
 
-   const prompt = `
+    const prompt = `
 Write a professional ${language === 'English' ? 'English' : 'German'} Instagram bio. 
 The bio must:
 - Be exactly 150 characters, split into 4 lines.
@@ -76,7 +101,6 @@ Details:
 
 Generate the bio now, ensuring each line starts with an emoji.
 `;
-
 
     console.log('Creating OpenAI request with prompt:', prompt);
     

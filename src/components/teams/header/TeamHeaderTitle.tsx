@@ -110,7 +110,7 @@ export function TeamHeaderTitle({
       </Sheet>
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-4xl font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-semibold">
             {team.name}
           </h1>
         </div>
