@@ -80,10 +80,9 @@ const BioGenerator = () => {
       console.info("Generating bio with values:", values);
       
       // Get the user ID and session
-      const { data: { user } } = await supabase.auth.getUser();
       const { data: { session } } = await supabase.auth.getSession();
 
-      if (!user?.id || !session?.access_token) {
+      if (!session?.access_token) {
         throw new Error("Authentication required");
       }
 
@@ -104,7 +103,7 @@ const BioGenerator = () => {
       const { error: saveError } = await supabase
         .from("user_bios")
         .upsert({
-          user_id: user.id,
+          user_id: session.user.id,
           ...values,
           generated_bio: bioData.bio,
           updated_at: new Date().toISOString()
