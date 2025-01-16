@@ -65,12 +65,10 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
         className={`${getBackgroundStyle()} rounded-lg border border-[#8E9196]/30 shadow-sm hover:shadow-md transition-all duration-200 group ${
           isDragging ? 'shadow-lg ring-2 ring-primary cursor-grabbing scale-105' : ''
         }`}
+        {...attributes}
+        {...listeners}
       >
-        <div 
-          {...attributes}
-          {...listeners}
-          className="p-4 cursor-grab active:cursor-grabbing"
-        >
+        <div className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="font-medium">{lead.name}</span>

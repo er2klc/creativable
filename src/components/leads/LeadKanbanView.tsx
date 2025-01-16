@@ -16,6 +16,9 @@ import { PhaseColumn } from "./kanban/PhaseColumn";
 import { useKanbanSubscription } from "./kanban/useKanbanSubscription";
 import { usePhaseQuery } from "./kanban/usePhaseQuery";
 import { usePhaseMutations } from "./kanban/usePhaseMutations";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -27,9 +30,41 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
   const [editingPhase, setEditingPhase] = useState<Tables<"lead_phases"> | null>(null);
   const { data: phases = [] } = usePhaseQuery();
   const { updateLeadPhase, addPhase, updatePhaseName } = usePhaseMutations();
+  const queryClient = useQueryClient();
 
   // Use the subscription hook
   useKanbanSubscription();
+
+  const updateLeadPhaseMutation = useMutation({
+    mutationFn: async ({ leadId, newPhase }: { leadId: string; newPhase: string }) => {
+      const { error } = await supabase
+        .from("leads")
+        .update({ 
+          phase: newPhase,
+          last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
+          last_action_date: new Date().toISOString(),
+        })
+        .eq("id", leadId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast.success(
+        settings?.language === "en" 
+          ? "Contact phase updated successfully" 
+          : "Kontaktphase erfolgreich aktualisiert"
+      );
+    },
+    onError: (error) => {
+      console.error("Error updating lead phase:", error);
+      toast.error(
+        settings?.language === "en"
+          ? "Failed to update contact phase"
+          : "Fehler beim Aktualisieren der Kontaktphase"
+      );
+    },
+  });
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -37,13 +72,13 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     if (!over || !active) return;
 
     const leadId = active.id as string;
-    const newPhase = phases.find(phase => phase.id === over.id);
+    const newPhase = phases.find(phase => phase.id === over.id)?.name;
     
     if (newPhase) {
       try {
-        await updateLeadPhase.mutateAsync({ 
+        await updateLeadPhaseMutation.mutateAsync({ 
           leadId, 
-          phaseName: newPhase.name 
+          newPhase 
         });
       } catch (error) {
         console.error("Error updating lead phase:", error);

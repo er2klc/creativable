@@ -1,4 +1,3 @@
-import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
 import { Edit, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,17 +38,15 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
         </div>
       </div>
       <div className="p-4 flex-1">
-        <SortableContext items={leads.map((l) => l.id)} strategy={rectSortingStrategy}>
-          <div className="space-y-2">
-            {leads.map((lead) => (
-              <SortableLeadItem
-                key={lead.id}
-                lead={lead}
-                onLeadClick={onLeadClick}
-              />
-            ))}
-          </div>
-        </SortableContext>
+        <div className="space-y-2">
+          {leads.map((lead) => (
+            <SortableLeadItem
+              key={lead.id}
+              lead={lead}
+              onLeadClick={onLeadClick}
+            />
+          ))}
+        </div>
         <div className="mt-4">
           <AddLeadButton phase={phase.name} />
         </div>
