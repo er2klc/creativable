@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { MobileMenu } from "./MobileMenu";
-import { useLocation } from "react-router-dom";
 
 interface MainContentProps {
   children: React.ReactNode;
@@ -8,9 +7,6 @@ interface MainContentProps {
 }
 
 export const MainContent = ({ children, className }: MainContentProps) => {
-  const location = useLocation();
-  const isLeadsPage = location.pathname === "/leads";
-
   return (
     <main className={cn("flex-1", className)}>
       <div className="sticky top-0 z-50 flex items-center justify-between bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/90 px-2 py-2 border-b border-sidebar-border md:hidden">
@@ -24,9 +20,7 @@ export const MainContent = ({ children, className }: MainContentProps) => {
         </div>
         <MobileMenu />
       </div>
-      <div className={cn(
-        isLeadsPage ? "w-full px-20" : "max-w-7xl mx-auto p-2 md:p-8"
-      )}>
+      <div className="max-w-7xl mx-auto p-2 md:p-8">
         {children}
       </div>
     </main>
