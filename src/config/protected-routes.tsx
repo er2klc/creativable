@@ -14,6 +14,7 @@ import TeamDetail from "@/pages/TeamDetail";
 import PlatformDetail from "@/pages/PlatformDetail";
 import SignatureGenerator from "@/pages/SignatureGenerator";
 import LeaderBoard from "@/pages/LeaderBoard";
+import Admin from "@/pages/Admin";
 
 export const protectedRoutes = [
   {
@@ -79,5 +80,9 @@ export const protectedRoutes = [
   {
     path: "/leaderboard/:teamId",
     element: <LeaderBoard />,
+  },
+  {
+    path: "/admin",
+    element: <Admin />,
   }
 ];
