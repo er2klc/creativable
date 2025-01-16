@@ -138,7 +138,7 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]" onClick={handleTeamClick}>
+      <DialogContent className="sm:max-w-[725px]" onClick={handleTeamClick}>
         <DialogHeader>
           <DialogTitle>Plattform bearbeiten</DialogTitle>
         </DialogHeader>
