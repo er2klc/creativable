@@ -8,13 +8,11 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       console.error('[Bio Generator] No authorization header');
@@ -30,7 +28,6 @@ serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client with auth header
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -43,7 +40,6 @@ serve(async (req) => {
       }
     );
 
-    // Get the user to verify authentication
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
       console.error('[Bio Generator] Authentication error:', userError);
@@ -61,11 +57,9 @@ serve(async (req) => {
 
     console.log("[Bio Generator] User authenticated:", user.id);
 
-    // Parse request body
     const values = await req.json();
     const { role, target_audience, unique_strengths, mission, social_proof, cta_goal, url, preferred_emojis, language } = values;
     
-    // Get user's OpenAI API key from settings
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
       .select('openai_api_key')
@@ -174,39 +168,6 @@ Generate the bio now, ensuring each line starts with an emoji.
     }
 
     console.log('[Bio Generator] Successfully generated bio');
-
-    // Save the generated bio
-    const { error: saveError } = await supabaseClient
-      .from('user_bios')
-      .upsert({
-        user_id: user.id,
-        role,
-        target_audience,
-        unique_strengths,
-        mission,
-        social_proof,
-        cta_goal,
-        url,
-        preferred_emojis,
-        language,
-        generated_bio: generatedBio
-      });
-
-    if (saveError) {
-      console.error('[Bio Generator] Error saving bio:', saveError);
-      return new Response(
-        JSON.stringify({
-          error: 'Failed to save bio',
-          details: saveError.message
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        }
-      );
-    }
-
-    console.log('[Bio Generator] Successfully saved bio to database');
 
     return new Response(
       JSON.stringify({ bio: generatedBio }),

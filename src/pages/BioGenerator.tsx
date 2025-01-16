@@ -20,9 +20,9 @@ const BioGenerator = () => {
   const loadSavedBio = async () => {
     try {
       console.info("Loading saved bio data...");
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
-      if (!userData.user?.id) {
+      if (!user?.id) {
         console.error("No user ID found");
         return;
       }
@@ -30,7 +30,7 @@ const BioGenerator = () => {
       const { data, error } = await supabase
         .from("user_bios")
         .select("*")
-        .eq("user_id", userData.user.id)
+        .eq("user_id", user.id)
         .maybeSingle();
 
       if (error) {
@@ -79,12 +79,15 @@ const BioGenerator = () => {
     try {
       console.info("Generating bio with values:", values);
       
-      // Get the session for the auth token
+      // Get the user ID and session
+      const { data: { user } } = await supabase.auth.getUser();
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error("No access token found");
+
+      if (!user?.id || !session?.access_token) {
+        throw new Error("Authentication required");
       }
 
+      // Generate bio
       const { data: bioData, error: bioError } = await supabase.functions.invoke(
         "generate-bio",
         {
@@ -97,6 +100,18 @@ const BioGenerator = () => {
 
       if (bioError) throw bioError;
 
+      // Save to database
+      const { error: saveError } = await supabase
+        .from("user_bios")
+        .upsert({
+          user_id: user.id,
+          ...values,
+          generated_bio: bioData.bio,
+          updated_at: new Date().toISOString()
+        });
+
+      if (saveError) throw saveError;
+
       setGeneratedBio(bioData.bio);
       setSavedFormData(values);
 
@@ -104,12 +119,11 @@ const BioGenerator = () => {
         title: "Bio generiert",
         description: "Ihre Bio wurde erfolgreich erstellt.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating bio:", error);
       toast({
         title: "Fehler",
-        description:
-          "Bio konnte nicht generiert werden. Bitte versuchen Sie es später erneut.",
+        description: error.message || "Bio konnte nicht generiert werden. Bitte versuchen Sie es später erneut.",
         variant: "destructive",
       });
     } finally {
