@@ -3,6 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Tables } from "@/integrations/supabase/types";
 import { LeadDetailView } from "../LeadDetailView";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface SortableLeadItemProps {
   lead: Tables<"leads">;
