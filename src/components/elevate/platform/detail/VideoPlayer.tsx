@@ -10,9 +10,14 @@ declare global {
           videoId: string;
           playerVars?: {
             autoplay?: number;
+            controls?: number;
             modestbranding?: number;
             rel?: number;
             origin?: string;
+            showinfo?: number;
+            fs?: number;
+            iv_load_policy?: number;
+            disablekb?: number;
           };
           events?: {
             onReady?: (event: { target: any }) => void;
@@ -63,7 +68,6 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
       setIsAPILoaded(true);
     }
 
-    // Cleanup function
     return () => {
       if (trackingIntervalRef.current) {
         clearInterval(trackingIntervalRef.current);
@@ -87,7 +91,6 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
 
     if (!videoId) return;
 
-    // Create a new container for the player
     const playerContainer = document.createElement('div');
     playerContainer.id = playerId;
     playerContainer.style.position = 'absolute';
@@ -96,13 +99,11 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
     playerContainer.style.width = '100%';
     playerContainer.style.height = '100%';
     
-    // Clear the container and append the new element
     if (containerRef.current) {
       containerRef.current.innerHTML = '';
       containerRef.current.appendChild(playerContainer);
     }
 
-    // Cleanup existing player and interval
     if (playerRef.current) {
       if (trackingIntervalRef.current) {
         clearInterval(trackingIntervalRef.current);
@@ -119,8 +120,13 @@ export const VideoPlayer = ({ videoUrl, onProgress, savedProgress = 0, onDuratio
         videoId,
         playerVars: {
           autoplay: 0,
+          controls: 1,
           modestbranding: 1,
           rel: 0,
+          showinfo: 0,
+          fs: 0,
+          iv_load_policy: 3,
+          disablekb: 1,
           origin: window.location.origin
         },
         events: {
