@@ -45,7 +45,7 @@ export const SidebarMenuSection = ({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
-                <a href={item.url} className="flex items-center gap-3 relative px-4 py-5 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
+                <a href={item.url} className="flex items-center gap-3 relative px-4 py-4 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
                   <div className="relative">
                     {item.showProgress ? (
                     <div className="relative flex items-center justify-center w-8 h-8">
@@ -70,7 +70,7 @@ export const SidebarMenuSection = ({
     />
   </svg>
   <item.icon
-    className="absolute top-1/2 left-[100%] transform -translate-x-1/2 -translate-y-1/2 h-5 w-5"
+    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-5 w-5"
   />
   {elevateProgress > 0 && (
     <Badge 
