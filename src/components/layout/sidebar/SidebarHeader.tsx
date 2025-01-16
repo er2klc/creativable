@@ -13,7 +13,7 @@ export const SidebarHeader = ({ isExpanded }: SidebarHeaderProps) => {
           <img 
             src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
             alt="Logo" 
-            className="h-8 w-8 relative z-10"
+            className="h-10 w-10 relative z-10"
           />
           <span className={cn("text-white font-medium transition-opacity duration-300 whitespace-nowrap", 
             isExpanded ? "opacity-100" : "opacity-0")}>
