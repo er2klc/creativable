@@ -1,18 +1,8 @@
-import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useState } from "react";
-
-interface ICalButtonProps {
-  teamId?: string;
-  teamName?: string;
-}
-
-export const useICalURL = ({ teamId, teamName }: ICalButtonProps) => {
+export const ICalButton = ({ teamId, teamName }: ICalButtonProps) => {
   const session = useSession();
   const [calendarUrl, setCalendarUrl] = useState<string | null>(null);
 
-  const generateICalURL = async () => {
+  const handleGetICalURL = async () => {
     try {
       if (!session) {
         toast.error("Bitte melden Sie sich an, um auf Ihren Kalender zuzugreifen");
@@ -45,25 +35,11 @@ export const useICalURL = ({ teamId, teamName }: ICalButtonProps) => {
         setCalendarUrl(data.url);
       }
     } catch (error) {
-      console.error("[iCal] Error in generateICalURL:", error);
+      console.error("[iCal] Error in handleGetICalURL:", error);
       toast.error("Fehler beim Generieren der Kalender-URL");
     }
   };
 
-  const copyICalURLToClipboard = async () => {
-    if (calendarUrl) {
-      try {
-        await navigator.clipboard.writeText(calendarUrl);
-        toast.success("Kalender-URL in die Zwischenablage kopiert!");
-      } catch (err) {
-        toast.error("Fehler beim Kopieren der URL");
-      }
-    }
-  };
-
-  return {
-    calendarUrl,
-    generateICalURL,
-    copyICalURLToClipboard,
-  };
+  // Keine UI mehr rendern
+  return null;
 };
