@@ -14,85 +14,46 @@ serve(async (req) => {
   }
 
   try {
-    // Get auth token from request header
-    const authHeader = req.headers.get('Authorization');
+    // Get user ID from auth header
+    const authHeader = req.headers.get('Authorization')?.replace('Bearer ', '');
     if (!authHeader) {
-      console.error('No authorization header found');
-      return new Response(
-        JSON.stringify({ error: 'Authorization header is missing' }),
-        { headers: corsHeaders, status: 401 },
-      );
+      throw new Error('No authorization header');
     }
 
-    // Initialize Supabase client with auth context
+    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: authHeader },
+          headers: { Authorization: `Bearer ${authHeader}` },
         },
       }
     );
 
-    // Get user's session
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !user) {
-      console.error('Error getting user:', userError);
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: User session not found' }),
-        { headers: corsHeaders, status: 401 },
-      );
-    }
-
-    console.log('User authenticated:', user.id);
-
-    // Fetch user's OpenAI API key
+    // Get user's OpenAI API key from settings
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
       .select('openai_api_key')
-      .eq('user_id', user.id)
       .single();
 
-    if (settingsError) {
+    if (settingsError || !settings?.openai_api_key) {
       console.error('Error fetching OpenAI API key:', settingsError);
       return new Response(
-        JSON.stringify({ error: 'Failed to retrieve OpenAI API key from settings' }),
-        { headers: corsHeaders, status: 500 },
+        JSON.stringify({
+          error: 'OpenAI API key not found in settings. Please add your API key in the settings page.',
+          details: 'Go to Settings -> Integrations -> OpenAI Integration to add your API key.'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
       );
     }
 
-    if (!settings?.openai_api_key) {
-      console.error('OpenAI API key not found in settings for user:', user.id);
-      return new Response(
-        JSON.stringify({ error: 'OpenAI API key is missing' }),
-        { headers: corsHeaders, status: 403 },
-      );
-    }
+    const { role, target_audience, unique_strengths, mission, social_proof, cta_goal, url, preferred_emojis, language } = await req.json();
 
-    const openaiApiKey = settings.openai_api_key;
-
-    // Get request body
-    const requestBody = await req.json();
-    const { 
-      role, 
-      target_audience, 
-      unique_strengths, 
-      mission, 
-      social_proof, 
-      cta_goal, 
-      url, 
-      preferred_emojis, 
-      language 
-    } = requestBody;
-
-    console.log('Generating bio with parameters:', {
-      role,
-      target_audience,
-      language,
-    });
-
-    const prompt = `
+   const prompt = `
 Write a professional ${language === 'English' ? 'English' : 'German'} Instagram bio. 
 The bio must:
 - Be exactly 150 characters, split into 4 lines
@@ -116,22 +77,25 @@ Details:
 Generate the bio now, ensuring each line starts with an emoji.
 `;
 
+
+    console.log('Creating OpenAI request with prompt:', prompt);
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
+        'Authorization': `Bearer ${settings.openai_api_key}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          {
-            role: 'system',
+          { 
+            role: 'system', 
             content: 'You are a professional bio writer that creates concise and impactful social media bios.'
           },
-          {
-            role: 'user',
-            content: prompt,
+          { 
+            role: 'user', 
+            content: prompt 
           }
         ],
         temperature: 0.7,
@@ -142,57 +106,35 @@ Generate the bio now, ensuring each line starts with an emoji.
     if (!response.ok) {
       const errorData = await response.json();
       console.error('OpenAI API error:', errorData);
-      return new Response(
-        JSON.stringify({ error: `OpenAI API error: ${errorData.error?.message || 'Unknown error'}` }),
-        { headers: corsHeaders, status: 500 },
-      );
+      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
     const generatedBio = data.choices[0]?.message?.content;
 
     if (!generatedBio) {
-      console.error('No bio generated');
-      return new Response(
-        JSON.stringify({ error: 'No bio was generated' }),
-        { headers: corsHeaders, status: 500 },
-      );
-    }
-
-    console.log('Bio generated successfully:', generatedBio);
-
-    // Save the generated bio
-    const { error: saveError } = await supabaseClient
-      .from('user_bios')
-      .upsert({
-        user_id: user.id,
-        role,
-        target_audience,
-        unique_strengths,
-        mission,
-        social_proof,
-        cta_goal,
-        url,
-        preferred_emojis,
-        language,
-        generated_bio: generatedBio,
-      }, {
-        onConflict: 'user_id',
-      });
-
-    if (saveError) {
-      console.error('Error saving bio:', saveError);
+      throw new Error('No bio was generated');
     }
 
     return new Response(
       JSON.stringify({ bio: generatedBio }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      },
     );
+
   } catch (error) {
-    console.error('Error in generate-bio function:', error.message);
+    console.error('Error in generate-bio function:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'An unknown error occurred' }),
-      { headers: corsHeaders, status: 500 },
+      JSON.stringify({
+        error: error.message,
+        details: error.response?.data?.error?.message || 'Unknown error occurred'
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      },
     );
   }
 });
