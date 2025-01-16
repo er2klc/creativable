@@ -84,10 +84,19 @@ const BioGenerator = () => {
         throw new Error("No user ID found");
       }
 
+      // Get the session for the auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("No access token found");
+      }
+
       const { data: bioData, error: bioError } = await supabase.functions.invoke(
         "generate-bio",
         {
           body: JSON.stringify(values),
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
         }
       );
 
