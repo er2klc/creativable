@@ -32,13 +32,12 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     zIndex: isDragging ? 50 : undefined,
   };
 
-  // Separate click handler from drag attributes
+  // Handle click event only when not dragging
   const handleClick = (e: React.MouseEvent) => {
     if (!isDragging) {
       e.preventDefault();
       e.stopPropagation();
       setIsEditDialogOpen(true);
-      onLeadClick(lead.id);
     }
   };
 
