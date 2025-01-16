@@ -44,7 +44,9 @@ export const ICalButton = ({ teamId }: ICalButtonProps) => {
       }
 
       if (data?.url) {
-        setCalendarUrl(data.url);
+        // Append .ics to the URL
+        const urlWithExtension = `${data.url}.ics`;
+        setCalendarUrl(urlWithExtension);
         setIsOpen(true);
       }
     } catch (error) {

@@ -16,10 +16,10 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url)
-    const userId = url.pathname.split('/').pop()
+    const userId = url.pathname.split('/').slice(-2)[0] // Get second to last segment
 
-    if (!userId) {
-      throw new Error("User ID is required")
+    if (!userId || !userId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+      throw new Error("Valid User ID is required")
     }
 
     console.log("[Personal Calendar] Generating calendar for user:", userId)

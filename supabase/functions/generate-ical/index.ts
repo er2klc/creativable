@@ -44,9 +44,10 @@ serve(async (req) => {
     const { teamId } = await req.json();
     
     // Generate the appropriate URL based on whether this is a team calendar or personal calendar
+    const baseUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1`;
     const calendarUrl = teamId
-      ? `${Deno.env.get('SUPABASE_URL')}/functions/v1/team-calendar/${teamId}/${user.id}`
-      : `${Deno.env.get('SUPABASE_URL')}/functions/v1/calendar/${user.id}`;
+      ? `${baseUrl}/team-calendar/${teamId}/${user.id}`
+      : `${baseUrl}/calendar/${user.id}`;
     
     console.log("[iCal] Successfully generated calendar URL");
 

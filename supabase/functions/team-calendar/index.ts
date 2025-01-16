@@ -16,7 +16,7 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url)
-    const [teamId, userId] = url.pathname.split('/').slice(-2)
+    const [teamId, userId] = url.pathname.split('/').slice(-3, -1) // Get the last two segments before .ics
 
     if (!teamId || !userId) {
       throw new Error("Team ID and User ID are required")
