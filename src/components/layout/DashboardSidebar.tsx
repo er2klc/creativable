@@ -99,7 +99,7 @@ export const DashboardSidebar = () => {
       onMouseLeave={() => setIsExpanded(false)}
       style={{ overflowX: 'hidden' }}
     >
-      <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[75px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
+      <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[60px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
       <SidebarContent className="flex flex-col h-full relative">
         <SidebarHeader isExpanded={isExpanded} />
 
