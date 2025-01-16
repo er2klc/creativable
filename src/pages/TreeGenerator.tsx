@@ -9,6 +9,7 @@ import { TreeGeneratorHeader } from "@/components/tree/generator/TreeGeneratorHe
 import { ProfileSection } from "@/components/tree/generator/ProfileSection";
 import { LinksSection } from "@/components/tree/generator/LinksSection";
 import { PublicUrlSection } from "@/components/tree/generator/PublicUrlSection";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 export interface TreeLink {
   id?: string;
@@ -295,12 +296,12 @@ const TreeGenerator = () => {
   return (
     <div className="container mx-auto p-4 flex flex-col lg:flex-row gap-8">
       <div className="w-full lg:w-1/2 space-y-8">
-        <TreeGeneratorHeader 
-          username={username}
-          bio={bio}
-          onUsernameChange={setUsername}
-          onBioChange={setBio}
-        />
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Tree Generator</h1>
+          <p className="text-sm text-muted-foreground">
+            Create your personalized link page
+          </p>
+        </div>
 
         <Card className="p-6 space-y-6">
           <ProfileSection
@@ -315,24 +316,25 @@ const TreeGenerator = () => {
             onSaveProfile={handleSaveProfile}
           />
 
-          {profile && (
-            <>
-              <LinksSection
-                profile={profile}
-                links={links}
-                onAddLink={addLink}
-                onRemoveLink={removeLink}
-                onUpdateLink={updateLink}
-                onSaveLinks={saveLinks}
-              />
+          <LinksSection
+            profile={profile}
+            links={links}
+            onAddLink={addLink}
+            onRemoveLink={removeLink}
+            onUpdateLink={updateLink}
+            onSaveLinks={saveLinks}
+          />
 
-              <PublicUrlSection profile={profile} />
-            </>
-          )}
+          <div className="flex justify-center gap-4 text-muted-foreground">
+            <ArrowUp className="h-5 w-5" />
+            <ArrowDown className="h-5 w-5" />
+          </div>
+
+          <PublicUrlSection profile={profile} />
         </Card>
       </div>
 
-      <div className="w-full lg:w-1/2 sticky top-4 space-y-6">
+      <div className="w-full lg:w-1/2 sticky top-4 h-full">
         <TreePreview 
           username={username}
           avatarUrl={logoPreview || avatarUrl}

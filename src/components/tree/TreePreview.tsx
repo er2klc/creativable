@@ -29,12 +29,12 @@ export const TreePreview = ({ username, avatarUrl, bio, links }: TreePreviewProp
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#0A0A0A] flex items-center justify-center p-4">
+    <div className="h-full w-full bg-[#0A0A0A] flex items-center justify-center p-4">
       {/* Background Gradient Effect */}
       <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30" />
       
-      {/* Logo Background Blur */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-5">
+      {/* Logo Background Blur - Now matches parent height */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-5 h-full">
         <img 
           src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
           alt="Background Logo" 
