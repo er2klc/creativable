@@ -103,7 +103,7 @@ export const DashboardSidebar = () => {
       <SidebarContent className="flex flex-col h-full relative">
         <SidebarHeader isExpanded={isExpanded} />
 
-        <div className="flex-1 overflow-y-auto no-scrollbar pt-6">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pt-6">
           <SidebarMenuSection 
             title="Persönlich" 
             items={personalItems} 
