@@ -7,7 +7,7 @@ export const DEFAULT_PLAYER_VARS = {
   fs: 0,
   iv_load_policy: 3,
   disablekb: 1,
-};
+} as const;
 
 export const PLAYER_STYLES = {
   position: 'absolute',

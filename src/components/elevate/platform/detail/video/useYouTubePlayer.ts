@@ -1,21 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { DEFAULT_PLAYER_VARS } from './VideoPlayerConfig';
 
 interface UseYouTubePlayerProps {
-  videoId: string;
+  videoUrl: string;
   onProgress?: (progress: number) => void;
-  onVideoEnd?: () => void;
+  savedProgress?: number;
+  onDuration?: (duration: number) => void;
 }
 
 export const useYouTubePlayer = ({ 
-  videoId, 
+  videoUrl, 
   onProgress, 
-  onVideoEnd 
+  savedProgress,
+  onDuration 
 }: UseYouTubePlayerProps) => {
   const [isAPILoaded, setIsAPILoaded] = useState(false);
   const playerRef = useRef<any>(null);
   const trackingIntervalRef = useRef<number>();
-  const playerId = `youtube-player-${videoId}`;
 
   useEffect(() => {
     const loadYouTubeAPI = () => {
@@ -42,9 +43,16 @@ export const useYouTubePlayer = ({
     };
   }, []);
 
-  const initializePlayer = (containerElement: HTMLElement) => {
-    if (!videoId || !isAPILoaded) return;
+  const initializePlayer = useCallback((containerElement: HTMLElement) => {
+    if (!videoUrl || !isAPILoaded) return;
 
+    const videoId = videoUrl.includes('v=') 
+      ? videoUrl.split('v=')[1].split('&')[0]
+      : videoUrl.split('/').pop();
+
+    if (!videoId) return;
+
+    const playerId = `youtube-player-${videoId}`;
     const playerContainer = document.createElement('div');
     playerContainer.id = playerId;
     
@@ -62,11 +70,16 @@ export const useYouTubePlayer = ({
       videoId,
       playerVars: DEFAULT_PLAYER_VARS,
       events: {
-        onStateChange: (event: any) => {
-          if (event.data === (window as any).YT.PlayerState.ENDED) {
-            onVideoEnd?.();
+        onReady: (event: any) => {
+          const duration = event.target.getDuration();
+          if (onDuration && duration > 0) {
+            onDuration(duration);
           }
-          
+          if (savedProgress && savedProgress > 0) {
+            event.target.seekTo(savedProgress);
+          }
+        },
+        onStateChange: (event: any) => {
           if (event.data === (window as any).YT.PlayerState.PLAYING) {
             trackingIntervalRef.current = window.setInterval(() => {
               const currentTime = playerRef.current?.getCurrentTime() || 0;
@@ -80,11 +93,10 @@ export const useYouTubePlayer = ({
         }
       }
     });
-  };
+  }, [videoUrl, isAPILoaded, onProgress, savedProgress, onDuration]);
 
   return {
     isAPILoaded,
-    playerId,
     initializePlayer
   };
 };

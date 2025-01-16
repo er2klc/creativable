@@ -3,30 +3,33 @@ import { useYouTubePlayer } from './useYouTubePlayer';
 import { CONTAINER_STYLES } from './VideoPlayerConfig';
 
 interface VideoPlayerProps {
-  videoId: string;
+  videoUrl: string;
   onProgress?: (progress: number) => void;
-  onVideoEnd?: () => void;
+  savedProgress?: number;
+  onDuration?: (duration: number) => void;
 }
 
 export const VideoPlayer = ({ 
-  videoId, 
+  videoUrl, 
   onProgress, 
-  onVideoEnd 
+  savedProgress,
+  onDuration 
 }: VideoPlayerProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { isAPILoaded, initializePlayer } = useYouTubePlayer({
-    videoId,
+    videoUrl,
     onProgress,
-    onVideoEnd
+    savedProgress,
+    onDuration
   });
 
   useEffect(() => {
     if (isAPILoaded && containerRef.current) {
       initializePlayer(containerRef.current);
     }
-  }, [isAPILoaded, videoId, initializePlayer]);
+  }, [isAPILoaded, videoUrl, initializePlayer]);
 
-  if (!videoId) return null;
+  if (!videoUrl) return null;
 
   return (
     <div 
