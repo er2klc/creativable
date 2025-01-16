@@ -59,7 +59,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
       <div className="w-full h-[calc(100vh-13rem)] overflow-hidden">
         <div className="w-full h-full overflow-x-auto">
           <div 
-            className="flex gap-4 px-4" 
+            className="flex gap-4 px-4 relative" 
             style={{ 
               minWidth: `${totalWidth}px`,
               width: '100%'
@@ -82,21 +82,19 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
               </div>
             ))}
             <div 
-              className="flex-1" 
+              className="flex-none" 
               style={{ 
-                minWidth: `${MIN_PHASE_WIDTH}px`
+                width: '40px'
               }}
             >
-              <div className="bg-muted/50 p-4 rounded-lg h-full min-h-[500px] flex items-center justify-center">
-                <Button
-                  variant="ghost"
-                  className="h-full w-full flex flex-col gap-2 items-center justify-center hover:bg-primary/10"
-                  onClick={() => addPhase.mutate()}
-                >
-                  <Plus className="h-6 w-6" />
-                  <span>{settings?.language === "en" ? "Add Phase" : "Phase hinzufügen"}</span>
-                </Button>
-              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 mt-4"
+                onClick={() => addPhase.mutate()}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>

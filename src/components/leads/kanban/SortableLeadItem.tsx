@@ -33,6 +33,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
 
   const handleClick = () => {
     if (!isDragging) {
+      onLeadClick(lead.id);
       setIsEditDialogOpen(true);
     }
   };
@@ -79,11 +80,10 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
         <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none" />
       </div>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl">
-          <LeadDetailView leadId={lead.id} onClose={() => setIsEditDialogOpen(false)} />
-        </DialogContent>
-      </Dialog>
+      <LeadDetailView
+        leadId={isEditDialogOpen ? lead.id : null}
+        onClose={() => setIsEditDialogOpen(false)}
+      />
     </>
   );
 };
