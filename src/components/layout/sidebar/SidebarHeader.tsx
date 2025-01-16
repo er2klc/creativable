@@ -6,7 +6,7 @@ interface SidebarHeaderProps {
 
 export const SidebarHeader = ({ isExpanded }: SidebarHeaderProps) => {
   return (
-    <div className="sticky top-0 left-0 z-50 bg-[#111111]/80 w-full pr-4">
+    <div className="sticky top-0 left-0 z-50 bg-[#111111]/80 w-full px-4 py-6">
       <div className="w-full h-16 flex items-center px-4">
         <div className="absolute inset-0 bg-[url('/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png')] opacity-10 blur-2xl scale-150" />
         <div className="flex items-center gap-3">
