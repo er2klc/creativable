@@ -84,7 +84,7 @@ export const SidebarMenuSection = ({
 </div>
                     ) : (
                       <div className="relative">
-                        <item.icon className={`shrink-0 transition-all duration-300 ${isExpanded ? 'h-[25px] w-[25px]' : 'h-[25px] w-[25px]'} group-hover/item:h-[32px] group-hover/item:w-[32px]`} /> 
+                        <item.icon className={`shrink-0 transition-all duration-300 ${isExpanded ? 'h-[21px] w-[21px]' : 'h-[21px] w-[21px]'} group-hover/item:h-[28px] group-hover/item:w-[28px]`} /> 
                         {typeof item.badge === 'number' && (
                           <Badge 
                             variant="outline" 
