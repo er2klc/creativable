@@ -25,14 +25,11 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
   const style = transform ? {
     transform: CSS.Transform.toString(transform),
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 50 : undefined,
   } : undefined;
 
   // Handle click event only when not dragging
   const handleClick = (e: React.MouseEvent) => {
     if (!isDragging) {
-      e.preventDefault();
-      e.stopPropagation();
       setIsEditDialogOpen(true);
     }
   };
@@ -58,25 +55,23 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
       <div
         ref={setNodeRef}
         style={style}
-        className={`${getBackgroundStyle()} rounded-lg border border-[#8E9196]/30 shadow-sm hover:shadow-md transition-all duration-200 group touch-none select-none ${
-          isDragging ? 'shadow-lg ring-2 ring-primary scale-105' : ''
-        }`}
+        className={cn(
+          getBackgroundStyle(),
+          "p-2 rounded hover:opacity-80 space-y-1 border border-[#8E9196]/30 shadow-sm",
+          isDragging && "shadow-lg ring-2 ring-primary scale-[1.02]"
+        )}
         {...attributes}
         {...listeners}
+        onClick={handleClick}
       >
-        <div 
-          className="p-4 cursor-pointer"
-          onClick={handleClick}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-medium">{lead.name}</span>
-            </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{lead.name}</span>
           </div>
-          
-          <div className="text-sm text-muted-foreground mt-2">
-            {lead.contact_type || "Nicht festgelegt"}
-          </div>
+        </div>
+        
+        <div className="text-sm text-muted-foreground">
+          {lead.contact_type || "Nicht festgelegt"}
         </div>
       </div>
 
