@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { startOfDay, endOfDay } from "date-fns";
 
 const useTaskCount = () => {
   return useQuery({
@@ -36,8 +37,35 @@ const useTaskCount = () => {
   });
 };
 
+const useAppointmentCount = () => {
+  return useQuery({
+    queryKey: ['todays-appointments'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+
+      const today = new Date();
+      const startTime = startOfDay(today).toISOString();
+      const endTime = endOfDay(today).toISOString();
+
+      const { count } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('due_date', startTime)
+        .lte('due_date', endTime)
+        .eq('completed', false)
+        .eq('cancelled', false);
+
+      return count || 0;
+    },
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+};
+
 export const personalItems = () => {
   const { data: taskCount = 0 } = useTaskCount();
+  const { data: appointmentCount = 0 } = useAppointmentCount();
 
   return [
     { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
@@ -48,7 +76,12 @@ export const personalItems = () => {
       url: "/messages",
       badge: true 
     },
-    { title: "Kalender", icon: Calendar, url: "/calendar" },
+    { 
+      title: "Kalender", 
+      icon: Calendar, 
+      url: "/calendar",
+      badge: appointmentCount || undefined
+    },
     { 
       title: "Todo Liste", 
       icon: CheckSquare, 

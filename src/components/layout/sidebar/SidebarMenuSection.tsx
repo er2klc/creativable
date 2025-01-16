@@ -1,5 +1,4 @@
 import { LucideIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -8,6 +7,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 
 interface MenuItem {
   title: string;
@@ -43,11 +43,15 @@ export const SidebarMenuSection = ({
               <SidebarMenuButton asChild>
                 <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
                   <div className="relative">
-                    <item.icon className={`shrink-0 transition-all duration-300 ${isExpanded ? 'h-[28px] w-[28px]' : 'h-[30px] w-[30px]'} group-hover/item:h-[25px] group-hover/item:w-[25px]`} /> 
+                    <item.icon className={`shrink-0 transition-all duration-300 ${isExpanded ? 'h-[40px] w-[40px]' : 'h-[40px] w-[40px]'} group-hover/item:h-[25px] group-hover/item:w-[25px]`} /> 
                     {typeof item.badge === 'number' && (
                       <Badge 
                         variant="outline" 
-                        className="absolute -top-2 -right-2 bg-[#9b87f5] text-white border-none text-xs min-w-[18px] h-[18px] flex items-center justify-center px-1"
+                        className={`absolute -top-2 -right-2 text-xs min-w-[18px] h-[18px] flex items-center justify-center px-1 ${
+                          item.title === "Kalender" 
+                            ? "bg-green-500/90 text-white border-none" 
+                            : "bg-[#9b87f5] text-white border-none"
+                        }`}
                       >
                         {item.badge}
                       </Badge>
