@@ -20,18 +20,21 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     isDragging,
   } = useSortable({
     id: lead.id,
+    data: lead
   });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isDragging ? 'grabbing' : 'pointer',
     position: isDragging ? 'relative' as const : undefined,
-    opacity: isDragging ? 0.9 : 1,
+    zIndex: isDragging ? 50 : undefined,
   };
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
     if (!isDragging) {
+      e.stopPropagation();
       onLeadClick(lead.id);
       setIsEditDialogOpen(true);
     }
@@ -59,7 +62,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
         ref={setNodeRef}
         style={style}
         onClick={handleClick}
-        className={`${getBackgroundStyle()} rounded-lg border border-[#8E9196]/30 shadow-sm hover:shadow-md transition-all duration-200 group cursor-pointer ${
+        className={`${getBackgroundStyle()} rounded-lg border border-[#8E9196]/30 shadow-sm hover:shadow-md transition-all duration-200 group ${
           isDragging ? 'shadow-lg ring-2 ring-primary cursor-grabbing scale-105' : ''
         }`}
         {...attributes}

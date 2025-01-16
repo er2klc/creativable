@@ -1,4 +1,4 @@
-import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverEvent, closestCenter } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useState } from "react";
@@ -34,7 +34,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (!over || !active) return;
+    if (!over || !active.data.current) return;
 
     const leadId = active.id as string;
     const newPhase = phases.find(phase => phase.id === over.id);
@@ -51,11 +51,14 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     }
   };
 
-  const MIN_PHASE_WIDTH = 200; // Minimum width for each phase in pixels
-  const totalWidth = phases.length * MIN_PHASE_WIDTH + ((phases.length - 1) * 16); // 16px for gap-4
+  const MIN_PHASE_WIDTH = 200;
+  const totalWidth = phases.length * MIN_PHASE_WIDTH + ((phases.length - 1) * 16);
 
   return (
-    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext 
+      collisionDetection={closestCenter} 
+      onDragEnd={handleDragEnd}
+    >
       <div className="w-full h-[calc(100vh-13rem)] overflow-hidden">
         <div className="w-full h-full overflow-x-auto">
           <div 
@@ -81,21 +84,14 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
                 />
               </div>
             ))}
-            <div 
-              className="flex-none" 
-              style={{ 
-                width: '40px'
-              }}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 mt-4 flex-none"
+              onClick={() => addPhase.mutate()}
             >
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 mt-4"
-                onClick={() => addPhase.mutate()}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
