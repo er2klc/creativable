@@ -22,13 +22,11 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     data: lead
   });
 
-  const style = {
+  const style = transform ? {
     transform: CSS.Transform.toString(transform),
     opacity: isDragging ? 0.5 : 1,
-    cursor: isDragging ? 'grabbing' : 'grab',
-    position: isDragging ? 'relative' as const : undefined,
     zIndex: isDragging ? 50 : undefined,
-  };
+  } : undefined;
 
   // Handle click event only when not dragging
   const handleClick = (e: React.MouseEvent) => {
@@ -60,13 +58,16 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
       <div
         ref={setNodeRef}
         style={style}
-        className={`${getBackgroundStyle()} rounded-lg border border-[#8E9196]/30 shadow-sm hover:shadow-md transition-all duration-200 group ${
-          isDragging ? 'shadow-lg ring-2 ring-primary cursor-grabbing scale-105' : ''
+        className={`${getBackgroundStyle()} rounded-lg border border-[#8E9196]/30 shadow-sm hover:shadow-md transition-all duration-200 group touch-none select-none ${
+          isDragging ? 'shadow-lg ring-2 ring-primary scale-105' : ''
         }`}
         {...attributes}
         {...listeners}
       >
-        <div className="p-4">
+        <div 
+          className="p-4 cursor-pointer"
+          onClick={handleClick}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="font-medium">{lead.name}</span>
@@ -77,10 +78,6 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
             {lead.contact_type || "Nicht festgelegt"}
           </div>
         </div>
-        <div 
-          onClick={handleClick}
-          className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg cursor-pointer"
-        />
       </div>
 
       <LeadDetailView
