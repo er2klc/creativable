@@ -27,6 +27,10 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: { headers: { Authorization: authHeader } },
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false
+        }
       }
     );
 
@@ -53,7 +57,10 @@ serve(async (req) => {
         .select('*')
         .eq('team_id', teamId);
 
-      if (eventsError) throw eventsError;
+      if (eventsError) {
+        console.error("[iCal] Error fetching team events:", eventsError);
+        throw eventsError;
+      }
 
       calendarContent = generateICalContent(events, true);
     } else {
@@ -66,7 +73,10 @@ serve(async (req) => {
         .eq('user_id', user.id)
         .not('due_date', 'is', null);
 
-      if (tasksError) throw tasksError;
+      if (tasksError) {
+        console.error("[iCal] Error fetching tasks:", tasksError);
+        throw tasksError;
+      }
 
       calendarContent = generateICalContent(tasks, false);
     }
