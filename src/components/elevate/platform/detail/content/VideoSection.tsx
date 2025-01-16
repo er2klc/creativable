@@ -1,37 +1,20 @@
-import { VideoPlayer } from "../VideoPlayer";
+import { VideoPlayer } from '../video/VideoPlayer';
+import React from 'react';
 
 interface VideoSectionProps {
-  videoUrl: string;
-  onVideoProgress: (progress: number) => void;
-  savedProgress?: number;
-  onDuration: (duration: number) => void;
+  videoId: string;
+  onProgress?: (progress: number) => void;
+  onVideoEnd?: () => void;
 }
 
-export const VideoSection = ({
-  videoUrl,
-  onVideoProgress,
-  savedProgress,
-  onDuration,
-}: VideoSectionProps) => {
-  if (!videoUrl) {
-    return (
-      <div className="col-span-8 aspect-video w-full bg-black rounded-lg flex items-center justify-center">
-        <span className="text-white">Kein Video verfügbar</span>
-      </div>
-    );
-  }
-
+export const VideoSection: React.FC<VideoSectionProps> = ({ videoId, onProgress, onVideoEnd }) => {
   return (
-    <div className="col-span-8 aspect-video w-full">
-      <div className="w-full h-full bg-black rounded-lg overflow-hidden">
-        <VideoPlayer
-          key={videoUrl}
-          videoUrl={videoUrl}
-          onProgress={onVideoProgress}
-          savedProgress={savedProgress}
-          onDuration={onDuration}
-        />
-      </div>
+    <div>
+      <VideoPlayer 
+        videoId={videoId} 
+        onProgress={onProgress} 
+        onVideoEnd={onVideoEnd} 
+      />
     </div>
   );
 };
