@@ -84,9 +84,9 @@ const Leads = () => {
   }
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b shrink-0">
-        <div className="max-w-full mx-auto">
+    <div className="w-full space-y-8">
+      <div className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="max-w-full mx-auto overflow-x-hidden">
           <div className="flex items-center h-16 px-4">
             <h1 className="text-3xl font-bold shrink-0">
               {settings?.language === "en" ? "Contacts" : "Kontakte"}
@@ -147,13 +147,11 @@ const Leads = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        {viewMode === "kanban" ? (
-          <LeadKanbanView leads={leads} onLeadClick={(id) => setSelectedLeadId(id)} />
-        ) : (
-          <LeadTableView leads={leads} onLeadClick={(id) => setSelectedLeadId(id)} />
-        )}
-      </div>
+      {viewMode === "kanban" ? (
+        <LeadKanbanView leads={leads} onLeadClick={(id) => setSelectedLeadId(id)} />
+      ) : (
+        <LeadTableView leads={leads} onLeadClick={(id) => setSelectedLeadId(id)} />
+      )}
 
       <LeadDetailView
         leadId={selectedLeadId}

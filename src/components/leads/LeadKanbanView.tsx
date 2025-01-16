@@ -86,16 +86,26 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     }
   };
 
+  const MIN_PHASE_WIDTH = 280;
+  const GAP = 16;
+  const totalWidth = phases.length * MIN_PHASE_WIDTH + ((phases.length - 1) * GAP);
+
   return (
     <DndContext 
       collisionDetection={closestCenter} 
       onDragEnd={handleDragEnd}
     >
-      <div className="h-[calc(100vh-13rem)] overflow-hidden">
-        <div className="h-full overflow-x-auto">
-          <div className="flex gap-4 px-4 min-w-max">
+      <div className="w-full h-[calc(100vh-13rem)] overflow-hidden">
+        <div className="w-full h-full overflow-x-auto">
+          <div 
+            className="flex gap-4 px-4 relative" 
+            style={{ 
+              minWidth: `${totalWidth}px`,
+              maxWidth: '100%'
+            }}
+          >
             {phases.map((phase) => (
-              <div key={phase.id} className="w-[280px] flex-none">
+              <div key={phase.id} className="flex-1 min-w-[180px] max-w-[300px]">
                 <PhaseColumn
                   phase={phase}
                   leads={leads.filter((lead) => lead.phase === phase.name)}
