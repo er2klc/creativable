@@ -64,7 +64,7 @@ export const SidebarMenuSection = ({
                               a 15.9155 15.9155 0 0 1 0 31.831
                               a 15.9155 15.9155 0 0 1 0 -31.831"
                             fill="none"
-                            stroke="#3d85c6"
+                            stroke="#F1C232"
                             strokeWidth="2"
                             strokeDasharray={`${elevateProgress}, 100`}
                           />
@@ -73,7 +73,7 @@ export const SidebarMenuSection = ({
                         {elevateProgress > 0 && (
                           <Badge 
                             variant="outline" 
-                            className="absolute -top-2 -right-2 text-xs min-w-[24px] h-[20px] flex items-center justify-center px-1 bg-[#3d85c6] text-white border-none"
+                            className="absolute -top-2 -right-2 text-xs min-w-[24px] h-[20px] flex items-center justify-center px-1 text-white border-none"
                           >
                             {elevateProgress}%
                           </Badge>
