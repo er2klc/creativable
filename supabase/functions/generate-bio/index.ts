@@ -31,15 +31,35 @@ serve(async (req) => {
       }
     );
 
+    // Get user's session to verify authentication
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    
+    if (userError || !user) {
+      console.error('Error getting user:', userError);
+      throw new Error('Unauthorized');
+    }
+
+    console.log('Fetching settings for user:', user.id);
+
     // Get user's OpenAI API key from settings
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
       .select('openai_api_key')
+      .eq('user_id', user.id)
       .single();
 
     if (settingsError) {
-      console.error('Error fetching OpenAI API key:', settingsError);
-      throw new Error('Failed to fetch settings');
+      console.error('Error fetching settings:', settingsError);
+      return new Response(
+        JSON.stringify({
+          error: 'Failed to fetch settings',
+          details: settingsError.message
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
     }
 
     if (!settings?.openai_api_key) {
