@@ -47,8 +47,6 @@ export const useSettings = () => {
           registration_step: 1,
           registration_completed: false,
           whatsapp_number: phoneNumber,
-          name: userMetadata.user?.user_metadata?.full_name,
-          // Remove openai_api_key from initial settings
         };
 
         const { data: createdSettings, error: createError } = await supabase
