@@ -70,7 +70,7 @@ export const SidebarMenuSection = ({
     />
   </svg>
   <item.icon
-    className="absolute top-1/2 left-[55%] transform -translate-x-1/2 -translate-y-1/2 h-5 w-5"
+    className="absolute top-1/2 left-[100%] transform -translate-x-1/2 -translate-y-1/2 h-5 w-5"
   />
   {elevateProgress > 0 && (
     <Badge 
