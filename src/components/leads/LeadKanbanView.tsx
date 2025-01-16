@@ -86,8 +86,9 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     }
   };
 
-  const MIN_PHASE_WIDTH = 200;
-  const totalWidth = phases.length * MIN_PHASE_WIDTH + ((phases.length - 1) * 16);
+  const MIN_PHASE_WIDTH = 280;
+  const GAP = 16;
+  const totalWidth = phases.length * MIN_PHASE_WIDTH + ((phases.length - 1) * GAP);
 
   return (
     <DndContext 
@@ -100,22 +101,19 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
             className="flex gap-4 px-4 relative" 
             style={{ 
               minWidth: `${totalWidth}px`,
-              width: '100%'
+              maxWidth: '100%'
             }}
           >
-           {phases.map((phase) => (
-  <div key={phase.id} className="flex-1 min-w-[300px]">
-    <PhaseColumn
-      phase={phase}
-      leads={leads.filter((lead) => lead.phase === phase.name)}
-      onLeadClick={(id) => {
-        console.log("Clicked Lead ID:", id); // Debugging
-        onLeadClick(id);
-      }}
-      onEditPhase={setEditingPhase}
-    />
-  </div>
-))}
+            {phases.map((phase) => (
+              <div key={phase.id} className="flex-1 min-w-[280px] max-w-[280px]">
+                <PhaseColumn
+                  phase={phase}
+                  leads={leads.filter((lead) => lead.phase === phase.name)}
+                  onLeadClick={onLeadClick}
+                  onEditPhase={setEditingPhase}
+                />
+              </div>
+            ))}
             <Button
               variant="ghost"
               size="icon"

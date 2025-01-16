@@ -8,10 +8,12 @@ interface AppLayoutProps {
 export const AppLayout = ({ children }: AppLayoutProps) => {
   return (
     <div className="min-h-screen flex w-full bg-background">
-      <div className="hidden md:block w-[60px] shrink-0">
+      <div className="hidden md:block w-[60px] shrink-0 fixed h-full z-50">
         <DashboardSidebar />
       </div>
-      <MainContent>{children}</MainContent>
+      <div className="flex-1 md:pl-[60px]">
+        <MainContent>{children}</MainContent>
+      </div>
     </div>
   );
 };
