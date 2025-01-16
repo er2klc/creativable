@@ -22,9 +22,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
 import { useSession } from "@supabase/auth-helpers-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const LeadPhaseManager = () => {
   const [newPhaseName, setNewPhaseName] = useState("");
+  const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [targetPhase, setTargetPhase] = useState<string>("");
   const { settings } = useSettings();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -103,41 +120,75 @@ export const LeadPhaseManager = () => {
           : "Die Phase wurde erfolgreich hinzugefügt",
       });
     },
-    onError: (error) => {
-      console.error("Error adding phase:", error);
-      toast({
-        title: settings?.language === "en" ? "Error" : "Fehler",
-        description: settings?.language === "en"
-          ? "Failed to add phase. Please try again."
-          : "Phase konnte nicht hinzugefügt werden. Bitte versuchen Sie es erneut.",
-        variant: "destructive",
-      });
-    },
   });
 
   const deletePhase = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ phaseId, targetPhaseName }: { phaseId: string; targetPhaseName: string }) => {
       if (!session?.user?.id) {
         throw new Error("No authenticated user found");
       }
 
-      const { error } = await supabase
+      // First update all leads in the phase being deleted
+      const { error: updateError } = await supabase
+        .from("leads")
+        .update({ phase: targetPhaseName })
+        .eq("phase", phaseToDelete?.name)
+        .eq("user_id", session.user.id);
+
+      if (updateError) throw updateError;
+
+      // Then delete the phase
+      const { error: deleteError } = await supabase
         .from("lead_phases")
         .delete()
-        .eq("id", id)
+        .eq("id", phaseId)
         .eq("user_id", session.user.id);
-      if (error) throw error;
+
+      if (deleteError) throw deleteError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast({
         title: settings?.language === "en" ? "Phase deleted" : "Phase gelöscht",
         description: settings?.language === "en"
-          ? "The phase has been deleted successfully"
-          : "Die Phase wurde erfolgreich gelöscht",
+          ? "The phase and its contacts have been moved successfully"
+          : "Die Phase wurde gelöscht und die Kontakte wurden verschoben",
       });
+      setPhaseToDelete(null);
+      setTargetPhase("");
     },
   });
+
+  const handleDeletePhase = async (phase: { id: string; name: string }) => {
+    // Check if there are any leads in this phase
+    const { data: leadsInPhase, error } = await supabase
+      .from("leads")
+      .select("id")
+      .eq("phase", phase.name)
+      .eq("user_id", session?.user?.id);
+
+    if (error) {
+      console.error("Error checking leads:", error);
+      return;
+    }
+
+    if (leadsInPhase && leadsInPhase.length > 0) {
+      // If there are leads, show the dialog
+      setPhaseToDelete(phase);
+    } else {
+      // If no leads, delete directly
+      deletePhase.mutate({ phaseId: phase.id, targetPhaseName: "" });
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (!phaseToDelete || !targetPhase) return;
+    deletePhase.mutate({ 
+      phaseId: phaseToDelete.id, 
+      targetPhaseName: targetPhase 
+    });
+  };
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
@@ -192,12 +243,62 @@ export const LeadPhaseManager = () => {
               <SortablePhase
                 key={phase.id}
                 phase={phase}
-                onDelete={() => deletePhase.mutate(phase.id)}
+                onDelete={() => handleDeletePhase(phase)}
               />
             ))}
           </div>
         </SortableContext>
       </DndContext>
+
+      <Dialog open={!!phaseToDelete} onOpenChange={() => setPhaseToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {settings?.language === "en" 
+                ? "Move Contacts Before Deleting" 
+                : "Kontakte verschieben vor dem Löschen"}
+            </DialogTitle>
+            <DialogDescription>
+              {settings?.language === "en"
+                ? "Please select where to move the contacts from this phase before deleting it."
+                : "Bitte wählen Sie aus, wohin die Kontakte dieser Phase verschoben werden sollen."}
+            </DialogDescription>
+          </DialogHeader>
+          <Select value={targetPhase} onValueChange={setTargetPhase}>
+            <SelectTrigger>
+              <SelectValue placeholder={
+                settings?.language === "en" 
+                  ? "Select target phase" 
+                  : "Zielphase auswählen"
+              } />
+            </SelectTrigger>
+            <SelectContent>
+              {phases
+                .filter(p => p.id !== phaseToDelete?.id)
+                .map(phase => (
+                  <SelectItem key={phase.id} value={phase.name}>
+                    {phase.name}
+                  </SelectItem>
+                ))
+              }
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPhaseToDelete(null)}
+            >
+              {settings?.language === "en" ? "Cancel" : "Abbrechen"}
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              disabled={!targetPhase}
+            >
+              {settings?.language === "en" ? "Move and Delete" : "Verschieben und Löschen"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
