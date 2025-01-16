@@ -1,5 +1,5 @@
 export const DEFAULT_PLAYER_VARS = {
-  autoplay: 0,
+  autoplay: 1,
   controls: 1,
   modestbranding: 1,
   rel: 0,
