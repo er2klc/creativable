@@ -51,6 +51,19 @@ serve(async (req) => {
     if (teamId) {
       console.log("[iCal] Generating team calendar for team:", teamId);
       
+      // Verify team membership
+      const { data: membership, error: membershipError } = await supabaseClient
+        .from('team_members')
+        .select('*')
+        .eq('team_id', teamId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (membershipError || !membership) {
+        console.error("[iCal] Team membership verification failed:", membershipError);
+        throw new Error("Unauthorized: Not a team member");
+      }
+      
       // Generate team calendar content
       const { data: events, error: eventsError } = await supabaseClient
         .from('team_calendar_events')
@@ -81,9 +94,9 @@ serve(async (req) => {
       calendarContent = generateICalContent(tasks, false);
     }
 
-    // Create a unique filename for the calendar
+    // Create a unique filename for the calendar that matches our RLS policies
     const filename = teamId 
-      ? `team-${teamId}/calendar.ics`
+      ? `${teamId}/calendar.ics`
       : `${user.id}/calendar.ics`;
 
     console.log("[iCal] Uploading calendar file:", filename);
