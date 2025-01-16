@@ -78,7 +78,7 @@ const Leads = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="w-full max-w-full px-4 mx-auto">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">
           {settings?.language === "en" ? "Contacts" : "Kontakte"}
