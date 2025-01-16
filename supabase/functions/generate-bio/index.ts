@@ -20,6 +20,8 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
+    console.log("[Bio Generator] Initializing Supabase client...");
+    
     // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -31,6 +33,8 @@ serve(async (req) => {
       }
     );
 
+    console.log("[Bio Generator] Fetching user settings...");
+    
     // Get user's OpenAI API key from settings
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
@@ -38,22 +42,15 @@ serve(async (req) => {
       .single();
 
     if (settingsError || !settings?.openai_api_key) {
-      console.error('Error fetching OpenAI API key:', settingsError);
-      return new Response(
-        JSON.stringify({
-          error: 'OpenAI API key not found in settings. Please add your API key in the settings page.',
-          details: 'Go to Settings -> Integrations -> OpenAI Integration to add your API key.'
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
+      console.error('[Bio Generator] Error fetching OpenAI API key:', settingsError);
+      throw new Error('OpenAI API key not found in settings');
     }
+
+    console.log("[Bio Generator] Successfully retrieved OpenAI API key");
 
     const { role, target_audience, unique_strengths, mission, social_proof, cta_goal, url, preferred_emojis, language } = await req.json();
 
-   const prompt = `
+    const prompt = `
 Write a professional ${language === 'English' ? 'English' : 'German'} Instagram bio. 
 The bio must:
 - Be exactly 150 characters, split into 4 lines
@@ -77,8 +74,7 @@ Details:
 Generate the bio now, ensuring each line starts with an emoji.
 `;
 
-
-    console.log('Creating OpenAI request with prompt:', prompt);
+    console.log('[Bio Generator] Creating OpenAI request with prompt:', prompt);
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -105,7 +101,7 @@ Generate the bio now, ensuring each line starts with an emoji.
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('OpenAI API error:', errorData);
+      console.error('[Bio Generator] OpenAI API error:', errorData);
       throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
     }
 
@@ -116,6 +112,8 @@ Generate the bio now, ensuring each line starts with an emoji.
       throw new Error('No bio was generated');
     }
 
+    console.log('[Bio Generator] Successfully generated bio');
+
     return new Response(
       JSON.stringify({ bio: generatedBio }),
       {
@@ -125,7 +123,7 @@ Generate the bio now, ensuring each line starts with an emoji.
     );
 
   } catch (error) {
-    console.error('Error in generate-bio function:', error);
+    console.error('[Bio Generator] Error:', error);
     return new Response(
       JSON.stringify({
         error: error.message,
