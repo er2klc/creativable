@@ -1,5 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
-import { Edit, Plus } from "lucide-react";
+import { Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tables } from "@/integrations/supabase/types";
 import { SortableLeadItem } from "./SortableLeadItem";

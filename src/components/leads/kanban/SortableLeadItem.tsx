@@ -1,4 +1,4 @@
-import { useSortable } from "@dnd-kit/sortable";
+import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Tables } from "@/integrations/supabase/types";
 import { LeadDetailView } from "../LeadDetailView";
@@ -16,18 +16,16 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging,
-  } = useSortable({
+  } = useDraggable({
     id: lead.id,
     data: lead
   });
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
     opacity: isDragging ? 0.5 : 1,
-    cursor: isDragging ? 'grabbing' : 'pointer',
+    cursor: isDragging ? 'grabbing' : 'grab',
     position: isDragging ? 'relative' as const : undefined,
     zIndex: isDragging ? 50 : undefined,
   };
