@@ -26,21 +26,26 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
   const { data: platform } = useQuery({
     queryKey: ['platform', platformId],
     queryFn: async () => {
-      const { data: platform } = await supabase
+      const { data: platform, error } = await supabase
         .from('elevate_platforms')
         .select('*')
         .eq('id', platformId)
         .maybeSingle();
       
-      if (platform) {
-        setName(platform.name || "");
-        setDescription(platform.description || "");
-        setImageUrl(platform.image_url);
-      }
+      if (error) throw error;
       return platform;
     },
     enabled: open,
   });
+
+  // Update form when platform data is loaded
+  useEffect(() => {
+    if (platform) {
+      setName(platform.name || "");
+      setDescription(platform.description || "");
+      setImageUrl(platform.image_url);
+    }
+  }, [platform]);
 
   // Reset form when dialog closes
   useEffect(() => {
