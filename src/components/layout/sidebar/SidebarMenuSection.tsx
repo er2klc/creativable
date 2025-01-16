@@ -42,26 +42,28 @@ export const SidebarMenuSection = ({
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
                 <a href={item.url} className="flex items-center gap-3 relative px-4 py-2 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
-                  <item.icon className={`shrink-0 transition-all duration-300 ${isExpanded ? 'h-[40px] w-[40px]' : 'h-[40px] w-[40px]'} group-hover/item:h-[25px] group-hover/item:w-[25px]`} /> 
+                  <div className="relative">
+                    <item.icon className={`shrink-0 transition-all duration-300 ${isExpanded ? 'h-[40px] w-[40px]' : 'h-[40px] w-[40px]'} group-hover/item:h-[25px] group-hover/item:w-[25px]`} /> 
+                    {typeof item.badge === 'number' && (
+                      <Badge 
+                        variant="outline" 
+                        className="absolute -top-2 -right-2 bg-[#9b87f5] text-white border-none text-xs min-w-[18px] h-[18px] flex items-center justify-center px-1"
+                      >
+                        {item.badge}
+                      </Badge>
+                    )}
+                    {item.badge === true && unreadCount > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="absolute -top-2 -right-2 text-xs min-w-[18px] h-[18px] flex items-center justify-center px-1"
+                      >
+                        {unreadCount}
+                      </Badge>
+                    )}
+                  </div>
                   <span className={`transition-opacity duration-300 whitespace-nowrap text-sm text-white ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
                     {item.title}
                   </span>
-                  {typeof item.badge === 'number' && (
-                    <Badge 
-                      variant="outline" 
-                      className={`absolute right-2 -top-1 transition-opacity duration-300 bg-[#9b87f5] text-white border-none ${isExpanded ? 'opacity-100' : 'opacity-0'}`}
-                    >
-                      {item.badge}
-                    </Badge>
-                  )}
-                  {item.badge === true && unreadCount > 0 && (
-                    <Badge 
-                      variant="destructive" 
-                      className={`absolute right-2 -top-1 transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}
-                    >
-                      {unreadCount}
-                    </Badge>
-                  )}
                   <div className="absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 group-hover/item:w-full transition-all duration-300" />
                 </a>
               </SidebarMenuButton>
