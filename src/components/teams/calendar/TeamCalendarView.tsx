@@ -8,14 +8,16 @@ import { CalendarGrid } from "@/components/calendar/CalendarGrid";
 import { useTeamCalendar } from "./hooks/useTeamCalendar";
 import { TeamEventDetailsDialog } from "@/components/calendar/TeamEventDetailsDialog";
 import { TeamEvent } from "@/components/calendar/types/calendar";
+import { ICalButton } from "@/components/calendar/ICalButton";
 
 interface TeamCalendarViewProps {
   teamId: string;
+  teamName: string;
   isAdmin: boolean;
   onBack: () => void;
 }
 
-export const TeamCalendarView = ({ teamId, isAdmin, onBack }: TeamCalendarViewProps) => {
+export const TeamCalendarView = ({ teamId, teamName, isAdmin, onBack }: TeamCalendarViewProps) => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -90,6 +92,7 @@ export const TeamCalendarView = ({ teamId, isAdmin, onBack }: TeamCalendarViewPr
           <h2 className="text-xl font-semibold">
             Team Kalender
           </h2>
+          <ICalButton teamId={teamId} teamName={teamName} />
         </div>
 
         <CalendarHeader 

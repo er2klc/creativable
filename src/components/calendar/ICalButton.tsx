@@ -14,9 +14,10 @@ import { useState } from "react";
 
 interface ICalButtonProps {
   teamId?: string;
+  teamName?: string;
 }
 
-export const ICalButton = ({ teamId }: ICalButtonProps) => {
+export const ICalButton = ({ teamId, teamName }: ICalButtonProps) => {
   const session = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [calendarUrl, setCalendarUrl] = useState<string | null>(null);
@@ -35,7 +36,8 @@ export const ICalButton = ({ teamId }: ICalButtonProps) => {
           Authorization: `Bearer ${session.access_token}`,
         },
         body: {
-          teamId: teamId
+          teamId: teamId,
+          teamName: teamName
         }
       });
 
@@ -76,7 +78,7 @@ export const ICalButton = ({ teamId }: ICalButtonProps) => {
         className="gap-2"
       >
         <Calendar className="h-4 w-4" />
-        iCal URL
+        {teamId ? "Team iCal URL" : "mein iCal URL"}
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
