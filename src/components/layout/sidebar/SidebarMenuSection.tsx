@@ -31,7 +31,7 @@ export const SidebarMenuSection = ({
 }: SidebarMenuSectionProps) => {
   return (
     <SidebarGroup>
-      <div className="flex items-center px-4 py-2">
+      <div className="flex items-center px-4 py-1.5">
         <SidebarGroupLabel className={`transition-opacity duration-300 text-white/70 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
           {title}
         </SidebarGroupLabel>
@@ -41,9 +41,9 @@ export const SidebarMenuSection = ({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
-                <a href={item.url} className="flex items-center gap-3 relative px-4 py-3 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
+                <a href={item.url} className="flex items-center gap-4 relative px-4 py-3 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
                   <div className="relative">
-                    <item.icon className={`shrink-0 transition-all duration-300 ${isExpanded ? 'h-[25px] w-[25px]' : 'h-[25px] w-[25px]'} group-hover/item:h-[30px] group-hover/item:w-[30px]`} /> 
+                    <item.icon className={`shrink-0 transition-all duration-300 ${isExpanded ? 'h-[25px] w-[25px]' : 'h-[25px] w-[25px]'} group-hover/item:h-[32px] group-hover/item:w-[32px]`} /> 
                     {typeof item.badge === 'number' && (
                       <Badge 
                         variant="outline" 
