@@ -103,22 +103,19 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
               width: '100%'
             }}
           >
-            {phases.map((phase) => (
-              <div 
-                key={phase.id} 
-                className="flex-1" 
-                style={{ 
-                  minWidth: `${MIN_PHASE_WIDTH}px`
-                }}
-              >
-                <PhaseColumn
-                  phase={phase}
-                  leads={leads.filter(lead => lead.phase === phase.name)}
-                  onLeadClick={onLeadClick}
-                  onEditPhase={setEditingPhase}
-                />
-              </div>
-            ))}
+           {phases.map((phase) => (
+  <div key={phase.id} className="flex-1 min-w-[300px]">
+    <PhaseColumn
+      phase={phase}
+      leads={leads.filter((lead) => lead.phase === phase.name)}
+      onLeadClick={(id) => {
+        console.log("Clicked Lead ID:", id); // Debugging
+        onLeadClick(id);
+      }}
+      onEditPhase={setEditingPhase}
+    />
+  </div>
+))}
             <Button
               variant="ghost"
               size="icon"
