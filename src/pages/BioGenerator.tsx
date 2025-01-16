@@ -20,9 +20,9 @@ const BioGenerator = () => {
   const loadSavedBio = async () => {
     try {
       console.info("Loading saved bio data...");
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
 
-      if (!user?.id) {
+      if (!session?.user?.id) {
         console.error("No user ID found");
         return;
       }
@@ -30,7 +30,7 @@ const BioGenerator = () => {
       const { data, error } = await supabase
         .from("user_bios")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", session.user.id)
         .maybeSingle();
 
       if (error) {
@@ -79,14 +79,14 @@ const BioGenerator = () => {
     try {
       console.info("Generating bio with values:", values);
       
-      // Get the user ID and session
+      // Get session for authentication
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session?.access_token) {
         throw new Error("Authentication required");
       }
 
-      // Generate bio
+      // Generate bio using edge function
       const { data: bioData, error: bioError } = await supabase.functions.invoke(
         "generate-bio",
         {
