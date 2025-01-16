@@ -14,32 +14,32 @@ serve(async (req) => {
   }
 
   try {
-    // Get user ID from auth header
-    const authHeader = req.headers.get('Authorization')?.replace('Bearer ', '');
+    // Get auth token from request header
+    const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('No authorization header found');
       throw new Error('No authorization header');
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase client with auth context
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: `Bearer ${authHeader}` },
+          headers: { Authorization: authHeader },
         },
       }
     );
 
-    // Get user's session to verify authentication
+    // Get user's session
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    
     if (userError || !user) {
       console.error('Error getting user:', userError);
       throw new Error('Unauthorized');
     }
 
-    console.log('Fetching settings for user:', user.id);
+    console.log('User authenticated:', user.id);
 
     // Get user's OpenAI API key from settings
     const { data: settings, error: settingsError } = await supabaseClient
@@ -48,46 +48,41 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
-    if (settingsError) {
-      console.error('Error fetching settings:', settingsError);
-      return new Response(
-        JSON.stringify({
-          error: 'Failed to fetch settings',
-          details: settingsError.message
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
+    if (settingsError || !settings?.openai_api_key) {
+      console.error('Error fetching OpenAI API key:', settingsError);
+      throw new Error('OpenAI API key not found in settings');
     }
 
-    if (!settings?.openai_api_key) {
-      console.error('No OpenAI API key found in settings');
-      return new Response(
-        JSON.stringify({
-          error: 'OpenAI API key not found in settings. Please add your API key in the settings page.',
-          details: 'Go to Settings -> Integrations -> OpenAI Integration to add your API key.'
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
-    }
+    // Get request body
+    const { 
+      role, 
+      target_audience, 
+      unique_strengths, 
+      mission, 
+      social_proof, 
+      cta_goal, 
+      url, 
+      preferred_emojis, 
+      language 
+    } = await req.json();
 
-    const { role, target_audience, unique_strengths, mission, social_proof, cta_goal, url, preferred_emojis, language } = await req.json();
+    console.log('Generating bio with parameters:', {
+      role,
+      target_audience,
+      language,
+      // ... other parameters logged but not showing sensitive data
+    });
 
     const prompt = `
 Write a professional ${language === 'English' ? 'English' : 'German'} Instagram bio. 
 The bio must:
-- Be exactly 150 characters, split into 4 lines.
-- Start each line with a relevant emoji.
+- Be exactly 150 characters, split into 4 lines
+- Start each line with a relevant emoji
 - Use the following structure:
-  1️⃣ Who they are and what they do (e.g., 🚀 Helping coaches achieve success).
-  2️⃣ What makes them unique or their mission (e.g., 🌟 Empowering growth through innovation).
-  3️⃣ Social proof or achievements (e.g., 🏆 Over 1000+ satisfied clients).
-  4️⃣ Call-to-action with a link (e.g., 🔗 Try it free: example.com).
+  1️⃣ Who they are and what they do (e.g., 🚀 Helping coaches achieve success)
+  2️⃣ What makes them unique or their mission (e.g., 🌟 Empowering growth through innovation)
+  3️⃣ Social proof or achievements (e.g., 🏆 Over 1000+ satisfied clients)
+  4️⃣ Call-to-action with a link (e.g., 🔗 Try it free: example.com)
 
 Details:
 - Role: ${role}
@@ -102,8 +97,8 @@ Details:
 Generate the bio now, ensuring each line starts with an emoji.
 `;
 
-    console.log('Creating OpenAI request with prompt:', prompt);
-    
+    console.log('Making OpenAI API request...');
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -113,13 +108,13 @@ Generate the bio now, ensuring each line starts with an emoji.
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { 
-            role: 'system', 
+          {
+            role: 'system',
             content: 'You are a professional bio writer that creates concise and impactful social media bios.'
           },
-          { 
-            role: 'user', 
-            content: prompt 
+          {
+            role: 'user',
+            content: prompt
           }
         ],
         temperature: 0.7,
@@ -138,6 +133,32 @@ Generate the bio now, ensuring each line starts with an emoji.
 
     if (!generatedBio) {
       throw new Error('No bio was generated');
+    }
+
+    console.log('Successfully generated bio');
+
+    // Save the generated bio
+    const { error: saveError } = await supabaseClient
+      .from('user_bios')
+      .upsert({
+        user_id: user.id,
+        role,
+        target_audience,
+        unique_strengths,
+        mission,
+        social_proof,
+        cta_goal,
+        url,
+        preferred_emojis,
+        language,
+        generated_bio: generatedBio,
+      }, {
+        onConflict: 'user_id'
+      });
+
+    if (saveError) {
+      console.error('Error saving bio:', saveError);
+      // Don't throw here, we still want to return the generated bio
     }
 
     return new Response(
