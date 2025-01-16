@@ -49,14 +49,14 @@ export const TeamCard = ({
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group w-full"
+      className="cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group w-full max-w-3xl mx-auto"
     >
       <div className="flex flex-col">
         <div onClick={(e) => handleClick(e, true)}>
           <TeamCardImage team={team} />
         </div>
         <div 
-          className="p-6 space-y-6"
+          className="p-4 space-y-4"
           onClick={(e) => handleClick(e, false)}
         >
           <TeamCardContent team={team} />
