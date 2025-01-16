@@ -51,17 +51,27 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     }
   };
 
+  const MIN_PHASE_WIDTH = 200; // Minimum width for each phase in pixels
+  const totalWidth = phases.length * MIN_PHASE_WIDTH + ((phases.length - 1) * 16); // 16px for gap-4
+
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="w-full overflow-x-auto no-scrollbar">
+      <div className="w-full overflow-x-auto">
         <div 
-          className="flex gap-4 px-4 min-w-[1024px]" 
+          className="flex gap-4 px-4" 
           style={{ 
-            width: `max(100%, ${phases.length * 250}px)` // Reduced from 300px to 250px per phase
+            minWidth: `${totalWidth}px`,
+            width: '100%'
           }}
         >
           {phases.map((phase) => (
-            <div key={phase.id} className="flex-1 min-w-[250px]"> {/* Reduced from 300px to 250px */}
+            <div 
+              key={phase.id} 
+              className="flex-1" 
+              style={{ 
+                minWidth: `${MIN_PHASE_WIDTH}px`
+              }}
+            >
               <PhaseColumn
                 phase={phase}
                 leads={leads.filter(lead => lead.phase === phase.name)}
@@ -70,7 +80,12 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
               />
             </div>
           ))}
-          <div className="min-w-[250px] flex-1"> {/* Reduced from 300px to 250px */}
+          <div 
+            className="flex-1" 
+            style={{ 
+              minWidth: `${MIN_PHASE_WIDTH}px`
+            }}
+          >
             <div className="bg-muted/50 p-4 rounded-lg h-full min-h-[500px] flex items-center justify-center">
               <Button
                 variant="ghost"
