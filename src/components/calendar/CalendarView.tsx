@@ -100,7 +100,7 @@ export const CalendarView = () => {
                 onCheckedChange={setShowTeamEvents}
               />
             </div>
-            <ICalButton />
+           
           </div>
         </div>
 
