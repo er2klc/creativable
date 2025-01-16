@@ -1,4 +1,4 @@
-import { DndContext, DragEndEvent, DragOverEvent, closestCenter } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useState } from "react";
@@ -34,7 +34,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (!over || !active.data.current) return;
+    if (!over || !active) return;
 
     const leadId = active.id as string;
     const newPhase = phases.find(phase => phase.id === over.id);
