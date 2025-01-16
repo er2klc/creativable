@@ -1,12 +1,12 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUser } from "@supabase/auth-helpers-react";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 interface CreatePlatformFormProps {
   name: string;
@@ -44,7 +44,7 @@ export const CreatePlatformForm = ({
         const { data, error } = await supabase
           .from('elevate_platforms')
           .select('id, name')
-          .eq('created_by', user.id) // Nur Module des eingeloggten Users
+          .eq('created_by', user.id)
           .order('name');
 
         if (error) {
@@ -100,11 +100,9 @@ export const CreatePlatformForm = ({
       </div>
       <div className="space-y-2">
         <Label htmlFor="description">Beschreibung</Label>
-        <Textarea
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Beschreiben Sie Ihr Modul (optional)"
+        <RichTextEditor
+          content={description}
+          onChange={setDescription}
         />
       </div>
       <div className="space-y-2">
