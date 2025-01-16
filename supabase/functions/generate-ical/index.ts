@@ -45,6 +45,18 @@ serve(async (req) => {
     // Generate calendar content based on whether it's a team or personal calendar
     let calendarContent;
     if (teamId) {
+      // Verify team membership
+      const { data: teamMember, error: teamError } = await supabaseClient
+        .from('team_members')
+        .select('*')
+        .eq('team_id', teamId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (teamError || !teamMember) {
+        throw new Error("Unauthorized: Not a team member");
+      }
+
       // Generate team calendar content
       const { data: events, error: eventsError } = await supabaseClient
         .from('team_calendar_events')
