@@ -20,12 +20,12 @@ export const PlatformCardContent = ({ platform }: PlatformCardContentProps) => {
   const { data: stats } = useQuery({
     queryKey: ["platform-stats", platform.id],
     queryFn: async () => {
-      // Get all lerninhalte for this platform
+      // Get all lerninhalte for this platform using the explicit foreign key relationship
       const { data: modules } = await supabase
         .from('elevate_modules')
         .select(`
           id,
-          elevate_lerninhalte (
+          elevate_lerninhalte!elevate_lerninhalte_module_id_fkey (
             id
           )
         `)
