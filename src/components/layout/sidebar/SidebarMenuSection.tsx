@@ -41,7 +41,7 @@ export const SidebarMenuSection = ({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
-                <a href={item.url} className="flex items-center gap-3 relative px-4 py-4 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
+                <a href={item.url} className="flex items-center gap-3 relative px-4 py-6 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
                   <div className="relative">
                     <item.icon className={`shrink-0 transition-all duration-300 ${isExpanded ? 'h-[25px] w-[25px]' : 'h-[25px] w-[25px]'} group-hover/item:h-[32px] group-hover/item:w-[32px]`} /> 
                     {typeof item.badge === 'number' && (
