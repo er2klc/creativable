@@ -84,7 +84,7 @@ const Leads = () => {
   }
 
   return (
-    <div className="flex flex-1 w-full overflow-hidden space-y-8 min-w-[600px]">
+    <div className="w-full overflow-hidden space-y-8 min-w-[600px]">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">
           {settings?.language === "en" ? "Contacts" : "Kontakte"}
