@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, FilePdf, FileSpreadsheet, Trash2 } from "lucide-react";
+import { FileText, File, FileSpreadsheet, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -7,7 +7,7 @@ import { DocumentPreview } from "./DocumentPreview";
 
 interface Document {
   id: string;
-  name: string;
+  file_name: string;
   file_path: string;
   file_type: string;
   preview_file_path: string | null;
@@ -47,7 +47,7 @@ export const DocumentSection = ({ documents, isAdmin, onDelete }: DocumentSectio
 
     switch (fileType.toLowerCase()) {
       case 'application/pdf':
-        return <FilePdf className="h-4 w-4 text-red-600" />;
+        return <File className="h-4 w-4 text-red-600" />;
       case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
       case 'application/vnd.ms-excel':
         return <FileSpreadsheet className="h-4 w-4 text-green-600" />;
