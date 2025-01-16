@@ -78,12 +78,7 @@ const BioGenerator = () => {
     setIsGenerating(true);
     try {
       console.info("Generating bio with values:", values);
-      const { data: userData } = await supabase.auth.getUser();
-
-      if (!userData.user?.id) {
-        throw new Error("No user ID found");
-      }
-
+      
       // Get the session for the auth token
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
@@ -93,7 +88,7 @@ const BioGenerator = () => {
       const { data: bioData, error: bioError } = await supabase.functions.invoke(
         "generate-bio",
         {
-          body: JSON.stringify(values),
+          body: values,
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
@@ -101,19 +96,6 @@ const BioGenerator = () => {
       );
 
       if (bioError) throw bioError;
-
-      const { error: saveError } = await supabase.from("user_bios").upsert(
-        {
-          ...values,
-          generated_bio: bioData.bio,
-          user_id: userData.user.id,
-        },
-        {
-          onConflict: "user_id",
-        }
-      );
-
-      if (saveError) throw saveError;
 
       setGeneratedBio(bioData.bio);
       setSavedFormData(values);

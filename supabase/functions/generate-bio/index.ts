@@ -18,7 +18,16 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       console.error('[Bio Generator] No authorization header');
-      throw new Error('No authorization header');
+      return new Response(
+        JSON.stringify({
+          error: 'Authentication failed',
+          details: 'No authorization header provided'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401
+        }
+      );
     }
 
     // Initialize Supabase client with auth header
@@ -53,7 +62,8 @@ serve(async (req) => {
     console.log("[Bio Generator] User authenticated:", user.id);
 
     // Parse request body
-    const { role, target_audience, unique_strengths, mission, social_proof, cta_goal, url, preferred_emojis, language } = await req.json();
+    const values = await req.json();
+    const { role, target_audience, unique_strengths, mission, social_proof, cta_goal, url, preferred_emojis, language } = values;
     
     // Get user's OpenAI API key from settings
     const { data: settings, error: settingsError } = await supabaseClient
@@ -125,7 +135,7 @@ Generate the bio now, ensuring each line starts with an emoji.
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           { 
             role: 'system', 
