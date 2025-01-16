@@ -21,7 +21,7 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
   return (
     <div 
       ref={setNodeRef}
-      className={`bg-muted/50 p-4 rounded-lg flex flex-col relative ${
+      className={`bg-muted/50 p-4 rounded-lg flex flex-col h-full min-h-[500px] relative ${
         isOver ? 'ring-2 ring-primary/50 bg-primary/5' : ''
       }`}
     >
@@ -39,7 +39,7 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
         </div>
       </div>
       <SortableContext items={leads.map((l) => l.id)} strategy={rectSortingStrategy}>
-        <div className="space-y-2 min-h-[200px] flex-1">
+        <div className="space-y-2 flex-1">
           {leads.map((lead) => (
             <SortableLeadItem
               key={lead.id}

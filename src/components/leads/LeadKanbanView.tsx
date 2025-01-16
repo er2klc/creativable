@@ -53,25 +53,30 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
 
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {phases.map((phase) => (
-          <PhaseColumn
-            key={phase.id}
-            phase={phase}
-            leads={leads.filter(lead => lead.phase === phase.name)}
-            onLeadClick={onLeadClick}
-            onEditPhase={setEditingPhase}
-          />
-        ))}
-        <div className="bg-muted/50 p-4 rounded-lg flex items-center justify-center">
-          <Button
-            variant="ghost"
-            className="h-full w-full flex flex-col gap-2 items-center justify-center hover:bg-primary/10"
-            onClick={() => addPhase.mutate()}
-          >
-            <Plus className="h-6 w-6" />
-            <span>{settings?.language === "en" ? "Add Phase" : "Phase hinzufügen"}</span>
-          </Button>
+      <div className="w-full overflow-x-auto no-scrollbar">
+        <div className="flex gap-4 min-w-full" style={{ width: `max(100%, ${phases.length * 300}px)` }}>
+          {phases.map((phase) => (
+            <div key={phase.id} className="flex-1 min-w-[300px]">
+              <PhaseColumn
+                phase={phase}
+                leads={leads.filter(lead => lead.phase === phase.name)}
+                onLeadClick={onLeadClick}
+                onEditPhase={setEditingPhase}
+              />
+            </div>
+          ))}
+          <div className="min-w-[300px] flex-1">
+            <div className="bg-muted/50 p-4 rounded-lg h-full min-h-[500px] flex items-center justify-center">
+              <Button
+                variant="ghost"
+                className="h-full w-full flex flex-col gap-2 items-center justify-center hover:bg-primary/10"
+                onClick={() => addPhase.mutate()}
+              >
+                <Plus className="h-6 w-6" />
+                <span>{settings?.language === "en" ? "Add Phase" : "Phase hinzufügen"}</span>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
