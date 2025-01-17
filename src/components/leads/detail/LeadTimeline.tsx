@@ -106,26 +106,8 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
     }
   };
 
-  const getItemBadge = (item: TimelineItem) => {
-    switch (item.type) {
-      case 'message':
-        return (
-          <Badge variant="secondary" className="text-xs">
-            {item.platform}
-          </Badge>
-        );
-      case 'task':
-        return (
-          <Badge 
-            variant={item.status === 'completed' ? 'default' : 'secondary'}
-            className="text-xs"
-          >
-            {item.status}
-          </Badge>
-        );
-      default:
-        return null;
-    }
+  const formatDate = (date: string) => {
+    return format(new Date(date), "EEE. dd.MM.yyyy | HH:mm 'Uhr'", { locale: de });
   };
 
   return (
@@ -138,21 +120,12 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
               {getIcon(item.type, item.platform)}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm text-muted-foreground">
-                  {format(new Date(item.timestamp), 'dd.MM.yyyy HH:mm', { locale: de })}
-                </span>
-                {getItemBadge(item)}
+              <div className="text-sm text-muted-foreground mb-1">
+                {formatDate(item.timestamp)}
               </div>
               <div className="text-sm break-words">
                 {item.content}
               </div>
-              {item.type === 'task' && item.metadata?.dueDate && (
-                <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  Fällig am: {format(new Date(item.metadata.dueDate), 'dd.MM.yyyy', { locale: de })}
-                </div>
-              )}
             </div>
           </div>
         ))}
@@ -164,4 +137,4 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
       </div>
     </Card>
   );
-};
+}

@@ -1,14 +1,15 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadInfoCard } from "./LeadInfoCard";
+import { TaskList } from "./TaskList";
 import { LeadSummary } from "./LeadSummary";
 import { LeadDetailHeader } from "./LeadDetailHeader";
+import { LeadMessages } from "./LeadMessages";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
-import { LeadDetailTabs } from "./LeadDetailTabs";
 import { LeadTimeline } from "./LeadTimeline";
 import { toast } from "sonner";
 import { type Platform } from "@/config/platforms";
@@ -45,7 +46,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
-      if (!leadId) return null;
       const { data, error } = await supabase
         .from("leads")
         .update(updates)
@@ -70,9 +70,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg overflow-hidden">
         <DialogHeader className="p-0">
-          <DialogTitle className="sr-only">
-            {settings?.language === "en" ? "Contact Details" : "Kontaktdetails"}
-          </DialogTitle>
           {lead && (
             <LeadDetailHeader
               lead={lead}
@@ -82,41 +79,27 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         </DialogHeader>
 
         {isLoading ? (
-          <div className="p-6">
-            {settings?.language === "en" ? "Loading..." : "Lädt..."}
-          </div>
+          <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
         ) : lead ? (
           <div className="flex-1 overflow-y-auto p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left column */}
-              <div className="space-y-6">
-                <CompactPhaseSelector
-                  lead={lead}
-                  onUpdateLead={updateLeadMutation.mutate}
-                />
-                
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Bot className="h-5 w-5" />
-                    <h3 className="text-lg font-semibold">
-                      {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
-                    </h3>
-                  </div>
-                  <LeadSummary lead={lead} />
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Bot className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">
+                    {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
+                  </h3>
                 </div>
-                
-                <LeadInfoCard lead={lead} />
+                <LeadSummary lead={lead} />
               </div>
-
-              {/* Right column */}
-              <div className="space-y-6">
-                <LeadDetailTabs lead={lead} />
-                <LeadTimeline lead={lead} />
-              </div>
+              
+              <LeadInfoCard lead={lead} />
+              <LeadTimeline lead={lead} />
+              <TaskList leadId={lead.id} />
             </div>
           </div>
         ) : null}
       </DialogContent>
     </Dialog>
   );
-};
+}

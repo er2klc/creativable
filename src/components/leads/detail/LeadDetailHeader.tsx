@@ -46,11 +46,11 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
             </div>
             <div className="flex items-center gap-2">
               <Button 
-                variant={lead.status === 'partner' ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
                 className={cn(
-                  "transition-colors",
-                  lead.status === 'partner' ? 'bg-[#F2FCE2] text-green-800 hover:bg-[#E2ECD2]' : ''
+                  "transition-colors border-b-2",
+                  lead.status === 'partner' ? 'border-b-green-500 hover:bg-green-50' : 'border-b-transparent'
                 )}
                 onClick={() => handleStatusChange('partner')}
               >
@@ -58,11 +58,11 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
                 Partner
               </Button>
               <Button 
-                variant={lead.status === 'customer' ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
                 className={cn(
-                  "transition-colors",
-                  lead.status === 'customer' ? 'bg-[#D3E4FD] text-blue-800 hover:bg-[#C3D4ED]' : ''
+                  "transition-colors border-b-2",
+                  lead.status === 'customer' ? 'border-b-blue-500 hover:bg-blue-50' : 'border-b-transparent'
                 )}
                 onClick={() => handleStatusChange('customer')}
               >
@@ -70,11 +70,11 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
                 Kunde
               </Button>
               <Button 
-                variant={lead.status === 'not_for_now' ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
                 className={cn(
-                  "transition-colors",
-                  lead.status === 'not_for_now' ? 'bg-[#FEF7CD] text-yellow-800 hover:bg-[#EEE7BD]' : ''
+                  "transition-colors border-b-2",
+                  lead.status === 'not_for_now' ? 'border-b-yellow-500 hover:bg-yellow-50' : 'border-b-transparent'
                 )}
                 onClick={() => handleStatusChange('not_for_now')}
               >
@@ -83,10 +83,12 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
               </Button>
             </div>
           </div>
-          <CompactPhaseSelector
-            lead={lead}
-            onUpdateLead={onUpdateLead}
-          />
+          <div className="border-t pt-4">
+            <CompactPhaseSelector
+              lead={lead}
+              onUpdateLead={onUpdateLead}
+            />
+          </div>
         </div>
       </div>
     </div>

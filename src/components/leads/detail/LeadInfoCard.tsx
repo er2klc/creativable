@@ -5,9 +5,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ContactInfoFields } from "./contact-info/ContactInfoFields";
-import { SocialMediaFields } from "./social-media/SocialMediaFields";
-import { BioAndInterestsFields } from "./bio/BioAndInterestsFields";
+import { Input } from "@/components/ui/input";
 
 interface LeadInfoCardProps {
   lead: Tables<"leads">;
@@ -42,26 +40,36 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 antialiased">
-          <Contact2 className="h-5 w-5 text-gray-900" />
+        <CardTitle className="flex items-center gap-2">
+          <Contact2 className="h-5 w-5" />
           {settings?.language === "en" ? "Contact Information" : "Kontakt Informationen"}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <dl className="grid grid-cols-2 gap-4">
-          <SocialMediaFields 
-            lead={lead} 
-            onUpdate={updateLeadMutation.mutate} 
-          />
-          <ContactInfoFields 
-            lead={lead} 
-            onUpdate={updateLeadMutation.mutate} 
-          />
-          <BioAndInterestsFields 
-            lead={lead} 
-            onUpdate={updateLeadMutation.mutate} 
-          />
-        </dl>
+        <div className="grid grid-cols-1 gap-4">
+          <div className="flex items-center gap-4">
+            <Input
+              value={lead.name || ""}
+              onChange={(e) => updateLeadMutation.mutate({ name: e.target.value })}
+              placeholder={settings?.language === "en" ? "Name" : "Name"}
+              className="flex-1"
+            />
+            <Input
+              value={lead.phone_number || ""}
+              onChange={(e) => updateLeadMutation.mutate({ phone_number: e.target.value })}
+              placeholder={settings?.language === "en" ? "Phone" : "Telefon"}
+              className="flex-1"
+              type="tel"
+            />
+            <Input
+              value={lead.email || ""}
+              onChange={(e) => updateLeadMutation.mutate({ email: e.target.value })}
+              placeholder={settings?.language === "en" ? "Email" : "E-Mail"}
+              className="flex-1"
+              type="email"
+            />
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
