@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSettings } from "@/hooks/use-settings";
 import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { 
   Select,
   SelectContent,
@@ -15,7 +16,9 @@ import {
 export const DashboardMetrics = () => {
   const session = useSession();
   const { settings } = useSettings();
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { pipelineId } = useParams();
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(pipelineId || null);
 
   // Get all pipelines
   const { data: pipelines } = useQuery({
@@ -49,6 +52,7 @@ export const DashboardMetrics = () => {
         const lastPipeline = pipelines.find(p => p.id === lastUsedPipelineId);
         if (lastPipeline) {
           setSelectedPipelineId(lastPipeline.id);
+          navigate(`/pipeline/${lastPipeline.id}`);
           return;
         }
       }
@@ -56,8 +60,9 @@ export const DashboardMetrics = () => {
       // Otherwise, try to find the Standard Pipeline or use the first one
       const defaultPipeline = pipelines.find(p => p.name === "Standard Pipeline") || pipelines[0];
       setSelectedPipelineId(defaultPipeline.id);
+      navigate(`/pipeline/${defaultPipeline.id}`);
     }
-  }, [pipelines, selectedPipelineId]);
+  }, [pipelines, selectedPipelineId, navigate]);
 
   // Then get the completion phase for selected pipeline
   const { data: completionPhase } = useQuery({
@@ -125,6 +130,7 @@ export const DashboardMetrics = () => {
   const handlePipelineChange = (pipelineId: string) => {
     setSelectedPipelineId(pipelineId);
     localStorage.setItem('lastUsedPipelineId', pipelineId);
+    navigate(`/pipeline/${pipelineId}`);
   };
 
   return (
