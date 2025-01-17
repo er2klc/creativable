@@ -11,6 +11,7 @@ import { LeadSummary } from "./detail/LeadSummary";
 import { LeadDetailHeader } from "./detail/LeadDetailHeader";
 import { LeadMessages } from "./detail/LeadMessages";
 import { CompactPhaseSelector } from "./detail/CompactPhaseSelector";
+import { LeadTimeline } from "./detail/LeadTimeline";
 import { toast } from "sonner";
 import { type Platform } from "@/config/platforms";
 
@@ -29,7 +30,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       if (!leadId) return null;
       const { data, error } = await supabase
         .from("leads")
-        .select("*, messages(*), tasks(*)")
+        .select("*, messages(*), tasks(*), notes(*)")
         .eq("id", leadId)
         .single();
 
@@ -38,6 +39,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         platform: Platform;
         messages: Tables<"messages">[];
         tasks: Tables<"tasks">[];
+        notes: Tables<"notes">[];
       });
     },
     enabled: !!leadId,
@@ -132,6 +134,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
               </div>
               
               <LeadInfoCard lead={lead} />
+              <LeadTimeline lead={lead} />
               <TaskList leadId={lead.id} />
               <NoteList leadId={lead.id} />
               <LeadMessages messages={lead.messages} />
@@ -141,4 +144,4 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       </DialogContent>
     </Dialog>
   );
-};
+}

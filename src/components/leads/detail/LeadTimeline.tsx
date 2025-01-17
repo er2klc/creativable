@@ -30,7 +30,7 @@ export function LeadTimeline({ lead }: LeadTimelineProps) {
       id: message.id,
       type: 'message' as const,
       content: message.content,
-      timestamp: message.sent_at || message.created_at || '',
+      timestamp: message.sent_at || '',
       status: message.platform
     })),
     ...lead.tasks.map(task => ({
