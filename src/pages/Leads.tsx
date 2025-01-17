@@ -12,6 +12,7 @@ import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { LeadPhaseManager } from "@/components/leads/LeadPhaseManager";
+import { PipelineSelector } from "@/components/leads/pipeline/PipelineSelector";
 import { Settings2, LayoutList, LayoutDashboard } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -31,9 +32,30 @@ const Leads = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [showSendMessage, setShowSendMessage] = useState(false);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  const [viewMode, setViewMode] = useState<"kanban" | "list">(isMobile ? "list" : "kanban");
+  const [viewMode, setViewMode] = useState<"kanban" | "list">(
+    isMobile ? "list" : "kanban"
+  );
   const { settings } = useSettings();
+
+  const { data: pipelines = [] } = useQuery({
+    queryKey: ["pipelines"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pipelines")
+        .select("*")
+        .order("order_index");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (pipelines.length > 0 && !selectedPipelineId) {
+      setSelectedPipelineId(pipelines[0].id);
+    }
+  }, [pipelines]);
 
   useEffect(() => {
     if (searchParams.get("action") === "send-message") {
@@ -92,12 +114,19 @@ const Leads = () => {
               <h1 className="text-3xl font-bold">
                 {settings?.language === "en" ? "Contacts" : "Kontakte"}
               </h1>
-              
+
               <div className="flex-1 min-w-[200px] max-w-[800px]">
-                <LeadSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+                <LeadSearch
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                />
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
+                <PipelineSelector
+                  selectedPipelineId={selectedPipelineId}
+                  onPipelineSelect={setSelectedPipelineId}
+                />
                 <LeadFilters
                   selectedPhase={selectedPhase}
                   setSelectedPhase={setSelectedPhase}
@@ -129,7 +158,9 @@ const Leads = () => {
                   <SheetContent>
                     <SheetHeader>
                       <SheetTitle>
-                        {settings?.language === "en" ? "Manage Phases" : "Phasen verwalten"}
+                        {settings?.language === "en"
+                          ? "Manage Phases"
+                          : "Phasen verwalten"}
                       </SheetTitle>
                       <SheetDescription>
                         {settings?.language === "en"
@@ -161,9 +192,7 @@ const Leads = () => {
       />
 
       {showSendMessage && (
-        <SendMessageDialog
-          trigger={<div style={{ display: "none" }} />}
-        />
+        <SendMessageDialog trigger={<div style={{ display: "none" }} />} />
       )}
     </div>
   );

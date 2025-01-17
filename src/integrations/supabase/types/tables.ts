@@ -219,4 +219,56 @@ export interface Tables {
       },
     ];
   };
+  pipelines: {
+    Row: {
+      id: string;
+      user_id: string;
+      name: string;
+      order_index: number;
+      created_at: string | null;
+      updated_at: string | null;
+    };
+    Insert: {
+      id?: string;
+      user_id: string;
+      name: string;
+      order_index?: number;
+      created_at?: string | null;
+      updated_at?: string | null;
+    };
+    Update: {
+      id?: string;
+      user_id?: string;
+      name?: string;
+      order_index?: number;
+      created_at?: string | null;
+      updated_at?: string | null;
+    };
+  };
+  pipeline_phases: {
+    Row: {
+      id: string;
+      pipeline_id: string;
+      name: string;
+      order_index: number;
+      created_at: string | null;
+      updated_at: string | null;
+    };
+    Insert: {
+      id?: string;
+      pipeline_id: string;
+      name: string;
+      order_index?: number;
+      created_at?: string | null;
+      updated_at?: string | null;
+    };
+    Update: {
+      id?: string;
+      pipeline_id?: string;
+      name?: string;
+      order_index?: number;
+      created_at?: string | null;
+      updated_at?: string | null;
+    };
+  };
 }
