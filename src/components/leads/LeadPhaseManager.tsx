@@ -127,8 +127,8 @@ export const LeadPhaseManager = () => {
       // First update all leads in the phase being deleted
       const { error: updateError } = await supabase
         .from("leads")
-        .update({ phase: targetPhase })
-        .eq("phase", phaseToDelete.name)
+        .update({ phase_id: targetPhase })
+        .eq("phase_id", phaseToDelete.id)
         .eq("user_id", session.user.id);
 
       if (updateError) throw updateError;

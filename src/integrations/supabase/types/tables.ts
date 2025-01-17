@@ -80,7 +80,8 @@ export interface Tables {
     };
     Relationships: [];
   };
-  leads: {
+
+leads: {
     Row: {
       id: string;
       user_id: string;
@@ -163,6 +164,7 @@ export interface Tables {
       phase_id?: string;
     };
   };
+
   messages: {
     Row: Message;
     Insert: MessageInsert;
@@ -251,3 +253,4 @@ export interface Tables {
     ];
   };
 }
+

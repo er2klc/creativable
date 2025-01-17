@@ -40,7 +40,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
       const { error } = await supabase
         .from("leads")
         .update({ 
-          phase: newPhase,
+          phase_id: newPhase,
           last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
           last_action_date: new Date().toISOString(),
         })
@@ -72,7 +72,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
     if (!over || !active) return;
 
     const leadId = active.id as string;
-    const newPhase = phases.find(phase => phase.id === over.id)?.name;
+    const newPhase = over.id as string;
     
     if (newPhase) {
       try {
@@ -111,7 +111,7 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
               <div key={phase.id} className="flex-1 min-w-[280px] max-w-[300px]">
                 <PhaseColumn
                   phase={phase}
-                  leads={leads.filter((lead) => lead.phase === phase.name)}
+                  leads={leads.filter((lead) => lead.phase_id === phase.id)}
                   onLeadClick={onLeadClick}
                   onEditPhase={setEditingPhase}
                 />

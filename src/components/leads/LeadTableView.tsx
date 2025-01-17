@@ -36,12 +36,12 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
     },
   });
 
-  const handlePhaseChange = async (leadId: string, newPhase: string) => {
+  const handlePhaseChange = async (leadId: string, phaseId: string) => {
     try {
       const { error } = await supabase
         .from("leads")
         .update({
-          phase: newPhase,
+          phase_id: phaseId,
           last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
           last_action_date: new Date().toISOString(),
         })
@@ -108,13 +108,14 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
                 <LeadTableCell type="favorite" value={null} />
                 <LeadTableCell type="name" value={lead.name} />
                 <LeadTableCell type="platform" value={lead.platform} />
-                <LeadTableCell type="phase" value={lead.phase} />
+                <LeadTableCell type="phase" value={lead.phase_id} />
                 <LeadTableCell type="lastAction" value={lead.last_action_date} />
                 <LeadTableCell type="industry" value={lead.industry} />
                 <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                   <LeadTableActions
                     lead={lead}
                     onShowDetails={() => onLeadClick(lead.id)}
+                    onPhaseChange={(newPhaseId) => handlePhaseChange(lead.id, newPhaseId)}
                   />
                 </TableCell>
               </TableRow>

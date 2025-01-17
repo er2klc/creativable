@@ -56,7 +56,7 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
       name: "",
       platform: "LinkedIn" as Platform,
       social_media_username: "",
-      phase: defaultPhase || "",
+      phase_id: "",
       contact_type: null,
       phone_number: "",
       email: "",
@@ -90,11 +90,11 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
       
       const { error } = await supabase.from("leads").insert({
         user_id: session.user.id,
-        pipeline_id: defaultPipeline.id, // Add the pipeline_id
+        pipeline_id: defaultPipeline.id,
         name: values.name,
         platform: values.platform,
         social_media_username: socialMediaUrl,
-        phase: values.phase,
+        phase_id: values.phase_id,
         contact_type: values.contact_type,
         phone_number: values.phone_number || null,
         email: values.email || null,

@@ -72,7 +72,12 @@ export const LeadPhases = () => {
       
       const { data: leads, error } = await supabase
         .from("leads")
-        .select("phase")
+        .select(`
+          phase_id,
+          pipeline_phases (
+            name
+          )
+        `)
         .eq("user_id", session.user.id)
         .eq("pipeline_id", pipeline.id);
 
@@ -83,7 +88,10 @@ export const LeadPhases = () => {
       const total = leads?.length || 0;
       
       leads?.forEach(lead => {
-        counts[lead.phase] = (counts[lead.phase] || 0) + 1;
+        const phaseName = lead.pipeline_phases?.name;
+        if (phaseName) {
+          counts[phaseName] = (counts[phaseName] || 0) + 1;
+        }
       });
 
       // Convert to percentages

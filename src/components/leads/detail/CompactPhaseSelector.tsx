@@ -53,8 +53,8 @@ export function CompactPhaseSelector({
     enabled: !!pipeline?.id,
   });
 
-  const handlePhaseChange = (newPhase: string) => {
-    onUpdateLead({ phase: newPhase });
+  const handlePhaseChange = (phaseId: string) => {
+    onUpdateLead({ phase_id: phaseId });
   };
 
   // Split phases into two rows
@@ -73,11 +73,11 @@ export function CompactPhaseSelector({
           {firstRow.map((phase) => (
             <div
               key={phase.id}
-              onClick={() => handlePhaseChange(phase.name)}
+              onClick={() => handlePhaseChange(phase.id)}
               className={cn(
                 "px-4 py-1.5 rounded-full text-sm cursor-pointer transition-all",
                 "hover:scale-105 transform duration-200 ease-in-out",
-                lead.phase === phase.name
+                lead.phase_id === phase.id
                   ? "bg-[#D3E4FD] text-blue-800 shadow-sm"
                   : "bg-gray-50 text-gray-600 hover:bg-gray-100"
               )}
@@ -93,11 +93,11 @@ export function CompactPhaseSelector({
             {secondRow.map((phase) => (
               <div
                 key={phase.id}
-                onClick={() => handlePhaseChange(phase.name)}
+                onClick={() => handlePhaseChange(phase.id)}
                 className={cn(
                   "px-4 py-1.5 rounded-full text-sm cursor-pointer transition-all",
                   "hover:scale-105 transform duration-200 ease-in-out",
-                  lead.phase === phase.name
+                  lead.phase_id === phase.id
                     ? "bg-[#D3E4FD] text-blue-800 shadow-sm"
                     : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                 )}
