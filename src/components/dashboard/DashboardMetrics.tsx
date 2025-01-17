@@ -76,7 +76,7 @@ export const DashboardMetrics = () => {
           .select("id")
           .eq("user_id", session.user.id)
           .eq("pipeline_id", pipeline.id)
-          .eq("phase", completionPhase?.name || "Abschluss"),
+          .eq("phase_id", completionPhase?.id),
       ]);
 
       const totalLeads = leadsResult.data?.length || 0;
