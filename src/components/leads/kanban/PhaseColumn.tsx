@@ -21,7 +21,7 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
     <div 
       ref={setNodeRef}
       className={`bg-muted/50 rounded-lg flex flex-col h-full relative transition-colors duration-200 ${
-        isOver ? 'ring-2 ring-primary/50 bg-primary/5' : ''
+        isOver ? 'ring-2 ring-primary/50 bg-primary/5 shadow-[0_-1px_3px_rgba(0,0,0,0.1)]' : ''
       }`}
     >
       <div className="sticky top-0 z-10 bg-[#f5f5f5] p-4 rounded-t-lg border-b border-primary/20 shadow-sm mb-[1px]">
