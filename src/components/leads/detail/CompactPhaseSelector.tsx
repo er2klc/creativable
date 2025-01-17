@@ -16,7 +16,6 @@ export function CompactPhaseSelector({
 }: CompactPhaseSelectorProps) {
   const session = useSession();
   
-  // Get all pipelines
   const { data: pipelines = [] } = useQuery({
     queryKey: ["pipelines"],
     queryFn: async () => {
@@ -34,7 +33,6 @@ export function CompactPhaseSelector({
     enabled: !!session?.user?.id,
   });
 
-  // Get phases for the selected pipeline
   const { data: phases = [] } = useQuery({
     queryKey: ["pipeline-phases", lead.pipeline_id],
     queryFn: async () => {
@@ -53,9 +51,7 @@ export function CompactPhaseSelector({
   });
 
   const handlePipelineChange = (pipelineId: string) => {
-    // Only update if the pipeline actually changed
     if (pipelineId !== lead.pipeline_id) {
-      // Get first phase of new pipeline
       const firstPhase = phases[0]?.id;
       if (firstPhase) {
         onUpdateLead({ 
@@ -67,14 +63,13 @@ export function CompactPhaseSelector({
   };
 
   const handlePhaseChange = (phaseId: string) => {
-    // Only update if the phase actually changed
     if (phaseId !== lead.phase_id) {
       onUpdateLead({ phase_id: phaseId });
     }
   };
 
   return (
-    <div className="w-full px-4 py-2 space-y-4">
+    <div className="w-full space-y-4">
       <div className="flex items-center gap-4">
         <Select
           value={lead.pipeline_id}
@@ -93,23 +88,22 @@ export function CompactPhaseSelector({
         </Select>
       </div>
 
-      <div className="flex items-center gap-2">
-        {phases.map((phase, index) => (
-          <div
+      <div className="relative flex items-center gap-2 pt-2">
+        <div className="absolute top-1/2 left-0 w-full h-px bg-gray-200 -translate-y-1/2 z-0" />
+        {phases.map((phase) => (
+          <button
             key={phase.id}
             onClick={() => handlePhaseChange(phase.id)}
             className={cn(
-              "px-4 py-1.5 rounded-full text-sm cursor-pointer transition-all relative",
+              "px-3 py-1 text-sm rounded-full transition-all relative z-10",
               "hover:scale-105 transform duration-200 ease-in-out",
-              "after:content-[''] after:absolute after:top-1/2 after:-right-4 after:w-2 after:h-2 after:border-t-2 after:border-r-2 after:border-gray-300 after:transform after:-translate-y-1/2 after:rotate-45",
               lead.phase_id === phase.id
-                ? "bg-[#D3E4FD] text-blue-800 shadow-sm"
-                : "bg-gray-50 text-gray-600 hover:bg-gray-100",
-              index === phases.length - 1 && "after:hidden"
+                ? "bg-[#D3E4FD] text-blue-800"
+                : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300"
             )}
           >
             {phase.name}
-          </div>
+          </button>
         ))}
       </div>
     </div>
