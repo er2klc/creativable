@@ -14,42 +14,44 @@ const App = () => {
   const showChat = useChatVisibility(publicPaths);
   
   return (
-    <AppProvider>
-      <Routes>
-        {/* Public Routes */}
-        {publicRoutes.map(route => (
-          <Route key={route.path} path={route.path} element={route.element} />
-        ))}
-        
-        {/* Protected Routes */}
-        <Route element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Outlet />
-            </AppLayout>
-          </ProtectedRoute>
-        }>
-          {protectedRoutes.map(route => (
-            <Route 
-              key={route.path} 
-              path={route.path} 
-              element={route.element}
-            />
+    <div className="min-h-screen bg-background text-foreground">
+      <AppProvider>
+        <Routes>
+          {/* Public Routes */}
+          {publicRoutes.map(route => (
+            <Route key={route.path} path={route.path} element={route.element} />
           ))}
-        </Route>
+          
+          {/* Protected Routes */}
+          <Route element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Outlet />
+              </AppLayout>
+            </ProtectedRoute>
+          }>
+            {protectedRoutes.map(route => (
+              <Route 
+                key={route.path} 
+                path={route.path} 
+                element={route.element}
+              />
+            ))}
+          </Route>
 
-        {/* Root route */}
-        <Route path="/" element={
-          <Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />
-        } />
+          {/* Root route */}
+          <Route path="/" element={
+            <Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />
+          } />
 
-        {/* Catch all route */}
-        <Route path="*" element={
-          <Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />
-        } />
-      </Routes>
-      {showChat && <ChatButton />}
-    </AppProvider>
+          {/* Catch all route */}
+          <Route path="*" element={
+            <Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />
+          } />
+        </Routes>
+        {showChat && <ChatButton />}
+      </AppProvider>
+    </div>
   );
 };
 
