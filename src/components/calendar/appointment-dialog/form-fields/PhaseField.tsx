@@ -21,13 +21,13 @@ interface PhaseFieldProps {
 
 export const PhaseField = ({ form }: PhaseFieldProps) => {
   const { data: phases = [] } = useQuery({
-    queryKey: ["lead-phases"],
+    queryKey: ["pipeline-phases"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
       const { data, error } = await supabase
-        .from("lead_phases")
+        .from("pipeline_phases")
         .select("*")
         .eq("user_id", user.id)
         .order("order_index");

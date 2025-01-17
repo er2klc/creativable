@@ -57,7 +57,7 @@ export const usePhaseMutations = () => {
 
       // Get the current highest order_index
       const { data: phases } = await supabase
-        .from("lead_phases")
+        .from("pipeline_phases")
         .select("order_index")
         .eq("user_id", session.user.id)
         .order("order_index", { ascending: false })
@@ -66,7 +66,7 @@ export const usePhaseMutations = () => {
       const nextOrderIndex = phases && phases.length > 0 ? phases[0].order_index + 1 : 0;
 
       const { error } = await supabase
-        .from("lead_phases")
+        .from("pipeline_phases")
         .insert({
           name: settings?.language === "en" ? "New Phase" : "Neue Phase",
           order_index: nextOrderIndex,
@@ -76,7 +76,7 @@ export const usePhaseMutations = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
       toast({
         title: settings?.language === "en" ? "Phase added" : "Phase hinzugefügt",
         description: settings?.language === "en"
@@ -110,7 +110,7 @@ export const usePhaseMutations = () => {
 
       // First update the phase name
       const { error: phaseError } = await supabase
-        .from("lead_phases")
+        .from("pipeline_phases")
         .update({ name })
         .eq("id", id)
         .eq("user_id", session.user.id);
@@ -149,7 +149,7 @@ export const usePhaseMutations = () => {
     },
     onSuccess: (data) => {
       console.log("Phase rename operation completed successfully:", data);
-      queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast({
         title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",

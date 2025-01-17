@@ -51,7 +51,7 @@ export interface Tables {
     };
     Update: {
       created_at?: string | null;
-      file_path?: string;
+      file_path?: string | null;
       file_type?: string;
       filename?: string;
       id?: string;
@@ -140,33 +140,6 @@ export interface Tables {
     };
     Relationships: [];
   };
-  message_templates: {
-    Row: {
-      content: string;
-      created_at: string | null;
-      id: string;
-      name: string;
-      updated_at: string | null;
-      user_id: string;
-    };
-    Insert: {
-      content: string;
-      created_at?: string | null;
-      id?: string;
-      name: string;
-      updated_at?: string | null;
-      user_id: string;
-    };
-    Update: {
-      content?: string;
-      created_at?: string | null;
-      id?: string;
-      name?: string;
-      updated_at?: string | null;
-      user_id?: string;
-    };
-    Relationships: [];
-  };
   messages: {
     Row: Message;
     Insert: MessageInsert;
@@ -219,32 +192,6 @@ export interface Tables {
       },
     ];
   };
-  pipelines: {
-    Row: {
-      id: string;
-      user_id: string;
-      name: string;
-      order_index: number;
-      created_at: string | null;
-      updated_at: string | null;
-    };
-    Insert: {
-      id?: string;
-      user_id: string;
-      name: string;
-      order_index?: number;
-      created_at?: string | null;
-      updated_at?: string | null;
-    };
-    Update: {
-      id?: string;
-      user_id?: string;
-      name?: string;
-      order_index?: number;
-      created_at?: string | null;
-      updated_at?: string | null;
-    };
-  };
   pipeline_phases: {
     Row: {
       id: string;
@@ -253,6 +200,7 @@ export interface Tables {
       order_index: number;
       created_at: string | null;
       updated_at: string | null;
+      user_id: string;
     };
     Insert: {
       id?: string;
@@ -261,6 +209,7 @@ export interface Tables {
       order_index?: number;
       created_at?: string | null;
       updated_at?: string | null;
+      user_id: string;
     };
     Update: {
       id?: string;
@@ -269,6 +218,7 @@ export interface Tables {
       order_index?: number;
       created_at?: string | null;
       updated_at?: string | null;
+      user_id?: string;
     };
   };
 }
