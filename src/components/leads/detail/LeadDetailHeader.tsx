@@ -1,6 +1,5 @@
-import { Button } from "@/components/ui/button";
 import { Tables } from "@/integrations/supabase/types";
-import { useSettings } from "@/hooks/use-settings";
+import { Button } from "@/components/ui/button";
 import { Award, Users, XCircle } from "lucide-react";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { toast } from "sonner";
@@ -9,77 +8,63 @@ import { Platform, getPlatformConfig } from "@/config/platforms";
 interface LeadDetailHeaderProps {
   lead: Tables<"leads"> & {
     platform: Platform;
+    messages: Tables<"messages">[];
+    tasks: Tables<"tasks">[];
   };
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
 }
 
-export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) => {
-  const { settings } = useSettings();
+export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) {
   const platformConfig = getPlatformConfig(lead.platform);
 
-  const handleStatusChange = (status: string) => {
-    onUpdateLead({ contact_type: status });
-    toast.success(
-      settings?.language === "en"
-        ? `Contact marked as ${status}`
-        : `Kontakt als ${status} markiert`
-    );
+  const handleStatusChange = async (status: string) => {
+    try {
+      await onUpdateLead({ status });
+      toast.success(`Status auf ${status} geändert`);
+    } catch (error) {
+      toast.error("Fehler beim Ändern des Status");
+    }
   };
 
   return (
-    <div className="border-b bg-white">
-      <div className="px-6 py-4">
+    <div className="bg-white border-b">
+      <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold flex items-center gap-2">
-              {lead.name}
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <platformConfig.icon className="h-4 w-4" />
-                {lead.platform}
-              </span>
-            </h1>
-            {lead.company_name && (
-              <p className="text-muted-foreground mt-1">{lead.company_name}</p>
-            )}
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold">{lead.name}</h1>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handleStatusChange('partner')}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Partner
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handleStatusChange('customer')}
+              >
+                <Award className="h-4 w-4 mr-2" />
+                Kunde
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handleStatusChange('not_for_now')}
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Not For Now
+              </Button>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant={lead.contact_type === "Won" ? "default" : "outline"}
-              className="flex items-center gap-2"
-              onClick={() => handleStatusChange("Won")}
-            >
-              <Award className="h-4 w-4" />
-              {settings?.language === "en" ? "Won" : "Gewonnen"}
-            </Button>
-            
-            <Button
-              variant={lead.contact_type === "NotForNow" ? "default" : "outline"}
-              className="flex items-center gap-2"
-              onClick={() => handleStatusChange("NotForNow")}
-            >
-              <XCircle className="h-4 w-4" />
-              NotForNow
-            </Button>
-            
-            <Button
-              variant={lead.contact_type === "Partner" ? "default" : "outline"}
-              className="flex items-center gap-2"
-              onClick={() => handleStatusChange("Partner")}
-            >
-              <Users className="h-4 w-4" />
-              Partner
-            </Button>
-          </div>
+          <CompactPhaseSelector
+            lead={lead}
+            onUpdateLead={onUpdateLead}
+          />
         </div>
-      </div>
-      
-      <div className="border-t px-6 py-2">
-        <CompactPhaseSelector
-          lead={lead}
-          onUpdateLead={onUpdateLead}
-        />
       </div>
     </div>
   );
-};
+}

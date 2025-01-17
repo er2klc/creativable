@@ -4,13 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { LeadInfoCard } from "@/components/leads/detail/LeadInfoCard";
 import { LeadDetailHeader } from "@/components/leads/detail/LeadDetailHeader";
-import { TaskList } from "@/components/leads/detail/TaskList";
-import { NoteList } from "@/components/leads/detail/NoteList";
-import { LeadMessages } from "@/components/leads/detail/LeadMessages";
 import { LeadSummary } from "@/components/leads/detail/LeadSummary";
 import { Platform } from "@/config/platforms";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
+import { LeadDetailTabs } from "@/components/leads/detail/LeadDetailTabs";
 
 export default function LeadDetail() {
   const { leadSlug } = useParams();
@@ -88,24 +86,16 @@ export default function LeadDetail() {
         <div className="grid grid-cols-12 gap-6">
           {/* Left column */}
           <div className="col-span-4 space-y-6">
-            <div className="bg-white rounded-lg shadow">
+            <div className="bg-white rounded-lg shadow p-6">
               <LeadSummary lead={lead} />
             </div>
-            
             <LeadInfoCard lead={lead} />
-            <TaskList leadId={lead.id} />
           </div>
 
-          {/* Right column - Timeline */}
-          <div className="col-span-8 space-y-6">
+          {/* Right column - Tabs and Timeline */}
+          <div className="col-span-8">
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">
-                {settings?.language === "en" ? "Timeline" : "Zeitstrahl"}
-              </h2>
-              <div className="space-y-6">
-                <LeadMessages messages={lead.messages} />
-                <NoteList leadId={lead.id} />
-              </div>
+              <LeadDetailTabs lead={lead} />
             </div>
           </div>
         </div>
