@@ -40,12 +40,12 @@ const App = () => {
 
         {/* Root route */}
         <Route path="/" element={
-          <Navigate to={isAuthenticated ? "/dashboard" : "/auth"} />
+          <Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />
         } />
 
         {/* Catch all route */}
         <Route path="*" element={
-          <Navigate to={isAuthenticated ? "/dashboard" : "/auth"} />
+          <Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />
         } />
       </Routes>
       {showChat && <ChatButton />}
