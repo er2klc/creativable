@@ -6,7 +6,6 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useParams, useNavigate } from "react-router-dom";
 
 const DEFAULT_PHASES = [
   { name: "Erstkontakt", order_index: 0 },
@@ -17,8 +16,6 @@ const DEFAULT_PHASES = [
 export const LeadPhases = () => {
   const session = useSession();
   const { toast } = useToast();
-  const { pipelineId } = useParams();
-  const navigate = useNavigate();
 
   // First get the default pipeline
   const { data: pipeline } = useQuery({
@@ -113,12 +110,6 @@ export const LeadPhases = () => {
     },
     enabled: !!session?.user?.id && !!pipeline?.id,
   });
-
-  useEffect(() => {
-    if (pipeline?.id && !pipelineId) {
-      navigate(`/pipeline/${pipeline.id}/leads`);
-    }
-  }, [pipeline?.id, pipelineId, navigate]);
 
   useEffect(() => {
     const initializeDefaultPhases = async () => {
