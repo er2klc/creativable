@@ -42,6 +42,18 @@ export const DashboardMetrics = () => {
   // Set default pipeline when pipelines are loaded
   useEffect(() => {
     if (pipelines && pipelines.length > 0 && !selectedPipelineId) {
+      const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
+      
+      // Try to find the last used pipeline first
+      if (lastUsedPipelineId) {
+        const lastPipeline = pipelines.find(p => p.id === lastUsedPipelineId);
+        if (lastPipeline) {
+          setSelectedPipelineId(lastPipeline.id);
+          return;
+        }
+      }
+      
+      // Otherwise, try to find the Standard Pipeline or use the first one
       const defaultPipeline = pipelines.find(p => p.name === "Standard Pipeline") || pipelines[0];
       setSelectedPipelineId(defaultPipeline.id);
     }
@@ -110,12 +122,17 @@ export const DashboardMetrics = () => {
     enabled: !!session?.user?.id && !!completionPhase?.id && !!selectedPipelineId,
   });
 
+  const handlePipelineChange = (pipelineId: string) => {
+    setSelectedPipelineId(pipelineId);
+    localStorage.setItem('lastUsedPipelineId', pipelineId);
+  };
+
   return (
     <div className="space-y-6 w-full mb-8">
       <div className="flex items-center gap-4">
         <Select
           value={selectedPipelineId || ""}
-          onValueChange={(value) => setSelectedPipelineId(value)}
+          onValueChange={handlePipelineChange}
         >
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Pipeline auswählen" />
