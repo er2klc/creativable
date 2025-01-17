@@ -57,7 +57,7 @@ export const DashboardMetrics = () => {
         .select("*")
         .eq("pipeline_id", selectedPipelineId)
         .eq("name", "Abschluss")
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching completion phase:", error);
