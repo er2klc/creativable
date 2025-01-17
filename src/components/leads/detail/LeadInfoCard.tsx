@@ -16,6 +16,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
   const [editingField, setEditingField] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState<string>("");
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
@@ -40,6 +41,11 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     },
   });
 
+  const handleStartEdit = (field: string, currentValue: string | null) => {
+    setEditingField(field);
+    setEditingValue(currentValue || "");
+  };
+
   const handleUpdate = (field: string, value: string) => {
     updateLeadMutation.mutate({ [field]: value });
   };
@@ -63,17 +69,23 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
         <div className="flex-1">
           {isEditing ? (
             <Input
-              value={value || ""}
-              onChange={(e) => handleUpdate(field, e.target.value)}
-              onBlur={() => setEditingField(null)}
-              onKeyDown={(e) => e.key === "Enter" && handleUpdate(field, (e.target as HTMLInputElement).value)}
+              value={editingValue}
+              onChange={(e) => setEditingValue(e.target.value)}
+              onBlur={() => handleUpdate(field, editingValue)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleUpdate(field, editingValue);
+                } else if (e.key === "Escape") {
+                  setEditingField(null);
+                }
+              }}
               autoFocus
               placeholder={label}
               className="max-w-md"
             />
           ) : (
             <div 
-              onClick={() => setEditingField(field)}
+              onClick={() => handleStartEdit(field, value)}
               className="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 -ml-2"
             >
               {value || label}
