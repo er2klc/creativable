@@ -1,6 +1,5 @@
 import { AppProvider } from "@/providers/AppProvider";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "@/hooks/use-auth";
+import { Routes, Route, Navigate, Outlet } from "react } from "@/hooks/use-auth";
 import { ChatButton } from "@/components/dashboard/ChatButton";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import { publicRoutes } from "@/config/public-routes";
@@ -22,19 +21,21 @@ const App = () => {
         ))}
         
         {/* Protected Routes */}
-        {protectedRoutes.map(route => (
-          <Route
-            key={route.path}
-            path={route.path}
-            element={
-              <ProtectedRoute>
-                <AppLayout>
-                  {route.element}
-                </AppLayout>
-              </ProtectedRoute>
-            }
-          />
-        ))}
+        <Route element={
+          <ProtectedRoute>
+            <AppLayout>
+              <Outlet />
+            </AppLayout>
+          </ProtectedRoute>
+        }>
+          {protectedRoutes.map(route => (
+            <Route 
+              key={route.path} 
+              path={route.path} 
+              element={route.element}
+            />
+          ))}
+        </Route>
 
         {/* Root route */}
         <Route path="/" element={
