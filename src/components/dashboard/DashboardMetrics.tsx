@@ -8,8 +8,55 @@ export const DashboardMetrics = () => {
   const session = useSession();
   const { settings } = useSettings();
 
+  // First get the default pipeline
+  const { data: pipeline } = useQuery({
+    queryKey: ["default-pipeline"],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+
+      const { data, error } = await supabase
+        .from("pipelines")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("order_index")
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.error("Error fetching pipeline:", error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  // Then get the completion phase for that pipeline
+  const { data: completionPhase } = useQuery({
+    queryKey: ["completion-phase", pipeline?.id],
+    queryFn: async () => {
+      if (!pipeline?.id) return null;
+
+      const { data, error } = await supabase
+        .from("pipeline_phases")
+        .select("*")
+        .eq("pipeline_id", pipeline.id)
+        .eq("name", "Abschluss")
+        .single();
+
+      if (error) {
+        console.error("Error fetching completion phase:", error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!pipeline?.id,
+  });
+
   const { data: metrics } = useQuery({
-    queryKey: ["dashboard-metrics"],
+    queryKey: ["dashboard-metrics", completionPhase?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
 
@@ -27,7 +74,7 @@ export const DashboardMetrics = () => {
           .from("leads")
           .select("id")
           .eq("user_id", session.user.id)
-          .eq("phase", "Abschluss"),
+          .eq("phase", completionPhase?.name || "Abschluss"),
       ]);
 
       const totalLeads = leadsResult.data?.length || 0;
@@ -43,7 +90,7 @@ export const DashboardMetrics = () => {
         completionRate
       };
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user?.id && !!completionPhase?.id,
   });
 
   return (
