@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSettings } from "@/hooks/use-settings";
 import { Progress } from "@/components/ui/progress";
-import { Users } from "lucide-react";
+import { Users, CheckSquare } from "lucide-react";
 
 export const DashboardMetrics = () => {
   const session = useSession();
@@ -28,6 +28,48 @@ export const DashboardMetrics = () => {
       }
 
       return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  // Get total leads count
+  const { data: totalLeads = 0 } = useQuery({
+    queryKey: ["total-leads"],
+    queryFn: async () => {
+      if (!session?.user?.id) return 0;
+
+      const { count, error } = await supabase
+        .from("leads")
+        .select("*", { count: 'exact', head: true })
+        .eq("user_id", session.user.id);
+
+      if (error) {
+        console.error("Error fetching total leads:", error);
+        return 0;
+      }
+
+      return count || 0;
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  // Get total tasks count
+  const { data: totalTasks = 0 } = useQuery({
+    queryKey: ["total-tasks"],
+    queryFn: async () => {
+      if (!session?.user?.id) return 0;
+
+      const { count, error } = await supabase
+        .from("tasks")
+        .select("*", { count: 'exact', head: true })
+        .eq("user_id", session.user.id);
+
+      if (error) {
+        console.error("Error fetching total tasks:", error);
+        return 0;
+      }
+
+      return count || 0;
     },
     enabled: !!session?.user?.id,
   });
@@ -91,20 +133,38 @@ export const DashboardMetrics = () => {
     enabled: !!session?.user?.id && !!pipelines,
   });
 
-  if (!pipelineStats?.length) {
-    return (
-      <div className="text-center p-4">
-        {settings?.language === "en" 
-          ? "No pipelines found. Create your first pipeline in the Leads section." 
-          : "Keine Pipelines gefunden. Erstellen Sie Ihre erste Pipeline im Leads-Bereich."}
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 w-full mb-8">
+      {/* Metrics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {settings?.language === "en" ? "Total Contacts" : "Gesamtkontakte"}
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalLeads}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {settings?.language === "en" ? "Total Tasks" : "Gesamtaufgaben"}
+            </CardTitle>
+            <CheckSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalTasks}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Pipeline Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {pipelineStats.map(({ pipeline, phases, stats }) => (
+        {pipelineStats?.map(({ pipeline, phases, stats }) => (
           <Card key={pipeline.id}>
             <CardHeader>
               <CardTitle className="text-lg font-medium flex items-center gap-2">
