@@ -50,7 +50,7 @@ export const SidebarMenuSection = ({
                     {item.showProgress ? (
                     <div className="relative pr-4 flex items-center justify-center w-8 h-8">
   <svg 
-    className="absolute w-full h-full" viewBox="0 0 36 36">
+    className="absolute pr-4 w-full h-full" viewBox="0 0 36 36">
     <path
       d="M18 2.0845
         a 15.9155 15.9155 0 0 1 0 31.831
@@ -71,7 +71,7 @@ export const SidebarMenuSection = ({
     />
   </svg>
   <item.icon
-    className="absolute pr-4 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-5 w-5"
+    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-5 w-5"
   />
   {elevateProgress > 0 && (
     <Badge 
