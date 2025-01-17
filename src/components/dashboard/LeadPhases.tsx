@@ -72,13 +72,13 @@ export const LeadPhases = () => {
   const { data: leadCounts = {} } = useQuery({
     queryKey: ["lead-phase-counts", pipeline?.id],
     queryFn: async () => {
-      if (!session?.user?.id) return {};
+      if (!session?.user?.id || !pipeline?.id) return {};
       
       const { data: leads, error } = await supabase
         .from("leads")
         .select("phase")
         .eq("user_id", session.user.id)
-        .eq("pipeline_id", pipeline?.id); // Filter leads by pipeline_id
+        .eq("pipeline_id", pipeline.id); // Filter leads by pipeline_id
 
       if (error) throw error;
 
