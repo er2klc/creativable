@@ -78,7 +78,7 @@ export const LeadPhases = () => {
         .from("leads")
         .select("phase")
         .eq("user_id", session.user.id)
-        .eq("pipeline_id", pipeline.id); // Filter leads by pipeline_id
+        .eq("pipeline_id", pipeline.id);
 
       if (error) throw error;
 
