@@ -25,14 +25,25 @@ export const LeadPhases = () => {
       
       const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("pipelines")
         .select("*")
         .eq("user_id", session.user.id)
-        .eq("name", "Standard Pipeline")
-        .order("order_index")
-        .limit(1)
-        .single();
+        .order("order_index");
+
+      // If we have a last used pipeline ID, try to fetch that one first
+      if (lastUsedPipelineId) {
+        const { data: lastPipeline } = await query
+          .eq("id", lastUsedPipelineId)
+          .single();
+        
+        if (lastPipeline) {
+          return lastPipeline;
+        }
+      }
+
+      // Otherwise get the first pipeline
+      const { data, error } = await query.limit(1).single();
 
       if (error) throw error;
 
@@ -170,7 +181,7 @@ export const LeadPhases = () => {
       <CardHeader>
         <CardTitle className="text-lg font-medium flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Kontakt-Phasen
+          {pipeline?.name || "Pipeline"}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
