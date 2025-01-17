@@ -17,20 +17,42 @@ export const LeadPhases = () => {
   const session = useSession();
   const { toast } = useToast();
 
-  const { data: phases = [], isLoading, refetch } = useQuery({
-    queryKey: ["pipeline-phases"],
+  // First get the default pipeline
+  const { data: pipeline } = useQuery({
+    queryKey: ["default-pipeline"],
     queryFn: async () => {
-      if (!session?.user?.id) return [];
+      if (!session?.user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from("pipelines")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("order_index")
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  // Then get the phases for that pipeline
+  const { data: phases = [], isLoading, refetch } = useQuery({
+    queryKey: ["pipeline-phases", pipeline?.id],
+    queryFn: async () => {
+      if (!session?.user?.id || !pipeline?.id) return [];
       
       const { data: existingPhases, error } = await supabase
         .from("pipeline_phases")
         .select("*")
-        .eq("user_id", session.user.id)
+        .eq("pipeline_id", pipeline.id)
         .order("order_index");
 
       if (error) throw error;
       return existingPhases;
     },
+    enabled: !!session?.user?.id && !!pipeline?.id,
   });
 
   // Query to get lead counts per phase
@@ -66,7 +88,7 @@ export const LeadPhases = () => {
 
   useEffect(() => {
     const initializeDefaultPhases = async () => {
-      if (!session?.user?.id || phases.length > 0) return;
+      if (!session?.user?.id || !pipeline?.id || phases.length > 0) return;
 
       try {
         // First verify that the user exists in auth
@@ -77,23 +99,6 @@ export const LeadPhases = () => {
           toast({
             title: "Fehler",
             description: "Benutzer konnte nicht verifiziert werden. Bitte melden Sie sich erneut an.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        // Get the default pipeline for the user
-        const { data: pipeline, error: pipelineError } = await supabase
-          .from("pipelines")
-          .select("id")
-          .eq("user_id", session.user.id)
-          .single();
-
-        if (pipelineError || !pipeline) {
-          console.error("Error getting pipeline:", pipelineError);
-          toast({
-            title: "Fehler",
-            description: "Pipeline konnte nicht gefunden werden.",
             variant: "destructive",
           });
           return;
@@ -136,7 +141,7 @@ export const LeadPhases = () => {
     };
 
     initializeDefaultPhases();
-  }, [session?.user?.id, phases.length, toast, refetch]);
+  }, [session?.user?.id, pipeline?.id, phases.length, toast, refetch]);
 
   if (isLoading) {
     return <div>Loading...</div>;

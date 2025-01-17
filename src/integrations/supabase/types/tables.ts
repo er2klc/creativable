@@ -75,8 +75,8 @@ export interface Tables {
     Update: {
       created_at?: string | null;
       id?: string;
-      keyword?: string;
-      user_id?: string;
+      keyword: string;
+      user_id: string;
     };
     Relationships: [];
   };
@@ -200,7 +200,6 @@ export interface Tables {
       order_index: number;
       created_at: string | null;
       updated_at: string | null;
-      user_id: string;
     };
     Insert: {
       id?: string;
@@ -209,16 +208,14 @@ export interface Tables {
       order_index?: number;
       created_at?: string | null;
       updated_at?: string | null;
-      user_id: string;
     };
     Update: {
       id?: string;
-      pipeline_id?: string;
-      name?: string;
+      pipeline_id: string;
+      name: string;
       order_index?: number;
       created_at?: string | null;
       updated_at?: string | null;
-      user_id?: string;
     };
     Relationships: [
       {
