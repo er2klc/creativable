@@ -2,7 +2,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Tables } from "@/integrations/supabase/types";
 import { LeadDetailView } from "../LeadDetailView";
-import { useState, useRef } from "react";
+import { useState, useRef, CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
 interface SortableLeadItemProps {
@@ -25,7 +25,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     data: lead,
   });
 
-  const style = transform ? {
+  const style: CSSProperties | undefined = transform ? {
     transform: CSS.Transform.toString({
       ...transform,
       x: transform.x,
@@ -34,7 +34,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
       scaleY: 1.02,
     }),
     zIndex: isDragging ? 1000 : 1,
-    position: isDragging ? ('absolute' as const) : ('relative' as const),
+    position: isDragging ? 'absolute' : 'relative',
     width: '100%',
     transition: 'transform 0.1s ease, box-shadow 0.1s ease',
     cursor: isDragging ? 'grabbing' : 'grab',
