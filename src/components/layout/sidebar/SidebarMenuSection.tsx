@@ -48,7 +48,7 @@ export const SidebarMenuSection = ({
                 <a href={item.url} className="flex items-center gap-3 relative px-4 py-5 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
                   <div className="relative">
                     {item.showProgress ? (
-                    <div className="relative flex items-center justify-center w-8 h-8">
+                    <div className="relative pr-4 flex items-center justify-center w-8 h-8">
   <svg 
     className="absolute w-full h-full" viewBox="0 0 36 36">
     <path
