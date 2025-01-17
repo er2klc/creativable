@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSettings } from "@/hooks/use-settings";
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { 
   Select,
   SelectContent,
@@ -17,6 +17,7 @@ export const DashboardMetrics = () => {
   const session = useSession();
   const { settings } = useSettings();
   const navigate = useNavigate();
+  const location = useLocation();
   const { pipelineId } = useParams();
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(pipelineId || null);
 
@@ -52,7 +53,8 @@ export const DashboardMetrics = () => {
         const lastPipeline = pipelines.find(p => p.id === lastUsedPipelineId);
         if (lastPipeline) {
           setSelectedPipelineId(lastPipeline.id);
-          navigate(`/pipeline/${lastPipeline.id}`);
+          const currentPath = location.pathname.split('/').pop();
+          navigate(`/pipeline/${lastPipeline.id}/${currentPath || 'dashboard'}`);
           return;
         }
       }
@@ -60,9 +62,10 @@ export const DashboardMetrics = () => {
       // Otherwise, try to find the Standard Pipeline or use the first one
       const defaultPipeline = pipelines.find(p => p.name === "Standard Pipeline") || pipelines[0];
       setSelectedPipelineId(defaultPipeline.id);
-      navigate(`/pipeline/${defaultPipeline.id}`);
+      const currentPath = location.pathname.split('/').pop();
+      navigate(`/pipeline/${defaultPipeline.id}/${currentPath || 'dashboard'}`);
     }
-  }, [pipelines, selectedPipelineId, navigate]);
+  }, [pipelines, selectedPipelineId, navigate, location]);
 
   // Then get the completion phase for selected pipeline
   const { data: completionPhase } = useQuery({
@@ -130,7 +133,8 @@ export const DashboardMetrics = () => {
   const handlePipelineChange = (pipelineId: string) => {
     setSelectedPipelineId(pipelineId);
     localStorage.setItem('lastUsedPipelineId', pipelineId);
-    navigate(`/pipeline/${pipelineId}`);
+    const currentPath = location.pathname.split('/').pop();
+    navigate(`/pipeline/${pipelineId}/${currentPath || 'dashboard'}`);
   };
 
   return (

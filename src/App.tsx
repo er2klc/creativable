@@ -29,8 +29,9 @@ const App = () => {
             </AppLayout>
           </ProtectedRoute>
         }>
-          {/* Pipeline specific route */}
-          <Route path="/pipeline/:pipelineId" element={<Navigate to="/leads" replace />} />
+          {/* Pipeline specific routes */}
+          <Route path="/pipeline/:pipelineId/leads" element={<Navigate to="/leads" replace />} />
+          <Route path="/pipeline/:pipelineId/dashboard" element={<Navigate to="/dashboard" replace />} />
           
           {protectedRoutes.map(route => (
             <Route 
