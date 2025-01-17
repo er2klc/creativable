@@ -46,11 +46,11 @@ export const SidebarMenuSection = ({
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
                 <a href={item.url} className="flex items-center gap-3 relative px-4 py-5 text-gray-300 bg-transparent hover:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent transition-all duration-200 group/item">
-                  <div className="relative">
+                  <div className="relative pr-4">
                     {item.showProgress ? (
-                    <div className="relative pr-4 flex items-center justify-center w-8 h-8">
+                    <div className="relative flex items-center justify-center w-8 h-8">
   <svg 
-    className="absolute pr-4 w-full h-full" viewBox="0 0 36 36">
+    className="absolute w-full h-full" viewBox="0 0 36 36">
     <path
       d="M18 2.0845
         a 15.9155 15.9155 0 0 1 0 31.831
