@@ -3,19 +3,12 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSettings } from "@/hooks/use-settings";
-import { useState, useEffect } from "react";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
+import { Users } from "lucide-react";
 
 export const DashboardMetrics = () => {
   const session = useSession();
   const { settings } = useSettings();
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
 
   // Get all pipelines
   const { data: pipelines } = useQuery({
@@ -39,147 +32,99 @@ export const DashboardMetrics = () => {
     enabled: !!session?.user?.id,
   });
 
-  // Set default pipeline when pipelines are loaded
-  useEffect(() => {
-    if (pipelines && pipelines.length > 0 && !selectedPipelineId) {
-      const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
-      
-      // Try to find the last used pipeline first
-      if (lastUsedPipelineId) {
-        const lastPipeline = pipelines.find(p => p.id === lastUsedPipelineId);
-        if (lastPipeline) {
-          setSelectedPipelineId(lastPipeline.id);
-          return;
-        }
-      }
-      
-      // Otherwise, try to find the Standard Pipeline or use the first one
-      const defaultPipeline = pipelines.find(p => p.name === "Standard Pipeline") || pipelines[0];
-      setSelectedPipelineId(defaultPipeline.id);
-    }
-  }, [pipelines, selectedPipelineId]);
-
-  // Then get the completion phase for selected pipeline
-  const { data: completionPhase } = useQuery({
-    queryKey: ["completion-phase", selectedPipelineId],
+  // Get phases and lead counts for each pipeline
+  const { data: pipelineStats } = useQuery({
+    queryKey: ["pipeline-stats"],
     queryFn: async () => {
-      if (!selectedPipelineId) return null;
+      if (!session?.user?.id || !pipelines) return [];
 
-      const { data, error } = await supabase
-        .from("pipeline_phases")
-        .select("*")
-        .eq("pipeline_id", selectedPipelineId)
-        .eq("name", "Abschluss")
-        .maybeSingle();
+      const stats = await Promise.all(
+        pipelines.map(async (pipeline) => {
+          // Get phases for this pipeline
+          const { data: phases } = await supabase
+            .from("pipeline_phases")
+            .select("*")
+            .eq("pipeline_id", pipeline.id)
+            .order("order_index");
 
-      if (error) {
-        console.error("Error fetching completion phase:", error);
-        return null;
-      }
+          // Get leads for this pipeline
+          const { data: leads } = await supabase
+            .from("leads")
+            .select(`
+              phase_id,
+              pipeline_phases (
+                name
+              )
+            `)
+            .eq("pipeline_id", pipeline.id)
+            .eq("user_id", session.user.id);
 
-      return data;
+          // Calculate percentages
+          const total = leads?.length || 0;
+          const phaseStats = {};
+          
+          leads?.forEach(lead => {
+            const phaseName = lead.pipeline_phases?.name;
+            if (phaseName) {
+              phaseStats[phaseName] = (phaseStats[phaseName] || 0) + 1;
+            }
+          });
+
+          // Convert to percentages
+          const phasePercentages = {};
+          Object.keys(phaseStats).forEach(phase => {
+            phasePercentages[phase] = total > 0 
+              ? Math.round((phaseStats[phase] / total) * 100) 
+              : 0;
+          });
+
+          return {
+            pipeline,
+            phases,
+            stats: phasePercentages
+          };
+        })
+      );
+
+      return stats;
     },
-    enabled: !!selectedPipelineId,
+    enabled: !!session?.user?.id && !!pipelines,
   });
 
-  const { data: metrics } = useQuery({
-    queryKey: ["dashboard-metrics", completionPhase?.id, selectedPipelineId],
-    queryFn: async () => {
-      if (!session?.user?.id || !selectedPipelineId) return null;
-
-      const [leadsResult, tasksResult, completedLeadsResult] = await Promise.all([
-        supabase
-          .from("leads")
-          .select("id")
-          .eq("user_id", session.user.id)
-          .eq("pipeline_id", selectedPipelineId),
-        supabase
-          .from("tasks")
-          .select("id")
-          .eq("user_id", session.user.id)
-          .eq("completed", false),
-        supabase
-          .from("leads")
-          .select("id")
-          .eq("user_id", session.user.id)
-          .eq("pipeline_id", selectedPipelineId)
-          .eq("phase_id", completionPhase?.id),
-      ]);
-
-      const totalLeads = leadsResult.data?.length || 0;
-      const openTasks = tasksResult.data?.length || 0;
-      const completedLeads = completedLeadsResult.data?.length || 0;
-      const completionRate = totalLeads > 0 
-        ? Math.round((completedLeads / totalLeads) * 100) 
-        : 0;
-
-      return {
-        totalLeads,
-        openTasks,
-        completionRate
-      };
-    },
-    enabled: !!session?.user?.id && !!completionPhase?.id && !!selectedPipelineId,
-  });
-
-  const handlePipelineChange = (pipelineId: string) => {
-    setSelectedPipelineId(pipelineId);
-    localStorage.setItem('lastUsedPipelineId', pipelineId);
-  };
+  if (!pipelineStats?.length) {
+    return (
+      <div className="text-center p-4">
+        {settings?.language === "en" 
+          ? "No pipelines found. Create your first pipeline in the Leads section." 
+          : "Keine Pipelines gefunden. Erstellen Sie Ihre erste Pipeline im Leads-Bereich."}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 w-full mb-8">
-      <div className="flex items-center gap-4">
-        <Select
-          value={selectedPipelineId || ""}
-          onValueChange={handlePipelineChange}
-        >
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Pipeline auswählen" />
-          </SelectTrigger>
-          <SelectContent>
-            {pipelines?.map((pipeline) => (
-              <SelectItem key={pipeline.id} value={pipeline.id}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {pipelineStats.map(({ pipeline, phases, stats }) => (
+          <Card key={pipeline.id}>
+            <CardHeader>
+              <CardTitle className="text-lg font-medium flex items-center gap-2">
+                <Users className="h-5 w-5" />
                 {pipeline.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="grid grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium truncate">
-              {settings?.language === "en" ? "Active Leads" : "Leads in Bearbeitung"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{metrics?.totalLeads || 0}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium truncate">
-              {settings?.language === "en" ? "Open Tasks" : "Offene Aufgaben"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{metrics?.openTasks || 0}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium truncate">
-              {settings?.language === "en" ? "Completion Rate" : "Abschlussquote"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{metrics?.completionRate || 0}%</p>
-          </CardContent>
-        </Card>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {phases?.map(phase => (
+                <div key={phase.id}>
+                  <div className="flex justify-between mb-1 text-sm">
+                    <span>{phase.name}</span>
+                    <span>{stats[phase.name] || 0}%</span>
+                  </div>
+                  <Progress value={stats[phase.name] || 0} className="h-2" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
