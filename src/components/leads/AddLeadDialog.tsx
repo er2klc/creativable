@@ -36,14 +36,14 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
     defaultValues: {
       name: "",
       platform: "LinkedIn",
-      socialMediaUsername: "",
+      social_media_username: "",
       phase: defaultPhase || "",
       contact_type: null,
       phone_number: "",
       email: "",
       company_name: "",
       notes: "",
-      industry: "Nicht angegeben", // Set a default value for industry
+      industry: "Nicht angegeben",
     },
   });
 
@@ -58,7 +58,7 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
     }
 
     try {
-      const socialMediaUrl = generateSocialMediaUrl(values.platform, values.socialMediaUsername);
+      const socialMediaUrl = generateSocialMediaUrl(values.platform, values.social_media_username);
       
       const { error } = await supabase.from("leads").insert({
         user_id: session.user.id,
@@ -71,7 +71,7 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
         email: values.email || null,
         company_name: values.company_name || null,
         notes: values.notes || null,
-        industry: values.industry, // This will now always have a value
+        industry: values.industry,
       });
 
       if (error) throw error;

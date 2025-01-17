@@ -1,8 +1,4 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,9 +11,8 @@ import { LeadSummary } from "./detail/LeadSummary";
 import { LeadDetailHeader } from "./detail/LeadDetailHeader";
 import { LeadMessages } from "./detail/LeadMessages";
 import { CompactPhaseSelector } from "./detail/CompactPhaseSelector";
-import { useState } from "react";
 import { toast } from "sonner";
-import { Platform } from "@/config/platforms";
+import { type Platform } from "@/config/platforms";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -27,7 +22,6 @@ interface LeadDetailViewProps {
 export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
-  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
   const { data: lead, isLoading } = useQuery({
     queryKey: ["lead", leadId],
@@ -49,16 +43,38 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     enabled: !!leadId,
   });
 
-  const { data: phases = [] } = useQuery({
-    queryKey: ["lead-phases"],
+  const { data: pipeline } = useQuery({
+    queryKey: ["default-pipeline"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("lead_phases")
+        .from("pipelines")
         .select("*")
-        .order("order_index");
+        .eq("user_id", lead?.user_id)
+        .order("order_index")
+        .limit(1)
+        .single();
+
       if (error) throw error;
       return data;
     },
+    enabled: !!lead?.user_id,
+  });
+
+  const { data: phases = [] } = useQuery({
+    queryKey: ["pipeline-phases", pipeline?.id],
+    queryFn: async () => {
+      if (!pipeline?.id) return [];
+      
+      const { data, error } = await supabase
+        .from("pipeline_phases")
+        .select("*")
+        .eq("pipeline_id", pipeline.id)
+        .order("order_index");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!pipeline?.id,
   });
 
   const updateLeadMutation = useMutation({
@@ -83,26 +99,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     },
   });
 
-  const updatePhaseOrderMutation = useMutation({
-    mutationFn: async (updatedPhases: Tables<"lead_phases">[]) => {
-      const { error } = await supabase
-        .from("lead_phases")
-        .upsert(
-          updatedPhases.map(phase => ({
-            id: phase.id,
-            name: phase.name,
-            order_index: phase.order_index,
-            user_id: phase.user_id
-          }))
-        );
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
-    },
-  });
-
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg overflow-hidden">
@@ -122,9 +118,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
             <div className="space-y-6">
               <CompactPhaseSelector
                 lead={lead}
-                phases={phases}
                 onUpdateLead={updateLeadMutation.mutate}
-                onUpdatePhases={(phases) => updatePhaseOrderMutation.mutate(phases)}
               />
               
               <div className="space-y-4">
