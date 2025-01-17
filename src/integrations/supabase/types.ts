@@ -597,6 +597,7 @@ export type Database = {
           social_media_interests: string[] | null
           social_media_posts: Json | null
           social_media_username: string | null
+          status: string | null
           target_audience: string | null
           updated_at: string | null
           user_id: string
@@ -625,6 +626,7 @@ export type Database = {
           social_media_interests?: string[] | null
           social_media_posts?: Json | null
           social_media_username?: string | null
+          status?: string | null
           target_audience?: string | null
           updated_at?: string | null
           user_id: string
@@ -653,6 +655,7 @@ export type Database = {
           social_media_interests?: string[] | null
           social_media_posts?: Json | null
           social_media_username?: string | null
+          status?: string | null
           target_audience?: string | null
           updated_at?: string | null
           user_id?: string

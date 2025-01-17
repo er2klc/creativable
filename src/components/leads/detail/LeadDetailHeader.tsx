@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Award, Users, XCircle } from "lucide-react";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { toast } from "sonner";
-import { Platform, getPlatformConfig } from "@/config/platforms";
+import { Platform } from "@/config/platforms";
 
 interface LeadDetailHeaderProps {
   lead: Tables<"leads"> & {
@@ -15,8 +15,6 @@ interface LeadDetailHeaderProps {
 }
 
 export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) {
-  const platformConfig = getPlatformConfig(lead.platform);
-
   const handleStatusChange = async (status: string) => {
     try {
       await onUpdateLead({ status });
@@ -34,7 +32,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
             <h1 className="text-2xl font-bold">{lead.name}</h1>
             <div className="flex items-center gap-2">
               <Button 
-                variant="outline" 
+                variant={lead.status === 'partner' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handleStatusChange('partner')}
               >
@@ -42,7 +40,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
                 Partner
               </Button>
               <Button 
-                variant="outline" 
+                variant={lead.status === 'customer' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handleStatusChange('customer')}
               >
@@ -50,7 +48,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
                 Kunde
               </Button>
               <Button 
-                variant="outline" 
+                variant={lead.status === 'not_for_now' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handleStatusChange('not_for_now')}
               >
