@@ -592,6 +592,7 @@ export type Database = {
           pipeline_id: string
           platform: string
           products_services: string | null
+          slug: string | null
           social_media_bio: string | null
           social_media_interests: string[] | null
           social_media_posts: Json | null
@@ -619,6 +620,7 @@ export type Database = {
           pipeline_id: string
           platform: string
           products_services?: string | null
+          slug?: string | null
           social_media_bio?: string | null
           social_media_interests?: string[] | null
           social_media_posts?: Json | null
@@ -646,6 +648,7 @@ export type Database = {
           pipeline_id?: string
           platform?: string
           products_services?: string | null
+          slug?: string | null
           social_media_bio?: string | null
           social_media_interests?: string[] | null
           social_media_posts?: Json | null

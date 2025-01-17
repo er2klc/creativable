@@ -26,6 +26,10 @@ export const protectedRoutes = [
     element: <Leads />,
   },
   {
+    path: "/leads/:leadSlug",
+    element: <Leads />,
+  },
+  {
     path: "/messages",
     element: <Messages />,
   },

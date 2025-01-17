@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
 import { LeadTableView } from "@/components/leads/LeadTableView";
@@ -12,6 +12,8 @@ import { useSession } from "@supabase/auth-helpers-react";
 
 const Leads = () => {
   const session = useSession();
+  const navigate = useNavigate();
+  const { leadSlug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
@@ -70,6 +72,7 @@ const Leads = () => {
     setViewMode(isMobile ? "list" : viewMode);
   }, [isMobile, viewMode]);
 
+  // Fetch leads including the slug
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ["leads", searchQuery, selectedPhase, selectedPlatform, selectedPipelineId],
     queryFn: async () => {
@@ -103,6 +106,28 @@ const Leads = () => {
     enabled: !!session?.user?.id && !!selectedPipelineId,
   });
 
+  // Find lead by slug when URL contains a slug
+  useEffect(() => {
+    if (leadSlug && leads.length > 0) {
+      const lead = leads.find(l => l.slug === leadSlug);
+      if (lead) {
+        setSelectedLeadId(lead.id);
+      }
+    }
+  }, [leadSlug, leads]);
+
+  const handleLeadClick = (id: string) => {
+    const lead = leads.find(l => l.id === id);
+    if (lead?.slug) {
+      navigate(`/leads/${lead.slug}`);
+    }
+  };
+
+  const handleLeadClose = () => {
+    navigate('/leads');
+    setSelectedLeadId(null);
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -125,20 +150,20 @@ const Leads = () => {
       {viewMode === "kanban" ? (
         <LeadKanbanView 
           leads={leads} 
-          onLeadClick={(id) => setSelectedLeadId(id)}
+          onLeadClick={handleLeadClick}
           selectedPipelineId={selectedPipelineId}
         />
       ) : (
         <LeadTableView 
           leads={leads} 
-          onLeadClick={(id) => setSelectedLeadId(id)}
+          onLeadClick={handleLeadClick}
           selectedPipelineId={selectedPipelineId}
         />
       )}
 
       <LeadDetailView
         leadId={selectedLeadId}
-        onClose={() => setSelectedLeadId(null)}
+        onClose={handleLeadClose}
       />
 
       {showSendMessage && (
