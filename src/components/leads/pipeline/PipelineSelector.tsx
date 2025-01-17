@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, User } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -49,8 +49,11 @@ export const PipelineSelector = ({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="min-w-[200px] justify-between">
-            {selectedPipeline?.name ||
-              (settings?.language === "en" ? "Select Pipeline" : "Pipeline wählen")}
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-muted-foreground" />
+              {selectedPipeline?.name ||
+                (settings?.language === "en" ? "Select Pipeline" : "Pipeline wählen")}
+            </div>
             <ChevronDown className="h-4 w-4 ml-2" />
           </Button>
         </DropdownMenuTrigger>
@@ -59,7 +62,9 @@ export const PipelineSelector = ({
             <DropdownMenuItem
               key={pipeline.id}
               onClick={() => onPipelineSelect(pipeline.id)}
+              className="flex items-center gap-2"
             >
+              <User className="h-4 w-4 text-muted-foreground" />
               {pipeline.name}
             </DropdownMenuItem>
           ))}
