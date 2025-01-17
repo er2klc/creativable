@@ -17,21 +17,35 @@ export const LeadPhases = () => {
   const session = useSession();
   const { toast } = useToast();
 
-  // First get the default pipeline
+  // First get the default pipeline or last used pipeline
   const { data: pipeline } = useQuery({
     queryKey: ["default-pipeline"],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      const { data, error } = await supabase
+      // Get the last used pipeline from localStorage
+      const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
+      
+      let query = supabase
         .from("pipelines")
         .select("*")
-        .eq("user_id", session.user.id)
-        .order("order_index")
-        .limit(1)
-        .single();
+        .eq("user_id", session.user.id);
+
+      if (lastUsedPipelineId) {
+        query = query.eq("id", lastUsedPipelineId);
+      } else {
+        query = query.eq("name", "Standard Pipeline");
+      }
+
+      const { data, error } = await query.limit(1).single();
 
       if (error) throw error;
+
+      // Store the pipeline ID for next time
+      if (data) {
+        localStorage.setItem('lastUsedPipelineId', data.id);
+      }
+
       return data;
     },
     enabled: !!session?.user?.id,
@@ -57,7 +71,7 @@ export const LeadPhases = () => {
 
   // Query to get lead counts per phase
   const { data: leadCounts = {} } = useQuery({
-    queryKey: ["lead-phase-counts"],
+    queryKey: ["lead-phase-counts", pipeline?.id],
     queryFn: async () => {
       if (!session?.user?.id) return {};
       
@@ -152,7 +166,7 @@ export const LeadPhases = () => {
       <CardHeader>
         <CardTitle className="text-lg font-medium flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Kontakt-Phasen
+          {pipeline?.name || "Pipeline"}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
