@@ -100,115 +100,123 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
   };
 
   return (
-    <div className="w-full overflow-x-auto">
-      <Table>
-        <TableHeader className="sticky top-0 bg-background z-10">
-          <TableRow>
-            <TableHead className="w-[30px]"></TableHead>
-            <TableHead className="whitespace-nowrap min-w-[120px]">
-              {settings?.language === "en" ? "Contact" : "Kontakt"}
-            </TableHead>
-            <TableHead className="whitespace-nowrap min-w-[120px]">
-              {settings?.language === "en" ? "Platform" : "Plattform"}
-            </TableHead>
-            <TableHead className="whitespace-nowrap min-w-[120px]">
-              {settings?.language === "en" ? "Phase" : "Phase"}
-            </TableHead>
-            <TableHead className="whitespace-nowrap min-w-[120px]">
-              {settings?.language === "en" ? "Last Action" : "Letzte Aktion"}
-            </TableHead>
-            <TableHead className="whitespace-nowrap min-w-[120px]">
-              {settings?.language === "en" ? "Industry" : "Branche"}
-            </TableHead>
-            <TableHead className="w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {leads.map((lead) => (
-            <TableRow
-              key={lead.id}
-              className="cursor-pointer"
-              onClick={() => onLeadClick(lead.id)}
-            >
-              <TableCell onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="icon" className="h-4 w-4">
-                  <Star className="h-4 w-4" />
-                </Button>
+    <div className="w-full">
+      <div className="relative overflow-x-auto">
+        <Table>
+          <TableHeader className="sticky top-0 bg-background z-10">
+            <TableRow>
+              <TableCell className="w-[30px] p-2">
+                <span className="sr-only">Favorite</span>
               </TableCell>
-              <TableCell className="font-medium whitespace-nowrap">{lead.name}</TableCell>
-              <TableCell className="flex items-center whitespace-nowrap">
-                {getPlatformIcon(lead.platform)}
-                {lead.platform}
+              <TableCell className="w-[15%] min-w-[120px]">
+                {settings?.language === "en" ? "Contact" : "Kontakt"}
               </TableCell>
-              <TableCell className="whitespace-nowrap">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" className="h-8 px-2 py-1">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs whitespace-nowrap ${
-                          lead.phase === "initial_contact"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : lead.phase === "follow_up"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-green-100 text-green-800"
-                        }`}
-                      >
-                        {getPhaseTranslation(lead.phase)}
-                      </span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    {phases.map((phase) => (
-                      <DropdownMenuItem
-                        key={phase.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlePhaseChange(lead.id, phase.name);
-                        }}
-                      >
-                        {phase.name}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <TableCell className="w-[15%] min-w-[120px]">
+                {settings?.language === "en" ? "Platform" : "Plattform"}
               </TableCell>
-              <TableCell className="whitespace-nowrap">
-                {lead.last_action_date
-                  ? new Date(lead.last_action_date).toLocaleDateString(
-                      settings?.language === "en" ? "en-US" : "de-DE"
-                    )
-                  : "-"}
+              <TableCell className="w-[15%] min-w-[120px]">
+                {settings?.language === "en" ? "Phase" : "Phase"}
               </TableCell>
-              <TableCell className="whitespace-nowrap">{lead.industry}</TableCell>
-              <TableCell onClick={(e) => e.stopPropagation()}>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onLeadClick(lead.id)}>
-                      {settings?.language === "en" ? "Show Details" : "Details anzeigen"}
-                    </DropdownMenuItem>
-                    <SendMessageDialog 
-                      lead={lead}
-                      trigger={
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                          {settings?.language === "en" ? "Send Message" : "Nachricht senden"}
-                        </DropdownMenuItem>
-                      }
-                    />
-                    <DropdownMenuItem className="text-destructive">
-                      {settings?.language === "en" ? "Delete" : "Löschen"}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <TableCell className="w-[20%] min-w-[120px]">
+                {settings?.language === "en" ? "Last Action" : "Letzte Aktion"}
+              </TableCell>
+              <TableCell className="w-[15%] min-w-[120px]">
+                {settings?.language === "en" ? "Industry" : "Branche"}
+              </TableCell>
+              <TableCell className="w-[50px]">
+                <span className="sr-only">Actions</span>
               </TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {leads.map((lead) => (
+              <TableRow
+                key={lead.id}
+                className="cursor-pointer hover:bg-muted/50"
+                onClick={() => onLeadClick(lead.id)}
+              >
+                <TableCell className="p-2" onClick={(e) => e.stopPropagation()}>
+                  <Button variant="ghost" size="icon" className="h-4 w-4">
+                    <Star className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+                <TableCell className="font-medium">{lead.name}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {getPlatformIcon(lead.platform)}
+                    <span>{lead.platform}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" className="h-8 px-2 py-1">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            lead.phase === "initial_contact"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : lead.phase === "follow_up"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {getPhaseTranslation(lead.phase)}
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {phases.map((phase) => (
+                        <DropdownMenuItem
+                          key={phase.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePhaseChange(lead.id, phase.name);
+                          }}
+                        >
+                          {phase.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+                <TableCell>
+                  {lead.last_action_date
+                    ? new Date(lead.last_action_date).toLocaleDateString(
+                        settings?.language === "en" ? "en-US" : "de-DE"
+                      )
+                    : "-"}
+                </TableCell>
+                <TableCell>{lead.industry}</TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => onLeadClick(lead.id)}>
+                        {settings?.language === "en" ? "Show Details" : "Details anzeigen"}
+                      </DropdownMenuItem>
+                      <SendMessageDialog 
+                        lead={lead}
+                        trigger={
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            {settings?.language === "en" ? "Send Message" : "Nachricht senden"}
+                          </DropdownMenuItem>
+                        }
+                      />
+                      <DropdownMenuItem className="text-destructive">
+                        {settings?.language === "en" ? "Delete" : "Löschen"}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
