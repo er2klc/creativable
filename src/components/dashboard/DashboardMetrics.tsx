@@ -42,7 +42,8 @@ export const DashboardMetrics = () => {
   // Set default pipeline when pipelines are loaded
   useEffect(() => {
     if (pipelines && pipelines.length > 0 && !selectedPipelineId) {
-      setSelectedPipelineId(pipelines[0].id);
+      const defaultPipeline = pipelines.find(p => p.name === "Standard Pipeline") || pipelines[0];
+      setSelectedPipelineId(defaultPipeline.id);
     }
   }, [pipelines, selectedPipelineId]);
 
