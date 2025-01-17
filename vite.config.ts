@@ -16,7 +16,7 @@ export default defineConfig(({ command }) => ({
   },
   server: {
     host: true,
-    port: 3000,
+    port: 8080,
   },
   base: command === 'build' ? '/creativable/' : '/',
 }));
