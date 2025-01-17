@@ -2,14 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { MessageSquare, Sparkles, Globe, Rocket, Brain, Github } from "lucide-react";
+import { MessageSquare, Sparkles, Globe, Rocket, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/landing/Header";
 
 const Index = () => {
   const navigate = useNavigate();
   const user = useUser();
-  const supabase = useSupabaseClient();
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -50,7 +49,11 @@ const Index = () => {
               #creativable
             </span>
             <div className="flex justify-center mb-8">
-              <img src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" alt="Creativable Logo" className="h-32 w-32" />
+              <img 
+                src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
+                alt="Creativable Logo" 
+                className="h-32 w-32" 
+              />
             </div>
             <h1 className="text-6xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 bg-clip-text text-transparent">
               Create. Connect. Grow.
@@ -103,16 +106,6 @@ const Index = () => {
         <div className="absolute bottom-0 w-full h-px bg-gradient-to-r from-transparent via-gray-500/50 to-transparent" />
       </div>
 
-      {/* Pricing Section */}
-      <div id="pricing" className="relative w-full py-32">
-        {/* Pricing content goes here */}
-      </div>
-
-      {/* Mission Section (formerly About) */}
-      <div id="mission" className="relative w-full bg-[#111111] py-32">
-        {/* Mission content goes here */}
-      </div>
-
       {/* Footer */}
       <footer className="relative w-full bg-[#111111] py-16">
         {/* Footer Separator Line */}
@@ -122,7 +115,11 @@ const Index = () => {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-6">
-                <img src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" alt="Creativable Logo" className="h-8 w-8" />
+                <img 
+                  src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
+                  alt="Creativable Logo" 
+                  className="h-8 w-8" 
+                />
                 <span className="text-base font-bold">creativable</span>
               </div>
               <p className="text-gray-400 mb-4">Revolutioniere dein Social Media Marketing</p>
