@@ -76,7 +76,7 @@ export const SidebarMenuSection = ({
   {elevateProgress > 0 && (
     <Badge 
       variant="outline" 
-      className="absolute -top-2 -right-2 text-[11px] min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-[#161616] text-[#F1C232] border-none"
+      className="absolute -top-2 -right-1 text-[11px] min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-[#161616] text-[#F1C232] border-none"
     >
       {elevateProgress}%
     </Badge>
