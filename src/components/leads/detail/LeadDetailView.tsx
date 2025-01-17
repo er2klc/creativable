@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -43,40 +43,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     enabled: !!leadId,
   });
 
-  const { data: pipeline } = useQuery({
-    queryKey: ["default-pipeline"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("pipelines")
-        .select("*")
-        .eq("user_id", lead?.user_id)
-        .order("order_index")
-        .limit(1)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!lead?.user_id,
-  });
-
-  const { data: phases = [] } = useQuery({
-    queryKey: ["pipeline-phases", pipeline?.id],
-    queryFn: async () => {
-      if (!pipeline?.id) return [];
-      
-      const { data, error } = await supabase
-        .from("pipeline_phases")
-        .select("*")
-        .eq("pipeline_id", pipeline.id)
-        .order("order_index");
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!pipeline?.id,
-  });
-
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
       const { data, error } = await supabase
@@ -103,6 +69,9 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg overflow-hidden">
         <DialogHeader className="p-0">
+          <DialogTitle className="sr-only">
+            {settings?.language === "en" ? "Contact Details" : "Kontaktdetails"}
+          </DialogTitle>
           {lead && (
             <LeadDetailHeader
               lead={lead}
