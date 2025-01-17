@@ -20,14 +20,5 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     sourcemap: true,
-    outDir: 'dist',
-    chunkSizeWarningLimit: 1600,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-        },
-      },
-    },
   },
 }));
