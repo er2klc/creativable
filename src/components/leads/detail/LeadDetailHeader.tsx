@@ -4,6 +4,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { Award, Users, XCircle } from "lucide-react";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { toast } from "sonner";
+import { Platform, getPlatformConfig } from "@/config/platforms";
 
 interface LeadDetailHeaderProps {
   lead: Tables<"leads"> & {
