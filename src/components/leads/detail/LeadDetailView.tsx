@@ -45,6 +45,17 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
+      // Check if we're actually changing anything
+      if (lead) {
+        const hasChanges = Object.entries(updates).some(
+          ([key, value]) => lead[key as keyof typeof lead] !== value
+        );
+        
+        if (!hasChanges) {
+          return lead; // Return existing lead without making API call
+        }
+      }
+
       const { data, error } = await supabase
         .from("leads")
         .update(updates)
@@ -55,13 +66,18 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      toast.success(
-        settings?.language === "en"
-          ? "Contact updated successfully"
-          : "Kontakt erfolgreich aktualisiert"
-      );
+    onSuccess: (data, variables) => {
+      // Only show toast if we actually updated something
+      if (lead && Object.entries(variables).some(
+        ([key, value]) => lead[key as keyof typeof lead] !== value
+      )) {
+        queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+        toast.success(
+          settings?.language === "en"
+            ? "Contact updated successfully"
+            : "Kontakt erfolgreich aktualisiert"
+        );
+      }
     },
   });
 

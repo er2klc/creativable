@@ -53,18 +53,24 @@ export function CompactPhaseSelector({
   });
 
   const handlePipelineChange = (pipelineId: string) => {
-    // Get first phase of new pipeline
-    const firstPhase = phases[0]?.id;
-    if (firstPhase) {
-      onUpdateLead({ 
-        pipeline_id: pipelineId,
-        phase_id: firstPhase 
-      });
+    // Only update if the pipeline actually changed
+    if (pipelineId !== lead.pipeline_id) {
+      // Get first phase of new pipeline
+      const firstPhase = phases[0]?.id;
+      if (firstPhase) {
+        onUpdateLead({ 
+          pipeline_id: pipelineId,
+          phase_id: firstPhase 
+        });
+      }
     }
   };
 
   const handlePhaseChange = (phaseId: string) => {
-    onUpdateLead({ phase_id: phaseId });
+    // Only update if the phase actually changed
+    if (phaseId !== lead.phase_id) {
+      onUpdateLead({ phase_id: phaseId });
+    }
   };
 
   return (
