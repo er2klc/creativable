@@ -3,28 +3,35 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSettings } from "@/hooks/use-settings";
+import { useState, useEffect } from "react";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const DashboardMetrics = () => {
   const session = useSession();
   const { settings } = useSettings();
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
 
-  // First get the default pipeline
-  const { data: pipeline } = useQuery({
-    queryKey: ["default-pipeline"],
+  // Get all pipelines
+  const { data: pipelines } = useQuery({
+    queryKey: ["pipelines"],
     queryFn: async () => {
-      if (!session?.user?.id) return null;
+      if (!session?.user?.id) return [];
 
       const { data, error } = await supabase
         .from("pipelines")
         .select("*")
         .eq("user_id", session.user.id)
-        .order("order_index")
-        .limit(1)
-        .single();
+        .order("order_index");
 
       if (error) {
-        console.error("Error fetching pipeline:", error);
-        return null;
+        console.error("Error fetching pipelines:", error);
+        return [];
       }
 
       return data;
@@ -32,16 +39,23 @@ export const DashboardMetrics = () => {
     enabled: !!session?.user?.id,
   });
 
-  // Then get the completion phase for that pipeline
+  // Set default pipeline when pipelines are loaded
+  useEffect(() => {
+    if (pipelines && pipelines.length > 0 && !selectedPipelineId) {
+      setSelectedPipelineId(pipelines[0].id);
+    }
+  }, [pipelines, selectedPipelineId]);
+
+  // Then get the completion phase for selected pipeline
   const { data: completionPhase } = useQuery({
-    queryKey: ["completion-phase", pipeline?.id],
+    queryKey: ["completion-phase", selectedPipelineId],
     queryFn: async () => {
-      if (!pipeline?.id) return null;
+      if (!selectedPipelineId) return null;
 
       const { data, error } = await supabase
         .from("pipeline_phases")
         .select("*")
-        .eq("pipeline_id", pipeline.id)
+        .eq("pipeline_id", selectedPipelineId)
         .eq("name", "Abschluss")
         .single();
 
@@ -52,20 +66,20 @@ export const DashboardMetrics = () => {
 
       return data;
     },
-    enabled: !!pipeline?.id,
+    enabled: !!selectedPipelineId,
   });
 
   const { data: metrics } = useQuery({
-    queryKey: ["dashboard-metrics", completionPhase?.id, pipeline?.id],
+    queryKey: ["dashboard-metrics", completionPhase?.id, selectedPipelineId],
     queryFn: async () => {
-      if (!session?.user?.id || !pipeline?.id) return null;
+      if (!session?.user?.id || !selectedPipelineId) return null;
 
       const [leadsResult, tasksResult, completedLeadsResult] = await Promise.all([
         supabase
           .from("leads")
           .select("id")
           .eq("user_id", session.user.id)
-          .eq("pipeline_id", pipeline.id),
+          .eq("pipeline_id", selectedPipelineId),
         supabase
           .from("tasks")
           .select("id")
@@ -75,7 +89,7 @@ export const DashboardMetrics = () => {
           .from("leads")
           .select("id")
           .eq("user_id", session.user.id)
-          .eq("pipeline_id", pipeline.id)
+          .eq("pipeline_id", selectedPipelineId)
           .eq("phase_id", completionPhase?.id),
       ]);
 
@@ -92,43 +106,63 @@ export const DashboardMetrics = () => {
         completionRate
       };
     },
-    enabled: !!session?.user?.id && !!completionPhase?.id && !!pipeline?.id,
+    enabled: !!session?.user?.id && !!completionPhase?.id && !!selectedPipelineId,
   });
 
   return (
-    <div className="grid grid-cols-3 gap-6 w-full mb-8">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium truncate">
-            {settings?.language === "en" ? "Active Leads" : "Leads in Bearbeitung"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{metrics?.totalLeads || 0}</p>
-        </CardContent>
-      </Card>
+    <div className="space-y-6 w-full mb-8">
+      <div className="flex items-center gap-4">
+        <Select
+          value={selectedPipelineId || ""}
+          onValueChange={(value) => setSelectedPipelineId(value)}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Pipeline auswählen" />
+          </SelectTrigger>
+          <SelectContent>
+            {pipelines?.map((pipeline) => (
+              <SelectItem key={pipeline.id} value={pipeline.id}>
+                {pipeline.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium truncate">
-            {settings?.language === "en" ? "Open Tasks" : "Offene Aufgaben"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{metrics?.openTasks || 0}</p>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-3 gap-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium truncate">
+              {settings?.language === "en" ? "Active Leads" : "Leads in Bearbeitung"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{metrics?.totalLeads || 0}</p>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium truncate">
-            {settings?.language === "en" ? "Completion Rate" : "Abschlussquote"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{metrics?.completionRate || 0}%</p>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium truncate">
+              {settings?.language === "en" ? "Open Tasks" : "Offene Aufgaben"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{metrics?.openTasks || 0}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium truncate">
+              {settings?.language === "en" ? "Completion Rate" : "Abschlussquote"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{metrics?.completionRate || 0}%</p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
