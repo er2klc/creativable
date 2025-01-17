@@ -27,7 +27,7 @@ interface LeadKanbanViewProps {
 
 export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
   const { settings } = useSettings();
-  const [editingPhase, setEditingPhase] = useState<Tables<"lead_phases"> | null>(null);
+  const [editingPhase, setEditingPhase] = useState<Tables<"pipeline_phases"> | null>(null);
   const { data: phases = [] } = usePhaseQuery();
   const { updateLeadPhase, addPhase, updatePhaseName } = usePhaseMutations();
   const queryClient = useQueryClient();

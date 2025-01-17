@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AddLeadFormFields, formSchema } from "./AddLeadFormFields";
 import { generateSocialMediaUrl } from "@/config/platforms";
 import * as z from "zod";
+import { type Platform } from "@/config/platforms";
 
 interface AddLeadDialogProps {
   trigger?: React.ReactNode;
@@ -35,7 +36,7 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      platform: "LinkedIn",
+      platform: "LinkedIn" as Platform,
       social_media_username: "",
       phase: defaultPhase || "",
       contact_type: null,
@@ -58,7 +59,7 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
     }
 
     try {
-      const socialMediaUrl = generateSocialMediaUrl(values.platform, values.social_media_username);
+      const socialMediaUrl = generateSocialMediaUrl(values.platform as Platform, values.social_media_username || '');
       
       const { error } = await supabase.from("leads").insert({
         user_id: session.user.id,

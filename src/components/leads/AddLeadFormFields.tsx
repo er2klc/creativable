@@ -7,7 +7,7 @@ import { type Platform } from "@/config/platforms";
 
 export const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich 📝"),
-  platform: z.string(),
+  platform: z.custom<Platform>(),
   social_media_username: z.string().optional(),
   phase: z.string().min(1, "Phase ist erforderlich 📊"),
   contact_type: z.string().nullable(),
