@@ -1,7 +1,6 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Tables } from "@/integrations/supabase/types";
-import { LeadDetailView } from "../LeadDetailView";
 import { useState, useRef, CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +11,6 @@ interface SortableLeadItemProps {
 
 export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const dragTimeoutRef = useRef<number | null>(null);
 
   const {
@@ -52,7 +50,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     }
 
     if (!isDragging) {
-      setIsEditDialogOpen(true);
+      onLeadClick(lead.id);
     }
     setIsDragging(false);
   };
@@ -73,35 +71,26 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
   };
 
   return (
-    <>
-      <div
-        ref={setNodeRef}
-        style={style}
-        className={cn(
-          "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200",
-          getBackgroundStyle(),
-          isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing",
-          !isDragging && "cursor-grab"
-        )}
-        {...attributes}
-        {...listeners}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-      >
-        <div className="space-y-1.5">
-          <div className="font-medium text-sm">{lead.name}</div>
-          <div className="text-xs text-muted-foreground">
-            {lead.contact_type || "Nicht festgelegt"}
-          </div>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200",
+        getBackgroundStyle(),
+        isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing",
+        !isDragging && "cursor-grab"
+      )}
+      {...attributes}
+      {...listeners}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+    >
+      <div className="space-y-1.5">
+        <div className="font-medium text-sm">{lead.name}</div>
+        <div className="text-xs text-muted-foreground">
+          {lead.contact_type || "Nicht festgelegt"}
         </div>
       </div>
-
-      {isEditDialogOpen && (
-        <LeadDetailView
-          leadId={lead.id}
-          onClose={() => setIsEditDialogOpen(false)}
-        />
-      )}
-    </>
+    </div>
   );
 };
