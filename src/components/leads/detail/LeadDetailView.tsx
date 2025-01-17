@@ -41,6 +41,40 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     enabled: !!leadId,
   });
 
+  const { data: pipeline } = useQuery({
+    queryKey: ["default-pipeline"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pipelines")
+        .select("*")
+        .eq("user_id", lead?.user_id)
+        .order("order_index")
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!lead?.user_id,
+  });
+
+  const { data: phases = [] } = useQuery({
+    queryKey: ["pipeline-phases", pipeline?.id],
+    queryFn: async () => {
+      if (!pipeline?.id) return [];
+      
+      const { data, error } = await supabase
+        .from("pipeline_phases")
+        .select("*")
+        .eq("pipeline_id", pipeline.id)
+        .order("order_index");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!pipeline?.id,
+  });
+
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
       const { data, error } = await supabase

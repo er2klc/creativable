@@ -1,178 +1,104 @@
 import { UseFormReturn } from "react-hook-form";
-import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
+import { FormData } from "../AddLeadFormFields";
 import { User, Globe, AtSign, Mail, Phone } from "lucide-react";
-import { platforms } from "@/config/platforms";
-import { type Tables } from "@/integrations/supabase/types";
+import { platformsConfig } from "@/config/platforms";
 
 interface BasicLeadFieldsProps {
-  form: UseFormReturn<Tables<"leads">>;
+  form: UseFormReturn<FormData>;
 }
 
 export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
-  const session = useSession();
-
-  // First get the default pipeline
-  const { data: pipeline } = useQuery({
-    queryKey: ["default-pipeline"],
-    queryFn: async () => {
-      if (!session?.user?.id) return null;
-      
-      const { data, error } = await supabase
-        .from("pipelines")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .order("order_index")
-        .limit(1)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!session?.user?.id,
-  });
-
-  // Then get the phases for that pipeline
-  const { data: phases = [] } = useQuery({
-    queryKey: ["pipeline-phases", pipeline?.id],
-    queryFn: async () => {
-      if (!pipeline?.id) return [];
-      
-      const { data, error } = await supabase
-        .from("pipeline_phases")
-        .select("*")
-        .eq("pipeline_id", pipeline.id)
-        .order("order_index");
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!pipeline?.id,
-  });
+  const { register, watch } = form;
+  const selectedPlatform = watch("platform");
 
   return (
-    <div className="space-y-4">
-      <FormField
-        control={form.control}
-        name="name"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Name
-            </FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
+    <>
+      <div className="space-y-2">
+        <Label htmlFor="name" className="flex items-center gap-2">
+          <User className="h-4 w-4" />
+          Name
+        </Label>
+        <Input
+          id="name"
+          {...register("name")}
+          placeholder="Name des Kontakts"
+        />
+      </div>
 
-      <FormField
-        control={form.control}
-        name="platform"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              Platform
-            </FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a platform" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {platforms.map((platform) => (
-                  <SelectItem key={platform} value={platform}>
-                    {platform}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FormItem>
-        )}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="platform" className="flex items-center gap-2">
+          <Globe className="h-4 w-4" />
+          Plattform
+        </Label>
+        <Select
+          onValueChange={(value) => form.setValue("platform", value)}
+          value={selectedPlatform}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Plattform auswählen" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.values(platformsConfig).map((platform) => (
+              <SelectItem key={platform.value} value={platform.value}>
+                {platform.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <FormField
-        control={form.control}
-        name="socialMediaUsername"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="flex items-center gap-2">
-              <AtSign className="h-4 w-4" />
-              Username
-            </FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="social_media_username" className="flex items-center gap-2">
+          <AtSign className="h-4 w-4" />
+          Benutzername
+        </Label>
+        <Input
+          id="social_media_username"
+          {...register("social_media_username")}
+          placeholder="@username"
+        />
+      </div>
 
-      <FormField
-        control={form.control}
-        name="phase"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              Phase
-            </FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a phase" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {phases.map((phase) => (
-                  <SelectItem key={phase.id} value={phase.name}>
-                    {phase.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FormItem>
-        )}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="industry" className="flex items-center gap-2">
+          <Globe className="h-4 w-4" />
+          Branche
+        </Label>
+        <Input
+          id="industry"
+          {...register("industry")}
+          placeholder="z.B. E-Commerce, Marketing, etc."
+        />
+      </div>
 
-      <FormField
-        control={form.control}
-        name="email"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Email
-            </FormLabel>
-            <FormControl>
-              <Input type="email" {...field} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="email" className="flex items-center gap-2">
+          <Mail className="h-4 w-4" />
+          E-Mail
+        </Label>
+        <Input
+          id="email"
+          type="email"
+          {...register("email")}
+          placeholder="email@example.com"
+        />
+      </div>
 
-      <FormField
-        control={form.control}
-        name="phone_number"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              Phone Number
-            </FormLabel>
-            <FormControl>
-              <Input type="tel" {...field} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-    </div>
+      <div className="space-y-2">
+        <Label htmlFor="phone_number" className="flex items-center gap-2">
+          <Phone className="h-4 w-4" />
+          Telefon
+        </Label>
+        <Input
+          id="phone_number"
+          type="tel"
+          {...register("phone_number")}
+          placeholder="+49 123 456789"
+        />
+      </div>
+    </>
   );
 }
