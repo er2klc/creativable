@@ -56,15 +56,16 @@ export const DashboardMetrics = () => {
   });
 
   const { data: metrics } = useQuery({
-    queryKey: ["dashboard-metrics", completionPhase?.id],
+    queryKey: ["dashboard-metrics", completionPhase?.id, pipeline?.id],
     queryFn: async () => {
-      if (!session?.user?.id) return null;
+      if (!session?.user?.id || !pipeline?.id) return null;
 
       const [leadsResult, tasksResult, completedLeadsResult] = await Promise.all([
         supabase
           .from("leads")
           .select("id")
-          .eq("user_id", session.user.id),
+          .eq("user_id", session.user.id)
+          .eq("pipeline_id", pipeline.id),
         supabase
           .from("tasks")
           .select("id")
@@ -74,6 +75,7 @@ export const DashboardMetrics = () => {
           .from("leads")
           .select("id")
           .eq("user_id", session.user.id)
+          .eq("pipeline_id", pipeline.id)
           .eq("phase", completionPhase?.name || "Abschluss"),
       ]);
 
@@ -90,7 +92,7 @@ export const DashboardMetrics = () => {
         completionRate
       };
     },
-    enabled: !!session?.user?.id && !!completionPhase?.id,
+    enabled: !!session?.user?.id && !!completionPhase?.id && !!pipeline?.id,
   });
 
   return (

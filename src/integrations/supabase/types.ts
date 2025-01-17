@@ -589,6 +589,7 @@ export type Database = {
           notes: string | null
           phase: string
           phone_number: string | null
+          pipeline_id: string
           platform: string
           products_services: string | null
           social_media_bio: string | null
@@ -615,6 +616,7 @@ export type Database = {
           notes?: string | null
           phase?: string
           phone_number?: string | null
+          pipeline_id: string
           platform: string
           products_services?: string | null
           social_media_bio?: string | null
@@ -641,6 +643,7 @@ export type Database = {
           notes?: string | null
           phase?: string
           phone_number?: string | null
+          pipeline_id?: string
           platform?: string
           products_services?: string | null
           social_media_bio?: string | null
@@ -652,7 +655,15 @@ export type Database = {
           user_id?: string
           usp?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leads_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "pipelines"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       message_templates: {
         Row: {

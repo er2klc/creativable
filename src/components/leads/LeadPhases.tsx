@@ -23,7 +23,6 @@ export const LeadPhases = () => {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      // Get the last used pipeline from localStorage
       const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
       
       const { data, error } = await supabase
@@ -67,14 +66,15 @@ export const LeadPhases = () => {
 
   // Query to get lead counts per phase
   const { data: leadCounts = {} } = useQuery({
-    queryKey: ["lead-phase-counts"],
+    queryKey: ["lead-phase-counts", pipeline?.id],
     queryFn: async () => {
-      if (!session?.user?.id) return {};
+      if (!session?.user?.id || !pipeline?.id) return {};
       
       const { data: leads, error } = await supabase
         .from("leads")
         .select("phase")
-        .eq("user_id", session.user.id);
+        .eq("user_id", session.user.id)
+        .eq("pipeline_id", pipeline.id);
 
       if (error) throw error;
 
@@ -94,6 +94,7 @@ export const LeadPhases = () => {
 
       return percentages;
     },
+    enabled: !!session?.user?.id && !!pipeline?.id,
   });
 
   useEffect(() => {
@@ -138,7 +139,6 @@ export const LeadPhases = () => {
           return;
         }
 
-        // Aktualisiere die Phasenliste
         refetch();
       } catch (error) {
         console.error("Error in initializeDefaultPhases:", error);
