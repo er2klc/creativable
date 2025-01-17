@@ -26,7 +26,7 @@ export const MainContent = ({ children, className }: MainContentProps) => {
       </div>
       <div className={cn(
         "mx-auto p-2 md:p-8 overflow-x-hidden",
-        isLeadsPage ? "px-4 w-full" : "max-w-7xl"
+        isLeadsPage ? "w-full max-w-full" : "max-w-7xl"
       )}>
         {children}
       </div>
