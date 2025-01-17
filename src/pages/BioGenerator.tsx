@@ -86,7 +86,7 @@ const BioGenerator = () => {
         throw new Error("Authentication required");
       }
 
-      // Generate bio using edge function
+      // Generate bio using edge function with proper authentication
       const { data: bioData, error: bioError } = await supabase.functions.invoke(
         "generate-bio",
         {
@@ -97,7 +97,10 @@ const BioGenerator = () => {
         }
       );
 
-      if (bioError) throw bioError;
+      if (bioError) {
+        console.error("Bio generation error:", bioError);
+        throw bioError;
+      }
 
       // Save to database
       const { error: saveError } = await supabase
