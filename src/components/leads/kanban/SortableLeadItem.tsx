@@ -34,7 +34,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
       scaleY: 1.02,
     }),
     zIndex: isDragging ? 1000 : 1,
-    position: isDragging ? 'absolute' : 'relative',
+    position: isDragging ? 'absolute' as const,
     width: '100%',
     transition: 'transform 0.1s ease, box-shadow 0.1s ease',
     cursor: isDragging ? 'grabbing' : 'grab',
