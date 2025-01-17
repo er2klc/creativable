@@ -1,13 +1,31 @@
 import { Tables } from "@/integrations/supabase/types";
 import { format } from "date-fns";
-import { MessageSquare, CheckSquare, StickyNote } from "lucide-react";
+import { de } from "date-fns/locale";
+import { 
+  MessageSquare, 
+  CheckSquare, 
+  StickyNote, 
+  Phone, 
+  Mail, 
+  Calendar,
+  ArrowRight,
+  FileText,
+  Bell,
+  Instagram,
+  Linkedin,
+  MessageCircle
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 type TimelineItem = {
   id: string;
-  type: 'message' | 'task' | 'note';
+  type: 'message' | 'task' | 'note' | 'phase_change' | 'reminder' | 'upload';
   content: string;
   timestamp: string;
   status?: string;
+  platform?: string;
+  metadata?: any;
 };
 
 interface LeadTimelineProps {
@@ -25,68 +43,125 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
       type: 'message' as const,
       content: message.content,
       timestamp: message.sent_at || '',
-      status: message.platform
+      status: message.platform,
+      platform: message.platform
     })),
     ...lead.tasks.map(task => ({
       id: task.id,
       type: 'task' as const,
       content: task.title,
       timestamp: task.created_at || '',
-      status: task.completed ? 'completed' : 'pending'
+      status: task.completed ? 'completed' : 'pending',
+      metadata: {
+        dueDate: task.due_date,
+        meetingType: task.meeting_type,
+        color: task.color
+      }
     })),
     ...lead.notes.map(note => ({
       id: note.id,
       type: 'note' as const,
       content: note.content,
       timestamp: note.created_at || '',
+      metadata: {
+        color: note.color
+      }
     }))
   ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-  const getIcon = (type: TimelineItem['type']) => {
+  const getIcon = (type: TimelineItem['type'], platform?: string) => {
     switch (type) {
       case 'message':
+        if (platform === 'instagram') return <Instagram className="h-4 w-4" />;
+        if (platform === 'linkedin') return <Linkedin className="h-4 w-4" />;
+        if (platform === 'whatsapp') return <MessageCircle className="h-4 w-4" />;
         return <MessageSquare className="h-4 w-4" />;
       case 'task':
         return <CheckSquare className="h-4 w-4" />;
       case 'note':
         return <StickyNote className="h-4 w-4" />;
+      case 'phase_change':
+        return <ArrowRight className="h-4 w-4" />;
+      case 'reminder':
+        return <Bell className="h-4 w-4" />;
+      case 'upload':
+        return <FileText className="h-4 w-4" />;
     }
   };
 
-  const getItemColor = (type: TimelineItem['type']) => {
+  const getItemColor = (type: TimelineItem['type'], status?: string) => {
     switch (type) {
       case 'message':
         return 'text-blue-500';
       case 'task':
-        return 'text-green-500';
+        return status === 'completed' ? 'text-green-500' : 'text-yellow-500';
       case 'note':
-        return 'text-yellow-500';
+        return 'text-purple-500';
+      case 'phase_change':
+        return 'text-orange-500';
+      case 'reminder':
+        return 'text-red-500';
+      case 'upload':
+        return 'text-gray-500';
+    }
+  };
+
+  const getItemBadge = (item: TimelineItem) => {
+    switch (item.type) {
+      case 'message':
+        return (
+          <Badge variant="secondary" className="text-xs">
+            {item.platform}
+          </Badge>
+        );
+      case 'task':
+        return (
+          <Badge 
+            variant={item.status === 'completed' ? 'default' : 'secondary'}
+            className="text-xs"
+          >
+            {item.status}
+          </Badge>
+        );
+      default:
+        return null;
     }
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Aktivitäten</h3>
+    <Card className="p-4">
+      <h3 className="text-lg font-semibold mb-4">Aktivitäten</h3>
       <div className="space-y-4">
         {timelineItems.map((item) => (
-          <div key={item.id} className="flex gap-4 items-start">
-            <div className={`mt-1 ${getItemColor(item.type)}`}>
-              {getIcon(item.type)}
+          <div key={item.id} className="flex gap-4 items-start group hover:bg-muted/50 p-2 rounded-lg transition-colors">
+            <div className={`mt-1 ${getItemColor(item.type, item.status)}`}>
+              {getIcon(item.type, item.platform)}
             </div>
-            <div className="flex-1">
-              <div className="text-sm text-gray-500">
-                {format(new Date(item.timestamp), 'dd.MM.yyyy HH:mm')}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm text-muted-foreground">
+                  {format(new Date(item.timestamp), 'dd.MM.yyyy HH:mm', { locale: de })}
+                </span>
+                {getItemBadge(item)}
               </div>
-              <div className="text-sm">{item.content}</div>
-              {item.status && (
-                <div className="text-xs text-gray-500 mt-1">
-                  Status: {item.status}
+              <div className="text-sm break-words">
+                {item.content}
+              </div>
+              {item.type === 'task' && item.metadata?.dueDate && (
+                <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  Fällig am: {format(new Date(item.metadata.dueDate), 'dd.MM.yyyy', { locale: de })}
                 </div>
               )}
             </div>
           </div>
         ))}
+        {timelineItems.length === 0 && (
+          <div className="text-center text-muted-foreground py-4">
+            Noch keine Aktivitäten vorhanden
+          </div>
+        )}
       </div>
-    </div>
+    </Card>
   );
 };
