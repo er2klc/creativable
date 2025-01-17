@@ -6,37 +6,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreVertical, Star, Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
-import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { useSettings } from "@/hooks/use-settings";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-const getPlatformIcon = (platform: string) => {
-  switch (platform?.toLowerCase()) {
-    case "instagram":
-      return <Instagram className="h-4 w-4 mr-2" />;
-    case "linkedin":
-      return <Linkedin className="h-4 w-4 mr-2" />;
-    case "facebook":
-      return <Facebook className="h-4 w-4 mr-2" />;
-    case "tiktok":
-      return <Video className="h-4 w-4 mr-2" />;
-    case "offline":
-      return <Users className="h-4 w-4 mr-2" />;
-    default:
-      return null;
-  }
-};
+import { LeadTableCell } from "./table/LeadTableCell";
+import { LeadTableActions } from "./table/LeadTableActions";
 
 interface LeadTableViewProps {
   leads: Tables<"leads">[];
@@ -64,7 +40,7 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
     try {
       const { error } = await supabase
         .from("leads")
-        .update({ 
+        .update({
           phase: newPhase,
           last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
           last_action_date: new Date().toISOString(),
@@ -77,7 +53,7 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
 
       toast({
         title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
-        description: settings?.language === "en" 
+        description: settings?.language === "en"
           ? "The phase has been successfully updated."
           : "Die Phase wurde erfolgreich aktualisiert.",
       });
@@ -93,36 +69,31 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
     }
   };
 
-  const getPhaseTranslation = (phase: string) => {
-    const foundPhase = phases.find(p => p.name === phase);
-    return foundPhase ? foundPhase.name : phase;
-  };
-
   return (
     <div className="w-full overflow-x-auto">
       <div className="min-w-full">
         <Table>
           <TableHeader className="sticky top-0 bg-background z-10">
             <TableRow>
-              <TableCell className="w-[30px] p-2 whitespace-nowrap">
+              <TableCell className="w-[30px] p-2">
                 <span className="sr-only">Favorite</span>
               </TableCell>
-              <TableCell className="w-[15%] min-w-[120px] whitespace-nowrap">
+              <TableCell className="w-[15%] min-w-[120px]">
                 {settings?.language === "en" ? "Contact" : "Kontakt"}
               </TableCell>
-              <TableCell className="w-[15%] min-w-[120px] whitespace-nowrap">
+              <TableCell className="w-[15%] min-w-[120px]">
                 {settings?.language === "en" ? "Platform" : "Plattform"}
               </TableCell>
-              <TableCell className="w-[15%] min-w-[120px] whitespace-nowrap">
+              <TableCell className="w-[15%] min-w-[120px]">
                 {settings?.language === "en" ? "Phase" : "Phase"}
               </TableCell>
-              <TableCell className="w-[20%] min-w-[120px] whitespace-nowrap">
+              <TableCell className="w-[20%] min-w-[120px]">
                 {settings?.language === "en" ? "Last Action" : "Letzte Aktion"}
               </TableCell>
-              <TableCell className="w-[15%] min-w-[120px] whitespace-nowrap">
+              <TableCell className="w-[15%] min-w-[120px]">
                 {settings?.language === "en" ? "Industry" : "Branche"}
               </TableCell>
-              <TableCell className="w-[50px] whitespace-nowrap">
+              <TableCell className="w-[50px]">
                 <span className="sr-only">Actions</span>
               </TableCell>
             </TableRow>
@@ -134,82 +105,17 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
                 className="cursor-pointer hover:bg-muted/50"
                 onClick={() => onLeadClick(lead.id)}
               >
-                <TableCell className="p-2" onClick={(e) => e.stopPropagation()}>
-                  <Button variant="ghost" size="icon" className="h-4 w-4">
-                    <Star className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-                <TableCell className="font-medium whitespace-nowrap">{lead.name}</TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <div className="flex items-center gap-2">
-                    {getPlatformIcon(lead.platform)}
-                    <span>{lead.platform}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" className="h-8 px-2 py-1">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            lead.phase === "initial_contact"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : lead.phase === "follow_up"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-green-100 text-green-800"
-                          }`}
-                        >
-                          {getPhaseTranslation(lead.phase)}
-                        </span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      {phases.map((phase) => (
-                        <DropdownMenuItem
-                          key={phase.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePhaseChange(lead.id, phase.name);
-                          }}
-                        >
-                          {phase.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  {lead.last_action_date
-                    ? new Date(lead.last_action_date).toLocaleDateString(
-                        settings?.language === "en" ? "en-US" : "de-DE"
-                      )
-                    : "-"}
-                </TableCell>
-                <TableCell className="whitespace-nowrap">{lead.industry}</TableCell>
+                <LeadTableCell type="favorite" value={null} />
+                <LeadTableCell type="name" value={lead.name} />
+                <LeadTableCell type="platform" value={lead.platform} />
+                <LeadTableCell type="phase" value={lead.phase} />
+                <LeadTableCell type="lastAction" value={lead.last_action_date} />
+                <LeadTableCell type="industry" value={lead.industry} />
                 <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onLeadClick(lead.id)}>
-                        {settings?.language === "en" ? "Show Details" : "Details anzeigen"}
-                      </DropdownMenuItem>
-                      <SendMessageDialog 
-                        lead={lead}
-                        trigger={
-                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                            {settings?.language === "en" ? "Send Message" : "Nachricht senden"}
-                          </DropdownMenuItem>
-                        }
-                      />
-                      <DropdownMenuItem className="text-destructive">
-                        {settings?.language === "en" ? "Delete" : "Löschen"}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <LeadTableActions
+                    lead={lead}
+                    onShowDetails={() => onLeadClick(lead.id)}
+                  />
                 </TableCell>
               </TableRow>
             ))}
