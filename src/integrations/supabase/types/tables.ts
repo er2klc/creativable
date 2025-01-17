@@ -220,5 +220,14 @@ export interface Tables {
       updated_at?: string | null;
       user_id?: string;
     };
+    Relationships: [
+      {
+        foreignKeyName: "pipeline_phases_pipeline_id_fkey";
+        columns: ["pipeline_id"];
+        isOneToOne: false;
+        referencedRelation: "pipelines";
+        referencedColumns: ["id"];
+      }
+    ];
   };
 }

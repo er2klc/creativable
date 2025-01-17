@@ -18,12 +18,12 @@ export const LeadPhases = () => {
   const { toast } = useToast();
 
   const { data: phases = [], isLoading, refetch } = useQuery({
-    queryKey: ["lead-phases"],
+    queryKey: ["pipeline-phases"],
     queryFn: async () => {
       if (!session?.user?.id) return [];
       
       const { data: existingPhases, error } = await supabase
-        .from("lead_phases")
+        .from("pipeline_phases")
         .select("*")
         .eq("user_id", session.user.id)
         .order("order_index");
@@ -82,32 +82,38 @@ export const LeadPhases = () => {
           return;
         }
 
+        // Get the default pipeline for the user
+        const { data: pipeline, error: pipelineError } = await supabase
+          .from("pipelines")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .single();
+
+        if (pipelineError || !pipeline) {
+          console.error("Error getting pipeline:", pipelineError);
+          toast({
+            title: "Fehler",
+            description: "Pipeline konnte nicht gefunden werden.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         // Proceed with phase initialization using UPSERT
         const phasesToAdd = DEFAULT_PHASES.map(phase => ({
           name: phase.name,
           order_index: phase.order_index,
-          user_id: session.user.id,
+          pipeline_id: pipeline.id,
         }));
 
         const { error } = await supabase
-          .from("lead_phases")
+          .from("pipeline_phases")
           .upsert(phasesToAdd, {
-            onConflict: 'user_id,name',
+            onConflict: 'pipeline_id,name',
             ignoreDuplicates: true
           });
 
         if (error) {
-          // Handle foreign key constraint error
-          if (error.code === '23503') {
-            console.error("Foreign key constraint error:", error);
-            toast({
-              title: "Fehler",
-              description: "Benutzer-Authentifizierung fehlgeschlagen. Bitte melden Sie sich erneut an.",
-              variant: "destructive",
-            });
-            return;
-          }
-          
           console.error("Error initializing phases:", error);
           toast({
             title: "Fehler",
