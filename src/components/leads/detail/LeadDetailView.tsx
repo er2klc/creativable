@@ -12,6 +12,7 @@ import { LeadDetailHeader } from "./LeadDetailHeader";
 import { LeadMessages } from "./LeadMessages";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { toast } from "sonner";
+import { type Platform } from "@/config/platforms";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -34,6 +35,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
       if (error) throw error;
       return data as (Tables<"leads"> & {
+        platform: Platform;
         messages: Tables<"messages">[];
         tasks: Tables<"tasks">[];
       });

@@ -4,6 +4,7 @@ export type Platform = "Instagram" | "LinkedIn" | "Facebook" | "TikTok" | "Offli
 
 export interface PlatformConfig {
   name: Platform;
+  label: string;
   icon: LucideIcon;
   generateUrl: (username: string) => string;
 }
@@ -11,6 +12,7 @@ export interface PlatformConfig {
 export const platformsConfig: PlatformConfig[] = [
   {
     name: "Instagram",
+    label: "Instagram",
     icon: Instagram,
     generateUrl: (username) => {
       if (username.startsWith('https://www.instagram.com/')) {
@@ -21,6 +23,7 @@ export const platformsConfig: PlatformConfig[] = [
   },
   {
     name: "LinkedIn",
+    label: "LinkedIn",
     icon: Linkedin,
     generateUrl: (username) => {
       if (username.startsWith('https://www.linkedin.com/')) {
@@ -31,6 +34,7 @@ export const platformsConfig: PlatformConfig[] = [
   },
   {
     name: "Facebook",
+    label: "Facebook",
     icon: Facebook,
     generateUrl: (username) => {
       if (username.startsWith('https://www.facebook.com/')) {
@@ -41,6 +45,7 @@ export const platformsConfig: PlatformConfig[] = [
   },
   {
     name: "TikTok",
+    label: "TikTok",
     icon: Video,
     generateUrl: (username) => {
       if (username.startsWith('https://www.tiktok.com/')) {
@@ -51,6 +56,7 @@ export const platformsConfig: PlatformConfig[] = [
   },
   {
     name: "Offline",
+    label: "Offline",
     icon: Users,
     generateUrl: (_) => "",
   }

@@ -41,9 +41,12 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
             <SelectValue placeholder="Plattform auswählen" />
           </SelectTrigger>
           <SelectContent>
-            {Object.values(platformsConfig).map((platform) => (
+            {platformsConfig.map((platform) => (
               <SelectItem key={platform.name} value={platform.name}>
-                {platform.label}
+                <div className="flex items-center">
+                  <platform.icon className="h-4 w-4 mr-2" />
+                  {platform.label}
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
