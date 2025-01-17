@@ -6,7 +6,7 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ command }) => ({
   plugins: [
     react(),
-    command === 'development' && componentTagger(),
+    command === 'serve' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
