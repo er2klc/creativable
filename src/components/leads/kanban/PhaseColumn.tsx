@@ -6,10 +6,10 @@ import { SortableLeadItem } from "./SortableLeadItem";
 import { AddLeadButton } from "./AddLeadButton";
 
 interface PhaseColumnProps {
-  phase: Tables<"lead_phases">;
+  phase: Tables<"pipeline_phases">;
   leads: Tables<"leads">[];
   onLeadClick: (id: string) => void;
-  onEditPhase: (phase: Tables<"lead_phases">) => void;
+  onEditPhase: (phase: Tables<"pipeline_phases">) => void;
 }
 
 export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseColumnProps) => {

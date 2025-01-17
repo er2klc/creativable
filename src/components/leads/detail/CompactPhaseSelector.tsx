@@ -1,22 +1,60 @@
+import { useSession } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
-import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
 
 interface CompactPhaseSelectorProps {
   lead: Tables<"leads">;
-  phases: Tables<"lead_phases">[];
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
-  onUpdatePhases?: (phases: Tables<"lead_phases">[], oldName: string) => void;
+  onUpdatePhases?: (phases: Tables<"pipeline_phases">[], oldName: string) => void;
 }
 
 export function CompactPhaseSelector({ 
   lead, 
-  phases,
   onUpdateLead,
   onUpdatePhases
 }: CompactPhaseSelectorProps) {
-  const { settings } = useSettings();
+  const session = useSession();
   
+  // First get the default pipeline
+  const { data: pipeline } = useQuery({
+    queryKey: ["default-pipeline"],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from("pipelines")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("order_index")
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  // Then get the phases for that pipeline
+  const { data: phases = [] } = useQuery({
+    queryKey: ["pipeline-phases", pipeline?.id],
+    queryFn: async () => {
+      if (!pipeline?.id) return [];
+      
+      const { data, error } = await supabase
+        .from("pipeline_phases")
+        .select("*")
+        .eq("pipeline_id", pipeline.id)
+        .order("order_index");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!pipeline?.id,
+  });
+
   const handlePhaseChange = (newPhase: string) => {
     onUpdateLead({ phase: newPhase });
   };
@@ -29,7 +67,7 @@ export function CompactPhaseSelector({
   return (
     <div className="w-full px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
       <h3 className="text-sm font-medium mb-3 text-center text-gray-700">
-        {settings?.language === "en" ? "Contact Phase" : "Kontaktphase"}
+        Phase
       </h3>
       <div className="flex flex-col gap-2 max-w-full overflow-x-hidden">
         {/* First Row */}

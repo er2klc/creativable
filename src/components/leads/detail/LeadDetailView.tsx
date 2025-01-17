@@ -1,23 +1,10 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-} from "@/components/ui/dialog";
-import { Bot } from "lucide-react";
-import { Tables } from "@/integrations/supabase/types";
+import { useEffect } from "react";
+import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadInfoCard } from "./LeadInfoCard";
-import { TaskList } from "./TaskList";
-import { NoteList } from "./NoteList";
-import { LeadSummary } from "./LeadSummary";
-import { LeadDetailHeader } from "./LeadDetailHeader";
-import { LeadMessages } from "./LeadMessages";
+import { Tables } from "@/integrations/supabase/types";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
-import { useState } from "react";
-import { toast } from "sonner";
-import { Platform } from "@/config/platforms";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -27,7 +14,45 @@ interface LeadDetailViewProps {
 export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
-  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const session = useSession();
+
+  // First get the default pipeline
+  const { data: pipeline } = useQuery({
+    queryKey: ["default-pipeline"],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from("pipelines")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("order_index")
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  // Then get the phases for that pipeline
+  const { data: phases = [] } = useQuery({
+    queryKey: ["pipeline-phases", pipeline?.id],
+    queryFn: async () => {
+      if (!pipeline?.id) return [];
+      
+      const { data, error } = await supabase
+        .from("pipeline_phases")
+        .select("*")
+        .eq("pipeline_id", pipeline.id)
+        .order("order_index");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!pipeline?.id,
+  });
 
   const { data: lead, isLoading } = useQuery({
     queryKey: ["lead", leadId],
@@ -41,24 +66,12 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
       if (error) throw error;
       return data as (Tables<"leads"> & {
-        platform: Platform;
+        platform: string;
         messages: Tables<"messages">[];
         tasks: Tables<"tasks">[];
       });
     },
     enabled: !!leadId,
-  });
-
-  const { data: phases = [] } = useQuery({
-    queryKey: ["lead-phases"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lead_phases")
-        .select("*")
-        .order("order_index");
-      if (error) throw error;
-      return data;
-    },
   });
 
   const updateLeadMutation = useMutation({
@@ -84,22 +97,22 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   });
 
   const updatePhaseOrderMutation = useMutation({
-    mutationFn: async (updatedPhases: Tables<"lead_phases">[]) => {
+    mutationFn: async (updatedPhases: Tables<"pipeline_phases">[]) => {
       const { error } = await supabase
-        .from("lead_phases")
+        .from("pipeline_phases")
         .upsert(
           updatedPhases.map(phase => ({
             id: phase.id,
             name: phase.name,
             order_index: phase.order_index,
-            user_id: phase.user_id
+            pipeline_id: phase.pipeline_id
           }))
         );
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
     },
   });
 

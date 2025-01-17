@@ -20,19 +20,21 @@ export const useKanbanMutations = () => {
         .from("leads")
         .update({ 
           phase: newPhase,
-          last_action: "Phase geändert",
+          last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
           last_action_date: new Date().toISOString(),
         })
-        .eq("id", leadId);
+        .eq("id", leadId)
+        .eq("user_id", session.user.id);
+
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast({
         title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
-        description: settings?.language === "en" 
-          ? "The phase has been successfully updated."
-          : "Die Phase wurde erfolgreich aktualisiert.",
+        description: settings?.language === "en"
+          ? "Contact phase has been updated successfully"
+          : "Kontaktphase wurde erfolgreich aktualisiert",
       });
     },
   });
@@ -43,17 +45,39 @@ export const useKanbanMutations = () => {
         throw new Error("No authenticated user found");
       }
 
+      // Get the default pipeline
+      const { data: pipeline } = await supabase
+        .from("pipelines")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("order_index")
+        .limit(1)
+        .single();
+
+      if (!pipeline) throw new Error("No pipeline found");
+
+      // Get the current highest order_index
+      const { data: phases } = await supabase
+        .from("pipeline_phases")
+        .select("order_index")
+        .eq("pipeline_id", pipeline.id)
+        .order("order_index", { ascending: false })
+        .limit(1);
+
+      const nextOrderIndex = phases && phases.length > 0 ? phases[0].order_index + 1 : 0;
+
       const { error } = await supabase
-        .from("lead_phases")
+        .from("pipeline_phases")
         .insert({
           name: settings?.language === "en" ? "New Phase" : "Neue Phase",
-          order_index: 0, // Will be updated by the backend
-          user_id: session.user.id,
+          order_index: nextOrderIndex,
+          pipeline_id: pipeline.id,
         });
+
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
       toast({
         title: settings?.language === "en" ? "Phase added" : "Phase hinzugefügt",
         description: settings?.language === "en"

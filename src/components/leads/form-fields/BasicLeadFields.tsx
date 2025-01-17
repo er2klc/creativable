@@ -2,12 +2,9 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { Platform, platformsConfig } from "@/config/platforms";
-import { User, Globe, AtSign, Phone, Mail } from "lucide-react";
+import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
-import * as z from "zod";
 
 interface BasicLeadFieldsProps {
   form: UseFormReturn<any>;
@@ -16,25 +13,42 @@ interface BasicLeadFieldsProps {
 export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
   const session = useSession();
 
-  const { data: phases = [] } = useQuery({
-    queryKey: ["lead-phases"],
+  // First get the default pipeline
+  const { data: pipeline } = useQuery({
+    queryKey: ["default-pipeline"],
     queryFn: async () => {
-      if (!session?.user?.id) return [];
+      if (!session?.user?.id) return null;
       
       const { data, error } = await supabase
-        .from("lead_phases")
+        .from("pipelines")
         .select("*")
         .eq("user_id", session.user.id)
-        .order("order_index");
+        .order("order_index")
+        .limit(1)
+        .single();
 
-      if (error) {
-        console.error("Error loading phases:", error);
-        return [];
-      }
-
-      return data || [];
+      if (error) throw error;
+      return data;
     },
     enabled: !!session?.user?.id,
+  });
+
+  // Then get the phases for that pipeline
+  const { data: phases = [] } = useQuery({
+    queryKey: ["pipeline-phases", pipeline?.id],
+    queryFn: async () => {
+      if (!pipeline?.id) return [];
+      
+      const { data, error } = await supabase
+        .from("pipeline_phases")
+        .select("*")
+        .eq("pipeline_id", pipeline.id)
+        .order("order_index");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!pipeline?.id,
   });
 
   return (
