@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
 import { LeadTableView } from "@/components/leads/LeadTableView";
@@ -18,6 +18,7 @@ const Leads = () => {
   const [showSendMessage, setShowSendMessage] = useState(false);
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"kanban" | "list">(
     isMobile ? "list" : "kanban"
   );
@@ -100,6 +101,13 @@ const Leads = () => {
     enabled: !!session?.user?.id && !!selectedPipelineId,
   });
 
+  const handleLeadClick = (id: string) => {
+    const lead = leads.find(l => l.id === id);
+    if (lead?.slug) {
+      navigate(`/leads/${lead.slug}`);
+    }
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -128,6 +136,7 @@ const Leads = () => {
         <LeadTableView 
           leads={leads}
           selectedPipelineId={selectedPipelineId}
+          onLeadClick={handleLeadClick}
         />
       )}
 

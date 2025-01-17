@@ -1,5 +1,6 @@
 import Dashboard from "@/pages/Dashboard";
 import Leads from "@/pages/Leads";
+import LeadDetail from "@/pages/LeadDetail";
 import Messages from "@/pages/Messages";
 import Calendar from "@/pages/Calendar";
 import Settings from "@/pages/Settings";
@@ -27,7 +28,7 @@ export const protectedRoutes = [
   },
   {
     path: "/leads/:leadSlug",
-    element: <Leads />,
+    element: <LeadDetail />,
   },
   {
     path: "/messages",

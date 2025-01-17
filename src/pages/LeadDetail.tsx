@@ -12,17 +12,17 @@ import { CompactPhaseSelector } from "@/components/leads/detail/CompactPhaseSele
 import { Platform } from "@/config/platforms";
 
 export default function LeadDetail() {
-  const { slug } = useParams();
+  const { leadSlug } = useParams();
 
   const { data: lead, isLoading } = useQuery({
-    queryKey: ["lead", slug],
+    queryKey: ["lead", leadSlug],
     queryFn: async () => {
-      if (!slug) return null;
+      if (!leadSlug) return null;
       
       const { data: lead, error } = await supabase
         .from("leads")
         .select("*, messages(*), tasks(*)")
-        .eq("slug", slug)
+        .eq("slug", leadSlug)
         .maybeSingle();
 
       if (error) throw error;
@@ -32,7 +32,7 @@ export default function LeadDetail() {
         tasks: Tables<"tasks">[];
       });
     },
-    enabled: !!slug,
+    enabled: !!leadSlug,
   });
 
   if (isLoading) {
@@ -43,9 +43,18 @@ export default function LeadDetail() {
     return <div className="p-8">Contact not found</div>;
   }
 
+  const handleUpdateLead = async (updates: Partial<Tables<"leads">>) => {
+    const { error } = await supabase
+      .from("leads")
+      .update(updates)
+      .eq("id", lead.id);
+
+    if (error) throw error;
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <LeadDetailHeader lead={lead} onUpdateLead={() => {}} />
+      <LeadDetailHeader lead={lead} onUpdateLead={handleUpdateLead} />
       
       <div className="grid grid-cols-12 gap-6">
         {/* Left sidebar with contact info */}
@@ -58,7 +67,7 @@ export default function LeadDetail() {
         <div className="col-span-8 space-y-6">
           <CompactPhaseSelector
             lead={lead}
-            onUpdateLead={() => {}}
+            onUpdateLead={handleUpdateLead}
           />
           
           {/* Timeline section */}
