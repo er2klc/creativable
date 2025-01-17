@@ -23,11 +23,10 @@ import { useNavigate } from "react-router-dom";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
-  onLeadClick: (id: string) => void;
   selectedPipelineId: string | null;
 }
 
-export const LeadKanbanView = ({ leads, onLeadClick, selectedPipelineId }: LeadKanbanViewProps) => {
+export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProps) => {
   const { settings } = useSettings();
   const [editingPhase, setEditingPhase] = useState<Tables<"pipeline_phases"> | null>(null);
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
