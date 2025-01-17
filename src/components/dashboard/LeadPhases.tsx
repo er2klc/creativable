@@ -17,7 +17,7 @@ export const LeadPhases = () => {
   const session = useSession();
   const { toast } = useToast();
 
-  // First get the default pipeline or last used pipeline
+  // First get the default pipeline
   const { data: pipeline } = useQuery({
     queryKey: ["default-pipeline"],
     queryFn: async () => {
@@ -25,18 +25,14 @@ export const LeadPhases = () => {
       
       const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
       
-      let query = supabase
+      const { data, error } = await supabase
         .from("pipelines")
         .select("*")
-        .eq("user_id", session.user.id);
-
-      if (lastUsedPipelineId) {
-        query = query.eq("id", lastUsedPipelineId);
-      } else {
-        query = query.eq("name", "Standard Pipeline");
-      }
-
-      const { data, error } = await query.limit(1).single();
+        .eq("user_id", session.user.id)
+        .eq("name", "Standard Pipeline")
+        .order("order_index")
+        .limit(1)
+        .single();
 
       if (error) throw error;
 
@@ -76,7 +72,7 @@ export const LeadPhases = () => {
       
       const { data: leads, error } = await supabase
         .from("leads")
-        .select("phase")
+        .select("pipeline_phases!inner(name)")
         .eq("user_id", session.user.id)
         .eq("pipeline_id", pipeline.id);
 
@@ -87,7 +83,8 @@ export const LeadPhases = () => {
       const total = leads?.length || 0;
       
       leads?.forEach(lead => {
-        counts[lead.phase] = (counts[lead.phase] || 0) + 1;
+        const phaseName = lead.pipeline_phases.name;
+        counts[phaseName] = (counts[phaseName] || 0) + 1;
       });
 
       // Convert to percentages

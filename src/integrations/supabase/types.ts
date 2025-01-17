@@ -587,7 +587,7 @@ export type Database = {
           last_social_media_scan: string | null
           name: string
           notes: string | null
-          phase: string
+          phase_id: string
           phone_number: string | null
           pipeline_id: string
           platform: string
@@ -614,7 +614,7 @@ export type Database = {
           last_social_media_scan?: string | null
           name: string
           notes?: string | null
-          phase?: string
+          phase_id: string
           phone_number?: string | null
           pipeline_id: string
           platform: string
@@ -641,7 +641,7 @@ export type Database = {
           last_social_media_scan?: string | null
           name?: string
           notes?: string | null
-          phase?: string
+          phase_id?: string
           phone_number?: string | null
           pipeline_id?: string
           platform?: string
@@ -656,6 +656,13 @@ export type Database = {
           usp?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "leads_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_phases"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "leads_pipeline_id_fkey"
             columns: ["pipeline_id"]
