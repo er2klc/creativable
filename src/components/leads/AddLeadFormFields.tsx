@@ -9,7 +9,7 @@ export const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich 📝"),
   platform: z.custom<Platform>(),
   social_media_username: z.string().optional(),
-  phase: z.string().min(1, "Phase ist erforderlich 📊"),
+  phase_id: z.string().min(1, "Phase ist erforderlich 📊"),
   contact_type: z.string().nullable(),
   phone_number: z.string().optional().nullable(),
   email: z.string().optional().nullable(),

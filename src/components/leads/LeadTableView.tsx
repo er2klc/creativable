@@ -115,7 +115,6 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
                   <LeadTableActions
                     lead={lead}
                     onShowDetails={() => onLeadClick(lead.id)}
-                    onPhaseChange={(newPhaseId) => handlePhaseChange(lead.id, newPhaseId)}
                   />
                 </TableCell>
               </TableRow>
