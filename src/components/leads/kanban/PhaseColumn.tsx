@@ -24,7 +24,7 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
         isOver ? 'ring-2 ring-primary/50 bg-primary/5' : ''
       }`}
     >
-      <div className="sticky top-0 z-10 bg-[#f5f5f5] p-4 rounded-t-lg border-b border-primary/20 shadow-sm">
+      <div className="sticky top-2 z-10 bg-[#f5f5f5] p-4 rounded-t-lg border-b border-primary/20 shadow-sm">
         <div className="flex items-center justify-between">
           <h3 className="font-medium text-lg tracking-tight">{phase.name}</h3>
           <Button
