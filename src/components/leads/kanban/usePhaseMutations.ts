@@ -55,11 +55,22 @@ export const usePhaseMutations = () => {
         throw new Error("No authenticated user found");
       }
 
+      // Get the default pipeline
+      const { data: pipeline } = await supabase
+        .from("pipelines")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("order_index")
+        .limit(1)
+        .single();
+
+      if (!pipeline) throw new Error("No pipeline found");
+
       // Get the current highest order_index
       const { data: phases } = await supabase
         .from("pipeline_phases")
         .select("order_index")
-        .eq("user_id", session.user.id)
+        .eq("pipeline_id", pipeline.id)
         .order("order_index", { ascending: false })
         .limit(1);
 
@@ -70,7 +81,7 @@ export const usePhaseMutations = () => {
         .insert({
           name: settings?.language === "en" ? "New Phase" : "Neue Phase",
           order_index: nextOrderIndex,
-          user_id: session.user.id,
+          pipeline_id: pipeline.id,
         });
 
       if (error) throw error;
@@ -112,8 +123,7 @@ export const usePhaseMutations = () => {
       const { error: phaseError } = await supabase
         .from("pipeline_phases")
         .update({ name })
-        .eq("id", id)
-        .eq("user_id", session.user.id);
+        .eq("id", id);
 
       if (phaseError) {
         console.error("Error updating phase name:", phaseError);

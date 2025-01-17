@@ -7,13 +7,11 @@ import { cn } from "@/lib/utils";
 interface CompactPhaseSelectorProps {
   lead: Tables<"leads">;
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
-  onUpdatePhases?: (phases: Tables<"pipeline_phases">[], oldName: string) => void;
 }
 
 export function CompactPhaseSelector({ 
   lead, 
   onUpdateLead,
-  onUpdatePhases
 }: CompactPhaseSelectorProps) {
   const session = useSession();
   
