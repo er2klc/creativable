@@ -1,5 +1,6 @@
 import { AppProvider } from "@/providers/AppProvider";
-import { Routes, Route, Navigate, Outlet } from "react } from "@/hooks/use-auth";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
 import { ChatButton } from "@/components/dashboard/ChatButton";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import { publicRoutes } from "@/config/public-routes";
