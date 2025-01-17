@@ -25,7 +25,7 @@ export const MainContent = ({ children, className }: MainContentProps) => {
         <MobileMenu />
       </div>
       <div className={cn(
-        "max-w-[2000px] mx-auto px-6",
+        "container mx-auto px-4 lg:px-6",
         isLeadsPage ? "" : "py-4"
       )}>
         {children}

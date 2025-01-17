@@ -87,61 +87,63 @@ const Leads = () => {
     <div className="w-full space-y-8">
       <div className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="w-full py-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <h1 className="text-3xl font-bold">
-              {settings?.language === "en" ? "Contacts" : "Kontakte"}
-            </h1>
-            
-            <div className="flex-1 min-w-[200px] max-w-[800px]">
-              <LeadSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-            </div>
-
-            <div className="flex items-center gap-2 flex-none">
-              <LeadFilters
-                selectedPhase={selectedPhase}
-                setSelectedPhase={setSelectedPhase}
-                selectedPlatform={selectedPlatform}
-                setSelectedPlatform={setSelectedPlatform}
-              />
-              <div className="flex gap-2">
-                <Button
-                  variant={viewMode === "kanban" ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => setViewMode("kanban")}
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => setViewMode("list")}
-                >
-                  <LayoutList className="h-4 w-4" />
-                </Button>
+          <div className="container mx-auto px-4 lg:px-6">
+            <div className="flex flex-wrap items-center gap-4">
+              <h1 className="text-3xl font-bold">
+                {settings?.language === "en" ? "Contacts" : "Kontakte"}
+              </h1>
+              
+              <div className="flex-1 min-w-[200px] max-w-[800px]">
+                <LeadSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
               </div>
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Settings2 className="h-4 w-4" />
+
+              <div className="flex items-center gap-2 shrink-0">
+                <LeadFilters
+                  selectedPhase={selectedPhase}
+                  setSelectedPhase={setSelectedPhase}
+                  selectedPlatform={selectedPlatform}
+                  setSelectedPlatform={setSelectedPlatform}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    variant={viewMode === "kanban" ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => setViewMode("kanban")}
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
                   </Button>
-                </SheetTrigger>
-                <SheetContent>
-                  <SheetHeader>
-                    <SheetTitle>
-                      {settings?.language === "en" ? "Manage Phases" : "Phasen verwalten"}
-                    </SheetTitle>
-                    <SheetDescription>
-                      {settings?.language === "en"
-                        ? "Add new phases or modify existing ones. Drag and drop to reorder phases."
-                        : "Fügen Sie neue Phasen hinzu oder ändern Sie bestehende. Ziehen und ablegen zum Neuordnen der Phasen."}
-                    </SheetDescription>
-                  </SheetHeader>
-                  <div className="mt-4">
-                    <LeadPhaseManager />
-                  </div>
-                </SheetContent>
-              </Sheet>
-              <AddLeadDialog />
+                  <Button
+                    variant={viewMode === "list" ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => setViewMode("list")}
+                  >
+                    <LayoutList className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <Settings2 className="h-4 w-4" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent>
+                    <SheetHeader>
+                      <SheetTitle>
+                        {settings?.language === "en" ? "Manage Phases" : "Phasen verwalten"}
+                      </SheetTitle>
+                      <SheetDescription>
+                        {settings?.language === "en"
+                          ? "Add new phases or modify existing ones. Drag and drop to reorder phases."
+                          : "Fügen Sie neue Phasen hinzu oder ändern Sie bestehende. Ziehen und ablegen zum Neuordnen der Phasen."}
+                      </SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-4">
+                      <LeadPhaseManager />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+                <AddLeadDialog />
+              </div>
             </div>
           </div>
         </div>
