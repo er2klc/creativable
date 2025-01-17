@@ -25,14 +25,25 @@ export const LeadPhases = () => {
       
       const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("pipelines")
         .select("*")
         .eq("user_id", session.user.id)
-        .eq("name", "Standard Pipeline")
-        .order("order_index")
-        .limit(1)
-        .single();
+        .order("order_index");
+
+      // If we have a last used pipeline ID, try to fetch that one first
+      if (lastUsedPipelineId) {
+        const { data: lastPipeline } = await query
+          .eq("id", lastUsedPipelineId)
+          .maybeSingle();
+        
+        if (lastPipeline) {
+          return lastPipeline;
+        }
+      }
+
+      // Otherwise get the first pipeline
+      const { data, error } = await query.limit(1).maybeSingle();
 
       if (error) throw error;
 
@@ -72,7 +83,9 @@ export const LeadPhases = () => {
       
       const { data: leads, error } = await supabase
         .from("leads")
-        .select("pipeline_phases!inner(name)")
+        .select(`
+          pipeline_phases!inner(name)
+        `)
         .eq("user_id", session.user.id)
         .eq("pipeline_id", pipeline.id);
 
@@ -116,31 +129,34 @@ export const LeadPhases = () => {
           return;
         }
 
-        // Proceed with phase initialization using UPSERT
-        const phasesToAdd = DEFAULT_PHASES.map(phase => ({
-          name: phase.name,
-          order_index: phase.order_index,
-          pipeline_id: pipeline.id,
-        }));
+        // Only initialize default phases for the standard pipeline
+        if (pipeline.name === "Standard Pipeline") {
+          // Proceed with phase initialization using UPSERT
+          const phasesToAdd = DEFAULT_PHASES.map(phase => ({
+            name: phase.name,
+            order_index: phase.order_index,
+            pipeline_id: pipeline.id,
+          }));
 
-        const { error } = await supabase
-          .from("pipeline_phases")
-          .upsert(phasesToAdd, {
-            onConflict: 'pipeline_id,name',
-            ignoreDuplicates: true
-          });
+          const { error } = await supabase
+            .from("pipeline_phases")
+            .upsert(phasesToAdd, {
+              onConflict: 'pipeline_id,name',
+              ignoreDuplicates: true
+            });
 
-        if (error) {
-          console.error("Error initializing phases:", error);
-          toast({
-            title: "Fehler",
-            description: "Fehler beim Initialisieren der Phasen. Bitte versuchen Sie es später erneut.",
-            variant: "destructive",
-          });
-          return;
+          if (error) {
+            console.error("Error initializing phases:", error);
+            toast({
+              title: "Fehler",
+              description: "Fehler beim Initialisieren der Phasen. Bitte versuchen Sie es später erneut.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          refetch();
         }
-
-        refetch();
       } catch (error) {
         console.error("Error in initializeDefaultPhases:", error);
         toast({
