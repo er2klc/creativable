@@ -13,84 +13,60 @@ const DEFAULT_PHASES = [
   { name: "Abschluss", order_index: 2 },
 ];
 
-export const LeadPhases = () => {
+export const LeadPhases = ({ selectedPipelineId }: { selectedPipelineId: string | null }) => {
   const session = useSession();
   const { toast } = useToast();
 
-  // First get the default pipeline
+  // Get the selected pipeline
   const { data: pipeline } = useQuery({
-    queryKey: ["default-pipeline"],
+    queryKey: ["pipeline", selectedPipelineId],
     queryFn: async () => {
-      if (!session?.user?.id) return null;
+      if (!session?.user?.id || !selectedPipelineId) return null;
       
-      const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
-      
-      let query = supabase
+      const { data, error } = await supabase
         .from("pipelines")
         .select("*")
+        .eq("id", selectedPipelineId)
         .eq("user_id", session.user.id)
-        .order("order_index");
-
-      // If we have a last used pipeline ID, try to fetch that one first
-      if (lastUsedPipelineId) {
-        const { data: lastPipeline } = await query
-          .eq("id", lastUsedPipelineId)
-          .single();
-        
-        if (lastPipeline) {
-          return lastPipeline;
-        }
-      }
-
-      // Otherwise get the first pipeline
-      const { data, error } = await query.limit(1).single();
+        .maybeSingle();
 
       if (error) throw error;
-
-      // Store the pipeline ID for next time
-      if (data) {
-        localStorage.setItem('lastUsedPipelineId', data.id);
-      }
-
       return data;
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user?.id && !!selectedPipelineId,
   });
 
   // Then get the phases for that pipeline
   const { data: phases = [], isLoading, refetch } = useQuery({
-    queryKey: ["pipeline-phases", pipeline?.id],
+    queryKey: ["pipeline-phases", selectedPipelineId],
     queryFn: async () => {
-      if (!session?.user?.id || !pipeline?.id) return [];
+      if (!session?.user?.id || !selectedPipelineId) return [];
       
       const { data: existingPhases, error } = await supabase
         .from("pipeline_phases")
         .select("*")
-        .eq("pipeline_id", pipeline.id)
+        .eq("pipeline_id", selectedPipelineId)
         .order("order_index");
 
       if (error) throw error;
       return existingPhases;
     },
-    enabled: !!session?.user?.id && !!pipeline?.id,
+    enabled: !!session?.user?.id && !!selectedPipelineId,
   });
 
   // Query to get lead counts per phase
   const { data: leadCounts = {} } = useQuery({
-    queryKey: ["lead-phase-counts", pipeline?.id],
+    queryKey: ["lead-phase-counts", selectedPipelineId],
     queryFn: async () => {
-      if (!session?.user?.id || !pipeline?.id) return {};
+      if (!session?.user?.id || !selectedPipelineId) return {};
       
       const { data: leads, error } = await supabase
         .from("leads")
         .select(`
-          phase_id,
-          pipeline_phases (
-            name
-          )
+          pipeline_phases!inner(name)
         `)
         .eq("user_id", session.user.id)
-        .eq("pipeline_id", pipeline.id);
+        .eq("pipeline_id", selectedPipelineId);
 
       if (error) throw error;
 
@@ -99,10 +75,8 @@ export const LeadPhases = () => {
       const total = leads?.length || 0;
       
       leads?.forEach(lead => {
-        const phaseName = lead.pipeline_phases?.name;
-        if (phaseName) {
-          counts[phaseName] = (counts[phaseName] || 0) + 1;
-        }
+        const phaseName = lead.pipeline_phases.name;
+        counts[phaseName] = (counts[phaseName] || 0) + 1;
       });
 
       // Convert to percentages
@@ -113,12 +87,12 @@ export const LeadPhases = () => {
 
       return percentages;
     },
-    enabled: !!session?.user?.id && !!pipeline?.id,
+    enabled: !!session?.user?.id && !!selectedPipelineId,
   });
 
   useEffect(() => {
     const initializeDefaultPhases = async () => {
-      if (!session?.user?.id || !pipeline?.id || phases.length > 0) return;
+      if (!session?.user?.id || !selectedPipelineId || phases.length > 0) return;
 
       try {
         // First verify that the user exists in auth
@@ -134,31 +108,34 @@ export const LeadPhases = () => {
           return;
         }
 
-        // Proceed with phase initialization using UPSERT
-        const phasesToAdd = DEFAULT_PHASES.map(phase => ({
-          name: phase.name,
-          order_index: phase.order_index,
-          pipeline_id: pipeline.id,
-        }));
+        // Only initialize default phases for the standard pipeline
+        if (pipeline?.name === "Standard Pipeline") {
+          // Proceed with phase initialization using UPSERT
+          const phasesToAdd = DEFAULT_PHASES.map(phase => ({
+            name: phase.name,
+            order_index: phase.order_index,
+            pipeline_id: selectedPipelineId,
+          }));
 
-        const { error } = await supabase
-          .from("pipeline_phases")
-          .upsert(phasesToAdd, {
-            onConflict: 'pipeline_id,name',
-            ignoreDuplicates: true
-          });
+          const { error } = await supabase
+            .from("pipeline_phases")
+            .upsert(phasesToAdd, {
+              onConflict: 'pipeline_id,name',
+              ignoreDuplicates: true
+            });
 
-        if (error) {
-          console.error("Error initializing phases:", error);
-          toast({
-            title: "Fehler",
-            description: "Fehler beim Initialisieren der Phasen. Bitte versuchen Sie es später erneut.",
-            variant: "destructive",
-          });
-          return;
+          if (error) {
+            console.error("Error initializing phases:", error);
+            toast({
+              title: "Fehler",
+              description: "Fehler beim Initialisieren der Phasen. Bitte versuchen Sie es später erneut.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          refetch();
         }
-
-        refetch();
       } catch (error) {
         console.error("Error in initializeDefaultPhases:", error);
         toast({
@@ -170,7 +147,7 @@ export const LeadPhases = () => {
     };
 
     initializeDefaultPhases();
-  }, [session?.user?.id, pipeline?.id, phases.length, toast, refetch]);
+  }, [session?.user?.id, selectedPipelineId, phases.length, toast, refetch, pipeline?.name]);
 
   if (isLoading) {
     return <div>Loading...</div>;

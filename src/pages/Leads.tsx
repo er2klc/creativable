@@ -4,12 +4,14 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
 import { LeadTableView } from "@/components/leads/LeadTableView";
-import { LeadDetailView } from "@/components/leads/LeadDetailView";
+import { LeadDetailView } from "@/components/leads/detail/LeadDetailView";
 import { SendMessageDialog } from "@/components/messaging/SendMessageDialog";
 import { LeadsHeader } from "@/components/leads/header/LeadsHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSession } from "@supabase/auth-helpers-react";
 
 const Leads = () => {
+  const session = useSession();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
@@ -22,23 +24,39 @@ const Leads = () => {
     isMobile ? "list" : "kanban"
   );
 
+  // Get all pipelines
   const { data: pipelines = [] } = useQuery({
     queryKey: ["pipelines"],
     queryFn: async () => {
+      if (!session?.user?.id) return [];
+      
       const { data, error } = await supabase
         .from("pipelines")
         .select("*")
+        .eq("user_id", session.user.id)
         .order("order_index");
+
       if (error) throw error;
       return data;
     },
+    enabled: !!session?.user?.id,
   });
 
+  // Set initial pipeline
   useEffect(() => {
     if (pipelines.length > 0 && !selectedPipelineId) {
-      setSelectedPipelineId(pipelines[0].id);
+      const pipelineId = searchParams.get("pipeline") || pipelines[0].id;
+      setSelectedPipelineId(pipelineId);
     }
-  }, [pipelines]);
+  }, [pipelines, selectedPipelineId, searchParams]);
+
+  // Update URL when pipeline changes
+  useEffect(() => {
+    if (selectedPipelineId) {
+      searchParams.set("pipeline", selectedPipelineId);
+      setSearchParams(searchParams);
+    }
+  }, [selectedPipelineId, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (searchParams.get("action") === "send-message") {
@@ -46,18 +64,22 @@ const Leads = () => {
       searchParams.delete("action");
       setSearchParams(searchParams);
     }
-  }, [searchParams]);
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     setViewMode(isMobile ? "list" : viewMode);
-  }, [isMobile]);
+  }, [isMobile, viewMode]);
 
   const { data: leads = [], isLoading } = useQuery({
-    queryKey: ["leads", searchQuery, selectedPhase, selectedPlatform],
+    queryKey: ["leads", searchQuery, selectedPhase, selectedPlatform, selectedPipelineId],
     queryFn: async () => {
+      if (!session?.user?.id || !selectedPipelineId) return [];
+
       let query = supabase
         .from("leads")
         .select("*")
+        .eq("user_id", session.user.id)
+        .eq("pipeline_id", selectedPipelineId)
         .order("created_at", { ascending: false });
 
       if (searchQuery) {
@@ -67,7 +89,7 @@ const Leads = () => {
       }
 
       if (selectedPhase) {
-        query = query.eq("phase", selectedPhase);
+        query = query.eq("phase_id", selectedPhase);
       }
 
       if (selectedPlatform) {
@@ -78,6 +100,7 @@ const Leads = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !!session?.user?.id && !!selectedPipelineId,
   });
 
   if (isLoading) {
@@ -100,9 +123,17 @@ const Leads = () => {
       />
 
       {viewMode === "kanban" ? (
-        <LeadKanbanView leads={leads} onLeadClick={(id) => setSelectedLeadId(id)} />
+        <LeadKanbanView 
+          leads={leads} 
+          onLeadClick={(id) => setSelectedLeadId(id)}
+          selectedPipelineId={selectedPipelineId}
+        />
       ) : (
-        <LeadTableView leads={leads} onLeadClick={(id) => setSelectedLeadId(id)} />
+        <LeadTableView 
+          leads={leads} 
+          onLeadClick={(id) => setSelectedLeadId(id)}
+          selectedPipelineId={selectedPipelineId}
+        />
       )}
 
       <LeadDetailView
