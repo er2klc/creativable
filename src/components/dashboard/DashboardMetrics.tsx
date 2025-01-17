@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSettings } from "@/hooks/use-settings";
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { 
   Select,
   SelectContent,
@@ -16,10 +15,7 @@ import {
 export const DashboardMetrics = () => {
   const session = useSession();
   const { settings } = useSettings();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { pipelineId } = useParams();
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(pipelineId || null);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
 
   // Get all pipelines
   const { data: pipelines } = useQuery({
