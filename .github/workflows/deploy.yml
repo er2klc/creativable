@@ -17,6 +17,16 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.3
@@ -29,7 +39,7 @@ jobs:
           cd /var/www/creativable
           git stash
           git pull origin main
-          npm install
+          npm ci
           npm run build
           systemctl reload nginx
           echo "Deployment completed!"
