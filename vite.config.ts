@@ -20,5 +20,20 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     sourcemap: true,
+    outDir: 'dist',
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
+  },
+  preview: {
+    port: 8080,
+    strictPort: true,
+    host: true,
+    origin: 'http://localhost:8080',
   },
 }));
