@@ -53,8 +53,6 @@ export const DashboardMetrics = () => {
         const lastPipeline = pipelines.find(p => p.id === lastUsedPipelineId);
         if (lastPipeline) {
           setSelectedPipelineId(lastPipeline.id);
-          const currentPath = location.pathname.split('/').pop();
-          navigate(`/pipeline/${lastPipeline.id}/${currentPath || 'dashboard'}`);
           return;
         }
       }
@@ -62,10 +60,8 @@ export const DashboardMetrics = () => {
       // Otherwise, try to find the Standard Pipeline or use the first one
       const defaultPipeline = pipelines.find(p => p.name === "Standard Pipeline") || pipelines[0];
       setSelectedPipelineId(defaultPipeline.id);
-      const currentPath = location.pathname.split('/').pop();
-      navigate(`/pipeline/${defaultPipeline.id}/${currentPath || 'dashboard'}`);
     }
-  }, [pipelines, selectedPipelineId, navigate, location]);
+  }, [pipelines, selectedPipelineId]);
 
   // Then get the completion phase for selected pipeline
   const { data: completionPhase } = useQuery({
@@ -133,8 +129,6 @@ export const DashboardMetrics = () => {
   const handlePipelineChange = (pipelineId: string) => {
     setSelectedPipelineId(pipelineId);
     localStorage.setItem('lastUsedPipelineId', pipelineId);
-    const currentPath = location.pathname.split('/').pop();
-    navigate(`/pipeline/${pipelineId}/${currentPath || 'dashboard'}`);
   };
 
   return (

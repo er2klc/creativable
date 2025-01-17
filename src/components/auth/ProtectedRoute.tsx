@@ -21,7 +21,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
           setIsSessionChecked(true);
           console.log("[Auth] Session check:", { 
             hasSession: hasValidSession, 
-            isAuthenticated, 
+            isAuthenticated,
             userId: session?.user?.id,
             path: location.pathname,
             timestamp: new Date().toISOString()
@@ -35,7 +35,12 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         }
       }
     };
-    
+
+    // Only check session if not already authenticated
+    if (!isAuthenticated && !isSessionChecked) {
+      checkSession();
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (mounted) {
         const hasValidSession = !!session;
@@ -50,20 +55,17 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       }
     });
     
-    checkSession();
-    
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [isAuthenticated, location.pathname]);
+  }, [isAuthenticated, location.pathname, isSessionChecked]);
 
   if (isLoading || !isSessionChecked) {
     return null;
   }
 
   if (!isAuthenticated && !hasSession) {
-    // Store the attempted URL to redirect back after login
     return <Navigate to="/auth" replace state={{ from: location }} />;
   }
 
