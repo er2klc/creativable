@@ -73,7 +73,6 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
 
       if (error) throw error;
 
-      // Invalidate and refetch leads
       queryClient.invalidateQueries({ queryKey: ["leads"] });
 
       toast({
@@ -100,30 +99,30 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
   };
 
   return (
-    <div className="w-full">
-      <div className="relative overflow-x-auto">
+    <div className="w-full overflow-x-auto">
+      <div className="min-w-full">
         <Table>
           <TableHeader className="sticky top-0 bg-background z-10">
             <TableRow>
-              <TableCell className="w-[30px] p-2">
+              <TableCell className="w-[30px] p-2 whitespace-nowrap">
                 <span className="sr-only">Favorite</span>
               </TableCell>
-              <TableCell className="w-[15%] min-w-[120px]">
+              <TableCell className="w-[15%] min-w-[120px] whitespace-nowrap">
                 {settings?.language === "en" ? "Contact" : "Kontakt"}
               </TableCell>
-              <TableCell className="w-[15%] min-w-[120px]">
+              <TableCell className="w-[15%] min-w-[120px] whitespace-nowrap">
                 {settings?.language === "en" ? "Platform" : "Plattform"}
               </TableCell>
-              <TableCell className="w-[15%] min-w-[120px]">
+              <TableCell className="w-[15%] min-w-[120px] whitespace-nowrap">
                 {settings?.language === "en" ? "Phase" : "Phase"}
               </TableCell>
-              <TableCell className="w-[20%] min-w-[120px]">
+              <TableCell className="w-[20%] min-w-[120px] whitespace-nowrap">
                 {settings?.language === "en" ? "Last Action" : "Letzte Aktion"}
               </TableCell>
-              <TableCell className="w-[15%] min-w-[120px]">
+              <TableCell className="w-[15%] min-w-[120px] whitespace-nowrap">
                 {settings?.language === "en" ? "Industry" : "Branche"}
               </TableCell>
-              <TableCell className="w-[50px]">
+              <TableCell className="w-[50px] whitespace-nowrap">
                 <span className="sr-only">Actions</span>
               </TableCell>
             </TableRow>
@@ -140,14 +139,14 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
                     <Star className="h-4 w-4" />
                   </Button>
                 </TableCell>
-                <TableCell className="font-medium">{lead.name}</TableCell>
-                <TableCell>
+                <TableCell className="font-medium whitespace-nowrap">{lead.name}</TableCell>
+                <TableCell className="whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     {getPlatformIcon(lead.platform)}
                     <span>{lead.platform}</span>
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" className="h-8 px-2 py-1">
@@ -179,15 +178,15 @@ export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   {lead.last_action_date
                     ? new Date(lead.last_action_date).toLocaleDateString(
                         settings?.language === "en" ? "en-US" : "de-DE"
                       )
                     : "-"}
                 </TableCell>
-                <TableCell>{lead.industry}</TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
+                <TableCell className="whitespace-nowrap">{lead.industry}</TableCell>
+                <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
