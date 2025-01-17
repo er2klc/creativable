@@ -83,6 +83,7 @@ const BioGenerator = () => {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session?.access_token) {
+        console.error("No access token found");
         throw new Error("Authentication required");
       }
 
@@ -93,6 +94,7 @@ const BioGenerator = () => {
           body: values,
           headers: {
             Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
           },
         }
       );
@@ -100,6 +102,11 @@ const BioGenerator = () => {
       if (bioError) {
         console.error("Bio generation error:", bioError);
         throw bioError;
+      }
+
+      if (!bioData?.bio) {
+        console.error("No bio data received");
+        throw new Error("No bio was generated");
       }
 
       // Save to database
@@ -112,7 +119,10 @@ const BioGenerator = () => {
           updated_at: new Date().toISOString()
         });
 
-      if (saveError) throw saveError;
+      if (saveError) {
+        console.error("Error saving bio:", saveError);
+        throw saveError;
+      }
 
       setGeneratedBio(bioData.bio);
       setSavedFormData(values);
