@@ -36,4 +36,5 @@ export default defineConfig(({ mode }) => ({
     host: true,
     origin: 'http://localhost:8080',
   },
+  base: '/',
 }));

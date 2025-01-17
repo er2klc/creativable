@@ -11,7 +11,22 @@ export const useAuth = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log("[Auth] Checking session...");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("[Auth] Session check error:", error);
+          setIsCheckingSession(false);
+          return false;
+        }
+
+        console.log("[Auth] Session check result:", {
+          hasSession: !!session,
+          userId: session?.user?.id,
+          path: window.location.pathname,
+          timestamp: new Date().toISOString(),
+        });
+
         setIsCheckingSession(false);
         return !!session;
       } catch (error) {
@@ -25,6 +40,7 @@ export const useAuth = () => {
   }, []);
 
   if (!context) {
+    console.error("[Auth] Auth context not found");
     throw new Error("useAuth must be used within an AuthProvider");
   }
 
