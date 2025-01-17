@@ -1,27 +1,26 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import path from "path";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+import path from 'path';
 import { componentTagger } from "lovable-tagger";
 
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "::",
-    port: 8080,
-  },
+export default defineConfig(({ command }) => ({
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    command === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
   build: {
-    sourcemap: true,
     outDir: 'dist',
-    assetsDir: 'assets',
+    sourcemap: true,
+    chunkSizeWarningLimit: 1000,
   },
-  base: '/',
+  server: {
+    host: true,
+    port: 8080,
+  },
+  base: command === 'build' ? '/creativable/' : '/',
 }));
