@@ -20,7 +20,7 @@ export default function LeadDetail() {
   const { leadSlug } = useParams();
   const queryClient = useQueryClient();
 
-  const { data: lead, isLoading } = useQuery({
+  const { data: lead, isLoading, error } = useQuery({
     queryKey: ["lead", leadSlug],
     queryFn: async () => {
       if (!leadSlug) return null;
@@ -34,9 +34,17 @@ export default function LeadDetail() {
           notes (*)
         `)
         .eq("slug", leadSlug)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching lead:", error);
+        throw error;
+      }
+
+      if (!data) {
+        return null;
+      }
+
       return data as LeadWithRelations;
     },
     enabled: !!leadSlug,
@@ -69,10 +77,18 @@ export default function LeadDetail() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="p-8 text-center text-destructive">
+        Ein Fehler ist aufgetreten: {error.message}
+      </div>
+    );
+  }
+
   if (!lead) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        Kontakt nicht gefunden
+        Kontakt wurde nicht gefunden
       </div>
     );
   }
