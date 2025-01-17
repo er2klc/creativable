@@ -90,8 +90,8 @@ export const SidebarMenuSection = ({
                             variant="outline" 
                             className={`absolute -top-2 -right-2 text-xs min-w-[18px] h-[18px] flex items-center justify-center px-1 ${
                               item.title === "Kalender" 
-                                ? "bg-green-500/90 text-white border-none" 
-                                : "bg-[#161616] text-[#3d85c6] border-none"
+                                ? "bg-[#161616] text-[#92ff86] border-none" 
+                                : "bg-[#161616] text-[#86edff] border-none"
                             }`}
                           >
                             {item.badge}
