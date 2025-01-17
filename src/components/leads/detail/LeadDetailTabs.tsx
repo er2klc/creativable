@@ -4,22 +4,36 @@ import { TaskList } from "./TaskList";
 import { LeadMessages } from "./LeadMessages";
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
+import { useSettings } from "@/hooks/use-settings";
+import { MessageSquare, CheckSquare, StickyNote } from "lucide-react";
 
 interface LeadDetailTabsProps {
   lead: Tables<"leads"> & {
     platform: Platform;
     messages: Tables<"messages">[];
     tasks: Tables<"tasks">[];
+    notes: Tables<"notes">[];
   };
 }
 
 export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
+  const { settings } = useSettings();
+  
   return (
     <Tabs defaultValue="notes" className="w-full">
       <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="notes">Notizen</TabsTrigger>
-        <TabsTrigger value="tasks">Aufgaben</TabsTrigger>
-        <TabsTrigger value="messages">Nachrichten</TabsTrigger>
+        <TabsTrigger value="notes" className="flex items-center gap-2">
+          <StickyNote className="h-4 w-4" />
+          {settings?.language === "en" ? "Notes" : "Notizen"}
+        </TabsTrigger>
+        <TabsTrigger value="tasks" className="flex items-center gap-2">
+          <CheckSquare className="h-4 w-4" />
+          {settings?.language === "en" ? "Tasks" : "Aufgaben"}
+        </TabsTrigger>
+        <TabsTrigger value="messages" className="flex items-center gap-2">
+          <MessageSquare className="h-4 w-4" />
+          {settings?.language === "en" ? "Messages" : "Nachrichten"}
+        </TabsTrigger>
       </TabsList>
       <TabsContent value="notes">
         <NoteList leadId={lead.id} />

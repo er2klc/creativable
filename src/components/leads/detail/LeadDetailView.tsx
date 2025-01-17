@@ -5,12 +5,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadInfoCard } from "./LeadInfoCard";
-import { TaskList } from "./TaskList";
-import { NoteList } from "./NoteList";
 import { LeadSummary } from "./LeadSummary";
 import { LeadDetailHeader } from "./LeadDetailHeader";
-import { LeadMessages } from "./LeadMessages";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
+import { LeadDetailTabs } from "./LeadDetailTabs";
+import { LeadTimeline } from "./LeadTimeline";
 import { toast } from "sonner";
 import { type Platform } from "@/config/platforms";
 
@@ -29,7 +28,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       if (!leadId) return null;
       const { data, error } = await supabase
         .from("leads")
-        .select("*, messages(*), tasks(*)")
+        .select("*, messages(*), tasks(*), notes(*)")
         .eq("id", leadId)
         .single();
 
@@ -38,6 +37,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         platform: Platform;
         messages: Tables<"messages">[];
         tasks: Tables<"tasks">[];
+        notes: Tables<"notes">[];
       });
     },
     enabled: !!leadId,
@@ -45,17 +45,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
-      // Check if we're actually changing anything
-      if (lead) {
-        const hasChanges = Object.entries(updates).some(
-          ([key, value]) => lead[key as keyof typeof lead] !== value
-        );
-        
-        if (!hasChanges) {
-          return lead; // Return existing lead without making API call
-        }
-      }
-
+      if (!leadId) return null;
       const { data, error } = await supabase
         .from("leads")
         .update(updates)
@@ -66,18 +56,13 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data, variables) => {
-      // Only show toast if we actually updated something
-      if (lead && Object.entries(variables).some(
-        ([key, value]) => lead[key as keyof typeof lead] !== value
-      )) {
-        queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-        toast.success(
-          settings?.language === "en"
-            ? "Contact updated successfully"
-            : "Kontakt erfolgreich aktualisiert"
-        );
-      }
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      toast.success(
+        settings?.language === "en"
+          ? "Contact updated successfully"
+          : "Kontakt erfolgreich aktualisiert"
+      );
     },
   });
 
@@ -97,29 +82,37 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         </DialogHeader>
 
         {isLoading ? (
-          <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
+          <div className="p-6">
+            {settings?.language === "en" ? "Loading..." : "Lädt..."}
+          </div>
         ) : lead ? (
           <div className="flex-1 overflow-y-auto p-6">
-            <div className="space-y-6">
-              <CompactPhaseSelector
-                lead={lead}
-                onUpdateLead={updateLeadMutation.mutate}
-              />
-              
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Bot className="h-5 w-5" />
-                  <h3 className="text-lg font-semibold">
-                    {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
-                  </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left column */}
+              <div className="space-y-6">
+                <CompactPhaseSelector
+                  lead={lead}
+                  onUpdateLead={updateLeadMutation.mutate}
+                />
+                
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Bot className="h-5 w-5" />
+                    <h3 className="text-lg font-semibold">
+                      {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
+                    </h3>
+                  </div>
+                  <LeadSummary lead={lead} />
                 </div>
-                <LeadSummary lead={lead} />
+                
+                <LeadInfoCard lead={lead} />
               </div>
-              
-              <LeadInfoCard lead={lead} />
-              <TaskList leadId={lead.id} />
-              <NoteList leadId={lead.id} />
-              <LeadMessages messages={lead.messages} />
+
+              {/* Right column */}
+              <div className="space-y-6">
+                <LeadDetailTabs lead={lead} />
+                <LeadTimeline lead={lead} />
+              </div>
             </div>
           </div>
         ) : null}
