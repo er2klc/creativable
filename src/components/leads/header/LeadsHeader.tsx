@@ -3,7 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { LeadFilters } from "@/components/leads/LeadFilters";
 import { PipelineSelector } from "@/components/leads/pipeline/PipelineSelector";
-import { ViewToggle } from "./ViewToggle";
 
 interface LeadsHeaderProps {
   searchQuery: string;
@@ -57,7 +56,20 @@ export const LeadsHeader = ({
             setSelectedPipelineId={setSelectedPipelineId}
           />
           <div className="flex gap-2">
-            <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+            <Button
+              variant={viewMode === "kanban" ? "default" : "outline"}
+              onClick={() => setViewMode("kanban")}
+              size="sm"
+            >
+              Kanban
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "outline"}
+              onClick={() => setViewMode("list")}
+              size="sm"
+            >
+              Liste
+            </Button>
           </div>
         </div>
       </div>
