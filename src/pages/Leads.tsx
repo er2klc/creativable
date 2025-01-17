@@ -86,17 +86,17 @@ const Leads = () => {
   return (
     <div className="w-full space-y-8">
       <div className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="max-w-[2000px] mx-auto px-6">
-          <div className="flex flex-wrap items-center justify-between gap-4 py-4">
+        <div className="w-full py-4">
+          <div className="flex flex-wrap items-center gap-4">
             <h1 className="text-3xl font-bold">
               {settings?.language === "en" ? "Contacts" : "Kontakte"}
             </h1>
             
-            <div className="flex-1 min-w-[200px] max-w-2xl">
+            <div className="flex-1 min-w-[200px] max-w-[800px]">
               <LeadSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
             </div>
 
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 flex-none">
               <LeadFilters
                 selectedPhase={selectedPhase}
                 setSelectedPhase={setSelectedPhase}
