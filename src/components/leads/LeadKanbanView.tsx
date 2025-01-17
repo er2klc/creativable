@@ -19,6 +19,7 @@ import { usePhaseMutations } from "./kanban/usePhaseMutations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -32,12 +33,18 @@ export const LeadKanbanView = ({ leads, onLeadClick, selectedPipelineId }: LeadK
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
   const { updateLeadPhase, addPhase, updatePhaseName } = usePhaseMutations();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Use the subscription hook
   useKanbanSubscription();
 
   const updateLeadPhaseMutation = useMutation({
     mutationFn: async ({ leadId, newPhase }: { leadId: string; newPhase: string }) => {
+      const lead = leads.find(l => l.id === leadId);
+      if (lead?.phase_id === newPhase) {
+        return null; // Skip update if phase hasn't changed
+      }
+
       const { error } = await supabase
         .from("leads")
         .update({ 
@@ -49,13 +56,15 @@ export const LeadKanbanView = ({ leads, onLeadClick, selectedPipelineId }: LeadK
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      toast.success(
-        settings?.language === "en" 
-          ? "Contact phase updated successfully" 
-          : "Kontaktphase erfolgreich aktualisiert"
-      );
+    onSuccess: (data) => {
+      if (data !== null) { // Only show toast if update actually happened
+        queryClient.invalidateQueries({ queryKey: ["leads"] });
+        toast.success(
+          settings?.language === "en" 
+            ? "Contact phase updated successfully" 
+            : "Kontaktphase erfolgreich aktualisiert"
+        );
+      }
     },
     onError: (error) => {
       console.error("Error updating lead phase:", error);
@@ -87,6 +96,13 @@ export const LeadKanbanView = ({ leads, onLeadClick, selectedPipelineId }: LeadK
     }
   };
 
+  const handleLeadClick = (id: string) => {
+    const lead = leads.find(l => l.id === id);
+    if (lead?.slug) {
+      navigate(`/leads/${lead.slug}`);
+    }
+  };
+
   const MIN_PHASE_WIDTH = 280;
   const GAP = 16;
   const totalWidth = phases.length * MIN_PHASE_WIDTH + ((phases.length - 1) * GAP);
@@ -113,7 +129,7 @@ export const LeadKanbanView = ({ leads, onLeadClick, selectedPipelineId }: LeadK
                 <PhaseColumn
                   phase={phase}
                   leads={leads.filter((lead) => lead.phase_id === phase.id)}
-                  onLeadClick={onLeadClick}
+                  onLeadClick={handleLeadClick}
                   onEditPhase={setEditingPhase}
                 />
               </div>
