@@ -17,23 +17,27 @@ import { LeadTableActions } from "./table/LeadTableActions";
 interface LeadTableViewProps {
   leads: Tables<"leads">[];
   onLeadClick: (id: string) => void;
+  selectedPipelineId: string | null;
 }
 
-export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
+export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTableViewProps) => {
   const { settings } = useSettings();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: phases = [] } = useQuery({
-    queryKey: ["pipeline-phases"],
+    queryKey: ["pipeline-phases", selectedPipelineId],
     queryFn: async () => {
+      if (!selectedPipelineId) return [];
       const { data, error } = await supabase
         .from("pipeline_phases")
         .select("*")
+        .eq("pipeline_id", selectedPipelineId)
         .order("order_index");
       if (error) throw error;
       return data;
     },
+    enabled: !!selectedPipelineId,
   });
 
   const handlePhaseChange = async (leadId: string, phaseId: string) => {

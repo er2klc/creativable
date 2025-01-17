@@ -23,12 +23,13 @@ import { toast } from "sonner";
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
   onLeadClick: (id: string) => void;
+  selectedPipelineId: string | null;
 }
 
-export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
+export const LeadKanbanView = ({ leads, onLeadClick, selectedPipelineId }: LeadKanbanViewProps) => {
   const { settings } = useSettings();
   const [editingPhase, setEditingPhase] = useState<Tables<"pipeline_phases"> | null>(null);
-  const { data: phases = [] } = usePhaseQuery();
+  const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
   const { updateLeadPhase, addPhase, updatePhaseName } = usePhaseMutations();
   const queryClient = useQueryClient();
 
