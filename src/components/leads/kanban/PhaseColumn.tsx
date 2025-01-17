@@ -20,7 +20,7 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
   return (
     <div 
       ref={setNodeRef}
-      className={`bg-muted/50 rounded-lg flex flex-col h-full min-h-[500px] relative transition-colors duration-200 ${
+      className={`bg-muted/50 rounded-lg flex flex-col h-full relative transition-colors duration-200 ${
         isOver ? 'ring-2 ring-primary/50 bg-primary/5' : ''
       }`}
     >
@@ -37,7 +37,7 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
           </Button>
         </div>
       </div>
-      <div className="p-4 flex-1">
+      <div className="p-4 flex-1 overflow-y-auto no-scrollbar">
         <div className="space-y-2">
           {leads.map((lead) => (
             <SortableLeadItem

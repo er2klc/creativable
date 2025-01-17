@@ -95,17 +95,20 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
       collisionDetection={closestCenter} 
       onDragEnd={handleDragEnd}
     >
-      <div className="w-full h-[calc(100vh-13rem)] overflow-hidden">
-        <div className="w-full h-full overflow-x-auto">
+      <div className="w-full h-[calc(100vh-13rem)] overflow-hidden relative">
+        <div className="w-full h-full overflow-x-auto no-scrollbar">
           <div 
-            className="flex gap-4 px-4 relative" 
+            className="flex gap-4 px-4 relative min-h-full" 
             style={{ 
               minWidth: `${totalWidth}px`,
               maxWidth: '100%'
             }}
           >
+            {/* Shadow indicator for left scroll */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
+
             {phases.map((phase) => (
-              <div key={phase.id} className="flex-1 min-w-[180px] max-w-[300px]">
+              <div key={phase.id} className="flex-1 min-w-[280px] max-w-[300px]">
                 <PhaseColumn
                   phase={phase}
                   leads={leads.filter((lead) => lead.phase === phase.name)}
@@ -122,6 +125,9 @@ export const LeadKanbanView = ({ leads, onLeadClick }: LeadKanbanViewProps) => {
             >
               <Plus className="h-4 w-4" />
             </Button>
+
+            {/* Shadow indicator for right scroll */}
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
           </div>
         </div>
       </div>
