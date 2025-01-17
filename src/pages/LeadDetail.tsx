@@ -7,12 +7,17 @@ import { LeadDetailHeader } from "@/components/leads/detail/LeadDetailHeader";
 import { LeadSummary } from "@/components/leads/detail/LeadSummary";
 import { Platform } from "@/config/platforms";
 import { toast } from "sonner";
-import { useSettings } from "@/hooks/use-settings";
 import { LeadDetailTabs } from "@/components/leads/detail/LeadDetailTabs";
+
+type LeadWithRelations = Tables<"leads"> & {
+  platform: Platform;
+  messages: Tables<"messages">[];
+  tasks: Tables<"tasks">[];
+  notes: Tables<"notes">[];
+};
 
 export default function LeadDetail() {
   const { leadSlug } = useParams();
-  const { settings } = useSettings();
   const queryClient = useQueryClient();
 
   const { data: lead, isLoading } = useQuery({
@@ -20,18 +25,19 @@ export default function LeadDetail() {
     queryFn: async () => {
       if (!leadSlug) return null;
       
-      const { data: lead, error } = await supabase
+      const { data, error } = await supabase
         .from("leads")
-        .select("*, messages(*), tasks(*)")
+        .select(`
+          *,
+          messages (*),
+          tasks (*),
+          notes (*)
+        `)
         .eq("slug", leadSlug)
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
-      return lead as (Tables<"leads"> & {
-        platform: Platform;
-        messages: Tables<"messages">[];
-        tasks: Tables<"tasks">[];
-      });
+      return data as LeadWithRelations;
     },
     enabled: !!leadSlug,
   });
@@ -51,18 +57,14 @@ export default function LeadDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lead", leadSlug] });
-      toast.success(
-        settings?.language === "en"
-          ? "Contact updated successfully"
-          : "Kontakt erfolgreich aktualisiert"
-      );
+      toast.success("Kontakt erfolgreich aktualisiert");
     },
   });
 
   if (isLoading) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        {settings?.language === "en" ? "Loading..." : "Lädt..."}
+        Lädt...
       </div>
     );
   }
@@ -70,7 +72,7 @@ export default function LeadDetail() {
   if (!lead) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        {settings?.language === "en" ? "Contact not found" : "Kontakt nicht gefunden"}
+        Kontakt nicht gefunden
       </div>
     );
   }
