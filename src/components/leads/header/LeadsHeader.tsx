@@ -52,15 +52,13 @@ export const LeadsHeader = ({
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <PipelineSelector
-                selectedPipelineId={selectedPipelineId}
-                onPipelineSelect={setSelectedPipelineId}
-              />
               <LeadFilters
                 selectedPhase={selectedPhase}
                 setSelectedPhase={setSelectedPhase}
                 selectedPlatform={selectedPlatform}
                 setSelectedPlatform={setSelectedPlatform}
+                selectedPipelineId={selectedPipelineId}
+                setSelectedPipelineId={setSelectedPipelineId}
               />
               <div className="flex gap-2">
                 <Button
