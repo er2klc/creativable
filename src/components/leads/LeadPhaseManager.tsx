@@ -42,6 +42,8 @@ export const LeadPhaseManager = () => {
   const [newPhaseName, setNewPhaseName] = useState("");
   const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
   const [targetPhase, setTargetPhase] = useState<string>("");
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string>("");
+  const [editingPipelineName, setEditingPipelineName] = useState("");
   const { settings } = useSettings();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -54,23 +56,67 @@ export const LeadPhaseManager = () => {
     })
   );
 
-  const { data: phases = [], isError } = useQuery({
-    queryKey: ["lead-phases"],
+  // Fetch pipelines
+  const { data: pipelines = [] } = useQuery({
+    queryKey: ["pipelines"],
     queryFn: async () => {
-      if (!session?.user?.id) {
-        throw new Error("No authenticated user found");
-      }
-
       const { data, error } = await supabase
-        .from("lead_phases")
+        .from("pipelines")
         .select("*")
-        .eq("user_id", session.user.id)
+        .eq("user_id", session?.user?.id)
+        .order("order_index");
+      
+      if (error) throw error;
+      
+      // Set first pipeline as selected if none selected
+      if (data.length > 0 && !selectedPipelineId) {
+        setSelectedPipelineId(data[0].id);
+        setEditingPipelineName(data[0].name);
+      }
+      
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  // Fetch phases for selected pipeline
+  const { data: phases = [] } = useQuery({
+    queryKey: ["pipeline-phases", selectedPipelineId],
+    queryFn: async () => {
+      if (!selectedPipelineId) return [];
+      
+      const { data, error } = await supabase
+        .from("pipeline_phases")
+        .select("*")
+        .eq("pipeline_id", selectedPipelineId)
         .order("order_index");
 
       if (error) throw error;
       return data;
     },
-    enabled: !!session?.user?.id,
+    enabled: !!selectedPipelineId,
+  });
+
+  const updatePipelineName = useMutation({
+    mutationFn: async () => {
+      if (!selectedPipelineId || !editingPipelineName.trim()) return;
+
+      const { error } = await supabase
+        .from("pipelines")
+        .update({ name: editingPipelineName })
+        .eq("id", selectedPipelineId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
+      toast({
+        title: settings?.language === "en" ? "Pipeline updated" : "Pipeline aktualisiert",
+        description: settings?.language === "en" 
+          ? "Pipeline name has been updated successfully" 
+          : "Der Pipeline-Name wurde erfolgreich aktualisiert",
+      });
+    },
   });
 
   const updatePhaseOrder = useMutation({
@@ -83,35 +129,38 @@ export const LeadPhaseManager = () => {
         id: phase.id,
         name: phase.name,
         order_index: index,
-        user_id: session.user.id,
+        pipeline_id: selectedPipelineId,
       }));
 
       const { error } = await supabase
-        .from("lead_phases")
+        .from("pipeline_phases")
         .upsert(updates, { onConflict: "id" });
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
     },
   });
 
   const addPhase = useMutation({
     mutationFn: async (name: string) => {
-      if (!session?.user?.id) {
-        throw new Error("No authenticated user found");
+      if (!session?.user?.id || !selectedPipelineId) {
+        throw new Error("No pipeline selected");
       }
 
-      const { error } = await supabase.from("lead_phases").insert({
-        name,
-        order_index: phases.length,
-        user_id: session.user.id,
-      });
+      const { error } = await supabase
+        .from("pipeline_phases")
+        .insert({
+          name,
+          pipeline_id: selectedPipelineId,
+          order_index: phases.length,
+        });
+
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
       setNewPhaseName("");
       toast({
         title: settings?.language === "en" ? "Phase added" : "Phase hinzugefügt",
@@ -139,15 +188,14 @@ export const LeadPhaseManager = () => {
 
       // Then delete the phase
       const { error: deleteError } = await supabase
-        .from("lead_phases")
+        .from("pipeline_phases")
         .delete()
-        .eq("id", phaseId)
-        .eq("user_id", session.user.id);
+        .eq("id", phaseId);
 
       if (deleteError) throw deleteError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast({
         title: settings?.language === "en" ? "Phase deleted" : "Phase gelöscht",
@@ -202,53 +250,87 @@ export const LeadPhaseManager = () => {
     }
   };
 
-  if (isError) {
-    return (
-      <div className="text-destructive">
-        {settings?.language === "en" 
-          ? "Error loading phases. Please try again later."
-          : "Fehler beim Laden der Phasen. Bitte versuchen Sie es später erneut."}
-      </div>
-    );
-  }
+  if (!session?.user?.id) return null;
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <Input
-          placeholder={settings?.language === "en" ? "New phase name" : "Name der neuen Phase"}
-          value={newPhaseName}
-          onChange={(e) => setNewPhaseName(e.target.value)}
-        />
-        <Button
-          onClick={() => addPhase.mutate(newPhaseName)}
-          disabled={!newPhaseName.trim() || !session?.user?.id}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          {settings?.language === "en" ? "Add Phase" : "Phase hinzufügen"}
-        </Button>
-      </div>
-
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={phases.map((p) => p.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="space-y-2">
-            {phases.map((phase) => (
-              <SortablePhase
-                key={phase.id}
-                phase={phase}
-                onDelete={() => handleDeletePhase(phase)}
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-2 items-center">
+          <Select value={selectedPipelineId} onValueChange={setSelectedPipelineId}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder={
+                settings?.language === "en" 
+                  ? "Select Pipeline" 
+                  : "Pipeline auswählen"
+              } />
+            </SelectTrigger>
+            <SelectContent>
+              {pipelines.map(pipeline => (
+                <SelectItem key={pipeline.id} value={pipeline.id}>
+                  {pipeline.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {selectedPipelineId && (
+            <div className="flex gap-2 items-center flex-1">
+              <Input
+                value={editingPipelineName}
+                onChange={(e) => setEditingPipelineName(e.target.value)}
+                placeholder={settings?.language === "en" ? "Pipeline name" : "Pipeline-Name"}
               />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
+              <Button 
+                variant="outline"
+                onClick={() => updatePipelineName.mutate()}
+                disabled={!editingPipelineName.trim()}
+              >
+                {settings?.language === "en" ? "Update Name" : "Name aktualisieren"}
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {selectedPipelineId && (
+          <>
+            <div className="flex gap-2">
+              <Input
+                placeholder={settings?.language === "en" ? "New phase name" : "Name der neuen Phase"}
+                value={newPhaseName}
+                onChange={(e) => setNewPhaseName(e.target.value)}
+              />
+              <Button
+                onClick={() => addPhase.mutate(newPhaseName)}
+                disabled={!newPhaseName.trim()}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {settings?.language === "en" ? "Add Phase" : "Phase hinzufügen"}
+              </Button>
+            </div>
+
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={phases.map((p) => p.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {phases.map((phase) => (
+                    <SortablePhase
+                      key={phase.id}
+                      phase={phase}
+                      onDelete={() => handleDeletePhase(phase)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </>
+        )}
+      </div>
 
       <Dialog open={!!phaseToDelete} onOpenChange={() => setPhaseToDelete(null)}>
         <DialogContent>

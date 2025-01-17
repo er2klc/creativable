@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CreatePipelineDialog } from "./CreatePipelineDialog";
+import { useEffect } from "react";
 
 interface PipelineSelectorProps {
   selectedPipelineId: string | null;
@@ -33,6 +34,13 @@ export const PipelineSelector = ({
       return data;
     },
   });
+
+  // Select first pipeline by default
+  useEffect(() => {
+    if (pipelines.length > 0 && !selectedPipelineId) {
+      onPipelineSelect(pipelines[0].id);
+    }
+  }, [pipelines, selectedPipelineId, onPipelineSelect]);
 
   const selectedPipeline = pipelines.find((p) => p.id === selectedPipelineId);
 
