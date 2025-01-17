@@ -4,14 +4,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FormData } from "../AddLeadFormFields";
 import { User, Globe, AtSign, Mail, Phone } from "lucide-react";
-import { platformsConfig } from "@/config/platforms";
+import { platformsConfig, type Platform } from "@/config/platforms";
 
 interface BasicLeadFieldsProps {
   form: UseFormReturn<FormData>;
 }
 
 export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
-  const { register, watch } = form;
+  const { register, watch, setValue } = form;
   const selectedPlatform = watch("platform");
 
   return (
@@ -34,7 +34,7 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
           Plattform
         </Label>
         <Select
-          onValueChange={(value) => form.setValue("platform", value)}
+          onValueChange={(value) => setValue("platform", value as Platform)}
           value={selectedPlatform}
         >
           <SelectTrigger>
@@ -42,7 +42,7 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
           </SelectTrigger>
           <SelectContent>
             {Object.values(platformsConfig).map((platform) => (
-              <SelectItem key={platform.value} value={platform.value}>
+              <SelectItem key={platform.name} value={platform.name}>
                 {platform.label}
               </SelectItem>
             ))}

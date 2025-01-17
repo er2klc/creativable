@@ -57,9 +57,11 @@ export const LeadPhaseManager = () => {
 
   const updatePhaseOrder = useMutation({
     mutationFn: async (updatedPhases: Tables<"pipeline_phases">[]) => {
-      const updates = updatedPhases.map((phase, index) => ({
+      const updates = updatedPhases.map((phase) => ({
         id: phase.id,
-        order_index: index,
+        name: phase.name,
+        pipeline_id: phase.pipeline_id,
+        order_index: phase.order_index,
       }));
 
       const { error } = await supabase

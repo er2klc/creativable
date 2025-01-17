@@ -1,76 +1,67 @@
-import { Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
-import { type LucideIcon } from "lucide-react";
+import { Instagram, Linkedin, Facebook, Video, Users, type LucideIcon } from "lucide-react";
 
 export type Platform = "Instagram" | "LinkedIn" | "Facebook" | "TikTok" | "Offline";
-
-export const platforms: Platform[] = ["Instagram", "LinkedIn", "Facebook", "TikTok", "Offline"];
 
 export interface PlatformConfig {
   name: Platform;
   icon: LucideIcon;
+  label: string;
   generateUrl: (username: string) => string;
 }
 
-export const platformsConfig: PlatformConfig[] = [
-  {
+export const platformsConfig: Record<Platform, PlatformConfig> = {
+  Instagram: {
     name: "Instagram",
     icon: Instagram,
+    label: "Instagram",
     generateUrl: (username) => {
       if (username.startsWith('https://www.instagram.com/')) {
         return username;
       }
-      return `https://www.instagram.com/${username.replace(/^@/, '')}`;
-    },
+      return `https://www.instagram.com/${username}`;
+    }
   },
-  {
+  LinkedIn: {
     name: "LinkedIn",
     icon: Linkedin,
+    label: "LinkedIn",
     generateUrl: (username) => {
       if (username.startsWith('https://www.linkedin.com/')) {
         return username;
       }
-      return `https://www.linkedin.com/in/${username.replace(/^@/, '')}`;
-    },
+      return `https://www.linkedin.com/in/${username}`;
+    }
   },
-  {
+  Facebook: {
     name: "Facebook",
     icon: Facebook,
+    label: "Facebook",
     generateUrl: (username) => {
       if (username.startsWith('https://www.facebook.com/')) {
         return username;
       }
-      return `https://www.facebook.com/${username.replace(/^@/, '')}`;
-    },
+      return `https://www.facebook.com/${username}`;
+    }
   },
-  {
+  TikTok: {
     name: "TikTok",
     icon: Video,
+    label: "TikTok",
     generateUrl: (username) => {
       if (username.startsWith('https://www.tiktok.com/')) {
         return username;
       }
-      return `https://www.tiktok.com/@${username.replace(/^@/, '')}`;
-    },
+      return `https://www.tiktok.com/@${username}`;
+    }
   },
-  {
+  Offline: {
     name: "Offline",
     icon: Users,
+    label: "Offline",
     generateUrl: (_) => "",
-  },
-];
-
-export const getPlatformConfig = (platform: Platform): PlatformConfig => {
-  return platformsConfig.find(p => p.name === platform) || platformsConfig[0];
+  }
 };
 
 export const generateSocialMediaUrl = (platform: Platform, username: string): string => {
-  if (!username) return "";
-  const config = getPlatformConfig(platform);
-  return config.generateUrl(username);
-};
-
-export const getPlatformIcon = (platform: Platform) => {
-  const config = getPlatformConfig(platform);
-  const Icon = config.icon;
-  return <Icon className="h-4 w-4 mr-2" />;
+  return platformsConfig[platform].generateUrl(username);
 };
