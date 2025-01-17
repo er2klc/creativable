@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,24 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
   const session = useSession();
   const queryClient = useQueryClient();
 
+  // Fetch the default pipeline for the user
+  const { data: defaultPipeline } = useQuery({
+    queryKey: ["pipelines", session?.user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pipelines")
+        .select("id")
+        .eq("user_id", session?.user?.id)
+        .order("order_index")
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -58,11 +76,21 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
       return;
     }
 
+    if (!defaultPipeline?.id) {
+      toast({
+        title: "Fehler ❌",
+        description: "Keine Pipeline gefunden. Bitte erstellen Sie zuerst eine Pipeline.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const socialMediaUrl = generateSocialMediaUrl(values.platform as Platform, values.social_media_username || '');
       
       const { error } = await supabase.from("leads").insert({
         user_id: session.user.id,
+        pipeline_id: defaultPipeline.id, // Add the pipeline_id
         name: values.name,
         platform: values.platform,
         social_media_username: socialMediaUrl,
