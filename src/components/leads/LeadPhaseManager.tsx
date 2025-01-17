@@ -23,36 +23,46 @@ export const LeadPhaseManager = () => {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
+      // Get the last used pipeline from localStorage
+      const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
+      
       const { data, error } = await supabase
         .from("pipelines")
         .select("*")
         .eq("user_id", session.user.id)
+        .eq("name", "Standard Pipeline")
         .order("order_index")
         .limit(1)
         .single();
 
       if (error) throw error;
+
+      // Store the pipeline ID for next time
+      if (data) {
+        localStorage.setItem('lastUsedPipelineId', data.id);
+      }
+
       return data;
     },
     enabled: !!session?.user?.id,
   });
 
   // Then get the phases for that pipeline
-  const { data: phases = [] } = useQuery({
+  const { data: phases = [], isLoading, refetch } = useQuery({
     queryKey: ["pipeline-phases", pipeline?.id],
     queryFn: async () => {
-      if (!pipeline?.id) return [];
+      if (!session?.user?.id || !pipeline?.id) return [];
       
-      const { data, error } = await supabase
+      const { data: existingPhases, error } = await supabase
         .from("pipeline_phases")
         .select("*")
         .eq("pipeline_id", pipeline.id)
         .order("order_index");
 
       if (error) throw error;
-      return data;
+      return existingPhases;
     },
-    enabled: !!pipeline?.id,
+    enabled: !!session?.user?.id && !!pipeline?.id,
   });
 
   const updatePhaseOrder = useMutation({
@@ -144,6 +154,10 @@ export const LeadPhaseManager = () => {
       setTargetPhase("");
     },
   });
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-4">
