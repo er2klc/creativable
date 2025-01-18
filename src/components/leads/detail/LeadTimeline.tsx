@@ -2,6 +2,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { TimelineHeader } from "./timeline/TimelineHeader";
 import { TimelineItem } from "./timeline/TimelineItem";
 import { TimelineItem as TimelineItemType, TimelineItemType as ItemType } from "./timeline/TimelineUtils";
+import { X } from "lucide-react";
 
 interface LeadTimelineProps {
   lead: {
@@ -11,6 +12,7 @@ interface LeadTimelineProps {
     created_at: string;
     name: string;
   };
+  onDeletePhaseChange: (noteId: string) => void;
 }
 
 interface NoteMetadata {
@@ -20,7 +22,7 @@ interface NoteMetadata {
   color?: string;
 }
 
-export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
+export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
   const timelineItems: TimelineItemType[] = [
     {
       id: 'contact-created',
@@ -86,7 +88,11 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
         <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-200" />
         
         {timelineItems.map((item) => (
-          <TimelineItem key={item.id} item={item} />
+          <TimelineItem 
+            key={item.id} 
+            item={item} 
+            onDelete={item.type === 'phase_change' ? () => onDeletePhaseChange(item.id) : undefined}
+          />
         ))}
         
         {timelineItems.length === 0 && (

@@ -5,9 +5,10 @@ import { formatDate } from "./TimelineUtils";
 
 interface TimelineItemProps {
   item: TimelineItemType;
+  onDelete?: () => void;
 }
 
-export const TimelineItem = ({ item }: TimelineItemProps) => {
+export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
   return (
     <div key={item.id} className="flex flex-col gap-1">
       {/* Date above the card */}
@@ -32,6 +33,7 @@ export const TimelineItem = ({ item }: TimelineItemProps) => {
           content={item.content}
           metadata={item.metadata}
           status={item.status}
+          onDelete={onDelete}
         />
       </div>
     </div>
