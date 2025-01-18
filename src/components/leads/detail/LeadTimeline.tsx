@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Platform } from "@/config/platforms";
 
 type TimelineItem = {
   id: string;
@@ -26,7 +27,11 @@ type TimelineItem = {
   timestamp: string;
   status?: string;
   platform?: string;
-  metadata?: any;
+  metadata?: {
+    dueDate?: string;
+    meetingType?: string;
+    color?: string;
+  };
 };
 
 interface LeadTimelineProps {
@@ -44,7 +49,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
     // Add contact creation as first item
     {
       id: 'contact-created',
-      type: 'contact_created',
+      type: 'contact_created' as const,
       content: `Kontakt ${lead.name} wurde erstellt`,
       timestamp: lead.created_at,
     },
