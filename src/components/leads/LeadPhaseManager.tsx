@@ -23,7 +23,6 @@ export const LeadPhaseManager = () => {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      // Get the last used pipeline from localStorage
       const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
       
       let query = supabase
@@ -32,7 +31,6 @@ export const LeadPhaseManager = () => {
         .eq("user_id", session.user.id)
         .order("order_index");
 
-      // If we have a last used pipeline ID, try to fetch that one first
       if (lastUsedPipelineId) {
         const { data: lastPipeline } = await query
           .eq("id", lastUsedPipelineId)
@@ -43,12 +41,10 @@ export const LeadPhaseManager = () => {
         }
       }
 
-      // Otherwise get the first pipeline
       const { data, error } = await query.limit(1).maybeSingle();
 
       if (error) throw error;
 
-      // Store the pipeline ID for next time
       if (data) {
         localStorage.setItem('lastUsedPipelineId', data.id);
       }
