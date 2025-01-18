@@ -1,25 +1,18 @@
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { PhaseColumn } from "./kanban/PhaseColumn";
 import { useKanbanSubscription } from "./kanban/useKanbanSubscription";
 import { usePhaseQuery } from "./kanban/usePhaseQuery";
 import { usePhaseMutations } from "./kanban/usePhaseMutations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Pencil, Save } from "lucide-react";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -28,7 +21,8 @@ interface LeadKanbanViewProps {
 
 export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProps) => {
   const { settings } = useSettings();
-  const [editingPhase, setEditingPhase] = useState<Tables<"pipeline_phases"> | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingPipelineName, setEditingPipelineName] = useState("");
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
   const { updateLeadPhase, addPhase, updatePhaseName, deletePhase } = usePhaseMutations();
   const queryClient = useQueryClient();
@@ -37,40 +31,31 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
   // Use the subscription hook
   useKanbanSubscription();
 
-  const updateLeadPhaseMutation = useMutation({
-    mutationFn: async ({ leadId, newPhase }: { leadId: string; newPhase: string }) => {
-      const lead = leads.find(l => l.id === leadId);
-      if (lead?.phase_id === newPhase) {
-        return null; // Skip update if phase hasn't changed
-      }
+  const updatePipelineName = useMutation({
+    mutationFn: async (newName: string) => {
+      if (!selectedPipelineId) return;
 
       const { error } = await supabase
-        .from("leads")
-        .update({ 
-          phase_id: newPhase,
-          last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
-          last_action_date: new Date().toISOString(),
-        })
-        .eq("id", leadId);
+        .from("pipelines")
+        .update({ name: newName })
+        .eq("id", selectedPipelineId);
 
       if (error) throw error;
     },
-    onSuccess: (data) => {
-      if (data !== null) { // Only show toast if update actually happened
-        queryClient.invalidateQueries({ queryKey: ["leads"] });
-        toast.success(
-          settings?.language === "en" 
-            ? "Contact phase updated successfully" 
-            : "Kontaktphase erfolgreich aktualisiert"
-        );
-      }
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
+      toast.success(
+        settings?.language === "en" 
+          ? "Pipeline name updated successfully" 
+          : "Pipeline-Name erfolgreich aktualisiert"
+      );
     },
     onError: (error) => {
-      console.error("Error updating lead phase:", error);
+      console.error("Error updating pipeline name:", error);
       toast.error(
         settings?.language === "en"
-          ? "Failed to update contact phase"
-          : "Fehler beim Aktualisieren der Kontaktphase"
+          ? "Failed to update pipeline name"
+          : "Fehler beim Aktualisieren des Pipeline-Namens"
       );
     },
   });
@@ -85,9 +70,9 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
     
     if (newPhase) {
       try {
-        await updateLeadPhaseMutation.mutateAsync({ 
+        await updateLeadPhase.mutateAsync({ 
           leadId, 
-          newPhase 
+          phaseId: newPhase 
         });
       } catch (error) {
         console.error("Error updating lead phase:", error);
@@ -99,20 +84,17 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
     navigate(`/contacts/${id}`);
   };
 
-  const handleAddPhase = () => {
-    if (!selectedPipelineId) {
-      toast.error(settings?.language === "en" 
-        ? "No pipeline selected" 
-        : "Keine Pipeline ausgewählt");
-      return;
+  const handleSaveChanges = async () => {
+    if (editingPipelineName) {
+      await updatePipelineName.mutateAsync(editingPipelineName);
     }
-    const defaultName = settings?.language === "en" ? "New Phase" : "Neue Phase";
-    addPhase.mutate({ name: defaultName, pipelineId: selectedPipelineId });
+    setIsEditMode(false);
   };
 
-  const MIN_PHASE_WIDTH = 280;
-  const GAP = 16;
-  const totalWidth = phases.length * MIN_PHASE_WIDTH + ((phases.length - 1) * GAP);
+  const handleEditModeToggle = (pipeline: any) => {
+    setIsEditMode(!isEditMode);
+    setEditingPipelineName(pipeline?.name || "");
+  };
 
   return (
     <DndContext 
@@ -120,11 +102,33 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
       onDragEnd={handleDragEnd}
     >
       <div className="w-full h-[calc(100vh-13rem)] overflow-hidden relative">
+        <div className="flex justify-between items-center mb-4 px-4">
+          {isEditMode ? (
+            <>
+              <Input
+                value={editingPipelineName}
+                onChange={(e) => setEditingPipelineName(e.target.value)}
+                className="max-w-xs"
+                placeholder={settings?.language === "en" ? "Pipeline name" : "Pipeline-Name"}
+              />
+              <Button onClick={handleSaveChanges} variant="outline" size="sm">
+                <Save className="h-4 w-4 mr-2" />
+                {settings?.language === "en" ? "Save Changes" : "Änderungen speichern"}
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => handleEditModeToggle(phases[0]?.pipeline)} variant="outline" size="sm">
+              <Pencil className="h-4 w-4 mr-2" />
+              {settings?.language === "en" ? "Edit Pipeline" : "Pipeline bearbeiten"}
+            </Button>
+          )}
+        </div>
+
         <div className="w-full h-full overflow-x-auto no-scrollbar">
           <div 
             className="flex gap-4 px-4 relative min-h-full" 
             style={{ 
-              minWidth: `${totalWidth}px`,
+              minWidth: `${phases.length * 280 + ((phases.length - 1) * 16)}px`,
               maxWidth: '100%'
             }}
           >
@@ -137,8 +141,9 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
                   phase={phase}
                   leads={leads.filter((lead) => lead.phase_id === phase.id)}
                   onLeadClick={handleLeadClick}
-                  onEditPhase={setEditingPhase}
+                  isEditMode={isEditMode}
                   onDeletePhase={() => deletePhase.mutate(phase.id)}
+                  onUpdatePhaseName={(newName) => updatePhaseName.mutate({ id: phase.id, name: newName })}
                 />
               </div>
             ))}
@@ -148,45 +153,6 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
           </div>
         </div>
       </div>
-
-      <Dialog open={!!editingPhase} onOpenChange={() => setEditingPhase(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {settings?.language === "en" ? "Edit Phase" : "Phase bearbeiten"}
-            </DialogTitle>
-            <DialogDescription>
-              {settings?.language === "en" 
-                ? "Enter a new name for this phase"
-                : "Geben Sie einen neuen Namen für diese Phase ein"}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              value={editingPhase?.name || ""}
-              onChange={(e) =>
-                setEditingPhase(prev =>
-                  prev ? { ...prev, name: e.target.value } : null
-                )
-              }
-              placeholder={settings?.language === "en" ? "Phase name" : "Phasenname"}
-            />
-            <Button
-              onClick={() => {
-                if (editingPhase) {
-                  updatePhaseName.mutate({
-                    id: editingPhase.id,
-                    name: editingPhase.name,
-                  });
-                  setEditingPhase(null);
-                }
-              }}
-            >
-              {settings?.language === "en" ? "Save" : "Speichern"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </DndContext>
   );
 };

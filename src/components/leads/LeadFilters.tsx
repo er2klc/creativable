@@ -6,12 +6,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PlusCircle, GitBranch, Pencil } from "lucide-react";
+import { PlusCircle, GitBranch } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatePipelineDialog } from "./pipeline/CreatePipelineDialog";
-import { EditPipelineDialog } from "./pipeline/EditPipelineDialog";
 import { useState } from "react";
 
 interface LeadFiltersProps {
@@ -25,7 +24,6 @@ export const LeadFilters = ({
 }: LeadFiltersProps) => {
   const session = useSession();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [hoveredPipeline, setHoveredPipeline] = useState<string | null>(null);
 
   const { data: pipelines = [] } = useQuery({
@@ -68,20 +66,6 @@ export const LeadFilters = ({
               className="flex items-center justify-between"
             >
               <span>{pipeline.name}</span>
-              {hoveredPipeline === pipeline.id && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedPipelineId(pipeline.id);
-                    setShowEditDialog(true);
-                  }}
-                >
-                  <Pencil className="h-3 w-3" />
-                </Button>
-              )}
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
@@ -99,16 +83,6 @@ export const LeadFilters = ({
         open={showCreateDialog} 
         onOpenChange={setShowCreateDialog} 
       />
-
-      {selectedPipeline && (
-        <EditPipelineDialog
-          open={showEditDialog}
-          onOpenChange={setShowEditDialog}
-          pipelineId={selectedPipeline.id}
-          currentName={selectedPipeline.name}
-          orderIndex={selectedPipeline.order_index}
-        />
-      )}
     </div>
   );
 };

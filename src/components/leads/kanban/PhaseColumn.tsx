@@ -1,59 +1,70 @@
 import { useDroppable } from "@dnd-kit/core";
-import { Edit, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Tables } from "@/integrations/supabase/types";
 import { SortableLeadItem } from "./SortableLeadItem";
-import { AddLeadButton } from "./AddLeadButton";
+import { Card, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { useState } from "react";
 
 interface PhaseColumnProps {
   phase: Tables<"pipeline_phases">;
   leads: Tables<"leads">[];
   onLeadClick: (id: string) => void;
-  onEditPhase: (phase: Tables<"pipeline_phases">) => void;
-  onDeletePhase: (id: string) => void;
+  isEditMode: boolean;
+  onDeletePhase: () => void;
+  onUpdatePhaseName: (newName: string) => void;
 }
 
 export const PhaseColumn = ({ 
   phase, 
   leads, 
-  onLeadClick, 
-  onEditPhase,
-  onDeletePhase 
+  onLeadClick,
+  isEditMode,
+  onDeletePhase,
+  onUpdatePhaseName
 }: PhaseColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: phase.id,
   });
 
+  const [editingName, setEditingName] = useState(phase.name);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditingName(e.target.value);
+    onUpdatePhaseName(e.target.value);
+  };
+
   return (
-    <div 
+    <Card
       ref={setNodeRef}
       className={`bg-muted/50 rounded-lg flex flex-col h-full relative transition-colors duration-200 ${
         isOver ? 'ring-2 ring-primary/50 bg-primary/5 shadow-[0_-2px_4px_rgba(0,0,0,0.15)]' : ''
       }`}
     >
-      <div className="sticky top-0 z-10 bg-[#f5f5f5] p-4 rounded-t-lg border-b border-primary/20 shadow-sm">
-        <div className="flex items-center justify-between">
-          <h3 className="font-medium text-lg tracking-tight">{phase.name}</h3>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => onEditPhase(phase)}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-destructive hover:bg-destructive/10"
-              onClick={() => onDeletePhase(phase.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+      <CardHeader className="p-4 space-y-0">
+        <div className="flex items-center justify-between gap-2">
+          {isEditMode ? (
+            <>
+              <Input
+                value={editingName}
+                onChange={handleNameChange}
+                className="h-8"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onDeletePhase}
+                className="h-8 w-8 text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <h3 className="font-medium text-lg tracking-tight">{phase.name}</h3>
+          )}
         </div>
-      </div>
+      </CardHeader>
       <div className="p-4 flex-1 overflow-y-auto no-scrollbar">
         <div className="space-y-2">
           {leads.map((lead) => (
@@ -65,6 +76,6 @@ export const PhaseColumn = ({
           ))}
         </div>
       </div>
-    </div>
+    </Card>
   );
 };
