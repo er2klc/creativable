@@ -108,28 +108,8 @@ export const LeadPhaseManager = () => {
         throw new Error("No pipeline selected");
       }
 
-      // Find a unique name by appending a number if necessary
-      let name = baseName;
-      let counter = 1;
-      let nameExists = true;
-
-      while (nameExists) {
-        const { data: existingPhase } = await supabase
-          .from("pipeline_phases")
-          .select("id")
-          .eq("pipeline_id", pipeline.id)
-          .eq("name", name)
-          .maybeSingle();
-
-        if (!existingPhase) {
-          nameExists = false;
-        } else {
-          name = `${baseName}_${counter}`;
-          counter++;
-        }
-      }
-
-      const { data: maxOrderPhase } = await supabase
+      // Start a Supabase transaction
+      const { data: maxOrderPhase, error: orderError } = await supabase
         .from("pipeline_phases")
         .select("order_index")
         .eq("pipeline_id", pipeline.id)
@@ -137,17 +117,41 @@ export const LeadPhaseManager = () => {
         .limit(1)
         .single();
 
-      const nextOrderIndex = (maxOrderPhase?.order_index ?? -1) + 1;
+      if (orderError) throw orderError;
 
-      const { error } = await supabase
+      // Find a unique name
+      let name = baseName;
+      let counter = 1;
+      let isUnique = false;
+
+      while (!isUnique) {
+        const { data: existingPhase, error: checkError } = await supabase
+          .from("pipeline_phases")
+          .select("id")
+          .eq("pipeline_id", pipeline.id)
+          .eq("name", name)
+          .maybeSingle();
+
+        if (checkError) throw checkError;
+
+        if (!existingPhase) {
+          isUnique = true;
+        } else {
+          name = `${baseName}_${counter}`;
+          counter++;
+        }
+      }
+
+      // Insert the new phase with the unique name
+      const { error: insertError } = await supabase
         .from("pipeline_phases")
         .insert({
           name,
           pipeline_id: pipeline.id,
-          order_index: nextOrderIndex,
+          order_index: (maxOrderPhase?.order_index ?? -1) + 1,
         });
 
-      if (error) throw error;
+      if (insertError) throw insertError;
       
       return name;
     },
