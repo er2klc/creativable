@@ -78,6 +78,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       return data;
     },
     onSuccess: () => {
+      // Invalidate and refetch the lead query to update the UI
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
       toast.success(
         settings?.language === "en"
@@ -85,6 +86,14 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           : "Kontakt erfolgreich aktualisiert"
       );
     },
+    onError: (error) => {
+      console.error("Error updating lead:", error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error updating contact"
+          : "Fehler beim Aktualisieren des Kontakts"
+      );
+    }
   });
 
   const deletePhaseChangeMutation = useMutation({

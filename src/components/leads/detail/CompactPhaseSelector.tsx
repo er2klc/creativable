@@ -86,6 +86,9 @@ export function CompactPhaseSelector({
           });
 
           if (noteError) throw noteError;
+
+          // Immediately invalidate the lead query to refresh the timeline
+          queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
         }
 
         // Then update the lead
@@ -95,7 +98,7 @@ export function CompactPhaseSelector({
           last_action_date: new Date().toISOString()
         });
 
-        // Invalidate the lead query to refresh the timeline
+        // Invalidate the lead query again after the update
         queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
       } catch (error) {
         console.error("Error updating phase:", error);
