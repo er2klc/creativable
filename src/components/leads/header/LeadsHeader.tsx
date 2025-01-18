@@ -51,13 +51,16 @@ export const LeadsHeader = ({
         </div>
       </div>
 
-      <div className="h-px bg-border" /> {/* Separator line */}
+      <div className="h-px bg-border" />
 
       <div className="flex items-center justify-between">
         <LeadFilters
           selectedPipelineId={selectedPipelineId}
           setSelectedPipelineId={setSelectedPipelineId}
         />
+        <Button onClick={() => setShowAddLead(true)}>
+          Neuer Kontakt ✨
+        </Button>
       </div>
 
       <AddLeadDialog

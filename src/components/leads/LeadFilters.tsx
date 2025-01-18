@@ -6,11 +6,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PlusCircle, GitBranch } from "lucide-react";
+import { PlusCircle, GitBranch, Pencil } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatePipelineDialog } from "./pipeline/CreatePipelineDialog";
+import { EditPipelineDialog } from "./pipeline/EditPipelineDialog";
 import { useState } from "react";
 
 interface LeadFiltersProps {
@@ -24,6 +25,8 @@ export const LeadFilters = ({
 }: LeadFiltersProps) => {
   const session = useSession();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [hoveredPipeline, setHoveredPipeline] = useState<string | null>(null);
 
   const { data: pipelines = [] } = useQuery({
     queryKey: ["pipelines"],
@@ -42,6 +45,8 @@ export const LeadFilters = ({
     enabled: !!session?.user?.id,
   });
 
+  const selectedPipeline = pipelines.find(p => p.id === selectedPipelineId);
+
   return (
     <div className="flex gap-2">
       <DropdownMenu>
@@ -49,7 +54,7 @@ export const LeadFilters = ({
           <Button variant="outline" className="min-w-[200px] justify-between">
             <div className="flex items-center gap-2">
               <GitBranch className="h-4 w-4" />
-              {pipelines.find(p => p.id === selectedPipelineId)?.name || "Pipeline wählen"}
+              {selectedPipeline?.name || "Pipeline wählen"}
             </div>
           </Button>
         </DropdownMenuTrigger>
@@ -57,9 +62,26 @@ export const LeadFilters = ({
           {pipelines.map(pipeline => (
             <DropdownMenuItem 
               key={pipeline.id}
+              onMouseEnter={() => setHoveredPipeline(pipeline.id)}
+              onMouseLeave={() => setHoveredPipeline(null)}
               onClick={() => setSelectedPipelineId(pipeline.id)}
+              className="flex items-center justify-between"
             >
-              {pipeline.name}
+              <span>{pipeline.name}</span>
+              {hoveredPipeline === pipeline.id && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-4 w-4 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPipelineId(pipeline.id);
+                    setShowEditDialog(true);
+                  }}
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+              )}
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
@@ -77,6 +99,16 @@ export const LeadFilters = ({
         open={showCreateDialog} 
         onOpenChange={setShowCreateDialog} 
       />
+
+      {selectedPipeline && (
+        <EditPipelineDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          pipelineId={selectedPipeline.id}
+          currentName={selectedPipeline.name}
+          orderIndex={selectedPipeline.order_index}
+        />
+      )}
     </div>
   );
 };
