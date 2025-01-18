@@ -141,7 +141,7 @@ export default function LeadDetail() {
             <div className="bg-white rounded-lg shadow p-6">
               <LeadDetailTabs lead={lead} />
             </div>
-            <div className="bg-white rounded-lg shadow">
+            <div className="rounded-lg">
               <LeadTimeline lead={lead} />
             </div>
           </div>
