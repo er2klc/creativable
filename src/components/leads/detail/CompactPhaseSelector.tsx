@@ -1,5 +1,5 @@
 import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ export function CompactPhaseSelector({
   onUpdateLead,
 }: CompactPhaseSelectorProps) {
   const session = useSession();
+  const queryClient = useQueryClient();
   
   const { data: pipelines = [] } = useQuery({
     queryKey: ["pipelines"],
@@ -69,27 +70,36 @@ export function CompactPhaseSelector({
       const oldPhase = phases.find(p => p.id === lead.phase_id)?.name;
       const newPhase = phases.find(p => p.id === phaseId)?.name;
       
-      // First create the note to track the phase change
-      if (oldPhase && newPhase) {
-        await supabase.from("notes").insert({
-          lead_id: lead.id,
-          user_id: session?.user?.id,
-          content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
-          color: "#E9D5FF", // Light purple color for phase changes
-          metadata: {
-            type: "phase_change",
-            oldPhase,
-            newPhase
-          }
-        });
-      }
+      try {
+        // First create the note to track the phase change
+        if (oldPhase && newPhase) {
+          const { error: noteError } = await supabase.from("notes").insert({
+            lead_id: lead.id,
+            user_id: session?.user?.id,
+            content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
+            color: "#E9D5FF", // Light purple color for phase changes
+            metadata: {
+              type: "phase_change",
+              oldPhase,
+              newPhase
+            }
+          });
 
-      // Then update the lead
-      onUpdateLead({ 
-        phase_id: phaseId,
-        last_action: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
-        last_action_date: new Date().toISOString()
-      });
+          if (noteError) throw noteError;
+        }
+
+        // Then update the lead
+        onUpdateLead({ 
+          phase_id: phaseId,
+          last_action: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
+          last_action_date: new Date().toISOString()
+        });
+
+        // Invalidate the lead query to refresh the timeline
+        queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
+      } catch (error) {
+        console.error("Error updating phase:", error);
+      }
     }
   };
 
