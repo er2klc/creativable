@@ -66,6 +66,8 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   useEffect(() => {
     if (!leadId) return;
 
+    console.log('Setting up real-time subscriptions for leadId:', leadId);
+
     const channel = supabase
       .channel('lead-changes')
       .on(
@@ -76,8 +78,8 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           table: 'leads',
           filter: `id=eq.${leadId}`
         },
-        () => {
-          console.log('Lead changed, invalidating query');
+        (payload) => {
+          console.log('Lead changed:', payload);
           queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
         }
       )
@@ -89,8 +91,8 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           table: 'notes',
           filter: `lead_id=eq.${leadId}`
         },
-        () => {
-          console.log('Notes changed, invalidating query');
+        (payload) => {
+          console.log('Notes changed:', payload);
           queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
         }
       )
@@ -102,8 +104,8 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           table: 'tasks',
           filter: `lead_id=eq.${leadId}`
         },
-        () => {
-          console.log('Tasks changed, invalidating query');
+        (payload) => {
+          console.log('Tasks changed:', payload);
           queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
         }
       )
@@ -115,15 +117,18 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           table: 'messages',
           filter: `lead_id=eq.${leadId}`
         },
-        () => {
-          console.log('Messages changed, invalidating query');
+        (payload) => {
+          console.log('Messages changed:', payload);
           queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     // Cleanup subscription on unmount
     return () => {
+      console.log('Cleaning up subscriptions');
       supabase.removeChannel(channel);
     };
   }, [leadId, queryClient]);
@@ -139,7 +144,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         .update(updates)
         .eq("id", leadId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -152,6 +157,14 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           : "Kontakt erfolgreich aktualisiert"
       );
     },
+    onError: (error) => {
+      console.error("Error updating lead:", error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error updating contact"
+          : "Fehler beim Aktualisieren des Kontakts"
+      );
+    }
   });
 
   const deletePhaseChangeMutation = useMutation({
@@ -185,16 +198,14 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center text-muted-foreground">
-        Lädt...
-      </div>
+      <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
     );
   }
 
   if (!lead) {
     return (
-      <div className="p-8 text-center text-muted-foreground">
-        Kontakt wurde nicht gefunden
+      <div className="p-6 text-center text-muted-foreground">
+        {settings?.language === "en" ? "Contact not found" : "Kontakt wurde nicht gefunden"}
       </div>
     );
   }
@@ -203,45 +214,39 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg overflow-hidden">
         <DialogHeader className="p-0">
-          {lead && (
-            <LeadDetailHeader 
-              lead={lead} 
-              onUpdateLead={updateLeadMutation.mutate} 
-            />
-          )}
+          <LeadDetailHeader
+            lead={lead}
+            onUpdateLead={updateLeadMutation.mutate}
+          />
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
-        ) : lead ? (
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="space-y-6">
-              <CompactPhaseSelector
-                lead={lead}
-                onUpdateLead={updateLeadMutation.mutate}
-              />
-              
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Bot className="h-5 w-5" />
-                  <h3 className="text-lg font-semibold">
-                    {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
-                  </h3>
-                </div>
-                <LeadSummary lead={lead} />
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="space-y-6">
+            <CompactPhaseSelector
+              lead={lead}
+              onUpdateLead={updateLeadMutation.mutate}
+            />
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Bot className="h-5 w-5" />
+                <h3 className="text-lg font-semibold">
+                  {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
+                </h3>
               </div>
-              
-              <LeadInfoCard lead={lead} />
-              <LeadTimeline 
-                lead={lead} 
-                onDeletePhaseChange={deletePhaseChangeMutation.mutate}
-              />
-              <TaskList leadId={lead.id} />
-              <NoteList leadId={lead.id} />
-              <LeadMessages messages={lead.messages} />
+              <LeadSummary lead={lead} />
             </div>
+            
+            <LeadInfoCard lead={lead} />
+            <LeadTimeline 
+              lead={lead} 
+              onDeletePhaseChange={deletePhaseChangeMutation.mutate}
+            />
+            <TaskList leadId={lead.id} />
+            <NoteList leadId={lead.id} />
+            <LeadMessages messages={lead.messages} />
           </div>
-        ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );

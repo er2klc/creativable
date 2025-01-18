@@ -70,6 +70,8 @@ export function CompactPhaseSelector({
       const newPhase = phases.find(p => p.id === phaseId)?.name;
       
       try {
+        console.log('Starting phase change process');
+        
         // First create the note to track the phase change
         if (oldPhase && newPhase) {
           const { error: noteError } = await supabase.from("notes").insert({
@@ -84,7 +86,12 @@ export function CompactPhaseSelector({
             }
           });
 
-          if (noteError) throw noteError;
+          if (noteError) {
+            console.error('Error creating phase change note:', noteError);
+            throw noteError;
+          }
+          
+          console.log('Phase change note created successfully');
         }
 
         // Then update the lead
@@ -93,6 +100,8 @@ export function CompactPhaseSelector({
           last_action: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
           last_action_date: new Date().toISOString()
         });
+        
+        console.log('Lead update triggered');
 
       } catch (error) {
         console.error("Error updating phase:", error);
