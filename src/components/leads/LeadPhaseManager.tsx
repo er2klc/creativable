@@ -26,14 +26,25 @@ export const LeadPhaseManager = () => {
       // Get the last used pipeline from localStorage
       const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("pipelines")
         .select("*")
         .eq("user_id", session.user.id)
-        .eq("name", "Standard Pipeline")
-        .order("order_index")
-        .limit(1)
-        .single();
+        .order("order_index");
+
+      // If we have a last used pipeline ID, try to fetch that one first
+      if (lastUsedPipelineId) {
+        const { data: lastPipeline } = await query
+          .eq("id", lastUsedPipelineId)
+          .maybeSingle();
+        
+        if (lastPipeline) {
+          return lastPipeline;
+        }
+      }
+
+      // Otherwise get the first pipeline
+      const { data, error } = await query.limit(1).maybeSingle();
 
       if (error) throw error;
 
@@ -97,18 +108,28 @@ export const LeadPhaseManager = () => {
         throw new Error("No pipeline selected");
       }
 
+      const { data: maxOrderPhase } = await supabase
+        .from("pipeline_phases")
+        .select("order_index")
+        .eq("pipeline_id", pipeline.id)
+        .order("order_index", { ascending: false })
+        .limit(1)
+        .single();
+
+      const nextOrderIndex = (maxOrderPhase?.order_index ?? -1) + 1;
+
       const { error } = await supabase
         .from("pipeline_phases")
         .insert({
           name,
           pipeline_id: pipeline.id,
-          order_index: phases.length,
+          order_index: nextOrderIndex,
         });
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases", pipeline?.id] });
       toast({
         title: settings?.language === "en" ? "Phase added" : "Phase hinzugefügt",
         description: settings?.language === "en"
@@ -142,7 +163,7 @@ export const LeadPhaseManager = () => {
       if (deleteError) throw deleteError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases", pipeline?.id] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast({
         title: settings?.language === "en" ? "Phase deleted" : "Phase gelöscht",
