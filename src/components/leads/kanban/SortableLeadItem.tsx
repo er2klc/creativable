@@ -114,4 +114,4 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
       </div>
     </div>
   );
-};
+}
