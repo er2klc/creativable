@@ -42,7 +42,7 @@ const getMeetingTypeIcon = (type: string) => {
     case "follow_up":
       return <RefreshCw className="h-4 w-4" />;
     default:
-      return null;
+      return <Calendar className="h-4 w-4" />;
   }
 };
 
