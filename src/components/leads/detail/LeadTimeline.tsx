@@ -21,7 +21,7 @@ import { Card } from "@/components/ui/card";
 
 type TimelineItem = {
   id: string;
-  type: 'message' | 'task' | 'note' | 'phase_change' | 'reminder' | 'upload' | 'contact_created';
+  type: "message" | "task" | "note" | "phase_change" | "reminder" | "upload" | "contact_created";
   content: string;
   timestamp: string;
   status?: string;
@@ -101,16 +101,16 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
     }
   };
 
-  const getItemColor = (type: TimelineItem['type'], status?: string) => {
+  const getItemColor = (type: TimelineItem['type'], status?: string, metadata?: any) => {
     switch (type) {
       case 'contact_created':
         return 'text-green-500';
       case 'message':
-        return 'text-blue-500';
+        return 'text-white';
       case 'task':
-        return status === 'completed' ? 'text-green-500' : 'text-yellow-500';
+        return metadata?.meetingType === 'appointment' ? 'text-[#40E0D0]' : 'text-[#FFA500]';
       case 'note':
-        return 'text-purple-500';
+        return 'text-[#008000]';
       case 'phase_change':
         return 'text-orange-500';
       case 'reminder':
@@ -130,7 +130,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
       <div className="space-y-4">
         {timelineItems.map((item) => (
           <div key={item.id} className="flex gap-4 items-start group hover:bg-muted/50 p-2 rounded-lg transition-colors">
-            <div className={`mt-1 ${getItemColor(item.type, item.status)}`}>
+            <div className={`mt-1 ${getItemColor(item.type, item.status, item.metadata)}`}>
               {getIcon(item.type, item.platform)}
             </div>
             <div className="flex-1 min-w-0">

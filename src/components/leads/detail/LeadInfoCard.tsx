@@ -1,12 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tables } from "@/integrations/supabase/types";
-import { Contact2, Building2, Briefcase, Phone, Mail } from "lucide-react";
+import { Contact2, Building2, Briefcase, Phone, Mail, ExternalLink } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { generateSocialMediaUrl, platformConfigMap } from "@/config/platforms";
 
 interface LeadInfoCardProps {
   lead: Tables<"leads">;
@@ -91,6 +93,10 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     field: string 
   }) => {
     const isEditing = editingField === field;
+    const platformConfig = lead.platform ? platformConfigMap[lead.platform as keyof typeof platformConfigMap] : null;
+    const socialMediaUrl = lead.social_media_username && platformConfig 
+      ? generateSocialMediaUrl(lead.platform as any, lead.social_media_username)
+      : null;
     
     return (
       <div className="flex items-center gap-4 py-2 group">
@@ -113,11 +119,23 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
               className="max-w-md"
             />
           ) : (
-            <div 
-              onClick={() => handleStartEdit(field, value)}
-              className="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 -ml-2"
-            >
-              {value || label}
+            <div className="flex items-center gap-2">
+              <div 
+                onClick={() => handleStartEdit(field, value)}
+                className="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 -ml-2 flex-1"
+              >
+                {value || label}
+              </div>
+              {field === "social_media_username" && socialMediaUrl && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => window.open(socialMediaUrl, '_blank')}
+                >
+                  {platformConfig?.icon && <platformConfig.icon className="h-4 w-4" />}
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -163,6 +181,12 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           label={settings?.language === "en" ? "Email" : "E-Mail"}
           value={lead.email}
           field="email"
+        />
+        <InfoRow
+          icon={platformConfigMap[lead.platform as keyof typeof platformConfigMap]?.icon || ExternalLink}
+          label={settings?.language === "en" ? "Social Media" : "Social Media"}
+          value={lead.social_media_username}
+          field="social_media_username"
         />
       </CardContent>
     </Card>
