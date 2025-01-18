@@ -13,8 +13,6 @@ const Leads = () => {
   const session = useSession();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
-  const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [showSendMessage, setShowSendMessage] = useState(false);
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
   const isMobile = useIsMobile();
@@ -69,7 +67,7 @@ const Leads = () => {
   }, [isMobile, viewMode]);
 
   const { data: leads = [], isLoading } = useQuery({
-    queryKey: ["leads", searchQuery, selectedPhase, selectedPlatform, selectedPipelineId],
+    queryKey: ["leads", searchQuery, selectedPipelineId],
     queryFn: async () => {
       if (!session?.user?.id || !selectedPipelineId) return [];
 
@@ -84,14 +82,6 @@ const Leads = () => {
         query = query.or(
           `name.ilike.%${searchQuery}%,platform.ilike.%${searchQuery}%,industry.ilike.%${searchQuery}%`
         );
-      }
-
-      if (selectedPhase) {
-        query = query.eq("phase_id", selectedPhase);
-      }
-
-      if (selectedPlatform) {
-        query = query.eq("platform", selectedPlatform);
       }
 
       const { data, error } = await query;
@@ -114,10 +104,6 @@ const Leads = () => {
       <LeadsHeader
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        selectedPhase={selectedPhase}
-        setSelectedPhase={setSelectedPhase}
-        selectedPlatform={selectedPlatform}
-        setSelectedPlatform={setSelectedPlatform}
         selectedPipelineId={selectedPipelineId}
         setSelectedPipelineId={setSelectedPipelineId}
         viewMode={viewMode}
