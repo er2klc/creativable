@@ -1,58 +1,28 @@
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { useSettings } from "@/hooks/use-settings";
-import { Tables } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { useSettings } from "@/hooks/use-settings";
 
 interface NoteListProps {
   leadId: string;
 }
 
-export function NoteList({ leadId }: NoteListProps) {
+export const NoteList = ({ leadId }: NoteListProps) => {
   const { settings } = useSettings();
-  const [newNoteContent, setNewNoteContent] = useState("");
-  const [selectedColor, setSelectedColor] = useState("#FEF7CD");
+  const [newNote, setNewNote] = useState("");
   const queryClient = useQueryClient();
 
-  const { data: notes = [], isLoading, error } = useQuery({
-    queryKey: ["lead-notes", leadId],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from("notes")
-          .select("id, content, color, created_at")
-          .eq("lead_id", leadId)
-          .order("created_at", { ascending: false });
-
-        if (error) {
-          console.error("Error fetching notes:", error);
-          throw error;
-        }
-
-        return data as Tables<"notes">[];
-      } catch (err) {
-        console.error("Failed to fetch notes:", err);
-        throw err;
-      }
-    },
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-  });
-
-  const addNoteMutation = useMutation({
+  const createNoteMutation = useMutation({
     mutationFn: async (content: string) => {
       const { data, error } = await supabase
         .from("notes")
         .insert({
           lead_id: leadId,
           content,
-          color: selectedColor,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
         })
         .select()
         .single();
@@ -61,123 +31,42 @@ export function NoteList({ leadId }: NoteListProps) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead-notes", leadId] });
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      setNewNoteContent("");
-      toast.success(settings?.language === "en" ? "Note added" : "Notiz hinzugefügt");
-    },
-    onError: (error) => {
-      console.error("Failed to add note:", error);
-      toast.error(
-        settings?.language === "en"
-          ? "Failed to add note"
-          : "Fehler beim Hinzufügen der Notiz"
-      );
-    },
-  });
-
-  const deleteNoteMutation = useMutation({
-    mutationFn: async (noteId: string) => {
-      const { error } = await supabase
-        .from("notes")
-        .delete()
-        .eq("id", noteId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead-notes", leadId] });
-      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      setNewNote("");
       toast.success(
-        settings?.language === "en" ? "Note deleted" : "Notiz gelöscht"
-      );
-    },
-    onError: (error) => {
-      console.error("Failed to delete note:", error);
-      toast.error(
         settings?.language === "en"
-          ? "Failed to delete note"
-          : "Fehler beim Löschen der Notiz"
+          ? "Note added successfully"
+          : "Notiz erfolgreich hinzugefügt"
       );
     },
   });
 
-  const handleAddNote = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newNoteContent.trim()) {
-      addNoteMutation.mutate(newNoteContent);
-    }
+    if (!newNote.trim()) return;
+    createNoteMutation.mutate(newNote);
   };
 
-  if (error) {
-    return (
-      <Card>
-        <CardContent>
-          <div className="text-red-500">
-            {settings?.language === "en"
-              ? "Failed to load notes. Please try again later."
-              : "Fehler beim Laden der Notizen. Bitte versuchen Sie es später erneut."}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card>
-      <CardContent>
-        <form onSubmit={handleAddNote} className="flex flex-col gap-2 mb-4">
-          <Textarea
-            value={newNoteContent}
-            onChange={(e) => setNewNoteContent(e.target.value)}
-            placeholder={settings?.language === "en" ? "New note..." : "Neue Notiz..."}
-            className="resize-none"
-          />
-          <div className="flex gap-2">
-            <input
-              type="color"
-              value={selectedColor}
-              onChange={(e) => setSelectedColor(e.target.value)}
-              className="w-10 h-10 rounded cursor-pointer"
-            />
-            <Button type="submit" className="ml-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              {settings?.language === "en" ? "Add Note" : "Notiz hinzufügen"}
-            </Button>
-          </div>
-        </form>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {notes.map((note) => (
-            <div
-              key={note.id}
-              className="p-4 rounded-lg shadow-lg transform hover:-rotate-1 transition-all relative group min-h-[150px] flex flex-col"
-              style={{ 
-                backgroundColor: note.color || "#FEF7CD",
-                boxShadow: "2px 2px 5px rgba(0,0,0,0.1)"
-              }}
-            >
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => deleteNoteMutation.mutate(note.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-              <p className="whitespace-pre-wrap flex-grow">{note.content}</p>
-              <div className="text-xs text-gray-500 mt-2">
-                {new Date(note.created_at || "").toLocaleString(
-                  settings?.language === "en" ? "en-US" : "de-DE",
-                  {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  }
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Textarea
+          value={newNote}
+          onChange={(e) => setNewNote(e.target.value)}
+          placeholder={
+            settings?.language === "en"
+              ? "Add a note..."
+              : "Füge eine Notiz hinzu..."
+          }
+          className="min-h-[100px]"
+        />
+        <Button
+          type="submit"
+          disabled={!newNote.trim() || createNoteMutation.isPending}
+        >
+          {settings?.language === "en" ? "Add Note" : "Notiz hinzufügen"}
+        </Button>
+      </form>
+    </div>
   );
-}
+};

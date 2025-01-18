@@ -15,11 +15,13 @@ import {
   Linkedin,
   MessageCircle,
   UserPlus,
-  Check
+  Check,
+  Circle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Platform } from "@/config/platforms";
+import { Button } from "@/components/ui/button";
 
 type TimelineItem = {
   id: string;
@@ -47,10 +49,9 @@ interface LeadTimelineProps {
 
 export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
   const timelineItems: TimelineItem[] = [
-    // Add contact creation as first item
     {
       id: 'contact-created',
-      type: 'contact_created' as const,
+      type: 'contact_created',
       content: `Kontakt ${lead.name} wurde erstellt`,
       timestamp: lead.created_at,
     },
@@ -95,7 +96,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
         if (platform === 'whatsapp') return <MessageCircle className="h-4 w-4" />;
         return <MessageSquare className="h-4 w-4" />;
       case 'task':
-        return <CheckSquare className="h-4 w-4" />;
+        return <Calendar className="h-4 w-4" />;
       case 'note':
         return <StickyNote className="h-4 w-4" />;
       case 'phase_change':
@@ -110,19 +111,19 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
   const getItemColor = (type: TimelineItem['type'], status?: string, metadata?: any) => {
     switch (type) {
       case 'contact_created':
-        return 'text-green-500';
+        return 'bg-green-100 border-green-200';
       case 'message':
-        return 'text-white';
+        return 'bg-blue-100 border-blue-200';
       case 'task':
-        return metadata?.meetingType === 'appointment' ? 'text-[#40E0D0]' : 'text-[#FFA500]';
+        return metadata?.meetingType === 'appointment' ? 'bg-cyan-100 border-cyan-200' : 'bg-orange-100 border-orange-200';
       case 'note':
-        return 'text-[#008000]';
+        return 'bg-yellow-100 border-yellow-200';
       case 'phase_change':
-        return 'text-orange-500';
+        return 'bg-purple-100 border-purple-200';
       case 'reminder':
-        return 'text-red-500';
+        return 'bg-red-100 border-red-200';
       case 'upload':
-        return 'text-gray-500';
+        return 'bg-gray-100 border-gray-200';
     }
   };
 
@@ -131,17 +132,31 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
   };
 
   return (
-    <Card className="p-4">
+    <div className="p-4">
       <h3 className="text-lg font-semibold mb-4">Aktivitäten</h3>
-      <div className="space-y-4">
+      <div className="relative space-y-4">
+        {/* Vertical Timeline Line */}
+        <div className="absolute left-2 top-2 bottom-2 w-0.5 bg-gray-200" />
+        
         {timelineItems.map((item) => (
-          <div key={item.id} className="flex gap-4 items-start group hover:bg-muted/50 p-2 rounded-lg transition-colors">
-            <div className={`mt-1 ${getItemColor(item.type, item.status, item.metadata)}`}>
-              {getIcon(item.type, item.platform)}
+          <div key={item.id} className="flex gap-4 items-start group relative">
+            {/* Circle with Icon */}
+            <div className={`z-10 flex items-center justify-center w-4 h-4 rounded-full bg-white border-2 border-gray-300`}>
+              <div className="w-2 h-2 rounded-full bg-gray-300" />
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm text-muted-foreground mb-1">
-                {formatDate(item.timestamp)}
+            
+            {/* Connecting Line */}
+            <div className="absolute left-4 top-2 w-4 h-0.5 bg-gray-200" />
+            
+            {/* Event Card */}
+            <div className={`flex-1 min-w-0 p-4 rounded-lg transition-all cursor-pointer hover:shadow-md ${getItemColor(item.type, item.status, item.metadata)}`}>
+              <div className="flex items-center gap-2 mb-1">
+                <div className={`text-gray-600`}>
+                  {getIcon(item.type, item.platform)}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {formatDate(item.timestamp)}
+                </div>
               </div>
               <div className="text-sm break-words">
                 {item.content}
@@ -149,12 +164,13 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
             </div>
           </div>
         ))}
+        
         {timelineItems.length === 0 && (
           <div className="text-center text-muted-foreground py-4">
             Noch keine Aktivitäten vorhanden
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 };
