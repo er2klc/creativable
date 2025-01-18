@@ -10,12 +10,12 @@ export const formSchema = z.object({
   platform: z.custom<Platform>(),
   social_media_username: z.string().optional(),
   phase_id: z.string().min(1, "Phase ist erforderlich 📊"),
+  pipeline_id: z.string().min(1, "Pipeline ist erforderlich"),
   contact_type: z.string().nullable(),
   phone_number: z.string().optional().nullable(),
   email: z.string().optional().nullable(),
   company_name: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
-  industry: z.string().min(1, "Branche ist erforderlich"),
 });
 
 export type FormData = z.infer<typeof formSchema>;

@@ -1,45 +1,29 @@
-import { UseFormReturn } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
-import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { type Platform } from "@/config/platforms";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UseFormReturn } from "react-hook-form";
+import { platformsConfig } from "@/config/platforms";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface BasicLeadFieldsProps {
-  form: UseFormReturn<any>;
+  form: any;
 }
 
 export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
   const session = useSession();
 
-  // First get the default pipeline
-  const { data: pipeline } = useQuery({
-    queryKey: ["default-pipeline"],
+  const { data: pipelines = [] } = useQuery({
+    queryKey: ["pipelines"],
     queryFn: async () => {
-      if (!session?.user?.id) return null;
+      if (!session?.user?.id) return [];
       
       const { data, error } = await supabase
         .from("pipelines")
         .select("*")
         .eq("user_id", session.user.id)
-        .eq("name", "Standard Pipeline")
-        .order("order_index")
-        .limit(1)
-        .single();
+        .order("order_index");
 
       if (error) throw error;
       return data;
@@ -47,26 +31,26 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
     enabled: !!session?.user?.id,
   });
 
-  // Then get the phases for that pipeline
   const { data: phases = [] } = useQuery({
-    queryKey: ["pipeline-phases", pipeline?.id],
+    queryKey: ["phases", form.watch("pipeline_id")],
     queryFn: async () => {
-      if (!session?.user?.id || !pipeline?.id) return [];
-      
+      const pipelineId = form.watch("pipeline_id");
+      if (!pipelineId) return [];
+
       const { data, error } = await supabase
         .from("pipeline_phases")
         .select("*")
-        .eq("pipeline_id", pipeline.id)
+        .eq("pipeline_id", pipelineId)
         .order("order_index");
 
       if (error) throw error;
       return data;
     },
-    enabled: !!session?.user?.id && !!pipeline?.id,
+    enabled: !!form.watch("pipeline_id"),
   });
 
   return (
-    <div className="space-y-4">
+    <>
       <FormField
         control={form.control}
         name="name"
@@ -83,23 +67,25 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
 
       <FormField
         control={form.control}
-        name="platform"
+        name="pipeline_id"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Plattform</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <FormLabel>Pipeline</FormLabel>
+            <Select
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+            >
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Wähle eine Plattform" />
+                  <SelectValue placeholder="Wähle eine Pipeline" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="LinkedIn">LinkedIn</SelectItem>
-                <SelectItem value="Instagram">Instagram</SelectItem>
-                <SelectItem value="Facebook">Facebook</SelectItem>
-                <SelectItem value="TikTok">TikTok</SelectItem>
-                <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-                <SelectItem value="Andere">Andere</SelectItem>
+                {pipelines.map((pipeline) => (
+                  <SelectItem key={pipeline.id} value={pipeline.id}>
+                    {pipeline.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <FormMessage />
@@ -113,7 +99,10 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel>Phase</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <Select
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+            >
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Wähle eine Phase" />
@@ -134,37 +123,51 @@ export function BasicLeadFields({ form }: BasicLeadFieldsProps) {
 
       <FormField
         control={form.control}
-        name="industry"
+        name="platform"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Branche</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <FormLabel>Plattform</FormLabel>
+            <Select
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+            >
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Wähle eine Branche" />
+                  <SelectValue placeholder="Wähle eine Plattform" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="Nicht angegeben">Nicht angegeben</SelectItem>
-                <SelectItem value="Dienstleistungen">Dienstleistungen</SelectItem>
-                <SelectItem value="E-Commerce">E-Commerce</SelectItem>
-                <SelectItem value="Einzelhandel">Einzelhandel</SelectItem>
-                <SelectItem value="Finanzen">Finanzen</SelectItem>
-                <SelectItem value="Gesundheit">Gesundheit</SelectItem>
-                <SelectItem value="Handwerk">Handwerk</SelectItem>
-                <SelectItem value="Immobilien">Immobilien</SelectItem>
-                <SelectItem value="IT">IT</SelectItem>
-                <SelectItem value="Marketing">Marketing</SelectItem>
-                <SelectItem value="Medien">Medien</SelectItem>
-                <SelectItem value="Produktion">Produktion</SelectItem>
-                <SelectItem value="Technologie">Technologie</SelectItem>
-                <SelectItem value="Andere">Andere</SelectItem>
+                {platformsConfig.map((platform) => (
+                  <SelectItem key={platform.name} value={platform.name}>
+                    <div className="flex items-center gap-2">
+                      <platform.icon className="h-4 w-4" />
+                      {platform.label}
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <FormMessage />
           </FormItem>
         )}
       />
-    </div>
+
+      <FormField
+        control={form.control}
+        name="social_media_username"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Benutzername</FormLabel>
+            <FormControl>
+              <Input placeholder="Benutzername auf der Plattform" {...field} />
+            </FormControl>
+            <FormDescription>
+              Der Benutzername oder die URL zum Profil
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
   );
 }
