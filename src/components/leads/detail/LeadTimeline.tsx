@@ -155,7 +155,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
             <div className="absolute left-10 top-5 w-4 h-0.5 bg-gray-300" />
             
             {/* Event Card */}
-            <div className="flex-1 min-w-0 bg-white rounded-lg shadow-sm p-4 transition-all cursor-pointer hover:shadow-md">
+            <div className="flex-1 min-w-0 rounded-lg p-4 transition-all cursor-pointer">
               <div className="text-sm text-gray-600 mb-1">
                 {formatDate(item.timestamp)}
               </div>
