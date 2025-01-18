@@ -126,6 +126,27 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
     }
   };
 
+  const getBorderColor = (type: TimelineItem['type'], status?: string) => {
+    switch (type) {
+      case 'contact_created':
+        return 'border-green-500';
+      case 'message':
+        return 'border-blue-500';
+      case 'task':
+        return status === 'completed' ? 'border-green-500' : 'border-orange-500';
+      case 'note':
+        return 'border-yellow-500';
+      case 'phase_change':
+        return 'border-purple-500';
+      case 'reminder':
+        return 'border-red-500';
+      case 'upload':
+        return 'border-gray-500';
+      default:
+        return 'border-gray-500';
+    }
+  };
+
   const formatDate = (date: string) => {
     const weekday = format(new Date(date), "EEE", { locale: de });
     const formattedDate = format(new Date(date), "dd.MM.yyyy | HH:mm 'Uhr'", { locale: de });
@@ -137,7 +158,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
       <h3 className="text-lg font-semibold mb-4">Aktivitäten</h3>
       <div className="relative space-y-6">
         {/* Vertical Timeline Line */}
-        <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-300" />
+        <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-200" />
         
         {timelineItems.map((item, index) => (
           <div key={item.id} className="flex gap-4 items-start group relative">
@@ -152,10 +173,13 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
             </div>
             
             {/* Connecting Line to Card */}
-            <div className="absolute left-10 top-4 w-4 h-0.5 bg-gray-300" />
+            <div className="absolute left-10 top-4 w-4 h-0.5 bg-gray-200" />
             
             {/* Event Card */}
-            <div className="flex-1 min-w-0 rounded-lg p-4 transition-all cursor-pointer">
+            <div className={cn(
+              "flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border-2",
+              getBorderColor(item.type, item.status)
+            )}>
               <div className="text-sm text-gray-600 mb-1">
                 {formatDate(item.timestamp)}
               </div>
