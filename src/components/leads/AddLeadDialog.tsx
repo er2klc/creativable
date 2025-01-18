@@ -90,12 +90,7 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
   return (
     <Dialog open={open ?? isOpen} onOpenChange={onOpenChange ?? setIsOpen}>
       <DialogTrigger asChild>
-        {trigger || (
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Neuer Kontakt ✨
-          </Button>
-        )}
+        {trigger}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
