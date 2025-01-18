@@ -93,13 +93,12 @@ export const LeadPhaseManager = () => {
 
       // Generate unique name by checking if it exists
       let name = baseName;
+      let counter = 1;
       const existingNames = existingPhases?.map(p => p.name) || [];
-      if (existingNames.includes(name)) {
-        let counter = 1;
-        while (existingNames.includes(name)) {
-          name = `${baseName}_${counter}`;
-          counter++;
-        }
+      
+      while (existingNames.includes(name)) {
+        name = `${baseName}_${counter}`;
+        counter++;
       }
 
       // Find the highest order_index

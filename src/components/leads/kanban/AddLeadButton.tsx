@@ -5,9 +5,10 @@ import { AddLeadDialog } from "../AddLeadDialog";
 interface AddLeadButtonProps {
   phase: string;
   variant?: "default" | "ghost";
+  pipelineId?: string | null;
 }
 
-export function AddLeadButton({ phase, variant = "ghost" }: AddLeadButtonProps) {
+export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadButtonProps) {
   return (
     <AddLeadDialog
       trigger={
@@ -21,6 +22,7 @@ export function AddLeadButton({ phase, variant = "ghost" }: AddLeadButtonProps) 
         </Button>
       }
       defaultPhase={phase}
+      pipelineId={pipelineId}
     />
   );
 }
