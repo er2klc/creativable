@@ -4,7 +4,7 @@ import {
   Clock,
   User,
   Video,
-  Flame,
+  Calendar,
   Phone,
   MapPin,
   Users,
@@ -112,8 +112,8 @@ export const AppointmentItem = ({
     return getMeetingTypeIcon(appointment.meeting_type);
   };
 
-  // Format time range
-  const formatTimeRange = () => {
+  // Format time
+  const formatTime = () => {
     if (!appointment.start_time) return null;
     const startTime = format(new Date(appointment.start_time), "HH:mm");
     if (appointment.end_time && appointment.end_time !== appointment.start_time) {
@@ -151,29 +151,28 @@ export const AppointmentItem = ({
         <span className="font-bold truncate">{appointment.title}</span>
       </div>
 
-      {/* Meeting Type or Team Name */}
+      {/* Team Name or Contact Name */}
       <div className="flex items-center gap-1 text-sm">
         {appointment.isTeamEvent ? (
           appointment.teams?.name || "Team Event"
-        ) : (
-          getMeetingTypeLabel(appointment.meeting_type)
-        )}
+        ) : appointment.leads?.name ? (
+          <>
+            <User className="h-3 w-3" />
+            <span className="truncate">{appointment.leads.name}</span>
+          </>
+        ) : null}
       </div>
 
-      {/* Contact Name */}
-      {appointment.leads?.name && (
-        <div className="flex items-center gap-1 text-sm text-gray-600">
-          <User className="h-3 w-3" />
-          <span className="truncate">{appointment.leads.name}</span>
-        </div>
-      )}
+      {/* Date */}
+      <div className="flex items-center gap-1 text-sm text-gray-600">
+        <Calendar className="h-3 w-3" />
+        <span>{format(new Date(appointment.start_time), "dd.MM.yyyy")}</span>
+      </div>
 
-      {/* Date and Time */}
+      {/* Time */}
       <div className="flex items-center gap-1 text-sm text-gray-600">
         <Clock className="h-3 w-3" />
-        <span>
-          {format(new Date(appointment.start_time), "dd.MM.yyyy")} | {formatTimeRange()}
-        </span>
+        <span>{formatTime()}</span>
       </div>
 
       {/* Status indicators */}
