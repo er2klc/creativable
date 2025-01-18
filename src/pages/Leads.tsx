@@ -102,10 +102,7 @@ const Leads = () => {
   });
 
   const handleLeadClick = (id: string) => {
-    const lead = leads.find(l => l.id === id);
-    if (lead?.slug) {
-      navigate(`/leads/${lead.slug}`);
-    }
+    navigate(`/contacts/${id}`);
   };
 
   if (isLoading) {
