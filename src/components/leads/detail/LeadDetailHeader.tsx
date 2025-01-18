@@ -50,7 +50,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
                 size="sm"
                 className={cn(
                   "transition-colors border-b-2",
-                  lead.status === 'partner' ? 'border-b-green-500 hover:bg-green-50' : 'border-b-transparent'
+                  lead.status === 'partner' ? 'border-b-blue-500 text-blue-700 hover:bg-blue-50' : 'border-b-transparent'
                 )}
                 onClick={() => handleStatusChange('partner')}
               >
@@ -62,7 +62,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
                 size="sm"
                 className={cn(
                   "transition-colors border-b-2",
-                  lead.status === 'customer' ? 'border-b-blue-500 hover:bg-blue-50' : 'border-b-transparent'
+                  lead.status === 'customer' ? 'border-b-green-500 text-green-700 hover:bg-green-50' : 'border-b-transparent'
                 )}
                 onClick={() => handleStatusChange('customer')}
               >
@@ -74,12 +74,24 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
                 size="sm"
                 className={cn(
                   "transition-colors border-b-2",
-                  lead.status === 'not_for_now' ? 'border-b-yellow-500 hover:bg-yellow-50' : 'border-b-transparent'
+                  lead.status === 'not_for_now' ? 'border-b-yellow-500 text-yellow-700 hover:bg-yellow-50' : 'border-b-transparent'
                 )}
                 onClick={() => handleStatusChange('not_for_now')}
               >
                 <XCircle className="h-4 w-4 mr-2" />
                 Not For Now
+              </Button>
+              <Button 
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "transition-colors border-b-2",
+                  lead.status === 'no_interest' ? 'border-b-red-500 text-red-700 hover:bg-red-50' : 'border-b-transparent'
+                )}
+                onClick={() => handleStatusChange('no_interest')}
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Kein Interesse
               </Button>
             </div>
           </div>
