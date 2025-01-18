@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface LeadInfoCardProps {
   lead: Tables<"leads">;
@@ -31,7 +31,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
+      queryClient.invalidateQueries({ queryKey: ["lead", lead.slug] });
       toast.success(
         settings?.language === "en"
           ? "Contact updated successfully"
@@ -40,6 +40,35 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
       setEditingField(null);
     },
   });
+
+  // Subscribe to real-time updates for this lead
+  useEffect(() => {
+    const channel = supabase
+      .channel('lead-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'leads',
+          filter: `id=eq.${lead.id}`
+        },
+        (payload) => {
+          queryClient.setQueryData(["lead", lead.slug], (oldData: any) => {
+            if (!oldData) return oldData;
+            return {
+              ...oldData,
+              ...payload.new,
+            };
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [lead.id, lead.slug, queryClient]);
 
   const handleStartEdit = (field: string, currentValue: string | null) => {
     setEditingField(field);

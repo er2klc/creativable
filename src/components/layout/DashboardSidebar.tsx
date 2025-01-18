@@ -1,5 +1,5 @@
 import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { SidebarHeader } from "./sidebar/SidebarHeader";
