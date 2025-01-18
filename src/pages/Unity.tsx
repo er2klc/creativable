@@ -1,39 +1,38 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useUser } from "@supabase/auth-helpers-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
-import { UnityHeader } from "@/components/teams/UnityHeader";
-import { TeamList } from "@/components/teams/TeamList";
+import { TeamListView } from "@/components/teams/TeamListView";
 
 const Unity = () => {
-  const navigate = useNavigate();
   const user = useUser();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  // First check if user is super admin
   const { data: profile } = useQuery({
-    queryKey: ['user-profile'],
+    queryKey: ['profile'],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data: profile } = await supabase
+      
+      const { data, error } = await supabase
         .from('profiles')
-        .select('is_super_admin')
+        .select('*')
         .eq('id', user.id)
         .single();
-      return profile;
+
+      if (error) throw error;
+      return data;
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
-  // Then fetch teams based on user role
-  const { data: teamsWithStats = [], isLoading } = useQuery({
-    queryKey: ['teams-with-stats', profile?.is_super_admin],
+  const { data: teams = [], isLoading } = useQuery({
+    queryKey: ['teams'],
     queryFn: async () => {
       if (!user?.id) return [];
       
-      // If super admin, fetch all teams
       const { data: teams, error: userTeamsError } = profile?.is_super_admin 
         ? await supabase.from('teams').select('*').order('order_index', { ascending: true })
         : await supabase.rpc('get_user_teams', { uid: user.id });
@@ -44,161 +43,21 @@ const Unity = () => {
         return [];
       }
 
-      // Get stats for each team
-      const teamsWithStats = await Promise.all(
-        teams.map(async (team) => {
-          const { data: members, error: membersError } = await supabase
-            .from('team_members')
-            .select('role')
-            .eq('team_id', team.id);
-
-          if (membersError) {
-            console.error("Error loading team members:", membersError);
-            return {
-              ...team,
-              stats: { totalMembers: 0, admins: 0 }
-            };
-          }
-
-          const admins = members.filter(m => 
-            m.role === 'admin' || m.role === 'owner'
-          ).length;
-
-          return {
-            ...team,
-            stats: {
-              totalMembers: members.length,
-              admins
-            }
-          };
-        })
-      );
-
-      return teamsWithStats;
+      return teams || [];
     },
-    enabled: !!user && profile !== undefined,
+    enabled: !!user?.id && !!profile,
   });
 
-  const handleDeleteTeam = async (teamId: string) => {
-    if (!user) return;
-
-    try {
-      // First, delete all team members
-      const { error: membersError } = await supabase
-        .from('team_members')
-        .delete()
-        .eq('team_id', teamId);
-
-      if (membersError) {
-        console.error('Error deleting team members:', membersError);
-        toast.error("Fehler beim Löschen der Teammitglieder");
-        return;
-      }
-
-      // Then delete the team itself
-      const { error: teamError } = await supabase
-        .from('teams')
-        .delete()
-        .eq('id', teamId);
-
-      if (teamError) {
-        console.error('Error deleting team:', teamError);
-        if (teamError.message?.includes('policy')) {
-          toast.error("Sie haben keine Berechtigung, dieses Team zu löschen");
-        } else {
-          toast.error("Fehler beim Löschen des Teams");
-        }
-        return;
-      }
-
-      // Invalidate all team-related queries
-      await queryClient.invalidateQueries({ queryKey: ['teams-with-stats'] });
-      await queryClient.invalidateQueries({ queryKey: ['team-members'] });
-      toast.success('Team erfolgreich gelöscht');
-    } catch (err: any) {
-      console.error('Error in team deletion:', err);
-      toast.error("Fehler beim Löschen des Teams");
-    }
-  };
-
-  const handleLeaveTeam = async (teamId: string) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('team_members')
-        .delete()
-        .eq('team_id', teamId)
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error leaving team:', error);
-        toast.error("Fehler beim Verlassen des Teams");
-        return;
-      }
-
-      // Invalidate all team-related queries
-      await queryClient.invalidateQueries({ queryKey: ['teams-with-stats'] });
-      await queryClient.invalidateQueries({ queryKey: ['team-members'] });
-      toast.success("Team erfolgreich verlassen");
-    } catch (error: any) {
-      console.error('Error leaving team:', error);
-      toast.error("Fehler beim Verlassen des Teams");
-    }
-  };
-
-  const handleUpdateTeamOrder = async (teamId: string, direction: 'up' | 'down') => {
-    try {
-      const currentTeam = teamsWithStats.find(t => t.id === teamId);
-      if (!currentTeam) return;
-
-      const currentIndex = teamsWithStats.findIndex(t => t.id === teamId);
-      const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-
-      // Don't proceed if we're trying to move beyond array bounds
-      if (newIndex < 0 || newIndex >= teamsWithStats.length) return;
-
-      const { error } = await supabase
-        .from('teams')
-        .update({ order_index: newIndex })
-        .eq('id', teamId);
-
-      if (error) throw error;
-
-      await queryClient.invalidateQueries({ queryKey: ['teams-with-stats'] });
-    } catch (error: any) {
-      console.error('Error updating team order:', error);
-      toast.error("Fehler beim Aktualisieren der Reihenfolge");
-    }
-  };
-
   useEffect(() => {
-    if (!user) {
-      navigate("/auth");
+    const teamId = searchParams.get('team');
+    if (teamId) {
+      navigate(`/unity/team/${teamId}`);
     }
-  }, [user, navigate]);
-
-  if (!user) return null;
-
-  const handleRefetch = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['teams-with-stats'] });
-    await queryClient.invalidateQueries({ queryKey: ['team-members'] });
-  };
+  }, [searchParams, navigate]);
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <UnityHeader 
-        onTeamCreated={handleRefetch}
-        onTeamJoined={handleRefetch}
-      />
-      <TeamList
-        isLoading={isLoading}
-        teams={teamsWithStats}
-        onDelete={handleDeleteTeam}
-        onLeave={handleLeaveTeam}
-        onUpdateOrder={handleUpdateTeamOrder}
-      />
+    <div className="container mx-auto py-6">
+      <TeamListView teams={teams} isLoading={isLoading} />
     </div>
   );
 };
