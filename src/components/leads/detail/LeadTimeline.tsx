@@ -1,4 +1,3 @@
-import { Tables } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { 
@@ -19,6 +18,7 @@ import {
   Circle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tables } from "@/integrations/supabase/types";
 
 type TimelineItem = {
   id: string;
@@ -144,7 +144,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
             {/* Circle with Icon */}
             <div 
               className={cn(
-                "z-10 flex items-center justify-center w-10 h-10 rounded-full",
+                "z-10 flex items-center justify-center w-8 h-8 rounded-full",
                 getIconColor(item.type, item.status)
               )}
             >

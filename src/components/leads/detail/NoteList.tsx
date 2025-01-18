@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
+import { useAuth } from "@/hooks/use-auth";
 
 interface NoteListProps {
   leadId: string;
@@ -13,6 +14,7 @@ interface NoteListProps {
 
 export const NoteList = ({ leadId }: NoteListProps) => {
   const { settings } = useSettings();
+  const { user } = useAuth();
   const [newNote, setNewNote] = useState("");
   const queryClient = useQueryClient();
 
@@ -23,6 +25,7 @@ export const NoteList = ({ leadId }: NoteListProps) => {
         .insert({
           lead_id: leadId,
           content,
+          user_id: user?.id
         })
         .select()
         .single();
