@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 interface LeadInfoCardProps {
   lead: Tables<"leads">;
@@ -19,7 +19,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   const queryClient = useQueryClient();
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>("");
-  const navigate = useNavigate();
+  const { leadSlug } = useParams();
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
@@ -31,16 +31,10 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
         .single();
 
       if (error) throw error;
-
-      // If name was updated, update the URL
-      if (updates.name) {
-        navigate(`/leads/${lead.id}`);
-      }
-
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
+      queryClient.invalidateQueries({ queryKey: ["lead", leadSlug] });
       toast.success(
         settings?.language === "en"
           ? "Contact updated successfully"
@@ -60,21 +54,15 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   };
 
   const handleContactTypeUpdate = (type: string) => {
-    const currentTypes = lead.contact_type ? lead.contact_type.split(',').map(t => t.trim()) : [];
-    let newTypes: string[];
-    
-    if (currentTypes.includes(type)) {
-      newTypes = currentTypes.filter(t => t !== type);
-    } else {
-      // Remove the other type if it exists (mutually exclusive)
-      newTypes = currentTypes.filter(t => 
-        t !== 'Likely Partner' && t !== 'Likely Kunde'
-      );
-      newTypes.push(type);
+    const currentType = lead.contact_type;
+    let newType: string | null = null;
+
+    if (currentType !== type) {
+      newType = type;
     }
     
     updateLeadMutation.mutate({ 
-      contact_type: newTypes.length > 0 ? newTypes.join(', ') : null 
+      contact_type: newType
     });
   };
 
@@ -124,8 +112,6 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     );
   };
 
-  const currentTypes = lead.contact_type ? lead.contact_type.split(',').map(t => t.trim()) : [];
-
   return (
     <Card>
       <CardHeader>
@@ -137,18 +123,18 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
       <CardContent className="space-y-1">
         <div className="flex gap-2 mb-4">
           <Button
-            variant={currentTypes.includes('Likely Partner') ? "default" : "outline"}
+            variant={lead.contact_type === 'likely_partner' ? "default" : "outline"}
             size="sm"
-            onClick={() => handleContactTypeUpdate('Likely Partner')}
+            onClick={() => handleContactTypeUpdate('likely_partner')}
             className="flex items-center gap-2"
           >
             <HelpCircle className="h-4 w-4" />
             Likely Partner
           </Button>
           <Button
-            variant={currentTypes.includes('Likely Kunde') ? "default" : "outline"}
+            variant={lead.contact_type === 'likely_customer' ? "default" : "outline"}
             size="sm"
-            onClick={() => handleContactTypeUpdate('Likely Kunde')}
+            onClick={() => handleContactTypeUpdate('likely_customer')}
             className="flex items-center gap-2"
           >
             <Star className="h-4 w-4" />
