@@ -1,6 +1,8 @@
 import { TableCell } from "@/components/ui/table";
 import { Star, Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LeadTableCellProps {
   type: "favorite" | "name" | "platform" | "phase" | "lastAction" | "industry";
@@ -26,6 +28,22 @@ const getPlatformIcon = (platform: string) => {
 };
 
 export const LeadTableCell = ({ type, value, onClick }: LeadTableCellProps) => {
+  const { data: phaseInfo } = useQuery({
+    queryKey: ["phase-info", value],
+    queryFn: async () => {
+      if (type !== "phase" || !value) return null;
+      
+      const { data: phase } = await supabase
+        .from("pipeline_phases")
+        .select("*, pipelines(name)")
+        .eq("id", value)
+        .maybeSingle();
+      
+      return phase;
+    },
+    enabled: type === "phase" && !!value,
+  });
+
   switch (type) {
     case "favorite":
       return (
@@ -45,6 +63,12 @@ export const LeadTableCell = ({ type, value, onClick }: LeadTableCellProps) => {
             {getPlatformIcon(value)}
             <span>{value}</span>
           </div>
+        </TableCell>
+      );
+    case "phase":
+      return (
+        <TableCell className="whitespace-nowrap">
+          {phaseInfo ? `${phaseInfo.pipelines.name} > ${phaseInfo.name}` : "..."}
         </TableCell>
       );
     case "name":

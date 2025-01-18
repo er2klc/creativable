@@ -23,33 +23,47 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
 
-  const { data: lead, isLoading } = useQuery({
+  const { data: lead, isLoading, error } = useQuery({
     queryKey: ["lead", leadId],
     queryFn: async () => {
       if (!leadId) return null;
-      const { data, error } = await supabase
-        .from("leads")
-        .select("*, messages(*), tasks(*), notes(*)")
-        .eq("id", leadId)
-        .single();
+      
+      try {
+        const { data, error } = await supabase
+          .from("leads")
+          .select(`
+            *,
+            messages (*),
+            tasks (*),
+            notes (*)
+          `)
+          .eq("id", leadId)
+          .maybeSingle();
 
-      if (error) throw error;
-      return data as (Tables<"leads"> & {
-        platform: Platform;
-        messages: Tables<"messages">[];
-        tasks: Tables<"tasks">[];
-        notes: Tables<"notes">[];
-      });
+        if (error) throw error;
+        
+        return data as (Tables<"leads"> & {
+          platform: Platform;
+          messages: Tables<"messages">[];
+          tasks: Tables<"tasks">[];
+          notes: Tables<"notes">[];
+        });
+      } catch (error: any) {
+        console.error("Error fetching lead:", error);
+        throw error;
+      }
     },
     enabled: !!leadId,
+    retry: false,
   });
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
+      if (!lead?.id) return null;
       const { data, error } = await supabase
         .from("leads")
         .update(updates)
-        .eq("id", leadId)
+        .eq("id", lead.id)
         .select()
         .single();
 
@@ -80,6 +94,12 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
         {isLoading ? (
           <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
+        ) : error ? (
+          <div className="p-6 text-destructive">
+            {settings?.language === "en" 
+              ? `An error occurred: ${error.message}`
+              : `Ein Fehler ist aufgetreten: ${error.message}`}
+          </div>
         ) : lead ? (
           <div className="flex-1 overflow-y-auto p-6">
             <div className="space-y-6">
@@ -102,4 +122,4 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       </DialogContent>
     </Dialog>
   );
-}
+};
