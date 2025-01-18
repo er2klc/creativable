@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LayoutGrid, Users, MessageSquare, Calendar, CheckSquare, BarChart, Settings, FileText, Shield, Globe2, Database, Wrench } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const personalItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutGrid },
@@ -38,6 +40,30 @@ export function MobileMenu() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Subscribe to real-time updates for unread messages count
+  useEffect(() => {
+    const channel = supabase
+      .channel('menu-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages'
+        },
+        () => {
+          // Invalidate the unread messages query to trigger a refetch
+          queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const handleNavigation = (path: string) => {
     navigate(path);

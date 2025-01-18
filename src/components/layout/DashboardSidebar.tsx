@@ -18,6 +18,7 @@ export const DashboardSidebar = () => {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [currentVersion, setCurrentVersion] = useState("0.31");
   const personalItems = usePersonalItems();
+  const queryClient = useQueryClient();
 
   const { data: latestVersion } = useQuery({
     queryKey: ['latest-version'],
@@ -92,6 +93,29 @@ export const DashboardSidebar = () => {
     refetchInterval: 30000,
   });
   
+  // Subscribe to real-time updates for unread messages count
+  useEffect(() => {
+    const channel = supabase
+      .channel('sidebar-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages'
+        },
+        () => {
+          // Invalidate the unread messages query to trigger a refetch
+          queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return (
     <Sidebar 
       className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out ${isExpanded ? 'w-[240px] z-[999]' : 'z-[10]'}`}

@@ -8,6 +8,7 @@ import { LeadSummary } from "@/components/leads/detail/LeadSummary";
 import { Platform } from "@/config/platforms";
 import { toast } from "sonner";
 import { LeadDetailTabs } from "@/components/leads/detail/LeadDetailTabs";
+import { useEffect } from "react";
 
 type LeadWithRelations = Tables<"leads"> & {
   platform: Platform;
@@ -41,14 +42,41 @@ export default function LeadDetail() {
         throw error;
       }
 
-      if (!data) {
-        return null;
-      }
-
       return data as LeadWithRelations;
     },
     enabled: !!leadSlug,
   });
+
+  // Subscribe to real-time updates for the lead
+  useEffect(() => {
+    if (!lead?.id) return;
+
+    const channel = supabase
+      .channel('lead-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'leads',
+          filter: `id=eq.${lead.id}`
+        },
+        (payload) => {
+          queryClient.setQueryData(["lead", leadSlug], (oldData: LeadWithRelations | undefined) => {
+            if (!oldData) return oldData;
+            return {
+              ...oldData,
+              ...payload.new,
+            };
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [lead?.id, leadSlug, queryClient]);
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
@@ -64,7 +92,6 @@ export default function LeadDetail() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", leadSlug] });
       toast.success("Kontakt erfolgreich aktualisiert");
     },
   });
@@ -102,7 +129,6 @@ export default function LeadDetail() {
       
       <div className="container mx-auto py-6 px-4">
         <div className="grid grid-cols-12 gap-6">
-          {/* Left column */}
           <div className="col-span-4 space-y-6">
             <div className="bg-white rounded-lg shadow p-6">
               <LeadSummary lead={lead} />
@@ -110,7 +136,6 @@ export default function LeadDetail() {
             <LeadInfoCard lead={lead} />
           </div>
 
-          {/* Right column - Tabs and Timeline */}
           <div className="col-span-8">
             <div className="bg-white rounded-lg shadow p-6">
               <LeadDetailTabs lead={lead} />
