@@ -34,12 +34,12 @@ const Unity = () => {
       if (!user?.id) return [];
       
       // If super admin, fetch all teams
-      const { data: teams, error } = profile?.is_super_admin 
+      const { data: teams, error: userTeamsError } = profile?.is_super_admin 
         ? await supabase.from('teams').select('*').order('order_index', { ascending: true })
         : await supabase.rpc('get_user_teams', { uid: user.id });
 
-      if (error) {
-        console.error("Error loading teams:", error);
+      if (userTeamsError) {
+        console.error("Error loading teams:", userTeamsError);
         toast.error("Fehler beim Laden der Teams");
         return [];
       }
@@ -83,15 +83,27 @@ const Unity = () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase
+      // First, delete all team members
+      const { error: membersError } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('team_id', teamId);
+
+      if (membersError) {
+        console.error('Error deleting team members:', membersError);
+        toast.error("Fehler beim Löschen der Teammitglieder");
+        return;
+      }
+
+      // Then delete the team itself
+      const { error: teamError } = await supabase
         .from('teams')
         .delete()
-        .eq('id', teamId)
-        .single();
+        .eq('id', teamId);
 
-      if (error) {
-        console.error('Error deleting team:', error);
-        if (error.message?.includes('policy')) {
+      if (teamError) {
+        console.error('Error deleting team:', teamError);
+        if (teamError.message?.includes('policy')) {
           toast.error("Sie haben keine Berechtigung, dieses Team zu löschen");
         } else {
           toast.error("Fehler beim Löschen des Teams");
