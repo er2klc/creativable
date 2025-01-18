@@ -1,49 +1,20 @@
 import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
 import { SidebarHeader } from "./sidebar/SidebarHeader";
 import { SidebarFooter } from "./sidebar/SidebarFooter";
 import { SidebarMenuSection } from "./sidebar/SidebarMenuSection";
-import { 
-  usePersonalItems, 
-  teamItems, 
-  analysisItems, 
-  legalItems,
-  adminItems 
-} from "./sidebar/SidebarItems";
+import { usePersonalItems, teamItems, analysisItems, legalItems } from "./sidebar/SidebarItems";
+import { useSidebarState } from "./sidebar/SidebarState";
+import { useUnreadCount } from "./sidebar/SidebarUnreadCount";
+import { AdminSection } from "./sidebar/AdminSection";
 
 export const DashboardSidebar = () => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [currentVersion, setCurrentVersion] = useState("0.31");
+  const { isExpanded, handlers } = useSidebarState();
   const personalItems = usePersonalItems();
-  const queryClient = useQueryClient();
-
-  const { data: latestVersion } = useQuery({
-    queryKey: ['latest-version'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('changelog_entries')
-        .select('version')
-        .order('version', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error) {
-        console.error('Error fetching latest version:', error);
-        return currentVersion;
-      }
-
-      return data?.version || currentVersion;
-    },
-  });
-
-  useEffect(() => {
-    if (latestVersion) {
-      setCurrentVersion(latestVersion);
-    }
-  }, [latestVersion]);
+  const unreadCount = useUnreadCount();
 
   useEffect(() => {
     const checkSuperAdminStatus = async () => {
@@ -76,51 +47,10 @@ export const DashboardSidebar = () => {
     checkSuperAdminStatus();
   }, []);
 
-  const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['unread-messages-count'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return 0;
-
-      const { count } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('read', false);
-
-      return count || 0;
-    },
-    refetchInterval: 30000,
-  });
-  
-  // Subscribe to real-time updates for unread messages count
-  useEffect(() => {
-    const channel = supabase
-      .channel('sidebar-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'messages'
-        },
-        () => {
-          // Invalidate the unread messages query to trigger a refetch
-          queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
-
   return (
     <Sidebar 
       className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out ${isExpanded ? 'w-[240px] z-[999]' : 'z-[10]'}`}
-      onMouseEnter={() => setIsExpanded(true)}
-      onMouseLeave={() => setIsExpanded(false)}
+      {...handlers}
     >
       <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[72px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
       <SidebarContent className="flex flex-col h-full relative overflow-x-hidden">
@@ -159,16 +89,7 @@ export const DashboardSidebar = () => {
           />
         </div>
 
-        {isSuperAdmin && (
-          <>
-            <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
-            <SidebarMenuSection 
-              title="Super Admin" 
-              items={adminItems} 
-              isExpanded={isExpanded}
-            />
-          </>
-        )}
+        <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
 
         <SidebarFooter 
           isExpanded={isExpanded} 
