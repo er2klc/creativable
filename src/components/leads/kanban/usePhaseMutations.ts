@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { useSession } from "@supabase/auth-helpers-react";
 
@@ -112,69 +112,90 @@ export const usePhaseMutations = () => {
   });
 
   const updatePhaseName = useMutation({
-    mutationFn: async ({ id, name, oldName }: { id: string; name: string; oldName: string }) => {
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
       if (!session?.user?.id) {
         throw new Error("No authenticated user found");
       }
 
-      console.log("Starting phase rename operation:", { id, name, oldName });
-
-      // First verify that leads exist with the old phase ID
-      const { data: existingLeads, error: checkError } = await supabase
-        .from("leads")
-        .select("id")
-        .eq("phase_id", id)
-        .eq("user_id", session.user.id);
-
-      if (checkError) {
-        console.error("Error checking existing leads:", checkError);
-        throw checkError;
-      }
-
-      console.log("Found leads to update:", existingLeads?.length || 0);
-
-      // First update the phase name
-      const { error: phaseError } = await supabase
+      const { error } = await supabase
         .from("pipeline_phases")
         .update({ name })
         .eq("id", id);
 
-      if (phaseError) {
-        console.error("Error updating phase name:", phaseError);
-        throw phaseError;
-      }
-
-      console.log("Phase name updated successfully");
-
-      // Return both results
-      return { 
-        phaseName: name, 
-        oldName,
-        updatedLeadsCount: existingLeads?.length || 0 
-      };
+      if (error) throw error;
     },
-    onSuccess: (data) => {
-      console.log("Phase rename operation completed successfully:", data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast({
         title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
         description: settings?.language === "en"
-          ? `Phase name has been updated successfully`
-          : `Phasenname wurde erfolgreich aktualisiert`,
+          ? "Phase name has been updated successfully"
+          : "Phasenname wurde erfolgreich aktualisiert",
       });
     },
     onError: (error) => {
-      console.error("Error in phase rename operation:", error);
+      console.error("Error updating phase name:", error);
       toast({
         title: settings?.language === "en" ? "Error" : "Fehler",
         description: settings?.language === "en"
-          ? "Failed to update phase name. Please try again."
-          : "Phasenname konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
+          ? "Failed to update phase name"
+          : "Fehler beim Aktualisieren des Phasennamens",
         variant: "destructive",
       });
     }
   });
 
-  return { updateLeadPhase, addPhase, updatePhaseName };
+  const deletePhase = useMutation({
+    mutationFn: async (phaseId: string) => {
+      if (!session?.user?.id) {
+        throw new Error("No authenticated user found");
+      }
+
+      // First check if there are any leads in this phase
+      const { data: leads, error: leadsError } = await supabase
+        .from("leads")
+        .select("id")
+        .eq("phase_id", phaseId);
+
+      if (leadsError) throw leadsError;
+
+      if (leads && leads.length > 0) {
+        throw new Error("Cannot delete phase with leads");
+      }
+
+      const { error } = await supabase
+        .from("pipeline_phases")
+        .delete()
+        .eq("id", phaseId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
+      toast({
+        title: settings?.language === "en" ? "Phase deleted" : "Phase gelöscht",
+        description: settings?.language === "en"
+          ? "Phase has been deleted successfully"
+          : "Phase wurde erfolgreich gelöscht",
+      });
+    },
+    onError: (error) => {
+      console.error("Error deleting phase:", error);
+      const errorMessage = error.message === "Cannot delete phase with leads"
+        ? settings?.language === "en"
+          ? "Cannot delete phase that contains contacts"
+          : "Phase mit Kontakten kann nicht gelöscht werden"
+        : settings?.language === "en"
+          ? "Failed to delete phase"
+          : "Fehler beim Löschen der Phase";
+
+      toast({
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  });
+
+  return { updateLeadPhase, addPhase, updatePhaseName, deletePhase };
 };

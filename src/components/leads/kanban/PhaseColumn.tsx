@@ -1,5 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
-import { Edit } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tables } from "@/integrations/supabase/types";
 import { SortableLeadItem } from "./SortableLeadItem";
@@ -10,9 +10,16 @@ interface PhaseColumnProps {
   leads: Tables<"leads">[];
   onLeadClick: (id: string) => void;
   onEditPhase: (phase: Tables<"pipeline_phases">) => void;
+  onDeletePhase: (id: string) => void;
 }
 
-export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseColumnProps) => {
+export const PhaseColumn = ({ 
+  phase, 
+  leads, 
+  onLeadClick, 
+  onEditPhase,
+  onDeletePhase 
+}: PhaseColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: phase.id,
   });
@@ -27,14 +34,24 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
       <div className="sticky top-0 z-10 bg-[#f5f5f5] p-4 rounded-t-lg border-b border-primary/20 shadow-sm">
         <div className="flex items-center justify-between">
           <h3 className="font-medium text-lg tracking-tight">{phase.name}</h3>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => onEditPhase(phase)}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => onEditPhase(phase)}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-destructive hover:bg-destructive/10"
+              onClick={() => onDeletePhase(phase.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
       <div className="p-4 flex-1 overflow-y-auto no-scrollbar">
@@ -46,9 +63,6 @@ export const PhaseColumn = ({ phase, leads, onLeadClick, onEditPhase }: PhaseCol
               onLeadClick={onLeadClick}
             />
           ))}
-        </div>
-        <div className="mt-4">
-          <AddLeadButton phase={phase.name} />
         </div>
       </div>
     </div>

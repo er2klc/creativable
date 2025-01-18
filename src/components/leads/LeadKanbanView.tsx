@@ -1,6 +1,6 @@
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
@@ -30,7 +30,7 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
   const { settings } = useSettings();
   const [editingPhase, setEditingPhase] = useState<Tables<"pipeline_phases"> | null>(null);
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
-  const { updateLeadPhase, addPhase, updatePhaseName } = usePhaseMutations();
+  const { updateLeadPhase, addPhase, updatePhaseName, deletePhase } = usePhaseMutations();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -138,17 +138,10 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
                   leads={leads.filter((lead) => lead.phase_id === phase.id)}
                   onLeadClick={handleLeadClick}
                   onEditPhase={setEditingPhase}
+                  onDeletePhase={() => deletePhase.mutate(phase.id)}
                 />
               </div>
             ))}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 mt-4 flex-none"
-              onClick={handleAddPhase}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
 
             {/* Shadow indicator for right scroll */}
             <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
