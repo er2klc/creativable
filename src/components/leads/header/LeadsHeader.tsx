@@ -26,8 +26,11 @@ export const LeadsHeader = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Kontakte</h1>
+        <div className="flex-1 max-w-md">
+          <LeadSearch value={searchQuery} onChange={setSearchQuery} />
+        </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -48,17 +51,13 @@ export const LeadsHeader = ({
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-1 gap-4">
-          <LeadSearch value={searchQuery} onChange={setSearchQuery} />
-          <LeadFilters
-            selectedPipelineId={selectedPipelineId}
-            setSelectedPipelineId={setSelectedPipelineId}
-          />
-        </div>
-
+      <div className="flex items-center justify-between">
+        <LeadFilters
+          selectedPipelineId={selectedPipelineId}
+          setSelectedPipelineId={setSelectedPipelineId}
+        />
         <Button onClick={() => setShowAddLead(true)}>
-          Kontakt hinzufügen
+          Neuer Kontakt ✨
         </Button>
       </div>
 
