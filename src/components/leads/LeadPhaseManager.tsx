@@ -108,6 +108,18 @@ export const LeadPhaseManager = () => {
         throw new Error("No pipeline selected");
       }
 
+      // First check if a phase with this name already exists in this pipeline
+      const { data: existingPhase } = await supabase
+        .from("pipeline_phases")
+        .select("id")
+        .eq("pipeline_id", pipeline.id)
+        .eq("name", name)
+        .maybeSingle();
+
+      if (existingPhase) {
+        throw new Error("Phase with this name already exists");
+      }
+
       const { data: maxOrderPhase } = await supabase
         .from("pipeline_phases")
         .select("order_index")
@@ -135,6 +147,19 @@ export const LeadPhaseManager = () => {
         description: settings?.language === "en"
           ? "The phase has been added successfully"
           : "Die Phase wurde erfolgreich hinzugefügt",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description: error.message === "Phase with this name already exists"
+          ? (settings?.language === "en" 
+              ? "A phase with this name already exists in this pipeline"
+              : "Eine Phase mit diesem Namen existiert bereits in dieser Pipeline")
+          : (settings?.language === "en"
+              ? "Failed to add phase"
+              : "Fehler beim Hinzufügen der Phase"),
       });
     },
   });
