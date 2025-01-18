@@ -23,7 +23,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
     },
     ...lead.messages.map(message => ({
       id: message.id,
-      type: 'message',
+      type: 'message' as const,
       content: message.content,
       timestamp: message.sent_at || '',
       status: message.platform,
@@ -31,7 +31,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
     })),
     ...lead.tasks.map(task => ({
       id: task.id,
-      type: task.meeting_type ? 'appointment' : 'task',
+      type: task.meeting_type ? 'appointment' as const : 'task' as const,
       content: task.title,
       timestamp: task.created_at || '',
       status: task.completed ? 'completed' : 'pending',
@@ -43,7 +43,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
     })),
     ...lead.notes.map(note => ({
       id: note.id,
-      type: 'note',
+      type: 'note' as const,
       content: note.content,
       timestamp: note.created_at || '',
       metadata: {
