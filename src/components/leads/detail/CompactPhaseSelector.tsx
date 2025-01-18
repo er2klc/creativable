@@ -56,15 +56,40 @@ export function CompactPhaseSelector({
       if (firstPhase) {
         onUpdateLead({ 
           pipeline_id: pipelineId,
-          phase_id: firstPhase 
+          phase_id: firstPhase,
+          last_action: "Pipeline geändert",
+          last_action_date: new Date().toISOString()
         });
       }
     }
   };
 
-  const handlePhaseChange = (phaseId: string) => {
+  const handlePhaseChange = async (phaseId: string) => {
     if (phaseId !== lead.phase_id) {
-      onUpdateLead({ phase_id: phaseId });
+      const oldPhase = phases.find(p => p.id === lead.phase_id)?.name;
+      const newPhase = phases.find(p => p.id === phaseId)?.name;
+      
+      // First update the lead
+      await onUpdateLead({ 
+        phase_id: phaseId,
+        last_action: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
+        last_action_date: new Date().toISOString()
+      });
+
+      // Then create a note to track the phase change
+      if (oldPhase && newPhase) {
+        await supabase.from("notes").insert({
+          lead_id: lead.id,
+          user_id: session?.user?.id,
+          content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
+          color: "#E9D5FF", // Light purple color for phase changes
+          metadata: {
+            type: "phase_change",
+            oldPhase,
+            newPhase
+          }
+        });
+      }
     }
   };
 

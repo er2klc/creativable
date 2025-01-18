@@ -41,15 +41,32 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
         color: task.color
       }
     })) : []),
-    ...(Array.isArray(lead.notes) ? lead.notes.map(note => ({
-      id: note.id,
-      type: 'note' as const,
-      content: note.content,
-      timestamp: note.created_at || '',
-      metadata: {
-        color: note.color
+    ...(Array.isArray(lead.notes) ? lead.notes.map(note => {
+      // Check if this is a phase change note
+      if (note.metadata?.type === 'phase_change') {
+        return {
+          id: note.id,
+          type: 'phase_change' as const,
+          content: note.content,
+          timestamp: note.created_at || '',
+          metadata: {
+            oldPhase: note.metadata.oldPhase,
+            newPhase: note.metadata.newPhase,
+            color: note.color
+          }
+        };
       }
-    })) : [])
+      // Regular note
+      return {
+        id: note.id,
+        type: 'note' as const,
+        content: note.content,
+        timestamp: note.created_at || '',
+        metadata: {
+          color: note.color
+        }
+      };
+    }) : [])
   ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   return (

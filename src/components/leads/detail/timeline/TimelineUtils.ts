@@ -29,5 +29,7 @@ export interface TimelineItem {
     dueDate?: string;
     meetingType?: string;
     color?: string;
+    oldPhase?: string;
+    newPhase?: string;
   };
 }

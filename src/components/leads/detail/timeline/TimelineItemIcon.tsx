@@ -10,7 +10,8 @@ import {
   MessageCircle,
   UserPlus,
   ListTodo,
-  Send
+  Send,
+  ArrowUpCircle
 } from "lucide-react";
 import { TimelineItemType } from "./TimelineUtils";
 
@@ -37,7 +38,7 @@ export const TimelineItemIcon = ({ type, status, platform }: TimelineItemIconPro
       case 'note':
         return <StickyNote className="h-4 w-4 text-white" />;
       case 'phase_change':
-        return <CheckSquare className="h-4 w-4 text-white" />;
+        return <ArrowUpCircle className="h-4 w-4 text-white" />;
       case 'reminder':
         return <Bell className="h-4 w-4 text-white" />;
       case 'upload':
