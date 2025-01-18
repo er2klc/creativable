@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Plus, Trash2, StickyNote } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
 import { toast } from "sonner";
@@ -62,6 +62,7 @@ export function NoteList({ leadId }: NoteListProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lead-notes", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
       setNewNoteContent("");
       toast.success(settings?.language === "en" ? "Note added" : "Notiz hinzugefügt");
     },
@@ -86,6 +87,7 @@ export function NoteList({ leadId }: NoteListProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lead-notes", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
       toast.success(
         settings?.language === "en" ? "Note deleted" : "Notiz gelöscht"
       );
@@ -110,12 +112,6 @@ export function NoteList({ leadId }: NoteListProps) {
   if (error) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <StickyNote className="h-5 w-5" />
-            {settings?.language === "en" ? "Notes" : "Notizen"}
-          </CardTitle>
-        </CardHeader>
         <CardContent>
           <div className="text-red-500">
             {settings?.language === "en"
@@ -129,12 +125,6 @@ export function NoteList({ leadId }: NoteListProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <StickyNote className="h-5 w-5" />
-          {settings?.language === "en" ? "Notes" : "Notizen"} ({notes.length})
-        </CardTitle>
-      </CardHeader>
       <CardContent>
         <form onSubmit={handleAddNote} className="flex flex-col gap-2 mb-4">
           <Textarea

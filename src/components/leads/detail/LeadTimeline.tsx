@@ -13,14 +13,15 @@ import {
   Bell,
   Instagram,
   Linkedin,
-  MessageCircle
+  MessageCircle,
+  UserPlus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
 type TimelineItem = {
   id: string;
-  type: 'message' | 'task' | 'note' | 'phase_change' | 'reminder' | 'upload';
+  type: 'message' | 'task' | 'note' | 'phase_change' | 'reminder' | 'upload' | 'contact_created';
   content: string;
   timestamp: string;
   status?: string;
@@ -33,11 +34,20 @@ interface LeadTimelineProps {
     messages: Tables<"messages">[];
     tasks: Tables<"tasks">[];
     notes: Tables<"notes">[];
+    created_at: string;
+    name: string;
   };
 }
 
 export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
   const timelineItems: TimelineItem[] = [
+    // Add contact creation as first item
+    {
+      id: 'contact-created',
+      type: 'contact_created',
+      content: `Kontakt ${lead.name} wurde erstellt`,
+      timestamp: lead.created_at,
+    },
     ...lead.messages.map(message => ({
       id: message.id,
       type: 'message' as const,
@@ -71,6 +81,8 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
 
   const getIcon = (type: TimelineItem['type'], platform?: string) => {
     switch (type) {
+      case 'contact_created':
+        return <UserPlus className="h-4 w-4" />;
       case 'message':
         if (platform === 'instagram') return <Instagram className="h-4 w-4" />;
         if (platform === 'linkedin') return <Linkedin className="h-4 w-4" />;
@@ -91,6 +103,8 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
 
   const getItemColor = (type: TimelineItem['type'], status?: string) => {
     switch (type) {
+      case 'contact_created':
+        return 'text-green-500';
       case 'message':
         return 'text-blue-500';
       case 'task':
@@ -137,4 +151,4 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
       </div>
     </Card>
   );
-}
+};

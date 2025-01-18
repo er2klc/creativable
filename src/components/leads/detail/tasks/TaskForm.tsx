@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface TaskFormProps {
   leadId: string;
@@ -79,57 +80,61 @@ export const TaskForm = ({ leadId }: TaskFormProps) => {
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder={settings?.language === "en" ? "New task..." : "Neue Aufgabe..."}
-      />
-      <div className="flex gap-2 items-center">
-        <div className="flex items-center gap-1">
-          <Calendar className="h-4 w-4" />
+    <Card>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <Input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-40"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={settings?.language === "en" ? "New task..." : "Neue Aufgabe..."}
           />
-        </div>
-        <div className="flex items-center gap-1">
-          <Clock className="h-4 w-4" />
-          <Input
-            type="time"
-            value={selectedTime}
-            onChange={(e) => setSelectedTime(e.target.value)}
-            className="w-32"
-          />
-        </div>
-        <Select value={selectedType} onValueChange={setSelectedType}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder={settings?.language === "en" ? "Meeting type" : "Terminart"} />
-          </SelectTrigger>
-          <SelectContent>
-            {MEETING_TYPES.map((type) => (
-              <SelectItem key={type.value} value={type.value}>
-                <div className="flex items-center gap-2">
-                  {type.icon}
-                  {type.label}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <input
-          type="color"
-          value={selectedColor}
-          onChange={(e) => setSelectedColor(e.target.value)}
-          className="w-10 h-10 rounded cursor-pointer"
-        />
-        <Button type="submit" className="ml-auto">
-          <Plus className="h-4 w-4 mr-2" />
-          {settings?.language === "en" ? "Add Task" : "Aufgabe hinzufügen"}
-        </Button>
-      </div>
-    </form>
+          <div className="flex gap-2 items-center">
+            <div className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-40"
+              />
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              <Input
+                type="time"
+                value={selectedTime}
+                onChange={(e) => setSelectedTime(e.target.value)}
+                className="w-32"
+              />
+            </div>
+            <Select value={selectedType} onValueChange={setSelectedType}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder={settings?.language === "en" ? "Meeting type" : "Terminart"} />
+              </SelectTrigger>
+              <SelectContent>
+                {MEETING_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    <div className="flex items-center gap-2">
+                      {type.icon}
+                      {type.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <input
+              type="color"
+              value={selectedColor}
+              onChange={(e) => setSelectedColor(e.target.value)}
+              className="w-10 h-10 rounded cursor-pointer"
+            />
+            <Button type="submit" className="ml-auto">
+              <Plus className="h-4 w-4 mr-2" />
+              {settings?.language === "en" ? "Add Task" : "Aufgabe hinzufügen"}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
