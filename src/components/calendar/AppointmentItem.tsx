@@ -104,7 +104,7 @@ export const AppointmentItem = ({
       if (appointment.is_admin_only) {
         return <Crown className="h-4 w-4 text-primary" />;
       }
-      return <Flame className="h-4 w-4 text-orange-500" />;
+      return <Users className="h-4 w-4 text-primary" />;
     }
     if (appointment.isRecurring) {
       return <Video className="h-4 w-4 text-primary" />; // Zoom Icon
@@ -145,15 +145,19 @@ export const AppointmentItem = ({
       )}
       onClick={(e) => onClick(e)}
     >
-      {/* Title */}
-      <div className="font-bold truncate">
-        {appointment.title}
+      {/* Title with icon */}
+      <div className="flex items-center gap-2">
+        {getEventIcon()}
+        <span className="font-bold truncate">{appointment.title}</span>
       </div>
 
-      {/* Meeting Type */}
+      {/* Meeting Type or Team Name */}
       <div className="flex items-center gap-1 text-sm">
-        {getEventIcon()}
-        <span>{getMeetingTypeLabel(appointment.meeting_type)}</span>
+        {appointment.isTeamEvent ? (
+          appointment.teams?.name || "Team Event"
+        ) : (
+          getMeetingTypeLabel(appointment.meeting_type)
+        )}
       </div>
 
       {/* Contact Name */}
