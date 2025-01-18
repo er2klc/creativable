@@ -1,9 +1,10 @@
 import { DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tables } from "@/integrations/supabase/types";
-import { Star, XCircle } from "lucide-react";
+import { Star, XCircle, Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { Platform } from "@/config/platforms";
 
 interface LeadDetailHeaderProps {
   lead: Tables<"leads">;
@@ -15,18 +16,35 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
 
   const handleNameChange = async (name: string) => {
     await onUpdateLead({ name });
-    navigate(`/contacts/${lead.id}`, { replace: true });
   };
 
   const handleStatusChange = (status: string) => {
     onUpdateLead({ status });
   };
 
+  const getPlatformIcon = (platform: Platform) => {
+    switch (platform) {
+      case "Instagram":
+        return <Instagram className="h-4 w-4 mr-2" />;
+      case "LinkedIn":
+        return <Linkedin className="h-4 w-4 mr-2" />;
+      case "Facebook":
+        return <Facebook className="h-4 w-4 mr-2" />;
+      case "TikTok":
+        return <Video className="h-4 w-4 mr-2" />;
+      case "Offline":
+        return <Users className="h-4 w-4 mr-2" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <DialogHeader className="p-6 bg-card border-b">
       <div className="flex flex-col space-y-4">
         <div className="flex justify-between items-start">
-          <div>
+          <div className="flex items-center gap-2">
+            {getPlatformIcon(lead.platform as Platform)}
             <input
               type="text"
               value={lead.name}
