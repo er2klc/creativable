@@ -4,6 +4,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 
 interface TaskItemProps {
   task: Tables<"tasks"> & {
@@ -15,20 +16,6 @@ interface TaskItemProps {
 export const TaskItem = ({ task, onToggle }: TaskItemProps) => {
   const { settings } = useSettings();
   const navigate = useNavigate();
-
-  const getMeetingTypeLabel = (type: string) => {
-    const labels: Record<string, { en: string; de: string; emoji: string }> = {
-      phone_call: { en: "Phone Call", de: "Telefongespräch", emoji: "📞" },
-      on_site: { en: "On-site Meeting", de: "Vor-Ort-Termin", emoji: "🏢" },
-      zoom: { en: "Zoom Meeting", de: "Zoom Meeting", emoji: "💻" },
-      initial_meeting: { en: "Initial Meeting", de: "Erstgespräch", emoji: "👋" },
-      presentation: { en: "Presentation", de: "Präsentation", emoji: "📊" },
-      follow_up: { en: "Follow-up", de: "Folgetermin", emoji: "🔄" }
-    };
-    const label = labels[type];
-    if (!label) return type;
-    return `${label[settings?.language === "en" ? "en" : "de"]} ${label.emoji}`;
-  };
 
   const handleContactClick = () => {
     if (task.lead_id) {
@@ -42,7 +29,7 @@ export const TaskItem = ({ task, onToggle }: TaskItemProps) => {
         task.completed ? "opacity-75" : ""
       }`}
       style={{ 
-        backgroundColor: task.color || "#FEF7CD",
+        backgroundColor: task.color || "#FFA500",
         border: "1px solid rgba(0,0,0,0.1)"
       }}
     >
@@ -76,21 +63,11 @@ export const TaskItem = ({ task, onToggle }: TaskItemProps) => {
             <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
               <Badge variant="outline" className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                {new Date(task.due_date).toLocaleString(
-                  settings?.language === "en" ? "en-US" : "de-DE",
-                  {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  }
+                {format(new Date(task.due_date), 
+                  settings?.language === "en" 
+                    ? "MMM d, yyyy" 
+                    : "dd.MM.yyyy"
                 )}
-              </Badge>
-            </div>
-          )}
-          
-          {task.meeting_type && (
-            <div className="mt-2">
-              <Badge variant="secondary" className="text-sm">
-                {getMeetingTypeLabel(task.meeting_type)}
               </Badge>
             </div>
           )}

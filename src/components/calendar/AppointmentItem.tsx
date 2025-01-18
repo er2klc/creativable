@@ -113,7 +113,7 @@ export const AppointmentItem = ({
       ref={setNodeRef}
       style={{
         ...style,
-        backgroundColor: appointment.color || "#FEF7CD",
+        backgroundColor: appointment.color || "#40E0D0", // Turquoise for appointments
         cursor: shouldBeDraggable ? "pointer" : "default",
       }}
       {...dragAttributes}
