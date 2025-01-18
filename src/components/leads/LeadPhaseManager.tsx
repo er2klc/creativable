@@ -59,7 +59,7 @@ export const LeadPhaseManager = () => {
   });
 
   // Then get the phases for that pipeline
-  const { data: phases = [], isLoading, refetch } = useQuery({
+  const { data: phases = [], isLoading } = useQuery({
     queryKey: ["pipeline-phases", pipeline?.id],
     queryFn: async () => {
       if (!session?.user?.id || !pipeline?.id) return [];
@@ -76,39 +76,13 @@ export const LeadPhaseManager = () => {
     enabled: !!session?.user?.id && !!pipeline?.id,
   });
 
-  const updatePhaseOrder = useMutation({
-    mutationFn: async (updatedPhases: Tables<"pipeline_phases">[]) => {
-      const updates = updatedPhases.map((phase) => ({
-        id: phase.id,
-        name: phase.name,
-        pipeline_id: phase.pipeline_id,
-        order_index: phase.order_index,
-      }));
-
-      const { error } = await supabase
-        .from("pipeline_phases")
-        .upsert(updates);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
-      toast({
-        title: settings?.language === "en" ? "Order updated" : "Reihenfolge aktualisiert",
-        description: settings?.language === "en"
-          ? "Phase order has been updated successfully"
-          : "Die Reihenfolge der Phasen wurde erfolgreich aktualisiert",
-      });
-    },
-  });
-
   const addPhase = useMutation({
     mutationFn: async (baseName: string) => {
       if (!session?.user?.id || !pipeline?.id) {
         throw new Error("No pipeline selected");
       }
 
-      // Get all existing phases for this pipeline to check names
+      // Get all existing phases for this pipeline
       const { data: existingPhases, error: fetchError } = await supabase
         .from("pipeline_phases")
         .select("name, order_index")
@@ -117,16 +91,19 @@ export const LeadPhaseManager = () => {
 
       if (fetchError) throw fetchError;
 
+      // Generate unique name by checking if it exists
+      let name = baseName;
+      const existingNames = existingPhases?.map(p => p.name) || [];
+      if (existingNames.includes(name)) {
+        let counter = 1;
+        while (existingNames.includes(name)) {
+          name = `${baseName}_${counter}`;
+          counter++;
+        }
+      }
+
       // Find the highest order_index
       const maxOrderIndex = existingPhases?.length ? Math.max(...existingPhases.map(p => p.order_index)) : -1;
-
-      // Generate unique name
-      let name = baseName;
-      let counter = 1;
-      while (existingPhases?.some(phase => phase.name === name)) {
-        name = `${baseName}_${counter}`;
-        counter++;
-      }
 
       // Insert the new phase
       const { error: insertError } = await supabase
@@ -157,6 +134,32 @@ export const LeadPhaseManager = () => {
         description: settings?.language === "en"
           ? "Failed to add phase"
           : "Fehler beim Hinzufügen der Phase",
+      });
+    },
+  });
+
+  const updatePhaseOrder = useMutation({
+    mutationFn: async (updatedPhases: Tables<"pipeline_phases">[]) => {
+      const updates = updatedPhases.map((phase) => ({
+        id: phase.id,
+        name: phase.name,
+        pipeline_id: phase.pipeline_id,
+        order_index: phase.order_index,
+      }));
+
+      const { error } = await supabase
+        .from("pipeline_phases")
+        .upsert(updates);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
+      toast({
+        title: settings?.language === "en" ? "Order updated" : "Reihenfolge aktualisiert",
+        description: settings?.language === "en"
+          ? "Phase order has been updated successfully"
+          : "Die Reihenfolge der Phasen wurde erfolgreich aktualisiert",
       });
     },
   });
