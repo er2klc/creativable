@@ -1,5 +1,4 @@
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
@@ -12,8 +11,8 @@ import { usePhaseMutations } from "./kanban/usePhaseMutations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Pencil, Save, UserPlus, Plus } from "lucide-react";
-import { AddLeadDialog } from "./AddLeadDialog";
+import { Save } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -92,15 +91,6 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
     setIsEditMode(false);
   };
 
-  const handleEditModeToggle = () => {
-    const currentPipeline = phases[0]?.pipeline_id ? {
-      name: phases[0]?.name || ""
-    } : null;
-    
-    setIsEditMode(!isEditMode);
-    setEditingPipelineName(currentPipeline?.name || "");
-  };
-
   return (
     <DndContext 
       collisionDetection={closestCenter} 
@@ -122,26 +112,7 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
                   {settings?.language === "en" ? "Save Changes" : "Änderungen speichern"}
                 </Button>
               </>
-            ) : (
-              <>
-                <Button onClick={handleEditModeToggle} variant="outline" size="sm">
-                  <Pencil className="h-4 w-4 mr-2" />
-                  {settings?.language === "en" ? "Edit Pipeline" : "Pipeline bearbeiten"}
-                </Button>
-                <AddLeadDialog
-                  trigger={
-                    <Button variant="outline" size="icon" className="h-9 w-9">
-                      <UserPlus className="h-4 w-4" />
-                    </Button>
-                  }
-                  defaultPhase={phases[0]?.id}
-                  pipelineId={selectedPipelineId}
-                />
-                <Button variant="outline" size="icon" className="h-9 w-9">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </>
-            )}
+            ) : null}
           </div>
         </div>
 
