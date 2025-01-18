@@ -9,6 +9,7 @@ import { Platform } from "@/config/platforms";
 import { toast } from "sonner";
 import { LeadDetailTabs } from "@/components/leads/detail/LeadDetailTabs";
 import { useEffect } from "react";
+import { LeadTimeline } from "@/components/leads/detail/LeadTimeline";
 
 type LeadWithRelations = Tables<"leads"> & {
   platform: Platform;
@@ -136,9 +137,12 @@ export default function LeadDetail() {
             <LeadInfoCard lead={lead} />
           </div>
 
-          <div className="col-span-8">
+          <div className="col-span-8 space-y-6">
             <div className="bg-white rounded-lg shadow p-6">
               <LeadDetailTabs lead={lead} />
+            </div>
+            <div className="bg-white rounded-lg shadow">
+              <LeadTimeline lead={lead} />
             </div>
           </div>
         </div>
