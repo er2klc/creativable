@@ -14,8 +14,7 @@ import {
   Linkedin,
   MessageCircle,
   UserPlus,
-  Check,
-  Circle
+  ListTodo
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tables } from "@/integrations/supabase/types";
@@ -93,7 +92,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
         if (platform === 'whatsapp') return <MessageCircle className="h-4 w-4 text-white" />;
         return <MessageSquare className="h-4 w-4 text-white" />;
       case 'task':
-        return <Calendar className="h-4 w-4 text-white" />;
+        return <ListTodo className="h-4 w-4 text-white" />;
       case 'note':
         return <StickyNote className="h-4 w-4 text-white" />;
       case 'phase_change':
@@ -112,7 +111,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
       case 'message':
         return 'bg-blue-500';
       case 'task':
-        return status === 'completed' ? 'bg-green-500' : 'bg-orange-500';
+        return status === 'completed' ? 'bg-green-500' : 'bg-cyan-500';
       case 'note':
         return 'bg-yellow-500';
       case 'phase_change':
@@ -133,7 +132,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
       case 'message':
         return 'border-blue-500';
       case 'task':
-        return status === 'completed' ? 'border-green-500' : 'border-orange-500';
+        return status === 'completed' ? 'border-green-500' : 'border-cyan-500';
       case 'note':
         return 'border-yellow-500';
       case 'phase_change':
@@ -161,36 +160,40 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
         <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-200" />
         
         {timelineItems.map((item, index) => (
-          <div key={item.id} className="flex gap-4 items-start group relative">
-            {/* Circle with Icon */}
-            <div 
-              className={cn(
-                "z-10 flex items-center justify-center w-8 h-8 rounded-full",
-                getIconColor(item.type, item.status)
-              )}
-            >
-              {getIcon(item.type, item.platform)}
+          <div key={item.id} className="flex flex-col gap-1">
+            {/* Date above the card */}
+            <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
+              {formatDate(item.timestamp)}
             </div>
             
-            {/* Connecting Line to Card */}
-            <div className="absolute left-10 top-4 w-4 h-0.5 bg-gray-200" />
-            
-            {/* Event Card */}
-            <div className={cn(
-              "flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border-2",
-              getBorderColor(item.type, item.status)
-            )}>
-              <div className="text-sm text-gray-600 mb-1">
-                {formatDate(item.timestamp)}
+            <div className="flex gap-4 items-start group relative">
+              {/* Circle with Icon */}
+              <div 
+                className={cn(
+                  "z-10 flex items-center justify-center w-8 h-8 rounded-full",
+                  getIconColor(item.type, item.status)
+                )}
+              >
+                {getIcon(item.type, item.platform)}
               </div>
-              <div className="font-medium mb-1">
-                {item.content}
-              </div>
-              {item.metadata?.dueDate && (
-                <div className="text-sm text-gray-500">
-                  Fällig am: {formatDate(item.metadata.dueDate)}
+              
+              {/* Connecting Line to Card */}
+              <div className="absolute left-10 top-4 w-4 h-0.5 bg-gray-200" />
+              
+              {/* Event Card */}
+              <div className={cn(
+                "flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border-2",
+                getBorderColor(item.type, item.status)
+              )}>
+                <div className="font-medium mb-1">
+                  {item.content}
                 </div>
-              )}
+                {item.metadata?.dueDate && (
+                  <div className="text-sm text-gray-500">
+                    Fällig am: {formatDate(item.metadata.dueDate)}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}
