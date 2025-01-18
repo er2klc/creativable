@@ -14,6 +14,7 @@ import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { LeadTimeline } from "./LeadTimeline";
 import { toast } from "sonner";
 import { type Platform } from "@/config/platforms";
+import { useEffect } from "react";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -61,6 +62,72 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     enabled: !!leadId && isValidUUID(leadId),
   });
 
+  // Set up real-time subscriptions for all related tables
+  useEffect(() => {
+    if (!leadId) return;
+
+    const channel = supabase
+      .channel('lead-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'leads',
+          filter: `id=eq.${leadId}`
+        },
+        () => {
+          console.log('Lead changed, invalidating query');
+          queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notes',
+          filter: `lead_id=eq.${leadId}`
+        },
+        () => {
+          console.log('Notes changed, invalidating query');
+          queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks',
+          filter: `lead_id=eq.${leadId}`
+        },
+        () => {
+          console.log('Tasks changed, invalidating query');
+          queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages',
+          filter: `lead_id=eq.${leadId}`
+        },
+        () => {
+          console.log('Messages changed, invalidating query');
+          queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [leadId, queryClient]);
+
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
       if (!leadId || !isValidUUID(leadId)) {
@@ -72,7 +139,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         .update(updates)
         .eq("id", leadId)
         .select()
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
       return data;
@@ -116,14 +183,30 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     return null;
   }
 
+  if (isLoading) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        Lädt...
+      </div>
+    );
+  }
+
+  if (!lead) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        Kontakt wurde nicht gefunden
+      </div>
+    );
+  }
+
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg overflow-hidden">
         <DialogHeader className="p-0">
           {lead && (
-            <LeadDetailHeader
-              lead={lead}
-              onUpdateLead={updateLeadMutation.mutate}
+            <LeadDetailHeader 
+              lead={lead} 
+              onUpdateLead={updateLeadMutation.mutate} 
             />
           )}
         </DialogHeader>

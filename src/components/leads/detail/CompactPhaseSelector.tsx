@@ -1,5 +1,5 @@
 import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,6 @@ export function CompactPhaseSelector({
   onUpdateLead,
 }: CompactPhaseSelectorProps) {
   const session = useSession();
-  const queryClient = useQueryClient();
   
   const { data: pipelines = [] } = useQuery({
     queryKey: ["pipelines"],
