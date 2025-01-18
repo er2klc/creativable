@@ -10,12 +10,16 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-export const CreatePipelineDialog = () => {
-  const [open, setOpen] = useState(false);
+interface CreatePipelineDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export const CreatePipelineDialog = ({ open, onOpenChange }: CreatePipelineDialogProps) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [pipelineName, setPipelineName] = useState("");
   const [phases, setPhases] = useState<{ name: string }[]>([{ name: "" }]);
   const { settings } = useSettings();
@@ -68,7 +72,8 @@ export const CreatePipelineDialog = () => {
           ? "Pipeline created successfully"
           : "Pipeline erfolgreich erstellt"
       );
-      setOpen(false);
+      setIsOpen(false);
+      onOpenChange?.(false);
       setPipelineName("");
       setPhases([{ name: "" }]);
     } catch (error) {
@@ -82,13 +87,7 @@ export const CreatePipelineDialog = () => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          {settings?.language === "en" ? "New Pipeline" : "Neue Pipeline"}
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open ?? isOpen} onOpenChange={onOpenChange ?? setIsOpen}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>

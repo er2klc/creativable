@@ -29,10 +29,13 @@ const formSchema = z.object({
 interface AddLeadDialogProps {
   trigger?: React.ReactNode;
   defaultPhase?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  pipelineId?: string | null;
 }
 
-export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
-  const [open, setOpen] = useState(false);
+export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipelineId }: AddLeadDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,7 +44,7 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
       platform: "LinkedIn" as Platform,
       social_media_username: "",
       phase_id: defaultPhase || "",
-      pipeline_id: "",
+      pipeline_id: pipelineId || "",
       contact_type: "",
       phone_number: "",
       email: "",
@@ -69,13 +72,14 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
           email: values.email,
           company_name: values.company_name,
           notes: values.notes,
-          industry: "Not Specified" // Add a default value for the required industry field
+          industry: "Not Specified"
         });
 
       if (error) throw error;
 
       toast.success("Kontakt erfolgreich hinzugefügt");
-      setOpen(false);
+      setIsOpen(false);
+      onOpenChange?.(false);
       form.reset();
     } catch (error) {
       console.error("Error adding contact:", error);
@@ -84,7 +88,7 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open ?? isOpen} onOpenChange={onOpenChange ?? setIsOpen}>
       <DialogTrigger asChild>
         {trigger || (
           <Button>
@@ -109,7 +113,10 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  setIsOpen(false);
+                  onOpenChange?.(false);
+                }}
               >
                 Abbrechen ❌
               </Button>

@@ -1,5 +1,5 @@
-import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 interface LeadSearchProps {
   value: string;
