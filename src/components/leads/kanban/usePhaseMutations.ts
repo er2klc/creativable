@@ -50,63 +50,45 @@ export const usePhaseMutations = () => {
   });
 
   const addPhase = useMutation({
-    mutationFn: async (baseName: string) => {
+    mutationFn: async ({ name, pipelineId }: { name: string, pipelineId: string }) => {
       if (!session?.user?.id) {
         throw new Error("No authenticated user found");
       }
 
-      // Get the default pipeline
-      const { data: pipeline } = await supabase
-        .from("pipelines")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .order("order_index")
-        .limit(1)
-        .single();
-
-      if (!pipeline) throw new Error("No pipeline found");
-
       // Get all existing phases for this pipeline
       const { data: existingPhases, error: fetchError } = await supabase
         .from("pipeline_phases")
-        .select("name")
-        .eq("pipeline_id", pipeline.id);
+        .select("name, order_index")
+        .eq("pipeline_id", pipelineId);
 
       if (fetchError) throw fetchError;
 
       // Generate unique name
-      let name = baseName;
+      let finalName = name;
       let counter = 1;
       const existingNames = existingPhases?.map(p => p.name) || [];
       
-      while (existingNames.includes(name)) {
-        name = `${baseName} ${counter}`;
+      while (existingNames.includes(finalName)) {
+        finalName = `${name} ${counter}`;
         counter++;
       }
 
       // Get highest order_index
-      const { data: maxOrderPhase } = await supabase
-        .from("pipeline_phases")
-        .select("order_index")
-        .eq("pipeline_id", pipeline.id)
-        .order("order_index", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      const newOrderIndex = (maxOrderPhase?.order_index ?? -1) + 1;
+      const maxOrderIndex = existingPhases?.reduce((max, phase) => 
+        Math.max(max, phase.order_index), -1) ?? -1;
 
       // Insert the new phase
       const { error: insertError } = await supabase
         .from("pipeline_phases")
         .insert({
-          name,
-          pipeline_id: pipeline.id,
-          order_index: newOrderIndex,
+          name: finalName,
+          pipeline_id: pipelineId,
+          order_index: maxOrderIndex + 1,
         });
 
       if (insertError) throw insertError;
       
-      return name;
+      return finalName;
     },
     onSuccess: (finalName) => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });

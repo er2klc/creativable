@@ -100,8 +100,14 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
   };
 
   const handleAddPhase = () => {
+    if (!selectedPipelineId) {
+      toast.error(settings?.language === "en" 
+        ? "No pipeline selected" 
+        : "Keine Pipeline ausgewählt");
+      return;
+    }
     const defaultName = settings?.language === "en" ? "New Phase" : "Neue Phase";
-    addPhase.mutate(defaultName);
+    addPhase.mutate({ name: defaultName, pipelineId: selectedPipelineId });
   };
 
   const MIN_PHASE_WIDTH = 280;
