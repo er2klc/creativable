@@ -18,10 +18,7 @@ import {
   Check,
   Circle
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Platform } from "@/config/platforms";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type TimelineItem = {
   id: string;
@@ -89,78 +86,87 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
   const getIcon = (type: TimelineItem['type'], platform?: string) => {
     switch (type) {
       case 'contact_created':
-        return <UserPlus className="h-4 w-4" />;
+        return <UserPlus className="h-5 w-5 text-white" />;
       case 'message':
-        if (platform === 'instagram') return <Instagram className="h-4 w-4" />;
-        if (platform === 'linkedin') return <Linkedin className="h-4 w-4" />;
-        if (platform === 'whatsapp') return <MessageCircle className="h-4 w-4" />;
-        return <MessageSquare className="h-4 w-4" />;
+        if (platform === 'instagram') return <Instagram className="h-5 w-5 text-white" />;
+        if (platform === 'linkedin') return <Linkedin className="h-5 w-5 text-white" />;
+        if (platform === 'whatsapp') return <MessageCircle className="h-5 w-5 text-white" />;
+        return <MessageSquare className="h-5 w-5 text-white" />;
       case 'task':
-        return <Calendar className="h-4 w-4" />;
+        return <Calendar className="h-5 w-5 text-white" />;
       case 'note':
-        return <StickyNote className="h-4 w-4" />;
+        return <StickyNote className="h-5 w-5 text-white" />;
       case 'phase_change':
-        return <ArrowRight className="h-4 w-4" />;
+        return <ArrowRight className="h-5 w-5 text-white" />;
       case 'reminder':
-        return <Bell className="h-4 w-4" />;
+        return <Bell className="h-5 w-5 text-white" />;
       case 'upload':
-        return <FileText className="h-4 w-4" />;
+        return <FileText className="h-5 w-5 text-white" />;
     }
   };
 
-  const getItemColor = (type: TimelineItem['type'], status?: string, metadata?: any) => {
+  const getIconColor = (type: TimelineItem['type'], status?: string) => {
     switch (type) {
       case 'contact_created':
-        return 'bg-green-100 border-green-200';
+        return 'bg-green-500';
       case 'message':
-        return 'bg-blue-100 border-blue-200';
+        return 'bg-blue-500';
       case 'task':
-        return metadata?.meetingType === 'appointment' ? 'bg-cyan-100 border-cyan-200' : 'bg-orange-100 border-orange-200';
+        return status === 'completed' ? 'bg-green-500' : 'bg-orange-500';
       case 'note':
-        return 'bg-yellow-100 border-yellow-200';
+        return 'bg-yellow-500';
       case 'phase_change':
-        return 'bg-purple-100 border-purple-200';
+        return 'bg-purple-500';
       case 'reminder':
-        return 'bg-red-100 border-red-200';
+        return 'bg-red-500';
       case 'upload':
-        return 'bg-gray-100 border-gray-200';
+        return 'bg-gray-500';
+      default:
+        return 'bg-gray-500';
     }
   };
 
   const formatDate = (date: string) => {
-    return format(new Date(date), "EEE. dd.MM.yyyy | HH:mm 'Uhr'", { locale: de });
+    const weekday = format(new Date(date), "EEE", { locale: de });
+    const formattedDate = format(new Date(date), "dd.MM.yyyy | HH:mm 'Uhr'", { locale: de });
+    return `${weekday}. ${formattedDate}`;
   };
 
   return (
     <div className="p-4">
       <h3 className="text-lg font-semibold mb-4">Aktivitäten</h3>
-      <div className="relative space-y-4">
+      <div className="relative space-y-6">
         {/* Vertical Timeline Line */}
-        <div className="absolute left-2 top-2 bottom-2 w-0.5 bg-gray-200" />
+        <div className="absolute left-6 top-2 bottom-2 w-0.5 bg-gray-200" />
         
-        {timelineItems.map((item) => (
+        {timelineItems.map((item, index) => (
           <div key={item.id} className="flex gap-4 items-start group relative">
             {/* Circle with Icon */}
-            <div className={`z-10 flex items-center justify-center w-4 h-4 rounded-full bg-white border-2 border-gray-300`}>
-              <div className="w-2 h-2 rounded-full bg-gray-300" />
+            <div 
+              className={cn(
+                "z-10 flex items-center justify-center w-12 h-12 rounded-full",
+                getIconColor(item.type, item.status)
+              )}
+            >
+              {getIcon(item.type, item.platform)}
             </div>
             
-            {/* Connecting Line */}
-            <div className="absolute left-4 top-2 w-4 h-0.5 bg-gray-200" />
+            {/* Connecting Line to Card */}
+            <div className="absolute left-12 top-6 w-4 h-0.5 bg-gray-200" />
             
             {/* Event Card */}
-            <div className={`flex-1 min-w-0 p-4 rounded-lg transition-all cursor-pointer hover:shadow-md ${getItemColor(item.type, item.status, item.metadata)}`}>
-              <div className="flex items-center gap-2 mb-1">
-                <div className={`text-gray-600`}>
-                  {getIcon(item.type, item.platform)}
-                </div>
-                <div className="text-sm text-gray-600">
-                  {formatDate(item.timestamp)}
-                </div>
+            <div className="flex-1 min-w-0 bg-white rounded-lg shadow-sm p-4 transition-all cursor-pointer hover:shadow-md">
+              <div className="text-sm text-gray-600 mb-1">
+                {formatDate(item.timestamp)}
               </div>
-              <div className="text-sm break-words">
+              <div className="font-medium mb-1">
                 {item.content}
               </div>
+              {item.metadata?.dueDate && (
+                <div className="text-sm text-gray-500">
+                  Fällig am: {formatDate(item.metadata.dueDate)}
+                </div>
+              )}
             </div>
           </div>
         ))}
