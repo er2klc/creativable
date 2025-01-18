@@ -11,7 +11,7 @@ export const usePhaseMutations = () => {
   const session = useSession();
 
   const updateLeadPhase = useMutation({
-    mutationFn: async ({ leadId, phaseName }: { leadId: string; phaseName: string }) => {
+    mutationFn: async ({ leadId, phaseId }: { leadId: string; phaseId: string }) => {
       if (!session?.user?.id) {
         throw new Error("No authenticated user found");
       }
@@ -19,7 +19,7 @@ export const usePhaseMutations = () => {
       const { error } = await supabase
         .from("leads")
         .update({
-          phase: phaseName,
+          phase_id: phaseId,
           last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
           last_action_date: new Date().toISOString(),
         })
@@ -50,7 +50,7 @@ export const usePhaseMutations = () => {
   });
 
   const addPhase = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (baseName: string) => {
       if (!session?.user?.id) {
         throw new Error("No authenticated user found");
       }
@@ -66,33 +66,65 @@ export const usePhaseMutations = () => {
 
       if (!pipeline) throw new Error("No pipeline found");
 
-      // Get the current highest order_index
-      const { data: phases } = await supabase
+      // Get all existing phases for this pipeline
+      const { data: existingPhases, error: fetchError } = await supabase
+        .from("pipeline_phases")
+        .select("name")
+        .eq("pipeline_id", pipeline.id);
+
+      if (fetchError) throw fetchError;
+
+      // Generate unique name
+      let name = baseName;
+      let counter = 1;
+      const existingNames = existingPhases?.map(p => p.name) || [];
+      
+      while (existingNames.includes(name)) {
+        name = `${baseName} ${counter}`;
+        counter++;
+      }
+
+      // Get highest order_index
+      const { data: maxOrderPhase } = await supabase
         .from("pipeline_phases")
         .select("order_index")
         .eq("pipeline_id", pipeline.id)
         .order("order_index", { ascending: false })
-        .limit(1);
+        .limit(1)
+        .maybeSingle();
 
-      const nextOrderIndex = phases && phases.length > 0 ? phases[0].order_index + 1 : 0;
+      const newOrderIndex = (maxOrderPhase?.order_index ?? -1) + 1;
 
-      const { error } = await supabase
+      // Insert the new phase
+      const { error: insertError } = await supabase
         .from("pipeline_phases")
         .insert({
-          name: settings?.language === "en" ? "New Phase" : "Neue Phase",
-          order_index: nextOrderIndex,
+          name,
           pipeline_id: pipeline.id,
+          order_index: newOrderIndex,
         });
 
-      if (error) throw error;
+      if (insertError) throw insertError;
+      
+      return name;
     },
-    onSuccess: () => {
+    onSuccess: (finalName) => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
       toast({
         title: settings?.language === "en" ? "Phase added" : "Phase hinzugefügt",
         description: settings?.language === "en"
-          ? "New phase has been added successfully"
-          : "Neue Phase wurde erfolgreich hinzugefügt",
+          ? `The phase "${finalName}" has been added successfully`
+          : `Die Phase "${finalName}" wurde erfolgreich hinzugefügt`,
+      });
+    },
+    onError: (error) => {
+      console.error("Error adding phase:", error);
+      toast({
+        variant: "destructive",
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description: settings?.language === "en"
+          ? "Failed to add phase"
+          : "Fehler beim Hinzufügen der Phase",
       });
     },
   });
@@ -105,11 +137,11 @@ export const usePhaseMutations = () => {
 
       console.log("Starting phase rename operation:", { id, name, oldName });
 
-      // First verify that leads exist with the old phase name
+      // First verify that leads exist with the old phase ID
       const { data: existingLeads, error: checkError } = await supabase
         .from("leads")
         .select("id")
-        .eq("phase", oldName)
+        .eq("phase_id", id)
         .eq("user_id", session.user.id);
 
       if (checkError) {
@@ -130,25 +162,7 @@ export const usePhaseMutations = () => {
         throw phaseError;
       }
 
-      console.log("Phase name updated successfully, now updating leads...");
-
-      // Then update all leads that were in the old phase
-      const { data: updatedLeads, error: leadsError } = await supabase
-        .from("leads")
-        .update({ 
-          phase: name,
-          last_action: settings?.language === "en" ? "Phase renamed" : "Phase umbenannt",
-          last_action_date: new Date().toISOString(),
-        })
-        .eq("phase", oldName.trim())
-        .eq("user_id", session.user.id);
-
-      console.log("Leads update result:", { updatedLeads, error: leadsError });
-
-      if (leadsError) {
-        console.error("Error updating leads:", leadsError);
-        throw leadsError;
-      }
+      console.log("Phase name updated successfully");
 
       // Return both results
       return { 
@@ -164,8 +178,8 @@ export const usePhaseMutations = () => {
       toast({
         title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
         description: settings?.language === "en"
-          ? `Phase name and ${data.updatedLeadsCount} contacts have been updated successfully`
-          : `Phasenname und ${data.updatedLeadsCount} Kontakte wurden erfolgreich aktualisiert`,
+          ? `Phase name has been updated successfully`
+          : `Phasenname wurde erfolgreich aktualisiert`,
       });
     },
     onError: (error) => {
@@ -173,8 +187,8 @@ export const usePhaseMutations = () => {
       toast({
         title: settings?.language === "en" ? "Error" : "Fehler",
         description: settings?.language === "en"
-          ? "Failed to update phase name and contacts. Please try again."
-          : "Phasenname und Kontakte konnten nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
+          ? "Failed to update phase name. Please try again."
+          : "Phasenname konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
         variant: "destructive",
       });
     }
