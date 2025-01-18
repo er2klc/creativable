@@ -14,10 +14,11 @@ import {
   Database,
   Wrench
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, endOfDay } from "date-fns";
 import { useUser } from "@supabase/auth-helpers-react";
+import { useEffect } from "react";
 
 export const useTaskCount = () => {
   const queryClient = useQueryClient();
@@ -165,9 +166,35 @@ export const useElevateProgress = () => {
   });
 };
 
+export const teamItems = [
+  { title: "Unity", icon: Infinity, url: "/unity" },
+  { 
+    title: "Elevate", 
+    icon: GraduationCap, 
+    url: "/elevate",
+    showProgress: true 
+  },
+];
+
+export const analysisItems = [
+  { title: "Berichte", icon: BarChart, url: "/reports" },
+  { title: "Tools", icon: Wrench, url: "/tools" },
+  { title: "Einstellungen", icon: Settings, url: "/settings" },
+];
+
+export const legalItems = [
+  { title: "Impressum", icon: FileText, url: "/impressum" },
+  { title: "Datenschutz", icon: Shield, url: "/privacy-policy" },
+  { title: "Datenlöschung", icon: Globe2, url: "/auth/data-deletion/instagram" },
+];
+
+export const adminItems = [
+  { title: "Admin Dashboard", icon: Database, url: "/admin" },
+];
+
 export const usePersonalItems = () => {
-  const { data: taskCount = 0 } = useTaskCount();
-  const { data: appointmentCount = 0 } = useAppointmentCount();
+  const taskCount = useTaskCount();
+  const appointmentCount = useAppointmentCount();
   const { data: elevateProgress = 0 } = useElevateProgress();
 
   return [
