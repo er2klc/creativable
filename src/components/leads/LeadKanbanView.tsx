@@ -12,7 +12,8 @@ import { usePhaseMutations } from "./kanban/usePhaseMutations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Pencil, Save } from "lucide-react";
+import { Pencil, Save, UserPlus, Plus } from "lucide-react";
+import { AddLeadDialog } from "./AddLeadDialog";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -107,25 +108,41 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
     >
       <div className="w-full h-[calc(100vh-13rem)] overflow-hidden relative">
         <div className="flex justify-between items-center mb-4 px-4">
-          {isEditMode ? (
-            <>
-              <Input
-                value={editingPipelineName}
-                onChange={(e) => setEditingPipelineName(e.target.value)}
-                className="max-w-xs"
-                placeholder={settings?.language === "en" ? "Pipeline name" : "Pipeline-Name"}
-              />
-              <Button onClick={handleSaveChanges} variant="outline" size="sm">
-                <Save className="h-4 w-4 mr-2" />
-                {settings?.language === "en" ? "Save Changes" : "Änderungen speichern"}
-              </Button>
-            </>
-          ) : (
-            <Button onClick={handleEditModeToggle} variant="outline" size="sm">
-              <Pencil className="h-4 w-4 mr-2" />
-              {settings?.language === "en" ? "Edit Pipeline" : "Pipeline bearbeiten"}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {isEditMode ? (
+              <>
+                <Input
+                  value={editingPipelineName}
+                  onChange={(e) => setEditingPipelineName(e.target.value)}
+                  className="max-w-xs"
+                  placeholder={settings?.language === "en" ? "Pipeline name" : "Pipeline-Name"}
+                />
+                <Button onClick={handleSaveChanges} variant="outline" size="sm">
+                  <Save className="h-4 w-4 mr-2" />
+                  {settings?.language === "en" ? "Save Changes" : "Änderungen speichern"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button onClick={handleEditModeToggle} variant="outline" size="sm">
+                  <Pencil className="h-4 w-4 mr-2" />
+                  {settings?.language === "en" ? "Edit Pipeline" : "Pipeline bearbeiten"}
+                </Button>
+                <AddLeadDialog
+                  trigger={
+                    <Button variant="outline" size="icon" className="h-9 w-9">
+                      <UserPlus className="h-4 w-4" />
+                    </Button>
+                  }
+                  defaultPhase={phases[0]?.id}
+                  pipelineId={selectedPipelineId}
+                />
+                <Button variant="outline" size="icon" className="h-9 w-9">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="w-full h-full overflow-x-auto no-scrollbar">
