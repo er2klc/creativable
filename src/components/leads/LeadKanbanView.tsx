@@ -91,9 +91,13 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
     setIsEditMode(false);
   };
 
-  const handleEditModeToggle = (pipeline: any) => {
+  const handleEditModeToggle = () => {
+    const currentPipeline = phases[0]?.pipeline_id ? {
+      name: phases[0]?.name || ""
+    } : null;
+    
     setIsEditMode(!isEditMode);
-    setEditingPipelineName(pipeline?.name || "");
+    setEditingPipelineName(currentPipeline?.name || "");
   };
 
   return (
@@ -117,7 +121,7 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
               </Button>
             </>
           ) : (
-            <Button onClick={() => handleEditModeToggle(phases[0]?.pipeline)} variant="outline" size="sm">
+            <Button onClick={handleEditModeToggle} variant="outline" size="sm">
               <Pencil className="h-4 w-4 mr-2" />
               {settings?.language === "en" ? "Edit Pipeline" : "Pipeline bearbeiten"}
             </Button>
@@ -144,6 +148,7 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
                   isEditMode={isEditMode}
                   onDeletePhase={() => deletePhase.mutate(phase.id)}
                   onUpdatePhaseName={(newName) => updatePhaseName.mutate({ id: phase.id, name: newName })}
+                  pipelineId={selectedPipelineId}
                 />
               </div>
             ))}

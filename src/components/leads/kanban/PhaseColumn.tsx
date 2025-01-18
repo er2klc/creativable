@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import { AddLeadButton } from "../AddLeadButton";
 
 interface PhaseColumnProps {
   phase: Tables<"pipeline_phases">;
@@ -14,6 +15,7 @@ interface PhaseColumnProps {
   isEditMode: boolean;
   onDeletePhase: () => void;
   onUpdatePhaseName: (newName: string) => void;
+  pipelineId: string | null;
 }
 
 export const PhaseColumn = ({ 
@@ -22,13 +24,15 @@ export const PhaseColumn = ({
   onLeadClick,
   isEditMode,
   onDeletePhase,
-  onUpdatePhaseName
+  onUpdatePhaseName,
+  pipelineId
 }: PhaseColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: phase.id,
   });
 
   const [editingName, setEditingName] = useState(phase.name);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditingName(e.target.value);
@@ -41,6 +45,8 @@ export const PhaseColumn = ({
       className={`bg-muted/50 rounded-lg flex flex-col h-full relative transition-colors duration-200 ${
         isOver ? 'ring-2 ring-primary/50 bg-primary/5 shadow-[0_-2px_4px_rgba(0,0,0,0.15)]' : ''
       }`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <CardHeader className="p-4 space-y-0">
         <div className="flex items-center justify-between gap-2">
@@ -74,6 +80,9 @@ export const PhaseColumn = ({
               onLeadClick={onLeadClick}
             />
           ))}
+          {isHovered && !isEditMode && (
+            <AddLeadButton phase={phase.id} pipelineId={pipelineId} />
+          )}
         </div>
       </div>
     </Card>
