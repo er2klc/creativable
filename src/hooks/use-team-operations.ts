@@ -21,7 +21,7 @@ export const useTeamOperations = () => {
           ? "Error deleting team members" 
           : "Fehler beim Löschen der Teammitglieder"
         );
-        return false;
+        return;
       }
 
       // Then delete the team itself
@@ -43,7 +43,7 @@ export const useTeamOperations = () => {
             : "Fehler beim Löschen des Teams"
           );
         }
-        return false;
+        return;
       }
 
       queryClient.invalidateQueries({ queryKey: ['teams'] });
@@ -51,23 +51,21 @@ export const useTeamOperations = () => {
         ? "Team deleted successfully" 
         : "Team erfolgreich gelöscht"
       );
-      return true;
     } catch (error) {
       console.error('Error in deleteTeam:', error);
       toast.error(settings?.language === "en" 
         ? "Error deleting team" 
         : "Fehler beim Löschen des Teams"
       );
-      return false;
     }
   };
 
   const updateTeamOrder = async (teamId: string, direction: 'up' | 'down') => {
     try {
-      const { error } = await supabase.rpc('update_team_order', {
-        team_id: teamId,
-        move_direction: direction
-      });
+      const { data, error } = await supabase
+        .from('teams')
+        .update({ order_index: direction === 'up' ? -1 : 1 })
+        .eq('id', teamId);
 
       if (error) throw error;
       

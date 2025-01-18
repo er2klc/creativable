@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { type Tables } from "@/integrations/supabase/types";
 import { TeamList } from "./TeamList";
 import { CreateTeamDialog } from "./CreateTeamDialog";
 import { useTeamOperations } from "@/hooks/use-team-operations";
 import { useSettings } from "@/hooks/use-settings";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { type Tables } from "@/integrations/supabase/types";
 
 interface TeamListViewProps {
   teams: Tables<"teams">[];
@@ -17,10 +16,17 @@ export const TeamListView = ({ teams, isLoading }: TeamListViewProps) => {
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const { deleteTeam, updateTeamOrder } = useTeamOperations();
   const { settings } = useSettings();
-  const navigate = useNavigate();
 
   const handleLeaveTeam = async (teamId: string) => {
     // Logic for leaving a team can be added here
+  };
+
+  const handleDeleteTeam = async (teamId: string) => {
+    await deleteTeam(teamId);
+  };
+
+  const handleUpdateOrder = async (teamId: string, direction: 'up' | 'down') => {
+    await updateTeamOrder(teamId, direction);
   };
 
   return (
@@ -37,15 +43,15 @@ export const TeamListView = ({ teams, isLoading }: TeamListViewProps) => {
 
       <TeamList
         teams={teams}
-        onDelete={deleteTeam}
+        onDelete={handleDeleteTeam}
         onLeave={handleLeaveTeam}
         isLoading={isLoading}
-        onUpdateOrder={updateTeamOrder}
+        onUpdateOrder={handleUpdateOrder}
       />
 
       <CreateTeamDialog
-        open={showCreateTeam}
-        onOpenChange={setShowCreateTeam}
+        isOpen={showCreateTeam}
+        onClose={() => setShowCreateTeam(false)}
       />
     </div>
   );
