@@ -15,6 +15,7 @@ import { LeadTimeline } from "./LeadTimeline";
 import { toast } from "sonner";
 import { type Platform } from "@/config/platforms";
 import { useEffect } from "react";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -29,6 +30,7 @@ const isValidUUID = (uuid: string) => {
 export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
+  const user = useUser();
 
   const { data: lead, isLoading, error } = useQuery({
     queryKey: ["lead", leadId],
@@ -64,7 +66,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
   // Set up real-time subscriptions for all related tables
   useEffect(() => {
-    if (!leadId) return;
+    if (!leadId || !user?.id) return;
 
     console.log('Setting up real-time subscriptions for leadId:', leadId);
 
@@ -131,12 +133,12 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       console.log('Cleaning up subscriptions');
       supabase.removeChannel(channel);
     };
-  }, [leadId, queryClient]);
+  }, [leadId, queryClient, user?.id]);
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
-      if (!leadId || !isValidUUID(leadId)) {
-        throw new Error("Invalid lead ID");
+      if (!leadId || !isValidUUID(leadId) || !user?.id) {
+        throw new Error("Invalid lead ID or user not authenticated");
       }
 
       // First create the phase change note if this is a phase change
@@ -148,6 +150,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           .from("notes")
           .insert({
             lead_id: leadId,
+            user_id: user.id, // Add the user_id here
             content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
             color: "#E9D5FF",
             metadata: {
