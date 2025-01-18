@@ -3,6 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Tables } from "@/integrations/supabase/types";
 import { useState, useRef, CSSProperties } from "react";
 import { cn } from "@/lib/utils";
+import { Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
 
 interface SortableLeadItemProps {
   lead: Tables<"leads">;
@@ -22,6 +23,23 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     id: lead.id,
     data: lead,
   });
+
+  const getPlatformIcon = (platform: string) => {
+    switch (platform?.toLowerCase()) {
+      case "instagram":
+        return <Instagram className="h-4 w-4 text-gray-500" />;
+      case "linkedin":
+        return <Linkedin className="h-4 w-4 text-gray-500" />;
+      case "facebook":
+        return <Facebook className="h-4 w-4 text-gray-500" />;
+      case "tiktok":
+        return <Video className="h-4 w-4 text-gray-500" />;
+      case "offline":
+        return <Users className="h-4 w-4 text-gray-500" />;
+      default:
+        return null;
+    }
+  };
 
   const style: CSSProperties | undefined = transform ? {
     transform: CSS.Transform.toString({
@@ -86,7 +104,10 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
       onMouseUp={handleMouseUp}
     >
       <div className="space-y-1.5">
-        <div className="font-medium text-sm">{lead.name}</div>
+        <div className="font-medium text-sm flex items-center gap-2">
+          {getPlatformIcon(lead.platform)}
+          <span>{lead.name}</span>
+        </div>
         <div className="text-xs text-muted-foreground">
           {lead.contact_type || "Nicht festgelegt"}
         </div>

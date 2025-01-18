@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tables } from "@/integrations/supabase/types";
-import { Contact2, Building2, Briefcase, Phone, Mail, ExternalLink, Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
+import { Contact2, Building2, Briefcase, Phone, Mail, ExternalLink } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,23 +19,6 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   const queryClient = useQueryClient();
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>("");
-
-  const getPlatformIcon = (platform: string) => {
-    switch (platform?.toLowerCase()) {
-      case "instagram":
-        return <Instagram className="h-4 w-4 text-gray-500" />;
-      case "linkedin":
-        return <Linkedin className="h-4 w-4 text-gray-500" />;
-      case "facebook":
-        return <Facebook className="h-4 w-4 text-gray-500" />;
-      case "tiktok":
-        return <Video className="h-4 w-4 text-gray-500" />;
-      case "offline":
-        return <Users className="h-4 w-4 text-gray-500" />;
-      default:
-        return null;
-    }
-  };
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
@@ -139,9 +122,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
             <div className="flex items-center gap-2">
               <div 
                 onClick={() => handleStartEdit(field, value)}
-                className="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 -ml-2 flex-1 flex items-center gap-2"
+                className="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 -ml-2 flex-1"
               >
-                {field === "name" && getPlatformIcon(lead.platform)}
                 <span>{value || label}</span>
               </div>
               {field === "social_media_username" && socialMediaUrl && (
