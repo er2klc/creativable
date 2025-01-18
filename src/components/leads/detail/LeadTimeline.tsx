@@ -14,7 +14,8 @@ import {
   Instagram,
   Linkedin,
   MessageCircle,
-  UserPlus
+  UserPlus,
+  Check
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
