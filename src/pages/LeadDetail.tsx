@@ -18,13 +18,13 @@ type LeadWithRelations = Tables<"leads"> & {
 };
 
 export default function LeadDetail() {
-  const { leadSlug } = useParams();
+  const { leadId } = useParams();
   const queryClient = useQueryClient();
 
   const { data: lead, isLoading, error } = useQuery({
-    queryKey: ["lead", leadSlug],
+    queryKey: ["lead", leadId],
     queryFn: async () => {
-      if (!leadSlug) return null;
+      if (!leadId) return null;
       
       const { data, error } = await supabase
         .from("leads")
@@ -34,7 +34,7 @@ export default function LeadDetail() {
           tasks (*),
           notes (*)
         `)
-        .eq("slug", leadSlug)
+        .eq("id", leadId)
         .maybeSingle();
 
       if (error) {
@@ -44,7 +44,7 @@ export default function LeadDetail() {
 
       return data as LeadWithRelations;
     },
-    enabled: !!leadSlug,
+    enabled: !!leadId,
   });
 
   // Subscribe to real-time updates for the lead
@@ -62,7 +62,7 @@ export default function LeadDetail() {
           filter: `id=eq.${lead.id}`
         },
         (payload) => {
-          queryClient.setQueryData(["lead", leadSlug], (oldData: LeadWithRelations | undefined) => {
+          queryClient.setQueryData(["lead", leadId], (oldData: LeadWithRelations | undefined) => {
             if (!oldData) return oldData;
             return {
               ...oldData,
@@ -76,7 +76,7 @@ export default function LeadDetail() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [lead?.id, leadSlug, queryClient]);
+  }, [lead?.id, leadId, queryClient]);
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {

@@ -14,12 +14,8 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
   const navigate = useNavigate();
 
   const handleNameChange = async (name: string) => {
-    const newSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    await onUpdateLead({ 
-      name,
-      slug: newSlug
-    });
-    navigate(`/leads/${newSlug}`, { replace: true });
+    await onUpdateLead({ name });
+    navigate(`/leads/${lead.id}`, { replace: true });
   };
 
   const handleStatusChange = (status: string) => {

@@ -96,10 +96,7 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
   };
 
   const handleLeadClick = (id: string) => {
-    const lead = leads.find(l => l.id === id);
-    if (lead?.slug) {
-      navigate(`/leads/${lead.slug}`);
-    }
+    navigate(`/leads/${id}`);
   };
 
   const MIN_PHASE_WIDTH = 280;
