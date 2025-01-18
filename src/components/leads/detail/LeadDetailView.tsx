@@ -139,6 +139,31 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Invalid lead ID");
       }
 
+      // First create the phase change note if this is a phase change
+      if (updates.phase_id && lead?.phase_id !== updates.phase_id) {
+        const oldPhase = lead?.phase_id;
+        const newPhase = updates.phase_id;
+        
+        const { error: noteError } = await supabase
+          .from("notes")
+          .insert({
+            lead_id: leadId,
+            content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
+            color: "#E9D5FF",
+            metadata: {
+              type: "phase_change",
+              oldPhase,
+              newPhase
+            }
+          });
+
+        if (noteError) {
+          console.error("Error creating phase change note:", noteError);
+          throw noteError;
+        }
+      }
+
+      // Then update the lead
       const { data, error } = await supabase
         .from("leads")
         .update(updates)
@@ -196,57 +221,49 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     return null;
   }
 
-  if (isLoading) {
-    return (
-      <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
-    );
-  }
-
-  if (!lead) {
-    return (
-      <div className="p-6 text-center text-muted-foreground">
-        {settings?.language === "en" ? "Contact not found" : "Kontakt wurde nicht gefunden"}
-      </div>
-    );
-  }
-
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg overflow-hidden">
         <DialogHeader className="p-0">
-          <LeadDetailHeader
-            lead={lead}
-            onUpdateLead={updateLeadMutation.mutate}
-          />
-        </DialogHeader>
-
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-6">
-            <CompactPhaseSelector
+          {lead && (
+            <LeadDetailHeader
               lead={lead}
               onUpdateLead={updateLeadMutation.mutate}
             />
-            
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Bot className="h-5 w-5" />
-                <h3 className="text-lg font-semibold">
-                  {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
-                </h3>
+          )}
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
+        ) : lead ? (
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="space-y-6">
+              <CompactPhaseSelector
+                lead={lead}
+                onUpdateLead={updateLeadMutation.mutate}
+              />
+              
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Bot className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">
+                    {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
+                  </h3>
+                </div>
+                <LeadSummary lead={lead} />
               </div>
-              <LeadSummary lead={lead} />
+              
+              <LeadInfoCard lead={lead} />
+              <LeadTimeline 
+                lead={lead} 
+                onDeletePhaseChange={deletePhaseChangeMutation.mutate}
+              />
+              <TaskList leadId={lead.id} />
+              <NoteList leadId={lead.id} />
+              <LeadMessages messages={lead.messages} />
             </div>
-            
-            <LeadInfoCard lead={lead} />
-            <LeadTimeline 
-              lead={lead} 
-              onDeletePhaseChange={deletePhaseChangeMutation.mutate}
-            />
-            <TaskList leadId={lead.id} />
-            <NoteList leadId={lead.id} />
-            <LeadMessages messages={lead.messages} />
           </div>
-        </div>
+        ) : null}
       </DialogContent>
     </Dialog>
   );

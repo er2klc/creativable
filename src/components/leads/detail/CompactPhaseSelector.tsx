@@ -69,43 +69,11 @@ export function CompactPhaseSelector({
       const oldPhase = phases.find(p => p.id === lead.phase_id)?.name;
       const newPhase = phases.find(p => p.id === phaseId)?.name;
       
-      try {
-        console.log('Starting phase change process');
-        
-        // First create the note to track the phase change
-        if (oldPhase && newPhase) {
-          const { error: noteError } = await supabase.from("notes").insert({
-            lead_id: lead.id,
-            user_id: session?.user?.id,
-            content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
-            color: "#E9D5FF", // Light purple color for phase changes
-            metadata: {
-              type: "phase_change",
-              oldPhase,
-              newPhase
-            }
-          });
-
-          if (noteError) {
-            console.error('Error creating phase change note:', noteError);
-            throw noteError;
-          }
-          
-          console.log('Phase change note created successfully');
-        }
-
-        // Then update the lead
-        onUpdateLead({ 
-          phase_id: phaseId,
-          last_action: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
-          last_action_date: new Date().toISOString()
-        });
-        
-        console.log('Lead update triggered');
-
-      } catch (error) {
-        console.error("Error updating phase:", error);
-      }
+      onUpdateLead({ 
+        phase_id: phaseId,
+        last_action: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
+        last_action_date: new Date().toISOString()
+      });
     }
   };
 
