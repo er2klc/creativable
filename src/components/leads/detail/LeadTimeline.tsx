@@ -21,7 +21,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
       content: `Kontakt ${lead.name} wurde erstellt`,
       timestamp: lead.created_at,
     },
-    ...lead.messages.map(message => ({
+    ...(lead.messages || []).map(message => ({
       id: message.id,
       type: 'message' as const,
       content: message.content,
@@ -29,7 +29,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
       status: message.platform,
       platform: message.platform
     })),
-    ...lead.tasks.map(task => ({
+    ...(lead.tasks || []).map(task => ({
       id: task.id,
       type: task.meeting_type ? ('appointment' as const) : ('task' as const),
       content: task.title,
@@ -41,7 +41,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
         color: task.color
       }
     })),
-    ...lead.notes.map(note => ({
+    ...(lead.notes || []).map(note => ({
       id: note.id,
       type: 'note' as const,
       content: note.content,
