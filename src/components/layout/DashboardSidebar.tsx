@@ -8,13 +8,29 @@ import { usePersonalItems, teamItems, analysisItems, legalItems } from "./sideba
 import { useSidebarState } from "./sidebar/SidebarState";
 import { useUnreadCount } from "./sidebar/SidebarUnreadCount";
 import { AdminSection } from "./sidebar/AdminSection";
+import { useQuery } from "@tanstack/react-query";
 
 export const DashboardSidebar = () => {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [currentVersion, setCurrentVersion] = useState("0.31");
   const { isExpanded, handlers } = useSidebarState();
   const personalItems = usePersonalItems();
   const unreadCount = useUnreadCount();
+
+  // Fetch latest version from changelog_entries
+  const { data: versionData } = useQuery({
+    queryKey: ['latest-version'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('changelog_entries')
+        .select('version')
+        .order('version', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+      return data?.version || '0.1';
+    }
+  });
 
   useEffect(() => {
     const checkSuperAdminStatus = async () => {
@@ -93,7 +109,7 @@ export const DashboardSidebar = () => {
 
         <SidebarFooter 
           isExpanded={isExpanded} 
-          currentVersion={currentVersion}
+          currentVersion={versionData || '0.1'}
         />
       </SidebarContent>
     </Sidebar>
