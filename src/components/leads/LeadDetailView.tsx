@@ -40,7 +40,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         .from("leads")
         .select("*, messages(*), tasks(*), notes(*)")
         .eq("id", leadId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching lead:", error);
@@ -70,7 +70,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         .eq("user_id", lead?.user_id)
         .order("order_index")
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -106,7 +106,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         .update(updates)
         .eq("id", leadId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
