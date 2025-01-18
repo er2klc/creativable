@@ -137,7 +137,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
       <h3 className="text-lg font-semibold mb-4">Aktivitäten</h3>
       <div className="relative space-y-6">
         {/* Vertical Timeline Line */}
-        <div className="absolute left-5 top-2 bottom-2 w-[2px] bg-gray-300" />
+        <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-300" />
         
         {timelineItems.map((item, index) => (
           <div key={item.id} className="flex gap-4 items-start group relative">
@@ -152,7 +152,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
             </div>
             
             {/* Connecting Line to Card */}
-            <div className="absolute left-10 top-5 w-4 h-0.5 bg-gray-300" />
+            <div className="absolute left-10 top-4 w-4 h-0.5 bg-gray-300" />
             
             {/* Event Card */}
             <div className="flex-1 min-w-0 rounded-lg p-4 transition-all cursor-pointer">
