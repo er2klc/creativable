@@ -1,17 +1,15 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useAuth } from "@/hooks/use-auth";
+import { Tables } from "@/integrations/supabase/types";
+import { Platform } from "@/config/platforms";
+import { NoteTab } from "./tabs/NoteTab";
+import { TaskTab } from "./tabs/TaskTab";
+import { MessageTab } from "./tabs/MessageTab";
+import { PlaceholderTab } from "./tabs/PlaceholderTab";
 
 interface LeadDetailTabsProps {
   lead: Tables<"leads"> & {
+    platform: Platform;
     messages: Tables<"messages">[];
     tasks: Tables<"tasks">[];
     notes: Tables<"notes">[];
@@ -29,86 +27,6 @@ const tabColors = {
 
 export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const { settings } = useSettings();
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [newNote, setNewNote] = useState("");
-  const [newTask, setNewTask] = useState("");
-  const [newMessage, setNewMessage] = useState("");
-
-  const createNoteMutation = useMutation({
-    mutationFn: async (content: string) => {
-      const { data, error } = await supabase
-        .from("notes")
-        .insert([
-          {
-            lead_id: lead.id,
-            content,
-            color: tabColors.notes,
-            user_id: user?.id,
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
-      setNewNote("");
-      toast.success(settings?.language === "en" ? "Note added" : "Notiz hinzugefügt");
-    },
-  });
-
-  const createTaskMutation = useMutation({
-    mutationFn: async (title: string) => {
-      const { data, error } = await supabase
-        .from("tasks")
-        .insert([
-          {
-            lead_id: lead.id,
-            title,
-            color: tabColors.tasks,
-            user_id: user?.id,
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
-      setNewTask("");
-      toast.success(settings?.language === "en" ? "Task added" : "Aufgabe hinzugefügt");
-    },
-  });
-
-  const createMessageMutation = useMutation({
-    mutationFn: async (content: string) => {
-      const { data, error } = await supabase
-        .from("messages")
-        .insert([
-          {
-            lead_id: lead.id,
-            content,
-            platform: lead.platform,
-            user_id: user?.id,
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
-      setNewMessage("");
-      toast.success(settings?.language === "en" ? "Message added" : "Nachricht hinzugefügt");
-    },
-  });
 
   return (
     <Tabs defaultValue="notes" className="w-full">
@@ -158,106 +76,27 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
       </TabsList>
 
       <TabsContent value="notes" className="mt-4">
-        <div className="space-y-4">
-          <div>
-            <Label>
-              {settings?.language === "en" ? "Add Note" : "Notiz hinzufügen"}
-            </Label>
-            <div className="flex gap-2 mt-2">
-              <Input
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                placeholder={settings?.language === "en" ? "Enter note..." : "Notiz eingeben..."}
-              />
-              <Button onClick={() => createNoteMutation.mutate(newNote)}>
-                {settings?.language === "en" ? "Add" : "Hinzufügen"}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <NoteTab leadId={lead.id} />
       </TabsContent>
 
       <TabsContent value="tasks" className="mt-4">
-        <div className="space-y-4">
-          <div>
-            <Label>
-              {settings?.language === "en" ? "Add Task" : "Aufgabe hinzufügen"}
-            </Label>
-            <div className="flex gap-2 mt-2">
-              <Input
-                value={newTask}
-                onChange={(e) => setNewTask(e.target.value)}
-                placeholder={settings?.language === "en" ? "Enter task..." : "Aufgabe eingeben..."}
-              />
-              <Button onClick={() => createTaskMutation.mutate(newTask)}>
-                {settings?.language === "en" ? "Add" : "Hinzufügen"}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <TaskTab leadId={lead.id} />
       </TabsContent>
 
       <TabsContent value="appointments" className="mt-4">
-        <div className="space-y-4">
-          <div>
-            <Label>
-              {settings?.language === "en" ? "Add Appointment" : "Termin hinzufügen"}
-            </Label>
-            <div className="mt-2">
-              {/* Appointment form will be implemented here */}
-            </div>
-          </div>
-        </div>
+        <PlaceholderTab title="Appointment" />
       </TabsContent>
 
       <TabsContent value="messages" className="mt-4">
-        <div className="space-y-4">
-          <div>
-            <Label>
-              {settings?.language === "en" ? "Add Message" : "Nachricht hinzufügen"}
-            </Label>
-            <div className="flex gap-2 mt-2">
-              <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder={settings?.language === "en" ? "Enter message..." : "Nachricht eingeben..."}
-              />
-              <Button onClick={() => createMessageMutation.mutate(newMessage)}>
-                {settings?.language === "en" ? "Add" : "Hinzufügen"}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <MessageTab leadId={lead.id} platform={lead.platform} />
       </TabsContent>
 
       <TabsContent value="uploads" className="mt-4">
-        <div className="space-y-4">
-          <div>
-            <Label>
-              {settings?.language === "en" ? "Upload File" : "Datei hochladen"}
-            </Label>
-            <div className="mt-2">
-              {/* File upload will be implemented here */}
-            </div>
-          </div>
-        </div>
+        <PlaceholderTab title="Upload" />
       </TabsContent>
 
       <TabsContent value="presentations" className="mt-4">
-        <div className="space-y-4">
-          <div>
-            <Label>
-              {settings?.language === "en" ? "Select Presentation" : "Präsentation auswählen"}
-            </Label>
-            <div className="mt-2">
-              <select className="w-full p-2 border rounded">
-                <option value="">
-                  {settings?.language === "en" ? "Select a presentation..." : "Präsentation auswählen..."}
-                </option>
-              </select>
-            </div>
-          </div>
-        </div>
+        <PlaceholderTab title="Presentation" />
       </TabsContent>
     </Tabs>
   );
