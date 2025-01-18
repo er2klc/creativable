@@ -103,7 +103,7 @@ export const LeadPhaseManager = () => {
         .eq("pipeline_id", pipeline.id)
         .order("order_index", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       const newOrderIndex = (maxOrderPhase?.order_index ?? -1) + 1;
 
@@ -129,39 +129,14 @@ export const LeadPhaseManager = () => {
           : `Die Phase "${finalName}" wurde erfolgreich hinzugefügt`,
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Error adding phase:", error);
       toast({
         variant: "destructive",
         title: settings?.language === "en" ? "Error" : "Fehler",
         description: settings?.language === "en"
           ? "Failed to add phase"
           : "Fehler beim Hinzufügen der Phase",
-      });
-    },
-  });
-
-  const updatePhaseOrder = useMutation({
-    mutationFn: async (updatedPhases: Tables<"pipeline_phases">[]) => {
-      const updates = updatedPhases.map((phase) => ({
-        id: phase.id,
-        name: phase.name,
-        pipeline_id: phase.pipeline_id,
-        order_index: phase.order_index,
-      }));
-
-      const { error } = await supabase
-        .from("pipeline_phases")
-        .upsert(updates);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
-      toast({
-        title: settings?.language === "en" ? "Order updated" : "Reihenfolge aktualisiert",
-        description: settings?.language === "en"
-          ? "Phase order has been updated successfully"
-          : "Die Reihenfolge der Phasen wurde erfolgreich aktualisiert",
       });
     },
   });
