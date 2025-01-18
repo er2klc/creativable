@@ -54,15 +54,17 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   };
 
   const handleContactTypeUpdate = (type: string) => {
-    const currentType = lead.contact_type;
-    let newType: string | null = null;
+    const currentTypes = lead.contact_type?.split(',') || [];
+    let newTypes: string[];
 
-    if (currentType !== type) {
-      newType = type;
+    if (currentTypes.includes(type)) {
+      newTypes = currentTypes.filter(t => t !== type);
+    } else {
+      newTypes = [...currentTypes, type];
     }
     
     updateLeadMutation.mutate({ 
-      contact_type: newType
+      contact_type: newTypes.length > 0 ? newTypes.join(',') : null
     });
   };
 
@@ -112,6 +114,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     );
   };
 
+  const currentTypes = lead.contact_type?.split(',') || [];
+
   return (
     <Card>
       <CardHeader>
@@ -123,22 +127,22 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
       <CardContent className="space-y-1">
         <div className="flex gap-2 mb-4">
           <Button
-            variant={lead.contact_type === 'likely_partner' ? "default" : "outline"}
+            variant={currentTypes.includes('Partner') ? "default" : "outline"}
             size="sm"
-            onClick={() => handleContactTypeUpdate('likely_partner')}
+            onClick={() => handleContactTypeUpdate('Partner')}
             className="flex items-center gap-2"
           >
             <HelpCircle className="h-4 w-4" />
-            Likely Partner
+            Partner
           </Button>
           <Button
-            variant={lead.contact_type === 'likely_customer' ? "default" : "outline"}
+            variant={currentTypes.includes('Kunde') ? "default" : "outline"}
             size="sm"
-            onClick={() => handleContactTypeUpdate('likely_customer')}
+            onClick={() => handleContactTypeUpdate('Kunde')}
             className="flex items-center gap-2"
           >
             <Star className="h-4 w-4" />
-            Likely Kunde
+            Kunde
           </Button>
         </div>
         <div className="h-[1px] w-full bg-border mb-4" />
