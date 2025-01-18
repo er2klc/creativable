@@ -99,6 +99,11 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
     navigate(`/contacts/${id}`);
   };
 
+  const handleAddPhase = () => {
+    const defaultName = settings?.language === "en" ? "New Phase" : "Neue Phase";
+    addPhase.mutate(defaultName);
+  };
+
   const MIN_PHASE_WIDTH = 280;
   const GAP = 16;
   const totalWidth = phases.length * MIN_PHASE_WIDTH + ((phases.length - 1) * GAP);
@@ -134,7 +139,7 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
               variant="ghost"
               size="icon"
               className="h-8 w-8 mt-4 flex-none"
-              onClick={() => addPhase.mutate()}
+              onClick={handleAddPhase}
             >
               <Plus className="h-4 w-4" />
             </Button>
