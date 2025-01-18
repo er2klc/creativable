@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Tables } from "@/integrations/supabase/types";
 import { Star, XCircle, Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
 import { Platform } from "@/config/platforms";
+import { CompactPhaseSelector } from "./CompactPhaseSelector";
 
 interface LeadDetailHeaderProps {
   lead: Tables<"leads">;
@@ -12,8 +12,6 @@ interface LeadDetailHeaderProps {
 }
 
 export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) {
-  const navigate = useNavigate();
-
   const handleNameChange = async (name: string) => {
     await onUpdateLead({ name });
   };
@@ -103,6 +101,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
             </Button>
           </div>
         </div>
+        <CompactPhaseSelector lead={lead} onUpdateLead={onUpdateLead} />
       </div>
     </DialogHeader>
   );
