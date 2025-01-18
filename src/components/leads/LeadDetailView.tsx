@@ -61,40 +61,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     enabled: !!leadId && isValidUUID(leadId),
   });
 
-  const { data: pipeline } = useQuery({
-    queryKey: ["default-pipeline"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("pipelines")
-        .select("*")
-        .eq("user_id", lead?.user_id)
-        .order("order_index")
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!lead?.user_id,
-  });
-
-  const { data: phases = [] } = useQuery({
-    queryKey: ["pipeline-phases", pipeline?.id],
-    queryFn: async () => {
-      if (!pipeline?.id) return [];
-      
-      const { data, error } = await supabase
-        .from("pipeline_phases")
-        .select("*")
-        .eq("pipeline_id", pipeline.id)
-        .order("order_index");
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!pipeline?.id,
-  });
-
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
       if (!leadId || !isValidUUID(leadId)) {
@@ -117,6 +83,25 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         settings?.language === "en"
           ? "Contact updated successfully"
           : "Kontakt erfolgreich aktualisiert"
+      );
+    },
+  });
+
+  const deletePhaseChangeMutation = useMutation({
+    mutationFn: async (noteId: string) => {
+      const { error } = await supabase
+        .from("notes")
+        .delete()
+        .eq("id", noteId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      toast.success(
+        settings?.language === "en"
+          ? "Phase change deleted successfully"
+          : "Phasenänderung erfolgreich gelöscht"
       );
     },
   });
@@ -164,7 +149,10 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
               </div>
               
               <LeadInfoCard lead={lead} />
-              <LeadTimeline lead={lead} />
+              <LeadTimeline 
+                lead={lead} 
+                onDeletePhaseChange={deletePhaseChangeMutation.mutate}
+              />
               <TaskList leadId={lead.id} />
               <NoteList leadId={lead.id} />
               <LeadMessages messages={lead.messages} />

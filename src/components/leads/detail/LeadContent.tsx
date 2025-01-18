@@ -18,9 +18,10 @@ interface LeadContentProps {
     notes: Tables<"notes">[];
   };
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
+  onDeletePhaseChange: (noteId: string) => void;
 }
 
-export const LeadContent = ({ lead, onUpdateLead }: LeadContentProps) => {
+export const LeadContent = ({ lead, onUpdateLead, onDeletePhaseChange }: LeadContentProps) => {
   const { settings } = useSettings();
 
   return (
@@ -42,7 +43,10 @@ export const LeadContent = ({ lead, onUpdateLead }: LeadContentProps) => {
         </div>
         
         <LeadInfoCard lead={lead} />
-        <LeadTimeline lead={lead} />
+        <LeadTimeline 
+          lead={lead} 
+          onDeletePhaseChange={onDeletePhaseChange}
+        />
         <TaskList leadId={lead.id} />
         <NoteList leadId={lead.id} />
         <LeadMessages messages={lead.messages} />

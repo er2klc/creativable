@@ -97,6 +97,21 @@ export default function LeadDetail() {
     },
   });
 
+  const deletePhaseChangeMutation = useMutation({
+    mutationFn: async (noteId: string) => {
+      const { error } = await supabase
+        .from("notes")
+        .delete()
+        .eq("id", noteId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      toast.success("Phasenänderung erfolgreich gelöscht");
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="p-8 text-center text-muted-foreground">
@@ -142,7 +157,10 @@ export default function LeadDetail() {
               <LeadDetailTabs lead={lead} />
             </div>
             <div className="rounded-lg">
-              <LeadTimeline lead={lead} />
+              <LeadTimeline 
+                lead={lead} 
+                onDeletePhaseChange={deletePhaseChangeMutation.mutate}
+              />
             </div>
           </div>
         </div>
