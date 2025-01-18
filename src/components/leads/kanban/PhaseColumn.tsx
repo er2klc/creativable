@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
-import { AddLeadButton } from "../../AddLeadButton";
+import { AddLeadButton } from "./AddLeadButton";
 
 interface PhaseColumnProps {
   phase: Tables<"pipeline_phases">;
