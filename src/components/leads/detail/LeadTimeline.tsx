@@ -86,22 +86,22 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
   const getIcon = (type: TimelineItem['type'], platform?: string) => {
     switch (type) {
       case 'contact_created':
-        return <UserPlus className="h-5 w-5 text-white" />;
+        return <UserPlus className="h-4 w-4 text-white" />;
       case 'message':
-        if (platform === 'instagram') return <Instagram className="h-5 w-5 text-white" />;
-        if (platform === 'linkedin') return <Linkedin className="h-5 w-5 text-white" />;
-        if (platform === 'whatsapp') return <MessageCircle className="h-5 w-5 text-white" />;
-        return <MessageSquare className="h-5 w-5 text-white" />;
+        if (platform === 'instagram') return <Instagram className="h-4 w-4 text-white" />;
+        if (platform === 'linkedin') return <Linkedin className="h-4 w-4 text-white" />;
+        if (platform === 'whatsapp') return <MessageCircle className="h-4 w-4 text-white" />;
+        return <MessageSquare className="h-4 w-4 text-white" />;
       case 'task':
-        return <Calendar className="h-5 w-5 text-white" />;
+        return <Calendar className="h-4 w-4 text-white" />;
       case 'note':
-        return <StickyNote className="h-5 w-5 text-white" />;
+        return <StickyNote className="h-4 w-4 text-white" />;
       case 'phase_change':
-        return <ArrowRight className="h-5 w-5 text-white" />;
+        return <ArrowRight className="h-4 w-4 text-white" />;
       case 'reminder':
-        return <Bell className="h-5 w-5 text-white" />;
+        return <Bell className="h-4 w-4 text-white" />;
       case 'upload':
-        return <FileText className="h-5 w-5 text-white" />;
+        return <FileText className="h-4 w-4 text-white" />;
     }
   };
 
@@ -133,18 +133,18 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 bg-transparent">
       <h3 className="text-lg font-semibold mb-4">Aktivitäten</h3>
       <div className="relative space-y-6">
         {/* Vertical Timeline Line */}
-        <div className="absolute left-6 top-2 bottom-2 w-0.5 bg-gray-200" />
+        <div className="absolute left-5 top-2 bottom-2 w-0.75 bg-gray-200" />
         
         {timelineItems.map((item, index) => (
           <div key={item.id} className="flex gap-4 items-start group relative">
             {/* Circle with Icon */}
             <div 
               className={cn(
-                "z-10 flex items-center justify-center w-12 h-12 rounded-full",
+                "z-10 flex items-center justify-center w-10 h-10 rounded-full",
                 getIconColor(item.type, item.status)
               )}
             >
@@ -152,7 +152,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
             </div>
             
             {/* Connecting Line to Card */}
-            <div className="absolute left-12 top-6 w-4 h-0.5 bg-gray-200" />
+            <div className="absolute left-10 top-5 w-4 h-0.5 bg-gray-200" />
             
             {/* Event Card */}
             <div className="flex-1 min-w-0 bg-white rounded-lg shadow-sm p-4 transition-all cursor-pointer hover:shadow-md">
