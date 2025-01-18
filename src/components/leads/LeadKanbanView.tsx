@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LeadFilters } from "./LeadFilters";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -89,6 +90,15 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
       await updatePipelineName.mutateAsync(editingPipelineName);
     }
     setIsEditMode(false);
+  };
+
+  const handleEditModeToggle = () => {
+    const currentPipeline = phases[0]?.pipeline_id ? {
+      name: phases[0]?.name || ""
+    } : null;
+    
+    setIsEditMode(!isEditMode);
+    setEditingPipelineName(currentPipeline?.name || "");
   };
 
   return (
