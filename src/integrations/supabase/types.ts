@@ -750,6 +750,7 @@ export type Database = {
           created_at: string | null
           id: string
           lead_id: string
+          metadata: Json | null
           updated_at: string | null
           user_id: string
         }
@@ -759,6 +760,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           lead_id: string
+          metadata?: Json | null
           updated_at?: string | null
           user_id: string
         }
@@ -768,6 +770,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           lead_id?: string
+          metadata?: Json | null
           updated_at?: string | null
           user_id?: string
         }
