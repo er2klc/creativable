@@ -20,21 +20,37 @@ interface LeadDetailViewProps {
   onClose: () => void;
 }
 
+const isValidUUID = (uuid: string) => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
 export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
 
-  const { data: lead, isLoading } = useQuery({
+  const { data: lead, isLoading, error } = useQuery({
     queryKey: ["lead", leadId],
     queryFn: async () => {
-      if (!leadId) return null;
+      if (!leadId || !isValidUUID(leadId)) {
+        throw new Error("Invalid lead ID");
+      }
+
       const { data, error } = await supabase
         .from("leads")
         .select("*, messages(*), tasks(*), notes(*)")
         .eq("id", leadId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching lead:", error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error("Lead not found");
+      }
+
       return data as (Tables<"leads"> & {
         platform: Platform;
         messages: Tables<"messages">[];
@@ -42,7 +58,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         notes: Tables<"notes">[];
       });
     },
-    enabled: !!leadId,
+    enabled: !!leadId && isValidUUID(leadId),
   });
 
   const { data: pipeline } = useQuery({
@@ -81,6 +97,10 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
+      if (!leadId || !isValidUUID(leadId)) {
+        throw new Error("Invalid lead ID");
+      }
+
       const { data, error } = await supabase
         .from("leads")
         .update(updates)
@@ -100,6 +120,16 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       );
     },
   });
+
+  if (error) {
+    toast.error(
+      settings?.language === "en"
+        ? "Error loading contact"
+        : "Fehler beim Laden des Kontakts"
+    );
+    onClose();
+    return null;
+  }
 
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
@@ -144,4 +174,4 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       </DialogContent>
     </Dialog>
   );
-}
+};
