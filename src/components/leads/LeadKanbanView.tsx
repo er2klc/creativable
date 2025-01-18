@@ -177,7 +177,6 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
                   updatePhaseName.mutate({
                     id: editingPhase.id,
                     name: editingPhase.name,
-                    oldName: editingPhase.name,
                   });
                   setEditingPhase(null);
                 }

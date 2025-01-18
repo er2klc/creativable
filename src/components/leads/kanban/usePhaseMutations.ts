@@ -5,7 +5,6 @@ import { useSettings } from "@/hooks/use-settings";
 import { useSession } from "@supabase/auth-helpers-react";
 
 export const usePhaseMutations = () => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { settings } = useSettings();
   const session = useSession();
@@ -30,22 +29,25 @@ export const usePhaseMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
-      toast({
-        title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
-        description: settings?.language === "en"
-          ? "Contact phase has been updated successfully"
-          : "Kontaktphase wurde erfolgreich aktualisiert",
-      });
+      toast(
+        settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
+        {
+          description: settings?.language === "en"
+            ? "Contact phase has been updated successfully"
+            : "Kontaktphase wurde erfolgreich aktualisiert",
+        }
+      );
     },
     onError: (error) => {
       console.error("Error updating phase:", error);
-      toast({
-        title: settings?.language === "en" ? "Error" : "Fehler",
-        description: settings?.language === "en"
-          ? "Failed to update phase. Please try again."
-          : "Phase konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
-        variant: "destructive",
-      });
+      toast(
+        settings?.language === "en" ? "Error" : "Fehler",
+        {
+          description: settings?.language === "en"
+            ? "Failed to update phase. Please try again."
+            : "Phase konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
+        }
+      );
     }
   });
 
@@ -92,22 +94,25 @@ export const usePhaseMutations = () => {
     },
     onSuccess: (finalName) => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
-      toast({
-        title: settings?.language === "en" ? "Phase added" : "Phase hinzugefügt",
-        description: settings?.language === "en"
-          ? `The phase "${finalName}" has been added successfully`
-          : `Die Phase "${finalName}" wurde erfolgreich hinzugefügt`,
-      });
+      toast(
+        settings?.language === "en" ? "Phase added" : "Phase hinzugefügt",
+        {
+          description: settings?.language === "en"
+            ? `The phase "${finalName}" has been added successfully`
+            : `Die Phase "${finalName}" wurde erfolgreich hinzugefügt`,
+        }
+      );
     },
     onError: (error) => {
       console.error("Error adding phase:", error);
-      toast({
-        variant: "destructive",
-        title: settings?.language === "en" ? "Error" : "Fehler",
-        description: settings?.language === "en"
-          ? "Failed to add phase"
-          : "Fehler beim Hinzufügen der Phase",
-      });
+      toast(
+        settings?.language === "en" ? "Error" : "Fehler",
+        {
+          description: settings?.language === "en"
+            ? "Failed to add phase"
+            : "Fehler beim Hinzufügen der Phase",
+        }
+      );
     },
   });
 
@@ -126,22 +131,25 @@ export const usePhaseMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
-      toast({
-        title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
-        description: settings?.language === "en"
-          ? "Phase name has been updated successfully"
-          : "Phasenname wurde erfolgreich aktualisiert",
-      });
+      toast(
+        settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
+        {
+          description: settings?.language === "en"
+            ? "Phase name has been updated successfully"
+            : "Phasenname wurde erfolgreich aktualisiert",
+        }
+      );
     },
     onError: (error) => {
       console.error("Error updating phase name:", error);
-      toast({
-        title: settings?.language === "en" ? "Error" : "Fehler",
-        description: settings?.language === "en"
-          ? "Failed to update phase name"
-          : "Fehler beim Aktualisieren des Phasennamens",
-        variant: "destructive",
-      });
+      toast(
+        settings?.language === "en" ? "Error" : "Fehler",
+        {
+          description: settings?.language === "en"
+            ? "Failed to update phase name"
+            : "Fehler beim Aktualisieren des Phasennamens",
+        }
+      );
     }
   });
 
@@ -172,12 +180,14 @@ export const usePhaseMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
-      toast({
-        title: settings?.language === "en" ? "Phase deleted" : "Phase gelöscht",
-        description: settings?.language === "en"
-          ? "Phase has been deleted successfully"
-          : "Phase wurde erfolgreich gelöscht",
-      });
+      toast(
+        settings?.language === "en" ? "Phase deleted" : "Phase gelöscht",
+        {
+          description: settings?.language === "en"
+            ? "Phase has been deleted successfully"
+            : "Phase wurde erfolgreich gelöscht",
+        }
+      );
     },
     onError: (error) => {
       console.error("Error deleting phase:", error);
@@ -189,11 +199,12 @@ export const usePhaseMutations = () => {
           ? "Failed to delete phase"
           : "Fehler beim Löschen der Phase";
 
-      toast({
-        title: settings?.language === "en" ? "Error" : "Fehler",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast(
+        settings?.language === "en" ? "Error" : "Fehler",
+        {
+          description: errorMessage,
+        }
+      );
     }
   });
 
