@@ -1,25 +1,30 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
-import { supabase } from "@/integrations/supabase/client";
-import { AddLeadFormFields, formSchema } from "./AddLeadFormFields";
-import { generateSocialMediaUrl } from "@/config/platforms";
 import * as z from "zod";
-import { type Platform } from "@/config/platforms";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { BasicLeadFields } from "./form-fields/BasicLeadFields";
+import { ContactTypeField } from "./form-fields/ContactTypeField";
+import { NotesFields } from "./form-fields/NotesFields";
+import { Plus } from "lucide-react";
+import { Platform } from "@/config/platforms";
+
+const formSchema = z.object({
+  name: z.string().min(1, "Name ist erforderlich"),
+  platform: z.custom<Platform>(),
+  social_media_username: z.string().optional(),
+  phase_id: z.string().min(1, "Phase ist erforderlich"),
+  pipeline_id: z.string().min(1, "Pipeline ist erforderlich"),
+  contact_type: z.string().nullable(),
+  phone_number: z.string().optional().nullable(),
+  email: z.string().optional().nullable(),
+  company_name: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+});
 
 interface AddLeadDialogProps {
   trigger?: React.ReactNode;
@@ -28,98 +33,52 @@ interface AddLeadDialogProps {
 
 export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
   const [open, setOpen] = useState(false);
-  const { toast } = useToast();
-  const session = useSession();
-  const queryClient = useQueryClient();
-
-  // Fetch the default pipeline for the user
-  const { data: defaultPipeline } = useQuery({
-    queryKey: ["pipelines", session?.user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("pipelines")
-        .select("id")
-        .eq("user_id", session?.user?.id)
-        .order("order_index")
-        .limit(1)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!session?.user?.id,
-  });
-
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       platform: "LinkedIn" as Platform,
       social_media_username: "",
-      phase_id: "",
+      phase_id: defaultPhase || "",
+      pipeline_id: "",
       contact_type: null,
       phone_number: "",
       email: "",
       company_name: "",
       notes: "",
-      industry: "Nicht angegeben",
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!session?.user?.id) {
-      toast({
-        title: "Fehler ❌",
-        description: "Sie müssen eingeloggt sein, um einen Kontakt hinzuzufügen.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!defaultPipeline?.id) {
-      toast({
-        title: "Fehler ❌",
-        description: "Keine Pipeline gefunden. Bitte erstellen Sie zuerst eine Pipeline.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      const socialMediaUrl = generateSocialMediaUrl(values.platform as Platform, values.social_media_username || '');
-      
-      const { error } = await supabase.from("leads").insert({
-        user_id: session.user.id,
-        pipeline_id: defaultPipeline.id,
-        name: values.name,
-        platform: values.platform,
-        social_media_username: socialMediaUrl,
-        phase_id: values.phase_id,
-        contact_type: values.contact_type,
-        phone_number: values.phone_number || null,
-        email: values.email || null,
-        company_name: values.company_name || null,
-        notes: values.notes || null,
-        industry: values.industry,
-      });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { error } = await supabase
+        .from("leads")
+        .insert({
+          user_id: user.id,
+          name: values.name,
+          platform: values.platform,
+          social_media_username: values.social_media_username,
+          phase_id: values.phase_id,
+          pipeline_id: values.pipeline_id,
+          contact_type: values.contact_type,
+          phone_number: values.phone_number,
+          email: values.email,
+          company_name: values.company_name,
+          notes: values.notes,
+        });
 
       if (error) throw error;
 
-      toast({
-        title: "Erfolg ✨",
-        description: "Kontakt erfolgreich hinzugefügt",
-      });
-
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast.success("Kontakt erfolgreich hinzugefügt");
       setOpen(false);
       form.reset();
     } catch (error) {
       console.error("Error adding contact:", error);
-      toast({
-        title: "Fehler ❌",
-        description: "Beim Hinzufügen des Kontakts ist ein Fehler aufgetreten.",
-        variant: "destructive",
-      });
+      toast.error("Fehler beim Hinzufügen des Kontakts");
     }
   };
 
@@ -133,7 +92,7 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Neuen Kontakt hinzufügen ✨</DialogTitle>
           <DialogDescription>
@@ -142,7 +101,9 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <AddLeadFormFields form={form} />
+            <BasicLeadFields form={form} />
+            <ContactTypeField form={form} />
+            <NotesFields form={form} />
             <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"
