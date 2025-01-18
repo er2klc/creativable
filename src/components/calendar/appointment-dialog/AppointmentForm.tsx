@@ -6,6 +6,7 @@ import { TimeField } from "./form-fields/TimeField";
 import { TitleField } from "./form-fields/TitleField";
 import { ColorField } from "./form-fields/ColorField";
 import { MeetingTypeField } from "./form-fields/MeetingTypeField";
+import { Form } from "@/components/ui/form";
 
 interface AppointmentFormProps {
   onSubmit: (values: any) => void;
@@ -36,25 +37,31 @@ export const AppointmentForm = ({
     },
   });
 
+  const handleSubmit = (values: any) => {
+    onSubmit(values);
+  };
+
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-      <TitleField form={form} />
-      <ContactField form={form} />
-      <TimeField form={form} />
-      <MeetingTypeField form={form} />
-      <ColorField form={form} />
-      
-      <div className="flex justify-end">
-        <Button type="submit">
-          {isEditing
-            ? settings?.language === "en"
-              ? "Update Appointment"
-              : "Termin aktualisieren"
-            : settings?.language === "en"
-            ? "Create Appointment"
-            : "Termin erstellen"}
-        </Button>
-      </div>
-    </form>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <TitleField form={form} />
+        <ContactField form={form} />
+        <TimeField form={form} />
+        <MeetingTypeField form={form} />
+        <ColorField form={form} />
+        
+        <div className="flex justify-end">
+          <Button type="submit">
+            {isEditing
+              ? settings?.language === "en"
+                ? "Update Appointment"
+                : "Termin aktualisieren"
+              : settings?.language === "en"
+              ? "Create Appointment"
+              : "Termin erstellen"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
