@@ -19,7 +19,7 @@ export const useUnreadCount = () => {
 
       return count || 0;
     },
-    refetchInterval: 30000,
+    refetchInterval: 30000, // Refetch every 30 seconds as backup
   });
 
   // Subscribe to real-time updates for unread messages count
@@ -34,6 +34,7 @@ export const useUnreadCount = () => {
           table: 'messages'
         },
         () => {
+          // Invalidate the query to trigger a refetch when messages change
           queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
         }
       )
