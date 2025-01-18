@@ -1,7 +1,7 @@
 import { Tables } from "@/integrations/supabase/types";
 import { TimelineHeader } from "./timeline/TimelineHeader";
 import { TimelineItem } from "./timeline/TimelineItem";
-import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
+import { TimelineItem as TimelineItemType, TimelineItemType as ItemType } from "./timeline/TimelineUtils";
 
 interface LeadTimelineProps {
   lead: {
@@ -17,7 +17,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
   const timelineItems: TimelineItemType[] = [
     {
       id: 'contact-created',
-      type: 'contact_created',
+      type: 'contact_created' as const,
       content: `Kontakt ${lead.name} wurde erstellt`,
       timestamp: lead.created_at,
     },
@@ -31,7 +31,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
     })),
     ...lead.tasks.map(task => ({
       id: task.id,
-      type: task.meeting_type ? 'appointment' as const : 'task' as const,
+      type: task.meeting_type ? ('appointment' as const) : ('task' as const),
       content: task.title,
       timestamp: task.created_at || '',
       status: task.completed ? 'completed' : 'pending',
