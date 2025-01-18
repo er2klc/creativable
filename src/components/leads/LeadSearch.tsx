@@ -2,19 +2,19 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 interface LeadSearchProps {
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
+  value: string;
+  onChange: (value: string) => void;
 }
 
-export const LeadSearch = ({ searchQuery, setSearchQuery }: LeadSearchProps) => {
+export const LeadSearch = ({ value, onChange }: LeadSearchProps) => {
   return (
     <div className="relative flex-1">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
       <Input
-        placeholder="Lead suchen..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className="pl-10"
+        placeholder="Suchen..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="pl-8"
       />
     </div>
   );
