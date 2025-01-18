@@ -51,7 +51,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
       type: 'contact_created',
       content: `Kontakt ${lead.name} wurde erstellt`,
       timestamp: lead.created_at,
-    },
+    } as const,
     ...lead.messages.map(message => ({
       id: message.id,
       type: 'message' as const,
@@ -133,7 +133,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
   };
 
   return (
-    <div className="p-4 bg-transparent">
+    <div className="p-4">
       <h3 className="text-lg font-semibold mb-4">Aktivitäten</h3>
       <div className="relative space-y-6">
         {/* Vertical Timeline Line */}
