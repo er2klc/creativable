@@ -6,7 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PlusCircle, GitBranch } from "lucide-react";
+import { PlusCircle, GitBranch, Pencil } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,11 +16,13 @@ import { useState } from "react";
 interface LeadFiltersProps {
   selectedPipelineId: string | null;
   setSelectedPipelineId: (id: string | null) => void;
+  onEditPipeline?: () => void;
 }
 
 export const LeadFilters = ({
   selectedPipelineId,
   setSelectedPipelineId,
+  onEditPipeline,
 }: LeadFiltersProps) => {
   const session = useSession();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -78,6 +80,24 @@ export const LeadFilters = ({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={onEditPipeline}
+        className="h-9 w-9"
+      >
+        <Pencil className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => setShowCreateDialog(true)}
+        className="h-9 w-9"
+      >
+        <PlusCircle className="h-4 w-4" />
+      </Button>
 
       <CreatePipelineDialog 
         open={showCreateDialog} 
