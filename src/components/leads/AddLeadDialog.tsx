@@ -69,6 +69,7 @@ export function AddLeadDialog({ trigger, defaultPhase }: AddLeadDialogProps) {
           email: values.email,
           company_name: values.company_name,
           notes: values.notes,
+          industry: "Not Specified" // Add a default value for the required industry field
         });
 
       if (error) throw error;
