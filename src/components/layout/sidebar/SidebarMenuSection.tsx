@@ -100,7 +100,7 @@ export const SidebarMenuSection = ({
                         {item.badge === true && unreadCount > 0 && (
                           <Badge 
                             variant="outline" 
-                            className="absolute -top-2 -right-2 text-xs min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-[#161616] text-[#fb6e6e]"
+                            className="absolute -top-2 -right-2 text-xs min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-[#161616] text-[#fb6e6e] border-none"
                           >
                             {unreadCount}
                           </Badge>
