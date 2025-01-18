@@ -141,6 +141,32 @@ export const LeadPhaseManager = () => {
     },
   });
 
+  const updatePhaseOrder = useMutation({
+    mutationFn: async (updatedPhases: Tables<"pipeline_phases">[]) => {
+      const updates = updatedPhases.map((phase) => ({
+        id: phase.id,
+        name: phase.name,
+        pipeline_id: phase.pipeline_id,
+        order_index: phase.order_index,
+      }));
+
+      const { error } = await supabase
+        .from("pipeline_phases")
+        .upsert(updates);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases", pipeline?.id] });
+      toast({
+        title: settings?.language === "en" ? "Order updated" : "Reihenfolge aktualisiert",
+        description: settings?.language === "en"
+          ? "Phase order has been updated successfully"
+          : "Die Reihenfolge der Phasen wurde erfolgreich aktualisiert",
+      });
+    },
+  });
+
   const deletePhase = useMutation({
     mutationFn: async () => {
       if (!session?.user?.id || !phaseToDelete) {
