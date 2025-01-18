@@ -43,35 +43,6 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     },
   });
 
-  // Subscribe to real-time updates for this lead
-  useEffect(() => {
-    const channel = supabase
-      .channel('lead-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'leads',
-          filter: `id=eq.${lead.id}`
-        },
-        (payload) => {
-          queryClient.setQueryData(["lead", lead.slug], (oldData: any) => {
-            if (!oldData) return oldData;
-            return {
-              ...oldData,
-              ...payload.new,
-            };
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [lead.id, lead.slug, queryClient]);
-
   const handleStartEdit = (field: string, currentValue: string | null) => {
     setEditingField(field);
     setEditingValue(currentValue || "");
@@ -79,6 +50,21 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
 
   const handleUpdate = (field: string, value: string) => {
     updateLeadMutation.mutate({ [field]: value });
+  };
+
+  const handleContactTypeUpdate = (type: string) => {
+    const currentTypes = lead.contact_type ? lead.contact_type.split(',').map(t => t.trim()) : [];
+    let newTypes: string[];
+    
+    if (currentTypes.includes(type)) {
+      newTypes = currentTypes.filter(t => t !== type);
+    } else {
+      newTypes = [...currentTypes, type];
+    }
+    
+    updateLeadMutation.mutate({ 
+      contact_type: newTypes.length > 0 ? newTypes.join(', ') : null 
+    });
   };
 
   const InfoRow = ({ 
@@ -143,6 +129,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     );
   };
 
+  const currentTypes = lead.contact_type ? lead.contact_type.split(',').map(t => t.trim()) : [];
+
   return (
     <Card>
       <CardHeader>
@@ -152,6 +140,23 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-1">
+        <div className="flex gap-2 mb-4">
+          <Button
+            variant={currentTypes.includes('Likely Partner') ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleContactTypeUpdate('Likely Partner')}
+          >
+            Likely Partner
+          </Button>
+          <Button
+            variant={currentTypes.includes('Likely Kunde') ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleContactTypeUpdate('Likely Kunde')}
+          >
+            Likely Kunde
+          </Button>
+        </div>
+        <div className="h-[1px] w-full bg-border mb-4" />
         <InfoRow
           icon={Contact2}
           label={settings?.language === "en" ? "Name" : "Name"}
