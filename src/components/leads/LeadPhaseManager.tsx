@@ -108,47 +108,33 @@ export const LeadPhaseManager = () => {
         throw new Error("No pipeline selected");
       }
 
-      // Start a Supabase transaction
-      const { data: maxOrderPhase, error: orderError } = await supabase
+      // Get all existing phases for this pipeline to check names
+      const { data: existingPhases, error: fetchError } = await supabase
         .from("pipeline_phases")
-        .select("order_index")
+        .select("name, order_index")
         .eq("pipeline_id", pipeline.id)
-        .order("order_index", { ascending: false })
-        .limit(1)
-        .single();
+        .order("order_index", { ascending: false });
 
-      if (orderError) throw orderError;
+      if (fetchError) throw fetchError;
 
-      // Find a unique name
+      // Find the highest order_index
+      const maxOrderIndex = existingPhases?.length ? Math.max(...existingPhases.map(p => p.order_index)) : -1;
+
+      // Generate unique name
       let name = baseName;
       let counter = 1;
-      let isUnique = false;
-
-      while (!isUnique) {
-        const { data: existingPhase, error: checkError } = await supabase
-          .from("pipeline_phases")
-          .select("id")
-          .eq("pipeline_id", pipeline.id)
-          .eq("name", name)
-          .maybeSingle();
-
-        if (checkError) throw checkError;
-
-        if (!existingPhase) {
-          isUnique = true;
-        } else {
-          name = `${baseName}_${counter}`;
-          counter++;
-        }
+      while (existingPhases?.some(phase => phase.name === name)) {
+        name = `${baseName}_${counter}`;
+        counter++;
       }
 
-      // Insert the new phase with the unique name
+      // Insert the new phase
       const { error: insertError } = await supabase
         .from("pipeline_phases")
         .insert({
           name,
           pipeline_id: pipeline.id,
-          order_index: (maxOrderPhase?.order_index ?? -1) + 1,
+          order_index: maxOrderIndex + 1,
         });
 
       if (insertError) throw insertError;
