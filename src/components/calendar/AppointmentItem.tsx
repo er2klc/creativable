@@ -18,7 +18,7 @@ import {
 import { format } from "date-fns";
 
 // Debugging-Log hinzufügen
-console.log("AppointmentItem.tsx version 1.3 geladen");
+console.log("AppointmentItem.tsx version 1.4 geladen");
 
 interface AppointmentItemProps {
   appointment: any;
@@ -132,12 +132,12 @@ export const AppointmentItem = ({
       ref={setNodeRef}
       style={{
         ...style,
-        backgroundColor: appointment.color || "#40E0D0", // Turquoise for appointments
+        backgroundColor: appointment.color || "#40E0D0",
         cursor: shouldBeDraggable ? "pointer" : "default",
       }}
       {...dragAttributes}
       className={cn(
-        "p-2 rounded hover:opacity-80 space-y-1",
+        "p-2 rounded hover:opacity-80 space-y-2",
         appointment.isRecurring && "border-l-4 border-primary",
         appointment.isTeamEvent && "border border-gray-200",
         !appointment.isTeamEvent && "text-black",
@@ -145,53 +145,46 @@ export const AppointmentItem = ({
       )}
       onClick={(e) => onClick(e)}
     >
-      {/* Title takes full width */}
-      <div className="w-full font-bold truncate mb-2">
+      {/* Title */}
+      <div className="font-bold truncate">
         {appointment.title}
       </div>
 
-      {/* Additional info in a grid */}
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="flex items-center gap-1">
-          {getEventIcon()}
-          <span>{getMeetingTypeLabel(appointment.meeting_type)}</span>
-        </div>
-
-        {(!isMultiDayEvent || (isMultiDayEvent && isStartDay)) && (
-          <div className="flex items-center gap-1 text-gray-600">
-            <Clock className="h-3 w-3" />
-            {formatTimeRange()}
-          </div>
-        )}
-
-        {appointment.leads?.name && (
-          <div className="flex items-center gap-1 text-gray-600">
-            <User className="h-3 w-3" />
-            <span className="truncate">{appointment.leads.name}</span>
-          </div>
-        )}
-
-        {isMultiDayEvent && (
-          <div className="text-gray-500">
-            {isStartDay && "Start"}
-            {!isStartDay && !isEndDay && "Zwischen"}
-            {isEndDay && "Ende"}
-          </div>
-        )}
-
-        {(appointment.completed || appointment.cancelled) && (
-          <div className={cn(
-            "flex items-center gap-1",
-            appointment.completed ? "text-green-500" : "text-red-500"
-          )}>
-            {appointment.completed ? (
-              <Check className="h-4 w-4" />
-            ) : (
-              <X className="h-4 w-4" />
-            )}
-          </div>
-        )}
+      {/* Meeting Type */}
+      <div className="flex items-center gap-1 text-sm">
+        {getEventIcon()}
+        <span>{getMeetingTypeLabel(appointment.meeting_type)}</span>
       </div>
+
+      {/* Contact Name */}
+      {appointment.leads?.name && (
+        <div className="flex items-center gap-1 text-sm text-gray-600">
+          <User className="h-3 w-3" />
+          <span className="truncate">{appointment.leads.name}</span>
+        </div>
+      )}
+
+      {/* Date and Time */}
+      <div className="flex items-center gap-1 text-sm text-gray-600">
+        <Clock className="h-3 w-3" />
+        <span>
+          {format(new Date(appointment.start_time), "dd.MM.yyyy")} | {formatTimeRange()}
+        </span>
+      </div>
+
+      {/* Status indicators */}
+      {(appointment.completed || appointment.cancelled) && (
+        <div className={cn(
+          "flex items-center gap-1",
+          appointment.completed ? "text-green-500" : "text-red-500"
+        )}>
+          {appointment.completed ? (
+            <Check className="h-4 w-4" />
+          ) : (
+            <X className="h-4 w-4" />
+          )}
+        </div>
+      )}
     </div>
   );
 };
