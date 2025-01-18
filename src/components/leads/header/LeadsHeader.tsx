@@ -25,7 +25,7 @@ export const LeadsHeader = ({
   const [showAddLead, setShowAddLead] = useState(false);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Kontakte</h1>
         <div className="flex-1 max-w-md">
@@ -51,14 +51,13 @@ export const LeadsHeader = ({
         </div>
       </div>
 
+      <div className="h-px bg-border" /> {/* Separator line */}
+
       <div className="flex items-center justify-between">
         <LeadFilters
           selectedPipelineId={selectedPipelineId}
           setSelectedPipelineId={setSelectedPipelineId}
         />
-        <Button onClick={() => setShowAddLead(true)}>
-          Neuer Kontakt ✨
-        </Button>
       </div>
 
       <AddLeadDialog
