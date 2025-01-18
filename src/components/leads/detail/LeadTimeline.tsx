@@ -13,6 +13,13 @@ interface LeadTimelineProps {
   };
 }
 
+interface NoteMetadata {
+  type?: string;
+  oldPhase?: string;
+  newPhase?: string;
+  color?: string;
+}
+
 export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
   const timelineItems: TimelineItemType[] = [
     {
@@ -42,16 +49,18 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
       }
     })) : []),
     ...(Array.isArray(lead.notes) ? lead.notes.map(note => {
+      const metadata = note.metadata as NoteMetadata;
+      
       // Check if this is a phase change note
-      if (note.metadata?.type === 'phase_change') {
+      if (metadata?.type === 'phase_change') {
         return {
           id: note.id,
           type: 'phase_change' as const,
           content: note.content,
           timestamp: note.created_at || '',
           metadata: {
-            oldPhase: note.metadata.oldPhase,
-            newPhase: note.metadata.newPhase,
+            oldPhase: metadata.oldPhase,
+            newPhase: metadata.newPhase,
             color: note.color
           }
         };

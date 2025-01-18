@@ -33,6 +33,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       return data;
     },
     onSuccess: () => {
+      // Invalidate both the lead query and the notes query to refresh the timeline
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
       toast.success(
         settings?.language === "en"
