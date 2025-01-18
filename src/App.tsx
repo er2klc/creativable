@@ -49,6 +49,16 @@ const App = () => {
           path="*" 
           element={<Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />} 
         />
+
+        {/* Legacy route redirects */}
+        <Route 
+          path="/leads" 
+          element={<Navigate to="/contacts" replace />} 
+        />
+        <Route 
+          path="/leads/:id" 
+          element={<Navigate to="/contacts/:id" replace />} 
+        />
       </Routes>
       {showChat && <ChatButton />}
     </AppProvider>

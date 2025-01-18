@@ -15,7 +15,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
 
   const handleNameChange = async (name: string) => {
     await onUpdateLead({ name });
-    navigate(`/leads/${lead.id}`, { replace: true });
+    navigate(`/contacts/${lead.id}`, { replace: true });
   };
 
   const handleStatusChange = (status: string) => {

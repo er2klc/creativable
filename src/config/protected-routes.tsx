@@ -23,11 +23,11 @@ export const protectedRoutes = [
     element: <Dashboard />,
   },
   {
-    path: "/leads",
+    path: "/contacts",
     element: <Leads />,
   },
   {
-    path: "/leads/:leadSlug",
+    path: "/contacts/:leadId",
     element: <LeadDetail />,
   },
   {

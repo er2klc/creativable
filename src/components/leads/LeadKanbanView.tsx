@@ -96,7 +96,7 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
   };
 
   const handleLeadClick = (id: string) => {
-    navigate(`/leads/${id}`);
+    navigate(`/contacts/${id}`);
   };
 
   const MIN_PHASE_WIDTH = 280;
