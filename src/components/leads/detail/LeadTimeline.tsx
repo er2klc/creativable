@@ -14,14 +14,15 @@ import {
   Linkedin,
   MessageCircle,
   UserPlus,
-  ListTodo
+  ListTodo,
+  Send
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tables } from "@/integrations/supabase/types";
 
 type TimelineItem = {
   id: string;
-  type: "message" | "task" | "note" | "phase_change" | "reminder" | "upload" | "contact_created";
+  type: "message" | "task" | "note" | "phase_change" | "reminder" | "upload" | "contact_created" | "appointment" | "presentation";
   content: string;
   timestamp: string;
   status?: string;
@@ -61,7 +62,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
     })),
     ...lead.tasks.map(task => ({
       id: task.id,
-      type: 'task' as const,
+      type: task.meeting_type ? 'appointment' as const : 'task' as const,
       content: task.title,
       timestamp: task.created_at || '',
       status: task.completed ? 'completed' : 'pending',
@@ -93,6 +94,8 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
         return <MessageSquare className="h-4 w-4 text-white" />;
       case 'task':
         return <ListTodo className="h-4 w-4 text-white" />;
+      case 'appointment':
+        return <Calendar className="h-4 w-4 text-white" />;
       case 'note':
         return <StickyNote className="h-4 w-4 text-white" />;
       case 'phase_change':
@@ -101,6 +104,8 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
         return <Bell className="h-4 w-4 text-white" />;
       case 'upload':
         return <FileText className="h-4 w-4 text-white" />;
+      case 'presentation':
+        return <Send className="h-4 w-4 text-white" />;
     }
   };
 
@@ -112,6 +117,8 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
         return 'bg-blue-500';
       case 'task':
         return status === 'completed' ? 'bg-green-500' : 'bg-cyan-500';
+      case 'appointment':
+        return status === 'completed' ? 'bg-green-500' : 'bg-orange-500';
       case 'note':
         return 'bg-yellow-500';
       case 'phase_change':
@@ -120,6 +127,8 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
         return 'bg-red-500';
       case 'upload':
         return 'bg-gray-500';
+      case 'presentation':
+        return 'bg-indigo-500';
       default:
         return 'bg-gray-500';
     }
@@ -133,6 +142,8 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
         return 'border-blue-500';
       case 'task':
         return status === 'completed' ? 'border-green-500' : 'border-cyan-500';
+      case 'appointment':
+        return status === 'completed' ? 'border-green-500' : 'border-orange-500';
       case 'note':
         return 'border-yellow-500';
       case 'phase_change':
@@ -141,6 +152,8 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
         return 'border-red-500';
       case 'upload':
         return 'border-gray-500';
+      case 'presentation':
+        return 'border-indigo-500';
       default:
         return 'border-gray-500';
     }
