@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { BasicLeadFields } from "./form-fields/BasicLeadFields";
 import { ContactTypeField } from "./form-fields/ContactTypeField";
 import { NotesFields } from "./form-fields/NotesFields";
-import { Plus } from "lucide-react";
 import { Platform } from "@/config/platforms";
 
 const formSchema = z.object({
@@ -90,12 +89,7 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
   return (
     <Dialog open={open ?? isOpen} onOpenChange={onOpenChange ?? setIsOpen}>
       <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="ghost" size="sm" className="w-full text-muted-foreground hover:text-foreground">
-            <Plus className="h-4 w-4 mr-2" />
-            Neuer Kontakt
-          </Button>
-        )}
+        {trigger}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
