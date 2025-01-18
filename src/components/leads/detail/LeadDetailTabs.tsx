@@ -1,12 +1,16 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { NoteList } from "./NoteList";
-import { TaskList } from "./TaskList";
-import { LeadMessages } from "./LeadMessages";
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 import { useSettings } from "@/hooks/use-settings";
 import { MessageSquare, CheckSquare, StickyNote, Calendar, Upload, Presentation } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface LeadDetailTabsProps {
   lead: Tables<"leads"> & {
@@ -28,6 +32,83 @@ const tabColors = {
 
 export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const { settings } = useSettings();
+  const queryClient = useQueryClient();
+  const [newNote, setNewNote] = useState("");
+  const [newTask, setNewTask] = useState("");
+  const [newAppointment, setNewAppointment] = useState("");
+  const [newMessage, setNewMessage] = useState("");
+
+  const createNoteMutation = useMutation({
+    mutationFn: async (content: string) => {
+      const { data, error } = await supabase
+        .from("notes")
+        .insert([
+          {
+            lead_id: lead.id,
+            content,
+            color: tabColors.notes,
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
+      setNewNote("");
+      toast.success(settings?.language === "en" ? "Note created" : "Notiz erstellt");
+    },
+  });
+
+  const createTaskMutation = useMutation({
+    mutationFn: async (title: string) => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .insert([
+          {
+            lead_id: lead.id,
+            title,
+            color: tabColors.tasks,
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
+      setNewTask("");
+      toast.success(settings?.language === "en" ? "Task created" : "Aufgabe erstellt");
+    },
+  });
+
+  const createMessageMutation = useMutation({
+    mutationFn: async (content: string) => {
+      const { data, error } = await supabase
+        .from("messages")
+        .insert([
+          {
+            lead_id: lead.id,
+            content,
+            platform: lead.platform,
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
+      setNewMessage("");
+      toast.success(settings?.language === "en" ? "Message created" : "Nachricht erstellt");
+    },
+  });
   
   return (
     <Tabs defaultValue="notes" className="w-full">
@@ -106,44 +187,117 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
       </TabsList>
 
       <TabsContent value="notes">
-        {/* Only show note creation form */}
         <div className="p-4 bg-white rounded-lg shadow">
-          {/* Note creation form will be implemented here */}
+          <Label htmlFor="new-note">
+            {settings?.language === "en" ? "New Note" : "Neue Notiz"}
+          </Label>
+          <div className="flex gap-2 mt-2">
+            <Input
+              id="new-note"
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              placeholder={settings?.language === "en" ? "Enter note content..." : "Notiz eingeben..."}
+            />
+            <Button 
+              onClick={() => createNoteMutation.mutate(newNote)}
+              disabled={!newNote.trim()}
+            >
+              {settings?.language === "en" ? "Add" : "Hinzufügen"}
+            </Button>
+          </div>
         </div>
       </TabsContent>
 
       <TabsContent value="tasks">
-        {/* Only show task creation form */}
         <div className="p-4 bg-white rounded-lg shadow">
-          {/* Task creation form will be implemented here */}
+          <Label htmlFor="new-task">
+            {settings?.language === "en" ? "New Task" : "Neue Aufgabe"}
+          </Label>
+          <div className="flex gap-2 mt-2">
+            <Input
+              id="new-task"
+              value={newTask}
+              onChange={(e) => setNewTask(e.target.value)}
+              placeholder={settings?.language === "en" ? "Enter task title..." : "Aufgabe eingeben..."}
+            />
+            <Button 
+              onClick={() => createTaskMutation.mutate(newTask)}
+              disabled={!newTask.trim()}
+            >
+              {settings?.language === "en" ? "Add" : "Hinzufügen"}
+            </Button>
+          </div>
         </div>
       </TabsContent>
 
       <TabsContent value="appointments">
-        {/* Only show appointment creation form */}
         <div className="p-4 bg-white rounded-lg shadow">
-          {/* Appointment creation form will be implemented here */}
+          <Label htmlFor="new-appointment">
+            {settings?.language === "en" ? "New Appointment" : "Neuer Termin"}
+          </Label>
+          <div className="flex gap-2 mt-2">
+            <Input
+              id="new-appointment"
+              value={newAppointment}
+              onChange={(e) => setNewAppointment(e.target.value)}
+              placeholder={settings?.language === "en" ? "Enter appointment details..." : "Termin eingeben..."}
+            />
+            <Button disabled={!newAppointment.trim()}>
+              {settings?.language === "en" ? "Add" : "Hinzufügen"}
+            </Button>
+          </div>
         </div>
       </TabsContent>
 
       <TabsContent value="messages">
-        {/* Only show message creation form */}
         <div className="p-4 bg-white rounded-lg shadow">
-          {/* Message creation form will be implemented here */}
+          <Label htmlFor="new-message">
+            {settings?.language === "en" ? "New Message" : "Neue Nachricht"}
+          </Label>
+          <div className="flex gap-2 mt-2">
+            <Input
+              id="new-message"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder={settings?.language === "en" ? "Enter message..." : "Nachricht eingeben..."}
+            />
+            <Button 
+              onClick={() => createMessageMutation.mutate(newMessage)}
+              disabled={!newMessage.trim()}
+            >
+              {settings?.language === "en" ? "Add" : "Hinzufügen"}
+            </Button>
+          </div>
         </div>
       </TabsContent>
 
       <TabsContent value="uploads">
-        {/* Upload functionality */}
         <div className="p-4 bg-white rounded-lg shadow">
-          {/* Upload form will be implemented here */}
+          <Label>
+            {settings?.language === "en" ? "Upload Files" : "Dateien hochladen"}
+          </Label>
+          <div className="mt-2">
+            <Input
+              type="file"
+              className="w-full"
+            />
+          </div>
         </div>
       </TabsContent>
 
       <TabsContent value="presentations">
-        {/* Presentation selection and sending */}
         <div className="p-4 bg-white rounded-lg shadow">
-          {/* Presentation selection and sending form will be implemented here */}
+          <Label>
+            {settings?.language === "en" ? "Select Presentation" : "Präsentation auswählen"}
+          </Label>
+          <div className="mt-2">
+            {/* Presentation selection will be implemented here */}
+            <select className="w-full p-2 border rounded">
+              <option value="">
+                {settings?.language === "en" ? "Select a presentation..." : "Präsentation auswählen..."}
+              </option>
+            </select>
+          </div>
         </div>
       </TabsContent>
     </Tabs>
