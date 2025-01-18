@@ -81,13 +81,12 @@ export const LeadPhaseManager = () => {
       // Get all existing phases for this pipeline
       const { data: existingPhases, error: fetchError } = await supabase
         .from("pipeline_phases")
-        .select("name, order_index")
-        .eq("pipeline_id", pipeline.id)
-        .order("order_index", { ascending: false });
+        .select("name")
+        .eq("pipeline_id", pipeline.id);
 
       if (fetchError) throw fetchError;
 
-      // Generate unique name by checking if it exists
+      // Generate unique name
       let name = baseName;
       let counter = 1;
       const existingNames = existingPhases?.map(p => p.name) || [];
@@ -97,8 +96,16 @@ export const LeadPhaseManager = () => {
         counter++;
       }
 
-      // Find the highest order_index
-      const maxOrderIndex = existingPhases?.length ? Math.max(...existingPhases.map(p => p.order_index)) : -1;
+      // Get highest order_index
+      const { data: maxOrderPhase } = await supabase
+        .from("pipeline_phases")
+        .select("order_index")
+        .eq("pipeline_id", pipeline.id)
+        .order("order_index", { ascending: false })
+        .limit(1)
+        .single();
+
+      const newOrderIndex = (maxOrderPhase?.order_index ?? -1) + 1;
 
       // Insert the new phase
       const { error: insertError } = await supabase
@@ -106,7 +113,7 @@ export const LeadPhaseManager = () => {
         .insert({
           name,
           pipeline_id: pipeline.id,
-          order_index: maxOrderIndex + 1,
+          order_index: newOrderIndex,
         });
 
       if (insertError) throw insertError;
