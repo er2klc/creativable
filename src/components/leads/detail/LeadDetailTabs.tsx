@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 
 interface LeadDetailTabsProps {
   lead: Tables<"leads"> & {
@@ -32,6 +33,7 @@ const tabColors = {
 
 export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const { settings } = useSettings();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [newNote, setNewNote] = useState("");
   const [newTask, setNewTask] = useState("");
@@ -47,6 +49,7 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
             lead_id: lead.id,
             content,
             color: tabColors.notes,
+            user_id: user?.id,
           },
         ])
         .select()
@@ -71,6 +74,7 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
             lead_id: lead.id,
             title,
             color: tabColors.tasks,
+            user_id: user?.id,
           },
         ])
         .select()
@@ -95,6 +99,7 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
             lead_id: lead.id,
             content,
             platform: lead.platform,
+            user_id: user?.id,
           },
         ])
         .select()
@@ -291,7 +296,6 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
             {settings?.language === "en" ? "Select Presentation" : "Präsentation auswählen"}
           </Label>
           <div className="mt-2">
-            {/* Presentation selection will be implemented here */}
             <select className="w-full p-2 border rounded">
               <option value="">
                 {settings?.language === "en" ? "Select a presentation..." : "Präsentation auswählen..."}
