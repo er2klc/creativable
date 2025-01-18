@@ -146,7 +146,7 @@ export default function LeadDetail() {
       <div className="container mx-auto py-6 px-4">
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-4 space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="overflow-hidden bg-gradient-to-b from-white to-gray-50">
               <LeadSummary lead={lead} />
             </div>
             <LeadInfoCard lead={lead} />
