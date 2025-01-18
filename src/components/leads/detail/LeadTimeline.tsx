@@ -21,15 +21,15 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
       content: `Kontakt ${lead.name} wurde erstellt`,
       timestamp: lead.created_at,
     },
-    ...(lead.messages || []).map(message => ({
+    ...(Array.isArray(lead.messages) ? lead.messages.map(message => ({
       id: message.id,
       type: 'message' as const,
       content: message.content,
       timestamp: message.sent_at || '',
       status: message.platform,
       platform: message.platform
-    })),
-    ...(lead.tasks || []).map(task => ({
+    })) : []),
+    ...(Array.isArray(lead.tasks) ? lead.tasks.map(task => ({
       id: task.id,
       type: task.meeting_type ? ('appointment' as const) : ('task' as const),
       content: task.title,
@@ -40,8 +40,8 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
         meetingType: task.meeting_type,
         color: task.color
       }
-    })),
-    ...(lead.notes || []).map(note => ({
+    })) : []),
+    ...(Array.isArray(lead.notes) ? lead.notes.map(note => ({
       id: note.id,
       type: 'note' as const,
       content: note.content,
@@ -49,7 +49,7 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
       metadata: {
         color: note.color
       }
-    }))
+    })) : [])
   ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   return (
