@@ -12,11 +12,14 @@ export function ContactTypeField({ form }: ContactTypeFieldProps) {
   const currentTypes = form.watch('contact_type')?.split(',').filter(Boolean) || [];
 
   const handleContactTypeChange = (type: string, checked: boolean) => {
+    const types = new Set(currentTypes);
     if (checked) {
-      form.setValue('contact_type', type);
+      types.add(type);
     } else {
-      form.setValue('contact_type', null);
+      types.delete(type);
     }
+    const newValue = Array.from(types).join(',');
+    form.setValue('contact_type', newValue || null);
   };
 
   return (
@@ -25,7 +28,7 @@ export function ContactTypeField({ form }: ContactTypeFieldProps) {
       name="contact_type"
       render={() => (
         <FormItem>
-          <FormLabel>Kontakttyp</FormLabel>
+          <FormLabel>Kontakttyp (Erste Einschätzung)</FormLabel>
           <FormControl>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
@@ -33,7 +36,7 @@ export function ContactTypeField({ form }: ContactTypeFieldProps) {
                   currentTypes.includes("Partner") ? "bg-[#E5DEFF]/30" : ""
                 }`}>
                   <Checkbox
-                    checked={form.watch('contact_type') === "Partner"}
+                    checked={currentTypes.includes("Partner")}
                     onCheckedChange={(checked) => 
                       handleContactTypeChange("Partner", checked as boolean)
                     }
@@ -52,7 +55,7 @@ export function ContactTypeField({ form }: ContactTypeFieldProps) {
                   currentTypes.includes("Kunde") ? "bg-[#F2FCE2]/30" : ""
                 }`}>
                   <Checkbox
-                    checked={form.watch('contact_type') === "Kunde"}
+                    checked={currentTypes.includes("Kunde")}
                     onCheckedChange={(checked) => 
                       handleContactTypeChange("Kunde", checked as boolean)
                     }
