@@ -103,21 +103,30 @@ export const LeadPhaseManager = () => {
   });
 
   const addPhase = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async (baseName: string) => {
       if (!session?.user?.id || !pipeline?.id) {
         throw new Error("No pipeline selected");
       }
 
-      // First check if a phase with this name already exists in this pipeline
-      const { data: existingPhase } = await supabase
-        .from("pipeline_phases")
-        .select("id")
-        .eq("pipeline_id", pipeline.id)
-        .eq("name", name)
-        .maybeSingle();
+      // Find a unique name by appending a number if necessary
+      let name = baseName;
+      let counter = 1;
+      let nameExists = true;
 
-      if (existingPhase) {
-        throw new Error("Phase with this name already exists");
+      while (nameExists) {
+        const { data: existingPhase } = await supabase
+          .from("pipeline_phases")
+          .select("id")
+          .eq("pipeline_id", pipeline.id)
+          .eq("name", name)
+          .maybeSingle();
+
+        if (!existingPhase) {
+          nameExists = false;
+        } else {
+          name = `${baseName}_${counter}`;
+          counter++;
+        }
       }
 
       const { data: maxOrderPhase } = await supabase
@@ -139,27 +148,25 @@ export const LeadPhaseManager = () => {
         });
 
       if (error) throw error;
+      
+      return name;
     },
-    onSuccess: () => {
+    onSuccess: (finalName) => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-phases", pipeline?.id] });
       toast({
         title: settings?.language === "en" ? "Phase added" : "Phase hinzugefügt",
         description: settings?.language === "en"
-          ? "The phase has been added successfully"
-          : "Die Phase wurde erfolgreich hinzugefügt",
+          ? `The phase "${finalName}" has been added successfully`
+          : `Die Phase "${finalName}" wurde erfolgreich hinzugefügt`,
       });
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         variant: "destructive",
         title: settings?.language === "en" ? "Error" : "Fehler",
-        description: error.message === "Phase with this name already exists"
-          ? (settings?.language === "en" 
-              ? "A phase with this name already exists in this pipeline"
-              : "Eine Phase mit diesem Namen existiert bereits in dieser Pipeline")
-          : (settings?.language === "en"
-              ? "Failed to add phase"
-              : "Fehler beim Hinzufügen der Phase"),
+        description: settings?.language === "en"
+          ? "Failed to add phase"
+          : "Fehler beim Hinzufügen der Phase",
       });
     },
   });
