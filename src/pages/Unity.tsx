@@ -33,48 +33,56 @@ const Unity = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      // If super admin, fetch all teams
-      const { data: teams, error } = profile?.is_super_admin 
-        ? await supabase.from('teams').select('*').order('order_index', { ascending: true })
-        : await supabase.rpc('get_user_teams', { uid: user.id });
+      try {
+        // If super admin, fetch all teams
+        const { data: teams, error } = profile?.is_super_admin 
+          ? await supabase.from('teams').select('*').order('order_index', { ascending: true })
+          : await supabase.rpc('get_user_teams', { uid: user.id });
 
-      if (error) {
-        console.error("Error loading teams:", error);
+        if (error) {
+          console.error("Error loading teams:", error);
+          toast.error("Fehler beim Laden der Teams");
+          return [];
+        }
+
+        if (!teams) return [];
+
+        // Get stats for each team
+        const teamsWithStats = await Promise.all(
+          teams.map(async (team) => {
+            const { data: members, error: membersError } = await supabase
+              .from('team_members')
+              .select('role')
+              .eq('team_id', team.id);
+
+            if (membersError) {
+              console.error("Error loading team members:", membersError);
+              return {
+                ...team,
+                stats: { totalMembers: 0, admins: 0 }
+              };
+            }
+
+            const admins = members.filter(m => 
+              m.role === 'admin' || m.role === 'owner'
+            ).length;
+
+            return {
+              ...team,
+              stats: {
+                totalMembers: members.length,
+                admins
+              }
+            };
+          })
+        );
+
+        return teamsWithStats;
+      } catch (error) {
+        console.error("Error in teams query:", error);
         toast.error("Fehler beim Laden der Teams");
         return [];
       }
-
-      // Get stats for each team
-      const teamsWithStats = await Promise.all(
-        teams.map(async (team) => {
-          const { data: members, error: membersError } = await supabase
-            .from('team_members')
-            .select('role')
-            .eq('team_id', team.id);
-
-          if (membersError) {
-            console.error("Error loading team members:", membersError);
-            return {
-              ...team,
-              stats: { totalMembers: 0, admins: 0 }
-            };
-          }
-
-          const admins = members.filter(m => 
-            m.role === 'admin' || m.role === 'owner'
-          ).length;
-
-          return {
-            ...team,
-            stats: {
-              totalMembers: members.length,
-              admins
-            }
-          };
-        })
-      );
-
-      return teamsWithStats;
     },
     enabled: !!user && profile !== undefined,
   });
@@ -99,7 +107,6 @@ const Unity = () => {
         return;
       }
 
-      // Invalidate all team-related queries
       await queryClient.invalidateQueries({ queryKey: ['teams-with-stats'] });
       await queryClient.invalidateQueries({ queryKey: ['team-members'] });
       toast.success('Team erfolgreich gelöscht');
@@ -126,7 +133,6 @@ const Unity = () => {
         return;
       }
 
-      // Invalidate all team-related queries
       await queryClient.invalidateQueries({ queryKey: ['teams-with-stats'] });
       await queryClient.invalidateQueries({ queryKey: ['team-members'] });
       toast.success("Team erfolgreich verlassen");
@@ -144,7 +150,6 @@ const Unity = () => {
       const currentIndex = teamsWithStats.findIndex(t => t.id === teamId);
       const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
 
-      // Don't proceed if we're trying to move beyond array bounds
       if (newIndex < 0 || newIndex >= teamsWithStats.length) return;
 
       const { error } = await supabase
