@@ -97,7 +97,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   };
 
   return (
-    <Card className="overflow-hidden bg-gradient-to-b from-white to-gray-50">
+    <Card>
       <CardContent className="pt-6">
         {!hasGenerated && (
           <Button
