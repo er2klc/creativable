@@ -46,6 +46,25 @@ const getMeetingTypeIcon = (type: string) => {
   }
 };
 
+const getMeetingTypeLabel = (type: string) => {
+  switch (type) {
+    case "phone_call":
+      return "Telefongespräch";
+    case "on_site":
+      return "Vor-Ort-Termin";
+    case "zoom":
+      return "Zoom Meeting";
+    case "initial_meeting":
+      return "Erstgespräch";
+    case "presentation":
+      return "Präsentation";
+    case "follow_up":
+      return "Folgetermin";
+    default:
+      return "";
+  }
+};
+
 export const AppointmentItem = ({
   appointment,
   onClick,
@@ -126,44 +145,53 @@ export const AppointmentItem = ({
       )}
       onClick={(e) => onClick(e)}
     >
-      <div className="flex items-center gap-1 text-xs">
-        <div className="flex items-center gap-1 flex-1">
+      {/* Title takes full width */}
+      <div className="w-full font-bold truncate mb-2">
+        {appointment.title}
+      </div>
+
+      {/* Additional info in a grid */}
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="flex items-center gap-1">
           {getEventIcon()}
-          <span className="font-bold truncate">{appointment.title}</span>
+          <span>{getMeetingTypeLabel(appointment.meeting_type)}</span>
         </div>
-        {appointment.completed && (
-          <div className="text-green-500">
-            <Check className="h-4 w-4" />
+
+        {(!isMultiDayEvent || (isMultiDayEvent && isStartDay)) && (
+          <div className="flex items-center gap-1 text-gray-600">
+            <Clock className="h-3 w-3" />
+            {formatTimeRange()}
           </div>
         )}
-        {appointment.cancelled && (
-          <div className="text-red-500">
-            <X className="h-4 w-4" />
+
+        {appointment.leads?.name && (
+          <div className="flex items-center gap-1 text-gray-600">
+            <User className="h-3 w-3" />
+            <span className="truncate">{appointment.leads.name}</span>
+          </div>
+        )}
+
+        {isMultiDayEvent && (
+          <div className="text-gray-500">
+            {isStartDay && "Start"}
+            {!isStartDay && !isEndDay && "Zwischen"}
+            {isEndDay && "Ende"}
+          </div>
+        )}
+
+        {(appointment.completed || appointment.cancelled) && (
+          <div className={cn(
+            "flex items-center gap-1",
+            appointment.completed ? "text-green-500" : "text-red-500"
+          )}>
+            {appointment.completed ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <X className="h-4 w-4" />
+            )}
           </div>
         )}
       </div>
-
-      {(!isMultiDayEvent || (isMultiDayEvent && isStartDay)) && (
-        <div className="flex items-center gap-1 text-xs text-gray-600">
-          <Clock className="h-3 w-3" />
-          {formatTimeRange()}
-        </div>
-      )}
-
-      {appointment.leads?.name && (
-        <div className="flex items-center gap-1 text-xs text-gray-600">
-          <User className="h-3 w-3" />
-          <span className="truncate">{appointment.leads.name}</span>
-        </div>
-      )}
-
-      {isMultiDayEvent && (
-        <div className="text-xs text-gray-500">
-          {isStartDay && "Start"}
-          {!isStartDay && !isEndDay && "Zwischen"}
-          {isEndDay && "Ende"}
-        </div>
-      )}
     </div>
   );
 };

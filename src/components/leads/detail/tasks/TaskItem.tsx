@@ -45,8 +45,6 @@ export const TaskItem = ({ task, onToggle }: TaskItemProps) => {
           {task.completed && <Check className="h-4 w-4" />}
         </button>
         <div className={`flex-1 ${task.completed ? "line-through text-gray-500" : ""}`}>
-          <div className="font-medium">{task.title}</div>
-          
           {task.leads && (
             <Button
               variant="ghost"
