@@ -5,10 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadInfoCard } from "./LeadInfoCard";
-import { TaskList } from "./TaskList";
-import { NoteList } from "./NoteList";
-import { LeadSummary } from "./LeadSummary";
 import { LeadDetailHeader } from "./LeadDetailHeader";
+import { LeadSummary } from "./LeadSummary";
 import { LeadMessages } from "./LeadMessages";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { LeadTimeline } from "./LeadTimeline";
@@ -150,7 +148,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           .from("notes")
           .insert({
             lead_id: leadId,
-            user_id: user.id, // Add the user_id here
+            user_id: user.id,
             content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
             color: "#E9D5FF",
             metadata: {
@@ -172,7 +170,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         .update(updates)
         .eq("id", leadId)
         .select()
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
       return data;
@@ -261,8 +259,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
                 lead={lead} 
                 onDeletePhaseChange={deletePhaseChangeMutation.mutate}
               />
-              <TaskList leadId={lead.id} />
-              <NoteList leadId={lead.id} />
               <LeadMessages messages={lead.messages} />
             </div>
           </div>
