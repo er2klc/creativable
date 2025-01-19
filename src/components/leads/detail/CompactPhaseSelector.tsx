@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChevronDown } from "lucide-react";
 
 interface CompactPhaseSelectorProps {
   lead: Tables<"leads">;
@@ -77,15 +78,56 @@ export function CompactPhaseSelector({
     }
   };
 
+  const currentPipeline = pipelines.find(p => p.id === lead.pipeline_id);
+  const currentPhase = phases.find(p => p.id === lead.phase_id);
+
   return (
     <div className="w-full space-y-4">
-      <div className="flex items-center gap-4">
+      <div className="relative flex items-center w-full">
+        <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 rounded-full" />
+        <div className="relative z-10 flex justify-between w-full">
+          {phases.map((phase, index) => {
+            const isActive = phase.id === lead.phase_id;
+            const isPast = phase.order_index < (currentPhase?.order_index || 0);
+            
+            return (
+              <div 
+                key={phase.id}
+                className="flex flex-col items-center"
+              >
+                <button
+                  onClick={() => handlePhaseChange(phase.id)}
+                  className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center transition-all relative",
+                    "hover:scale-110 transform duration-200 ease-in-out mb-2",
+                    isActive ? "bg-blue-600 text-white" :
+                    isPast ? "bg-blue-200" : "bg-white border-2 border-gray-200"
+                  )}
+                >
+                  {index + 1}
+                </button>
+                <span className="text-xs font-medium">
+                  {phase.name}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 text-sm text-gray-600">
+        <span>Aktuelle Pipeline:</span>
         <Select
           value={lead.pipeline_id}
           onValueChange={handlePipelineChange}
         >
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Pipeline wählen" />
+          <SelectTrigger className="h-8 w-[200px] text-sm">
+            <SelectValue>
+              <div className="flex items-center gap-2">
+                {currentPipeline?.name}
+                <ChevronDown className="h-4 w-4" />
+              </div>
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {pipelines.map((pipeline) => (
@@ -95,25 +137,6 @@ export function CompactPhaseSelector({
             ))}
           </SelectContent>
         </Select>
-      </div>
-
-      <div className="relative flex items-center gap-2 pt-2">
-        <div className="absolute top-1/2 left-0 w-full h-px bg-gray-200 -translate-y-1/2 z-0" />
-        {phases.map((phase) => (
-          <button
-            key={phase.id}
-            onClick={() => handlePhaseChange(phase.id)}
-            className={cn(
-              "px-3 py-1 text-sm rounded-full transition-all relative z-10",
-              "hover:scale-105 transform duration-200 ease-in-out",
-              lead.phase_id === phase.id
-                ? "bg-[#D3E4FD] text-blue-800"
-                : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300"
-            )}
-          >
-            {phase.name}
-          </button>
-        ))}
       </div>
     </div>
   );
