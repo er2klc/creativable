@@ -7,6 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { useContactFields } from "@/hooks/use-contact-fields";
 import { toast } from "sonner";
@@ -38,6 +39,8 @@ export function ContactInfoGroup({
   const { addField } = useContactFields();
   const { settings } = useSettings();
 
+  console.log("ContactInfoGroup rendering:", { title, groupName, isAddingField });
+
   const handleToggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
   };
@@ -54,11 +57,13 @@ export function ContactInfoGroup({
   };
 
   const handleAddField = () => {
+    console.log("Starting to add new field");
     setIsAddingField(true);
   };
 
   const handleSaveNewField = async () => {
     if (newFieldLabel.trim()) {
+      console.log("Saving new field:", newFieldLabel);
       try {
         await addField({
           field_name: newFieldLabel,
@@ -117,32 +122,46 @@ export function ContactInfoGroup({
                 <MoreVertical className="h-4 w-4 text-gray-500" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleAddField}>
-                <Plus className="mr-2 h-4 w-4" />
-                {settings?.language === "en" ? "Add Field" : "Feld hinzufügen"}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleToggleReordering}>
-                <GripVertical className="mr-2 h-4 w-4" />
-                {isReordering 
-                  ? (settings?.language === "en" ? "Done" : "Fertig")
-                  : (settings?.language === "en" ? "Reorder" : "Neu anordnen")
-                }
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleToggleEmpty}>
-                {showEmpty ? (
-                  <>
-                    <EyeOff className="mr-2 h-4 w-4" />
-                    {settings?.language === "en" ? "Hide Empty" : "Leere ausblenden"}
-                  </>
-                ) : (
-                  <>
-                    <Eye className="mr-2 h-4 w-4" />
-                    {settings?.language === "en" ? "Show Empty" : "Leere anzeigen"}
-                  </>
-                )}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
+            <DropdownMenuPortal>
+              <DropdownMenuContent 
+                align="end" 
+                className="z-50 bg-white dark:bg-gray-800 shadow-lg rounded-md border w-48"
+              >
+                <DropdownMenuItem 
+                  onClick={handleAddField}
+                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  {settings?.language === "en" ? "Add Field" : "Feld hinzufügen"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={handleToggleReordering}
+                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <GripVertical className="mr-2 h-4 w-4" />
+                  {isReordering 
+                    ? (settings?.language === "en" ? "Done" : "Fertig")
+                    : (settings?.language === "en" ? "Reorder" : "Neu anordnen")
+                  }
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={handleToggleEmpty}
+                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  {showEmpty ? (
+                    <>
+                      <EyeOff className="mr-2 h-4 w-4" />
+                      {settings?.language === "en" ? "Hide Empty" : "Leere ausblenden"}
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="mr-2 h-4 w-4" />
+                      {settings?.language === "en" ? "Show Empty" : "Leere anzeigen"}
+                    </>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenuPortal>
           </DropdownMenu>
         )}
       </div>
