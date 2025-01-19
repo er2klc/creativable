@@ -6,6 +6,9 @@ import { NoteTab } from "./tabs/NoteTab";
 import { TaskTab } from "./tabs/TaskTab";
 import { MessageTab } from "./tabs/MessageTab";
 import { PlaceholderTab } from "./tabs/PlaceholderTab";
+import { AppointmentList } from "../AppointmentList";
+import { useState } from "react";
+import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
 
 interface LeadDetailTabsProps {
   lead: Tables<"leads"> & {
@@ -16,17 +19,9 @@ interface LeadDetailTabsProps {
   };
 }
 
-const tabColors = {
-  notes: "#eab308",
-  tasks: "#06b6d4",
-  appointments: "#DCF0FF",
-  messages: "#E5ECE9",
-  uploads: "#F4E4FF",
-  presentations: "#FFE4F3",
-};
-
 export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const { settings } = useSettings();
+  const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
 
   return (
     <Tabs defaultValue="notes" className="w-full">
@@ -34,42 +29,37 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
         <TabsTrigger
           value="notes"
           className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.notes}` }}
         >
           {settings?.language === "en" ? "Notes" : "Notizen"}
         </TabsTrigger>
         <TabsTrigger
           value="tasks"
           className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.tasks}` }}
         >
           {settings?.language === "en" ? "Tasks" : "Aufgaben"}
         </TabsTrigger>
         <TabsTrigger
           value="appointments"
           className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.appointments}` }}
+          onClick={() => setIsAppointmentDialogOpen(true)}
         >
           {settings?.language === "en" ? "Appointments" : "Termine"}
         </TabsTrigger>
         <TabsTrigger
           value="messages"
           className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.messages}` }}
         >
           {settings?.language === "en" ? "Messages" : "Nachrichten"}
         </TabsTrigger>
         <TabsTrigger
           value="uploads"
           className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.uploads}` }}
         >
           {settings?.language === "en" ? "Uploads" : "Uploads"}
         </TabsTrigger>
         <TabsTrigger
           value="presentations"
           className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.presentations}` }}
         >
           {settings?.language === "en" ? "Presentations" : "Präsentationen"}
         </TabsTrigger>
@@ -84,7 +74,7 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
       </TabsContent>
 
       <TabsContent value="appointments" className="mt-4">
-        <PlaceholderTab title="Appointment" />
+        <AppointmentList leadId={lead.id} />
       </TabsContent>
 
       <TabsContent value="messages" className="mt-4">
@@ -98,6 +88,16 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
       <TabsContent value="presentations" className="mt-4">
         <PlaceholderTab title="Presentation" />
       </TabsContent>
+
+      <NewAppointmentDialog
+        open={isAppointmentDialogOpen}
+        onOpenChange={setIsAppointmentDialogOpen}
+        defaultValues={{
+          leadId: lead.id,
+          time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+          date: new Date(),
+        }}
+      />
     </Tabs>
   );
 }
