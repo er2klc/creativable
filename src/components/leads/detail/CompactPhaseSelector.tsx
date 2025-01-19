@@ -58,7 +58,7 @@ export function CompactPhaseSelector({
   };
 
   const handlePhaseChange = async (phaseId: string) => {
-    if (phaseId !== lead.phase_id && session?.user?.id) {
+    if (session?.user?.id) {
       const oldPhase = phases.find(p => p.id === lead.phase_id);
       const newPhase = phases.find(p => p.id === phaseId);
       const oldPipeline = pipelines.find(p => p.id === lead.pipeline_id);
