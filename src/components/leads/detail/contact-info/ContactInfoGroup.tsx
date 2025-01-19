@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, Eye, EyeOff, GripVertical, MoreVertical, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, Eye, EyeOff, GripVertical, MoreVertical, Plus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,9 @@ export function ContactInfoGroup({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showEmpty, setShowEmpty] = useState(showEmptyFields);
   const [isReordering, setIsReordering] = useState(false);
+  const [isAddingField, setIsAddingField] = useState(false);
+  const [newFieldLabel, setNewFieldLabel] = useState("");
+  const [newFieldValue, setNewFieldValue] = useState("");
 
   const handleToggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
@@ -41,6 +45,20 @@ export function ContactInfoGroup({
 
   const handleToggleReordering = () => {
     setIsReordering(!isReordering);
+  };
+
+  const handleAddField = () => {
+    setIsAddingField(true);
+  };
+
+  const handleSaveNewField = () => {
+    if (newFieldLabel.trim() && newFieldValue.trim()) {
+      // Here you would typically save the new field to your backend
+      console.log("Saving new field:", { label: newFieldLabel, value: newFieldValue });
+      setIsAddingField(false);
+      setNewFieldLabel("");
+      setNewFieldValue("");
+    }
   };
 
   return (
@@ -87,7 +105,7 @@ export function ContactInfoGroup({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => console.log("Add field")}>
+              <DropdownMenuItem onClick={handleAddField}>
                 <Plus className="mr-2 h-4 w-4" />
                 Feld hinzufügen
               </DropdownMenuItem>
@@ -102,6 +120,30 @@ export function ContactInfoGroup({
 
       {!isCollapsed && (
         <div className="space-y-1">
+          {isAddingField && (
+            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3 w-1/2">
+                <Settings className="h-4 w-4 text-gray-500 shrink-0" />
+                <Input
+                  value={newFieldLabel}
+                  onChange={(e) => setNewFieldLabel(e.target.value)}
+                  onBlur={handleSaveNewField}
+                  placeholder="Feldname"
+                  className="h-8 text-sm bg-white"
+                  autoFocus
+                />
+              </div>
+              <div className="flex-1 w-1/2">
+                <Input
+                  value={newFieldValue}
+                  onChange={(e) => setNewFieldValue(e.target.value)}
+                  onBlur={handleSaveNewField}
+                  placeholder="Wert"
+                  className="h-8 text-sm bg-white"
+                />
+              </div>
+            </div>
+          )}
           {React.Children.map(children, child => {
             if (React.isValidElement(child)) {
               return React.cloneElement(child, {
