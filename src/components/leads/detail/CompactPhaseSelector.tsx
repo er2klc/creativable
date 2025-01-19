@@ -29,6 +29,11 @@ export function CompactPhaseSelector({
   const handlePhaseChange = async (phaseId: string) => {
     if (!session?.user?.id || !selectedPipelineId) return;
     
+    // Don't update if the phase hasn't changed
+    if (phaseId === lead.phase_id && selectedPipelineId === lead.pipeline_id) {
+      return;
+    }
+    
     updateLeadPipeline.mutate({
       leadId: lead.id,
       pipelineId: selectedPipelineId,

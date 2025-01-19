@@ -72,23 +72,39 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Invalid lead ID");
       }
 
+      // Only proceed if there are actual changes
+      const hasChanges = Object.entries(updates).some(
+        ([key, value]) => lead?.[key as keyof typeof lead] !== value
+      );
+
+      if (!hasChanges) {
+        return lead;
+      }
+
       const { data, error } = await supabase
         .from("leads")
         .update(updates)
         .eq("id", leadId)
         .select()
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      toast.success(
-        settings?.language === "en"
-          ? "Contact updated successfully"
-          : "Kontakt erfolgreich aktualisiert"
+    onSuccess: (data, variables) => {
+      // Only show toast and invalidate if there were actual changes
+      const hasChanges = Object.entries(variables).some(
+        ([key, value]) => lead?.[key as keyof typeof lead] !== value
       );
+      
+      if (hasChanges) {
+        queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+        toast.success(
+          settings?.language === "en"
+            ? "Contact updated successfully"
+            : "Kontakt erfolgreich aktualisiert"
+        );
+      }
     },
     onError: (error) => {
       console.error("Error updating lead:", error);
@@ -169,7 +185,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
               />
               <TaskList leadId={lead.id} />
               <NoteList leadId={lead.id} />
-              <LeadMessages messages={lead.messages} />
+              <LeadMessages leadId={lead.id} messages={lead.messages} />
             </div>
           </div>
         ) : null}
