@@ -46,7 +46,7 @@ export function CompactPhaseSelector({
   return (
     <div className="w-full space-y-4">
       <div className="relative flex items-center w-full">
-        <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 rounded-full" />
+        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2" />
         <div className="relative z-10 flex justify-between w-full">
           {phases.map((phase, index) => {
             const isActive = phase.id === lead.phase_id && selectedPipelineId === lead.pipeline_id;
@@ -61,14 +61,15 @@ export function CompactPhaseSelector({
                 <button
                   onClick={() => handlePhaseChange(phase.id)}
                   className={cn(
-                    "w-full h-10 relative flex items-center justify-center transition-all",
-                    "hover:brightness-110 transform duration-200 ease-in-out mb-2",
-                    "clip-chevron", // This will be defined in tailwind.config.ts
-                    isActive ? "bg-blue-600 text-white" :
-                    isPast ? "bg-blue-200" : "bg-white border-2 border-gray-200"
+                    "w-full h-12 relative flex items-center justify-center transition-all",
+                    "hover:brightness-105 transform duration-200 ease-in-out",
+                    "clip-chevron shadow-sm",
+                    isActive ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white" :
+                    isPast ? "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700" : 
+                    "bg-white text-gray-700 border border-gray-200"
                   )}
                 >
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium px-4 truncate">
                     {phase.name}
                   </span>
                 </button>
