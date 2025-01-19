@@ -57,6 +57,8 @@ export const LeadKanbanView = ({
           await updatePhaseOrder.mutateAsync(
             newPhases.map((phase, index) => ({
               id: phase.id,
+              name: phase.name,
+              pipeline_id: phase.pipeline_id,
               order_index: index
             }))
           );
