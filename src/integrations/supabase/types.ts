@@ -575,23 +575,41 @@ export type Database = {
       }
       leads: {
         Row: {
+          address: string | null
+          best_contact_times: string | null
+          birth_date: string | null
           business_description: string | null
+          challenges: string[] | null
+          city: string | null
           company_name: string | null
           contact_type: string | null
           created_at: string | null
           email: string | null
+          emotional_analysis: Json | null
+          first_name: string | null
+          gender: Database["public"]["Enums"]["gender_type"] | null
+          goals: string[] | null
           id: string
           industry: string
+          interaction_prediction: Json | null
+          interests: string[] | null
           last_action: string | null
           last_action_date: string | null
+          last_name: string | null
           last_social_media_scan: string | null
           name: string
+          next_steps: Json | null
           notes: string | null
           phase_id: string
           phone_number: string | null
           pipeline_id: string
           platform: string
+          position: string | null
+          preferred_communication_channel:
+            | Database["public"]["Enums"]["communication_channel"]
+            | null
           products_services: string | null
+          region: string | null
           slug: string | null
           social_media_bio: string | null
           social_media_interests: string[] | null
@@ -604,23 +622,41 @@ export type Database = {
           usp: string | null
         }
         Insert: {
+          address?: string | null
+          best_contact_times?: string | null
+          birth_date?: string | null
           business_description?: string | null
+          challenges?: string[] | null
+          city?: string | null
           company_name?: string | null
           contact_type?: string | null
           created_at?: string | null
           email?: string | null
+          emotional_analysis?: Json | null
+          first_name?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          goals?: string[] | null
           id?: string
           industry: string
+          interaction_prediction?: Json | null
+          interests?: string[] | null
           last_action?: string | null
           last_action_date?: string | null
+          last_name?: string | null
           last_social_media_scan?: string | null
           name: string
+          next_steps?: Json | null
           notes?: string | null
           phase_id: string
           phone_number?: string | null
           pipeline_id: string
           platform: string
+          position?: string | null
+          preferred_communication_channel?:
+            | Database["public"]["Enums"]["communication_channel"]
+            | null
           products_services?: string | null
+          region?: string | null
           slug?: string | null
           social_media_bio?: string | null
           social_media_interests?: string[] | null
@@ -633,23 +669,41 @@ export type Database = {
           usp?: string | null
         }
         Update: {
+          address?: string | null
+          best_contact_times?: string | null
+          birth_date?: string | null
           business_description?: string | null
+          challenges?: string[] | null
+          city?: string | null
           company_name?: string | null
           contact_type?: string | null
           created_at?: string | null
           email?: string | null
+          emotional_analysis?: Json | null
+          first_name?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          goals?: string[] | null
           id?: string
           industry?: string
+          interaction_prediction?: Json | null
+          interests?: string[] | null
           last_action?: string | null
           last_action_date?: string | null
+          last_name?: string | null
           last_social_media_scan?: string | null
           name?: string
+          next_steps?: Json | null
           notes?: string | null
           phase_id?: string
           phone_number?: string | null
           pipeline_id?: string
           platform?: string
+          position?: string | null
+          preferred_communication_channel?:
+            | Database["public"]["Enums"]["communication_channel"]
+            | null
           products_services?: string | null
+          region?: string | null
           slug?: string | null
           social_media_bio?: string | null
           social_media_interests?: string[] | null
@@ -2259,6 +2313,13 @@ export type Database = {
       }
     }
     Enums: {
+      communication_channel:
+        | "phone"
+        | "email"
+        | "sms"
+        | "whatsapp"
+        | "social_media"
+      gender_type: "male" | "female" | "other" | "prefer_not_to_say"
       recurring_pattern: "none" | "daily" | "weekly" | "monthly" | "yearly"
       shortcut_type:
         | "team"

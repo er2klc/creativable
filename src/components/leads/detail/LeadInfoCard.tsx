@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tables } from "@/integrations/supabase/types";
-import { Contact2, Building2, Briefcase, Phone, Mail, HelpCircle, Star } from "lucide-react";
+import { Contact2, Building2, Briefcase, Phone, Mail, Globe, MapPin, Calendar, MessageSquare, Clock, Languages, Heart, Target, AlertCircle, Share2, UserPlus } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,21 +53,6 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     updateLeadMutation.mutate({ [field]: value });
   };
 
-  const handleContactTypeUpdate = (type: string) => {
-    const currentTypes = lead.contact_type?.split(',') || [];
-    let newTypes: string[];
-
-    if (currentTypes.includes(type)) {
-      newTypes = currentTypes.filter(t => t !== type);
-    } else {
-      newTypes = [...currentTypes, type];
-    }
-    
-    updateLeadMutation.mutate({ 
-      contact_type: newTypes.length > 0 ? newTypes.join(',') : null
-    });
-  };
-
   const InfoRow = ({ 
     icon: Icon, 
     label, 
@@ -106,15 +91,14 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
               onClick={() => handleStartEdit(field, value)}
               className="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 -ml-2"
             >
-              <span>{value || label}</span>
+              <span className="text-sm text-gray-500">{label}</span>
+              <span className="block">{value || label}</span>
             </div>
           )}
         </div>
       </div>
     );
   };
-
-  const currentTypes = lead.contact_type?.split(',') || [];
 
   return (
     <Card>
@@ -124,58 +108,168 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           {settings?.language === "en" ? "Contact Information" : "Kontakt Informationen"}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-1">
-        <div className="flex gap-2 mb-4">
-          <Button
-            variant={currentTypes.includes('Partner') ? "default" : "outline"}
-            size="sm"
-            onClick={() => handleContactTypeUpdate('Partner')}
-            className="flex items-center gap-2"
-          >
-            <HelpCircle className="h-4 w-4" />
-            Partner
-          </Button>
-          <Button
-            variant={currentTypes.includes('Kunde') ? "default" : "outline"}
-            size="sm"
-            onClick={() => handleContactTypeUpdate('Kunde')}
-            className="flex items-center gap-2"
-          >
-            <Star className="h-4 w-4" />
-            Kunde
-          </Button>
+      <CardContent className="space-y-4">
+        {/* Basic Information */}
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            {settings?.language === "en" ? "Basic Information" : "Grundinformationen"}
+          </h3>
+          <InfoRow
+            icon={Contact2}
+            label={settings?.language === "en" ? "Name" : "Name"}
+            value={lead.name}
+            field="name"
+          />
+          <InfoRow
+            icon={Building2}
+            label={settings?.language === "en" ? "Company" : "Firma"}
+            value={lead.company_name}
+            field="company_name"
+          />
+          <InfoRow
+            icon={Briefcase}
+            label={settings?.language === "en" ? "Position" : "Position"}
+            value={lead.position}
+            field="position"
+          />
         </div>
-        <div className="h-[1px] w-full bg-border mb-4" />
-        <InfoRow
-          icon={Contact2}
-          label={settings?.language === "en" ? "Name" : "Name"}
-          value={lead.name}
-          field="name"
-        />
-        <InfoRow
-          icon={Building2}
-          label={settings?.language === "en" ? "Company" : "Firma"}
-          value={lead.company_name}
-          field="company_name"
-        />
-        <InfoRow
-          icon={Briefcase}
-          label={settings?.language === "en" ? "Industry" : "Branche"}
-          value={lead.industry}
-          field="industry"
-        />
-        <InfoRow
-          icon={Phone}
-          label={settings?.language === "en" ? "Phone" : "Telefon"}
-          value={lead.phone_number}
-          field="phone_number"
-        />
-        <InfoRow
-          icon={Mail}
-          label={settings?.language === "en" ? "Email" : "E-Mail"}
-          value={lead.email}
-          field="email"
-        />
+
+        {/* Contact Details */}
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            {settings?.language === "en" ? "Contact Details" : "Kontaktdetails"}
+          </h3>
+          <InfoRow
+            icon={Phone}
+            label={settings?.language === "en" ? "Phone" : "Telefon"}
+            value={lead.phone_number}
+            field="phone_number"
+          />
+          <InfoRow
+            icon={Mail}
+            label={settings?.language === "en" ? "Email" : "E-Mail"}
+            value={lead.email}
+            field="email"
+          />
+          <InfoRow
+            icon={Globe}
+            label={settings?.language === "en" ? "Website" : "Webseite"}
+            value={lead.website}
+            field="website"
+          />
+        </div>
+
+        {/* Address */}
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            {settings?.language === "en" ? "Address" : "Adresse"}
+          </h3>
+          <InfoRow
+            icon={MapPin}
+            label={settings?.language === "en" ? "Street" : "Straße"}
+            value={lead.street}
+            field="street"
+          />
+          <InfoRow
+            icon={MapPin}
+            label={settings?.language === "en" ? "City" : "Stadt"}
+            value={lead.city}
+            field="city"
+          />
+          <InfoRow
+            icon={MapPin}
+            label={settings?.language === "en" ? "State" : "Bundesland"}
+            value={lead.region}
+            field="region"
+          />
+          <InfoRow
+            icon={MapPin}
+            label={settings?.language === "en" ? "Postal Code" : "Postleitzahl"}
+            value={lead.postal_code}
+            field="postal_code"
+          />
+          <InfoRow
+            icon={MapPin}
+            label={settings?.language === "en" ? "Country" : "Land"}
+            value={lead.country}
+            field="country"
+          />
+        </div>
+
+        {/* Additional Information */}
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            {settings?.language === "en" ? "Additional Information" : "Zusätzliche Informationen"}
+          </h3>
+          <InfoRow
+            icon={Calendar}
+            label={settings?.language === "en" ? "Birth Date" : "Geburtsdatum"}
+            value={lead.birth_date ? new Date(lead.birth_date).toLocaleDateString() : null}
+            field="birth_date"
+          />
+          <InfoRow
+            icon={MessageSquare}
+            label={settings?.language === "en" ? "Preferred Contact Channel" : "Bevorzugter Kontaktkanal"}
+            value={lead.preferred_communication_channel}
+            field="preferred_communication_channel"
+          />
+          <InfoRow
+            icon={Clock}
+            label={settings?.language === "en" ? "Best Contact Times" : "Beste Erreichbarkeitszeit"}
+            value={lead.best_contact_times}
+            field="best_contact_times"
+          />
+          <InfoRow
+            icon={Languages}
+            label={settings?.language === "en" ? "Languages" : "Sprachen"}
+            value={lead.languages}
+            field="languages"
+          />
+        </div>
+
+        {/* Interests & Goals */}
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            {settings?.language === "en" ? "Interests & Goals" : "Interessen & Ziele"}
+          </h3>
+          <InfoRow
+            icon={Heart}
+            label={settings?.language === "en" ? "Interests" : "Interessen"}
+            value={Array.isArray(lead.interests) ? lead.interests.join(", ") : lead.interests}
+            field="interests"
+          />
+          <InfoRow
+            icon={Target}
+            label={settings?.language === "en" ? "Goals" : "Ziele"}
+            value={Array.isArray(lead.goals) ? lead.goals.join(", ") : lead.goals}
+            field="goals"
+          />
+          <InfoRow
+            icon={AlertCircle}
+            label={settings?.language === "en" ? "Challenges" : "Herausforderungen"}
+            value={Array.isArray(lead.challenges) ? lead.challenges.join(", ") : lead.challenges}
+            field="challenges"
+          />
+        </div>
+
+        {/* Source Information */}
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            {settings?.language === "en" ? "Source Information" : "Herkunftsinformationen"}
+          </h3>
+          <InfoRow
+            icon={Share2}
+            label={settings?.language === "en" ? "Contact Source" : "Kontakt-Quelle"}
+            value={lead.platform}
+            field="platform"
+          />
+          <InfoRow
+            icon={UserPlus}
+            label={settings?.language === "en" ? "Referred By" : "Empfohlen durch"}
+            value={lead.referred_by}
+            field="referred_by"
+          />
+        </div>
       </CardContent>
     </Card>
   );
