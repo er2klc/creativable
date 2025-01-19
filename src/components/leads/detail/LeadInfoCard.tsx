@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { useParams } from "react-router-dom";
 
 interface LeadInfoCardProps {
@@ -222,7 +221,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           <InfoRow
             icon={Languages}
             label={settings?.language === "en" ? "Languages" : "Sprachen"}
-            value={lead.languages}
+            value={Array.isArray(lead.languages) ? lead.languages.join(", ") : lead.languages}
             field="languages"
           />
         </div>
