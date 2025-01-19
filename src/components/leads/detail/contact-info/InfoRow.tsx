@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { platformsConfig } from "@/config/platforms";
 import { Tables } from "@/integrations/supabase/types";
 import { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface InfoRowProps {
   icon: LucideIcon;
@@ -12,9 +13,18 @@ interface InfoRowProps {
   field: string;
   onUpdate: (updates: Partial<Tables<"leads">>) => void;
   isSourceField?: boolean;
+  showToast?: boolean;
 }
 
-export function InfoRow({ icon: Icon, label, value, field, onUpdate, isSourceField }: InfoRowProps) {
+export function InfoRow({ 
+  icon: Icon, 
+  label, 
+  value, 
+  field, 
+  onUpdate, 
+  isSourceField,
+  showToast = false 
+}: InfoRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingValue, setEditingValue] = useState<string>("");
 
@@ -34,10 +44,12 @@ export function InfoRow({ icon: Icon, label, value, field, onUpdate, isSourceFie
         .filter(Boolean);
       
       if (arrayValue.length > 0 || value === "") {
-        onUpdate({ [field]: arrayValue.length > 0 ? arrayValue : [] });
+        onUpdate({ 
+          [field]: arrayValue.length > 0 ? arrayValue : [],
+        }, showToast);
       }
     } else {
-      onUpdate({ [field]: value });
+      onUpdate({ [field]: value }, showToast);
     }
     setIsEditing(false);
   };
@@ -51,7 +63,10 @@ export function InfoRow({ icon: Icon, label, value, field, onUpdate, isSourceFie
 
   return (
     <div className="group relative">
-      <div className="flex items-center gap-3 py-3 px-4 hover:bg-gray-50/80 rounded-lg transition-colors">
+      <div className={cn(
+        "flex items-center gap-3 py-3 px-4 rounded-lg transition-colors",
+        isEditing ? "bg-gray-50" : "hover:bg-gray-50/80"
+      )}>
         <Icon className="h-4 w-4 text-gray-500 shrink-0" />
         
         <div className="flex-1 min-w-0">

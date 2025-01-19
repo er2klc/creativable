@@ -36,11 +36,6 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      toast.success(
-        settings?.language === "en"
-          ? "Contact updated successfully"
-          : "Kontakt erfolgreich aktualisiert"
-      );
     },
     onError: (error) => {
       console.error("Error updating lead:", error);
@@ -52,8 +47,15 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     },
   });
 
-  const handleUpdate = (updates: Partial<Tables<"leads">>) => {
+  const handleUpdate = (updates: Partial<Tables<"leads">>, showToast = false) => {
     updateLeadMutation.mutate(updates);
+    if (showToast) {
+      toast.success(
+        settings?.language === "en"
+          ? "Contact updated successfully"
+          : "Kontakt erfolgreich aktualisiert"
+      );
+    }
   };
 
   return (
@@ -75,7 +77,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
         <div className="h-px bg-gray-200/80" />
         <InterestsGoalsFields lead={lead} onUpdate={handleUpdate} />
         <div className="h-px bg-gray-200/80" />
-        <SourceInfoFields lead={lead} onUpdate={handleUpdate} />
+        <SourceInfoFields lead={lead} onUpdate={handleUpdate} showToast={true} />
       </CardContent>
     </Card>
   );

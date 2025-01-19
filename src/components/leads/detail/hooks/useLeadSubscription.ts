@@ -11,7 +11,7 @@ export const useLeadSubscription = (leadId: string | null) => {
     console.log('Setting up real-time subscriptions for leadId:', leadId);
 
     const channel = supabase
-      .channel('lead-details-changes')
+      .channel(`lead-details-${leadId}`)
       .on(
         'postgres_changes',
         {
