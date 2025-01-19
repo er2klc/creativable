@@ -16,11 +16,6 @@ import { Button } from "@/components/ui/button";
 import { LeadFilters } from "./LeadFilters";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
 import { AddLeadDialog } from "./AddLeadDialog";
-import {
-  SortableContext,
-  horizontalListSortingStrategy,
-  arrayMove,
-} from "@dnd-kit/sortable";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -40,7 +35,7 @@ export const LeadKanbanView = ({
   const [targetPhase, setTargetPhase] = useState<string>("");
   const [showAddLead, setShowAddLead] = useState(false);
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
-  const { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePhaseOrder } = usePhaseMutations();
+  const { updateLeadPhase, addPhase, updatePhaseName, deletePhase } = usePhaseMutations();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -81,34 +76,10 @@ export const LeadKanbanView = ({
     
     if (!over || !active) return;
 
-    if (isEditMode) {
-      // Handle phase reordering
-      const oldIndex = phases.findIndex((phase) => phase.id === active.id);
-      const newIndex = phases.findIndex((phase) => phase.id === over.id);
-
-      if (oldIndex !== newIndex) {
-        const newPhases = arrayMove(phases, oldIndex, newIndex);
-        const updates = newPhases.map((phase, index) => ({
-          id: phase.id,
-          order_index: index,
-        }));
-        
-        try {
-          await updatePhaseOrder.mutateAsync(updates);
-        } catch (error) {
-          console.error("Error reordering phases:", error);
-          toast.error(
-            settings?.language === "en"
-              ? "Failed to reorder phases"
-              : "Fehler beim Neuordnen der Phasen"
-          );
-        }
-      }
-    } else {
-      // Handle lead movement
-      const leadId = active.id as string;
-      const newPhase = over.id as string;
-      
+    const leadId = active.id as string;
+    const newPhase = over.id as string;
+    
+    if (newPhase && !isEditMode) {  // Only allow lead dragging when not in edit mode
       try {
         await updateLeadPhase.mutateAsync({ 
           leadId, 
@@ -188,24 +159,19 @@ export const LeadKanbanView = ({
             {/* Shadow indicator for left scroll */}
             <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
 
-            <SortableContext 
-              items={phases.map(phase => phase.id)}
-              strategy={horizontalListSortingStrategy}
-            >
-              {phases.map((phase) => (
-                <div key={phase.id} className="flex-1" style={{ minWidth: '190px', width: `${100 / phases.length}%` }}>
-                  <PhaseColumn
-                    phase={phase}
-                    leads={leads.filter((lead) => lead.phase_id === phase.id)}
-                    onLeadClick={handleLeadClick}
-                    isEditMode={isEditMode}
-                    onDeletePhase={() => setPhaseToDelete(phase)}
-                    onUpdatePhaseName={(newName) => updatePhaseName.mutate({ id: phase.id, name: newName })}
-                    pipelineId={selectedPipelineId}
-                  />
-                </div>
-              ))}
-            </SortableContext>
+            {phases.map((phase) => (
+              <div key={phase.id} className="flex-1" style={{ minWidth: '190px', width: `${100 / phases.length}%` }}>
+                <PhaseColumn
+                  phase={phase}
+                  leads={leads.filter((lead) => lead.phase_id === phase.id)}
+                  onLeadClick={handleLeadClick}
+                  isEditMode={isEditMode}
+                  onDeletePhase={() => setPhaseToDelete(phase)}
+                  onUpdatePhaseName={(newName) => updatePhaseName.mutate({ id: phase.id, name: newName })}
+                  pipelineId={selectedPipelineId}
+                />
+              </div>
+            ))}
 
             {/* Shadow indicator for right scroll */}
             <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
