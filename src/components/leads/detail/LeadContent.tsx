@@ -49,7 +49,7 @@ export const LeadContent = ({ lead, onUpdateLead, onDeletePhaseChange }: LeadCon
         />
         <TaskList leadId={lead.id} />
         <NoteList leadId={lead.id} />
-        <LeadMessages messages={lead.messages} />
+        <LeadMessages leadId={lead.id} messages={lead.messages} />
       </div>
     </div>
   );

@@ -57,7 +57,7 @@ export const LeadDetailContent = ({
           lead={lead} 
           onDeletePhaseChange={onDeletePhaseChange}
         />
-        <LeadMessages messages={lead.messages} />
+        <LeadMessages leadId={lead.id} messages={lead.messages} />
       </div>
     </div>
   );
