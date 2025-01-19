@@ -3,7 +3,10 @@ import { LeadFilters } from "../LeadFilters";
 import { LeadSearch } from "../LeadSearch";
 import { AddLeadDialog } from "../AddLeadDialog";
 import { useState } from "react";
-import { LayoutGrid, List } from "lucide-react";
+import { LayoutGrid, List, Save } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { useSettings } from "@/hooks/use-settings";
+import { usePhaseMutations } from "../kanban/usePhaseQuery";
 
 interface LeadsHeaderProps {
   searchQuery: string;
@@ -12,6 +15,7 @@ interface LeadsHeaderProps {
   setSelectedPipelineId: (id: string | null) => void;
   viewMode: "kanban" | "list";
   setViewMode: (mode: "kanban" | "list") => void;
+  currentPipelineName?: string;
 }
 
 export const LeadsHeader = ({
@@ -21,8 +25,35 @@ export const LeadsHeader = ({
   setSelectedPipelineId,
   viewMode,
   setViewMode,
+  currentPipelineName,
 }: LeadsHeaderProps) => {
   const [showAddLead, setShowAddLead] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingPipelineName, setEditingPipelineName] = useState(currentPipelineName || "");
+  const { settings } = useSettings();
+  const { updatePipelineName } = usePhaseMutations();
+
+  const handleEditModeToggle = () => {
+    if (isEditMode) {
+      handleSaveChanges();
+    }
+    setIsEditMode(!isEditMode);
+    setEditingPipelineName(currentPipelineName || "");
+  };
+
+  const handleSaveChanges = async () => {
+    if (!selectedPipelineId) return;
+    
+    try {
+      await updatePipelineName.mutateAsync({
+        id: selectedPipelineId,
+        name: editingPipelineName
+      });
+      setIsEditMode(false);
+    } catch (error) {
+      console.error("Error updating pipeline name:", error);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -54,10 +85,28 @@ export const LeadsHeader = ({
       <div className="h-px bg-border" />
 
       <div className="flex items-center justify-between">
-        <LeadFilters
-          selectedPipelineId={selectedPipelineId}
-          setSelectedPipelineId={setSelectedPipelineId}
-        />
+        <div className="flex items-center gap-2">
+          <LeadFilters
+            selectedPipelineId={selectedPipelineId}
+            setSelectedPipelineId={setSelectedPipelineId}
+            onEditPipeline={handleEditModeToggle}
+            isEditMode={isEditMode}
+          />
+          {isEditMode && (
+            <>
+              <Input
+                value={editingPipelineName}
+                onChange={(e) => setEditingPipelineName(e.target.value)}
+                className="max-w-xs"
+                placeholder={settings?.language === "en" ? "Pipeline name" : "Pipeline-Name"}
+              />
+              <Button onClick={handleSaveChanges} variant="outline" size="sm">
+                <Save className="h-4 w-4 mr-2" />
+                {settings?.language === "en" ? "Save Changes" : "Änderungen speichern"}
+              </Button>
+            </>
+          )}
+        </div>
         <Button onClick={() => setShowAddLead(true)}>
           Neuer Kontakt ✨
         </Button>
