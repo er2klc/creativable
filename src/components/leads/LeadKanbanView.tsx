@@ -30,7 +30,7 @@ export const LeadKanbanView = ({
   const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
   const [targetPhase, setTargetPhase] = useState<string>("");
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
-  const { updateLeadPhase, deletePhase } = usePhaseMutations();
+  const { updateLeadPhase, updatePhaseName, deletePhase } = usePhaseMutations();
   const queryClient = useQueryClient();
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -39,13 +39,13 @@ export const LeadKanbanView = ({
     if (!over) return;
     
     const leadId = active.id as string;
-    const newPhaseId = over.id as string;
+    const phaseId = over.id as string;
     
-    if (leadId && newPhaseId) {
+    if (leadId && phaseId) {
       try {
         await updateLeadPhase.mutateAsync({
           leadId,
-          newPhaseId
+          phaseId
         });
         
         // Invalidate queries to refresh the data
@@ -65,6 +65,14 @@ export const LeadKanbanView = ({
       setTargetPhase("");
     } catch (error) {
       console.error("Error deleting phase:", error);
+    }
+  };
+
+  const handleUpdatePhaseName = async (phaseId: string, newName: string) => {
+    try {
+      await updatePhaseName.mutateAsync({ id: phaseId, name: newName });
+    } catch (error) {
+      console.error("Error updating phase name:", error);
     }
   };
 
@@ -99,7 +107,7 @@ export const LeadKanbanView = ({
                   onLeadClick={handleLeadClick}
                   isEditMode={isEditMode}
                   onDeletePhase={() => setPhaseToDelete(phase)}
-                  onUpdatePhaseName={(newName) => updatePhaseName.mutate({ id: phase.id, name: newName })}
+                  onUpdatePhaseName={(newName) => handleUpdatePhaseName(phase.id, newName)}
                   pipelineId={selectedPipelineId}
                 />
               ))}
