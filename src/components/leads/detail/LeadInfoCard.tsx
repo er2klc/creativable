@@ -89,7 +89,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     
     return (
       <div className="relative group">
-        <div className="flex flex-col gap-1 py-1 px-3 hover:bg-gray-50/50 rounded">
+        <div className="flex flex-col gap-1.5 py-2 px-3 hover:bg-gray-50/50 rounded transition-colors">
           <span className="text-xs text-gray-500 flex items-center gap-2">
             <Icon className="h-3.5 w-3.5 text-gray-400" />
             {label}
@@ -103,7 +103,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                   setEditingField(null);
                 }}
               >
-                <SelectTrigger className="w-full h-8">
+                <SelectTrigger className="w-full h-7 text-sm">
                   <SelectValue placeholder="Wähle eine Quelle" />
                 </SelectTrigger>
                 <SelectContent>
@@ -130,35 +130,35 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                   }
                 }}
                 autoFocus
-                className="max-w-md border-gray-200 h-8"
+                className="max-w-md border-gray-200 h-7 text-sm"
               />
             )
           ) : (
             <div 
               onClick={() => handleStartEdit(field, value)}
-              className="cursor-pointer min-h-[24px] text-sm"
+              className="cursor-pointer min-h-[20px] text-sm py-0.5"
             >
               {displayValue || ""}
             </div>
           )}
         </div>
-        <div className="absolute bottom-0 left-3 right-3 h-px bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gray-100/80" />
       </div>
     );
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
+    <Card className="shadow-sm">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-lg font-medium">
           <Contact2 className="h-5 w-5" />
           {settings?.language === "en" ? "Contact Information" : "Kontakt Informationen"}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         {/* Basic Information */}
         <div>
-          <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
+          <h3 className="text-xs font-medium text-gray-500 mb-3 px-3">
             {settings?.language === "en" ? "Basic Information" : "Grundinformationen"}
           </h3>
           <div className="divide-y divide-gray-50">
@@ -183,11 +183,11 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           </div>
         </div>
 
-        <div className="h-px bg-gray-200 mx-2" />
+        <div className="h-px bg-gray-200/80" />
 
         {/* Contact Details */}
         <div>
-          <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
+          <h3 className="text-xs font-medium text-gray-500 mb-3 px-3">
             {settings?.language === "en" ? "Contact Details" : "Kontaktdetails"}
           </h3>
           <div className="divide-y divide-gray-50">
@@ -212,11 +212,11 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           </div>
         </div>
 
-        <div className="h-px bg-gray-200 mx-2" />
+        <div className="h-px bg-gray-200/80" />
 
         {/* Address */}
         <div>
-          <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
+          <h3 className="text-xs font-medium text-gray-500 mb-3 px-3">
             {settings?.language === "en" ? "Address" : "Adresse"}
           </h3>
           <div className="divide-y divide-gray-50">
@@ -253,11 +253,11 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           </div>
         </div>
 
-        <div className="h-px bg-gray-200 mx-2" />
+        <div className="h-px bg-gray-200/80" />
 
         {/* Additional Information */}
         <div>
-          <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
+          <h3 className="text-xs font-medium text-gray-500 mb-3 px-3">
             {settings?.language === "en" ? "Additional Information" : "Zusätzliche Informationen"}
           </h3>
           <div className="divide-y divide-gray-50">
@@ -288,11 +288,11 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           </div>
         </div>
 
-        <div className="h-px bg-gray-200 mx-2" />
+        <div className="h-px bg-gray-200/80" />
 
         {/* Interests & Goals */}
         <div>
-          <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
+          <h3 className="text-xs font-medium text-gray-500 mb-3 px-3">
             {settings?.language === "en" ? "Interests & Goals" : "Interessen & Ziele"}
           </h3>
           <div className="divide-y divide-gray-50">
@@ -317,11 +317,11 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           </div>
         </div>
 
-        <div className="h-px bg-gray-200 mx-2" />
+        <div className="h-px bg-gray-200/80" />
 
         {/* Source Information */}
         <div>
-          <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
+          <h3 className="text-xs font-medium text-gray-500 mb-3 px-3">
             {settings?.language === "en" ? "Source Information" : "Herkunftsinformationen"}
           </h3>
           <div className="divide-y divide-gray-50">
