@@ -8,7 +8,6 @@ import { useSettings } from "@/hooks/use-settings";
 import { LeadDetailHeader } from "./LeadDetailHeader";
 import { LeadDetailContent } from "./LeadDetailContent";
 import { useLeadSubscription } from "./hooks/useLeadSubscription";
-import { useLeadMutations } from "./hooks/useLeadMutations";
 import { useSession } from "@supabase/auth-helpers-react";
 
 interface LeadDetailViewProps {
@@ -68,29 +67,27 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       }
 
       // First create the phase change note if this is a phase change
-      if (updates.phase_id) {
+      if (updates.phase_id && updates.phase_id !== lead?.phase_id) {
         const oldPhase = lead?.phase_id;
         const newPhase = updates.phase_id;
         
-        if (oldPhase !== newPhase) {
-          const { error: noteError } = await supabase
-            .from("notes")
-            .insert({
-              lead_id: leadId,
-              user_id: session.user.id,
-              content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
-              color: "#E9D5FF",
-              metadata: {
-                type: "phase_change",
-                oldPhase,
-                newPhase
-              }
-            });
+        const { error: noteError } = await supabase
+          .from("notes")
+          .insert({
+            lead_id: leadId,
+            user_id: session.user.id,
+            content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
+            color: "#E9D5FF",
+            metadata: {
+              type: "phase_change",
+              oldPhase,
+              newPhase
+            }
+          });
 
-          if (noteError) {
-            console.error("Error creating phase change note:", noteError);
-            throw noteError;
-          }
+        if (noteError) {
+          console.error("Error creating phase change note:", noteError);
+          throw noteError;
         }
       }
 
@@ -104,13 +101,16 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      toast.success(
-        settings?.language === "en"
-          ? "Contact updated successfully"
-          : "Kontakt erfolgreich aktualisiert"
-      );
+      // Only show success message if phase_id was changed and it's different from the current phase
+      if (variables.phase_id && variables.phase_id !== lead?.phase_id) {
+        toast.success(
+          settings?.language === "en"
+            ? "Contact updated successfully"
+            : "Kontakt erfolgreich aktualisiert"
+        );
+      }
     },
     onError: (error) => {
       console.error("Error updating lead:", error);
