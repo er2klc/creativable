@@ -78,7 +78,7 @@ export function InfoRow({
       )}>
         <div className="flex items-center gap-3 w-1/2">
           <Icon className="h-4 w-4 text-gray-500 shrink-0" />
-          <div className="text-sm font-medium text-gray-700 truncate">
+          <div className="text-sm font-medium text-gray-600 truncate">
             {label}
           </div>
         </div>

@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Eye, EyeOff, GripVertical } from "lucide-react";
+import React, { useState } from "react";
+import { ChevronDown, ChevronUp, Eye, EyeOff, GripVertical, MoreVertical, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
-import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ContactInfoGroupProps {
   title: string;
@@ -23,44 +27,9 @@ export function ContactInfoGroup({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showEmpty, setShowEmpty] = useState(showEmptyFields);
   const [isReordering, setIsReordering] = useState(false);
-  const { user } = useAuth();
 
-  useEffect(() => {
-    const loadGroupState = async () => {
-      const { data } = await supabase
-        .from("contact_group_states")
-        .select("is_collapsed")
-        .eq("lead_id", leadId)
-        .eq("group_name", title)
-        .eq("user_id", user?.id)
-        .maybeSingle();
-
-      if (data) {
-        setIsCollapsed(data.is_collapsed);
-      }
-    };
-
-    if (user?.id) {
-      loadGroupState();
-    }
-  }, [leadId, title, user?.id]);
-
-  const handleToggleCollapse = async () => {
-    if (!user?.id) return;
-    
-    const newState = !isCollapsed;
-    setIsCollapsed(newState);
-
-    await supabase
-      .from("contact_group_states")
-      .upsert({
-        user_id: user.id,
-        lead_id: leadId,
-        group_name: title,
-        is_collapsed: newState,
-      }, {
-        onConflict: "user_id,lead_id,group_name"
-      });
+  const handleToggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
   };
 
   const handleToggleEmpty = () => {
@@ -72,9 +41,6 @@ export function ContactInfoGroup({
 
   const handleToggleReordering = () => {
     setIsReordering(!isReordering);
-    if (!isReordering) {
-      toast.info("Felder können jetzt neu angeordnet werden");
-    }
   };
 
   return (
@@ -93,7 +59,7 @@ export function ContactInfoGroup({
               <ChevronUp className="h-4 w-4 text-gray-500" />
             )}
           </Button>
-          <h3 className="text-sm font-medium text-gray-700">{title}</h3>
+          <h3 className="text-sm font-medium text-gray-600">{title}</h3>
         </div>
         
         <div className="flex items-center gap-2">
@@ -110,25 +76,27 @@ export function ContactInfoGroup({
             )}
           </Button>
 
-          {isReordering && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleToggleReordering}
-              className="text-xs px-2 py-1 hover:bg-gray-100 rounded-full"
-            >
-              Fertig
-            </Button>
-          )}
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleToggleReordering}
-            className="p-1 hover:bg-gray-100 rounded-full"
-          >
-            <GripVertical className="h-4 w-4 text-gray-500" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-1 hover:bg-gray-100 rounded-full"
+              >
+                <MoreVertical className="h-4 w-4 text-gray-500" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => console.log("Add field")}>
+                <Plus className="mr-2 h-4 w-4" />
+                Feld hinzufügen
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleToggleReordering}>
+                <GripVertical className="mr-2 h-4 w-4" />
+                {isReordering ? "Fertig" : "Neu anordnen"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
