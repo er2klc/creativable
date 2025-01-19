@@ -933,6 +933,7 @@ export type Database = {
           instagram_auth_token: string | null
           instagram_connected: boolean | null
           language: string | null
+          last_selected_pipeline_id: string | null
           linkedin_auth_token: string | null
           linkedin_connected: boolean | null
           openai_api_key: string | null
@@ -964,6 +965,7 @@ export type Database = {
           instagram_auth_token?: string | null
           instagram_connected?: boolean | null
           language?: string | null
+          last_selected_pipeline_id?: string | null
           linkedin_auth_token?: string | null
           linkedin_connected?: boolean | null
           openai_api_key?: string | null
@@ -995,6 +997,7 @@ export type Database = {
           instagram_auth_token?: string | null
           instagram_connected?: boolean | null
           language?: string | null
+          last_selected_pipeline_id?: string | null
           linkedin_auth_token?: string | null
           linkedin_connected?: boolean | null
           openai_api_key?: string | null
@@ -1012,7 +1015,15 @@ export type Database = {
           whatsapp_number?: string | null
           whatsapp_verified?: boolean | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "settings_last_selected_pipeline_id_fkey"
+            columns: ["last_selected_pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "pipelines"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       support_ticket_attachments: {
         Row: {

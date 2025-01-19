@@ -8,10 +8,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PlusCircle, GitBranch, Pencil } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatePipelineDialog } from "./pipeline/CreatePipelineDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSettings } from "@/hooks/use-settings";
 
 interface LeadFiltersProps {
   selectedPipelineId: string | null;
@@ -29,6 +30,8 @@ export const LeadFilters = ({
   const session = useSession();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [hoveredPipeline, setHoveredPipeline] = useState<string | null>(null);
+  const { settings, updateSettings } = useSettings();
+  const queryClient = useQueryClient();
 
   const { data: pipelines = [] } = useQuery({
     queryKey: ["pipelines"],
@@ -46,6 +49,28 @@ export const LeadFilters = ({
     },
     enabled: !!session?.user?.id,
   });
+
+  // Load last selected pipeline on initial render
+  useEffect(() => {
+    if (settings?.last_selected_pipeline_id && !selectedPipelineId) {
+      setSelectedPipelineId(settings.last_selected_pipeline_id);
+    } else if (pipelines.length > 0 && !selectedPipelineId) {
+      setSelectedPipelineId(pipelines[0].id);
+    }
+  }, [settings?.last_selected_pipeline_id, pipelines, selectedPipelineId, setSelectedPipelineId]);
+
+  // Save selected pipeline to settings
+  const handlePipelineSelect = async (pipelineId: string) => {
+    setSelectedPipelineId(pipelineId);
+    try {
+      await updateSettings.mutateAsync({
+        last_selected_pipeline_id: pipelineId
+      });
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+    } catch (error) {
+      console.error("Error saving selected pipeline:", error);
+    }
+  };
 
   const selectedPipeline = pipelines.find(p => p.id === selectedPipelineId);
 
@@ -66,7 +91,7 @@ export const LeadFilters = ({
               key={pipeline.id}
               onMouseEnter={() => setHoveredPipeline(pipeline.id)}
               onMouseLeave={() => setHoveredPipeline(null)}
-              onClick={() => setSelectedPipelineId(pipeline.id)}
+              onClick={() => handlePipelineSelect(pipeline.id)}
               className="flex items-center justify-between"
             >
               <span>{pipeline.name}</span>
