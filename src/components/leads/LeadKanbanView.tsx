@@ -15,6 +15,7 @@ import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LeadFilters } from "./LeadFilters";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
+import { AddLeadDialog } from "./AddLeadDialog";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -32,6 +33,7 @@ export const LeadKanbanView = ({
   const [editingPipelineName, setEditingPipelineName] = useState("");
   const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
   const [targetPhase, setTargetPhase] = useState<string>("");
+  const [showAddLead, setShowAddLead] = useState(false);
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
   const { updateLeadPhase, addPhase, updatePhaseName, deletePhase } = usePhaseMutations();
   const queryClient = useQueryClient();
@@ -142,6 +144,9 @@ export const LeadKanbanView = ({
               </Button>
             )}
           </div>
+          <Button onClick={() => setShowAddLead(true)}>
+            Neuer Kontakt ✨
+          </Button>
         </div>
 
         <div className="w-full h-full overflow-x-auto no-scrollbar">
@@ -181,6 +186,12 @@ export const LeadKanbanView = ({
           onClose={() => setPhaseToDelete(null)}
           onConfirm={handleDeletePhase}
           phases={phases}
+        />
+
+        <AddLeadDialog
+          open={showAddLead}
+          onOpenChange={setShowAddLead}
+          pipelineId={selectedPipelineId}
         />
       </div>
     </DndContext>

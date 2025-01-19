@@ -1,7 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { LeadSearch } from "../LeadSearch";
-import { AddLeadDialog } from "../AddLeadDialog";
-import { useState } from "react";
 import { LayoutGrid, List } from "lucide-react";
 
 interface LeadsHeaderProps {
@@ -21,8 +19,6 @@ export const LeadsHeader = ({
   viewMode,
   setViewMode,
 }: LeadsHeaderProps) => {
-  const [showAddLead, setShowAddLead] = useState(false);
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
@@ -51,18 +47,6 @@ export const LeadsHeader = ({
       </div>
 
       <div className="h-px bg-border" />
-
-      <div className="flex items-center justify-end">
-        <Button onClick={() => setShowAddLead(true)}>
-          Neuer Kontakt ✨
-        </Button>
-      </div>
-
-      <AddLeadDialog
-        open={showAddLead}
-        onOpenChange={setShowAddLead}
-        pipelineId={selectedPipelineId}
-      />
     </div>
   );
 };
