@@ -42,13 +42,13 @@ export const PhaseColumn = ({
   return (
     <Card
       ref={setNodeRef}
-      className={`bg-muted/50 rounded-lg flex flex-col h-full relative transition-colors duration-200 ${
+      className={`bg-muted/50 rounded-lg flex flex-col min-w-[250px] w-[250px] h-full relative transition-colors duration-200 ${
         isOver ? 'ring-2 ring-primary/50 bg-primary/5 shadow-[0_-2px_4px_rgba(0,0,0,0.15)]' : ''
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <CardHeader className="p-4 space-y-0">
+      <CardHeader className="p-4 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-10 border-b">
         <div className="flex items-center justify-between gap-2">
           {isEditMode ? (
             <>
@@ -72,7 +72,7 @@ export const PhaseColumn = ({
         </div>
       </CardHeader>
       <div className="p-4 flex-1 overflow-y-auto no-scrollbar">
-        <div className="space-y-2">
+        <div className="space-y-2 min-h-[calc(100vh-13rem)]">
           {leads.map((lead) => (
             <SortableLeadItem
               key={lead.id}
@@ -81,7 +81,9 @@ export const PhaseColumn = ({
             />
           ))}
           {isHovered && !isEditMode && (
-            <AddLeadButton phase={phase.id} pipelineId={pipelineId} />
+            <div className="sticky bottom-4 left-0 right-0 mt-4">
+              <AddLeadButton phase={phase.id} pipelineId={pipelineId} />
+            </div>
           )}
         </div>
       </div>

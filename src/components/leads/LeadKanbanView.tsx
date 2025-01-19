@@ -9,7 +9,7 @@ import { PhaseColumn } from "./kanban/PhaseColumn";
 import { useQueryClient } from "@tanstack/react-query";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
 import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
+import { Save, Plus } from "lucide-react";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -30,7 +30,7 @@ export const LeadKanbanView = ({
   const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
   const [targetPhase, setTargetPhase] = useState<string>("");
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
-  const { updateLeadPhase, updatePhaseName, deletePhase } = usePhaseMutations();
+  const { updateLeadPhase, updatePhaseName, deletePhase, addPhase } = usePhaseMutations();
   const queryClient = useQueryClient();
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -48,7 +48,6 @@ export const LeadKanbanView = ({
           phaseId
         });
         
-        // Invalidate queries to refresh the data
         await queryClient.invalidateQueries({ queryKey: ['leads'] });
       } catch (error) {
         console.error('Error updating lead phase:', error);
@@ -76,6 +75,18 @@ export const LeadKanbanView = ({
     }
   };
 
+  const handleAddPhase = async () => {
+    if (!selectedPipelineId) return;
+    try {
+      await addPhase.mutateAsync({
+        name: settings?.language === "en" ? "New Phase" : "Neue Phase",
+        pipelineId: selectedPipelineId
+      });
+    } catch (error) {
+      console.error("Error adding phase:", error);
+    }
+  };
+
   return (
     <DndContext 
       collisionDetection={closestCenter} 
@@ -94,7 +105,7 @@ export const LeadKanbanView = ({
         </div>
 
         <div className="relative flex-1 overflow-x-auto">
-          <div className="flex gap-4 p-4">
+          <div className="flex gap-4 p-4 min-h-[calc(100vh-13rem)]">
             <SortableContext 
               items={phases.map(phase => phase.id)}
               strategy={horizontalListSortingStrategy}
@@ -111,6 +122,16 @@ export const LeadKanbanView = ({
                   pipelineId={selectedPipelineId}
                 />
               ))}
+              {isEditMode && (
+                <Button
+                  onClick={handleAddPhase}
+                  variant="ghost"
+                  className="min-w-[250px] h-[calc(100vh-13rem)] border-2 border-dashed border-muted-foreground/20 hover:border-muted-foreground/40 transition-colors"
+                >
+                  <Plus className="h-6 w-6 mr-2" />
+                  {settings?.language === "en" ? "Add Phase" : "Phase hinzufügen"}
+                </Button>
+              )}
             </SortableContext>
             <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
             <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
