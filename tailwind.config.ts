@@ -82,7 +82,7 @@ const config = {
           'clip-path': 'polygon(95% 0, 100% 50%, 95% 100%, 0% 100%, 0% 0%)'
         },
         '.clip-chevron-last': {
-          'clip-path': 'polygon(100% 0, 100% 100%, 0% 100%, 5% 50%, 0% 0%)'
+          'clip-path': 'polygon(100% 0, 100% 100%, 0% 100%, 0% 0%)'
         }
       })
     }
