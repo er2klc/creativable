@@ -1,47 +1,38 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
+import { type Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
+import { getLeadWithRelations } from "@/utils/query-helpers";
 
-const isValidUUID = (uuid: string) => {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(uuid);
+type LeadWithRelations = Tables<"leads"> & {
+  platform: Platform;
+  messages: Tables<"messages">[];
+  tasks: Tables<"tasks">[];
+  notes: Tables<"notes">[];
 };
 
 export const useLeadQuery = (leadId: string | null) => {
   return useQuery({
-    queryKey: ["lead", leadId],
+    queryKey: ["lead-with-relations", leadId],
     queryFn: async () => {
-      if (!leadId || !isValidUUID(leadId)) {
+      if (!leadId) {
         throw new Error("Invalid lead ID");
       }
-
-      console.log("[useLeadQuery] fetching lead with relations for ID =", leadId);
       
-      const { data, error } = await supabase
-        .from("leads")
-        .select("*, messages(*), tasks(*), notes(*)")
-        .eq("id", leadId)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching lead:", error);
-        throw error;
-      }
-
+      console.log("[useLeadQuery] Fetching lead with relations for ID:", leadId);
+      const data = await getLeadWithRelations(leadId);
+      
       if (!data) {
         throw new Error("Lead not found");
       }
 
-      console.log("[useLeadQuery] raw data:", data);
-
-      return data as (Tables<"leads"> & {
-        platform: Platform;
-        messages: Tables<"messages">[];
-        tasks: Tables<"tasks">[];
-        notes: Tables<"notes">[];
+      console.log("[useLeadQuery] Received data:", {
+        messages: data.messages?.length || 0,
+        tasks: data.tasks?.length || 0,
+        notes: data.notes?.length || 0
       });
+
+      return data as LeadWithRelations;
     },
-    enabled: !!leadId && isValidUUID(leadId),
+    enabled: !!leadId,
   });
 };

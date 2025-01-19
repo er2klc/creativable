@@ -2,6 +2,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Platform } from "@/config/platforms";
 import { LeadWithRelations, SubscriptionPayload } from "../types/leadSubscription";
+import { getLeadWithRelations } from "@/utils/query-helpers";
 
 export const useLeadDataHandler = (
   leadId: string | null,
@@ -12,15 +13,11 @@ export const useLeadDataHandler = (
     
     if (!leadId) return;
 
-    const { data } = await supabase
-      .from("leads")
-      .select("*, messages(*), tasks(*), notes(*)")
-      .eq("id", leadId)
-      .maybeSingle();
-
+    const data = await getLeadWithRelations(leadId);
+    
     if (data) {
       queryClient.setQueryData<LeadWithRelations>(
-        ["lead", leadId],
+        ["lead-with-relations", leadId],
         (old) => {
           if (!old) return old;
           return {
