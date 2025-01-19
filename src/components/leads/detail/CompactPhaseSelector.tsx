@@ -29,6 +29,7 @@ export function CompactPhaseSelector({
   const handlePhaseChange = async (phaseId: string) => {
     if (!session?.user?.id || !selectedPipelineId) return;
     
+    // Don't update if the phase hasn't changed
     if (phaseId === lead.phase_id && selectedPipelineId === lead.pipeline_id) {
       return;
     }
@@ -44,37 +45,33 @@ export function CompactPhaseSelector({
   const currentPhase = phases.find(p => p.id === lead.phase_id && selectedPipelineId === lead.pipeline_id);
 
   return (
-    <div className="w-full space-y-3">
-      <div className="relative flex items-center w-full pl-2">
-        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-300 -translate-y-1/2" />
+    <div className="w-full space-y-4">
+      <div className="relative flex items-center w-full">
+        <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 rounded-full" />
         <div className="relative z-10 flex justify-between w-full">
           {phases.map((phase, index) => {
             const isActive = phase.id === lead.phase_id && selectedPipelineId === lead.pipeline_id;
             const isPast = phase.order_index < (currentPhase?.order_index || 0) && selectedPipelineId === lead.pipeline_id;
-            const isLast = index === phases.length - 1;
             
             return (
-             <div 
-      key={phase.id} 
-      className="flex flex-col items-center -ml-[15px]" // Negative margin für Abstand
-      style={{ width: `${100 / phases.length}%` }}
-    >
+              <div 
+                key={phase.id}
+                className="flex flex-col items-center"
+              >
                 <button
                   onClick={() => handlePhaseChange(phase.id)}
                   className={cn(
-                    "w-full h-7 relative flex items-center justify-center transition-all",
-                    "hover:brightness-105 transform duration-200 ease-in-out",
-                    index === 0 ? "clip-chevron-first" : isLast ? "clip-chevron-last" : "clip-chevron",
-                    "shadow-sm",
-                    isActive ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white" :
-                    isPast ? "bg-gradient-to-r from-blue-200 to-blue-300 text-blue-800" : 
-                    "bg-gray-200 text-gray-700 border border-gray-400"
+                    "w-8 h-8 rounded-full flex items-center justify-center transition-all relative",
+                    "hover:scale-110 transform duration-200 ease-in-out mb-2",
+                    isActive ? "bg-blue-600 text-white" :
+                    isPast ? "bg-blue-200" : "bg-white border-2 border-gray-200"
                   )}
                 >
-                  <span className="text-xs font-medium px-2 truncate">
-                    {phase.name}
-                  </span>
+                  {index + 1}
                 </button>
+                <span className="text-xs font-medium">
+                  {phase.name}
+                </span>
               </div>
             );
           })}
