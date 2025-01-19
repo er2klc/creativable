@@ -5,13 +5,18 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 
+interface MutationResult {
+  data: Tables<"leads"> | null;
+  hasChanges: boolean;
+}
+
 export const useLeadMutations = (leadId: string | null) => {
   const queryClient = useQueryClient();
   const user = useUser();
   const { settings } = useSettings();
 
   const updateLeadMutation = useMutation({
-    mutationFn: async (updates: Partial<Tables<"leads">>) => {
+    mutationFn: async (updates: Partial<Tables<"leads">>): Promise<MutationResult> => {
       if (!leadId || !user?.id) {
         throw new Error("Invalid lead ID or user not authenticated");
       }
@@ -26,7 +31,7 @@ export const useLeadMutations = (leadId: string | null) => {
 
       // If no changes, return current data without updating
       if (!hasChanges) {
-        return currentLead;
+        return { data: currentLead, hasChanges: false };
       }
 
       // First create the phase change note if this is a phase change
