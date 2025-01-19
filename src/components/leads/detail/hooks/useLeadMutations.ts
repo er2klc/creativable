@@ -66,7 +66,7 @@ export const useLeadMutations = (leadId: string | null) => {
         .from("leads")
         .update(updates)
         .eq("id", leadId)
-        .select()
+        .select("*, messages(*), tasks(*), notes(*)")
         .single();
 
       if (error) throw error;

@@ -16,6 +16,8 @@ export const useLeadQuery = (leadId: string | null) => {
         throw new Error("Invalid lead ID");
       }
 
+      console.log("[useLeadQuery] fetching lead with relations for ID =", leadId);
+      
       const { data, error } = await supabase
         .from("leads")
         .select("*, messages(*), tasks(*), notes(*)")
@@ -30,6 +32,8 @@ export const useLeadQuery = (leadId: string | null) => {
       if (!data) {
         throw new Error("Lead not found");
       }
+
+      console.log("[useLeadQuery] raw data:", data);
 
       return data as (Tables<"leads"> & {
         platform: Platform;
