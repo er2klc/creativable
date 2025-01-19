@@ -29,6 +29,10 @@ export const NoteList = ({ leadId }: NoteListProps) => {
   const createNoteMutation = useMutation({
     mutationFn: async (content: string) => {
       console.log("[NoteList] Starting note creation for lead:", leadId);
+      console.log("[NoteList] Current cache state before mutation:", {
+        data: queryClient.getQueryData<LeadWithRelations>(["lead-with-relations", leadId]),
+        timestamp: new Date().toISOString()
+      });
       
       const { data, error } = await supabase
         .from("notes")
@@ -76,6 +80,7 @@ export const NoteList = ({ leadId }: NoteListProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNote.trim()) return;
+    console.log("[NoteList] Submitting note:", { content: newNote, leadId });
     createNoteMutation.mutate(newNote);
   };
 
