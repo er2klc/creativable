@@ -44,8 +44,8 @@ export function CompactPhaseSelector({
   const currentPhase = phases.find(p => p.id === lead.phase_id && selectedPipelineId === lead.pipeline_id);
 
   return (
-    <div className="w-full space-y-4">
-      <div className="relative flex items-center w-full">
+    <div className="w-full space-y-3">
+      <div className="relative flex items-center w-full pl-2">
         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2" />
         <div className="relative z-10 flex justify-between w-full gap-[1px]">
           {phases.map((phase, index) => {
@@ -67,7 +67,7 @@ export function CompactPhaseSelector({
                     "shadow-sm",
                     isActive ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white" :
                     isPast ? "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700" : 
-                    "bg-gray-50 text-gray-700 border border-gray-200"
+                    "bg-gray-100 text-gray-700 border border-gray-300"
                   )}
                 >
                   <span className="text-xs font-medium px-2 truncate">
