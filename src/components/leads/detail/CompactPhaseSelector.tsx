@@ -5,6 +5,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 interface CompactPhaseSelectorProps {
   lead: Tables<"leads">;
@@ -16,6 +17,7 @@ export function CompactPhaseSelector({
   onUpdateLead,
 }: CompactPhaseSelectorProps) {
   const session = useSession();
+  const [selectedPipelineId, setSelectedPipelineId] = useState(lead.pipeline_id);
   
   const { data: pipelines = [] } = useQuery({
     queryKey: ["pipelines"],
@@ -35,43 +37,36 @@ export function CompactPhaseSelector({
   });
 
   const { data: phases = [] } = useQuery({
-    queryKey: ["pipeline-phases", lead.pipeline_id],
+    queryKey: ["pipeline-phases", selectedPipelineId],
     queryFn: async () => {
-      if (!lead.pipeline_id) return [];
+      if (!selectedPipelineId) return [];
       
       const { data, error } = await supabase
         .from("pipeline_phases")
         .select("*")
-        .eq("pipeline_id", lead.pipeline_id)
+        .eq("pipeline_id", selectedPipelineId)
         .order("order_index");
 
       if (error) throw error;
       return data;
     },
-    enabled: !!lead.pipeline_id,
+    enabled: !!selectedPipelineId,
   });
 
   const handlePipelineChange = (pipelineId: string) => {
-    if (pipelineId !== lead.pipeline_id) {
-      const firstPhase = phases[0]?.id;
-      if (firstPhase) {
-        onUpdateLead({ 
-          pipeline_id: pipelineId,
-          phase_id: firstPhase,
-        });
-      }
-    }
+    setSelectedPipelineId(pipelineId);
   };
 
   const handlePhaseChange = async (phaseId: string) => {
     if (phaseId !== lead.phase_id && session?.user?.id) {
       const oldPhase = phases.find(p => p.id === lead.phase_id);
       const newPhase = phases.find(p => p.id === phaseId);
-      const pipeline = pipelines.find(p => p.id === lead.pipeline_id);
+      const oldPipeline = pipelines.find(p => p.id === lead.pipeline_id);
+      const newPipeline = pipelines.find(p => p.id === selectedPipelineId);
       
-      if (oldPhase && newPhase && pipeline) {
-        const oldPhaseName = `${pipeline.name} → ${oldPhase.name}`;
-        const newPhaseName = `${pipeline.name} → ${newPhase.name}`;
+      if (oldPhase && newPhase && oldPipeline && newPipeline) {
+        const oldPhaseName = `${oldPipeline.name} → ${oldPhase.name}`;
+        const newPhaseName = `${newPipeline.name} → ${newPhase.name}`;
         
         // First create the phase change note
         const { error: noteError } = await supabase
@@ -92,8 +87,9 @@ export function CompactPhaseSelector({
           console.error("Error creating phase change note:", noteError);
         }
 
-        // Then update the lead
+        // Then update the lead with both new pipeline and phase
         onUpdateLead({ 
+          pipeline_id: selectedPipelineId,
           phase_id: phaseId,
           last_action: `Phase von "${oldPhaseName}" zu "${newPhaseName}" geändert`,
           last_action_date: new Date().toISOString()
@@ -102,7 +98,7 @@ export function CompactPhaseSelector({
     }
   };
 
-  const currentPipeline = pipelines.find(p => p.id === lead.pipeline_id);
+  const currentPipeline = pipelines.find(p => p.id === selectedPipelineId);
   const currentPhase = phases.find(p => p.id === lead.phase_id);
 
   return (
@@ -111,8 +107,8 @@ export function CompactPhaseSelector({
         <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 rounded-full" />
         <div className="relative z-10 flex justify-between w-full">
           {phases.map((phase, index) => {
-            const isActive = phase.id === lead.phase_id;
-            const isPast = phase.order_index < (currentPhase?.order_index || 0);
+            const isActive = phase.id === lead.phase_id && selectedPipelineId === lead.pipeline_id;
+            const isPast = phase.order_index < (currentPhase?.order_index || 0) && selectedPipelineId === lead.pipeline_id;
             
             return (
               <div 
@@ -141,7 +137,7 @@ export function CompactPhaseSelector({
 
       <div className="flex items-center gap-2 text-sm text-gray-600">
         <Select
-          value={lead.pipeline_id}
+          value={selectedPipelineId}
           onValueChange={handlePipelineChange}
         >
           <SelectTrigger className="h-8 w-[200px] text-sm">
