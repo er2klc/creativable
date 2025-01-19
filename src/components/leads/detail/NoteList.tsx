@@ -28,8 +28,6 @@ export const NoteList = ({ leadId }: NoteListProps) => {
 
   const createNoteMutation = useMutation({
     mutationFn: async (content: string) => {
-      console.log("[NoteList] Starting note creation for lead:", leadId);
-      
       const { data, error } = await supabase
         .from("notes")
         .insert({
@@ -41,14 +39,10 @@ export const NoteList = ({ leadId }: NoteListProps) => {
         .single();
 
       if (error) throw error;
-      
-      console.log("[NoteList] Note created successfully:", data);
       return data;
     },
     onSuccess: () => {
-      console.log("[NoteList] Invalidating queries for lead:", leadId);
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      
       setNewNote("");
       toast.success(
         settings?.language === "en"
@@ -57,7 +51,6 @@ export const NoteList = ({ leadId }: NoteListProps) => {
       );
     },
     onError: (error) => {
-      console.error("[NoteList] Error creating note:", error);
       toast.error(
         settings?.language === "en"
           ? "Error adding note"

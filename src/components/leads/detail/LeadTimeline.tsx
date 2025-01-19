@@ -16,73 +16,17 @@ interface LeadTimelineProps {
 }
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
-  const renderCount = useRef(0);
-  const prevDataRef = useRef({
-    messages: lead.messages?.length || 0,
-    tasks: lead.tasks?.length || 0,
-    notes: lead.notes?.length || 0,
-  });
-
-  // Only update if data actually changed
-  const hasDataChanged = useMemo(() => {
-    const currentData = {
-      messages: lead.messages?.length || 0,
-      tasks: lead.tasks?.length || 0,
-      notes: lead.notes?.length || 0,
-    };
-
-    const changed = JSON.stringify(currentData) !== JSON.stringify(prevDataRef.current);
-    
-    if (changed) {
-      console.log('[LeadTimeline] Data changed:', {
-        prev: prevDataRef.current,
-        current: currentData,
-        timestamp: new Date().toISOString()
-      });
-      prevDataRef.current = currentData;
-    }
-    
-    return changed;
-  }, [lead.messages, lead.tasks, lead.notes]);
-
-  useEffect(() => {
-    if (hasDataChanged) {
-      renderCount.current++;
-      console.log(`[LeadTimeline] Render #${renderCount.current} with data:`, {
-        messages: lead.messages?.length || 0,
-        tasks: lead.tasks?.length || 0,
-        notes: lead.notes?.length || 0,
-        created_at: lead.created_at,
-        timestamp: new Date().toISOString()
-      });
-    }
-  }, [hasDataChanged, lead]);
-
-  // Ensure arrays exist and are valid
   const messages = Array.isArray(lead.messages) ? lead.messages : [];
   const tasks = Array.isArray(lead.tasks) ? lead.tasks : [];
   const notes = Array.isArray(lead.notes) ? lead.notes : [];
 
-  if (hasDataChanged) {
-    console.log('[LeadTimeline] Processing data:', {
-      messages: messages.length,
-      tasks: tasks.length,
-      notes: notes.length,
-      created_at: lead.created_at,
-      renderCount: renderCount.current,
-      timestamp: new Date().toISOString()
-    });
-  }
-
   const timelineItems: TimelineItemType[] = useMemo(() => [
-    // Always include contact creation as first item
     {
       id: 'contact-created',
       type: 'contact_created' as const,
       content: `Kontakt ${lead.name} wurde erstellt`,
       timestamp: lead.created_at || new Date().toISOString(),
     },
-    // Map messages
     ...messages.map(message => ({
       id: message.id,
       type: 'message' as const,
@@ -91,7 +35,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       status: message.platform,
       platform: message.platform
     })),
-    // Map tasks
     ...tasks.map(task => ({
       id: task.id,
       type: task.meeting_type ? ('appointment' as const) : ('task' as const),
@@ -104,11 +47,9 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         color: task.color
       }
     })),
-    // Map notes
     ...notes.map(note => {
       const metadata = note.metadata as { type?: string; oldPhase?: string; newPhase?: string; color?: string };
       
-      // Check if this is a phase change note
       if (metadata?.type === 'phase_change') {
         return {
           id: note.id,
@@ -122,7 +63,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           }
         };
       }
-      // Regular note
       return {
         id: note.id,
         type: 'note' as const,
