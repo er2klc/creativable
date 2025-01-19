@@ -72,7 +72,7 @@ export const PhaseColumn = ({
         </div>
       </CardHeader>
       <div className="p-4 flex-1 overflow-y-auto no-scrollbar">
-        <div className="space-y-2">
+        <div className="space-y-2 pb-14">
           {leads.map((lead) => (
             <SortableLeadItem
               key={lead.id}
