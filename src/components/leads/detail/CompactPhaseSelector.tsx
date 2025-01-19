@@ -56,10 +56,10 @@ export function CompactPhaseSelector({
             return (
               <div 
   key={phase.id}
-  className="flex flex-col items-center"
+  className="flex flex-col items-center -left-16"
   style={{ 
     width: `${100 / phases.length}%`, 
-    left: '-16px', 
+    left: '-16px !important', 
     position: 'relative' // Stelle sicher, dass "left" korrekt angewendet wird
   }}
 >
