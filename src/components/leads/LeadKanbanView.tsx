@@ -57,8 +57,6 @@ export const LeadKanbanView = ({
           await updatePhaseOrder.mutateAsync(
             newPhases.map((phase, index) => ({
               id: phase.id,
-              name: phase.name,
-              pipeline_id: phase.pipeline_id,
               order_index: index
             }))
           );
@@ -77,8 +75,6 @@ export const LeadKanbanView = ({
             leadId,
             phaseId
           });
-          // Invalidate leads query to refresh the data
-          queryClient.invalidateQueries({ queryKey: ["leads"] });
         } catch (error) {
           console.error('Error updating lead phase:', error);
         }
@@ -124,7 +120,7 @@ export const LeadKanbanView = ({
       onDragEnd={handleDragEnd}
     >
       <div className="w-full h-[calc(100vh-13rem)] overflow-hidden relative">
-        <div className="relative flex-1 overflow-x-auto overflow-y-auto">
+        <div className="relative flex-1 overflow-x-auto">
           <div className="flex gap-4 p-4 min-h-[calc(100vh-13rem)]">
             <SortableContext 
               items={phases.map(phase => phase.id)}
