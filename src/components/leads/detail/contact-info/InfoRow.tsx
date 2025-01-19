@@ -11,9 +11,8 @@ interface InfoRowProps {
   label: string;
   value: string | null | string[];
   field: string;
-  onUpdate: (updates: Partial<Tables<"leads">>, showToast?: boolean) => void;
+  onUpdate: (updates: Partial<Tables<"leads">>) => void;
   isSourceField?: boolean;
-  showToast?: boolean;
 }
 
 export function InfoRow({ 
@@ -21,9 +20,8 @@ export function InfoRow({
   label, 
   value, 
   field, 
-  onUpdate, 
-  isSourceField,
-  showToast = false 
+  onUpdate,
+  isSourceField 
 }: InfoRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingValue, setEditingValue] = useState<string>("");
@@ -44,12 +42,10 @@ export function InfoRow({
         .filter(Boolean);
       
       if (arrayValue.length > 0 || value === "") {
-        onUpdate({ 
-          [field]: arrayValue.length > 0 ? arrayValue : [],
-        }, showToast);
+        onUpdate({ [field]: arrayValue.length > 0 ? arrayValue : [] });
       }
     } else {
-      onUpdate({ [field]: value }, showToast);
+      onUpdate({ [field]: value });
     }
     setIsEditing(false);
   };
@@ -64,16 +60,17 @@ export function InfoRow({
   return (
     <div className="group relative">
       <div className={cn(
-        "flex items-center gap-3 py-3 px-4 rounded-lg transition-colors",
+        "flex items-center gap-6 py-3 px-4 rounded-lg transition-colors",
         isEditing ? "bg-gray-50" : "hover:bg-gray-50/80"
       )}>
-        <Icon className="h-4 w-4 text-gray-500 shrink-0" />
-        
-        <div className="flex-1 min-w-0">
-          <div className="text-xs font-medium text-gray-500 mb-1">
+        <div className="flex items-center gap-3 min-w-[200px]">
+          <Icon className="h-4 w-4 text-gray-500 shrink-0" />
+          <div className="text-sm font-medium text-gray-700">
             {label}
           </div>
-          
+        </div>
+        
+        <div className="flex-1 min-w-0">
           {isEditing ? (
             isSourceField ? (
               <Select

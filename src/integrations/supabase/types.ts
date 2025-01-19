@@ -69,6 +69,77 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_field_settings: {
+        Row: {
+          created_at: string | null
+          field_group: string
+          field_name: string
+          field_type: string
+          icon: string | null
+          id: string
+          order_index: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          field_group: string
+          field_name: string
+          field_type: string
+          icon?: string | null
+          id?: string
+          order_index?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          field_group?: string
+          field_name?: string
+          field_type?: string
+          icon?: string | null
+          id?: string
+          order_index?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      contact_group_states: {
+        Row: {
+          created_at: string | null
+          group_name: string
+          id: string
+          is_collapsed: boolean
+          lead_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          group_name: string
+          id?: string
+          is_collapsed?: boolean
+          lead_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          group_name?: string
+          id?: string
+          is_collapsed?: boolean
+          lead_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_group_states_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_embeddings: {
         Row: {
           content: string

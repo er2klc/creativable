@@ -1,7 +1,9 @@
-import { Contact2, Building2, Briefcase } from "lucide-react";
+import { useState } from "react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { InfoRow } from "./InfoRow";
+import { ContactInfoGroup } from "./ContactInfoGroup";
+import { User, Building2, AtSign, Phone, Globe } from "lucide-react";
 
 interface BasicInformationFieldsProps {
   lead: Tables<"leads">;
@@ -10,35 +12,37 @@ interface BasicInformationFieldsProps {
 
 export function BasicInformationFields({ lead, onUpdate }: BasicInformationFieldsProps) {
   const { settings } = useSettings();
+  const [showEmptyFields, setShowEmptyFields] = useState(true);
+
+  const fields = [
+    { icon: User, label: settings?.language === "en" ? "Name" : "Name", field: "name", value: lead.name },
+    { icon: Building2, label: settings?.language === "en" ? "Company" : "Firma", field: "company_name", value: lead.company_name },
+    { icon: AtSign, label: "E-Mail", field: "email", value: lead.email },
+    { icon: Phone, label: settings?.language === "en" ? "Phone" : "Telefon", field: "phone_number", value: lead.phone_number },
+    { icon: Globe, label: settings?.language === "en" ? "Website" : "Webseite", field: "website", value: lead.website },
+  ];
+
+  const visibleFields = showEmptyFields 
+    ? fields 
+    : fields.filter(field => field.value);
 
   return (
-    <div>
-      <h3 className="text-xs font-medium text-gray-500 mb-3 px-3">
-        {settings?.language === "en" ? "Basic Information" : "Grundinformationen"}
-      </h3>
-      <div className="divide-y divide-gray-50">
+    <ContactInfoGroup
+      title={settings?.language === "en" ? "Basic Information" : "Basis Informationen"}
+      leadId={lead.id}
+      showEmptyFields={showEmptyFields}
+      onToggleEmptyFields={() => setShowEmptyFields(!showEmptyFields)}
+    >
+      {visibleFields.map((field) => (
         <InfoRow
-          icon={Contact2}
-          label={settings?.language === "en" ? "Name" : "Name"}
-          value={lead.name}
-          field="name"
+          key={field.field}
+          icon={field.icon}
+          label={field.label}
+          value={field.value}
+          field={field.field}
           onUpdate={onUpdate}
         />
-        <InfoRow
-          icon={Building2}
-          label={settings?.language === "en" ? "Company" : "Firma"}
-          value={lead.company_name}
-          field="company_name"
-          onUpdate={onUpdate}
-        />
-        <InfoRow
-          icon={Briefcase}
-          label={settings?.language === "en" ? "Position" : "Position"}
-          value={lead.position}
-          field="position"
-          onUpdate={onUpdate}
-        />
-      </div>
-    </div>
+      ))}
+    </ContactInfoGroup>
   );
 }
