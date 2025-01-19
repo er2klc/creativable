@@ -41,10 +41,10 @@ export const usePhaseMutations = () => {
   });
 
   const updatePhaseOrder = useMutation({
-    mutationFn: async (updates: { id: string; order_index: number }[]) => {
+    mutationFn: async (updates: { id: string; name: string; pipeline_id: string; order_index: number }[]) => {
       const { error } = await supabase
         .from("pipeline_phases")
-        .upsert(updates);
+        .upsert(updates, { onConflict: 'id' });
 
       if (error) throw error;
     },
