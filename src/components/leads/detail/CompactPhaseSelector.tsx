@@ -5,6 +5,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
+import { useEffect } from "react";
 
 interface CompactPhaseSelectorProps {
   lead: Tables<"leads">;
@@ -65,7 +66,9 @@ export function CompactPhaseSelector({
 
   const handlePhaseChange = async (phaseId: string) => {
     if (phaseId !== lead.phase_id) {
+      const oldPipeline = pipelines.find(p => p.id === lead.pipeline_id)?.name;
       const oldPhase = phases.find(p => p.id === lead.phase_id)?.name;
+      const newPipeline = pipelines.find(p => p.id === lead.pipeline_id)?.name;
       const newPhase = phases.find(p => p.id === phaseId)?.name;
       
       if (session?.user?.id) {
@@ -75,12 +78,12 @@ export function CompactPhaseSelector({
           .insert({
             lead_id: lead.id,
             user_id: session.user.id,
-            content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
+            content: `Phase von "${oldPipeline} → ${oldPhase}" zu "${newPipeline} → ${newPhase}" geändert`,
             color: "#E9D5FF",
             metadata: {
               type: "phase_change",
-              oldPhase,
-              newPhase
+              oldPhase: `${oldPipeline} → ${oldPhase}`,
+              newPhase: `${newPipeline} → ${newPhase}`
             }
           });
 
@@ -92,11 +95,35 @@ export function CompactPhaseSelector({
       // Then update the lead
       onUpdateLead({ 
         phase_id: phaseId,
-        last_action: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
+        last_action: `Phase von "${oldPipeline} → ${oldPhase}" zu "${newPipeline} → ${newPhase}" geändert`,
         last_action_date: new Date().toISOString()
       });
     }
   };
+
+  // Set up real-time subscription for notes
+  useEffect(() => {
+    const channel = supabase
+      .channel('notes-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notes',
+          filter: `lead_id=eq.${lead.id}`
+        },
+        (payload) => {
+          // Invalidate the lead query to refresh the timeline
+          window.dispatchEvent(new CustomEvent('invalidate-lead'));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [lead.id]);
 
   const currentPipeline = pipelines.find(p => p.id === lead.pipeline_id);
   const currentPhase = phases.find(p => p.id === lead.phase_id);
