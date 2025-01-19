@@ -2,6 +2,7 @@ import { Phone, Mail, Globe } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { InfoRow } from "./InfoRow";
+import { ContactInfoGroup } from "./ContactInfoGroup";
 
 interface ContactDetailsFieldsProps {
   lead: Tables<"leads">;
@@ -11,34 +12,27 @@ interface ContactDetailsFieldsProps {
 export function ContactDetailsFields({ lead, onUpdate }: ContactDetailsFieldsProps) {
   const { settings } = useSettings();
 
+  const fields = [
+    { icon: Phone, label: settings?.language === "en" ? "Phone" : "Telefon", field: "phone_number", value: lead.phone_number },
+    { icon: Mail, label: settings?.language === "en" ? "Email" : "E-Mail", field: "email", value: lead.email },
+    { icon: Globe, label: settings?.language === "en" ? "Website" : "Webseite", field: "website", value: lead.website },
+  ];
+
   return (
-    <div>
-      <h3 className="text-xs font-medium text-gray-500 mb-3 px-3">
-        {settings?.language === "en" ? "Contact Details" : "Kontaktdetails"}
-      </h3>
-      <div className="divide-y divide-gray-50">
+    <ContactInfoGroup
+      title={settings?.language === "en" ? "Contact Details" : "Kontaktdetails"}
+      leadId={lead.id}
+    >
+      {fields.map((field) => (
         <InfoRow
-          icon={Phone}
-          label={settings?.language === "en" ? "Phone" : "Telefon"}
-          value={lead.phone_number}
-          field="phone_number"
+          key={field.field}
+          icon={field.icon}
+          label={field.label}
+          value={field.value}
+          field={field.field}
           onUpdate={onUpdate}
         />
-        <InfoRow
-          icon={Mail}
-          label={settings?.language === "en" ? "Email" : "E-Mail"}
-          value={lead.email}
-          field="email"
-          onUpdate={onUpdate}
-        />
-        <InfoRow
-          icon={Globe}
-          label={settings?.language === "en" ? "Website" : "Webseite"}
-          value={lead.website}
-          field="website"
-          onUpdate={onUpdate}
-        />
-      </div>
-    </div>
+      ))}
+    </ContactInfoGroup>
   );
 }

@@ -2,6 +2,7 @@ import { Heart, Target, AlertCircle } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { InfoRow } from "./InfoRow";
+import { ContactInfoGroup } from "./ContactInfoGroup";
 
 interface InterestsGoalsFieldsProps {
   lead: Tables<"leads">;
@@ -11,34 +12,27 @@ interface InterestsGoalsFieldsProps {
 export function InterestsGoalsFields({ lead, onUpdate }: InterestsGoalsFieldsProps) {
   const { settings } = useSettings();
 
+  const fields = [
+    { icon: Heart, label: settings?.language === "en" ? "Interests" : "Interessen", field: "interests", value: lead.interests },
+    { icon: Target, label: settings?.language === "en" ? "Goals" : "Ziele", field: "goals", value: lead.goals },
+    { icon: AlertCircle, label: settings?.language === "en" ? "Challenges" : "Herausforderungen", field: "challenges", value: lead.challenges },
+  ];
+
   return (
-    <div>
-      <h3 className="text-xs font-medium text-gray-500 mb-3 px-3">
-        {settings?.language === "en" ? "Interests & Goals" : "Interessen & Ziele"}
-      </h3>
-      <div className="divide-y divide-gray-50">
+    <ContactInfoGroup
+      title={settings?.language === "en" ? "Interests & Goals" : "Interessen & Ziele"}
+      leadId={lead.id}
+    >
+      {fields.map((field) => (
         <InfoRow
-          icon={Heart}
-          label={settings?.language === "en" ? "Interests" : "Interessen"}
-          value={lead.interests}
-          field="interests"
+          key={field.field}
+          icon={field.icon}
+          label={field.label}
+          value={field.value}
+          field={field.field}
           onUpdate={onUpdate}
         />
-        <InfoRow
-          icon={Target}
-          label={settings?.language === "en" ? "Goals" : "Ziele"}
-          value={lead.goals}
-          field="goals"
-          onUpdate={onUpdate}
-        />
-        <InfoRow
-          icon={AlertCircle}
-          label={settings?.language === "en" ? "Challenges" : "Herausforderungen"}
-          value={lead.challenges}
-          field="challenges"
-          onUpdate={onUpdate}
-        />
-      </div>
-    </div>
+      ))}
+    </ContactInfoGroup>
   );
 }
