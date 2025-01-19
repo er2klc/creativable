@@ -15,7 +15,7 @@ interface LeadDetailViewProps {
 export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
   const { data: lead, isLoading, error } = useLeadQuery(leadId);
-  const updateLeadMutation = useLeadMutations(leadId);
+  const { updateLeadMutation, deletePhaseChangeMutation } = useLeadMutations(leadId);
 
   // Set up real-time subscriptions
   useLeadSubscription(leadId);
@@ -46,6 +46,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           <LeadDetailContent
             lead={lead}
             onUpdateLead={updateLeadMutation.mutate}
+            onDeletePhaseChange={deletePhaseChangeMutation.mutate}
             isLoading={isLoading}
           />
         )}

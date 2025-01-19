@@ -10,7 +10,7 @@ export const useLeadMutations = (leadId: string | null) => {
   const user = useUser();
   const { settings } = useSettings();
 
-  return useMutation({
+  const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
       if (!leadId || !user?.id) {
         throw new Error("Invalid lead ID or user not authenticated");
@@ -71,4 +71,28 @@ export const useLeadMutations = (leadId: string | null) => {
       );
     }
   });
+
+  const deletePhaseChangeMutation = useMutation({
+    mutationFn: async (noteId: string) => {
+      const { error } = await supabase
+        .from("notes")
+        .delete()
+        .eq("id", noteId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      toast.success(
+        settings?.language === "en"
+          ? "Phase change deleted successfully"
+          : "Phasenänderung erfolgreich gelöscht"
+      );
+    },
+  });
+
+  return {
+    updateLeadMutation,
+    deletePhaseChangeMutation
+  };
 };
