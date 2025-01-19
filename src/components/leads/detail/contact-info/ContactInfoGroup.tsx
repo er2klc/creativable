@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ContactInfoGroupProps {
   title: string;
@@ -26,6 +27,7 @@ export function ContactInfoGroup({
   onToggleEmptyFields,
 }: ContactInfoGroupProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const loadGroupState = async () => {
@@ -34,6 +36,7 @@ export function ContactInfoGroup({
         .select("is_collapsed")
         .eq("lead_id", leadId)
         .eq("group_name", title)
+        .eq("user_id", user?.id)
         .single();
 
       if (data) {
@@ -41,21 +44,26 @@ export function ContactInfoGroup({
       }
     };
 
-    loadGroupState();
-  }, [leadId, title]);
+    if (user?.id) {
+      loadGroupState();
+    }
+  }, [leadId, title, user?.id]);
 
   const handleToggleCollapse = async () => {
+    if (!user?.id) return;
+    
     const newState = !isCollapsed;
     setIsCollapsed(newState);
 
     await supabase
       .from("contact_group_states")
       .upsert({
+        user_id: user.id,
         lead_id: leadId,
         group_name: title,
         is_collapsed: newState,
       }, {
-        onConflict: "lead_id,group_name"
+        onConflict: "user_id,lead_id,group_name"
       });
   };
 

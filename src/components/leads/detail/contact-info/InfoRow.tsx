@@ -11,7 +11,7 @@ interface InfoRowProps {
   label: string;
   value: string | null | string[];
   field: string;
-  onUpdate: (updates: Partial<Tables<"leads">>) => void;
+  onUpdate: (updates: Partial<Tables<"leads">>, showToast?: boolean) => void;
   isSourceField?: boolean;
 }
 
@@ -60,17 +60,17 @@ export function InfoRow({
   return (
     <div className="group relative">
       <div className={cn(
-        "flex items-center gap-6 py-3 px-4 rounded-lg transition-colors",
+        "flex items-center gap-2 py-3 rounded-lg transition-colors",
         isEditing ? "bg-gray-50" : "hover:bg-gray-50/80"
       )}>
-        <div className="flex items-center gap-3 min-w-[200px]">
+        <div className="flex items-center gap-3 w-1/2 pl-4">
           <Icon className="h-4 w-4 text-gray-500 shrink-0" />
-          <div className="text-sm font-medium text-gray-700">
+          <div className="text-sm font-medium text-gray-700 truncate">
             {label}
           </div>
         </div>
         
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 w-1/2 pr-4">
           {isEditing ? (
             isSourceField ? (
               <Select
