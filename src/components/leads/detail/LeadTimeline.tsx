@@ -2,7 +2,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { TimelineHeader } from "./timeline/TimelineHeader";
 import { TimelineItem } from "./timeline/TimelineItem";
 import { TimelineItem as TimelineItemType, TimelineItemType as ItemType } from "./timeline/TimelineUtils";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface LeadTimelineProps {
   lead: {
@@ -16,13 +16,16 @@ interface LeadTimelineProps {
 }
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
-  // Log initial data load
+  const renderCount = useRef(0);
+
   useEffect(() => {
-    console.log('LeadTimeline mounted with data:', {
+    renderCount.current++;
+    console.log(`[LeadTimeline] Render #${renderCount.current} with data:`, {
       messages: lead.messages?.length || 0,
       tasks: lead.tasks?.length || 0,
       notes: lead.notes?.length || 0,
-      created_at: lead.created_at
+      created_at: lead.created_at,
+      timestamp: new Date().toISOString()
     });
   }, [lead]);
 
@@ -31,11 +34,13 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const tasks = Array.isArray(lead.tasks) ? lead.tasks : [];
   const notes = Array.isArray(lead.notes) ? lead.notes : [];
 
-  console.log('Timeline lead data:', {
+  console.log('[LeadTimeline] Processing data:', {
     messages: messages.length,
     tasks: tasks.length,
     notes: notes.length,
-    created_at: lead.created_at
+    created_at: lead.created_at,
+    renderCount: renderCount.current,
+    timestamp: new Date().toISOString()
   });
 
   const timelineItems: TimelineItemType[] = [
@@ -103,13 +108,10 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     return dateB.getTime() - dateA.getTime();
   });
 
-  console.log('Sorted timeline items:', timelineItems);
-
   return (
     <div className="p-4">
       <TimelineHeader title="Aktivitäten" />
       <div className="relative space-y-6">
-        {/* Vertical Timeline Line */}
         <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-200" />
         
         {timelineItems.length > 0 ? (

@@ -15,24 +15,30 @@ export const useLeadQuery = (leadId: string | null) => {
     queryKey: ["lead-with-relations", leadId],
     queryFn: async () => {
       if (!leadId) {
+        console.error("[useLeadQuery] Invalid lead ID");
         throw new Error("Invalid lead ID");
       }
       
-      console.log("[useLeadQuery] Fetching lead with relations for ID:", leadId);
+      console.log("[useLeadQuery] Starting fetch for lead ID:", leadId);
       const data = await getLeadWithRelations(leadId);
       
       if (!data) {
+        console.error("[useLeadQuery] Lead not found");
         throw new Error("Lead not found");
       }
 
-      console.log("[useLeadQuery] Received data:", {
+      console.log("[useLeadQuery] Data received:", {
+        id: data.id,
         messages: data.messages?.length || 0,
         tasks: data.tasks?.length || 0,
-        notes: data.notes?.length || 0
+        notes: data.notes?.length || 0,
+        timestamp: new Date().toISOString()
       });
 
       return data as LeadWithRelations;
     },
     enabled: !!leadId,
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 };
