@@ -42,6 +42,7 @@ export const LeadKanbanView = ({
 
   useKanbanSubscription();
 
+  // Add mutation for updating pipeline name
   const updatePipelineName = useMutation({
     mutationFn: async (newName: string) => {
       if (!selectedPipelineId) return;
@@ -165,10 +166,18 @@ export const LeadKanbanView = ({
               isEditMode={isEditMode}
             />
             {isEditMode && (
-              <Button onClick={handleSaveChanges} variant="outline" size="sm">
-                <Save className="h-4 w-4 mr-2" />
-                {settings?.language === "en" ? "Save Changes" : "Änderungen speichern"}
-              </Button>
+              <>
+                <Input
+                  value={editingPipelineName}
+                  onChange={(e) => setEditingPipelineName(e.target.value)}
+                  placeholder={settings?.language === "en" ? "Pipeline Name" : "Pipeline-Name"}
+                  className="w-[200px]"
+                />
+                <Button onClick={handleSaveChanges} variant="outline" size="sm">
+                  <Save className="h-4 w-4 mr-2" />
+                  {settings?.language === "en" ? "Save Changes" : "Änderungen speichern"}
+                </Button>
+              </>
             )}
           </div>
           <Button onClick={() => setShowAddLead(true)} className="shrink-0">
