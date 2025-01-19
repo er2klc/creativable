@@ -77,6 +77,8 @@ export const LeadKanbanView = ({
             leadId,
             phaseId
           });
+          // Invalidate leads query to refresh the data
+          queryClient.invalidateQueries({ queryKey: ["leads"] });
         } catch (error) {
           console.error('Error updating lead phase:', error);
         }
