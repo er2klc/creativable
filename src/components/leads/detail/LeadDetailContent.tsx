@@ -1,4 +1,5 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadInfoCard } from "./LeadInfoCard";
@@ -9,7 +10,7 @@ import { LeadDetailHeader } from "./LeadDetailHeader";
 import { LeadMessages } from "./LeadMessages";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { LeadTimeline } from "./LeadTimeline";
-import { Bot } from "lucide-react";
+import { ContactFieldManager } from "./contact-info/ContactFieldManager";
 
 interface LeadDetailContentProps {
   lead: Tables<"leads"> & {
@@ -53,10 +54,13 @@ export const LeadDetailContent = ({
         </div>
         
         <LeadInfoCard lead={lead} />
+        <ContactFieldManager />
         <LeadTimeline 
           lead={lead} 
           onDeletePhaseChange={onDeletePhaseChange}
         />
+        <TaskList leadId={lead.id} />
+        <NoteList leadId={lead.id} />
         <LeadMessages leadId={lead.id} messages={lead.messages} />
       </div>
     </div>

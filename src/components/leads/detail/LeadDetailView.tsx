@@ -1,17 +1,10 @@
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
-import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadInfoCard } from "./LeadInfoCard";
-import { TaskList } from "./TaskList";
-import { NoteList } from "./NoteList";
-import { LeadSummary } from "./LeadSummary";
 import { LeadDetailHeader } from "./LeadDetailHeader";
-import { LeadMessages } from "./LeadMessages";
-import { CompactPhaseSelector } from "./CompactPhaseSelector";
-import { LeadTimeline } from "./LeadTimeline";
+import { LeadDetailContent } from "./LeadDetailContent";
 import { toast } from "sonner";
 import { type Platform } from "@/config/platforms";
 import { useLeadSubscription } from "./hooks/useLeadSubscription";
@@ -71,6 +64,15 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Invalid lead ID");
       }
 
+      // Only proceed if there are actual changes
+      const hasChanges = Object.entries(updates).some(
+        ([key, value]) => lead?.[key as keyof typeof lead] !== value
+      );
+
+      if (!hasChanges) {
+        return lead;
+      }
+
       const { data, error } = await supabase
         .from("leads")
         .update(updates)
@@ -81,13 +83,20 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      toast.success(
-        settings?.language === "en"
-          ? "Contact updated successfully"
-          : "Kontakt erfolgreich aktualisiert"
+    onSuccess: (data, variables) => {
+      // Only show toast and invalidate if there were actual changes
+      const hasChanges = Object.entries(variables).some(
+        ([key, value]) => lead?.[key as keyof typeof lead] !== value
       );
+      
+      if (hasChanges) {
+        queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+        toast.success(
+          settings?.language === "en"
+            ? "Contact updated successfully"
+            : "Kontakt erfolgreich aktualisiert"
+        );
+      }
     },
     onError: (error) => {
       console.error("Error updating lead:", error);
@@ -140,37 +149,14 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           )}
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
-        ) : lead ? (
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="space-y-6">
-              <CompactPhaseSelector
-                lead={lead}
-                onUpdateLead={updateLeadMutation.mutate}
-              />
-              
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Bot className="h-5 w-5" />
-                  <h3 className="text-lg font-semibold">
-                    {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
-                  </h3>
-                </div>
-                <LeadSummary lead={lead} />
-              </div>
-              
-              <LeadInfoCard lead={lead} />
-              <LeadTimeline 
-                lead={lead} 
-                onDeletePhaseChange={deletePhaseChangeMutation.mutate}
-              />
-              <TaskList leadId={lead.id} />
-              <NoteList leadId={lead.id} />
-              <LeadMessages messages={lead.messages} />
-            </div>
-          </div>
-        ) : null}
+        {lead && (
+          <LeadDetailContent
+            lead={lead}
+            onUpdateLead={updateLeadMutation.mutate}
+            onDeletePhaseChange={deletePhaseChangeMutation.mutate}
+            isLoading={isLoading}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
