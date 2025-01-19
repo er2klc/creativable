@@ -107,6 +107,9 @@ export default {
           '&::-webkit-scrollbar': {
             display: 'none'
           }
+        },
+        '.clip-chevron': {
+          'clip-path': 'polygon(85% 0, 100% 50%, 85% 100%, 0% 100%, 15% 50%, 0% 0%)'
         }
       })
     }

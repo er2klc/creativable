@@ -29,7 +29,6 @@ export function CompactPhaseSelector({
   const handlePhaseChange = async (phaseId: string) => {
     if (!session?.user?.id || !selectedPipelineId) return;
     
-    // Don't update if the phase hasn't changed
     if (phaseId === lead.phase_id && selectedPipelineId === lead.pipeline_id) {
       return;
     }
@@ -57,21 +56,22 @@ export function CompactPhaseSelector({
               <div 
                 key={phase.id}
                 className="flex flex-col items-center"
+                style={{ width: `${100 / phases.length}%` }}
               >
                 <button
                   onClick={() => handlePhaseChange(phase.id)}
                   className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center transition-all relative",
-                    "hover:scale-110 transform duration-200 ease-in-out mb-2",
+                    "w-full h-10 relative flex items-center justify-center transition-all",
+                    "hover:brightness-110 transform duration-200 ease-in-out mb-2",
+                    "clip-chevron", // This will be defined in tailwind.config.ts
                     isActive ? "bg-blue-600 text-white" :
                     isPast ? "bg-blue-200" : "bg-white border-2 border-gray-200"
                   )}
                 >
-                  {index + 1}
+                  <span className="text-sm font-medium">
+                    {phase.name}
+                  </span>
                 </button>
-                <span className="text-xs font-medium">
-                  {phase.name}
-                </span>
               </div>
             );
           })}
