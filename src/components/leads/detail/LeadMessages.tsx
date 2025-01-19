@@ -2,14 +2,19 @@ import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare } from "lucide-react";
+import { useLeadSubscription } from "./hooks/useLeadSubscription";
 
 interface LeadMessagesProps {
   messages: Tables<"messages">[];
+  leadId: string;
 }
 
-export function LeadMessages({ messages }: LeadMessagesProps) {
+export function LeadMessages({ messages, leadId }: LeadMessagesProps) {
   const { settings } = useSettings();
   
+  // Set up real-time subscription for messages
+  useLeadSubscription(leadId);
+
   const sentMessages = messages.filter(m => m.platform !== "received");
   const receivedMessages = messages.filter(m => m.platform === "received");
 
