@@ -9,7 +9,8 @@ import { PhaseColumn } from "./kanban/PhaseColumn";
 import { useQueryClient } from "@tanstack/react-query";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
 import { Button } from "@/components/ui/button";
-import { Save, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useKanbanSubscription } from "./kanban/useKanbanSubscription";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -33,6 +34,9 @@ export const LeadKanbanView = ({
   const { updateLeadPhase, updatePhaseName, deletePhase, addPhase } = usePhaseMutations();
   const queryClient = useQueryClient();
 
+  // Set up realtime subscriptions
+  useKanbanSubscription();
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
@@ -47,8 +51,6 @@ export const LeadKanbanView = ({
           leadId,
           phaseId
         });
-        
-        await queryClient.invalidateQueries({ queryKey: ['leads'] });
       } catch (error) {
         console.error('Error updating lead phase:', error);
       }
@@ -59,7 +61,10 @@ export const LeadKanbanView = ({
     if (!phaseToDelete || !targetPhase) return;
 
     try {
-      await deletePhase.mutateAsync(phaseToDelete.id);
+      await deletePhase.mutateAsync({
+        phaseId: phaseToDelete.id,
+        targetPhaseId: targetPhase
+      });
       setPhaseToDelete(null);
       setTargetPhase("");
     } catch (error) {
@@ -93,17 +98,6 @@ export const LeadKanbanView = ({
       onDragEnd={handleDragEnd}
     >
       <div className="w-full h-[calc(100vh-13rem)] overflow-hidden relative">
-        <div className="flex justify-between items-center mb-4 px-4">
-          <div className="flex items-center gap-2">
-            {isEditMode && (
-              <Button onClick={onSaveChanges} variant="outline" size="sm">
-                <Save className="h-4 w-4 mr-2" />
-                {settings?.language === "en" ? "Save Changes" : "Änderungen speichern"}
-              </Button>
-            )}
-          </div>
-        </div>
-
         <div className="relative flex-1 overflow-x-auto">
           <div className="flex gap-4 p-4 min-h-[calc(100vh-13rem)]">
             <SortableContext 
