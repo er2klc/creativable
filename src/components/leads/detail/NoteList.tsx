@@ -29,10 +29,6 @@ export const NoteList = ({ leadId }: NoteListProps) => {
   const createNoteMutation = useMutation({
     mutationFn: async (content: string) => {
       console.log("[NoteList] Starting note creation for lead:", leadId);
-      console.log("[NoteList] Current cache state before mutation:", {
-        data: queryClient.getQueryData<LeadWithRelations>(["lead-with-relations", leadId]),
-        timestamp: new Date().toISOString()
-      });
       
       const { data, error } = await supabase
         .from("notes")
@@ -51,14 +47,7 @@ export const NoteList = ({ leadId }: NoteListProps) => {
     },
     onSuccess: () => {
       console.log("[NoteList] Invalidating queries for lead:", leadId);
-      queryClient.invalidateQueries({ queryKey: ["lead-with-relations", leadId] });
-      
-      // Get current cache data to verify update
-      const currentData = queryClient.getQueryData<LeadWithRelations>(["lead-with-relations", leadId]);
-      console.log("[NoteList] Current cache data after invalidation:", {
-        notes: currentData?.notes?.length || 0,
-        timestamp: new Date().toISOString()
-      });
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
       
       setNewNote("");
       toast.success(
@@ -80,7 +69,6 @@ export const NoteList = ({ leadId }: NoteListProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNote.trim()) return;
-    console.log("[NoteList] Submitting note:", { content: newNote, leadId });
     createNoteMutation.mutate(newNote);
   };
 

@@ -2,7 +2,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { TimelineHeader } from "./timeline/TimelineHeader";
 import { TimelineItem } from "./timeline/TimelineItem";
 import { TimelineItem as TimelineItemType, TimelineItemType as ItemType } from "./timeline/TimelineUtils";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 
 interface LeadTimelineProps {
   lead: {
@@ -17,33 +17,64 @@ interface LeadTimelineProps {
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
   const renderCount = useRef(0);
+  const prevDataRef = useRef({
+    messages: lead.messages?.length || 0,
+    tasks: lead.tasks?.length || 0,
+    notes: lead.notes?.length || 0,
+  });
 
-  useEffect(() => {
-    renderCount.current++;
-    console.log(`[LeadTimeline] Render #${renderCount.current} with data:`, {
+  // Only update if data actually changed
+  const hasDataChanged = useMemo(() => {
+    const currentData = {
       messages: lead.messages?.length || 0,
       tasks: lead.tasks?.length || 0,
       notes: lead.notes?.length || 0,
-      created_at: lead.created_at,
-      timestamp: new Date().toISOString()
-    });
-  }, [lead]);
+    };
+
+    const changed = JSON.stringify(currentData) !== JSON.stringify(prevDataRef.current);
+    
+    if (changed) {
+      console.log('[LeadTimeline] Data changed:', {
+        prev: prevDataRef.current,
+        current: currentData,
+        timestamp: new Date().toISOString()
+      });
+      prevDataRef.current = currentData;
+    }
+    
+    return changed;
+  }, [lead.messages, lead.tasks, lead.notes]);
+
+  useEffect(() => {
+    if (hasDataChanged) {
+      renderCount.current++;
+      console.log(`[LeadTimeline] Render #${renderCount.current} with data:`, {
+        messages: lead.messages?.length || 0,
+        tasks: lead.tasks?.length || 0,
+        notes: lead.notes?.length || 0,
+        created_at: lead.created_at,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }, [hasDataChanged, lead]);
 
   // Ensure arrays exist and are valid
   const messages = Array.isArray(lead.messages) ? lead.messages : [];
   const tasks = Array.isArray(lead.tasks) ? lead.tasks : [];
   const notes = Array.isArray(lead.notes) ? lead.notes : [];
 
-  console.log('[LeadTimeline] Processing data:', {
-    messages: messages.length,
-    tasks: tasks.length,
-    notes: notes.length,
-    created_at: lead.created_at,
-    renderCount: renderCount.current,
-    timestamp: new Date().toISOString()
-  });
+  if (hasDataChanged) {
+    console.log('[LeadTimeline] Processing data:', {
+      messages: messages.length,
+      tasks: tasks.length,
+      notes: notes.length,
+      created_at: lead.created_at,
+      renderCount: renderCount.current,
+      timestamp: new Date().toISOString()
+    });
+  }
 
-  const timelineItems: TimelineItemType[] = [
+  const timelineItems: TimelineItemType[] = useMemo(() => [
     // Always include contact creation as first item
     {
       id: 'contact-created',
@@ -106,7 +137,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     const dateA = new Date(a.timestamp || new Date());
     const dateB = new Date(b.timestamp || new Date());
     return dateB.getTime() - dateA.getTime();
-  });
+  }), [messages, tasks, notes, lead.created_at, lead.name]);
 
   return (
     <div className="p-4">
