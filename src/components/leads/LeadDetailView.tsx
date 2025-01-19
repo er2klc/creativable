@@ -12,6 +12,7 @@ import { LeadDetailHeader } from "./detail/LeadDetailHeader";
 import { LeadMessages } from "./detail/LeadMessages";
 import { CompactPhaseSelector } from "./detail/CompactPhaseSelector";
 import { LeadTimeline } from "./detail/LeadTimeline";
+import { ContactFieldManager } from "./detail/contact-info/ContactFieldManager";
 import { toast } from "sonner";
 import { type Platform } from "@/config/platforms";
 import { useLeadSubscription } from "./detail/hooks/useLeadSubscription";
@@ -161,6 +162,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
               </div>
               
               <LeadInfoCard lead={lead} />
+              <ContactFieldManager />
               <LeadTimeline 
                 lead={lead} 
                 onDeletePhaseChange={deletePhaseChangeMutation.mutate}
