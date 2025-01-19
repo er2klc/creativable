@@ -17,12 +17,14 @@ interface LeadFiltersProps {
   selectedPipelineId: string | null;
   setSelectedPipelineId: (id: string | null) => void;
   onEditPipeline?: () => void;
+  isEditMode?: boolean;
 }
 
 export const LeadFilters = ({
   selectedPipelineId,
   setSelectedPipelineId,
   onEditPipeline,
+  isEditMode,
 }: LeadFiltersProps) => {
   const session = useSession();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -82,21 +84,12 @@ export const LeadFilters = ({
       </DropdownMenu>
 
       <Button
-        variant="outline"
+        variant={isEditMode ? "default" : "outline"}
         size="icon"
         onClick={onEditPipeline}
         className="h-9 w-9"
       >
         <Pencil className="h-4 w-4" />
-      </Button>
-
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() => setShowCreateDialog(true)}
-        className="h-9 w-9"
-      >
-        <PlusCircle className="h-4 w-4" />
       </Button>
 
       <CreatePipelineDialog 
