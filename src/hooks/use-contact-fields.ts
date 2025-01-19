@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSettings } from "./use-settings";
+import { useAuth } from "./use-auth";
 
 export interface ContactFieldSetting {
   id: string;
@@ -23,6 +24,7 @@ interface AddFieldParams {
 export const useContactFields = () => {
   const queryClient = useQueryClient();
   const { settings } = useSettings();
+  const { user } = useAuth();
 
   const { data: fields = [], isLoading } = useQuery({
     queryKey: ["contact-field-settings"],
@@ -38,11 +40,14 @@ export const useContactFields = () => {
   });
 
   const addField = async (params: AddFieldParams) => {
+    if (!user?.id) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("contact_field_settings")
       .insert([
         {
           ...params,
+          user_id: user.id,
           order_index: fields.length,
         },
       ])

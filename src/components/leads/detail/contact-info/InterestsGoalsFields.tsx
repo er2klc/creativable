@@ -22,6 +22,7 @@ export function InterestsGoalsFields({ lead, onUpdate }: InterestsGoalsFieldsPro
     <ContactInfoGroup
       title={settings?.language === "en" ? "Interests & Goals" : "Interessen & Ziele"}
       leadId={lead.id}
+      groupName="interests_goals"
     >
       {fields.map((field) => (
         <InfoRow

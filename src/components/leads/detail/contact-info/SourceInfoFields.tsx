@@ -22,6 +22,7 @@ export function SourceInfoFields({ lead, onUpdate, showToast = false }: SourceIn
     <ContactInfoGroup
       title={settings?.language === "en" ? "Source Information" : "Herkunftsinformationen"}
       leadId={lead.id}
+      groupName="source_info"
     >
       {fields.map((field) => (
         <InfoRow

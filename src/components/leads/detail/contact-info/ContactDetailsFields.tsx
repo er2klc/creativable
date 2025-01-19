@@ -22,6 +22,7 @@ export function ContactDetailsFields({ lead, onUpdate }: ContactDetailsFieldsPro
     <ContactInfoGroup
       title={settings?.language === "en" ? "Contact Details" : "Kontaktdetails"}
       leadId={lead.id}
+      groupName="contact_details"
     >
       {fields.map((field) => (
         <InfoRow

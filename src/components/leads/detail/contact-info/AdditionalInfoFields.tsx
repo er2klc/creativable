@@ -23,6 +23,7 @@ export function AdditionalInfoFields({ lead, onUpdate }: AdditionalInfoFieldsPro
     <ContactInfoGroup
       title={settings?.language === "en" ? "Additional Information" : "Zusätzliche Informationen"}
       leadId={lead.id}
+      groupName="additional_info"
     >
       {fields.map((field) => (
         <InfoRow

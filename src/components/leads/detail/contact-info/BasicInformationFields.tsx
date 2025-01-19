@@ -32,6 +32,7 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
       leadId={lead.id}
       showEmptyFields={showEmptyFields}
       onToggleEmptyFields={() => setShowEmptyFields(!showEmptyFields)}
+      groupName="basic_info"
     >
       {visibleFields.map((field) => (
         <InfoRow

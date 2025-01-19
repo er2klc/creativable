@@ -24,6 +24,7 @@ export function AddressFields({ lead, onUpdate }: AddressFieldsProps) {
     <ContactInfoGroup
       title={settings?.language === "en" ? "Address" : "Adresse"}
       leadId={lead.id}
+      groupName="address"
     >
       {fields.map((field) => (
         <InfoRow
