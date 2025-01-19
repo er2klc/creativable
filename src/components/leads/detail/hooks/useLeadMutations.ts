@@ -16,9 +16,22 @@ export const useLeadMutations = (leadId: string | null) => {
         throw new Error("Invalid lead ID or user not authenticated");
       }
 
+      // Get current lead data from cache
+      const currentLead = queryClient.getQueryData<Tables<"leads">>(["lead", leadId]);
+
+      // Check if there are actual changes
+      const hasChanges = Object.entries(updates).some(
+        ([key, value]) => currentLead?.[key as keyof Tables<"leads">] !== value
+      );
+
+      // If no changes, return current data without updating
+      if (!hasChanges) {
+        return currentLead;
+      }
+
       // First create the phase change note if this is a phase change
       if (updates.phase_id) {
-        const oldPhase = queryClient.getQueryData<Tables<"leads">>(["lead", leadId])?.phase_id;
+        const oldPhase = currentLead?.phase_id;
         const newPhase = updates.phase_id;
         
         if (oldPhase !== newPhase) {
@@ -52,15 +65,19 @@ export const useLeadMutations = (leadId: string | null) => {
         .single();
 
       if (error) throw error;
-      return data;
+      return { data, hasChanges };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      toast.success(
-        settings?.language === "en"
-          ? "Contact updated successfully"
-          : "Kontakt erfolgreich aktualisiert"
-      );
+      
+      // Only show success toast if there were actual changes
+      if (result.hasChanges) {
+        toast.success(
+          settings?.language === "en"
+            ? "Contact updated successfully"
+            : "Kontakt erfolgreich aktualisiert"
+        );
+      }
     },
     onError: (error) => {
       console.error("Error updating lead:", error);
