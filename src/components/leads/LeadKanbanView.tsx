@@ -122,7 +122,7 @@ export const LeadKanbanView = ({
       onDragEnd={handleDragEnd}
     >
       <div className="w-full h-[calc(100vh-13rem)] overflow-hidden relative">
-        <div className="relative flex-1 overflow-x-auto">
+        <div className="relative flex-1 overflow-x-auto overflow-y-auto">
           <div className="flex gap-4 p-4 min-h-[calc(100vh-13rem)]">
             <SortableContext 
               items={phases.map(phase => phase.id)}
