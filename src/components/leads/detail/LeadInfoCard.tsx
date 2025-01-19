@@ -103,7 +103,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                   setEditingField(null);
                 }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full h-8">
                   <SelectValue placeholder="Wähle eine Quelle" />
                 </SelectTrigger>
                 <SelectContent>
@@ -130,7 +130,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                   }
                 }}
                 autoFocus
-                className="max-w-md border-gray-200"
+                className="max-w-md border-gray-200 h-8"
               />
             )
           ) : (
@@ -183,6 +183,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           </div>
         </div>
 
+        <div className="h-px bg-gray-200 mx-2" />
+
         {/* Contact Details */}
         <div>
           <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
@@ -209,6 +211,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
             />
           </div>
         </div>
+
+        <div className="h-px bg-gray-200 mx-2" />
 
         {/* Address */}
         <div>
@@ -249,6 +253,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           </div>
         </div>
 
+        <div className="h-px bg-gray-200 mx-2" />
+
         {/* Additional Information */}
         <div>
           <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
@@ -282,6 +288,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           </div>
         </div>
 
+        <div className="h-px bg-gray-200 mx-2" />
+
         {/* Interests & Goals */}
         <div>
           <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
@@ -308,6 +316,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
             />
           </div>
         </div>
+
+        <div className="h-px bg-gray-200 mx-2" />
 
         {/* Source Information */}
         <div>
