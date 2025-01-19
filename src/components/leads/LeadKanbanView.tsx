@@ -1,16 +1,22 @@
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
-import { SortableContext, arrayMove } from "@dnd-kit/sortable";
-import { Tables } from "@/integrations/supabase/types";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useSettings } from "@/hooks/use-settings";
-import { PhaseColumn } from "./kanban/PhaseColumn";
-import { AddPhaseButton } from "./kanban/AddPhaseButton";
 import { useState } from "react";
+import { useSettings } from "@/hooks/use-settings";
+import { Tables } from "@/integrations/supabase/types";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useSession } from "@supabase/auth-helpers-react";
+import { PhaseColumn } from "./kanban/PhaseColumn";
+import { useKanbanSubscription } from "./kanban/useKanbanSubscription";
+import { usePhaseQuery } from "./kanban/usePhaseQuery";
+import { usePhaseMutations } from "./kanban/usePhaseMutations";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { Save } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { LeadFilters } from "./LeadFilters";
+import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
+import { AddLeadDialog } from "./AddLeadDialog";
+import { AddPhaseButton } from "./kanban/AddPhaseButton";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -18,158 +24,222 @@ interface LeadKanbanViewProps {
   setSelectedPipelineId: (id: string | null) => void;
 }
 
-export const LeadKanbanView = ({ leads, selectedPipelineId, setSelectedPipelineId }: LeadKanbanViewProps) => {
+export const LeadKanbanView = ({ 
+  leads, 
+  selectedPipelineId,
+  setSelectedPipelineId 
+}: LeadKanbanViewProps) => {
   const { settings } = useSettings();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingPipelineName, setEditingPipelineName] = useState("");
+  const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [targetPhase, setTargetPhase] = useState<string>("");
+  const [showAddLead, setShowAddLead] = useState(false);
+  const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
+  const { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePhaseOrder } = usePhaseMutations();
   const queryClient = useQueryClient();
-  const session = useSession();
-  const [isEditing, setIsEditing] = useState(false);
-  const [pipelineName, setPipelineName] = useState("");
+  const navigate = useNavigate();
 
-  const { data: phases = [] } = useQuery({
-    queryKey: ["pipeline-phases", selectedPipelineId],
-    queryFn: async () => {
-      if (!selectedPipelineId) return [];
-      const { data, error } = await supabase
-        .from("pipeline_phases")
-        .select("*")
-        .eq("pipeline_id", selectedPipelineId)
-        .order("order_index");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!selectedPipelineId,
-  });
+  useKanbanSubscription();
 
-  const updateLeadMutation = useMutation({
-    mutationFn: async ({ leadId, phaseId }: { leadId: string; phaseId: string }) => {
-      if (!session?.user?.id) {
-        throw new Error("User not authenticated");
-      }
+  // Add mutation for updating pipeline name
+  const updatePipelineName = useMutation({
+    mutationFn: async (newName: string) => {
+      if (!selectedPipelineId) return;
 
-      // Get the current lead to check its phase
-      const { data: currentLead } = await supabase
-        .from("leads")
-        .select("phase_id")
-        .eq("id", leadId)
-        .single();
-
-      const oldPhase = currentLead?.phase_id;
-
-      // Create phase change note
-      if (oldPhase !== phaseId) {
-        const { error: noteError } = await supabase
-          .from("notes")
-          .insert({
-            lead_id: leadId,
-            user_id: session.user.id,
-            content: `Phase von "${oldPhase}" zu "${phaseId}" geändert`,
-            color: "#E9D5FF",
-            metadata: {
-              type: "phase_change",
-              oldPhase,
-              newPhase: phaseId
-            }
-          });
-
-        if (noteError) {
-          console.error("Error creating phase change note:", noteError);
-          throw noteError;
-        }
-      }
-
-      // Update the lead's phase
-      const { data, error } = await supabase
-        .from("leads")
-        .update({
-          phase_id: phaseId,
-          last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
-          last_action_date: new Date().toISOString(),
-        })
-        .eq("id", leadId)
-        .select()
-        .single();
+      const { error } = await supabase
+        .from("pipelines")
+        .update({ name: newName })
+        .eq("id", selectedPipelineId);
 
       if (error) throw error;
-      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
       toast.success(
-        settings?.language === "en"
-          ? "Phase updated successfully"
-          : "Phase erfolgreich aktualisiert"
+        settings?.language === "en" 
+          ? "Pipeline name updated successfully" 
+          : "Pipeline-Name erfolgreich aktualisiert"
       );
     },
     onError: (error) => {
-      console.error("Error updating phase:", error);
+      console.error("Error updating pipeline name:", error);
       toast.error(
         settings?.language === "en"
-          ? "Error updating phase"
-          : "Fehler beim Aktualisieren der Phase"
+          ? "Failed to update pipeline name"
+          : "Fehler beim Aktualisieren des Pipeline-Namens"
       );
     },
   });
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (!over) return;
+    if (!over || !active) return;
+
+    const leadId = active.id as string;
+    const newPhase = over.id as string;
     
-    if (active.id !== over.id) {
-      const leadId = active.id as string;
-      const newPhaseId = over.id as string;
-      
-      updateLeadMutation.mutate({ leadId, newPhaseId });
+    if (newPhase && !isEditMode) {
+      try {
+        await updateLeadPhase.mutateAsync({ 
+          leadId, 
+          phaseId: newPhase 
+        });
+      } catch (error) {
+        console.error("Error updating lead phase:", error);
+      }
+    }
+  };
+
+  const handleLeadClick = (id: string) => {
+    navigate(`/contacts/${id}`);
+  };
+
+  const handleSaveChanges = async () => {
+    if (editingPipelineName) {
+      await updatePipelineName.mutateAsync(editingPipelineName);
+    }
+    setIsEditMode(false);
+  };
+
+  const handleEditModeToggle = () => {
+    const currentPipeline = phases[0]?.pipeline_id ? {
+      name: phases[0]?.name || ""
+    } : null;
+    
+    setIsEditMode(!isEditMode);
+    setEditingPipelineName(currentPipeline?.name || "");
+  };
+
+  const handleDeletePhase = async () => {
+    if (!phaseToDelete || !targetPhase) return;
+
+    try {
+      await deletePhase.mutateAsync({ 
+        phaseId: phaseToDelete.id, 
+        targetPhaseId: targetPhase 
+      });
+      setPhaseToDelete(null);
+      setTargetPhase("");
+    } catch (error) {
+      console.error("Error deleting phase:", error);
+    }
+  };
+
+  const handleMovePhase = async (phaseId: string, direction: 'left' | 'right') => {
+    const currentIndex = phases.findIndex(p => p.id === phaseId);
+    if (currentIndex === -1) return;
+
+    const newIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= phases.length) return;
+
+    const updatedPhases = [...phases];
+    const [movedPhase] = updatedPhases.splice(currentIndex, 1);
+    updatedPhases.splice(newIndex, 0, movedPhase);
+
+    // Update order_index for all phases
+    const phasesWithNewOrder = updatedPhases.map((phase, index) => ({
+      ...phase,
+      order_index: index
+    }));
+
+    try {
+      await updatePhaseOrder.mutateAsync(phasesWithNewOrder);
+    } catch (error) {
+      console.error("Error updating phase order:", error);
     }
   };
 
   return (
-    <div className="h-full overflow-x-auto">
-      <div className="flex items-center justify-between mb-4 px-4">
-        {isEditing ? (
-          <div className="flex items-center gap-2">
-            <Input
-              value={pipelineName}
-              onChange={(e) => setPipelineName(e.target.value)}
-              placeholder={settings?.language === "en" ? "Pipeline name" : "Pipeline-Name"}
-              className="max-w-xs"
+    <DndContext 
+      collisionDetection={closestCenter} 
+      onDragEnd={handleDragEnd}
+    >
+      <div className="flex flex-col h-screen">
+        <div className="flex items-center justify-between p-4 flex-wrap gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <LeadFilters
+              selectedPipelineId={selectedPipelineId}
+              setSelectedPipelineId={setSelectedPipelineId}
+              onEditPipeline={handleEditModeToggle}
+              isEditMode={isEditMode}
             />
-            <Button 
-              onClick={handleSaveClick}
-              disabled={!pipelineName.trim()}
-            >
-              {settings?.language === "en" ? "Save Pipeline Name" : "Pipeline-Name speichern"}
-            </Button>
-            <Button variant="ghost" onClick={() => setIsEditing(false)}>
-              {settings?.language === "en" ? "Cancel" : "Abbrechen"}
-            </Button>
+            {isEditMode && (
+              <>
+                <Input
+                  value={editingPipelineName}
+                  onChange={(e) => setEditingPipelineName(e.target.value)}
+                  placeholder={settings?.language === "en" ? "Pipeline Name" : "Pipeline-Name"}
+                  className="w-[200px]"
+                />
+                <Button onClick={handleSaveChanges} variant="outline" size="sm">
+                  <Save className="h-4 w-4 mr-2" />
+                  {settings?.language === "en" ? "Save Pipeline Name" : "Pipeline-Name speichern"}
+                </Button>
+              </>
+            )}
           </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold">
-              {selectedPipeline?.name || (settings?.language === "en" ? "Select Pipeline" : "Pipeline auswählen")}
-            </h2>
-            <Button variant="ghost" size="sm" onClick={handleEditClick}>
-              {settings?.language === "en" ? "Edit" : "Bearbeiten"}
-            </Button>
-          </div>
-        )}
-      </div>
-
-      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 p-4">
-          <SortableContext items={phases.map(phase => phase.id)}>
-            {phases.map((phase) => (
-              <PhaseColumn
-                key={phase.id}
-                phase={phase}
-                leads={leads.filter((lead) => lead.phase_id === phase.id)}
-              />
-            ))}
-          </SortableContext>
-          <AddPhaseButton pipelineId={selectedPipelineId} />
+          <Button onClick={() => setShowAddLead(true)} className="shrink-0">
+            Neuer Kontakt ✨
+          </Button>
         </div>
-      </DndContext>
-    </div>
+
+        <div className="flex-1 overflow-x-auto no-scrollbar relative">
+          <div 
+            className="flex gap-4 px-4 h-full" 
+            style={{ 
+              minWidth: 'fit-content',
+            }}
+          >
+            {/* Shadow indicator for left scroll */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
+
+            {phases.map((phase, index) => (
+              <div key={phase.id} className="flex-1" style={{ minWidth: '190px', width: `${100 / phases.length}%` }}>
+                <PhaseColumn
+                  phase={phase}
+                  leads={leads.filter((lead) => lead.phase_id === phase.id)}
+                  onLeadClick={handleLeadClick}
+                  isEditMode={isEditMode}
+                  onDeletePhase={() => setPhaseToDelete(phase)}
+                  onUpdatePhaseName={(newName) => updatePhaseName.mutate({ id: phase.id, name: newName })}
+                  pipelineId={selectedPipelineId}
+                  isFirst={index === 0}
+                  isLast={index === phases.length - 1}
+                  onMovePhase={
+                    isEditMode 
+                      ? (direction) => handleMovePhase(phase.id, direction)
+                      : undefined
+                  }
+                />
+              </div>
+            ))}
+
+            {isEditMode && (
+              <AddPhaseButton pipelineId={selectedPipelineId} />
+            )}
+
+            {/* Shadow indicator for right scroll */}
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
+          </div>
+        </div>
+
+        <DeletePhaseDialog
+          phaseToDelete={phaseToDelete}
+          targetPhase={targetPhase}
+          setTargetPhase={setTargetPhase}
+          onClose={() => setPhaseToDelete(null)}
+          onConfirm={handleDeletePhase}
+          phases={phases}
+        />
+
+        <AddLeadDialog
+          open={showAddLead}
+          onOpenChange={setShowAddLead}
+          pipelineId={selectedPipelineId}
+        />
+      </div>
+    </DndContext>
   );
 };
