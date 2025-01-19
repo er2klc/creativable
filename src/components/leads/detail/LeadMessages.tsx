@@ -2,16 +2,45 @@ import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare } from "lucide-react";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LeadMessagesProps {
   messages: Tables<"messages">[];
+  leadId: string;
 }
 
-export function LeadMessages({ messages }: LeadMessagesProps) {
+export function LeadMessages({ messages, leadId }: LeadMessagesProps) {
   const { settings } = useSettings();
+  const queryClient = useQueryClient();
   
   const sentMessages = messages.filter(m => m.platform !== "received");
   const receivedMessages = messages.filter(m => m.platform === "received");
+
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('messages-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages',
+          filter: `lead_id=eq.${leadId}`
+        },
+        (payload) => {
+          console.log('Message change received:', payload);
+          queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, leadId]);
 
   return (
     <div className="grid grid-cols-2 gap-4">
