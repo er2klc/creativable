@@ -86,7 +86,7 @@ export function ContactInfoGroup({
   return (
     <div className="space-y-2">
       <div 
-        className="flex items-center justify-between group"
+        className="flex items-center justify-between group cursor-pointer"
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
       >
@@ -117,7 +117,7 @@ export function ContactInfoGroup({
                 <MoreVertical className="h-4 w-4 text-gray-500" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={handleAddField}>
                 <Plus className="mr-2 h-4 w-4" />
                 {settings?.language === "en" ? "Add Field" : "Feld hinzufügen"}
