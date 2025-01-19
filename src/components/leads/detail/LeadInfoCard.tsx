@@ -43,24 +43,35 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     },
   });
 
-  const handleStartEdit = (field: string, currentValue: string | null) => {
+  const handleStartEdit = (field: string, currentValue: string | null | string[]) => {
     setEditingField(field);
-    setEditingValue(currentValue || "");
+    if (Array.isArray(currentValue)) {
+      setEditingValue(currentValue.join(", "));
+    } else {
+      setEditingValue(currentValue || "");
+    }
   };
 
   const handleUpdate = (field: string, value: string) => {
     // Handle array fields
     if (["languages", "interests", "goals", "challenges"].includes(field)) {
-      const arrayValue = value.split(",").map(item => item.trim()).filter(Boolean);
-      updateLeadMutation.mutate({ [field]: arrayValue });
+      // Split by comma, trim whitespace, and filter out empty strings
+      const arrayValue = value.split(",")
+        .map(item => item.trim())
+        .filter(Boolean);
+      
+      // Only update if we have valid values
+      if (arrayValue.length > 0 || value === "") {
+        updateLeadMutation.mutate({ [field]: arrayValue.length > 0 ? arrayValue : [] });
+      }
     } else {
       updateLeadMutation.mutate({ [field]: value });
     }
   };
 
   const formatArrayField = (value: string[] | null): string => {
-    if (!value) return "";
-    return Array.isArray(value) ? value.join(", ") : value;
+    if (!value || !Array.isArray(value)) return "";
+    return value.join(", ");
   };
 
   const InfoRow = ({ 
@@ -75,7 +86,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     field: string 
   }) => {
     const isEditing = editingField === field;
-    const displayValue = Array.isArray(value) ? value.join(", ") : value;
+    const displayValue = Array.isArray(value) ? formatArrayField(value) : value;
     
     return (
       <div className="flex items-center gap-4 py-2 group">
@@ -99,7 +110,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
             />
           ) : (
             <div 
-              onClick={() => handleStartEdit(field, displayValue)}
+              onClick={() => handleStartEdit(field, value)}
               className="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 -ml-2"
             >
               <span className="text-sm text-gray-500">{label}</span>
@@ -233,7 +244,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           <InfoRow
             icon={Languages}
             label={settings?.language === "en" ? "Languages" : "Sprachen"}
-            value={formatArrayField(lead.languages)}
+            value={lead.languages}
             field="languages"
           />
         </div>
@@ -246,19 +257,19 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           <InfoRow
             icon={Heart}
             label={settings?.language === "en" ? "Interests" : "Interessen"}
-            value={formatArrayField(lead.interests)}
+            value={lead.interests}
             field="interests"
           />
           <InfoRow
             icon={Target}
             label={settings?.language === "en" ? "Goals" : "Ziele"}
-            value={formatArrayField(lead.goals)}
+            value={lead.goals}
             field="goals"
           />
           <InfoRow
             icon={AlertCircle}
             label={settings?.language === "en" ? "Challenges" : "Herausforderungen"}
-            value={formatArrayField(lead.challenges)}
+            value={lead.challenges}
             field="challenges"
           />
         </div>
