@@ -11,6 +11,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragEndEvent
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -21,7 +22,15 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-const SortableField = ({ field, isReordering }) => {
+interface SortableFieldProps {
+  field: {
+    id: string;
+    field_name: string;
+  };
+  isReordering: boolean;
+}
+
+const SortableField = ({ field, isReordering }: SortableFieldProps) => {
   const {
     attributes,
     listeners,
@@ -71,10 +80,10 @@ export function ContactFieldManager() {
     })
   );
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (active.id !== over.id) {
+    if (over && active.id !== over.id) {
       const oldIndex = fields.findIndex((field) => field.id === active.id);
       const newIndex = fields.findIndex((field) => field.id === over.id);
       const newFields = arrayMove(fields, oldIndex, newIndex);
