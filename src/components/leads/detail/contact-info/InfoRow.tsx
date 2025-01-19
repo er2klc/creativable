@@ -15,11 +15,11 @@ interface InfoRowProps {
 }
 
 export function InfoRow({ icon: Icon, label, value, field, onUpdate, isSourceField }: InfoRowProps) {
-  const [editingField, setEditingField] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [editingValue, setEditingValue] = useState<string>("");
 
-  const handleStartEdit = (field: string, currentValue: string | null | string[]) => {
-    setEditingField(field);
+  const handleStartEdit = (currentValue: string | null | string[]) => {
+    setIsEditing(true);
     if (Array.isArray(currentValue)) {
       setEditingValue(currentValue.join(", "));
     } else {
@@ -27,7 +27,7 @@ export function InfoRow({ icon: Icon, label, value, field, onUpdate, isSourceFie
     }
   };
 
-  const handleUpdate = (field: string, value: string) => {
+  const handleUpdate = (value: string) => {
     if (["languages", "interests", "goals", "challenges"].includes(field)) {
       const arrayValue = value.split(",")
         .map(item => item.trim())
@@ -39,6 +39,7 @@ export function InfoRow({ icon: Icon, label, value, field, onUpdate, isSourceFie
     } else {
       onUpdate({ [field]: value });
     }
+    setIsEditing(false);
   };
 
   const formatArrayField = (value: string[] | null): string => {
@@ -46,65 +47,71 @@ export function InfoRow({ icon: Icon, label, value, field, onUpdate, isSourceFie
     return value.join(", ");
   };
 
-  const isEditing = editingField === field;
   const displayValue = Array.isArray(value) ? formatArrayField(value) : value;
 
   return (
-    <div className="relative group">
-      <div className="flex flex-col gap-1.5 py-2 px-3 hover:bg-gray-50/50 rounded transition-colors">
-        <span className="text-xs text-gray-500 flex items-center gap-2">
-          <Icon className="h-3.5 w-3.5 text-gray-400" />
-          {label}
-        </span>
-        {isEditing ? (
-          isSourceField ? (
-            <Select
-              value={editingValue}
-              onValueChange={(value) => {
-                handleUpdate(field, value);
-                setEditingField(null);
-              }}
-            >
-              <SelectTrigger className="w-full h-8 text-sm">
-                <SelectValue placeholder="Wähle eine Quelle" />
-              </SelectTrigger>
-              <SelectContent>
-                {platformsConfig.map((platform) => (
-                  <SelectItem key={platform.name} value={platform.name}>
-                    <div className="flex items-center gap-2">
-                      <platform.icon className="h-4 w-4" />
-                      {platform.name}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Input
-              value={editingValue}
-              onChange={(e) => setEditingValue(e.target.value)}
-              onBlur={() => handleUpdate(field, editingValue)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleUpdate(field, editingValue);
-                } else if (e.key === "Escape") {
-                  setEditingField(null);
-                }
-              }}
-              autoFocus
-              className="h-8 text-sm"
-            />
-          )
-        ) : (
-          <div 
-            onClick={() => handleStartEdit(field, value)}
-            className="cursor-pointer min-h-[20px] text-sm py-0.5"
-          >
-            {displayValue || ""}
+    <div className="group relative">
+      <div className="flex items-center gap-3 py-3 px-4 hover:bg-gray-50/80 rounded-lg transition-colors">
+        <Icon className="h-4 w-4 text-gray-500 shrink-0" />
+        
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-medium text-gray-500 mb-1">
+            {label}
           </div>
-        )}
+          
+          {isEditing ? (
+            isSourceField ? (
+              <Select
+                value={editingValue}
+                onValueChange={(value) => {
+                  handleUpdate(value);
+                  setIsEditing(false);
+                }}
+                onOpenChange={(open) => !open && setIsEditing(false)}
+              >
+                <SelectTrigger className="w-full h-8 text-sm bg-white">
+                  <SelectValue placeholder="Wähle eine Quelle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {platformsConfig.map((platform) => (
+                    <SelectItem key={platform.name} value={platform.name}>
+                      <div className="flex items-center gap-2">
+                        <platform.icon className="h-4 w-4" />
+                        {platform.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                value={editingValue}
+                onChange={(e) => setEditingValue(e.target.value)}
+                onBlur={() => {
+                  handleUpdate(editingValue);
+                  setIsEditing(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleUpdate(editingValue);
+                  } else if (e.key === "Escape") {
+                    setIsEditing(false);
+                  }
+                }}
+                autoFocus
+                className="h-8 text-sm bg-white"
+              />
+            )
+          ) : (
+            <div 
+              onClick={() => handleStartEdit(value)}
+              className="text-sm py-0.5 min-h-[20px] cursor-pointer text-gray-900 hover:text-gray-700 transition-colors"
+            >
+              {displayValue || "—"}
+            </div>
+          )}
+        </div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gray-100/80" />
     </div>
   );
 }
