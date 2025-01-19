@@ -55,10 +55,14 @@ export function CompactPhaseSelector({
             
             return (
               <div 
-                key={phase.id}
-                className="flex flex-col items-center style={{ left: '-10px !important' }}"
-                style={{ width: `${100 / phases.length}%` }}
-              >
+  key={phase.id}
+  className="flex flex-col items-center"
+  style={{ 
+    width: `${100 / phases.length}%`, 
+    left: '-10px', 
+    position: 'relative' // Stelle sicher, dass "left" korrekt angewendet wird
+  }}
+>
                 <button
                   onClick={() => handlePhaseChange(phase.id)}
                   className={cn(
