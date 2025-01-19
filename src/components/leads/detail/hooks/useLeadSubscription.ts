@@ -1,12 +1,16 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
 
 export const useLeadSubscription = (leadId: string | null) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!leadId) return;
+    if (!leadId) {
+      console.log('No leadId provided for subscription');
+      return;
+    }
 
     console.log('Setting up real-time subscriptions for leadId:', leadId);
 
@@ -22,7 +26,22 @@ export const useLeadSubscription = (leadId: string | null) => {
         },
         (payload) => {
           console.log('Lead changed:', payload);
-          queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+          if (payload.eventType === 'DELETE') {
+            queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+            return;
+          }
+          
+          // Update the lead data in the cache
+          queryClient.setQueryData<Tables<"leads"> | undefined>(
+            ["lead", leadId],
+            (old) => {
+              if (!old) return old;
+              return {
+                ...old,
+                ...payload.new,
+              };
+            }
+          );
         }
       )
       .on(
@@ -66,10 +85,16 @@ export const useLeadSubscription = (leadId: string | null) => {
       )
       .subscribe((status) => {
         console.log('Subscription status:', status);
+        
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to changes');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Failed to subscribe to changes');
+        }
       });
 
     return () => {
-      console.log('Cleaning up subscriptions');
+      console.log('Cleaning up subscriptions for leadId:', leadId);
       supabase.removeChannel(channel);
     };
   }, [leadId, queryClient]);
