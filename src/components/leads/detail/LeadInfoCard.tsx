@@ -86,9 +86,12 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     const displayValue = Array.isArray(value) ? formatArrayField(value) : value;
     
     return (
-      <div className="flex items-center gap-3 py-1 group">
-        <Icon className="h-4 w-4 text-gray-500 shrink-0" />
-        <div className="flex-1">
+      <div className="relative group">
+        <div className="flex flex-col gap-1 py-1 px-3 hover:bg-gray-50/50 rounded">
+          <span className="text-xs text-gray-500 flex items-center gap-2">
+            <Icon className="h-3.5 w-3.5 text-gray-400" />
+            {label}
+          </span>
           {isEditing ? (
             <Input
               value={editingValue}
@@ -102,192 +105,203 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
                 }
               }}
               autoFocus
-              placeholder={label}
-              className="max-w-md"
+              className="max-w-md border-gray-200"
             />
           ) : (
             <div 
               onClick={() => handleStartEdit(field, value)}
-              className="cursor-pointer hover:bg-gray-50 rounded px-2 py-0.5 -ml-2"
+              className="cursor-pointer min-h-[24px] text-sm"
             >
-              <span className="text-xs text-gray-500">{label}</span>
-              <span className="block text-sm">{displayValue || label}</span>
+              {displayValue || ""}
             </div>
           )}
         </div>
+        <div className="absolute bottom-0 left-3 right-3 h-px bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
     );
   };
 
   return (
     <Card>
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Contact2 className="h-5 w-5" />
           {settings?.language === "en" ? "Contact Information" : "Kontakt Informationen"}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         {/* Basic Information */}
-        <div className="space-y-0.5">
-          <h3 className="text-xs font-medium text-gray-500 mb-1">
+        <div>
+          <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
             {settings?.language === "en" ? "Basic Information" : "Grundinformationen"}
           </h3>
-          <InfoRow
-            icon={Contact2}
-            label={settings?.language === "en" ? "Name" : "Name"}
-            value={lead.name}
-            field="name"
-          />
-          <InfoRow
-            icon={Building2}
-            label={settings?.language === "en" ? "Company" : "Firma"}
-            value={lead.company_name}
-            field="company_name"
-          />
-          <InfoRow
-            icon={Briefcase}
-            label={settings?.language === "en" ? "Position" : "Position"}
-            value={lead.position}
-            field="position"
-          />
+          <div className="divide-y divide-gray-50">
+            <InfoRow
+              icon={Contact2}
+              label={settings?.language === "en" ? "Name" : "Name"}
+              value={lead.name}
+              field="name"
+            />
+            <InfoRow
+              icon={Building2}
+              label={settings?.language === "en" ? "Company" : "Firma"}
+              value={lead.company_name}
+              field="company_name"
+            />
+            <InfoRow
+              icon={Briefcase}
+              label={settings?.language === "en" ? "Position" : "Position"}
+              value={lead.position}
+              field="position"
+            />
+          </div>
         </div>
 
         {/* Contact Details */}
-        <div className="space-y-0.5">
-          <h3 className="text-xs font-medium text-gray-500 mb-1">
+        <div>
+          <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
             {settings?.language === "en" ? "Contact Details" : "Kontaktdetails"}
           </h3>
-          <InfoRow
-            icon={Phone}
-            label={settings?.language === "en" ? "Phone" : "Telefon"}
-            value={lead.phone_number}
-            field="phone_number"
-          />
-          <InfoRow
-            icon={Mail}
-            label={settings?.language === "en" ? "Email" : "E-Mail"}
-            value={lead.email}
-            field="email"
-          />
-          <InfoRow
-            icon={Globe}
-            label={settings?.language === "en" ? "Website" : "Webseite"}
-            value={lead.website}
-            field="website"
-          />
+          <div className="divide-y divide-gray-50">
+            <InfoRow
+              icon={Phone}
+              label={settings?.language === "en" ? "Phone" : "Telefon"}
+              value={lead.phone_number}
+              field="phone_number"
+            />
+            <InfoRow
+              icon={Mail}
+              label={settings?.language === "en" ? "Email" : "E-Mail"}
+              value={lead.email}
+              field="email"
+            />
+            <InfoRow
+              icon={Globe}
+              label={settings?.language === "en" ? "Website" : "Webseite"}
+              value={lead.website}
+              field="website"
+            />
+          </div>
         </div>
 
         {/* Address */}
-        <div className="space-y-0.5">
-          <h3 className="text-xs font-medium text-gray-500 mb-1">
+        <div>
+          <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
             {settings?.language === "en" ? "Address" : "Adresse"}
           </h3>
-          <InfoRow
-            icon={MapPin}
-            label={settings?.language === "en" ? "Street" : "Straße"}
-            value={lead.street}
-            field="street"
-          />
-          <InfoRow
-            icon={MapPin}
-            label={settings?.language === "en" ? "City" : "Stadt"}
-            value={lead.city}
-            field="city"
-          />
-          <InfoRow
-            icon={MapPin}
-            label={settings?.language === "en" ? "State" : "Bundesland"}
-            value={lead.region}
-            field="region"
-          />
-          <InfoRow
-            icon={MapPin}
-            label={settings?.language === "en" ? "Postal Code" : "Postleitzahl"}
-            value={lead.postal_code}
-            field="postal_code"
-          />
-          <InfoRow
-            icon={MapPin}
-            label={settings?.language === "en" ? "Country" : "Land"}
-            value={lead.country}
-            field="country"
-          />
+          <div className="divide-y divide-gray-50">
+            <InfoRow
+              icon={MapPin}
+              label={settings?.language === "en" ? "Street" : "Straße"}
+              value={lead.street}
+              field="street"
+            />
+            <InfoRow
+              icon={MapPin}
+              label={settings?.language === "en" ? "City" : "Stadt"}
+              value={lead.city}
+              field="city"
+            />
+            <InfoRow
+              icon={MapPin}
+              label={settings?.language === "en" ? "State" : "Bundesland"}
+              value={lead.region}
+              field="region"
+            />
+            <InfoRow
+              icon={MapPin}
+              label={settings?.language === "en" ? "Postal Code" : "Postleitzahl"}
+              value={lead.postal_code}
+              field="postal_code"
+            />
+            <InfoRow
+              icon={MapPin}
+              label={settings?.language === "en" ? "Country" : "Land"}
+              value={lead.country}
+              field="country"
+            />
+          </div>
         </div>
 
         {/* Additional Information */}
-        <div className="space-y-0.5">
-          <h3 className="text-xs font-medium text-gray-500 mb-1">
+        <div>
+          <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
             {settings?.language === "en" ? "Additional Information" : "Zusätzliche Informationen"}
           </h3>
-          <InfoRow
-            icon={Calendar}
-            label={settings?.language === "en" ? "Birth Date" : "Geburtsdatum"}
-            value={lead.birth_date ? new Date(lead.birth_date).toLocaleDateString() : null}
-            field="birth_date"
-          />
-          <InfoRow
-            icon={MessageSquare}
-            label={settings?.language === "en" ? "Preferred Contact Channel" : "Bevorzugter Kontaktkanal"}
-            value={lead.preferred_communication_channel}
-            field="preferred_communication_channel"
-          />
-          <InfoRow
-            icon={Clock}
-            label={settings?.language === "en" ? "Best Contact Times" : "Beste Erreichbarkeitszeit"}
-            value={lead.best_contact_times}
-            field="best_contact_times"
-          />
-          <InfoRow
-            icon={Languages}
-            label={settings?.language === "en" ? "Languages" : "Sprachen"}
-            value={lead.languages}
-            field="languages"
-          />
+          <div className="divide-y divide-gray-50">
+            <InfoRow
+              icon={Calendar}
+              label={settings?.language === "en" ? "Birth Date" : "Geburtsdatum"}
+              value={lead.birth_date ? new Date(lead.birth_date).toLocaleDateString() : null}
+              field="birth_date"
+            />
+            <InfoRow
+              icon={MessageSquare}
+              label={settings?.language === "en" ? "Preferred Contact Channel" : "Bevorzugter Kontaktkanal"}
+              value={lead.preferred_communication_channel}
+              field="preferred_communication_channel"
+            />
+            <InfoRow
+              icon={Clock}
+              label={settings?.language === "en" ? "Best Contact Times" : "Beste Erreichbarkeitszeit"}
+              value={lead.best_contact_times}
+              field="best_contact_times"
+            />
+            <InfoRow
+              icon={Languages}
+              label={settings?.language === "en" ? "Languages" : "Sprachen"}
+              value={lead.languages}
+              field="languages"
+            />
+          </div>
         </div>
 
         {/* Interests & Goals */}
-        <div className="space-y-0.5">
-          <h3 className="text-xs font-medium text-gray-500 mb-1">
+        <div>
+          <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
             {settings?.language === "en" ? "Interests & Goals" : "Interessen & Ziele"}
           </h3>
-          <InfoRow
-            icon={Heart}
-            label={settings?.language === "en" ? "Interests" : "Interessen"}
-            value={lead.interests}
-            field="interests"
-          />
-          <InfoRow
-            icon={Target}
-            label={settings?.language === "en" ? "Goals" : "Ziele"}
-            value={lead.goals}
-            field="goals"
-          />
-          <InfoRow
-            icon={AlertCircle}
-            label={settings?.language === "en" ? "Challenges" : "Herausforderungen"}
-            value={lead.challenges}
-            field="challenges"
-          />
+          <div className="divide-y divide-gray-50">
+            <InfoRow
+              icon={Heart}
+              label={settings?.language === "en" ? "Interests" : "Interessen"}
+              value={lead.interests}
+              field="interests"
+            />
+            <InfoRow
+              icon={Target}
+              label={settings?.language === "en" ? "Goals" : "Ziele"}
+              value={lead.goals}
+              field="goals"
+            />
+            <InfoRow
+              icon={AlertCircle}
+              label={settings?.language === "en" ? "Challenges" : "Herausforderungen"}
+              value={lead.challenges}
+              field="challenges"
+            />
+          </div>
         </div>
 
         {/* Source Information */}
-        <div className="space-y-0.5">
-          <h3 className="text-xs font-medium text-gray-500 mb-1">
+        <div>
+          <h3 className="text-xs font-medium text-gray-500 mb-2 px-3">
             {settings?.language === "en" ? "Source Information" : "Herkunftsinformationen"}
           </h3>
-          <InfoRow
-            icon={Share2}
-            label={settings?.language === "en" ? "Contact Source" : "Kontakt-Quelle"}
-            value={lead.platform}
-            field="platform"
-          />
-          <InfoRow
-            icon={UserPlus}
-            label={settings?.language === "en" ? "Referred By" : "Empfohlen durch"}
-            value={lead.referred_by}
-            field="referred_by"
-          />
+          <div className="divide-y divide-gray-50">
+            <InfoRow
+              icon={Share2}
+              label={settings?.language === "en" ? "Contact Source" : "Kontakt-Quelle"}
+              value={lead.platform}
+              field="platform"
+            />
+            <InfoRow
+              icon={UserPlus}
+              label={settings?.language === "en" ? "Referred By" : "Empfohlen durch"}
+              value={lead.referred_by}
+              field="referred_by"
+            />
+          </div>
         </div>
       </CardContent>
     </Card>
