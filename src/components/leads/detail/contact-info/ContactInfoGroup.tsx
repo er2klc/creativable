@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Eye, EyeOff, MoreVertical } from "lucide-react";
+import { ChevronDown, ChevronUp, Eye, EyeOff, MoreVertical, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,8 +8,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 interface ContactInfoGroupProps {
   title: string;
@@ -27,6 +27,7 @@ export function ContactInfoGroup({
   onToggleEmptyFields,
 }: ContactInfoGroupProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showEmpty, setShowEmpty] = useState(showEmptyFields);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -67,6 +68,17 @@ export function ContactInfoGroup({
       });
   };
 
+  const handleToggleEmpty = () => {
+    setShowEmpty(!showEmpty);
+    if (onToggleEmptyFields) {
+      onToggleEmptyFields();
+    }
+  };
+
+  const handleAddField = () => {
+    toast.info("Diese Funktion wird bald verfügbar sein");
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -90,14 +102,23 @@ export function ContactInfoGroup({
           <Button
             variant="ghost"
             size="sm"
-            onClick={onToggleEmptyFields}
+            onClick={handleToggleEmpty}
             className="p-1 hover:bg-gray-100 rounded-full"
           >
-            {showEmptyFields ? (
+            {showEmpty ? (
               <EyeOff className="h-4 w-4 text-gray-500" />
             ) : (
               <Eye className="h-4 w-4 text-gray-500" />
             )}
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleAddField}
+            className="p-1 hover:bg-gray-100 rounded-full"
+          >
+            <Plus className="h-4 w-4 text-gray-500" />
           </Button>
           
           <DropdownMenu>
@@ -111,7 +132,7 @@ export function ContactInfoGroup({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleAddField}>
                 Feld hinzufügen
               </DropdownMenuItem>
               <DropdownMenuItem>
@@ -122,14 +143,19 @@ export function ContactInfoGroup({
         </div>
       </div>
 
-      <div
-        className={cn(
-          "space-y-1 transition-all duration-200",
-          isCollapsed ? "hidden" : "block"
-        )}
-      >
-        {children}
-      </div>
+      {!isCollapsed && (
+        <div className="space-y-1">
+          {React.Children.map(children, child => {
+            if (React.isValidElement(child)) {
+              return React.cloneElement(child, {
+                ...child.props,
+                isVisible: showEmpty
+              });
+            }
+            return child;
+          })}
+        </div>
+      )}
     </div>
   );
 }

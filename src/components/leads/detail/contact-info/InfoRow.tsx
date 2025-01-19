@@ -14,6 +14,7 @@ interface InfoRowProps {
   onUpdate: (updates: Partial<Tables<"leads">>, showToast?: boolean) => void;
   isSourceField?: boolean;
   showToast?: boolean;
+  isVisible?: boolean;
 }
 
 export function InfoRow({ 
@@ -23,7 +24,8 @@ export function InfoRow({
   field, 
   onUpdate,
   isSourceField,
-  showToast = false
+  showToast = false,
+  isVisible = true
 }: InfoRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingValue, setEditingValue] = useState<string>("");
@@ -59,20 +61,24 @@ export function InfoRow({
 
   const displayValue = Array.isArray(value) ? formatArrayField(value) : value;
 
+  if (!isVisible && (!displayValue || displayValue === "")) {
+    return null;
+  }
+
   return (
     <div className="group relative">
       <div className={cn(
-        "flex items-center gap-2 py-3 rounded-lg transition-colors",
+        "flex items-center gap-2 rounded-lg transition-colors",
         isEditing ? "bg-gray-50" : "hover:bg-gray-50/80"
       )}>
-        <div className="flex items-center gap-3 w-1/2 pl-4">
+        <div className="flex items-center gap-3 w-1/2">
           <Icon className="h-4 w-4 text-gray-500 shrink-0" />
           <div className="text-sm font-medium text-gray-700 truncate">
             {label}
           </div>
         </div>
         
-        <div className="flex-1 w-1/2 pr-4">
+        <div className="flex-1 w-1/2">
           {isEditing ? (
             isSourceField ? (
               <Select
