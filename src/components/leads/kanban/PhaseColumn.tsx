@@ -48,7 +48,7 @@ export const PhaseColumn = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <CardHeader className="p-4 space-y-0">
+      <CardHeader className="p-2 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-10 border-b">
         <div className="flex items-center justify-between gap-2">
           {isEditMode ? (
             <>
@@ -67,12 +67,12 @@ export const PhaseColumn = ({
               </Button>
             </>
           ) : (
-            <h3 className="font-medium text-lg tracking-tight">{phase.name}</h3>
+            <h3 className="font-medium text-sm tracking-tight">{phase.name}</h3>
           )}
         </div>
       </CardHeader>
-      <div className="p-4 flex-1 overflow-y-auto no-scrollbar">
-        <div className="space-y-2 pb-14">
+      <div className="flex-1 overflow-y-auto no-scrollbar h-[calc(100vh-13rem)]">
+        <div className="space-y-2 p-4 pb-14">
           {leads.map((lead) => (
             <SortableLeadItem
               key={lead.id}
