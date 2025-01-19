@@ -37,15 +37,25 @@ export const usePhaseMutations = () => {
             : "Kontaktphase wurde erfolgreich aktualisiert",
         }
       );
+    }
+  });
+
+  const updatePhaseOrder = useMutation({
+    mutationFn: async (updates: { id: string; order_index: number }[]) => {
+      const { error } = await supabase
+        .from("pipeline_phases")
+        .upsert(updates);
+
+      if (error) throw error;
     },
-    onError: (error) => {
-      console.error("Error updating phase:", error);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
       toast(
-        settings?.language === "en" ? "Error" : "Fehler",
+        settings?.language === "en" ? "Order updated" : "Reihenfolge aktualisiert",
         {
           description: settings?.language === "en"
-            ? "Failed to update phase. Please try again."
-            : "Phase konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
+            ? "Phase order has been updated successfully"
+            : "Die Reihenfolge der Phasen wurde erfolgreich aktualisiert",
         }
       );
     }
@@ -102,17 +112,6 @@ export const usePhaseMutations = () => {
             : `Die Phase "${finalName}" wurde erfolgreich hinzugefügt`,
         }
       );
-    },
-    onError: (error) => {
-      console.error("Error adding phase:", error);
-      toast(
-        settings?.language === "en" ? "Error" : "Fehler",
-        {
-          description: settings?.language === "en"
-            ? "Failed to add phase"
-            : "Fehler beim Hinzufügen der Phase",
-        }
-      );
     }
   });
 
@@ -139,17 +138,6 @@ export const usePhaseMutations = () => {
             : "Phasenname wurde erfolgreich aktualisiert",
         }
       );
-    },
-    onError: (error) => {
-      console.error("Error updating phase name:", error);
-      toast(
-        settings?.language === "en" ? "Error" : "Fehler",
-        {
-          description: settings?.language === "en"
-            ? "Failed to update phase name"
-            : "Fehler beim Aktualisieren des Phasennamens",
-        }
-      );
     }
   });
 
@@ -157,18 +145,6 @@ export const usePhaseMutations = () => {
     mutationFn: async (phaseId: string) => {
       if (!session?.user?.id) {
         throw new Error("No authenticated user found");
-      }
-
-      // First check if there are any leads in this phase
-      const { data: leads, error: leadsError } = await supabase
-        .from("leads")
-        .select("id")
-        .eq("phase_id", phaseId);
-
-      if (leadsError) throw leadsError;
-
-      if (leads && leads.length > 0) {
-        throw new Error("Cannot delete phase with leads");
       }
 
       const { error } = await supabase
@@ -186,23 +162,6 @@ export const usePhaseMutations = () => {
           description: settings?.language === "en"
             ? "Phase has been deleted successfully"
             : "Phase wurde erfolgreich gelöscht",
-        }
-      );
-    },
-    onError: (error) => {
-      console.error("Error deleting phase:", error);
-      const errorMessage = error.message === "Cannot delete phase with leads"
-        ? settings?.language === "en"
-          ? "Cannot delete phase that contains contacts"
-          : "Phase mit Kontakten kann nicht gelöscht werden"
-        : settings?.language === "en"
-          ? "Failed to delete phase"
-          : "Fehler beim Löschen der Phase";
-
-      toast(
-        settings?.language === "en" ? "Error" : "Fehler",
-        {
-          description: errorMessage,
         }
       );
     }
@@ -231,19 +190,15 @@ export const usePhaseMutations = () => {
             : "Pipeline-Name wurde erfolgreich aktualisiert",
         }
       );
-    },
-    onError: (error) => {
-      console.error("Error updating pipeline name:", error);
-      toast(
-        settings?.language === "en" ? "Error" : "Fehler",
-        {
-          description: settings?.language === "en"
-            ? "Failed to update pipeline name"
-            : "Fehler beim Aktualisieren des Pipeline-Namens",
-        }
-      );
     }
   });
 
-  return { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePipelineName };
+  return { 
+    updateLeadPhase, 
+    addPhase, 
+    updatePhaseName, 
+    deletePhase, 
+    updatePipelineName,
+    updatePhaseOrder 
+  };
 };
