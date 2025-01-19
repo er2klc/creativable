@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { platformsConfig } from "@/config/platforms";
 
 interface LeadInfoCardProps {
   lead: Tables<"leads">;
@@ -93,20 +95,44 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
             {label}
           </span>
           {isEditing ? (
-            <Input
-              value={editingValue}
-              onChange={(e) => setEditingValue(e.target.value)}
-              onBlur={() => handleUpdate(field, editingValue)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleUpdate(field, editingValue);
-                } else if (e.key === "Escape") {
+            field === 'platform' ? (
+              <Select
+                value={editingValue}
+                onValueChange={(value) => {
+                  handleUpdate(field, value);
                   setEditingField(null);
-                }
-              }}
-              autoFocus
-              className="max-w-md border-gray-200"
-            />
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Wähle eine Quelle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {platformsConfig.map((platform) => (
+                    <SelectItem key={platform.name} value={platform.name}>
+                      <div className="flex items-center gap-2">
+                        <platform.icon className="h-4 w-4" />
+                        {platform.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                value={editingValue}
+                onChange={(e) => setEditingValue(e.target.value)}
+                onBlur={() => handleUpdate(field, editingValue)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleUpdate(field, editingValue);
+                  } else if (e.key === "Escape") {
+                    setEditingField(null);
+                  }
+                }}
+                autoFocus
+                className="max-w-md border-gray-200"
+              />
+            )
           ) : (
             <div 
               onClick={() => handleStartEdit(field, value)}
