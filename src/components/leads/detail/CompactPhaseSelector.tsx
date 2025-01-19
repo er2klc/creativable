@@ -99,7 +99,7 @@ export function CompactPhaseSelector({
   };
 
   const currentPipeline = pipelines.find(p => p.id === selectedPipelineId);
-  const currentPhase = phases.find(p => p.id === lead.phase_id);
+  const currentPhase = phases.find(p => p.id === lead.phase_id && selectedPipelineId === lead.pipeline_id);
 
   return (
     <div className="w-full space-y-4">
