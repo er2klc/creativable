@@ -58,8 +58,6 @@ export function CompactPhaseSelector({
         onUpdateLead({ 
           pipeline_id: pipelineId,
           phase_id: firstPhase,
-          last_action: "Pipeline geändert",
-          last_action_date: new Date().toISOString()
         });
       }
     }
@@ -70,6 +68,28 @@ export function CompactPhaseSelector({
       const oldPhase = phases.find(p => p.id === lead.phase_id)?.name;
       const newPhase = phases.find(p => p.id === phaseId)?.name;
       
+      if (session?.user?.id) {
+        // First create the phase change note
+        const { error: noteError } = await supabase
+          .from("notes")
+          .insert({
+            lead_id: lead.id,
+            user_id: session.user.id,
+            content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
+            color: "#E9D5FF",
+            metadata: {
+              type: "phase_change",
+              oldPhase,
+              newPhase
+            }
+          });
+
+        if (noteError) {
+          console.error("Error creating phase change note:", noteError);
+        }
+      }
+
+      // Then update the lead
       onUpdateLead({ 
         phase_id: phaseId,
         last_action: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
@@ -116,7 +136,6 @@ export function CompactPhaseSelector({
       </div>
 
       <div className="flex items-center gap-2 text-sm text-gray-600">
-        <span>Aktuelle Pipeline:</span>
         <Select
           value={lead.pipeline_id}
           onValueChange={handlePipelineChange}
