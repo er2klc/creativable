@@ -37,7 +37,7 @@ export function ContactInfoGroup({
         .eq("lead_id", leadId)
         .eq("group_name", title)
         .eq("user_id", user?.id)
-        .single();
+        .maybeSingle();
 
       if (data) {
         setIsCollapsed(data.is_collapsed);

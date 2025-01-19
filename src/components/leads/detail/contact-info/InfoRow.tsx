@@ -13,6 +13,7 @@ interface InfoRowProps {
   field: string;
   onUpdate: (updates: Partial<Tables<"leads">>, showToast?: boolean) => void;
   isSourceField?: boolean;
+  showToast?: boolean;
 }
 
 export function InfoRow({ 
@@ -21,7 +22,8 @@ export function InfoRow({
   value, 
   field, 
   onUpdate,
-  isSourceField 
+  isSourceField,
+  showToast = false
 }: InfoRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingValue, setEditingValue] = useState<string>("");
@@ -42,10 +44,10 @@ export function InfoRow({
         .filter(Boolean);
       
       if (arrayValue.length > 0 || value === "") {
-        onUpdate({ [field]: arrayValue.length > 0 ? arrayValue : [] });
+        onUpdate({ [field]: arrayValue.length > 0 ? arrayValue : [] }, showToast);
       }
     } else {
-      onUpdate({ [field]: value });
+      onUpdate({ [field]: value }, showToast);
     }
     setIsEditing(false);
   };
