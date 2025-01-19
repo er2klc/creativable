@@ -44,7 +44,7 @@ export const TimelineItemCard = ({ type, content, metadata, status, onDelete }: 
 
   return (
     <div className={cn(
-      "flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border-2 group relative",
+      "flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border-1 group relative",
       getBorderColor()
     )}>
       <div className="font-medium mb-1">{content}</div>
