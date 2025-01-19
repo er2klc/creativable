@@ -30,6 +30,7 @@ export const LeadDetailContent = ({
   isLoading 
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
+  console.log('LeadDetailContent rendering with lead:', lead);
 
   if (isLoading) {
     return <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>;
