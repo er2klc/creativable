@@ -29,14 +29,18 @@ export const useContactFields = () => {
   const { data: fields = [], isLoading } = useQuery({
     queryKey: ["contact-field-settings"],
     queryFn: async () => {
+      if (!user?.id) return [];
+      
       const { data, error } = await supabase
         .from("contact_field_settings")
         .select("*")
+        .eq('user_id', user.id)
         .order("order_index");
 
       if (error) throw error;
       return data as ContactFieldSetting[];
     },
+    enabled: !!user?.id,
   });
 
   const addField = async (params: AddFieldParams) => {
@@ -66,30 +70,25 @@ export const useContactFields = () => {
     }
 
     queryClient.invalidateQueries({ queryKey: ["contact-field-settings"] });
-    toast.success(
-      settings?.language === "en"
-        ? "Field added successfully"
-        : "Feld erfolgreich hinzugefügt"
-    );
-
     return data;
   };
 
   const updateFieldOrder = useMutation({
-    mutationFn: async (updates: ContactFieldSetting[]) => {
+    mutationFn: async (updatedFields: ContactFieldSetting[]) => {
       if (!user?.id) {
         toast.error(settings?.language === "en" ? "Not authenticated" : "Nicht authentifiziert");
         return;
       }
 
+      const updates = updatedFields.map((field, index) => ({
+        id: field.id,
+        order_index: index,
+        user_id: user.id,
+      }));
+
       const { error } = await supabase
         .from("contact_field_settings")
-        .upsert(
-          updates.map((field, index) => ({
-            ...field,
-            order_index: index,
-          }))
-        );
+        .upsert(updates);
 
       if (error) throw error;
     },

@@ -34,6 +34,7 @@ export function ContactInfoGroup({
   const [isReordering, setIsReordering] = useState(false);
   const [isAddingField, setIsAddingField] = useState(false);
   const [newFieldLabel, setNewFieldLabel] = useState("");
+  const [showActions, setShowActions] = useState(false);
   const { addField } = useContactFields();
   const { settings } = useSettings();
 
@@ -66,6 +67,11 @@ export function ContactInfoGroup({
         });
         setIsAddingField(false);
         setNewFieldLabel("");
+        toast.success(
+          settings?.language === "en"
+            ? "Field added successfully"
+            : "Feld erfolgreich hinzugefügt"
+        );
       } catch (error) {
         console.error("Error saving new field:", error);
         toast.error(
@@ -79,7 +85,11 @@ export function ContactInfoGroup({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
+      <div 
+        className="flex items-center justify-between group"
+        onMouseEnter={() => setShowActions(true)}
+        onMouseLeave={() => setShowActions(false)}
+      >
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
@@ -96,20 +106,7 @@ export function ContactInfoGroup({
           <h3 className="text-sm font-medium text-gray-600">{title}</h3>
         </div>
         
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleToggleEmpty}
-            className="p-1 hover:bg-gray-100 rounded-full"
-          >
-            {showEmpty ? (
-              <EyeOff className="h-4 w-4 text-gray-500" />
-            ) : (
-              <Eye className="h-4 w-4 text-gray-500" />
-            )}
-          </Button>
-
+        {showActions && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -132,9 +129,22 @@ export function ContactInfoGroup({
                   : (settings?.language === "en" ? "Reorder" : "Neu anordnen")
                 }
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleToggleEmpty}>
+                {showEmpty ? (
+                  <>
+                    <EyeOff className="mr-2 h-4 w-4" />
+                    {settings?.language === "en" ? "Hide Empty" : "Leere ausblenden"}
+                  </>
+                ) : (
+                  <>
+                    <Eye className="mr-2 h-4 w-4" />
+                    {settings?.language === "en" ? "Show Empty" : "Leere anzeigen"}
+                  </>
+                )}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        )}
       </div>
 
       {!isCollapsed && (
