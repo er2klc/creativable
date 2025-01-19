@@ -39,17 +39,6 @@ export const usePhaseMutations = () => {
         }
       );
     },
-    onError: (error) => {
-      console.error("Error updating phase:", error);
-      toast(
-        settings?.language === "en" ? "Error" : "Fehler",
-        {
-          description: settings?.language === "en"
-            ? "Failed to update phase. Please try again."
-            : "Phase konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
-        }
-      );
-    }
   });
 
   const addPhase = useMutation({
@@ -104,17 +93,6 @@ export const usePhaseMutations = () => {
         }
       );
     },
-    onError: (error) => {
-      console.error("Error adding phase:", error);
-      toast(
-        settings?.language === "en" ? "Error" : "Fehler",
-        {
-          description: settings?.language === "en"
-            ? "Failed to add phase"
-            : "Fehler beim Hinzufügen der Phase",
-        }
-      );
-    },
   });
 
   const updatePhaseName = useMutation({
@@ -141,17 +119,6 @@ export const usePhaseMutations = () => {
         }
       );
     },
-    onError: (error) => {
-      console.error("Error updating phase name:", error);
-      toast(
-        settings?.language === "en" ? "Error" : "Fehler",
-        {
-          description: settings?.language === "en"
-            ? "Failed to update phase name"
-            : "Fehler beim Aktualisieren des Phasennamens",
-        }
-      );
-    }
   });
 
   const updatePhaseOrder = useMutation({
@@ -184,72 +151,47 @@ export const usePhaseMutations = () => {
         }
       );
     },
-    onError: (error) => {
-      console.error("Error updating phase order:", error);
-      toast(
-        settings?.language === "en" ? "Error" : "Fehler",
-        {
-          description: settings?.language === "en"
-            ? "Failed to update phase order"
-            : "Fehler beim Aktualisieren der Phasenreihenfolge",
-        }
-      );
-    }
   });
 
   const deletePhase = useMutation({
-    mutationFn: async (phaseId: string) => {
+    mutationFn: async ({ phaseId, targetPhaseId }: { phaseId: string, targetPhaseId: string }) => {
       if (!session?.user?.id) {
         throw new Error("No authenticated user found");
       }
 
-      // First check if there are any leads in this phase
-      const { data: leads, error: leadsError } = await supabase
+      // First update all leads in the phase being deleted
+      const { error: updateError } = await supabase
         .from("leads")
-        .select("id")
-        .eq("phase_id", phaseId);
+        .update({ 
+          phase_id: targetPhaseId,
+          last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
+          last_action_date: new Date().toISOString(),
+        })
+        .eq("phase_id", phaseId)
+        .eq("user_id", session.user.id);
 
-      if (leadsError) throw leadsError;
+      if (updateError) throw updateError;
 
-      if (leads && leads.length > 0) {
-        throw new Error("Cannot delete phase with leads");
-      }
-
-      const { error } = await supabase
+      // Then delete the phase
+      const { error: deleteError } = await supabase
         .from("pipeline_phases")
         .delete()
         .eq("id", phaseId);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast(
         settings?.language === "en" ? "Phase deleted" : "Phase gelöscht",
         {
           description: settings?.language === "en"
-            ? "Phase has been deleted successfully"
-            : "Phase wurde erfolgreich gelöscht",
+            ? "Phase has been deleted and contacts have been moved successfully"
+            : "Phase wurde gelöscht und Kontakte wurden erfolgreich verschoben",
         }
       );
     },
-    onError: (error) => {
-      console.error("Error deleting phase:", error);
-      const errorMessage = error.message === "Cannot delete phase with leads"
-        ? settings?.language === "en"
-          ? "Cannot delete phase that contains contacts"
-          : "Phase mit Kontakten kann nicht gelöscht werden"
-        : settings?.language === "en"
-          ? "Failed to delete phase"
-          : "Fehler beim Löschen der Phase";
-
-      toast(
-        settings?.language === "en" ? "Error" : "Fehler",
-        {
-          description: errorMessage,
-        }
-      );
-    }
   });
 
   return { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePhaseOrder };

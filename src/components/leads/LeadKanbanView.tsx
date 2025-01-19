@@ -115,7 +115,10 @@ export const LeadKanbanView = ({
     if (!phaseToDelete || !targetPhase) return;
 
     try {
-      await deletePhase.mutateAsync(phaseToDelete.id);
+      await deletePhase.mutateAsync({ 
+        phaseId: phaseToDelete.id, 
+        targetPhaseId: targetPhase 
+      });
       setPhaseToDelete(null);
       setTargetPhase("");
     } catch (error) {

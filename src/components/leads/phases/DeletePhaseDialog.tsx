@@ -63,7 +63,7 @@ export const DeletePhaseDialog = ({
             {phases
               .filter(p => p.id !== phaseToDelete?.id)
               .map(phase => (
-                <SelectItem key={phase.id} value={phase.name}>
+                <SelectItem key={phase.id} value={phase.id}>
                   {phase.name}
                 </SelectItem>
               ))
