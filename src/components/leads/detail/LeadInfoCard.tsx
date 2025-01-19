@@ -49,7 +49,18 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   };
 
   const handleUpdate = (field: string, value: string) => {
-    updateLeadMutation.mutate({ [field]: value });
+    // Handle array fields
+    if (["languages", "interests", "goals", "challenges"].includes(field)) {
+      const arrayValue = value.split(",").map(item => item.trim()).filter(Boolean);
+      updateLeadMutation.mutate({ [field]: arrayValue });
+    } else {
+      updateLeadMutation.mutate({ [field]: value });
+    }
+  };
+
+  const formatArrayField = (value: string[] | null): string => {
+    if (!value) return "";
+    return Array.isArray(value) ? value.join(", ") : value;
   };
 
   const InfoRow = ({ 
@@ -60,10 +71,11 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   }: { 
     icon: any, 
     label: string, 
-    value: string | null, 
+    value: string | null | string[], 
     field: string 
   }) => {
     const isEditing = editingField === field;
+    const displayValue = Array.isArray(value) ? value.join(", ") : value;
     
     return (
       <div className="flex items-center gap-4 py-2 group">
@@ -87,11 +99,11 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
             />
           ) : (
             <div 
-              onClick={() => handleStartEdit(field, value)}
+              onClick={() => handleStartEdit(field, displayValue)}
               className="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 -ml-2"
             >
               <span className="text-sm text-gray-500">{label}</span>
-              <span className="block">{value || label}</span>
+              <span className="block">{displayValue || label}</span>
             </div>
           )}
         </div>
@@ -221,7 +233,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           <InfoRow
             icon={Languages}
             label={settings?.language === "en" ? "Languages" : "Sprachen"}
-            value={Array.isArray(lead.languages) ? lead.languages.join(", ") : lead.languages}
+            value={formatArrayField(lead.languages)}
             field="languages"
           />
         </div>
@@ -234,19 +246,19 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           <InfoRow
             icon={Heart}
             label={settings?.language === "en" ? "Interests" : "Interessen"}
-            value={Array.isArray(lead.interests) ? lead.interests.join(", ") : lead.interests}
+            value={formatArrayField(lead.interests)}
             field="interests"
           />
           <InfoRow
             icon={Target}
             label={settings?.language === "en" ? "Goals" : "Ziele"}
-            value={Array.isArray(lead.goals) ? lead.goals.join(", ") : lead.goals}
+            value={formatArrayField(lead.goals)}
             field="goals"
           />
           <InfoRow
             icon={AlertCircle}
             label={settings?.language === "en" ? "Challenges" : "Herausforderungen"}
-            value={Array.isArray(lead.challenges) ? lead.challenges.join(", ") : lead.challenges}
+            value={formatArrayField(lead.challenges)}
             field="challenges"
           />
         </div>
