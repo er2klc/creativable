@@ -59,13 +59,11 @@ export function TaskList({ leadId }: TaskListProps) {
         {
           event: '*',
           schema: 'public',
-          table: 'tasks',
-          filter: leadId ? `lead_id=eq.${leadId}` : undefined
+          table: 'tasks'
         },
         (payload) => {
           console.log('Task change received:', payload);
           queryClient.invalidateQueries({ queryKey: ["tasks", leadId] });
-          queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
         }
       )
       .subscribe();

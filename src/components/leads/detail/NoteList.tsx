@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { useAuth } from "@/hooks/use-auth";
-import { useEffect } from "react";
 
 interface NoteListProps {
   leadId: string;
@@ -19,30 +18,6 @@ export const NoteList = ({ leadId }: NoteListProps) => {
   const [newNote, setNewNote] = useState("");
   const queryClient = useQueryClient();
 
-  // Set up real-time subscription
-  useEffect(() => {
-    const channel = supabase
-      .channel('notes-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notes',
-          filter: `lead_id=eq.${leadId}`
-        },
-        (payload) => {
-          console.log('Notes change received:', payload);
-          queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient, leadId]);
-
   const createNoteMutation = useMutation({
     mutationFn: async (content: string) => {
       const { data, error } = await supabase
@@ -50,8 +25,7 @@ export const NoteList = ({ leadId }: NoteListProps) => {
         .insert({
           lead_id: leadId,
           content,
-          user_id: user?.id,
-          color: '#FEF7CD'
+          user_id: user?.id
         })
         .select()
         .single();
