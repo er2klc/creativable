@@ -1,11 +1,9 @@
 import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { usePipelineManagement } from "./hooks/usePipelineManagement";
 
 interface CompactPhaseSelectorProps {
   lead: Tables<"leads">;
@@ -13,89 +11,29 @@ interface CompactPhaseSelectorProps {
 }
 
 export function CompactPhaseSelector({ 
-  lead, 
-  onUpdateLead,
+  lead,
 }: CompactPhaseSelectorProps) {
   const session = useSession();
-  const [selectedPipelineId, setSelectedPipelineId] = useState(lead.pipeline_id);
-  
-  const { data: pipelines = [] } = useQuery({
-    queryKey: ["pipelines"],
-    queryFn: async () => {
-      if (!session?.user?.id) return [];
-      
-      const { data, error } = await supabase
-        .from("pipelines")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .order("order_index");
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!session?.user?.id,
-  });
-
-  const { data: phases = [] } = useQuery({
-    queryKey: ["pipeline-phases", selectedPipelineId],
-    queryFn: async () => {
-      if (!selectedPipelineId) return [];
-      
-      const { data, error } = await supabase
-        .from("pipeline_phases")
-        .select("*")
-        .eq("pipeline_id", selectedPipelineId)
-        .order("order_index");
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!selectedPipelineId,
-  });
+  const {
+    selectedPipelineId,
+    setSelectedPipelineId,
+    pipelines,
+    phases,
+    updateLeadPipeline
+  } = usePipelineManagement(lead.pipeline_id);
 
   const handlePipelineChange = (pipelineId: string) => {
     setSelectedPipelineId(pipelineId);
   };
 
   const handlePhaseChange = async (phaseId: string) => {
-    if (session?.user?.id) {
-      const oldPhase = phases.find(p => p.id === lead.phase_id);
-      const newPhase = phases.find(p => p.id === phaseId);
-      const oldPipeline = pipelines.find(p => p.id === lead.pipeline_id);
-      const newPipeline = pipelines.find(p => p.id === selectedPipelineId);
-      
-      if (oldPhase && newPhase && oldPipeline && newPipeline) {
-        const oldPhaseName = `${oldPipeline.name} → ${oldPhase.name}`;
-        const newPhaseName = `${newPipeline.name} → ${newPhase.name}`;
-        
-        // First create the phase change note
-        const { error: noteError } = await supabase
-          .from("notes")
-          .insert({
-            lead_id: lead.id,
-            user_id: session.user.id,
-            content: `Phase von "${oldPhaseName}" zu "${newPhaseName}" geändert`,
-            color: "#E9D5FF",
-            metadata: {
-              type: "phase_change",
-              oldPhase: oldPhaseName,
-              newPhase: newPhaseName
-            }
-          });
-
-        if (noteError) {
-          console.error("Error creating phase change note:", noteError);
-        }
-
-        // Then update the lead with both new pipeline and phase
-        onUpdateLead({ 
-          pipeline_id: selectedPipelineId,
-          phase_id: phaseId,
-          last_action: `Phase von "${oldPhaseName}" zu "${newPhaseName}" geändert`,
-          last_action_date: new Date().toISOString()
-        });
-      }
-    }
+    if (!session?.user?.id || !selectedPipelineId) return;
+    
+    updateLeadPipeline.mutate({
+      leadId: lead.id,
+      pipelineId: selectedPipelineId,
+      phaseId: phaseId
+    });
   };
 
   const currentPipeline = pipelines.find(p => p.id === selectedPipelineId);
