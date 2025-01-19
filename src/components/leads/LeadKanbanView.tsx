@@ -14,7 +14,6 @@ import { useNavigate } from "react-router-dom";
 import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LeadFilters } from "./LeadFilters";
-import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -25,8 +24,6 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
   const { settings } = useSettings();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingPipelineName, setEditingPipelineName] = useState("");
-  const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
-  const [targetPhase, setTargetPhase] = useState<string>("");
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
   const { updateLeadPhase, addPhase, updatePhaseName, deletePhase } = usePhaseMutations();
   const queryClient = useQueryClient();
@@ -104,21 +101,6 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
     setEditingPipelineName(currentPipeline?.name || "");
   };
 
-  const handleDeletePhase = async () => {
-    if (!phaseToDelete || !targetPhase) return;
-
-    try {
-      await deletePhase.mutateAsync({
-        phaseId: phaseToDelete.id,
-        targetPhaseId: targetPhase
-      });
-      setPhaseToDelete(null);
-      setTargetPhase("");
-    } catch (error) {
-      console.error("Error deleting phase:", error);
-    }
-  };
-
   return (
     <DndContext 
       collisionDetection={closestCenter} 
@@ -127,18 +109,20 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
       <div className="w-full h-[calc(100vh-13rem)] overflow-hidden relative">
         <div className="flex justify-between items-center mb-4 px-4">
           <div className="flex items-center gap-2">
-            <LeadFilters
-              selectedPipelineId={selectedPipelineId}
-              setSelectedPipelineId={() => {}}
-              onEditPipeline={handleEditModeToggle}
-              isEditMode={isEditMode}
-            />
-            {isEditMode && (
-              <Button onClick={handleSaveChanges} variant="outline" size="sm">
-                <Save className="h-4 w-4 mr-2" />
-                {settings?.language === "en" ? "Save Changes" : "Änderungen speichern"}
-              </Button>
-            )}
+            {isEditMode ? (
+              <>
+                <Input
+                  value={editingPipelineName}
+                  onChange={(e) => setEditingPipelineName(e.target.value)}
+                  className="max-w-xs"
+                  placeholder={settings?.language === "en" ? "Pipeline name" : "Pipeline-Name"}
+                />
+                <Button onClick={handleSaveChanges} variant="outline" size="sm">
+                  <Save className="h-4 w-4 mr-2" />
+                  {settings?.language === "en" ? "Save Changes" : "Änderungen speichern"}
+                </Button>
+              </>
+            ) : null}
           </div>
         </div>
 
@@ -160,7 +144,7 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
                   leads={leads.filter((lead) => lead.phase_id === phase.id)}
                   onLeadClick={handleLeadClick}
                   isEditMode={isEditMode}
-                  onDeletePhase={() => setPhaseToDelete(phase)}
+                  onDeletePhase={() => deletePhase.mutate(phase.id)}
                   onUpdatePhaseName={(newName) => updatePhaseName.mutate({ id: phase.id, name: newName })}
                   pipelineId={selectedPipelineId}
                 />
@@ -171,15 +155,6 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
             <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
           </div>
         </div>
-
-        <DeletePhaseDialog
-          phaseToDelete={phaseToDelete}
-          targetPhase={targetPhase}
-          setTargetPhase={setTargetPhase}
-          onClose={() => setPhaseToDelete(null)}
-          onConfirm={handleDeletePhase}
-          phases={phases}
-        />
       </div>
     </DndContext>
   );
