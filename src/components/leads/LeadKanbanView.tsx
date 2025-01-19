@@ -19,9 +19,14 @@ import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
   selectedPipelineId: string | null;
+  setSelectedPipelineId: (id: string | null) => void;
 }
 
-export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProps) => {
+export const LeadKanbanView = ({ 
+  leads, 
+  selectedPipelineId,
+  setSelectedPipelineId 
+}: LeadKanbanViewProps) => {
   const { settings } = useSettings();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingPipelineName, setEditingPipelineName] = useState("");
@@ -108,10 +113,7 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
     if (!phaseToDelete || !targetPhase) return;
 
     try {
-      await deletePhase.mutateAsync({
-        phaseId: phaseToDelete.id,
-        targetPhaseId: targetPhase
-      });
+      await deletePhase.mutateAsync(phaseToDelete.id);
       setPhaseToDelete(null);
       setTargetPhase("");
     } catch (error) {
@@ -129,7 +131,7 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
           <div className="flex items-center gap-2">
             <LeadFilters
               selectedPipelineId={selectedPipelineId}
-              setSelectedPipelineId={() => {}}
+              setSelectedPipelineId={setSelectedPipelineId}
               onEditPipeline={handleEditModeToggle}
               isEditMode={isEditMode}
             />
