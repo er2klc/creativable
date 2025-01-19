@@ -46,7 +46,7 @@ export function CompactPhaseSelector({
   return (
     <div className="w-full space-y-3">
       <div className="relative flex items-center w-full pl-2">
-        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2" />
+        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-300 -translate-y-1/2" />
         <div className="relative z-10 flex justify-between w-full gap-[1px]">
           {phases.map((phase, index) => {
             const isActive = phase.id === lead.phase_id && selectedPipelineId === lead.pipeline_id;
@@ -55,14 +55,14 @@ export function CompactPhaseSelector({
             
             return (
               <div 
-  key={phase.id}
-  className="flex flex-col items-center -left-16"
-  style={{ 
-    width: `${100 / phases.length}%`, 
-    left: '-16px !important', 
-    position: 'relative' // Stelle sicher, dass "left" korrekt angewendet wird
-  }}
->
+                key={phase.id}
+                className="flex flex-col items-center"
+                style={{ 
+                  width: `${100 / phases.length}%`,
+                  left: '-16px',
+                  position: 'relative'
+                }}
+              >
                 <button
                   onClick={() => handlePhaseChange(phase.id)}
                   className={cn(
@@ -70,9 +70,9 @@ export function CompactPhaseSelector({
                     "hover:brightness-105 transform duration-200 ease-in-out",
                     index === 0 ? "clip-chevron-first" : isLast ? "clip-chevron-last" : "clip-chevron",
                     "shadow-sm",
-                    isActive ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white" :
-                    isPast ? "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700" : 
-                    "bg-gray-100 text-gray-700 border border-gray-300"
+                    isActive ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white" :
+                    isPast ? "bg-gradient-to-r from-blue-200 to-blue-300 text-blue-800" : 
+                    "bg-gray-200 text-gray-700 border border-gray-400"
                   )}
                 >
                   <span className="text-xs font-medium px-2 truncate">
