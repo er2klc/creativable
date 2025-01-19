@@ -59,7 +59,7 @@ export function CompactPhaseSelector({
   className="flex flex-col items-center"
   style={{ 
     width: `${100 / phases.length}%`, 
-    left: '-10px', 
+    left: '-16px', 
     position: 'relative' // Stelle sicher, dass "left" korrekt angewendet wird
   }}
 >
