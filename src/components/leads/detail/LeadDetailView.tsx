@@ -30,6 +30,9 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
 
+  // Set up real-time subscriptions
+  useLeadSubscription(leadId);
+
   const { data: lead, isLoading, error } = useQuery({
     queryKey: ["lead", leadId],
     queryFn: async () => {
@@ -61,9 +64,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     },
     enabled: !!leadId && isValidUUID(leadId),
   });
-
-  // Set up real-time subscriptions
-  useLeadSubscription(leadId);
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {

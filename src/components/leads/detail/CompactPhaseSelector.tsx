@@ -64,39 +64,41 @@ export function CompactPhaseSelector({
   };
 
   const handlePhaseChange = async (phaseId: string) => {
-    if (phaseId !== lead.phase_id) {
-      const oldPipeline = pipelines.find(p => p.id === lead.pipeline_id)?.name;
-      const oldPhase = phases.find(p => p.id === lead.phase_id)?.name;
-      const newPipeline = pipelines.find(p => p.id === lead.pipeline_id)?.name;
-      const newPhase = phases.find(p => p.id === phaseId)?.name;
+    if (phaseId !== lead.phase_id && session?.user?.id) {
+      const oldPhase = phases.find(p => p.id === lead.phase_id);
+      const newPhase = phases.find(p => p.id === phaseId);
+      const pipeline = pipelines.find(p => p.id === lead.pipeline_id);
       
-      if (session?.user?.id) {
+      if (oldPhase && newPhase && pipeline) {
+        const oldPhaseName = `${pipeline.name} → ${oldPhase.name}`;
+        const newPhaseName = `${pipeline.name} → ${newPhase.name}`;
+        
         // First create the phase change note
         const { error: noteError } = await supabase
           .from("notes")
           .insert({
             lead_id: lead.id,
             user_id: session.user.id,
-            content: `Phase von "${oldPipeline} → ${oldPhase}" zu "${newPipeline} → ${newPhase}" geändert`,
+            content: `Phase von "${oldPhaseName}" zu "${newPhaseName}" geändert`,
             color: "#E9D5FF",
             metadata: {
               type: "phase_change",
-              oldPhase: `${oldPipeline} → ${oldPhase}`,
-              newPhase: `${newPipeline} → ${newPhase}`
+              oldPhase: oldPhaseName,
+              newPhase: newPhaseName
             }
           });
 
         if (noteError) {
           console.error("Error creating phase change note:", noteError);
         }
-      }
 
-      // Then update the lead
-      onUpdateLead({ 
-        phase_id: phaseId,
-        last_action: `Phase von "${oldPipeline} → ${oldPhase}" zu "${newPipeline} → ${newPhase}" geändert`,
-        last_action_date: new Date().toISOString()
-      });
+        // Then update the lead
+        onUpdateLead({ 
+          phase_id: phaseId,
+          last_action: `Phase von "${oldPhaseName}" zu "${newPhaseName}" geändert`,
+          last_action_date: new Date().toISOString()
+        });
+      }
     }
   };
 
