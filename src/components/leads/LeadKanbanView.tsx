@@ -128,8 +128,8 @@ export const LeadKanbanView = ({
       collisionDetection={closestCenter} 
       onDragEnd={handleDragEnd}
     >
-      <div className="w-full h-[calc(100vh-13rem)] overflow-hidden relative">
-        <div className="flex items-center justify-between mb-4 px-4 flex-wrap gap-2">
+      <div className="flex flex-col h-screen">
+        <div className="flex items-center justify-between p-4 flex-wrap gap-2">
           <div className="flex items-center gap-2 flex-wrap">
             <LeadFilters
               selectedPipelineId={selectedPipelineId}
@@ -149,9 +149,9 @@ export const LeadKanbanView = ({
           </Button>
         </div>
 
-        <div className="w-full h-full overflow-x-auto no-scrollbar">
+        <div className="flex-1 overflow-x-auto no-scrollbar relative">
           <div 
-            className="flex gap-4 px-4 relative min-h-full w-full" 
+            className="flex gap-4 px-4 h-full" 
             style={{ 
               minWidth: 'fit-content',
             }}
