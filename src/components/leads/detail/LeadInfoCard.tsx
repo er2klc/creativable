@@ -53,14 +53,11 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   };
 
   const handleUpdate = (field: string, value: string) => {
-    // Handle array fields
     if (["languages", "interests", "goals", "challenges"].includes(field)) {
-      // Split by comma, trim whitespace, and filter out empty strings
       const arrayValue = value.split(",")
         .map(item => item.trim())
         .filter(Boolean);
       
-      // Only update if we have valid values
       if (arrayValue.length > 0 || value === "") {
         updateLeadMutation.mutate({ [field]: arrayValue.length > 0 ? arrayValue : [] });
       }
@@ -89,8 +86,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
     const displayValue = Array.isArray(value) ? formatArrayField(value) : value;
     
     return (
-      <div className="flex items-center gap-4 py-2 group">
-        <Icon className="h-5 w-5 text-gray-500" />
+      <div className="flex items-center gap-3 py-1 group">
+        <Icon className="h-4 w-4 text-gray-500 shrink-0" />
         <div className="flex-1">
           {isEditing ? (
             <Input
@@ -111,10 +108,10 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           ) : (
             <div 
               onClick={() => handleStartEdit(field, value)}
-              className="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 -ml-2"
+              className="cursor-pointer hover:bg-gray-50 rounded px-2 py-0.5 -ml-2"
             >
-              <span className="text-sm text-gray-500">{label}</span>
-              <span className="block">{displayValue || label}</span>
+              <span className="text-xs text-gray-500">{label}</span>
+              <span className="block text-sm">{displayValue || label}</span>
             </div>
           )}
         </div>
@@ -124,16 +121,16 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Contact2 className="h-5 w-5" />
           {settings?.language === "en" ? "Contact Information" : "Kontakt Informationen"}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         {/* Basic Information */}
-        <div className="space-y-1">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">
+        <div className="space-y-0.5">
+          <h3 className="text-xs font-medium text-gray-500 mb-1">
             {settings?.language === "en" ? "Basic Information" : "Grundinformationen"}
           </h3>
           <InfoRow
@@ -157,8 +154,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
         </div>
 
         {/* Contact Details */}
-        <div className="space-y-1">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">
+        <div className="space-y-0.5">
+          <h3 className="text-xs font-medium text-gray-500 mb-1">
             {settings?.language === "en" ? "Contact Details" : "Kontaktdetails"}
           </h3>
           <InfoRow
@@ -182,8 +179,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
         </div>
 
         {/* Address */}
-        <div className="space-y-1">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">
+        <div className="space-y-0.5">
+          <h3 className="text-xs font-medium text-gray-500 mb-1">
             {settings?.language === "en" ? "Address" : "Adresse"}
           </h3>
           <InfoRow
@@ -219,8 +216,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
         </div>
 
         {/* Additional Information */}
-        <div className="space-y-1">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">
+        <div className="space-y-0.5">
+          <h3 className="text-xs font-medium text-gray-500 mb-1">
             {settings?.language === "en" ? "Additional Information" : "Zusätzliche Informationen"}
           </h3>
           <InfoRow
@@ -250,8 +247,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
         </div>
 
         {/* Interests & Goals */}
-        <div className="space-y-1">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">
+        <div className="space-y-0.5">
+          <h3 className="text-xs font-medium text-gray-500 mb-1">
             {settings?.language === "en" ? "Interests & Goals" : "Interessen & Ziele"}
           </h3>
           <InfoRow
@@ -275,8 +272,8 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
         </div>
 
         {/* Source Information */}
-        <div className="space-y-1">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">
+        <div className="space-y-0.5">
+          <h3 className="text-xs font-medium text-gray-500 mb-1">
             {settings?.language === "en" ? "Source Information" : "Herkunftsinformationen"}
           </h3>
           <InfoRow
