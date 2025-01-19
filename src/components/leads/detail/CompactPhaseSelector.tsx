@@ -45,7 +45,7 @@ export function CompactPhaseSelector({
 
   return (
     <div className="w-full space-y-3">
-      <div className="relative flex items-center w-full pl-2" style={{ left: '-10px' }}>
+      <div className="relative flex items-center w-full pl-2">
         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2" />
         <div className="relative z-10 flex justify-between w-full gap-[1px]">
           {phases.map((phase, index) => {
@@ -56,7 +56,7 @@ export function CompactPhaseSelector({
             return (
               <div 
                 key={phase.id}
-                className="flex flex-col items-center"
+                className="flex flex-col items-center style={{ left: '-10px !important' }}"
                 style={{ width: `${100 / phases.length}%` }}
               >
                 <button
