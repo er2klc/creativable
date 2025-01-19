@@ -1,12 +1,10 @@
 import { useDroppable } from "@dnd-kit/core";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Tables } from "@/integrations/supabase/types";
 import { SortableLeadItem } from "./SortableLeadItem";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2, GripVertical } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { AddLeadButton } from "./AddLeadButton";
 
@@ -29,25 +27,12 @@ export const PhaseColumn = ({
   onUpdatePhaseName,
   pipelineId
 }: PhaseColumnProps) => {
-  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+  const { setNodeRef, isOver } = useDroppable({
     id: phase.id,
   });
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef: setSortableRef,
-    transform,
-    transition,
-  } = useSortable({ id: phase.id });
-
   const [editingName, setEditingName] = useState(phase.name);
   const [isHovered, setIsHovered] = useState(false);
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditingName(e.target.value);
@@ -56,27 +41,17 @@ export const PhaseColumn = ({
 
   return (
     <Card
-      ref={setDroppableRef}
+      ref={setNodeRef}
       className={`bg-muted/50 rounded-lg flex flex-col min-w-[250px] w-[250px] h-full relative transition-colors duration-200 ${
         isOver ? 'ring-2 ring-primary/50 bg-primary/5 shadow-[0_-2px_4px_rgba(0,0,0,0.15)]' : ''
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={style}
     >
       <CardHeader className="p-4 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-10 border-b">
         <div className="flex items-center justify-between gap-2">
           {isEditMode ? (
-            <div className="flex items-center gap-2 w-full" ref={setSortableRef}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 cursor-grab"
-                {...attributes}
-                {...listeners}
-              >
-                <GripVertical className="h-4 w-4" />
-              </Button>
+            <>
               <Input
                 value={editingName}
                 onChange={handleNameChange}
@@ -90,7 +65,7 @@ export const PhaseColumn = ({
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
-            </div>
+            </>
           ) : (
             <h3 className="font-medium text-lg tracking-tight">{phase.name}</h3>
           )}

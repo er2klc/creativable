@@ -28,10 +28,10 @@ export const useKanbanSubscription = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'pipeline_phases'
+          table: 'lead_phases'
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
+          queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
         }
       )
       .subscribe();

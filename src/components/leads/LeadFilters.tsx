@@ -6,7 +6,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { PlusCircle, GitBranch, Pencil } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
@@ -19,7 +18,6 @@ interface LeadFiltersProps {
   setSelectedPipelineId: (id: string | null) => void;
   onEditPipeline?: () => void;
   isEditMode?: boolean;
-  onPipelineNameChange?: (name: string) => void;
 }
 
 export const LeadFilters = ({
@@ -27,12 +25,10 @@ export const LeadFilters = ({
   setSelectedPipelineId,
   onEditPipeline,
   isEditMode,
-  onPipelineNameChange,
 }: LeadFiltersProps) => {
   const session = useSession();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [hoveredPipeline, setHoveredPipeline] = useState<string | null>(null);
-  const [editingPipelineName, setEditingPipelineName] = useState("");
 
   const { data: pipelines = [] } = useQuery({
     queryKey: ["pipelines"],
@@ -52,24 +48,6 @@ export const LeadFilters = ({
   });
 
   const selectedPipeline = pipelines.find(p => p.id === selectedPipelineId);
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditingPipelineName(e.target.value);
-    onPipelineNameChange?.(e.target.value);
-  };
-
-  if (isEditMode) {
-    return (
-      <div className="flex items-center gap-2">
-        <GitBranch className="h-4 w-4" />
-        <Input
-          value={editingPipelineName || selectedPipeline?.name || ""}
-          onChange={handleNameChange}
-          className="h-9 min-w-[200px]"
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="flex gap-2">

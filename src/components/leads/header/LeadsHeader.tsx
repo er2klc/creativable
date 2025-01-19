@@ -3,7 +3,7 @@ import { LeadFilters } from "../LeadFilters";
 import { LeadSearch } from "../LeadSearch";
 import { AddLeadDialog } from "../AddLeadDialog";
 import { useState } from "react";
-import { LayoutGrid, List } from "lucide-react";
+import { LayoutGrid, List, Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useSettings } from "@/hooks/use-settings";
 import { usePhaseMutations } from "../kanban/usePhaseMutations";
@@ -91,8 +91,21 @@ export const LeadsHeader = ({
             setSelectedPipelineId={setSelectedPipelineId}
             onEditPipeline={handleEditModeToggle}
             isEditMode={isEditMode}
-            onPipelineNameChange={setEditingPipelineName}
           />
+          {isEditMode && (
+            <>
+              <Input
+                value={editingPipelineName}
+                onChange={(e) => setEditingPipelineName(e.target.value)}
+                className="max-w-xs"
+                placeholder={settings?.language === "en" ? "Pipeline name" : "Pipeline-Name"}
+              />
+              <Button onClick={handleSaveChanges} variant="outline" size="sm">
+                <Save className="h-4 w-4 mr-2" />
+                {settings?.language === "en" ? "Save Changes" : "Änderungen speichern"}
+              </Button>
+            </>
+          )}
         </div>
         <Button onClick={() => setShowAddLead(true)}>
           Neuer Kontakt ✨

@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
-import { 
-  SortableContext, 
-  horizontalListSortingStrategy,
-  arrayMove
-} from "@dnd-kit/sortable";
+import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
 import { usePhaseQuery } from "./kanban/usePhaseQuery";
@@ -13,8 +9,7 @@ import { PhaseColumn } from "./kanban/PhaseColumn";
 import { useQueryClient } from "@tanstack/react-query";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { useKanbanSubscription } from "./kanban/useKanbanSubscription";
+import { Save, Plus } from "lucide-react";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -35,55 +30,33 @@ export const LeadKanbanView = ({
   const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
   const [targetPhase, setTargetPhase] = useState<string>("");
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
-  const { updateLeadPhase, updatePhaseName, deletePhase, addPhase, updatePhaseOrder } = usePhaseMutations();
+  const { updateLeadPhase, updatePhaseName, deletePhase, addPhase } = usePhaseMutations();
   const queryClient = useQueryClient();
-
-  // Set up realtime subscriptions
-  useKanbanSubscription();
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
     if (!over) return;
     
-    if (isEditMode) {
-      // Handle phase reordering
-      const oldIndex = phases.findIndex(p => p.id === active.id);
-      const newIndex = phases.findIndex(p => p.id === over.id);
-      
-      if (oldIndex !== newIndex) {
-        const newPhases = arrayMove(phases, oldIndex, newIndex);
-        try {
-          await updatePhaseOrder.mutateAsync(
-            newPhases.map((phase, index) => ({
-              id: phase.id,
-              order_index: index
-            }))
-          );
-        } catch (error) {
-          console.error('Error updating phase order:', error);
-        }
-      }
-    } else {
-      // Handle lead movement between phases
-      const leadId = active.id as string;
-      const phaseId = over.id as string;
-      
-      if (leadId && phaseId) {
-        try {
-          await updateLeadPhase.mutateAsync({
-            leadId,
-            phaseId
-          });
-        } catch (error) {
-          console.error('Error updating lead phase:', error);
-        }
+    const leadId = active.id as string;
+    const phaseId = over.id as string;
+    
+    if (leadId && phaseId) {
+      try {
+        await updateLeadPhase.mutateAsync({
+          leadId,
+          phaseId
+        });
+        
+        await queryClient.invalidateQueries({ queryKey: ['leads'] });
+      } catch (error) {
+        console.error('Error updating lead phase:', error);
       }
     }
   };
 
   const handleDeletePhase = async () => {
-    if (!phaseToDelete) return;
+    if (!phaseToDelete || !targetPhase) return;
 
     try {
       await deletePhase.mutateAsync(phaseToDelete.id);
@@ -120,6 +93,17 @@ export const LeadKanbanView = ({
       onDragEnd={handleDragEnd}
     >
       <div className="w-full h-[calc(100vh-13rem)] overflow-hidden relative">
+        <div className="flex justify-between items-center mb-4 px-4">
+          <div className="flex items-center gap-2">
+            {isEditMode && (
+              <Button onClick={onSaveChanges} variant="outline" size="sm">
+                <Save className="h-4 w-4 mr-2" />
+                {settings?.language === "en" ? "Save Changes" : "Änderungen speichern"}
+              </Button>
+            )}
+          </div>
+        </div>
+
         <div className="relative flex-1 overflow-x-auto">
           <div className="flex gap-4 p-4 min-h-[calc(100vh-13rem)]">
             <SortableContext 
