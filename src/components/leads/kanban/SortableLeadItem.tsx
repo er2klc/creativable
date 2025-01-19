@@ -8,9 +8,10 @@ import { Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
 interface SortableLeadItemProps {
   lead: Tables<"leads">;
   onLeadClick: (id: string) => void;
+  disabled?: boolean;
 }
 
-export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) => {
+export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: SortableLeadItemProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const dragTimeoutRef = useRef<number | null>(null);
 
@@ -22,6 +23,7 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
   } = useDraggable({
     id: lead.id,
     data: lead,
+    disabled, // Disable dragging when in edit mode
   });
 
   const getPlatformIcon = (platform: string) => {
@@ -53,10 +55,12 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
     position: isDragging ? 'absolute' : 'relative',
     width: '100%',
     transition: 'transform 0.1s ease, box-shadow 0.1s ease',
-    cursor: isDragging ? 'grabbing' : 'grab',
+    cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
   } : undefined;
 
   const handleMouseDown = () => {
+    if (disabled) return;
+    
     dragTimeoutRef.current = window.setTimeout(() => {
       setIsDragging(true);
     }, 150);
@@ -96,10 +100,10 @@ export const SortableLeadItem = ({ lead, onLeadClick }: SortableLeadItemProps) =
         "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200",
         getBackgroundStyle(),
         isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing",
-        !isDragging && "cursor-grab"
+        !isDragging && !disabled && "cursor-grab",
+        disabled && "cursor-default"
       )}
-      {...attributes}
-      {...listeners}
+      {...(disabled ? {} : { ...attributes, ...listeners })}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
     >

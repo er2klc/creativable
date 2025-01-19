@@ -79,7 +79,7 @@ export const LeadKanbanView = ({
     const leadId = active.id as string;
     const newPhase = over.id as string;
     
-    if (newPhase) {
+    if (newPhase && !isEditMode) {  // Only allow lead dragging when not in edit mode
       try {
         await updateLeadPhase.mutateAsync({ 
           leadId, 

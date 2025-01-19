@@ -29,6 +29,7 @@ export const PhaseColumn = ({
 }: PhaseColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: phase.id,
+    disabled: isEditMode, // Disable dropping when in edit mode
   });
 
   const [editingName, setEditingName] = useState(phase.name);
@@ -43,7 +44,7 @@ export const PhaseColumn = ({
     <Card
       ref={setNodeRef}
       className={`h-full flex flex-col bg-muted/50 rounded-lg relative transition-colors duration-200 ${
-        isOver ? 'ring-2 ring-primary/50 bg-primary/5 shadow-[0_-2px_4px_rgba(0,0,0,0.15)]' : ''
+        isOver && !isEditMode ? 'ring-2 ring-primary/50 bg-primary/5 shadow-[0_-2px_4px_rgba(0,0,0,0.15)]' : ''
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -78,6 +79,7 @@ export const PhaseColumn = ({
               key={lead.id}
               lead={lead}
               onLeadClick={onLeadClick}
+              disabled={isEditMode} // Disable dragging when in edit mode
             />
           ))}
           {isHovered && !isEditMode && (
