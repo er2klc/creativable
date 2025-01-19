@@ -114,6 +114,7 @@ const Leads = () => {
         <LeadKanbanView 
           leads={leads}
           selectedPipelineId={selectedPipelineId}
+          setSelectedPipelineId={setSelectedPipelineId}
         />
       ) : (
         <LeadTableView 
