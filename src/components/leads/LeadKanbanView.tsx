@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { LeadFilters } from "./LeadFilters";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
 import { AddLeadDialog } from "./AddLeadDialog";
+import { AddPhaseButton } from "./kanban/AddPhaseButton";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -35,11 +36,10 @@ export const LeadKanbanView = ({
   const [targetPhase, setTargetPhase] = useState<string>("");
   const [showAddLead, setShowAddLead] = useState(false);
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
-  const { updateLeadPhase, addPhase, updatePhaseName, deletePhase } = usePhaseMutations();
+  const { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePhaseOrder } = usePhaseMutations();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  // Use the subscription hook
   useKanbanSubscription();
 
   const updatePipelineName = useMutation({
@@ -79,7 +79,7 @@ export const LeadKanbanView = ({
     const leadId = active.id as string;
     const newPhase = over.id as string;
     
-    if (newPhase && !isEditMode) {  // Only allow lead dragging when not in edit mode
+    if (newPhase && !isEditMode) {
       try {
         await updateLeadPhase.mutateAsync({ 
           leadId, 
@@ -123,6 +123,30 @@ export const LeadKanbanView = ({
     }
   };
 
+  const handleMovePhase = async (phaseId: string, direction: 'left' | 'right') => {
+    const currentIndex = phases.findIndex(p => p.id === phaseId);
+    if (currentIndex === -1) return;
+
+    const newIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= phases.length) return;
+
+    const updatedPhases = [...phases];
+    const [movedPhase] = updatedPhases.splice(currentIndex, 1);
+    updatedPhases.splice(newIndex, 0, movedPhase);
+
+    // Update order_index for all phases
+    const phasesWithNewOrder = updatedPhases.map((phase, index) => ({
+      ...phase,
+      order_index: index
+    }));
+
+    try {
+      await updatePhaseOrder.mutateAsync(phasesWithNewOrder);
+    } catch (error) {
+      console.error("Error updating phase order:", error);
+    }
+  };
+
   return (
     <DndContext 
       collisionDetection={closestCenter} 
@@ -159,7 +183,7 @@ export const LeadKanbanView = ({
             {/* Shadow indicator for left scroll */}
             <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
 
-            {phases.map((phase) => (
+            {phases.map((phase, index) => (
               <div key={phase.id} className="flex-1" style={{ minWidth: '190px', width: `${100 / phases.length}%` }}>
                 <PhaseColumn
                   phase={phase}
@@ -169,9 +193,20 @@ export const LeadKanbanView = ({
                   onDeletePhase={() => setPhaseToDelete(phase)}
                   onUpdatePhaseName={(newName) => updatePhaseName.mutate({ id: phase.id, name: newName })}
                   pipelineId={selectedPipelineId}
+                  isFirst={index === 0}
+                  isLast={index === phases.length - 1}
+                  onMovePhase={
+                    isEditMode 
+                      ? (direction) => handleMovePhase(phase.id, direction)
+                      : undefined
+                  }
                 />
               </div>
             ))}
+
+            {isEditMode && (
+              <AddPhaseButton pipelineId={selectedPipelineId} />
+            )}
 
             {/* Shadow indicator for right scroll */}
             <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />

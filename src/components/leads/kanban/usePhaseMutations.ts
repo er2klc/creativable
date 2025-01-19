@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { useSession } from "@supabase/auth-helpers-react";
+import { Tables } from "@/integrations/supabase/types";
 
 export const usePhaseMutations = () => {
   const queryClient = useQueryClient();
@@ -153,6 +154,49 @@ export const usePhaseMutations = () => {
     }
   });
 
+  const updatePhaseOrder = useMutation({
+    mutationFn: async (phases: Tables<"pipeline_phases">[]) => {
+      if (!session?.user?.id) {
+        throw new Error("No authenticated user found");
+      }
+
+      const updates = phases.map((phase) => ({
+        id: phase.id,
+        order_index: phase.order_index,
+        pipeline_id: phase.pipeline_id,
+        name: phase.name
+      }));
+
+      const { error } = await supabase
+        .from("pipeline_phases")
+        .upsert(updates);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
+      toast(
+        settings?.language === "en" ? "Order updated" : "Reihenfolge aktualisiert",
+        {
+          description: settings?.language === "en"
+            ? "Phase order has been updated successfully"
+            : "Phasenreihenfolge wurde erfolgreich aktualisiert",
+        }
+      );
+    },
+    onError: (error) => {
+      console.error("Error updating phase order:", error);
+      toast(
+        settings?.language === "en" ? "Error" : "Fehler",
+        {
+          description: settings?.language === "en"
+            ? "Failed to update phase order"
+            : "Fehler beim Aktualisieren der Phasenreihenfolge",
+        }
+      );
+    }
+  });
+
   const deletePhase = useMutation({
     mutationFn: async (phaseId: string) => {
       if (!session?.user?.id) {
@@ -208,5 +252,5 @@ export const usePhaseMutations = () => {
     }
   });
 
-  return { updateLeadPhase, addPhase, updatePhaseName, deletePhase };
+  return { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePhaseOrder };
 };

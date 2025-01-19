@@ -4,9 +4,10 @@ import { SortableLeadItem } from "./SortableLeadItem";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { AddLeadButton } from "./AddLeadButton";
+import { usePhaseMutations } from "./usePhaseMutations";
 
 interface PhaseColumnProps {
   phase: Tables<"pipeline_phases">;
@@ -16,6 +17,9 @@ interface PhaseColumnProps {
   onDeletePhase: () => void;
   onUpdatePhaseName: (newName: string) => void;
   pipelineId: string | null;
+  isFirst?: boolean;
+  isLast?: boolean;
+  onMovePhase?: (direction: 'left' | 'right') => void;
 }
 
 export const PhaseColumn = ({ 
@@ -25,7 +29,10 @@ export const PhaseColumn = ({
   isEditMode,
   onDeletePhase,
   onUpdatePhaseName,
-  pipelineId
+  pipelineId,
+  isFirst = false,
+  isLast = false,
+  onMovePhase
 }: PhaseColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: phase.id,
@@ -53,11 +60,33 @@ export const PhaseColumn = ({
         <div className="flex items-center justify-between gap-2">
           {isEditMode ? (
             <>
-              <Input
-                value={editingName}
-                onChange={handleNameChange}
-                className="h-8"
-              />
+              <div className="flex items-center gap-2 flex-1">
+                {!isFirst && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onMovePhase?.('left')}
+                    className="h-8 w-8 hover:bg-primary/10"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                )}
+                <Input
+                  value={editingName}
+                  onChange={handleNameChange}
+                  className="h-8"
+                />
+                {!isLast && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onMovePhase?.('right')}
+                    className="h-8 w-8 hover:bg-primary/10"
+                  >
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
@@ -79,7 +108,7 @@ export const PhaseColumn = ({
               key={lead.id}
               lead={lead}
               onLeadClick={onLeadClick}
-              disabled={isEditMode} // Disable dragging when in edit mode
+              disabled={isEditMode}
             />
           ))}
           {isHovered && !isEditMode && (
