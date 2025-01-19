@@ -15,6 +15,7 @@ interface InfoRowProps {
   isSourceField?: boolean;
   showToast?: boolean;
   isVisible?: boolean;
+  isReordering?: boolean;
 }
 
 export function InfoRow({ 
@@ -25,7 +26,8 @@ export function InfoRow({
   onUpdate,
   isSourceField,
   showToast = false,
-  isVisible = true
+  isVisible = true,
+  isReordering = false
 }: InfoRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingValue, setEditingValue] = useState<string>("");
@@ -66,7 +68,10 @@ export function InfoRow({
   }
 
   return (
-    <div className="group relative">
+    <div className={cn(
+      "group relative",
+      isReordering && "cursor-move"
+    )}>
       <div className={cn(
         "flex items-center gap-2 rounded-lg transition-colors",
         isEditing ? "bg-gray-50" : "hover:bg-gray-50/80"
@@ -124,8 +129,11 @@ export function InfoRow({
             )
           ) : (
             <div 
-              onClick={() => handleStartEdit(value)}
-              className="text-sm py-0.5 min-h-[20px] cursor-pointer text-gray-900 hover:text-gray-700 transition-colors"
+              onClick={() => !isReordering && handleStartEdit(value)}
+              className={cn(
+                "text-sm py-0.5 min-h-[20px]",
+                !isReordering && "cursor-pointer text-gray-900 hover:text-gray-700 transition-colors"
+              )}
             >
               {displayValue || "—"}
             </div>
