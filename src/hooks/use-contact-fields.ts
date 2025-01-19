@@ -40,17 +40,18 @@ export const useContactFields = () => {
   });
 
   const addField = async (params: AddFieldParams) => {
-    if (!user?.id) throw new Error("User not authenticated");
+    if (!user?.id) {
+      toast.error(settings?.language === "en" ? "Not authenticated" : "Nicht authentifiziert");
+      return;
+    }
 
     const { data, error } = await supabase
       .from("contact_field_settings")
-      .insert([
-        {
-          ...params,
-          user_id: user.id,
-          order_index: fields.length,
-        },
-      ])
+      .insert({
+        ...params,
+        user_id: user.id,
+        order_index: fields.length,
+      })
       .select()
       .single();
 
@@ -76,6 +77,11 @@ export const useContactFields = () => {
 
   const updateFieldOrder = useMutation({
     mutationFn: async (updates: ContactFieldSetting[]) => {
+      if (!user?.id) {
+        toast.error(settings?.language === "en" ? "Not authenticated" : "Nicht authentifiziert");
+        return;
+      }
+
       const { error } = await supabase
         .from("contact_field_settings")
         .upsert(

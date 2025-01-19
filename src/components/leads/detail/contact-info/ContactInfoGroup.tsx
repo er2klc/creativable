@@ -9,6 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useContactFields } from "@/hooks/use-contact-fields";
+import { toast } from "sonner";
+import { useSettings } from "@/hooks/use-settings";
 
 interface ContactInfoGroupProps {
   title: string;
@@ -16,7 +18,7 @@ interface ContactInfoGroupProps {
   children: React.ReactNode;
   showEmptyFields?: boolean;
   onToggleEmptyFields?: () => void;
-  groupName: string; // Add this prop
+  groupName: string;
 }
 
 export function ContactInfoGroup({
@@ -33,6 +35,7 @@ export function ContactInfoGroup({
   const [isAddingField, setIsAddingField] = useState(false);
   const [newFieldLabel, setNewFieldLabel] = useState("");
   const { addField } = useContactFields();
+  const { settings } = useSettings();
 
   const handleToggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
@@ -55,13 +58,22 @@ export function ContactInfoGroup({
 
   const handleSaveNewField = async () => {
     if (newFieldLabel.trim()) {
-      await addField({
-        field_name: newFieldLabel,
-        field_group: groupName,
-        field_type: 'text'
-      });
-      setIsAddingField(false);
-      setNewFieldLabel("");
+      try {
+        await addField({
+          field_name: newFieldLabel,
+          field_group: groupName,
+          field_type: 'text'
+        });
+        setIsAddingField(false);
+        setNewFieldLabel("");
+      } catch (error) {
+        console.error("Error saving new field:", error);
+        toast.error(
+          settings?.language === "en"
+            ? "Error saving field"
+            : "Fehler beim Speichern des Feldes"
+        );
+      }
     }
   };
 
@@ -111,11 +123,14 @@ export function ContactInfoGroup({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleAddField}>
                 <Plus className="mr-2 h-4 w-4" />
-                Feld hinzufügen
+                {settings?.language === "en" ? "Add Field" : "Feld hinzufügen"}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleToggleReordering}>
                 <GripVertical className="mr-2 h-4 w-4" />
-                {isReordering ? "Fertig" : "Neu anordnen"}
+                {isReordering 
+                  ? (settings?.language === "en" ? "Done" : "Fertig")
+                  : (settings?.language === "en" ? "Reorder" : "Neu anordnen")
+                }
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -137,7 +152,7 @@ export function ContactInfoGroup({
                       handleSaveNewField();
                     }
                   }}
-                  placeholder="Feldname"
+                  placeholder={settings?.language === "en" ? "Field name" : "Feldname"}
                   className="h-8 text-sm bg-white"
                   autoFocus
                 />
