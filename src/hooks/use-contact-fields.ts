@@ -14,6 +14,12 @@ export interface ContactFieldSetting {
   created_at?: string;
 }
 
+interface AddFieldParams {
+  field_name: string;
+  field_group: string;
+  field_type: string;
+}
+
 export const useContactFields = () => {
   const queryClient = useQueryClient();
   const { settings } = useSettings();
@@ -30,6 +36,38 @@ export const useContactFields = () => {
       return data as ContactFieldSetting[];
     },
   });
+
+  const addField = async (params: AddFieldParams) => {
+    const { data, error } = await supabase
+      .from("contact_field_settings")
+      .insert([
+        {
+          ...params,
+          order_index: fields.length,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error adding field:", error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error adding field"
+          : "Fehler beim Hinzufügen des Feldes"
+      );
+      throw error;
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["contact-field-settings"] });
+    toast.success(
+      settings?.language === "en"
+        ? "Field added successfully"
+        : "Feld erfolgreich hinzugefügt"
+    );
+
+    return data;
+  };
 
   const updateFieldOrder = useMutation({
     mutationFn: async (updates: ContactFieldSetting[]) => {
@@ -62,37 +100,10 @@ export const useContactFields = () => {
     },
   });
 
-  const updateField = useMutation({
-    mutationFn: async (field: Partial<ContactFieldSetting> & { id: string }) => {
-      const { error } = await supabase
-        .from("contact_field_settings")
-        .update(field)
-        .eq("id", field.id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contact-field-settings"] });
-      toast.success(
-        settings?.language === "en"
-          ? "Field updated successfully"
-          : "Feld erfolgreich aktualisiert"
-      );
-    },
-    onError: (error) => {
-      console.error("Error updating field:", error);
-      toast.error(
-        settings?.language === "en"
-          ? "Error updating field"
-          : "Fehler beim Aktualisieren des Feldes"
-      );
-    },
-  });
-
   return {
     fields,
     isLoading,
     updateFieldOrder,
-    updateField,
+    addField,
   };
 };

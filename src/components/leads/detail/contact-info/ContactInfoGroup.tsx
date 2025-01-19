@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp, Eye, EyeOff, GripVertical, MoreVertical, Plus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -17,6 +16,7 @@ interface ContactInfoGroupProps {
   children: React.ReactNode;
   showEmptyFields?: boolean;
   onToggleEmptyFields?: () => void;
+  groupName: string; // Add this prop
 }
 
 export function ContactInfoGroup({
@@ -25,13 +25,14 @@ export function ContactInfoGroup({
   children,
   showEmptyFields = true,
   onToggleEmptyFields,
+  groupName,
 }: ContactInfoGroupProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showEmpty, setShowEmpty] = useState(showEmptyFields);
   const [isReordering, setIsReordering] = useState(false);
   const [isAddingField, setIsAddingField] = useState(false);
   const [newFieldLabel, setNewFieldLabel] = useState("");
-  const { updateField } = useContactFields();
+  const { addField } = useContactFields();
 
   const handleToggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
@@ -52,10 +53,13 @@ export function ContactInfoGroup({
     setIsAddingField(true);
   };
 
-  const handleSaveNewField = () => {
+  const handleSaveNewField = async () => {
     if (newFieldLabel.trim()) {
-      // Here you would typically save the new field to your backend
-      console.log("Saving new field:", { label: newFieldLabel });
+      await addField({
+        field_name: newFieldLabel,
+        field_group: groupName,
+        field_type: 'text'
+      });
       setIsAddingField(false);
       setNewFieldLabel("");
     }
