@@ -51,6 +51,8 @@ export const useLeadSubscription = (leadId: string | null) => {
                 return {
                   ...old,
                   ...data,
+                  // Ensure platform remains of type Platform
+                  platform: data.platform as Platform,
                   // Preserve relations if they exist in old data but not in new data
                   messages: data.messages || old.messages,
                   tasks: data.tasks || old.tasks,
@@ -85,6 +87,7 @@ export const useLeadSubscription = (leadId: string | null) => {
                 if (!old) return old;
                 return {
                   ...old,
+                  platform: old.platform,
                   notes: data.notes,
                 };
               }
@@ -116,6 +119,7 @@ export const useLeadSubscription = (leadId: string | null) => {
                 if (!old) return old;
                 return {
                   ...old,
+                  platform: old.platform,
                   tasks: data.tasks,
                 };
               }
@@ -147,6 +151,7 @@ export const useLeadSubscription = (leadId: string | null) => {
                 if (!old) return old;
                 return {
                   ...old,
+                  platform: old.platform,
                   messages: data.messages,
                 };
               }
