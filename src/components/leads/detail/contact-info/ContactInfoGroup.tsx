@@ -1,17 +1,9 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, Eye, EyeOff, GripVertical, MoreVertical, Plus, Settings } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuPortal,
-} from "@/components/ui/dropdown-menu";
-import { useContactFields } from "@/hooks/use-contact-fields";
-import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
+import { AddFieldForm } from "./AddFieldForm";
+import { GroupActionsMenu } from "./GroupActionsMenu";
 
 interface ContactInfoGroupProps {
   title: string;
@@ -34,9 +26,7 @@ export function ContactInfoGroup({
   const [showEmpty, setShowEmpty] = useState(showEmptyFields);
   const [isReordering, setIsReordering] = useState(false);
   const [isAddingField, setIsAddingField] = useState(false);
-  const [newFieldLabel, setNewFieldLabel] = useState("");
   const [showActions, setShowActions] = useState(false);
-  const { addField } = useContactFields();
   const { settings } = useSettings();
 
   const handleToggleCollapse = () => {
@@ -52,35 +42,6 @@ export function ContactInfoGroup({
 
   const handleToggleReordering = () => {
     setIsReordering(!isReordering);
-  };
-
-  const handleAddField = () => {
-    setIsAddingField(true);
-  };
-
-  const handleSaveNewField = async () => {
-    if (newFieldLabel.trim()) {
-      try {
-        await addField({
-          field_name: newFieldLabel,
-          field_group: groupName,
-          field_type: 'text'
-        });
-        setIsAddingField(false);
-        setNewFieldLabel("");
-        toast.success(
-          settings?.language === "en"
-            ? "Field added successfully"
-            : "Feld erfolgreich hinzugefügt"
-        );
-      } catch (error) {
-        toast.error(
-          settings?.language === "en"
-            ? "Error saving field"
-            : "Fehler beim Speichern des Feldes"
-        );
-      }
-    }
   };
 
   return (
@@ -107,81 +68,23 @@ export function ContactInfoGroup({
         </div>
         
         {showActions && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-1 hover:bg-gray-100 rounded-full"
-              >
-                <MoreVertical className="h-4 w-4 text-gray-500" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuContent 
-                align="end" 
-                className="z-50 bg-white dark:bg-gray-800 shadow-lg rounded-md border w-48"
-              >
-                <DropdownMenuItem 
-                  onClick={handleAddField}
-                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  {settings?.language === "en" ? "Add Field" : "Feld hinzufügen"}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleToggleReordering}
-                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  <GripVertical className="mr-2 h-4 w-4" />
-                  {isReordering 
-                    ? (settings?.language === "en" ? "Done" : "Fertig")
-                    : (settings?.language === "en" ? "Reorder" : "Neu anordnen")
-                  }
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleToggleEmpty}
-                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {showEmpty ? (
-                    <>
-                      <EyeOff className="mr-2 h-4 w-4" />
-                      {settings?.language === "en" ? "Hide Empty" : "Leere ausblenden"}
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="mr-2 h-4 w-4" />
-                      {settings?.language === "en" ? "Show Empty" : "Leere anzeigen"}
-                    </>
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenuPortal>
-          </DropdownMenu>
+          <GroupActionsMenu
+            showEmpty={showEmpty}
+            isReordering={isReordering}
+            onToggleEmpty={handleToggleEmpty}
+            onToggleReordering={handleToggleReordering}
+            onAddField={() => setIsAddingField(true)}
+          />
         )}
       </div>
 
       {!isCollapsed && (
         <div className="space-y-1">
           {isAddingField && (
-            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3 w-full">
-                <Settings className="h-4 w-4 text-gray-500 shrink-0" />
-                <Input
-                  value={newFieldLabel}
-                  onChange={(e) => setNewFieldLabel(e.target.value)}
-                  onBlur={handleSaveNewField}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSaveNewField();
-                    }
-                  }}
-                  placeholder={settings?.language === "en" ? "Field name" : "Feldname"}
-                  className="h-8 text-sm bg-white"
-                  autoFocus
-                />
-              </div>
-            </div>
+            <AddFieldForm 
+              groupName={groupName}
+              onComplete={() => setIsAddingField(false)}
+            />
           )}
           {React.Children.map(children, child => {
             if (React.isValidElement(child)) {
