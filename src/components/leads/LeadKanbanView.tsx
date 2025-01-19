@@ -175,7 +175,7 @@ export const LeadKanbanView = ({
                 />
                 <Button onClick={handleSaveChanges} variant="outline" size="sm">
                   <Save className="h-4 w-4 mr-2" />
-                  {settings?.language === "en" ? "Save Changes" : "Änderungen speichern"}
+                  {settings?.language === "en" ? "Save Pipeline Name" : "Pipeline-Name speichern"}
                 </Button>
               </>
             )}
