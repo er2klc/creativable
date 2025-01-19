@@ -5,10 +5,11 @@ import { InfoRow } from "./InfoRow";
 
 interface SourceInfoFieldsProps {
   lead: Tables<"leads">;
-  onUpdate: (updates: Partial<Tables<"leads">>) => void;
+  onUpdate: (updates: Partial<Tables<"leads">>, showToast?: boolean) => void;
+  showToast?: boolean;
 }
 
-export function SourceInfoFields({ lead, onUpdate }: SourceInfoFieldsProps) {
+export function SourceInfoFields({ lead, onUpdate, showToast = false }: SourceInfoFieldsProps) {
   const { settings } = useSettings();
 
   return (
@@ -24,6 +25,7 @@ export function SourceInfoFields({ lead, onUpdate }: SourceInfoFieldsProps) {
           field="platform"
           onUpdate={onUpdate}
           isSourceField
+          showToast={showToast}
         />
         <InfoRow
           icon={UserPlus}
@@ -31,6 +33,7 @@ export function SourceInfoFields({ lead, onUpdate }: SourceInfoFieldsProps) {
           value={lead.referred_by}
           field="referred_by"
           onUpdate={onUpdate}
+          showToast={showToast}
         />
       </div>
     </div>

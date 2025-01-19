@@ -11,7 +11,7 @@ interface InfoRowProps {
   label: string;
   value: string | null | string[];
   field: string;
-  onUpdate: (updates: Partial<Tables<"leads">>) => void;
+  onUpdate: (updates: Partial<Tables<"leads">>, showToast?: boolean) => void;
   isSourceField?: boolean;
   showToast?: boolean;
 }
