@@ -47,7 +47,7 @@ export function CompactPhaseSelector({
     <div className="w-full space-y-3">
       <div className="relative flex items-center w-full pl-2">
         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-300 -translate-y-1/2" />
-        <div className="relative z-10 flex justify-between w-full gap-[1px]">
+        <div className="relative z-10 flex justify-between w-full style={{ gap: '-15px' }}">
           {phases.map((phase, index) => {
             const isActive = phase.id === lead.phase_id && selectedPipelineId === lead.pipeline_id;
             const isPast = phase.order_index < (currentPhase?.order_index || 0) && selectedPipelineId === lead.pipeline_id;
