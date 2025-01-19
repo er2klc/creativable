@@ -2,6 +2,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { TimelineHeader } from "./timeline/TimelineHeader";
 import { TimelineItem } from "./timeline/TimelineItem";
 import { TimelineItem as TimelineItemType, TimelineItemType as ItemType } from "./timeline/TimelineUtils";
+import { useEffect } from "react";
 
 interface LeadTimelineProps {
   lead: {
@@ -15,10 +16,25 @@ interface LeadTimelineProps {
 }
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
+  // Log initial data load
+  useEffect(() => {
+    console.log('LeadTimeline mounted with data:', {
+      messages: lead.messages?.length || 0,
+      tasks: lead.tasks?.length || 0,
+      notes: lead.notes?.length || 0,
+      created_at: lead.created_at
+    });
+  }, [lead]);
+
+  // Ensure arrays exist and are valid
+  const messages = Array.isArray(lead.messages) ? lead.messages : [];
+  const tasks = Array.isArray(lead.tasks) ? lead.tasks : [];
+  const notes = Array.isArray(lead.notes) ? lead.notes : [];
+
   console.log('Timeline lead data:', {
-    messages: lead.messages?.length || 0,
-    tasks: lead.tasks?.length || 0,
-    notes: lead.notes?.length || 0,
+    messages: messages.length,
+    tasks: tasks.length,
+    notes: notes.length,
     created_at: lead.created_at
   });
 
@@ -30,17 +46,17 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       content: `Kontakt ${lead.name} wurde erstellt`,
       timestamp: lead.created_at || new Date().toISOString(),
     },
-    // Map messages if they exist
-    ...(Array.isArray(lead.messages) ? lead.messages.map(message => ({
+    // Map messages
+    ...messages.map(message => ({
       id: message.id,
       type: 'message' as const,
       content: message.content,
       timestamp: message.sent_at || new Date().toISOString(),
       status: message.platform,
       platform: message.platform
-    })) : []),
-    // Map tasks if they exist
-    ...(Array.isArray(lead.tasks) ? lead.tasks.map(task => ({
+    })),
+    // Map tasks
+    ...tasks.map(task => ({
       id: task.id,
       type: task.meeting_type ? ('appointment' as const) : ('task' as const),
       content: task.title,
@@ -51,9 +67,9 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         meetingType: task.meeting_type,
         color: task.color
       }
-    })) : []),
-    // Map notes if they exist
-    ...(Array.isArray(lead.notes) ? lead.notes.map(note => {
+    })),
+    // Map notes
+    ...notes.map(note => {
       const metadata = note.metadata as { type?: string; oldPhase?: string; newPhase?: string; color?: string };
       
       // Check if this is a phase change note
@@ -80,7 +96,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           color: note.color
         }
       };
-    }) : [])
+    })
   ].sort((a, b) => {
     const dateA = new Date(a.timestamp || new Date());
     const dateB = new Date(b.timestamp || new Date());
