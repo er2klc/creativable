@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { LeadFilters } from "../LeadFilters";
 import { LeadSearch } from "../LeadSearch";
 import { AddLeadDialog } from "../AddLeadDialog";
 import { useState } from "react";
@@ -53,11 +52,7 @@ export const LeadsHeader = ({
 
       <div className="h-px bg-border" />
 
-      <div className="flex items-center justify-between">
-        <LeadFilters
-          selectedPipelineId={selectedPipelineId}
-          setSelectedPipelineId={setSelectedPipelineId}
-        />
+      <div className="flex items-center justify-end">
         <Button onClick={() => setShowAddLead(true)}>
           Neuer Kontakt ✨
         </Button>

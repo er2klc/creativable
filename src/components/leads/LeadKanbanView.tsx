@@ -125,7 +125,7 @@ export const LeadKanbanView = ({ leads, selectedPipelineId }: LeadKanbanViewProp
       onDragEnd={handleDragEnd}
     >
       <div className="w-full h-[calc(100vh-13rem)] overflow-hidden relative">
-        <div className="flex justify-between items-center mb-4 px-4">
+        <div className="flex items-center justify-between mb-4 px-4">
           <div className="flex items-center gap-2">
             <LeadFilters
               selectedPipelineId={selectedPipelineId}
