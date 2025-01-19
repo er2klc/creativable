@@ -80,10 +80,15 @@ export const useContactFields = () => {
         return;
       }
 
+      // Create updates array with all required fields
       const updates = updatedFields.map((field, index) => ({
         id: field.id,
+        user_id: field.user_id,
+        field_name: field.field_name,
+        field_type: field.field_type,
+        field_group: field.field_group,
         order_index: index,
-        user_id: user.id,
+        icon: field.icon
       }));
 
       const { error } = await supabase
