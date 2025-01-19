@@ -3,6 +3,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
 import { formSchema } from "../AddLeadFormFields";
+import { HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ContactTypeFieldProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
@@ -44,9 +46,19 @@ export function ContactTypeField({ form }: ContactTypeFieldProps) {
                   />
                   <label 
                     htmlFor="partner" 
-                    className="ml-2 text-sm font-medium cursor-pointer"
+                    className="ml-2 text-sm font-medium cursor-pointer inline-flex items-center gap-1"
                   >
                     Likely Partner
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <HelpCircle className="h-4 w-4 text-[#7B61FF]" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Kontakt zeigt Interesse an einer Partnerschaft</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </label>
                 </div>
               </div>
@@ -63,9 +75,19 @@ export function ContactTypeField({ form }: ContactTypeFieldProps) {
                   />
                   <label 
                     htmlFor="kunde" 
-                    className="ml-2 text-sm font-medium cursor-pointer"
+                    className="ml-2 text-sm font-medium cursor-pointer inline-flex items-center gap-1"
                   >
                     Likely Kunde
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <HelpCircle className="h-4 w-4 text-[#86EFAC]" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Kontakt zeigt Interesse an unseren Produkten/Services</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </label>
                 </div>
               </div>
