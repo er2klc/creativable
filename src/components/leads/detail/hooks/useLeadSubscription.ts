@@ -2,6 +2,14 @@ import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
+import { Platform } from "@/config/platforms";
+
+type LeadWithRelations = Tables<"leads"> & {
+  platform: Platform;
+  messages: Tables<"messages">[];
+  tasks: Tables<"tasks">[];
+  notes: Tables<"notes">[];
+};
 
 export const useLeadSubscription = (leadId: string | null) => {
   const queryClient = useQueryClient();
@@ -16,6 +24,7 @@ export const useLeadSubscription = (leadId: string | null) => {
 
     const channel = supabase
       .channel(`lead-details-${leadId}`)
+      // Lead changes
       .on(
         'postgres_changes',
         {
@@ -24,26 +33,35 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'leads',
           filter: `id=eq.${leadId}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('Lead changed:', payload);
-          if (payload.eventType === 'DELETE') {
-            queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-            return;
-          }
           
-          // Update the lead data in the cache
-          queryClient.setQueryData<Tables<"leads"> | undefined>(
-            ["lead", leadId],
-            (old) => {
-              if (!old) return old;
-              return {
-                ...old,
-                ...payload.new,
-              };
-            }
-          );
+          // For lead changes, we need to refetch with all relations
+          const { data } = await supabase
+            .from("leads")
+            .select("*, messages(*), tasks(*), notes(*)")
+            .eq("id", leadId)
+            .maybeSingle();
+
+          if (data) {
+            queryClient.setQueryData<LeadWithRelations>(
+              ["lead", leadId],
+              (old) => {
+                if (!old) return old;
+                return {
+                  ...old,
+                  ...data,
+                  // Preserve relations if they exist in old data but not in new data
+                  messages: data.messages || old.messages,
+                  tasks: data.tasks || old.tasks,
+                  notes: data.notes || old.notes,
+                };
+              }
+            );
+          }
         }
       )
+      // Notes changes
       .on(
         'postgres_changes',
         {
@@ -52,11 +70,29 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'notes',
           filter: `lead_id=eq.${leadId}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('Notes changed:', payload);
-          queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+          const { data } = await supabase
+            .from("leads")
+            .select("*, messages(*), tasks(*), notes(*)")
+            .eq("id", leadId)
+            .maybeSingle();
+
+          if (data) {
+            queryClient.setQueryData<LeadWithRelations>(
+              ["lead", leadId],
+              (old) => {
+                if (!old) return old;
+                return {
+                  ...old,
+                  notes: data.notes,
+                };
+              }
+            );
+          }
         }
       )
+      // Tasks changes
       .on(
         'postgres_changes',
         {
@@ -65,11 +101,29 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'tasks',
           filter: `lead_id=eq.${leadId}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('Tasks changed:', payload);
-          queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+          const { data } = await supabase
+            .from("leads")
+            .select("*, messages(*), tasks(*), notes(*)")
+            .eq("id", leadId)
+            .maybeSingle();
+
+          if (data) {
+            queryClient.setQueryData<LeadWithRelations>(
+              ["lead", leadId],
+              (old) => {
+                if (!old) return old;
+                return {
+                  ...old,
+                  tasks: data.tasks,
+                };
+              }
+            );
+          }
         }
       )
+      // Messages changes
       .on(
         'postgres_changes',
         {
@@ -78,9 +132,26 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'messages',
           filter: `lead_id=eq.${leadId}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('Messages changed:', payload);
-          queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+          const { data } = await supabase
+            .from("leads")
+            .select("*, messages(*), tasks(*), notes(*)")
+            .eq("id", leadId)
+            .maybeSingle();
+
+          if (data) {
+            queryClient.setQueryData<LeadWithRelations>(
+              ["lead", leadId],
+              (old) => {
+                if (!old) return old;
+                return {
+                  ...old,
+                  messages: data.messages,
+                };
+              }
+            );
+          }
         }
       )
       .subscribe((status) => {
