@@ -129,8 +129,8 @@ export const LeadKanbanView = ({
       onDragEnd={handleDragEnd}
     >
       <div className="w-full h-[calc(100vh-13rem)] overflow-hidden relative">
-        <div className="flex items-center justify-between mb-4 px-4">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between mb-4 px-4 flex-wrap gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <LeadFilters
               selectedPipelineId={selectedPipelineId}
               setSelectedPipelineId={setSelectedPipelineId}
@@ -144,7 +144,7 @@ export const LeadKanbanView = ({
               </Button>
             )}
           </div>
-          <Button onClick={() => setShowAddLead(true)}>
+          <Button onClick={() => setShowAddLead(true)} className="shrink-0">
             Neuer Kontakt ✨
           </Button>
         </div>
@@ -160,7 +160,7 @@ export const LeadKanbanView = ({
             <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
 
             {phases.map((phase) => (
-              <div key={phase.id} className="flex-1" style={{ minWidth: '280px', width: `${100 / phases.length}%` }}>
+              <div key={phase.id} className="flex-1" style={{ minWidth: '190px', width: `${100 / phases.length}%` }}>
                 <PhaseColumn
                   phase={phase}
                   leads={leads.filter((lead) => lead.phase_id === phase.id)}
