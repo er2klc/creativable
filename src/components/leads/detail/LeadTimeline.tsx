@@ -35,7 +35,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       id: message.id,
       type: 'message' as const,
       content: message.content,
-      timestamp: message.sent_at || message.created_at || new Date().toISOString(),
+      timestamp: message.sent_at || new Date().toISOString(),
       status: message.platform,
       platform: message.platform
     })) : []),
