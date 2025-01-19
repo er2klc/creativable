@@ -151,17 +151,16 @@ export const LeadKanbanView = ({
 
         <div className="w-full h-full overflow-x-auto no-scrollbar">
           <div 
-            className="flex gap-4 px-4 relative min-h-full" 
+            className="flex gap-4 px-4 relative min-h-full w-full" 
             style={{ 
-              minWidth: `${phases.length * 280 + ((phases.length - 1) * 16)}px`,
-              maxWidth: '100%'
+              minWidth: 'fit-content',
             }}
           >
             {/* Shadow indicator for left scroll */}
             <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
 
             {phases.map((phase) => (
-              <div key={phase.id} className="flex-1 min-w-[280px] max-w-[300px]">
+              <div key={phase.id} className="flex-1" style={{ minWidth: '280px', width: `${100 / phases.length}%` }}>
                 <PhaseColumn
                   phase={phase}
                   leads={leads.filter((lead) => lead.phase_id === phase.id)}
