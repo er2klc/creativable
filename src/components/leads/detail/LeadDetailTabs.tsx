@@ -4,9 +4,11 @@ import { NoteTab } from "./tabs/NoteTab";
 import { TaskTab } from "./tabs/TaskTab";
 import { MessageTab } from "./tabs/MessageTab";
 import { PlaceholderTab } from "./tabs/PlaceholderTab";
-import { AppointmentList } from "./AppointmentList";
+import { AppointmentList } from "./tabs/AppointmentList";
 import { useState } from "react";
 import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
+import { Tables } from "@/integrations/supabase/types";
+import { Platform } from "@/config/platforms";
 
 interface LeadDetailTabsProps {
   lead: Tables<"leads"> & {
@@ -24,41 +26,26 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   return (
     <Tabs defaultValue="notes" className="w-full">
       <TabsList className="w-full">
-        <TabsTrigger
-          value="notes"
-          className="flex-1"
-        >
+        <TabsTrigger value="notes" className="flex-1">
           {settings?.language === "en" ? "Notes" : "Notizen"}
         </TabsTrigger>
-        <TabsTrigger
-          value="tasks"
-          className="flex-1"
-        >
+        <TabsTrigger value="tasks" className="flex-1">
           {settings?.language === "en" ? "Tasks" : "Aufgaben"}
         </TabsTrigger>
-        <TabsTrigger
-          value="appointments"
+        <TabsTrigger 
+          value="appointments" 
           className="flex-1"
           onClick={() => setIsAppointmentDialogOpen(true)}
         >
           {settings?.language === "en" ? "Appointments" : "Termine"}
         </TabsTrigger>
-        <TabsTrigger
-          value="messages"
-          className="flex-1"
-        >
+        <TabsTrigger value="messages" className="flex-1">
           {settings?.language === "en" ? "Messages" : "Nachrichten"}
         </TabsTrigger>
-        <TabsTrigger
-          value="uploads"
-          className="flex-1"
-        >
+        <TabsTrigger value="uploads" className="flex-1">
           {settings?.language === "en" ? "Uploads" : "Uploads"}
         </TabsTrigger>
-        <TabsTrigger
-          value="presentations"
-          className="flex-1"
-        >
+        <TabsTrigger value="presentations" className="flex-1">
           {settings?.language === "en" ? "Presentations" : "Präsentationen"}
         </TabsTrigger>
       </TabsList>
