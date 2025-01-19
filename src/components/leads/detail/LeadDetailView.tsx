@@ -68,20 +68,17 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
       // First create the phase change note if this is a phase change
       if (updates.phase_id && updates.phase_id !== lead?.phase_id) {
-        const oldPhase = lead?.phase_id;
-        const newPhase = updates.phase_id;
-        
         const { error: noteError } = await supabase
           .from("notes")
           .insert({
             lead_id: leadId,
             user_id: session.user.id,
-            content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
+            content: `Phase von "${lead?.phase_id}" zu "${updates.phase_id}" geändert`,
             color: "#E9D5FF",
             metadata: {
               type: "phase_change",
-              oldPhase,
-              newPhase
+              oldPhase: lead?.phase_id,
+              newPhase: updates.phase_id
             }
           });
 
