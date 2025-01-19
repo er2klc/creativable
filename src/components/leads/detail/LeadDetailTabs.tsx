@@ -17,8 +17,8 @@ interface LeadDetailTabsProps {
 }
 
 const tabColors = {
-  notes: "#FEF7CD",
-  tasks: "#FFE2DD",
+  notes: "#eab308",
+  tasks: "#06b6d4",
   appointments: "#DCF0FF",
   messages: "#E5ECE9",
   uploads: "#F4E4FF",
