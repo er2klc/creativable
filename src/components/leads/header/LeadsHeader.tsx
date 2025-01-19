@@ -6,7 +6,7 @@ import { useState } from "react";
 import { LayoutGrid, List, Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useSettings } from "@/hooks/use-settings";
-import { usePhaseMutations } from "../kanban/usePhaseQuery";
+import { usePhaseMutations } from "../kanban/usePhaseMutations";
 
 interface LeadsHeaderProps {
   searchQuery: string;

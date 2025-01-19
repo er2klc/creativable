@@ -3,10 +3,13 @@ import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
-import { usePhaseQuery, usePhaseMutations } from "./kanban/usePhaseQuery";
+import { usePhaseQuery } from "./kanban/usePhaseQuery";
+import { usePhaseMutations } from "./kanban/usePhaseMutations";
 import { PhaseColumn } from "./kanban/PhaseColumn";
 import { useQueryClient } from "@tanstack/react-query";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
+import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];

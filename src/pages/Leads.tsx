@@ -108,12 +108,16 @@ const Leads = () => {
         setSelectedPipelineId={setSelectedPipelineId}
         viewMode={viewMode}
         setViewMode={setViewMode}
+        currentPipelineName={pipelines.find(p => p.id === selectedPipelineId)?.name}
       />
 
       {viewMode === "kanban" ? (
         <LeadKanbanView 
           leads={leads}
           selectedPipelineId={selectedPipelineId}
+          handleLeadClick={handleLeadClick}
+          isEditMode={false}
+          onSaveChanges={() => {}}
         />
       ) : (
         <LeadTableView 
