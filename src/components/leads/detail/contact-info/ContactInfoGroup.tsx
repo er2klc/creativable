@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Eye, EyeOff, MoreVertical, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, Eye, EyeOff, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -28,6 +22,7 @@ export function ContactInfoGroup({
 }: ContactInfoGroupProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showEmpty, setShowEmpty] = useState(showEmptyFields);
+  const [isReordering, setIsReordering] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -75,8 +70,11 @@ export function ContactInfoGroup({
     }
   };
 
-  const handleAddField = () => {
-    toast.info("Diese Funktion wird bald verfügbar sein");
+  const handleToggleReordering = () => {
+    setIsReordering(!isReordering);
+    if (!isReordering) {
+      toast.info("Felder können jetzt neu angeordnet werden");
+    }
   };
 
   return (
@@ -112,34 +110,25 @@ export function ContactInfoGroup({
             )}
           </Button>
 
+          {isReordering && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleToggleReordering}
+              className="text-xs px-2 py-1 hover:bg-gray-100 rounded-full"
+            >
+              Fertig
+            </Button>
+          )}
+
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleAddField}
+            onClick={handleToggleReordering}
             className="p-1 hover:bg-gray-100 rounded-full"
           >
-            <Plus className="h-4 w-4 text-gray-500" />
+            <GripVertical className="h-4 w-4 text-gray-500" />
           </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-1 hover:bg-gray-100 rounded-full"
-              >
-                <MoreVertical className="h-4 w-4 text-gray-500" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleAddField}>
-                Feld hinzufügen
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                Reihenfolge ändern
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 
@@ -149,7 +138,8 @@ export function ContactInfoGroup({
             if (React.isValidElement(child)) {
               return React.cloneElement(child, {
                 ...child.props,
-                isVisible: showEmpty
+                isVisible: showEmpty,
+                isReordering: isReordering
               });
             }
             return child;
