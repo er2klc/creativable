@@ -208,5 +208,41 @@ export const usePhaseMutations = () => {
     }
   });
 
-  return { updateLeadPhase, addPhase, updatePhaseName, deletePhase };
+  const updatePhaseOrder = useMutation({
+    mutationFn: async (updates: { id: string; order_index: number }[]) => {
+      if (!session?.user?.id) {
+        throw new Error("No authenticated user found");
+      }
+
+      const { error } = await supabase
+        .from("pipeline_phases")
+        .upsert(updates);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
+      toast.success(
+        settings?.language === "en" 
+          ? "Phase order updated" 
+          : "Phasenreihenfolge aktualisiert"
+      );
+    },
+    onError: (error) => {
+      console.error("Error updating phase order:", error);
+      toast.error(
+        settings?.language === "en"
+          ? "Failed to update phase order"
+          : "Fehler beim Aktualisieren der Phasenreihenfolge"
+      );
+    }
+  });
+
+  return { 
+    updateLeadPhase, 
+    addPhase, 
+    updatePhaseName, 
+    deletePhase,
+    updatePhaseOrder // Add the new mutation to the return object
+  };
 };

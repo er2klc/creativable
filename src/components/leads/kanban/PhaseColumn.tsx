@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { AddLeadButton } from "./AddLeadButton";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface PhaseColumnProps {
   phase: Tables<"pipeline_phases">;
@@ -27,7 +29,19 @@ export const PhaseColumn = ({
   onUpdatePhaseName,
   pipelineId
 }: PhaseColumnProps) => {
-  const { setNodeRef, isOver } = useDroppable({
+  const {
+    setNodeRef,
+    attributes,
+    listeners,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: phase.id,
+    disabled: !isEditMode, // Only enable sorting when in edit mode
+  });
+
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: phase.id,
     disabled: isEditMode, // Disable dropping when in edit mode
   });
@@ -40,17 +54,29 @@ export const PhaseColumn = ({
     onUpdatePhaseName(e.target.value);
   };
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
     <Card
-      ref={setNodeRef}
+      ref={node => {
+        setNodeRef(node);
+        setDroppableRef(node);
+      }}
+      style={style}
       className={`h-full flex flex-col bg-muted/50 rounded-lg relative transition-colors duration-200 ${
         isOver && !isEditMode ? 'ring-2 ring-primary/50 bg-primary/5 shadow-[0_-2px_4px_rgba(0,0,0,0.15)]' : ''
-      }`}
+      } ${isDragging ? 'opacity-50' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <CardHeader className="p-2 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-10 border-b">
-        <div className="flex items-center justify-between gap-2">
+        <div 
+          className="flex items-center justify-between gap-2"
+          {...(isEditMode ? { ...attributes, ...listeners } : {})}
+        >
           {isEditMode ? (
             <>
               <Input
