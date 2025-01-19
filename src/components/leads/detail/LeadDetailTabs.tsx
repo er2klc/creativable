@@ -1,12 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings } from "@/hooks/use-settings";
-import { Tables } from "@/integrations/supabase/types";
-import { Platform } from "@/config/platforms";
 import { NoteTab } from "./tabs/NoteTab";
 import { TaskTab } from "./tabs/TaskTab";
 import { MessageTab } from "./tabs/MessageTab";
 import { PlaceholderTab } from "./tabs/PlaceholderTab";
-import { AppointmentList } from "../AppointmentList";
+import { AppointmentList } from "./AppointmentList";
 import { useState } from "react";
 import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
 
@@ -92,10 +90,14 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
       <NewAppointmentDialog
         open={isAppointmentDialogOpen}
         onOpenChange={setIsAppointmentDialogOpen}
-        defaultValues={{
+        initialSelectedDate={new Date()}
+        appointmentToEdit={{
+          id: '',
           leadId: lead.id,
           time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
-          date: new Date(),
+          title: '',
+          color: '#40E0D0',
+          meeting_type: 'phone_call'
         }}
       />
     </Tabs>
