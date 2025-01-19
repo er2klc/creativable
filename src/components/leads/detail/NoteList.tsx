@@ -7,10 +7,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { useAuth } from "@/hooks/use-auth";
+import { Platform } from "@/config/platforms";
 
 interface NoteListProps {
   leadId: string;
 }
+
+type LeadWithRelations = Tables<"leads"> & {
+  platform: Platform;
+  messages: Tables<"messages">[];
+  tasks: Tables<"tasks">[];
+  notes: Tables<"notes">[];
+};
 
 export const NoteList = ({ leadId }: NoteListProps) => {
   const { settings } = useSettings();
@@ -42,7 +50,7 @@ export const NoteList = ({ leadId }: NoteListProps) => {
       queryClient.invalidateQueries({ queryKey: ["lead-with-relations", leadId] });
       
       // Get current cache data to verify update
-      const currentData = queryClient.getQueryData(["lead-with-relations", leadId]);
+      const currentData = queryClient.getQueryData<LeadWithRelations>(["lead-with-relations", leadId]);
       console.log("[NoteList] Current cache data after invalidation:", {
         notes: currentData?.notes?.length || 0,
         timestamp: new Date().toISOString()
