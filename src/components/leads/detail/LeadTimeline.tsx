@@ -28,7 +28,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       id: 'contact-created',
       type: 'contact_created' as const,
       content: `Kontakt ${lead.name} wurde erstellt`,
-      timestamp: lead.created_at || new Date().toISOString(), // Fallback if created_at is null
+      timestamp: lead.created_at || new Date().toISOString(),
     },
     // Map messages if they exist
     ...(Array.isArray(lead.messages) ? lead.messages.map(message => ({
