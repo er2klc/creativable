@@ -5,7 +5,6 @@ import { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
-import { useEffect } from "react";
 
 interface CompactPhaseSelectorProps {
   lead: Tables<"leads">;
@@ -100,30 +99,6 @@ export function CompactPhaseSelector({
       });
     }
   };
-
-  // Set up real-time subscription for notes
-  useEffect(() => {
-    const channel = supabase
-      .channel('notes-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notes',
-          filter: `lead_id=eq.${lead.id}`
-        },
-        (payload) => {
-          // Invalidate the lead query to refresh the timeline
-          window.dispatchEvent(new CustomEvent('invalidate-lead'));
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [lead.id]);
 
   const currentPipeline = pipelines.find(p => p.id === lead.pipeline_id);
   const currentPhase = phases.find(p => p.id === lead.phase_id);

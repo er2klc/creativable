@@ -1,14 +1,12 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@supabase/auth-helpers-react";
 
 export const useLeadSubscription = (leadId: string | null) => {
   const queryClient = useQueryClient();
-  const user = useUser();
 
   useEffect(() => {
-    if (!leadId || !user?.id) return;
+    if (!leadId) return;
 
     console.log('Setting up real-time subscriptions for leadId:', leadId);
 
@@ -74,5 +72,5 @@ export const useLeadSubscription = (leadId: string | null) => {
       console.log('Cleaning up subscriptions');
       supabase.removeChannel(channel);
     };
-  }, [leadId, queryClient, user?.id]);
+  }, [leadId, queryClient]);
 };
