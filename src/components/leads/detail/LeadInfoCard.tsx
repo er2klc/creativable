@@ -3,6 +3,9 @@ import { Tables } from "@/integrations/supabase/types";
 import { Contact2 } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { ContactInfoSections } from "./contact-info/ContactInfoSections";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface LeadInfoCardProps {
   lead: Tables<"leads">;
@@ -10,6 +13,7 @@ interface LeadInfoCardProps {
 
 export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   const { settings } = useSettings();
+  const queryClient = useQueryClient();
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
