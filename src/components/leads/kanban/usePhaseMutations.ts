@@ -38,6 +38,17 @@ export const usePhaseMutations = () => {
         }
       );
     },
+    onError: (error) => {
+      console.error("Error updating phase:", error);
+      toast(
+        settings?.language === "en" ? "Error" : "Fehler",
+        {
+          description: settings?.language === "en"
+            ? "Failed to update phase. Please try again."
+            : "Phase konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.",
+        }
+      );
+    }
   });
 
   const addPhase = useMutation({
@@ -92,6 +103,17 @@ export const usePhaseMutations = () => {
         }
       );
     },
+    onError: (error) => {
+      console.error("Error adding phase:", error);
+      toast(
+        settings?.language === "en" ? "Error" : "Fehler",
+        {
+          description: settings?.language === "en"
+            ? "Failed to add phase"
+            : "Fehler beim Hinzufügen der Phase",
+        }
+      );
+    }
   });
 
   const updatePhaseName = useMutation({
@@ -118,32 +140,17 @@ export const usePhaseMutations = () => {
         }
       );
     },
-  });
-
-  const updatePipelineName = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      if (!session?.user?.id) {
-        throw new Error("No authenticated user found");
-      }
-
-      const { error } = await supabase
-        .from("pipelines")
-        .update({ name })
-        .eq("id", id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
+    onError: (error) => {
+      console.error("Error updating phase name:", error);
       toast(
-        settings?.language === "en" ? "Pipeline updated" : "Pipeline aktualisiert",
+        settings?.language === "en" ? "Error" : "Fehler",
         {
           description: settings?.language === "en"
-            ? "Pipeline name has been updated successfully"
-            : "Pipeline-Name wurde erfolgreich aktualisiert",
+            ? "Failed to update phase name"
+            : "Fehler beim Aktualisieren des Phasennamens",
         }
       );
-    },
+    }
   });
 
   const deletePhase = useMutation({
@@ -182,6 +189,60 @@ export const usePhaseMutations = () => {
         }
       );
     },
+    onError: (error) => {
+      console.error("Error deleting phase:", error);
+      const errorMessage = error.message === "Cannot delete phase with leads"
+        ? settings?.language === "en"
+          ? "Cannot delete phase that contains contacts"
+          : "Phase mit Kontakten kann nicht gelöscht werden"
+        : settings?.language === "en"
+          ? "Failed to delete phase"
+          : "Fehler beim Löschen der Phase";
+
+      toast(
+        settings?.language === "en" ? "Error" : "Fehler",
+        {
+          description: errorMessage,
+        }
+      );
+    }
+  });
+
+  const updatePipelineName = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      if (!session?.user?.id) {
+        throw new Error("No authenticated user found");
+      }
+
+      const { error } = await supabase
+        .from("pipelines")
+        .update({ name })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
+      toast(
+        settings?.language === "en" ? "Pipeline updated" : "Pipeline aktualisiert",
+        {
+          description: settings?.language === "en"
+            ? "Pipeline name has been updated successfully"
+            : "Pipeline-Name wurde erfolgreich aktualisiert",
+        }
+      );
+    },
+    onError: (error) => {
+      console.error("Error updating pipeline name:", error);
+      toast(
+        settings?.language === "en" ? "Error" : "Fehler",
+        {
+          description: settings?.language === "en"
+            ? "Failed to update pipeline name"
+            : "Fehler beim Aktualisieren des Pipeline-Namens",
+        }
+      );
+    }
   });
 
   return { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePipelineName };
