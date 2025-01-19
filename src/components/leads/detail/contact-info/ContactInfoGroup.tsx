@@ -39,8 +39,6 @@ export function ContactInfoGroup({
   const { addField } = useContactFields();
   const { settings } = useSettings();
 
-  console.log("ContactInfoGroup rendering:", { title, groupName, isAddingField });
-
   const handleToggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
   };
@@ -57,13 +55,11 @@ export function ContactInfoGroup({
   };
 
   const handleAddField = () => {
-    console.log("Starting to add new field");
     setIsAddingField(true);
   };
 
   const handleSaveNewField = async () => {
     if (newFieldLabel.trim()) {
-      console.log("Saving new field:", newFieldLabel);
       try {
         await addField({
           field_name: newFieldLabel,
@@ -78,7 +74,6 @@ export function ContactInfoGroup({
             : "Feld erfolgreich hinzugefügt"
         );
       } catch (error) {
-        console.error("Error saving new field:", error);
         toast.error(
           settings?.language === "en"
             ? "Error saving field"
