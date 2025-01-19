@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import { 
+  SortableContext, 
+  horizontalListSortingStrategy,
+  arrayMove
+} from "@dnd-kit/sortable";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
 import { usePhaseQuery } from "./kanban/usePhaseQuery";
@@ -31,7 +35,7 @@ export const LeadKanbanView = ({
   const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
   const [targetPhase, setTargetPhase] = useState<string>("");
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
-  const { updateLeadPhase, updatePhaseName, deletePhase, addPhase } = usePhaseMutations();
+  const { updateLeadPhase, updatePhaseName, deletePhase, addPhase, updatePhaseOrder } = usePhaseMutations();
   const queryClient = useQueryClient();
 
   // Set up realtime subscriptions
@@ -42,29 +46,47 @@ export const LeadKanbanView = ({
     
     if (!over) return;
     
-    const leadId = active.id as string;
-    const phaseId = over.id as string;
-    
-    if (leadId && phaseId) {
-      try {
-        await updateLeadPhase.mutateAsync({
-          leadId,
-          phaseId
-        });
-      } catch (error) {
-        console.error('Error updating lead phase:', error);
+    if (isEditMode) {
+      // Handle phase reordering
+      const oldIndex = phases.findIndex(p => p.id === active.id);
+      const newIndex = phases.findIndex(p => p.id === over.id);
+      
+      if (oldIndex !== newIndex) {
+        const newPhases = arrayMove(phases, oldIndex, newIndex);
+        try {
+          await updatePhaseOrder.mutateAsync(
+            newPhases.map((phase, index) => ({
+              id: phase.id,
+              order_index: index
+            }))
+          );
+        } catch (error) {
+          console.error('Error updating phase order:', error);
+        }
+      }
+    } else {
+      // Handle lead movement between phases
+      const leadId = active.id as string;
+      const phaseId = over.id as string;
+      
+      if (leadId && phaseId) {
+        try {
+          await updateLeadPhase.mutateAsync({
+            leadId,
+            phaseId
+          });
+        } catch (error) {
+          console.error('Error updating lead phase:', error);
+        }
       }
     }
   };
 
   const handleDeletePhase = async () => {
-    if (!phaseToDelete || !targetPhase) return;
+    if (!phaseToDelete) return;
 
     try {
-      await deletePhase.mutateAsync({
-        phaseId: phaseToDelete.id,
-        targetPhaseId: targetPhase
-      });
+      await deletePhase.mutateAsync(phaseToDelete.id);
       setPhaseToDelete(null);
       setTargetPhase("");
     } catch (error) {

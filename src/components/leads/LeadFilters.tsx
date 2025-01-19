@@ -58,6 +58,19 @@ export const LeadFilters = ({
     onPipelineNameChange?.(e.target.value);
   };
 
+  if (isEditMode) {
+    return (
+      <div className="flex items-center gap-2">
+        <GitBranch className="h-4 w-4" />
+        <Input
+          value={editingPipelineName || selectedPipeline?.name || ""}
+          onChange={handleNameChange}
+          className="h-9 min-w-[200px]"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex gap-2">
       <DropdownMenu>
@@ -65,16 +78,7 @@ export const LeadFilters = ({
           <Button variant="outline" className="min-w-[200px] justify-between">
             <div className="flex items-center gap-2">
               <GitBranch className="h-4 w-4" />
-              {isEditMode ? (
-                <Input
-                  value={editingPipelineName || selectedPipeline?.name || ""}
-                  onChange={handleNameChange}
-                  className="h-8"
-                  onClick={(e) => e.stopPropagation()}
-                />
-              ) : (
-                selectedPipeline?.name || "Pipeline wählen"
-              )}
+              {selectedPipeline?.name || "Pipeline wählen"}
             </div>
           </Button>
         </DropdownMenuTrigger>
