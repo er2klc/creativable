@@ -113,7 +113,7 @@ export const usePhaseMutations = () => {
             : "Fehler beim Hinzufügen der Phase",
         }
       );
-    }
+    },
   });
 
   const updatePhaseName = useMutation({
@@ -208,42 +208,5 @@ export const usePhaseMutations = () => {
     }
   });
 
-  const updatePipelineName = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      if (!session?.user?.id) {
-        throw new Error("No authenticated user found");
-      }
-
-      const { error } = await supabase
-        .from("pipelines")
-        .update({ name })
-        .eq("id", id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
-      toast(
-        settings?.language === "en" ? "Pipeline updated" : "Pipeline aktualisiert",
-        {
-          description: settings?.language === "en"
-            ? "Pipeline name has been updated successfully"
-            : "Pipeline-Name wurde erfolgreich aktualisiert",
-        }
-      );
-    },
-    onError: (error) => {
-      console.error("Error updating pipeline name:", error);
-      toast(
-        settings?.language === "en" ? "Error" : "Fehler",
-        {
-          description: settings?.language === "en"
-            ? "Failed to update pipeline name"
-            : "Fehler beim Aktualisieren des Pipeline-Namens",
-        }
-      );
-    }
-  });
-
-  return { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePipelineName };
+  return { updateLeadPhase, addPhase, updatePhaseName, deletePhase };
 };
