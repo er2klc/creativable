@@ -38,7 +38,6 @@ export const PlatformContent = ({
   const completedCount = sortedSubmodules.filter(unit => isCompleted(unit.id)).length;
   const progress = (completedCount / sortedSubmodules.length) * 100;
 
-  // Fetch documents count when activeUnit changes
   useEffect(() => {
     const fetchDocumentsCount = async () => {
       if (activeUnitId) {
@@ -53,55 +52,34 @@ export const PlatformContent = ({
     fetchDocumentsCount();
   }, [activeUnitId]);
 
-  const handleCreateUnit = async (data: {
-    title: string;
-    description: string;
-    videoUrl: string;
-    files: File[];
-  }) => {
+  const handleDeleteUnit = async () => {
     try {
-      const { data: lerninhalte, error: unitError } = await supabase
+      const { error: notesError } = await supabase
+        .from('elevate_lerninhalte_notes')
+        .delete()
+        .eq('lerninhalte_id', activeUnitId);
+
+      if (notesError) throw notesError;
+
+      const { error: docsError } = await supabase
+        .from('elevate_lerninhalte_documents')
+        .delete()
+        .eq('lerninhalte_id', activeUnitId);
+
+      if (docsError) throw docsError;
+
+      const { error } = await supabase
         .from('elevate_lerninhalte')
-        .insert({
-          module_id: platform?.elevate_modules?.[0]?.id,
-          title: data.title,
-          description: data.description,
-          video_url: data.videoUrl,
-          created_by: platform.created_by,
-          submodule_order: sortedSubmodules.length
-        })
-        .select()
-        .single();
+        .delete()
+        .eq('id', activeUnitId);
 
-      if (unitError) throw unitError;
+      if (error) throw error;
 
-      for (const file of data.files) {
-        const filePath = `${lerninhalte.id}/${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('elevate-documents')
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { error: docError } = await supabase
-          .from('elevate_lerninhalte_documents')
-          .insert({
-            lerninhalte_id: lerninhalte.id,
-            file_name: file.name,
-            file_path: filePath,
-            file_type: file.type,
-            created_by: platform.created_by
-          });
-
-        if (docError) throw docError;
-      }
-
-      toast.success("Neue Lerneinheit erfolgreich erstellt");
-      setIsDialogOpen(false);
       await refetch();
+      toast.success("Lerneinheit erfolgreich gelöscht");
     } catch (error) {
-      console.error('Error creating learning unit:', error);
-      toast.error("Fehler beim Erstellen der Lerneinheit");
+      console.error('Error deleting learning unit:', error);
+      toast.error("Fehler beim Löschen der Lerneinheit");
     }
   };
 
@@ -109,7 +87,52 @@ export const PlatformContent = ({
     return (
       <EmptyState 
         isAdmin={isAdmin} 
-        onCreateUnit={handleCreateUnit}
+        onCreateUnit={async (data) => {
+          try {
+            const { data: lerninhalte, error: unitError } = await supabase
+              .from('elevate_lerninhalte')
+              .insert({
+                module_id: platform?.elevate_modules?.[0]?.id,
+                title: data.title,
+                description: data.description,
+                video_url: data.videoUrl,
+                created_by: platform.created_by,
+                submodule_order: sortedSubmodules.length
+              })
+              .select()
+              .single();
+
+            if (unitError) throw unitError;
+
+            for (const file of data.files) {
+              const filePath = `${lerninhalte.id}/${file.name}`;
+              const { error: uploadError } = await supabase.storage
+                .from('elevate-documents')
+                .upload(filePath, file);
+
+              if (uploadError) throw uploadError;
+
+              const { error: docError } = await supabase
+                .from('elevate_lerninhalte_documents')
+                .insert({
+                  lerninhalte_id: lerninhalte.id,
+                  file_name: file.name,
+                  file_path: filePath,
+                  file_type: file.type,
+                  created_by: platform.created_by
+                });
+
+              if (docError) throw docError;
+            }
+
+            toast.success("Neue Lerneinheit erfolgreich erstellt");
+            setIsDialogOpen(false);
+            await refetch();
+          } catch (error) {
+            console.error('Error creating learning unit:', error);
+            toast.error("Fehler beim Erstellen der Lerneinheit");
+          }
+        }}
       />
     );
   }
@@ -122,36 +145,7 @@ export const PlatformContent = ({
         isAdmin={isAdmin}
         isCompleted={isCompleted}
         markAsCompleted={markAsCompleted}
-        handleDeleteUnit={async () => {
-          try {
-            const { error: notesError } = await supabase
-              .from('elevate_lerninhalte_notes')
-              .delete()
-              .eq('lerninhalte_id', activeUnitId);
-
-            if (notesError) throw notesError;
-
-            const { error: docsError } = await supabase
-              .from('elevate_lerninhalte_documents')
-              .delete()
-              .eq('lerninhalte_id', activeUnitId);
-
-            if (docsError) throw docsError;
-
-            const { error } = await supabase
-              .from('elevate_lerninhalte')
-              .delete()
-              .eq('id', activeUnitId);
-
-            if (error) throw error;
-
-            await refetch();
-            toast.success("Lerneinheit erfolgreich gelöscht");
-          } catch (error) {
-            console.error('Error deleting learning unit:', error);
-            toast.error("Fehler beim Löschen der Lerneinheit");
-          }
-        }}
+        handleDeleteUnit={handleDeleteUnit}
         setIsEditDialogOpen={setIsEditDialogOpen}
         progress={progress}
         videoDuration={videoDuration}
@@ -169,36 +163,7 @@ export const PlatformContent = ({
           markAsCompleted={markAsCompleted}
           handleVideoProgress={handleVideoProgress}
           platform={platform}
-          handleDeleteUnit={async () => {
-            try {
-              const { error: notesError } = await supabase
-                .from('elevate_lerninhalte_notes')
-                .delete()
-                .eq('lerninhalte_id', activeUnitId);
-
-              if (notesError) throw notesError;
-
-              const { error: docsError } = await supabase
-                .from('elevate_lerninhalte_documents')
-                .delete()
-                .eq('lerninhalte_id', activeUnitId);
-
-              if (docsError) throw docsError;
-
-              const { error } = await supabase
-                .from('elevate_lerninhalte')
-                .delete()
-                .eq('id', activeUnitId);
-
-              if (error) throw error;
-
-              await refetch();
-              toast.success("Lerneinheit erfolgreich gelöscht");
-            } catch (error) {
-              console.error('Error deleting learning unit:', error);
-              toast.error("Fehler beim Löschen der Lerneinheit");
-            }
-          }}
+          handleDeleteUnit={handleDeleteUnit}
           refetch={refetch}
           setIsEditDialogOpen={setIsEditDialogOpen}
           progress={progress}
