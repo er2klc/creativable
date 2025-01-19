@@ -47,7 +47,7 @@ export function CompactPhaseSelector({
     <div className="w-full space-y-4">
       <div className="relative flex items-center w-full">
         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2" />
-        <div className="relative z-10 flex justify-between w-full gap-[2px]">
+        <div className="relative z-10 flex justify-between w-full gap-[1px]">
           {phases.map((phase, index) => {
             const isActive = phase.id === lead.phase_id && selectedPipelineId === lead.pipeline_id;
             const isPast = phase.order_index < (currentPhase?.order_index || 0) && selectedPipelineId === lead.pipeline_id;
@@ -61,7 +61,7 @@ export function CompactPhaseSelector({
                 <button
                   onClick={() => handlePhaseChange(phase.id)}
                   className={cn(
-                    "w-full h-10 relative flex items-center justify-center transition-all",
+                    "w-full h-7 relative flex items-center justify-center transition-all",
                     "hover:brightness-105 transform duration-200 ease-in-out",
                     index === 0 ? "clip-chevron-first" : "clip-chevron",
                     "shadow-sm",
@@ -70,7 +70,7 @@ export function CompactPhaseSelector({
                     "bg-gray-50 text-gray-700 border border-gray-200"
                   )}
                 >
-                  <span className="text-sm font-medium px-3 truncate">
+                  <span className="text-xs font-medium px-2 truncate">
                     {phase.name}
                   </span>
                 </button>
