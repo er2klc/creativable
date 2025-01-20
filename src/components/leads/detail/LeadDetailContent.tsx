@@ -29,6 +29,9 @@ export const LeadDetailContent = ({
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
 
+  // Only hide phase selector if lead has a status
+  const showPhaseSelector = !lead.status || lead.status === 'lead';
+
   if (isLoading) {
     return <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>;
   }
@@ -37,10 +40,12 @@ export const LeadDetailContent = ({
     <div className="flex-1 overflow-y-auto p-6">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <CompactPhaseSelector
-            lead={lead}
-            onUpdateLead={onUpdateLead}
-          />
+          {showPhaseSelector ? (
+            <CompactPhaseSelector
+              lead={lead}
+              onUpdateLead={onUpdateLead}
+            />
+          ) : null}
           <div className="flex gap-4">
             <LeadFileUpload leadId={lead.id} />
             <AddAppointmentDialog leadId={lead.id} leadName={lead.name} />
