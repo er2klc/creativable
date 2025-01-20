@@ -30,6 +30,13 @@ interface NewAppointmentDialogProps {
     completed?: boolean;
     cancelled?: boolean;
   };
+  defaultValues?: {
+    leadId: string;
+    time: string;
+    title: string;
+    color: string;
+    meeting_type: string;
+  };
 }
 
 export const NewAppointmentDialog = ({
@@ -37,6 +44,7 @@ export const NewAppointmentDialog = ({
   onOpenChange,
   initialSelectedDate,
   appointmentToEdit,
+  defaultValues,
 }: NewAppointmentDialogProps) => {
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -186,7 +194,7 @@ export const NewAppointmentDialog = ({
             }
             createAppointment.mutate(values);
           }}
-          defaultValues={appointmentToEdit}
+          defaultValues={appointmentToEdit || defaultValues}
           isEditing={!!appointmentToEdit}
         />
       </DialogContent>

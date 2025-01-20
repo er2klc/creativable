@@ -101,11 +101,10 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
           <NewAppointmentDialog
             open={appointmentDialogOpen}
             onOpenChange={setAppointmentDialogOpen}
-            initialSelectedDate={null}
-            appointmentToEdit={{
-              id: "",
+            initialSelectedDate={new Date()}
+            defaultValues={{
               leadId: lead.id,
-              time: "09:00",
+              time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false }),
               title: "",
               color: "#40E0D0",
               meeting_type: "phone_call"
