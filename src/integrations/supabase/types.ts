@@ -644,6 +644,59 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_files: {
+        Row: {
+          compressed_file_path: string | null
+          compressed_file_size: number | null
+          created_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          lead_id: string | null
+          metadata: Json | null
+          preview_path: string | null
+          user_id: string | null
+        }
+        Insert: {
+          compressed_file_path?: string | null
+          compressed_file_size?: number | null
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          lead_id?: string | null
+          metadata?: Json | null
+          preview_path?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          compressed_file_path?: string | null
+          compressed_file_size?: number | null
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          lead_id?: string | null
+          metadata?: Json | null
+          preview_path?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_files_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           address: string | null
