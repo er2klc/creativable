@@ -1,11 +1,11 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings } from "@/hooks/use-settings";
-import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
+import { Tables } from "@/integrations/supabase/types";
 import { NoteTab } from "./tabs/NoteTab";
 import { TaskTab } from "./tabs/TaskTab";
 import { MessageTab } from "./tabs/MessageTab";
-import { AppointmentForm } from "../calendar/appointment-dialog/AppointmentForm";
+import { AppointmentForm } from "@/components/calendar/appointment-dialog/AppointmentForm";
 import { LeadFileUpload } from "./files/LeadFileUpload";
 import { LeadFileList } from "./files/LeadFileList";
 
