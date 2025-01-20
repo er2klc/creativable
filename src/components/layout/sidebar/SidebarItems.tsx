@@ -103,7 +103,7 @@ export const useAppointmentCount = () => {
         .select('*', { count: 'exact', head: true })
         .in('team_id', teamIds)
         .gte('start_time', startTime)
-        .lte('end_time', endTime)
+        .lt('start_time', endTime)
         .eq('cancelled', false);
 
       return personalCount + teamCount;
