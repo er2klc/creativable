@@ -12,6 +12,7 @@ interface CompactPhaseSelectorProps {
 
 export function CompactPhaseSelector({ 
   lead,
+  onUpdateLead
 }: CompactPhaseSelectorProps) {
   const session = useSession();
   const {
@@ -21,6 +22,11 @@ export function CompactPhaseSelector({
     phases,
     updateLeadPipeline
   } = usePipelineManagement(lead.pipeline_id);
+
+  // Only show if lead has no status or status is 'lead'
+  if (lead.status && lead.status !== 'lead') {
+    return null;
+  }
 
   const handlePipelineChange = (pipelineId: string) => {
     setSelectedPipelineId(pipelineId);
