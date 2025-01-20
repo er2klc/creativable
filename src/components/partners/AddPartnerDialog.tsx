@@ -70,23 +70,23 @@ export const AddPartnerDialog = ({ open, onOpenChange, position, availablePartne
         return;
       }
 
-      let updateResult;
-      
       if (selectedPartnerId) {
         // Update existing partner with parent_id and level
-        updateResult = await supabase
+        const { error } = await supabase
           .from('leads')
           .update({
             parent_id: position?.parentId === 'root' ? null : position?.parentId,
             level: position?.y ? Math.floor(position.y / 200) : 1,
             status: 'partner'
           })
-          .eq('id', selectedPartnerId);
+          .eq('id', selectedPartnerId)
+          .select()
+          .single();
 
-        if (updateResult.error) throw updateResult.error;
+        if (error) throw error;
       } else {
         // Create new partner
-        updateResult = await supabase
+        const { error } = await supabase
           .from('leads')
           .insert({
             user_id: user.id,
@@ -98,10 +98,16 @@ export const AddPartnerDialog = ({ open, onOpenChange, position, availablePartne
             phase_id: phase.id,
             pipeline_id: pipeline.id,
             parent_id: position?.parentId === 'root' ? null : position?.parentId,
-            level: position?.y ? Math.floor(position.y / 200) : 1
+            level: position?.y ? Math.floor(position.y / 200) : 1,
+            onboarding_progress: {
+              message_sent: false,
+              team_invited: false,
+              training_provided: false,
+              intro_meeting_scheduled: false
+            }
           });
 
-        if (updateResult.error) throw updateResult.error;
+        if (error) throw error;
       }
 
       toast.success("Partner erfolgreich hinzugefügt");

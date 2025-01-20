@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { type Platform } from "@/config/platforms";
 import { useLeadSubscription } from "@/components/leads/detail/hooks/useLeadSubscription";
 import { LeadWithRelations } from "./detail/types/lead";
+import { CheckCircle, ArrowRight } from "lucide-react";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -145,10 +146,29 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg overflow-hidden">
         <DialogHeader className="p-0">
           {lead && (
-            <LeadDetailHeader
-              lead={lead}
-              onUpdateLead={updateLeadMutation.mutate}
-            />
+            lead.status === 'partner' && lead.onboarding_progress && 
+            Object.values(lead.onboarding_progress).every(value => value) ? (
+              <div className="p-4 bg-green-50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <span className="font-semibold text-green-700">Onboarding abgeschlossen</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => onClose()}
+                >
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                  Zurück zur Kontakt Page
+                </Button>
+              </div>
+            ) : (
+              <LeadDetailHeader
+                lead={lead}
+                onUpdateLead={updateLeadMutation.mutate}
+              />
+            )
           )}
         </DialogHeader>
 

@@ -18,7 +18,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
 import { Card } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
-import { UserPlus, User, Plus } from 'lucide-react';
+import { UserPlus, User, Plus, CheckCircle, CircleSlash, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface PartnerTreeProps {
   unassignedPartners: Tables<'leads'>[];
@@ -33,42 +34,64 @@ interface PartnerWithProfile extends Tables<'leads'> {
   avatar_url?: string | null;
 }
 
-const CustomNode = ({ data }: { data: any }) => (
-  <Card className="min-w-[200px] p-4 bg-white/80 backdrop-blur-sm border border-white/20">
-    <div className="flex items-center gap-4">
-      {data.isEmpty ? (
-        <Button 
-          variant="ghost" 
-          className="w-12 h-12 rounded-full flex items-center justify-center"
-          onClick={data.onAdd}
-        >
-          <Plus className="w-6 h-6" />
-        </Button>
-      ) : (
-        <Avatar className="w-12 h-12">
-          {!data.avatar_url && (
-            <div className="bg-primary text-primary-foreground w-full h-full rounded-full flex items-center justify-center text-xl font-semibold">
-              {data.name?.substring(0, 2).toUpperCase() || <User className="w-6 h-6" />}
-            </div>
-          )}
-          {data.avatar_url && (
-            <img
-              src={data.avatar_url}
-              alt={data.name}
-              className="w-full h-full object-cover rounded-full"
-            />
-          )}
-        </Avatar>
-      )}
-      <div className="flex flex-col">
-        <span className="font-semibold">{data.isEmpty ? 'Partner hinzufügen' : data.name}</span>
-        {data.network_marketing_id && !data.isEmpty && (
-          <span className="text-sm text-gray-500">ID: {data.network_marketing_id}</span>
+const CustomNode = ({ data }: { data: any }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    if (!data.isEmpty && data.id) {
+      navigate(`/leads/${data.id}`);
+    }
+  };
+
+  return (
+    <Card 
+      className="min-w-[200px] p-4 bg-white/80 backdrop-blur-sm border border-white/20 cursor-pointer"
+      onClick={handleClick}
+    >
+      <div className="flex items-center gap-4">
+        {data.isEmpty ? (
+          <Button 
+            variant="ghost" 
+            className="w-12 h-12 rounded-full flex items-center justify-center"
+            onClick={data.onAdd}
+          >
+            <Plus className="w-6 h-6" />
+          </Button>
+        ) : (
+          <div className="relative">
+            <Avatar className="w-12 h-12">
+              {!data.avatar_url && (
+                <div className="bg-primary text-primary-foreground w-full h-full rounded-full flex items-center justify-center text-xl font-semibold">
+                  {data.name?.substring(0, 2).toUpperCase() || <User className="w-6 h-6" />}
+                </div>
+              )}
+              {data.avatar_url && (
+                <img
+                  src={data.avatar_url}
+                  alt={data.name}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              )}
+            </Avatar>
+            {data.user_created && (
+              <img 
+                src="/your-logo.png" 
+                alt="Company Logo" 
+                className="absolute -top-1 -right-1 w-5 h-5 rounded-full"
+              />
+            )}
+          </div>
         )}
+        <div className="flex flex-col">
+          <span className="font-semibold">{data.isEmpty ? 'Partner hinzufügen' : data.name}</span>
+          {data.network_marketing_id && !data.isEmpty && (
+            <span className="text-sm text-gray-500">ID: {data.network_marketing_id}</span>
+          )}
+        </div>
       </div>
-    </div>
-  </Card>
-);
+    </Card>
+  );
+};
 
 export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProps) {
   const [isAddingPartner, setIsAddingPartner] = useState(false);
@@ -153,7 +176,8 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
 
       const transformedPartners = partners?.map(partner => ({
         ...partner,
-        avatar_url: null
+        avatar_url: null,
+        user_created: partner.user_id === user.id
       })) || [];
 
       setPartners(transformedPartners);
@@ -177,7 +201,7 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
           if (!parentNode) return;
 
           const parentX = parentNode.position.x;
-          const isLeftChild = parentX > 400; // Assuming 400 is the center
+          const isLeftChild = parentX > 400;
           const baseX = isLeftChild ? parentX - 200 : parentX + 200;
           const y = 200 * level;
 
@@ -188,9 +212,12 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
             position: { x: baseX, y },
             draggable: false,
             data: {
+              id: partner.id,
               name: partner.name,
               network_marketing_id: partner.network_marketing_id,
-              avatar_url: partner.avatar_url
+              avatar_url: partner.avatar_url,
+              user_created: partner.user_created,
+              onboarding_progress: partner.onboarding_progress
             }
           });
 
@@ -262,12 +289,68 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
     };
   }, [currentUser?.id]);
 
-  // Filter unassigned partners for the lobby - only show partners that aren't in the tree
+  // Filter partners for onboarding status
+  const pendingOnboardingPartners = partners.filter(partner => 
+    partner.onboarding_progress && 
+    Object.values(partner.onboarding_progress).some(value => !value)
+  );
+
+  const completedOnboardingPartners = partners.filter(partner => 
+    partner.onboarding_progress && 
+    Object.values(partner.onboarding_progress).every(value => value)
+  );
+
+  // Filter unassigned partners for the lobby
   const lobbyPartners = partners.filter(partner => !assignedPartnerIds.has(partner.id));
 
   return (
     <div className="space-y-8">
-      {/* Lobby Section */}
+      {/* Onboarding Overview */}
+      <div className="grid grid-cols-2 gap-4">
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <CircleSlash className="h-5 w-5 text-orange-500" />
+            <h3 className="text-lg font-semibold">Onboarding ausstehend ({pendingOnboardingPartners.length})</h3>
+          </div>
+          <div className="space-y-2">
+            {pendingOnboardingPartners.map(partner => (
+              <div key={partner.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <span>{partner.name}</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => navigate(`/leads/${partner.id}`)}
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </Card>
+        
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            <h3 className="text-lg font-semibold">Onboarding abgeschlossen ({completedOnboardingPartners.length})</h3>
+          </div>
+          <div className="space-y-2">
+            {completedOnboardingPartners.map(partner => (
+              <div key={partner.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <span>{partner.name}</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => navigate(`/leads/${partner.id}`)}
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      {/* Partner Lobby */}
       <div className="p-4 bg-gray-50 rounded-lg">
         <h3 className="text-lg font-semibold mb-4">Partner Lobby</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
