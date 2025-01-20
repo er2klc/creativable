@@ -34,10 +34,17 @@ export const supabase = createClient<Database>(
   }
 );
 
-// Add global error handler for failed requests
-supabase.rest.on('error', (error) => {
-  console.error('Supabase request failed:', error);
-  if (error.message === 'Failed to fetch') {
-    console.error('Network error - please check your connection');
+// Add error handling through global fetch listener
+const originalFetch = window.fetch;
+window.fetch = async (...args) => {
+  try {
+    const response = await originalFetch(...args);
+    return response;
+  } catch (error) {
+    console.error('Supabase request failed:', error);
+    if (error.message === 'Failed to fetch') {
+      console.error('Network error - please check your connection');
+    }
+    throw error;
   }
-});
+};
