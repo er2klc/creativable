@@ -9,6 +9,7 @@ interface LeadTimelineProps {
     messages: Tables<"messages">[];
     tasks: Tables<"tasks">[];
     notes: Tables<"notes">[];
+    lead_files: Tables<"lead_files">[];
     created_at: string;
     name: string;
   };
@@ -19,6 +20,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const messages = Array.isArray(lead.messages) ? lead.messages : [];
   const tasks = Array.isArray(lead.tasks) ? lead.tasks : [];
   const notes = Array.isArray(lead.notes) ? lead.notes : [];
+  const files = Array.isArray(lead.lead_files) ? lead.lead_files : [];
 
   const timelineItems: TimelineItemType[] = useMemo(() => [
     {
@@ -72,12 +74,23 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           color: note.color
         }
       };
-    })
+    }),
+    ...files.map(file => ({
+      id: file.id,
+      type: 'file_upload' as const,
+      content: `Datei "${file.file_name}" wurde hochgeladen`,
+      timestamp: file.created_at || new Date().toISOString(),
+      metadata: {
+        fileName: file.file_name,
+        fileType: file.file_type,
+        fileSize: file.file_size
+      }
+    }))
   ].sort((a, b) => {
     const dateA = new Date(a.timestamp || new Date());
     const dateB = new Date(b.timestamp || new Date());
     return dateB.getTime() - dateA.getTime();
-  }), [messages, tasks, notes, lead.created_at, lead.name]);
+  }), [messages, tasks, notes, files, lead.created_at, lead.name]);
 
   return (
     <div className="p-4">

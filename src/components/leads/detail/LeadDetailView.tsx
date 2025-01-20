@@ -1,24 +1,167 @@
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { Bot } from "lucide-react";
+import { Tables } from "@/integrations/supabase/types";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
+import { LeadInfoCard } from "./LeadInfoCard";
+import { TaskList } from "./TaskList";
+import { NoteList } from "./NoteList";
+import { LeadSummary } from "./LeadSummary";
 import { LeadDetailHeader } from "./LeadDetailHeader";
-import { LeadDetailContent } from "./LeadDetailContent";
+import { LeadMessages } from "./LeadMessages";
+import { CompactPhaseSelector } from "./CompactPhaseSelector";
+import { LeadTimeline } from "./LeadTimeline";
+import { ContactFieldManager } from "./detail/contact-info/ContactFieldManager";
 import { toast } from "sonner";
-import { useLeadQuery } from "./hooks/useLeadQuery";
-import { useLeadMutations } from "./hooks/useLeadMutations";
-import { useLeadSubscription } from "./hooks/useLeadSubscription";
+import { type Platform } from "@/config/platforms";
+import { useLeadSubscription } from "./detail/hooks/useLeadSubscription";
+import { useEffect } from "react";
 
 interface LeadDetailViewProps {
   leadId: string | null;
   onClose: () => void;
 }
 
+const isValidUUID = (uuid: string) => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
 export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
-  const { data: lead, isLoading, error } = useLeadQuery(leadId);
-  const { updateLeadMutation, deletePhaseChangeMutation } = useLeadMutations(leadId);
+  const queryClient = useQueryClient();
+
+  const { data: lead, isLoading, error } = useQuery({
+    queryKey: ["lead", leadId],
+    queryFn: async () => {
+      if (!leadId || !isValidUUID(leadId)) {
+        throw new Error("Invalid lead ID");
+      }
+
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*, messages(*), tasks(*), notes(*), lead_files(*)")
+        .eq("id", leadId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching lead:", error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error("Lead not found");
+      }
+
+      return data as (Tables<"leads"> & {
+        platform: Platform;
+        messages: Tables<"messages">[];
+        tasks: Tables<"tasks">[];
+        notes: Tables<"notes">[];
+        lead_files: Tables<"lead_files">[];
+      });
+    },
+    enabled: !!leadId && isValidUUID(leadId),
+  });
 
   // Set up real-time subscriptions
   useLeadSubscription(leadId);
+
+  // Subscribe to file changes
+  useEffect(() => {
+    if (!leadId) return;
+
+    const channel = supabase
+      .channel('lead-files')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'lead_files',
+          filter: `lead_id=eq.${leadId}`
+        },
+        () => {
+          console.log('File change detected, invalidating query');
+          queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [leadId, queryClient]);
+
+  const updateLeadMutation = useMutation({
+    mutationFn: async (updates: Partial<Tables<"leads">>) => {
+      if (!leadId || !isValidUUID(leadId)) {
+        throw new Error("Invalid lead ID");
+      }
+
+      // Only proceed if there are actual changes
+      const hasChanges = Object.entries(updates).some(
+        ([key, value]) => lead?.[key as keyof typeof lead] !== value
+      );
+
+      if (!hasChanges) {
+        return lead;
+      }
+
+      const { data, error } = await supabase
+        .from("leads")
+        .update(updates)
+        .eq("id", leadId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data, variables) => {
+      // Only show toast and invalidate if there were actual changes
+      const hasChanges = Object.entries(variables).some(
+        ([key, value]) => lead?.[key as keyof typeof lead] !== value
+      );
+      
+      if (hasChanges) {
+        queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+        toast.success(
+          settings?.language === "en"
+            ? "Contact updated successfully"
+            : "Kontakt erfolgreich aktualisiert"
+        );
+      }
+    },
+    onError: (error) => {
+      console.error("Error updating lead:", error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error updating contact"
+          : "Fehler beim Aktualisieren des Kontakts"
+      );
+    }
+  });
+
+  const deletePhaseChangeMutation = useMutation({
+    mutationFn: async (noteId: string) => {
+      const { error } = await supabase
+        .from("notes")
+        .delete()
+        .eq("id", noteId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      toast.success(
+        settings?.language === "en"
+          ? "Phase change deleted successfully"
+          : "Phasenänderung erfolgreich gelöscht"
+      );
+    },
+  });
 
   if (error) {
     toast.error(
@@ -42,14 +185,38 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           )}
         </DialogHeader>
 
-        {lead && (
-          <LeadDetailContent
-            lead={lead}
-            onUpdateLead={updateLeadMutation.mutate}
-            onDeletePhaseChange={deletePhaseChangeMutation.mutate}
-            isLoading={isLoading}
-          />
-        )}
+        {isLoading ? (
+          <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
+        ) : lead ? (
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="space-y-6">
+              <CompactPhaseSelector
+                lead={lead}
+                onUpdateLead={updateLeadMutation.mutate}
+              />
+              
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Bot className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">
+                    {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
+                  </h3>
+                </div>
+                <LeadSummary lead={lead} />
+              </div>
+              
+              <LeadInfoCard lead={lead} />
+              <ContactFieldManager />
+              <LeadTimeline 
+                lead={lead} 
+                onDeletePhaseChange={deletePhaseChangeMutation.mutate}
+              />
+              <TaskList leadId={lead.id} />
+              <NoteList leadId={lead.id} />
+              <LeadMessages leadId={lead.id} messages={lead.messages} />
+            </div>
+          </div>
+        ) : null}
       </DialogContent>
     </Dialog>
   );

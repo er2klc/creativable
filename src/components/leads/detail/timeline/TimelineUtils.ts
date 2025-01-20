@@ -16,7 +16,8 @@ export type TimelineItemType =
   | "upload" 
   | "contact_created" 
   | "appointment"
-  | "presentation";
+  | "presentation"
+  | "file_upload";
 
 export interface TimelineItem {
   id: string;
@@ -31,5 +32,8 @@ export interface TimelineItem {
     color?: string;
     oldPhase?: string;
     newPhase?: string;
+    fileName?: string;
+    fileType?: string;
+    fileSize?: number;
   };
 }
