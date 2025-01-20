@@ -12,7 +12,7 @@ import {
   Infinity,
   GraduationCap,
   Database,
-  Wrench
+  Waves
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -117,6 +117,36 @@ export const useAppointmentCount = () => {
   return appointmentCount;
 };
 
+export const usePersonalItems = () => {
+  const taskCount = useTaskCount();
+  const appointmentCount = useAppointmentCount();
+  const { data: elevateProgress = 0 } = useElevateProgress();
+
+  return [
+    { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
+    { title: "Kontakte", icon: Users, url: "/contacts" },
+    { title: "Pool", icon: Waves, url: "/pool" },
+    { 
+      title: "Nachrichten", 
+      icon: MessageSquare, 
+      url: "/messages",
+      badge: true 
+    },
+    { 
+      title: "Kalender", 
+      icon: Calendar, 
+      url: "/calendar",
+      badge: appointmentCount || undefined
+    },
+    { 
+      title: "Todo Liste", 
+      icon: CheckSquare, 
+      url: "/todo",
+      badge: taskCount > 0 ? taskCount : undefined
+    },
+  ];
+};
+
 export const useElevateProgress = () => {
   const user = useUser();
 
@@ -191,32 +221,3 @@ export const legalItems = [
 export const adminItems = [
   { title: "Admin Dashboard", icon: Database, url: "/admin" },
 ];
-
-export const usePersonalItems = () => {
-  const taskCount = useTaskCount();
-  const appointmentCount = useAppointmentCount();
-  const { data: elevateProgress = 0 } = useElevateProgress();
-
-  return [
-    { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
-    { title: "Kontakte", icon: Users, url: "/leads" },
-    { 
-      title: "Nachrichten", 
-      icon: MessageSquare, 
-      url: "/messages",
-      badge: true 
-    },
-    { 
-      title: "Kalender", 
-      icon: Calendar, 
-      url: "/calendar",
-      badge: appointmentCount || undefined
-    },
-    { 
-      title: "Todo Liste", 
-      icon: CheckSquare, 
-      url: "/todo",
-      badge: taskCount > 0 ? taskCount : undefined
-    },
-  ];
-};
