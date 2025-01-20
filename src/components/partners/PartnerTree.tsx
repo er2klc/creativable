@@ -88,25 +88,27 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
   };
 
   const handleNodeClick = (event: React.MouseEvent, node: Node) => {
-    // Only handle clicks on empty partner spots
     if (node.data.isEmpty) {
       setSelectedPosition({
         x: node.position.x,
         y: node.position.y,
-        parentId: node.id
+        parentId: node.id.replace('empty-', '')
       });
       setIsAddingPartner(true);
     }
   };
 
-  // Load partners and create tree structure
   useEffect(() => {
     const loadPartners = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
       const { data: partners, error } = await supabase
         .from('leads')
         .select('*')
         .eq('status', 'partner')
-        .eq('user_id', currentUser?.id);
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error loading partners:', error);
@@ -115,8 +117,7 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
 
       setPartners(partners || []);
 
-      // Create nodes for each partner
-      const newNodes = [...nodes];
+      const newNodes = [...initialNodes];
       const newEdges = [...edges];
 
       partners.forEach((partner, index) => {
@@ -146,7 +147,6 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
           type: 'smoothstep'
         });
 
-        // Add empty partner spots below this partner
         ['left', 'right'].forEach((side, sideIndex) => {
           const emptyId = `empty-${nodeId}-${side}`;
           newNodes.push({
@@ -165,7 +165,6 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
         });
       });
 
-      // If no partners yet, add initial empty spots
       if (partners.length === 0) {
         ['left', 'right'].forEach((side, index) => {
           newNodes.push({

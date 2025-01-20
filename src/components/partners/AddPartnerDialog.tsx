@@ -73,12 +73,13 @@ export const AddPartnerDialog = ({ open, onOpenChange, position, availablePartne
       let partnerData;
 
       if (selectedPartnerId) {
-        // Update existing partner with parent_id
+        // Update existing partner with parent_id and level
         const { error } = await supabase
           .from('leads')
           .update({
             parent_id: position?.parentId,
-            level: position?.y ? Math.floor(position.y / 200) : 1
+            level: position?.y ? Math.floor(position.y / 200) : 1,
+            status: 'partner'
           })
           .eq('id', selectedPartnerId);
 
