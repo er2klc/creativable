@@ -5,8 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { Tables } from "@/integrations/supabase/types";
-import { Card } from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
 import { PartnerTree } from "@/components/partners/PartnerTree";
 
 export default function Pool() {
@@ -39,6 +37,8 @@ export default function Pool() {
       if (error) throw error;
       return data as Tables<"leads">[];
     },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
   });
 
   const { data: currentUser } = useQuery({
@@ -55,6 +55,8 @@ export default function Pool() {
 
       return profile;
     },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
   });
 
   return (
@@ -71,6 +73,7 @@ export default function Pool() {
           <PartnerTree 
             unassignedPartners={leads} 
             currentUser={currentUser}
+            onContactClick={(id) => setSelectedLeadId(id)}
           />
         </TabsContent>
 

@@ -61,6 +61,8 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
   });
 
   useLeadSubscription(leadId);
@@ -143,7 +145,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           : "Kontakt erfolgreich gelöscht"
       );
       onClose();
-      navigate('/leads');
+      navigate('/contacts');
     },
     onError: (error) => {
       console.error("Error deleting lead:", error);
