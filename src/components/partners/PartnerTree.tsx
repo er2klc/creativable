@@ -28,6 +28,7 @@ interface PartnerTreeProps {
     avatar_url?: string | null;
     display_name?: string | null;
   } | null;
+  onContactClick?: (id: string) => void;
 }
 
 interface PartnerWithProfile extends Tables<'leads'> {
@@ -39,7 +40,11 @@ const CustomNode = ({ data }: { data: any }) => {
 
   const handleClick = () => {
     if (!data.isEmpty && data.id && !data.isManual) {
-      navigate(`/leads/${data.id}`);
+      if (data.onContactClick) {
+        data.onContactClick(data.id);
+      } else {
+        navigate(`/contacts/${data.id}`);
+      }
     }
   };
 
@@ -93,7 +98,7 @@ const CustomNode = ({ data }: { data: any }) => {
   );
 };
 
-export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProps) {
+export function PartnerTree({ unassignedPartners, currentUser, onContactClick }: PartnerTreeProps) {
   const [isAddingPartner, setIsAddingPartner] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<{ x: number; y: number; parentId: string } | null>(null);
   const [partners, setPartners] = useState<PartnerWithProfile[]>([]);
@@ -127,6 +132,7 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
         name: currentUser?.display_name || 'Mein Profil',
         avatar_url: currentUser?.avatar_url,
         network_marketing_id: null,
+        onContactClick,
       },
     },
     createEmptySlot('root-left', { x: 200, y: 200 }, 'root'),
@@ -221,7 +227,8 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
               avatar_url: partner.avatar_url,
               user_created: partner.user_created,
               onboarding_progress: partner.onboarding_progress,
-              isManual: false
+              isManual: false,
+              onContactClick,
             }
           });
 
