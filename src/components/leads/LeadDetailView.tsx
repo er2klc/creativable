@@ -1,6 +1,5 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Bot, CheckCircle, ArrowRight, Trash2 } from "lucide-react";
-import { Tables } from "@/integrations/supabase/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
@@ -14,21 +13,11 @@ import { CompactPhaseSelector } from "./detail/CompactPhaseSelector";
 import { LeadTimeline } from "./detail/LeadTimeline";
 import { ContactFieldManager } from "@/components/leads/detail/contact-info/ContactFieldManager";
 import { toast } from "sonner";
-import { type Platform } from "@/config/platforms";
 import { useLeadSubscription } from "@/components/leads/detail/hooks/useLeadSubscription";
 import { LeadWithRelations } from "./detail/types/lead";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 
 interface LeadDetailViewProps {
@@ -77,7 +66,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   useLeadSubscription(leadId);
 
   const updateLeadMutation = useMutation({
-    mutationFn: async (updates: Partial<Tables<"leads">>) => {
+    mutationFn: async (updates: Partial<LeadWithRelations>) => {
       if (!leadId || !isValidUUID(leadId)) {
         throw new Error("Invalid lead ID");
       }
@@ -129,7 +118,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       if (!leadId) return;
 
       // Delete related records first
-      const tables = ['messages', 'tasks', 'notes', 'lead_files'];
+      const tables = ['messages', 'tasks', 'notes', 'lead_files'] as const;
       for (const table of tables) {
         const { error } = await supabase
           .from(table)
