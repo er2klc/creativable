@@ -102,12 +102,12 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // Join with profiles to get avatar_url
+      // First get all partners
       const { data: partners, error } = await supabase
         .from('leads')
         .select(`
           *,
-          profile:user_id (
+          profiles:leads_profiles!inner(
             avatar_url
           )
         `)
@@ -123,7 +123,7 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
       // Transform the data to include avatar_url at the top level
       const transformedPartners = partners?.map(partner => ({
         ...partner,
-        avatar_url: partner.profile?.avatar_url
+        avatar_url: partner.profiles?.avatar_url
       })) || [];
 
       setPartners(transformedPartners);
