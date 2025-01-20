@@ -6,11 +6,13 @@ import { LeadInfoCard } from "./LeadInfoCard";
 import { TaskList } from "./TaskList";
 import { NoteList } from "./NoteList";
 import { LeadSummary } from "./LeadSummary";
-import { LeadDetailHeader } from "./LeadDetailHeader";
 import { LeadMessages } from "./LeadMessages";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { LeadTimeline } from "./LeadTimeline";
 import { ContactFieldManager } from "./contact-info/ContactFieldManager";
+import { LeadFileUpload } from "./files/LeadFileUpload";
+import { LeadFileList } from "./files/LeadFileList";
+import { AddAppointmentDialog } from "./appointments/AddAppointmentDialog";
 
 interface LeadDetailContentProps {
   lead: Tables<"leads"> & {
@@ -30,7 +32,6 @@ export const LeadDetailContent = ({
   isLoading 
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
-  console.log('LeadDetailContent rendering with lead:', lead);
 
   if (isLoading) {
     return <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>;
@@ -39,10 +40,16 @@ export const LeadDetailContent = ({
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="space-y-6">
-        <CompactPhaseSelector
-          lead={lead}
-          onUpdateLead={onUpdateLead}
-        />
+        <div className="flex justify-between items-center">
+          <CompactPhaseSelector
+            lead={lead}
+            onUpdateLead={onUpdateLead}
+          />
+          <div className="flex gap-4">
+            <LeadFileUpload leadId={lead.id} />
+            <AddAppointmentDialog leadId={lead.id} leadName={lead.name} />
+          </div>
+        </div>
         
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -56,6 +63,7 @@ export const LeadDetailContent = ({
         
         <LeadInfoCard lead={lead} />
         <ContactFieldManager />
+        <LeadFileList leadId={lead.id} />
         <LeadTimeline 
           lead={lead} 
           onDeletePhaseChange={onDeletePhaseChange}
