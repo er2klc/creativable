@@ -93,11 +93,17 @@ export default function LeadDetail() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <LeadDetailHeader lead={lead} />
+      <LeadDetailHeader 
+        lead={lead} 
+        onUpdateLead={updateLeadMutation.mutate}
+      />
       <LeadSummary lead={lead} />
       <LeadInfoCard lead={lead} />
       <LeadDetailTabs lead={lead} />
-      <LeadTimeline lead={lead} onDeletePhaseChange={deletePhaseChangeMutation.mutate} />
+      <LeadTimeline 
+        lead={lead} 
+        onDeletePhaseChange={deletePhaseChangeMutation.mutate}
+      />
     </div>
   );
 }

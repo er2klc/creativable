@@ -12,11 +12,11 @@ import { LeadDetailHeader } from "./LeadDetailHeader";
 import { LeadMessages } from "./LeadMessages";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { LeadTimeline } from "./LeadTimeline";
-import { ContactFieldManager } from "./detail/contact-info/ContactFieldManager";
+import { ContactFieldManager } from "@/components/leads/detail/contact-info/ContactFieldManager";
 import { toast } from "sonner";
 import { type Platform } from "@/config/platforms";
-import { useLeadSubscription } from "./detail/hooks/useLeadSubscription";
-import { useEffect } from "react";
+import { useLeadSubscription } from "@/components/leads/detail/hooks/useLeadSubscription";
+import { LeadWithRelations } from "./types/lead";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -54,45 +54,12 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Lead not found");
       }
 
-      return data as (Tables<"leads"> & {
-        platform: Platform;
-        messages: Tables<"messages">[];
-        tasks: Tables<"tasks">[];
-        notes: Tables<"notes">[];
-        lead_files: Tables<"lead_files">[];
-      });
+      return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
   });
 
-  // Set up real-time subscriptions
   useLeadSubscription(leadId);
-
-  // Subscribe to file changes
-  useEffect(() => {
-    if (!leadId) return;
-
-    const channel = supabase
-      .channel('lead-files')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'lead_files',
-          filter: `lead_id=eq.${leadId}`
-        },
-        () => {
-          console.log('File change detected, invalidating query');
-          queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [leadId, queryClient]);
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
