@@ -204,7 +204,7 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
           newEdges.push(
             {
               id: `e-${partner.parent_id}-${nodeId}`,
-              source: partner.parent_id === 'root' ? 'root' : `partner-${partner.parent_id}`,
+              source: partner.parent_id === null ? 'root' : `partner-${partner.parent_id}`,
               target: nodeId,
               type: 'smoothstep'
             },
@@ -232,9 +232,9 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
     if (currentUser?.id) {
       loadPartners();
     }
-  }, [currentUser?.id]);
+  }, [currentUser?.id, setNodes, setEdges]);
 
-  // Filter unassigned partners for the lobby
+  // Filter unassigned partners for the lobby - only show partners that aren't in the tree
   const lobbyPartners = partners.filter(partner => !assignedPartnerIds.has(partner.id));
 
   return (
@@ -242,7 +242,7 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
       {/* Lobby Section */}
       <div className="p-4 bg-gray-50 rounded-lg">
         <h3 className="text-lg font-semibold mb-4">Partner Lobby</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
           {lobbyPartners.map((partner) => (
             <CustomNode key={partner.id} data={partner} />
           ))}
