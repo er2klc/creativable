@@ -3,7 +3,7 @@ import {
   Users, 
   MessageSquare, 
   Calendar,
-  CheckSquare, 
+  CheckSquare,
   BarChart, 
   Settings,
   FileText,
@@ -67,89 +67,50 @@ export const useTaskCount = () => {
 
 export const useAppointmentCount = () => {
   const queryClient = useQueryClient();
-  const user = useUser();
 
   const { data: appointmentCount = 0 } = useQuery({
     queryKey: ['todays-appointments'],
     queryFn: async () => {
-      if (!user?.id) return 0;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
 
       const today = new Date();
       const startTime = startOfDay(today).toISOString();
       const endTime = endOfDay(today).toISOString();
 
-      // Get personal appointments
-      const { count: personalCount = 0 } = await supabase
+      const { count } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .gte('due_date', startTime)
-        .lt('due_date', endTime)
+        .lte('due_date', endTime)
         .eq('completed', false)
         .eq('cancelled', false);
 
-      // Get team memberships
-      const { data: teamMemberships } = await supabase
-        .from('team_members')
-        .select('team_id')
-        .eq('user_id', user.id);
-
-      const teamIds = teamMemberships?.map(tm => tm.team_id) || [];
-
-      if (teamIds.length === 0) return personalCount;
-
-      // Get team appointments with fixed query syntax
-      const { count: teamCount = 0 } = await supabase
-        .from('team_calendar_events')
-        .select('*', { count: 'exact', head: true })
-        .in('team_id', teamIds)
-        .gte('start_time', startTime)
-        .lt('start_time', endTime)
-        .eq('cancelled', false);
-
-      return personalCount + teamCount;
+      return count || 0;
     },
     refetchInterval: 30000,
-    retry: 3,
-    retryDelay: 1000,
   });
 
-  // Subscribe to real-time updates for appointments and team events
+  // Subscribe to real-time updates for appointments
   useEffect(() => {
-    const channels = [
-      supabase
-        .channel('appointment-updates')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'tasks'
-          },
-          () => {
-            queryClient.invalidateQueries({ queryKey: ['todays-appointments'] });
-          }
-        )
-        .subscribe(),
-
-      supabase
-        .channel('team-event-updates')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'team_calendar_events'
-          },
-          () => {
-            queryClient.invalidateQueries({ queryKey: ['todays-appointments'] });
-          }
-        )
-        .subscribe()
-    ];
+    const channel = supabase
+      .channel('appointment-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['todays-appointments'] });
+        }
+      )
+      .subscribe();
 
     return () => {
-      channels.forEach(channel => supabase.removeChannel(channel));
+      supabase.removeChannel(channel);
     };
   }, [queryClient]);
 
