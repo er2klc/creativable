@@ -25,14 +25,14 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const timelineItems: TimelineItemType[] = useMemo(() => [
     {
       id: 'contact-created',
-      type: 'contact_created' as const,
+      type: 'contact_created',
       content: `Kontakt ${lead.name} wurde erstellt`,
       created_at: lead.created_at || new Date().toISOString(),
       timestamp: lead.created_at || new Date().toISOString(),
     },
     ...messages.map(message => ({
       id: message.id,
-      type: 'message' as const,
+      type: 'message',
       content: message.content,
       created_at: message.sent_at || new Date().toISOString(),
       timestamp: message.sent_at || new Date().toISOString(),
@@ -41,7 +41,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     })),
     ...tasks.map(task => ({
       id: task.id,
-      type: (task.meeting_type ? 'appointment' : 'task') as TimelineItemType,
+      type: task.meeting_type ? 'appointment' : 'task',
       content: task.title,
       created_at: task.created_at || new Date().toISOString(),
       timestamp: task.created_at || new Date().toISOString(),
@@ -61,7 +61,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       if (metadata?.type === 'phase_change') {
         return {
           id: note.id,
-          type: 'phase_change' as const,
+          type: 'phase_change',
           content: note.content,
           created_at: note.created_at || new Date().toISOString(),
           timestamp: note.created_at || new Date().toISOString(),
@@ -74,7 +74,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       }
       return {
         id: note.id,
-        type: 'note' as const,
+        type: 'note',
         content: note.content,
         created_at: note.created_at || new Date().toISOString(),
         timestamp: note.created_at || new Date().toISOString(),
@@ -85,7 +85,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     }),
     ...files.map(file => ({
       id: file.id,
-      type: 'file_upload' as const,
+      type: 'file_upload',
       content: `Datei "${file.file_name}" wurde hochgeladen`,
       created_at: file.created_at || new Date().toISOString(),
       timestamp: file.created_at || new Date().toISOString(),
