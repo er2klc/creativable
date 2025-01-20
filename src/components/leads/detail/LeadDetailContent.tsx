@@ -1,4 +1,3 @@
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
@@ -13,13 +12,10 @@ import { ContactFieldManager } from "./contact-info/ContactFieldManager";
 import { LeadFileUpload } from "./files/LeadFileUpload";
 import { LeadFileList } from "./files/LeadFileList";
 import { AddAppointmentDialog } from "./appointments/AddAppointmentDialog";
+import { LeadWithRelations } from "./types/lead";
 
 interface LeadDetailContentProps {
-  lead: Tables<"leads"> & {
-    messages: Tables<"messages">[];
-    tasks: Tables<"tasks">[];
-    notes: Tables<"notes">[];
-  };
+  lead: LeadWithRelations;
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
   onDeletePhaseChange: (noteId: string) => void;
   isLoading: boolean;

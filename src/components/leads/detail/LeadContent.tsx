@@ -1,6 +1,5 @@
 import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
-import { Platform } from "@/config/platforms";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadInfoCard } from "./LeadInfoCard";
 import { TaskList } from "./TaskList";
@@ -9,14 +8,11 @@ import { LeadSummary } from "./LeadSummary";
 import { LeadMessages } from "./LeadMessages";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { LeadTimeline } from "./LeadTimeline";
+import { ContactFieldManager } from "./contact-info/ContactFieldManager";
+import { LeadWithRelations } from "./types/lead";
 
 interface LeadContentProps {
-  lead: Tables<"leads"> & {
-    platform: Platform;
-    messages: Tables<"messages">[];
-    tasks: Tables<"tasks">[];
-    notes: Tables<"notes">[];
-  };
+  lead: LeadWithRelations;
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
   onDeletePhaseChange: (noteId: string) => void;
 }
@@ -43,6 +39,7 @@ export const LeadContent = ({ lead, onUpdateLead, onDeletePhaseChange }: LeadCon
         </div>
         
         <LeadInfoCard lead={lead} />
+        <ContactFieldManager />
         <LeadTimeline 
           lead={lead} 
           onDeletePhaseChange={onDeletePhaseChange}
