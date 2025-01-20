@@ -23,12 +23,12 @@ export const supabase = createClient<Database>(
       headers: {
         'X-Client-Info': 'supabase-js-web'
       },
-      fetch: (url, options = {}) => {
+      fetch: (url: string, options: RequestInit = {}) => {
         return fetch(url, {
           ...options,
           credentials: 'include',
           headers: {
-            ...options.headers,
+            ...(options.headers as Record<string, string>),
             'Cache-Control': 'no-cache',
           }
         }).catch(error => {
