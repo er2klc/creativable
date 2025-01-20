@@ -103,12 +103,14 @@ export const useAppointmentCount = () => {
         .select('*', { count: 'exact', head: true })
         .in('team_id', teamIds)
         .gte('start_time', startTime)
-        .lte('start_time', endTime)
+        .lte('end_time', endTime)
         .eq('cancelled', false);
 
       return personalCount + teamCount;
     },
     refetchInterval: 30000,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // Subscribe to real-time updates for appointments and team events
