@@ -76,7 +76,7 @@ export const NewAppointmentDialog = ({
         const { error } = await supabase
           .from("tasks")
           .update({
-            lead_id: values.leadId,
+            lead_id: values.leadId || null,
             title: values.title,
             due_date: appointmentDate.toISOString(),
             meeting_type: values.meeting_type,
@@ -90,7 +90,7 @@ export const NewAppointmentDialog = ({
       } else {
         const { error } = await supabase.from("tasks").insert({
           user_id: user.id,
-          lead_id: values.leadId,
+          lead_id: values.leadId || null,
           title: values.title,
           due_date: appointmentDate.toISOString(),
           meeting_type: values.meeting_type,
