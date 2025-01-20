@@ -169,14 +169,21 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
       const assignedIds = new Set<string>();
 
       transformedPartners.forEach((partner) => {
-        if (partner.parent_id) {
+        if (partner.parent_id !== null) {
           assignedIds.add(partner.id);
           const nodeId = `partner-${partner.id}`;
           const level = partner.level || 1;
           
           // Calculate position based on whether it's a left or right child
-          const isLeftChild = partner.position === 'left';
-          const baseX = isLeftChild ? 200 : 600;
+          const parentNode = partner.parent_id === null ? 
+            newNodes.find(n => n.id === 'root') : 
+            newNodes.find(n => n.id === `partner-${partner.parent_id}`);
+
+          if (!parentNode) return;
+
+          const parentX = parentNode.position.x;
+          const isLeftChild = parentX > 400; // Assuming 400 is the center
+          const baseX = isLeftChild ? parentX - 200 : parentX + 200;
           const y = 200 * level;
 
           newNodes.push({

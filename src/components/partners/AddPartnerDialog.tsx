@@ -70,8 +70,6 @@ export const AddPartnerDialog = ({ open, onOpenChange, position, availablePartne
         return;
       }
 
-      let partnerData;
-
       if (selectedPartnerId) {
         // Update existing partner with parent_id and level
         const { error } = await supabase
