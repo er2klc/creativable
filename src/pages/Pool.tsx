@@ -5,7 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { Tables } from "@/integrations/supabase/types";
-import { PartnerTree } from "@/components/partners/PartnerTree";
+import { Card } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
 
 export default function Pool() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -14,49 +15,15 @@ export default function Pool() {
   const { data: leads = [] } = useQuery({
     queryKey: ["pool-leads", status],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      // Get the user's network marketing ID
-      const { data: settings } = await supabase
-        .from('settings')
-        .select('network_marketing_id')
-        .eq('user_id', user.id)
-        .single();
-
-      // Get leads that are either:
-      // 1. Created by the current user
-      // 2. Have a matching network_marketing_id with the current user's settings
       const { data, error } = await supabase
         .from("leads")
         .select("*")
         .eq("status", status)
-        .or(`user_id.eq.${user.id},network_marketing_id.eq.${settings?.network_marketing_id}`)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as Tables<"leads">[];
     },
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
-  });
-
-  const { data: currentUser } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      return profile;
-    },
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
   });
 
   return (
@@ -70,11 +37,27 @@ export default function Pool() {
         </TabsList>
 
         <TabsContent value="partner" className="mt-6">
-          <PartnerTree 
-            unassignedPartners={leads} 
-            currentUser={currentUser}
-            onContactClick={(id) => setSelectedLeadId(id)}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {leads.map((lead) => (
+              <Card 
+                key={lead.id} 
+                className="p-4 cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => setSelectedLeadId(lead.id)}
+              >
+                <div className="flex items-center space-x-4">
+                  <Avatar className="h-12 w-12">
+                    <div className="bg-primary h-full w-full flex items-center justify-center text-white font-semibold">
+                      {lead.name.charAt(0)}
+                    </div>
+                  </Avatar>
+                  <div>
+                    <h3 className="font-semibold">{lead.name}</h3>
+                    <p className="text-sm text-gray-500">{lead.company_name || 'Kein Unternehmen'}</p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
 
         <TabsContent value="customer">

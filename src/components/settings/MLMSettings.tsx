@@ -6,25 +6,16 @@ import { TargetAudienceField } from "./mlm/TargetAudienceField";
 import { UspField } from "./mlm/UspField";
 import { BusinessDescriptionField } from "./mlm/BusinessDescriptionField";
 import { useSettings } from "@/hooks/use-settings";
-import { Building2, Package, Users2, Star, FileText, Sparkles, Hash } from "lucide-react";
+import { Building2, Package, Users2, Star, FileText, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Settings } from "@/integrations/supabase/types/settings";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 export function MLMSettings() {
   const { settings, updateSettings } = useSettings();
   const [isLoading, setIsLoading] = React.useState(false);
-  const [networkMarketingId, setNetworkMarketingId] = React.useState(settings?.network_marketing_id || "");
-
-  React.useEffect(() => {
-    if (settings?.network_marketing_id) {
-      setNetworkMarketingId(settings.network_marketing_id);
-    }
-  }, [settings?.network_marketing_id]);
 
   const fetchCompanyInfo = async () => {
     if (!settings?.company_name) {
@@ -69,16 +60,6 @@ export function MLMSettings() {
     }
   };
 
-  const handleNetworkMarketingIdSave = async () => {
-    try {
-      await updateSettings.mutateAsync({ network_marketing_id: networkMarketingId });
-      toast.success("Network Marketing ID wurde erfolgreich gespeichert");
-    } catch (error) {
-      console.error('Error updating network marketing ID:', error);
-      toast.error("Fehler beim Speichern der Network Marketing ID");
-    }
-  };
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -90,25 +71,6 @@ export function MLMSettings() {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="relative">
-          <Hash className="absolute left-0 top-8 h-5 w-5 text-gray-500" />
-          <div className="pl-8">
-            <div className="space-y-2">
-              <Label>Network Marketing ID</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={networkMarketingId}
-                  onChange={(e) => setNetworkMarketingId(e.target.value)}
-                  placeholder="Ihre Network Marketing ID"
-                />
-                <Button onClick={handleNetworkMarketingIdSave}>
-                  Speichern
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="relative">
           <Building2 className="absolute left-0 top-8 h-5 w-5 text-gray-500" />
           <div className="pl-8 flex items-start gap-4">
