@@ -11,7 +11,7 @@ import { Form } from "@/components/ui/form";
 interface AppointmentFormProps {
   onSubmit: (values: any) => void;
   defaultValues?: {
-    id: string;
+    id?: string;
     leadId: string;
     time: string;
     title: string;
