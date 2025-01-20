@@ -64,12 +64,14 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
   const [isAddingPartner, setIsAddingPartner] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<{ x: number; y: number; parentId: string } | null>(null);
   const [partners, setPartners] = useState<PartnerWithProfile[]>([]);
+  const [assignedPartnerIds, setAssignedPartnerIds] = useState<Set<string>>(new Set());
 
   const initialNodes: Node[] = [
     {
       id: 'root',
       type: 'custom',
       position: { x: 400, y: 50 },
+      draggable: false,
       data: {
         name: currentUser?.display_name || 'Mein Profil',
         avatar_url: currentUser?.avatar_url,
@@ -127,72 +129,63 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
 
       setPartners(transformedPartners);
 
+      // Create tree structure for assigned partners
       const newNodes = [...initialNodes];
       const newEdges = [...edges];
+      const assignedIds = new Set<string>();
 
-      transformedPartners.forEach((partner, index) => {
-        const nodeId = `partner-${partner.id}`;
-        const parentId = partner.parent_id || 'root';
-        const level = partner.level || 1;
-        const position = {
-          x: 200 + (index % 2) * 400,
-          y: 200 * level
-        };
+      transformedPartners.forEach((partner) => {
+        if (partner.parent_id) {
+          assignedIds.add(partner.id);
+          const nodeId = `partner-${partner.id}`;
+          const level = partner.level || 1;
+          const position = {
+            x: 200 + (level % 2) * 400,
+            y: 200 * level
+          };
 
-        newNodes.push({
-          id: nodeId,
-          type: 'custom',
-          position,
-          data: {
-            name: partner.name,
-            network_marketing_id: partner.network_marketing_id,
-            avatar_url: partner.avatar_url
-          }
-        });
-
-        newEdges.push({
-          id: `e-${parentId}-${nodeId}`,
-          source: parentId,
-          target: nodeId,
-          type: 'smoothstep'
-        });
-
-        ['left', 'right'].forEach((side, sideIndex) => {
-          const emptyId = `empty-${nodeId}-${side}`;
           newNodes.push({
-            id: emptyId,
+            id: nodeId,
             type: 'custom',
-            position: {
-              x: position.x - 200 + sideIndex * 400,
-              y: position.y + 200
-            },
+            position,
+            draggable: false,
             data: {
-              isEmpty: true,
-              name: '+ Partner hinzufügen',
-              parentId: nodeId
+              name: partner.name,
+              network_marketing_id: partner.network_marketing_id,
+              avatar_url: partner.avatar_url
             }
           });
-        });
+
+          // Add connection to parent
+          newEdges.push({
+            id: `e-${partner.parent_id}-${nodeId}`,
+            source: partner.parent_id === 'root' ? 'root' : `partner-${partner.parent_id}`,
+            target: nodeId,
+            type: 'smoothstep'
+          });
+
+          // Add empty slots for potential children
+          ['left', 'right'].forEach((side, sideIndex) => {
+            const emptyId = `empty-${nodeId}-${side}`;
+            newNodes.push({
+              id: emptyId,
+              type: 'custom',
+              position: {
+                x: position.x - 200 + sideIndex * 400,
+                y: position.y + 200
+              },
+              draggable: false,
+              data: {
+                isEmpty: true,
+                name: '+ Partner hinzufügen',
+                parentId: nodeId
+              }
+            });
+          });
+        }
       });
 
-      if (partners.length === 0) {
-        ['left', 'right'].forEach((side, index) => {
-          newNodes.push({
-            id: `empty-root-${side}`,
-            type: 'custom',
-            position: {
-              x: 200 + index * 400,
-              y: 200
-            },
-            data: {
-              isEmpty: true,
-              name: '+ Partner hinzufügen',
-              parentId: 'root'
-            }
-          });
-        });
-      }
-
+      setAssignedPartnerIds(assignedIds);
       setNodes(newNodes);
       setEdges(newEdges);
     };
@@ -202,30 +195,47 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
     }
   }, [currentUser?.id]);
 
+  // Filter unassigned partners for the lobby
+  const lobbyPartners = partners.filter(partner => !assignedPartnerIds.has(partner.id));
+
   return (
-    <div className="h-[600px] w-full">
-      <div className="w-full h-full border rounded-lg bg-gray-50">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={handleNodeClick}
-          nodeTypes={nodeTypes}
-          fitView
-        >
-          <Controls />
-          <MiniMap />
-          <Background />
-        </ReactFlow>
+    <div className="space-y-8">
+      {/* Lobby Section */}
+      <div className="p-4 bg-gray-50 rounded-lg">
+        <h3 className="text-lg font-semibold mb-4">Partner Lobby</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {lobbyPartners.map((partner) => (
+            <CustomNode key={partner.id} data={partner} />
+          ))}
+        </div>
+      </div>
+
+      {/* Tree Section */}
+      <div className="h-[600px] w-full">
+        <div className="w-full h-full border rounded-lg bg-gray-50">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onNodeClick={handleNodeClick}
+            nodeTypes={nodeTypes}
+            fitView
+            nodesDraggable={false}
+          >
+            <Controls />
+            <MiniMap />
+            <Background />
+          </ReactFlow>
+        </div>
       </div>
 
       <AddPartnerDialog
         open={isAddingPartner}
         onOpenChange={setIsAddingPartner}
         position={selectedPosition}
-        availablePartners={unassignedPartners}
+        availablePartners={lobbyPartners}
       />
     </div>
   );
