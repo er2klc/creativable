@@ -133,8 +133,8 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
     custom: CustomNode,
   };
 
-  useEffect(() => {
-    const loadPartners = async () => {
+  const loadPartners = async () => {
+    try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
@@ -164,7 +164,7 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
       const assignedIds = new Set<string>();
 
       transformedPartners.forEach((partner) => {
-        if (partner.parent_id !== null) {
+        if (partner.parent_id !== null || partner.parent_id === 'root') {
           assignedIds.add(partner.id);
           const nodeId = `partner-${partner.id}`;
           const level = partner.level || 1;
@@ -230,8 +230,12 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
       setAssignedPartnerIds(assignedIds);
       setNodes(newNodes);
       setEdges(newEdges);
-    };
+    } catch (error) {
+      console.error('Error in loadPartners:', error);
+    }
+  };
 
+  useEffect(() => {
     if (currentUser?.id) {
       loadPartners();
     }
@@ -256,7 +260,7 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUser?.id, setNodes, setEdges]);
+  }, [currentUser?.id]);
 
   // Filter unassigned partners for the lobby - only show partners that aren't in the tree
   const lobbyPartners = partners.filter(partner => !assignedPartnerIds.has(partner.id));
