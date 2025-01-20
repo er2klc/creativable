@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 interface LeadFileUploadProps {
   leadId: string;
@@ -13,17 +14,18 @@ export const LeadFileUpload = ({ leadId }: LeadFileUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   const { settings } = useSettings();
+  const { user } = useAuth();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
 
     setIsUploading(true);
     try {
-      // Create a properly structured file path
+      // Create a properly structured file path with user_id/lead_id/filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${leadId}/${fileName}`;
+      const filePath = `${user.id}/${leadId}/${fileName}`;
 
       // Upload file to storage
       const { error: uploadError } = await supabase.storage
@@ -37,6 +39,7 @@ export const LeadFileUpload = ({ leadId }: LeadFileUploadProps) => {
         .from('lead_files')
         .insert({
           lead_id: leadId,
+          user_id: user.id,
           file_name: file.name,
           file_path: filePath,
           file_type: file.type,
