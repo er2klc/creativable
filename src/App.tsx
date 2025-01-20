@@ -16,12 +16,28 @@ const App = () => {
   return (
     <AppProvider>
       <Routes>
+        {/* Root route */}
+        <Route 
+          path="/" 
+          element={<Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />} 
+        />
+
+        {/* Legacy route redirects */}
+        <Route 
+          path="/leads" 
+          element={<Navigate to="/contacts" replace />} 
+        />
+        <Route 
+          path="/leads/:id" 
+          element={<Navigate to="/contacts/:id" replace />} 
+        />
+
         {/* Public Routes */}
         {publicRoutes.map(route => (
           <Route key={route.path} path={route.path} element={route.element} />
         ))}
         
-        {/* Protected Routes */}
+        {/* Protected Routes with shared layout */}
         <Route element={
           <ProtectedRoute>
             <AppLayout>
@@ -38,26 +54,10 @@ const App = () => {
           ))}
         </Route>
 
-        {/* Root route */}
-        <Route 
-          path="/" 
-          element={<Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />} 
-        />
-
-        {/* Catch all route */}
+        {/* Catch all route - must be last */}
         <Route 
           path="*" 
           element={<Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />} 
-        />
-
-        {/* Legacy route redirects */}
-        <Route 
-          path="/leads" 
-          element={<Navigate to="/contacts" replace />} 
-        />
-        <Route 
-          path="/leads/:id" 
-          element={<Navigate to="/contacts/:id" replace />} 
         />
       </Routes>
       {showChat && <ChatButton />}
