@@ -7,6 +7,9 @@ import { toast } from "sonner";
 
 const PUBLIC_ROUTES = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram"];
 
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 1000;
+
 export const AuthStateHandler = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,11 +18,8 @@ export const AuthStateHandler = () => {
   useEffect(() => {
     let subscription: { unsubscribe: () => void } | null = null;
     let refreshInterval: NodeJS.Timeout;
-    let retryCount = 0;
-    const MAX_RETRIES = 3;
-    const RETRY_DELAY = 1000; // 1 second
     
-    const setupAuth = async () => {
+    const setupAuth = async (retryCount = 0) => {
       try {
         console.log("[Auth] Setting up auth state handler...");
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -27,18 +27,14 @@ export const AuthStateHandler = () => {
         if (sessionError) {
           console.error("[Auth] Session error:", sessionError);
           if (retryCount < MAX_RETRIES) {
-            retryCount++;
-            console.log(`[Auth] Retrying setup (${retryCount}/${MAX_RETRIES})`);
-            setTimeout(setupAuth, RETRY_DELAY * retryCount);
+            const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
+            console.log(`[Auth] Retrying setup in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+            setTimeout(() => setupAuth(retryCount + 1), delay);
             return;
           }
           throw sessionError;
         }
         
-        // Reset retry count on successful setup
-        retryCount = 0;
-        
-        // Set up auth state listener
         const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
           async (event: AuthChangeEvent, currentSession) => {
             console.log("[Auth] State changed:", event, currentSession?.user?.id);
@@ -61,12 +57,10 @@ export const AuthStateHandler = () => {
 
         subscription = authSubscription;
 
-        // Initial route check
         if (!session && !PUBLIC_ROUTES.includes(location.pathname)) {
           navigate("/auth");
         }
 
-        // Set up session refresh interval with exponential backoff
         const refreshWithRetry = async (attempt = 0) => {
           try {
             console.log("[Auth] Attempting to refresh session...");
@@ -88,7 +82,6 @@ export const AuthStateHandler = () => {
           }
         };
 
-        // Refresh every 4 minutes to prevent token expiration
         refreshInterval = setInterval(() => refreshWithRetry(), 4 * 60 * 1000);
 
       } catch (error) {
