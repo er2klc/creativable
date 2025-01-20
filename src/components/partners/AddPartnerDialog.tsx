@@ -77,7 +77,7 @@ export const AddPartnerDialog = ({ open, onOpenChange, position, availablePartne
         const { error } = await supabase
           .from('leads')
           .update({
-            parent_id: position?.parentId,
+            parent_id: position?.parentId === 'root' ? null : position?.parentId,
             level: position?.y ? Math.floor(position.y / 200) : 1,
             status: 'partner'
           })
@@ -97,7 +97,7 @@ export const AddPartnerDialog = ({ open, onOpenChange, position, availablePartne
             platform: 'Direct',
             phase_id: phase.id,
             pipeline_id: pipeline.id,
-            parent_id: position?.parentId,
+            parent_id: position?.parentId === 'root' ? null : position?.parentId,
             level: position?.y ? Math.floor(position.y / 200) : 1
           });
 
