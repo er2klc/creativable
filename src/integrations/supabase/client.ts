@@ -16,45 +16,11 @@ export const supabase = createClient<Database>(
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: true,
-      flowType: 'pkce'
+      detectSessionInUrl: true
     },
     global: {
       headers: {
         'X-Client-Info': 'supabase-js-web'
-      },
-      fetch: (url: string, options: RequestInit = {}) => {
-        const fetchOptions: RequestInit = {
-          ...options,
-          credentials: 'include',
-          headers: {
-            ...(options.headers as Record<string, string>),
-            'Cache-Control': 'no-cache',
-          }
-        };
-
-        return fetch(url, fetchOptions)
-          .then(response => {
-            if (!response.ok) {
-              console.error('HTTP Error Response:', {
-                status: response.status,
-                statusText: response.statusText,
-                url: url
-              });
-            }
-            return response;
-          })
-          .catch(error => {
-            console.error('Supabase request failed:', {
-              url,
-              error,
-              method: options.method || 'GET'
-            });
-            if (error.message === 'Failed to fetch') {
-              console.error('Network error - please check your connection');
-            }
-            throw error;
-          });
       }
     },
     db: {
@@ -73,13 +39,6 @@ const originalFetch = window.fetch;
 window.fetch = async (...args) => {
   try {
     const response = await originalFetch(...args);
-    if (!response.ok) {
-      console.error('HTTP Error Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        url: args[0]
-      });
-    }
     return response;
   } catch (error) {
     console.error('Supabase request failed:', error);
