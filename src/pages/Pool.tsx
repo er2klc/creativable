@@ -7,6 +7,7 @@ import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
+import { PartnerTree } from "@/components/partners/PartnerTree";
 
 export default function Pool() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -26,6 +27,22 @@ export default function Pool() {
     },
   });
 
+  const { data: currentUser } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      return profile;
+    },
+  });
+
   return (
     <div className="container mx-auto py-6">
       <Tabs defaultValue={status} className="w-full">
@@ -37,27 +54,10 @@ export default function Pool() {
         </TabsList>
 
         <TabsContent value="partner" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {leads.map((lead) => (
-              <Card 
-                key={lead.id} 
-                className="p-4 cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => setSelectedLeadId(lead.id)}
-              >
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-12 w-12">
-                    <div className="bg-primary h-full w-full flex items-center justify-center text-white font-semibold">
-                      {lead.name.charAt(0)}
-                    </div>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-semibold">{lead.name}</h3>
-                    <p className="text-sm text-gray-500">{lead.company_name || 'Kein Unternehmen'}</p>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <PartnerTree 
+            unassignedPartners={leads} 
+            currentUser={currentUser}
+          />
         </TabsContent>
 
         <TabsContent value="customer">
