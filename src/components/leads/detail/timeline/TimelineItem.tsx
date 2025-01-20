@@ -32,7 +32,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
         />
         
         {/* Connecting Line to Card */}
-        <div className="absolute left-12 top-4 w-4 h-0.5 bg-gray-400" />
+        <div className="absolute left-8 top-4 w-4 h-0.5 bg-gray-400" />
         
         {/* Event Card */}
         <TimelineItemCard 
