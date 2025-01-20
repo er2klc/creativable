@@ -5,7 +5,9 @@ import { Platform } from "@/config/platforms";
 import { NoteTab } from "./tabs/NoteTab";
 import { TaskTab } from "./tabs/TaskTab";
 import { MessageTab } from "./tabs/MessageTab";
-import { PlaceholderTab } from "./tabs/PlaceholderTab";
+import { AppointmentForm } from "../calendar/appointment-dialog/AppointmentForm";
+import { LeadFileUpload } from "./files/LeadFileUpload";
+import { LeadFileList } from "./files/LeadFileList";
 
 interface LeadDetailTabsProps {
   lead: Tables<"leads"> & {
@@ -17,16 +19,21 @@ interface LeadDetailTabsProps {
 }
 
 const tabColors = {
-  notes: "#FEF08A",         // Gelb-Pastell (passt zu border-yellow-500)
-  tasks: "#A5F3FC",         // Hell-Cyan (passt zu border-cyan-500)
-  appointments: "#FDBA74",  // Hell-Orange (passt zu border-orange-500)
-  messages: "#BFDBFE",      // Hell-Blau (passt zu border-blue-500)
-  uploads: "#E5E7EB",       // Hell-Grau (passt zu border-gray-500)
-  presentations: "#A5B4FC", // Hell-Indigo (passt zu border-indigo-500)
+  notes: "#FEF08A",
+  tasks: "#A5F3FC",
+  appointments: "#FDBA74",
+  messages: "#BFDBFE",
+  uploads: "#E5E7EB",
+  presentations: "#A5B4FC",
 };
 
 export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const { settings } = useSettings();
+
+  const handleAppointmentSubmit = async (values: any) => {
+    // Handle appointment creation
+    console.log("Creating appointment:", values);
+  };
 
   return (
     <Tabs defaultValue="notes" className="w-full">
@@ -84,7 +91,19 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
       </TabsContent>
 
       <TabsContent value="appointments" className="mt-4">
-        <PlaceholderTab title="Appointment" />
+        <div className="space-y-4">
+          <AppointmentForm 
+            onSubmit={handleAppointmentSubmit}
+            defaultValues={{
+              id: "",
+              leadId: lead.id,
+              time: "09:00",
+              title: "",
+              color: "#40E0D0",
+              meeting_type: "phone_call"
+            }}
+          />
+        </div>
       </TabsContent>
 
       <TabsContent value="messages" className="mt-4">
@@ -92,11 +111,18 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
       </TabsContent>
 
       <TabsContent value="uploads" className="mt-4">
-        <PlaceholderTab title="Upload" />
+        <div className="space-y-4">
+          <LeadFileUpload leadId={lead.id} />
+          <LeadFileList leadId={lead.id} />
+        </div>
       </TabsContent>
 
       <TabsContent value="presentations" className="mt-4">
-        <PlaceholderTab title="Presentation" />
+        <div className="p-4 text-center text-muted-foreground">
+          {settings?.language === "en" 
+            ? "Presentations feature coming soon" 
+            : "Präsentationen-Funktion kommt bald"}
+        </div>
       </TabsContent>
     </Tabs>
   );
