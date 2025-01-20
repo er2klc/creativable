@@ -20,6 +20,9 @@ interface TimelineItemCardProps {
     fileType?: string;
     fileSize?: number;
     filePath?: string;
+    status?: 'completed' | 'cancelled';
+    completedAt?: string;
+    cancelledAt?: string;
   };
   status?: string;
   onDelete?: () => void;
@@ -37,7 +40,7 @@ export const TimelineItemCard = ({ type, content, metadata, status, onDelete }: 
       case 'task':
         return status === 'completed' ? 'border-green-500' : 'border-cyan-500';
       case 'appointment':
-        return status === 'completed' ? 'border-green-500' : 'border-orange-500';
+        return status === 'cancelled' ? 'border-red-500' : 'border-orange-500';
       case 'note':
         return 'border-yellow-500';
       case 'phase_change':
@@ -64,7 +67,6 @@ export const TimelineItemCard = ({ type, content, metadata, status, onDelete }: 
         
         if (error) throw error;
         
-        // Create download link
         const url = window.URL.createObjectURL(data);
         const a = document.createElement('a');
         a.href = url;
@@ -83,13 +85,30 @@ export const TimelineItemCard = ({ type, content, metadata, status, onDelete }: 
   return (
     <div className={cn(
       "flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border group relative",
-      getBorderColor()
+      getBorderColor(),
+      (status === 'completed' || status === 'cancelled') && "opacity-70"
     )}>
-      <div className="font-medium mb-1">{content}</div>
+      <div className={cn(
+        "font-medium mb-1",
+        status === 'completed' && "line-through text-gray-500",
+        status === 'cancelled' && "text-gray-400"
+      )}>{content}</div>
       
       {metadata?.dueDate && (
         <div className="text-sm text-gray-500">
           Fällig am: {formatDate(metadata.dueDate)}
+        </div>
+      )}
+
+      {metadata?.completedAt && (
+        <div className="text-sm text-green-600">
+          Erledigt am: {formatDate(metadata.completedAt)}
+        </div>
+      )}
+
+      {metadata?.cancelledAt && (
+        <div className="text-sm text-red-600">
+          Verschoben am: {formatDate(metadata.cancelledAt)}
         </div>
       )}
 

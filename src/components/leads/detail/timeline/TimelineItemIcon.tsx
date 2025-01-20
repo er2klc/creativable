@@ -11,7 +11,9 @@ import {
   UserPlus,
   ListTodo,
   Send,
-  ArrowUpCircle
+  ArrowUpCircle,
+  X,
+  Check
 } from "lucide-react";
 import { TimelineItemType } from "./TimelineUtils";
 
@@ -32,9 +34,13 @@ export const TimelineItemIcon = ({ type, status, platform }: TimelineItemIconPro
         if (platform === 'whatsapp') return <MessageCircle className="h-4 w-4 text-white" />;
         return <MessageSquare className="h-4 w-4 text-white" />;
       case 'task':
-        return <ListTodo className="h-4 w-4 text-white" />;
+        return status === 'completed' ? 
+          <Check className="h-4 w-4 text-white" /> : 
+          <ListTodo className="h-4 w-4 text-white" />;
       case 'appointment':
-        return <Calendar className="h-4 w-4 text-white" />;
+        return status === 'cancelled' ? 
+          <X className="h-4 w-4 text-white" /> : 
+          <Calendar className="h-4 w-4 text-white" />;
       case 'note':
         return <StickyNote className="h-4 w-4 text-white" />;
       case 'phase_change':
@@ -59,7 +65,7 @@ export const TimelineItemIcon = ({ type, status, platform }: TimelineItemIconPro
       case 'task':
         return status === 'completed' ? 'bg-green-500' : 'bg-cyan-500';
       case 'appointment':
-        return status === 'completed' ? 'bg-green-500' : 'bg-orange-500';
+        return status === 'cancelled' ? 'bg-red-500' : 'bg-orange-500';
       case 'note':
         return 'bg-yellow-500';
       case 'phase_change':
