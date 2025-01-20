@@ -34,11 +34,10 @@ export const supabase = createClient<Database>(
   }
 );
 
-// Add error handling for failed requests
-supabase.handleFailedRequest = async (error: any) => {
+// Add global error handler for failed requests
+supabase.rest.on('error', (error) => {
   console.error('Supabase request failed:', error);
   if (error.message === 'Failed to fetch') {
     console.error('Network error - please check your connection');
   }
-  return error;
-};
+});
