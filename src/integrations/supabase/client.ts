@@ -6,7 +6,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('[Supabase] Missing environment variables');
-  throw new Error('Missing environment variables VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
+  throw new Error('Missing Supabase environment variables');
 }
 
 export const supabase = createClient<Database>(
@@ -31,22 +31,6 @@ export const supabase = createClient<Database>(
       params: {
         eventsPerSecond: 10
       }
-    },
-    // Add better error handling and retries
-    fetch: (url, options = {}) => {
-      return fetch(url, {
-        ...options,
-        headers: {
-          ...options.headers,
-          'Cache-Control': 'no-cache',
-        },
-      }).catch(error => {
-        console.error('[Supabase] Network error:', error);
-        if (error.message === 'Failed to fetch') {
-          console.error('[Supabase] Network error - please check your connection and Supabase configuration');
-        }
-        throw error;
-      });
     }
   }
 );
