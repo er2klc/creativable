@@ -12,10 +12,11 @@ import { LeadDetailHeader } from "./detail/LeadDetailHeader";
 import { LeadMessages } from "./detail/LeadMessages";
 import { CompactPhaseSelector } from "./detail/CompactPhaseSelector";
 import { LeadTimeline } from "./detail/LeadTimeline";
-import { ContactFieldManager } from "./detail/contact-info/ContactFieldManager";
+import { ContactFieldManager } from "@/components/leads/detail/contact-info/ContactFieldManager";
 import { toast } from "sonner";
 import { type Platform } from "@/config/platforms";
-import { useLeadSubscription } from "./detail/hooks/useLeadSubscription";
+import { useLeadSubscription } from "@/components/leads/detail/hooks/useLeadSubscription";
+import { LeadWithRelations } from "./detail/types/lead";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -40,7 +41,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
       const { data, error } = await supabase
         .from("leads")
-        .select("*, messages(*), tasks(*), notes(*)")
+        .select("*, messages(*), tasks(*), notes(*), lead_files(*)")
         .eq("id", leadId)
         .maybeSingle();
 
@@ -53,17 +54,11 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Lead not found");
       }
 
-      return data as (Tables<"leads"> & {
-        platform: Platform;
-        messages: Tables<"messages">[];
-        tasks: Tables<"tasks">[];
-        notes: Tables<"notes">[];
-      });
+      return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
   });
 
-  // Set up real-time subscriptions
   useLeadSubscription(leadId);
 
   const updateLeadMutation = useMutation({

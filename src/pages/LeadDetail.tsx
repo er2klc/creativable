@@ -1,22 +1,14 @@
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
 import { LeadInfoCard } from "@/components/leads/detail/LeadInfoCard";
 import { LeadDetailHeader } from "@/components/leads/detail/LeadDetailHeader";
 import { LeadSummary } from "@/components/leads/detail/LeadSummary";
-import { Platform } from "@/config/platforms";
 import { toast } from "sonner";
 import { LeadDetailTabs } from "@/components/leads/detail/LeadDetailTabs";
 import { useEffect } from "react";
 import { LeadTimeline } from "@/components/leads/detail/LeadTimeline";
-
-type LeadWithRelations = Tables<"leads"> & {
-  platform: Platform;
-  messages: Tables<"messages">[];
-  tasks: Tables<"tasks">[];
-  notes: Tables<"notes">[];
-};
+import { LeadWithRelations } from "@/components/leads/detail/types/lead";
 
 export default function LeadDetail() {
   const { leadId } = useParams();
@@ -33,7 +25,8 @@ export default function LeadDetail() {
           *,
           messages (*),
           tasks (*),
-          notes (*)
+          notes (*),
+          lead_files (*)
         `)
         .eq("id", leadId)
         .maybeSingle();
@@ -48,7 +41,6 @@ export default function LeadDetail() {
     enabled: !!leadId,
   });
 
-  // Subscribe to real-time updates for the lead
   useEffect(() => {
     if (!lead?.id) return;
 
