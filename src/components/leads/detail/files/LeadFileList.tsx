@@ -45,16 +45,17 @@ export const LeadFileList = ({ leadId }: LeadFileListProps) => {
   };
 
   const handlePreview = async (filePath: string) => {
-    const { data: { publicUrl }, error } = await supabase.storage
-      .from("documents")
-      .getPublicUrl(filePath);
+    try {
+      const { data } = await supabase.storage
+        .from("documents")
+        .getPublicUrl(filePath);
 
-    if (error) {
-      console.error("Error getting public URL:", error);
-      return;
+      if (data?.publicUrl) {
+        window.open(data.publicUrl, "_blank");
+      }
+    } catch (err) {
+      console.error("Error getting public URL:", err);
     }
-
-    window.open(publicUrl, "_blank");
   };
 
   return (

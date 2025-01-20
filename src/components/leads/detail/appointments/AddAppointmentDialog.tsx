@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Calendar as CalendarIcon, Clock } from "lucide-react";
-import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
@@ -48,10 +47,7 @@ export const AddAppointmentDialog = ({ leadId, leadName }: AddAppointmentDialogP
           due_date: startDateTime.toISOString(),
           meeting_type: data.meetingType,
           color: "#4CAF50",
-          metadata: {
-            end_time: endDateTime.toISOString(),
-            lead_name: leadName,
-          },
+          user_id: session?.user?.id,
         });
 
       if (error) throw error;
