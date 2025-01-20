@@ -91,7 +91,6 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
   });
 
   const initialNodes: Node[] = [
-    // Root node (current user)
     {
       id: 'root',
       type: 'custom',
@@ -103,21 +102,17 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
         network_marketing_id: null,
       },
     },
-    // Left empty slot
     createEmptySlot('root-left', { x: 200, y: 200 }, 'root'),
-    // Right empty slot
     createEmptySlot('root-right', { x: 600, y: 200 }, 'root'),
   ];
 
   const initialEdges: Edge[] = [
-    // Connection to left slot
     {
       id: 'root-to-left',
       source: 'root',
       target: 'empty-root-left',
       type: 'smoothstep',
     },
-    // Connection to right slot
     {
       id: 'root-to-right',
       source: 'root',
@@ -186,6 +181,7 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
           const baseX = isLeftChild ? parentX - 200 : parentX + 200;
           const y = 200 * level;
 
+          // Add partner node
           newNodes.push({
             id: nodeId,
             type: 'custom',
@@ -239,6 +235,27 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
     if (currentUser?.id) {
       loadPartners();
     }
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('partner-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'leads',
+          filter: `user_id=eq.${currentUser?.id}`
+        },
+        () => {
+          loadPartners(); // Reload partners when changes occur
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [currentUser?.id, setNodes, setEdges]);
 
   // Filter unassigned partners for the lobby - only show partners that aren't in the tree
