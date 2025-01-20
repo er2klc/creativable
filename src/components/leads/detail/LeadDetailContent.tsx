@@ -29,7 +29,7 @@ export const LeadDetailContent = ({
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
 
-  // Only hide phase selector if lead has a status
+  // Only hide phase selector if lead has a status other than 'lead'
   const showPhaseSelector = !lead.status || lead.status === 'lead';
 
   if (isLoading) {
