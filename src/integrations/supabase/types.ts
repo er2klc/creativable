@@ -764,10 +764,13 @@ export type Database = {
           last_interaction_date: string | null
           last_name: string | null
           last_social_media_scan: string | null
+          level: number | null
           name: string
+          network_marketing_id: string | null
           next_steps: Json | null
           notes: string | null
           onboarding_progress: Json | null
+          parent_id: string | null
           phase_id: string
           phone_number: string | null
           pipeline_id: string
@@ -822,10 +825,13 @@ export type Database = {
           last_interaction_date?: string | null
           last_name?: string | null
           last_social_media_scan?: string | null
+          level?: number | null
           name: string
+          network_marketing_id?: string | null
           next_steps?: Json | null
           notes?: string | null
           onboarding_progress?: Json | null
+          parent_id?: string | null
           phase_id: string
           phone_number?: string | null
           pipeline_id: string
@@ -880,10 +886,13 @@ export type Database = {
           last_interaction_date?: string | null
           last_name?: string | null
           last_social_media_scan?: string | null
+          level?: number | null
           name?: string
+          network_marketing_id?: string | null
           next_steps?: Json | null
           notes?: string | null
           onboarding_progress?: Json | null
+          parent_id?: string | null
           phase_id?: string
           phone_number?: string | null
           pipeline_id?: string
@@ -911,6 +920,13 @@ export type Database = {
           website?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "leads_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "leads_phase_id_fkey"
             columns: ["phase_id"]
@@ -1185,6 +1201,7 @@ export type Database = {
           last_selected_pipeline_id: string | null
           linkedin_auth_token: string | null
           linkedin_connected: boolean | null
+          network_marketing_id: string | null
           openai_api_key: string | null
           products_services: string | null
           registration_company_name: string | null
@@ -1217,6 +1234,7 @@ export type Database = {
           last_selected_pipeline_id?: string | null
           linkedin_auth_token?: string | null
           linkedin_connected?: boolean | null
+          network_marketing_id?: string | null
           openai_api_key?: string | null
           products_services?: string | null
           registration_company_name?: string | null
@@ -1249,6 +1267,7 @@ export type Database = {
           last_selected_pipeline_id?: string | null
           linkedin_auth_token?: string | null
           linkedin_connected?: boolean | null
+          network_marketing_id?: string | null
           openai_api_key?: string | null
           products_services?: string | null
           registration_company_name?: string | null
