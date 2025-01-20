@@ -1,106 +1,90 @@
-import { Archive, Clock, User, UserCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { useSettings } from "@/hooks/use-settings";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
+import { useSettings } from "@/hooks/use-settings";
+import { Users, UserCheck, Clock, XCircle } from "lucide-react";
+import { toast } from "sonner";
 
 interface PoolCategorySelectorProps {
   lead: Tables<"leads">;
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
 }
 
-export const PoolCategorySelector = ({ lead, onUpdateLead }: PoolCategorySelectorProps) => {
+export function PoolCategorySelector({ lead, onUpdateLead }: PoolCategorySelectorProps) {
   const { settings } = useSettings();
-  const queryClient = useQueryClient();
 
-  const updatePoolCategoryMutation = useMutation({
-    mutationFn: async (category: string | null) => {
-      const { data, error } = await supabase
-        .from("leads")
-        .update({ 
-          pool_category: category,
-          onboarding_progress: category === 'partner' ? {
-            message_sent: false,
-            team_invited: false,
-            training_provided: false,
-            intro_meeting_scheduled: false
-          } : null
-        })
-        .eq("id", lead.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
-      const categoryLabels: Record<string, string> = {
-        partner: "Partner",
-        kunde: "Kunde",
-        not_for_now: "Später kontaktieren",
-        kein_interesse: "Kein Interesse"
+  const handleCategorySelect = async (category: string) => {
+    try {
+      const updates: Partial<Tables<"leads">> = {
+        pool_category: category,
       };
+
+      // Initialize onboarding progress when moving to partner category
+      if (category === 'partner') {
+        updates.onboarding_progress = {
+          message_sent: false,
+          team_invited: false,
+          training_provided: false,
+          intro_meeting_scheduled: false
+        };
+      }
+
+      await onUpdateLead(updates);
       toast.success(
         settings?.language === "en"
-          ? `Contact moved to ${categoryLabels[data.pool_category || ""]}`
-          : `Kontakt wurde zu ${categoryLabels[data.pool_category || ""]} verschoben`
+          ? "Category updated successfully"
+          : "Kategorie erfolgreich aktualisiert"
       );
-    },
-    onError: (error) => {
-      console.error("Error updating pool category:", error);
+    } catch (error) {
+      console.error("Error updating category:", error);
       toast.error(
         settings?.language === "en"
-          ? "Error updating contact category"
-          : "Fehler beim Aktualisieren der Kontaktkategorie"
+          ? "Error updating category"
+          : "Fehler beim Aktualisieren der Kategorie"
       );
-    },
-  });
-
-  const handleCategorySelect = (category: string) => {
-    updatePoolCategoryMutation.mutate(category);
+    }
   };
 
+  const categories = [
+    {
+      id: 'partner',
+      label: settings?.language === "en" ? "Partner" : "Partner",
+      icon: <UserCheck className="h-4 w-4" />,
+      variant: lead.pool_category === 'partner' ? 'default' : 'outline' as const
+    },
+    {
+      id: 'kunde',
+      label: settings?.language === "en" ? "Customer" : "Kunde",
+      icon: <Users className="h-4 w-4" />,
+      variant: lead.pool_category === 'kunde' ? 'default' : 'outline' as const
+    },
+    {
+      id: 'not_for_now',
+      label: settings?.language === "en" ? "Not For Now" : "NotForNow",
+      icon: <Clock className="h-4 w-4" />,
+      variant: lead.pool_category === 'not_for_now' ? 'default' : 'outline' as const
+    },
+    {
+      id: 'kein_interesse',
+      label: settings?.language === "en" ? "Not Interested" : "Kein Interesse",
+      icon: <XCircle className="h-4 w-4" />,
+      variant: lead.pool_category === 'kein_interesse' ? 'default' : 'outline' as const
+    }
+  ];
+
   return (
-    <div className="flex flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
-      <Button
-        variant={lead.pool_category === "partner" ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleCategorySelect("partner")}
-        className="flex items-center gap-2"
-      >
-        <Users className="h-4 w-4" />
-        {settings?.language === "en" ? "Partner" : "Partner"}
-      </Button>
-      <Button
-        variant={lead.pool_category === "kunde" ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleCategorySelect("kunde")}
-        className="flex items-center gap-2"
-      >
-        <UserCheck className="h-4 w-4" />
-        {settings?.language === "en" ? "Customer" : "Kunde"}
-      </Button>
-      <Button
-        variant={lead.pool_category === "not_for_now" ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleCategorySelect("not_for_now")}
-        className="flex items-center gap-2"
-      >
-        <Clock className="h-4 w-4" />
-        {settings?.language === "en" ? "Not For Now" : "Später"}
-      </Button>
-      <Button
-        variant={lead.pool_category === "kein_interesse" ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleCategorySelect("kein_interesse")}
-        className="flex items-center gap-2"
-      >
-        <Archive className="h-4 w-4" />
-        {settings?.language === "en" ? "Not Interested" : "Kein Interesse"}
-      </Button>
+    <div className="flex flex-wrap gap-2">
+      {categories.map((category) => (
+        <Button
+          key={category.id}
+          variant={category.variant}
+          size="sm"
+          onClick={() => handleCategorySelect(category.id)}
+          className="flex items-center gap-2"
+        >
+          {category.icon}
+          {category.label}
+        </Button>
+      ))}
     </div>
   );
-};
+}
