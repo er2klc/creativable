@@ -697,9 +697,48 @@ export type Database = {
           },
         ]
       }
+      lead_subscriptions: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          id: string
+          lead_id: string | null
+          product_name: string
+          start_date: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          lead_id?: string | null
+          product_name: string
+          start_date?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          lead_id?: string | null
+          product_name?: string
+          start_date?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_subscriptions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           address: string | null
+          archive_reason: string | null
           best_contact_times: string | null
           birth_date: string | null
           business_description: string | null
@@ -712,6 +751,7 @@ export type Database = {
           email: string | null
           emotional_analysis: Json | null
           first_name: string | null
+          follow_up_date: string | null
           gender: Database["public"]["Enums"]["gender_type"] | null
           goals: string[] | null
           id: string
@@ -721,15 +761,18 @@ export type Database = {
           languages: string[] | null
           last_action: string | null
           last_action_date: string | null
+          last_interaction_date: string | null
           last_name: string | null
           last_social_media_scan: string | null
           name: string
           next_steps: Json | null
           notes: string | null
+          onboarding_progress: Json | null
           phase_id: string
           phone_number: string | null
           pipeline_id: string
           platform: string
+          pool_category: string | null
           position: string | null
           postal_code: string | null
           preferred_communication_channel:
@@ -753,6 +796,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          archive_reason?: string | null
           best_contact_times?: string | null
           birth_date?: string | null
           business_description?: string | null
@@ -765,6 +809,7 @@ export type Database = {
           email?: string | null
           emotional_analysis?: Json | null
           first_name?: string | null
+          follow_up_date?: string | null
           gender?: Database["public"]["Enums"]["gender_type"] | null
           goals?: string[] | null
           id?: string
@@ -774,15 +819,18 @@ export type Database = {
           languages?: string[] | null
           last_action?: string | null
           last_action_date?: string | null
+          last_interaction_date?: string | null
           last_name?: string | null
           last_social_media_scan?: string | null
           name: string
           next_steps?: Json | null
           notes?: string | null
+          onboarding_progress?: Json | null
           phase_id: string
           phone_number?: string | null
           pipeline_id: string
           platform: string
+          pool_category?: string | null
           position?: string | null
           postal_code?: string | null
           preferred_communication_channel?:
@@ -806,6 +854,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          archive_reason?: string | null
           best_contact_times?: string | null
           birth_date?: string | null
           business_description?: string | null
@@ -818,6 +867,7 @@ export type Database = {
           email?: string | null
           emotional_analysis?: Json | null
           first_name?: string | null
+          follow_up_date?: string | null
           gender?: Database["public"]["Enums"]["gender_type"] | null
           goals?: string[] | null
           id?: string
@@ -827,15 +877,18 @@ export type Database = {
           languages?: string[] | null
           last_action?: string | null
           last_action_date?: string | null
+          last_interaction_date?: string | null
           last_name?: string | null
           last_social_media_scan?: string | null
           name?: string
           next_steps?: Json | null
           notes?: string | null
+          onboarding_progress?: Json | null
           phase_id?: string
           phone_number?: string | null
           pipeline_id?: string
           platform?: string
+          pool_category?: string | null
           position?: string | null
           postal_code?: string | null
           preferred_communication_channel?:
