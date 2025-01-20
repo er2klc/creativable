@@ -4,9 +4,11 @@ import { Tables } from "@/integrations/supabase/types";
 import { Star, XCircle, Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Platform } from "@/config/platforms";
-import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
+import confetti from 'canvas-confetti';
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LeadDetailHeaderProps {
   lead: Tables<"leads">;
@@ -15,7 +17,26 @@ interface LeadDetailHeaderProps {
 
 export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) {
   const { settings } = useSettings();
+  const navigate = useNavigate();
   
+  const triggerPartnerAnimation = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#4CAF50', '#8BC34A', '#CDDC39']
+    });
+  };
+
+  const triggerCustomerAnimation = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#2196F3', '#03A9F4', '#00BCD4']
+    });
+  };
+
   const handleNameChange = async (name: string) => {
     await onUpdateLead({ name });
   };
@@ -24,7 +45,6 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
     try {
       await onUpdateLead({ 
         status,
-        // Initialize onboarding progress when status changes to partner
         ...(status === 'partner' ? {
           onboarding_progress: {
             message_sent: false,
@@ -34,12 +54,42 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
           }
         } : {})
       });
+
+      // Create timeline entry
+      const { error: noteError } = await supabase
+        .from("notes")
+        .insert({
+          lead_id: lead.id,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          content: `Status geändert zu ${status}`,
+          color: status === 'partner' ? '#4CAF50' : 
+                 status === 'customer' ? '#2196F3' : 
+                 status === 'not_for_now' ? '#FFC107' : '#F44336',
+          metadata: {
+            type: 'status_change',
+            oldStatus: lead.status,
+            newStatus: status
+          }
+        });
+
+      if (noteError) throw noteError;
       
+      // Trigger animation for partner/customer
+      if (status === 'partner') {
+        triggerPartnerAnimation();
+      } else if (status === 'customer') {
+        triggerCustomerAnimation();
+      }
+
       toast.success(
         settings?.language === "en"
           ? "Status updated successfully"
           : "Status erfolgreich aktualisiert"
       );
+
+      // Navigate to pool page
+      navigate('/pool');
+      
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error(
@@ -86,7 +136,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
               size="sm"
               className={cn(
                 "transition-colors border-b-2",
-                lead.status === 'partner' ? 'border-b-blue-500 text-blue-700 hover:bg-blue-50' : 'border-b-transparent'
+                lead.status === 'partner' ? 'border-b-green-500 text-green-700 hover:bg-green-50' : 'border-b-transparent'
               )}
               onClick={() => handleStatusChange('partner')}
             >
@@ -98,7 +148,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
               size="sm"
               className={cn(
                 "transition-colors border-b-2",
-                lead.status === 'customer' ? 'border-b-green-500 text-green-700 hover:bg-green-50' : 'border-b-transparent'
+                lead.status === 'customer' ? 'border-b-blue-500 text-blue-700 hover:bg-blue-50' : 'border-b-transparent'
               )}
               onClick={() => handleStatusChange('customer')}
             >
@@ -131,7 +181,6 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
             </Button>
           </div>
         </div>
-        <CompactPhaseSelector lead={lead} onUpdateLead={onUpdateLead} />
       </div>
     </DialogHeader>
   );
