@@ -1,7 +1,7 @@
 import { Tables } from "@/integrations/supabase/types";
 import { TimelineHeader } from "./timeline/TimelineHeader";
 import { TimelineItem } from "./timeline/TimelineItem";
-import { TimelineItem as TimelineItemType, TimelineItemType as ItemType } from "./timeline/TimelineUtils";
+import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
 import { useEffect, useRef, useMemo } from "react";
 
 interface LeadTimelineProps {
@@ -25,28 +25,32 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const timelineItems: TimelineItemType[] = useMemo(() => [
     {
       id: 'contact-created',
-      type: 'contact_created' as const,
+      type: 'contact_created',
       content: `Kontakt ${lead.name} wurde erstellt`,
+      created_at: lead.created_at || new Date().toISOString(),
       timestamp: lead.created_at || new Date().toISOString(),
     },
     ...messages.map(message => ({
       id: message.id,
-      type: 'message' as const,
+      type: 'message',
       content: message.content,
+      created_at: message.created_at || new Date().toISOString(),
       timestamp: message.sent_at || new Date().toISOString(),
       status: message.platform,
       platform: message.platform
     })),
     ...tasks.map(task => ({
       id: task.id,
-      type: task.meeting_type ? ('appointment' as const) : ('task' as const),
+      type: task.meeting_type ? 'appointment' : 'task',
       content: task.title,
+      created_at: task.created_at || new Date().toISOString(),
       timestamp: task.created_at || new Date().toISOString(),
       status: task.completed ? 'completed' : 'pending',
       metadata: {
         dueDate: task.due_date,
         meetingType: task.meeting_type,
-        color: task.color
+        color: task.color,
+        status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : undefined
       }
     })),
     ...notes.map(note => {
@@ -55,8 +59,9 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       if (metadata?.type === 'phase_change') {
         return {
           id: note.id,
-          type: 'phase_change' as const,
+          type: 'phase_change',
           content: note.content,
+          created_at: note.created_at || new Date().toISOString(),
           timestamp: note.created_at || new Date().toISOString(),
           metadata: {
             oldPhase: metadata.oldPhase,
@@ -67,8 +72,9 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       }
       return {
         id: note.id,
-        type: 'note' as const,
+        type: 'note',
         content: note.content,
+        created_at: note.created_at || new Date().toISOString(),
         timestamp: note.created_at || new Date().toISOString(),
         metadata: {
           color: note.color
@@ -77,8 +83,9 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     }),
     ...files.map(file => ({
       id: file.id,
-      type: 'file_upload' as const,
+      type: 'file_upload',
       content: `Datei "${file.file_name}" wurde hochgeladen`,
+      created_at: file.created_at || new Date().toISOString(),
       timestamp: file.created_at || new Date().toISOString(),
       metadata: {
         fileName: file.file_name,
