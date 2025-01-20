@@ -5,7 +5,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables');
+  console.error('[Supabase] Missing environment variables');
   throw new Error('Missing Supabase environment variables');
 }
 
@@ -16,7 +16,8 @@ export const supabase = createClient<Database>(
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: true
+      detectSessionInUrl: true,
+      flowType: 'pkce'
     },
     global: {
       headers: {
@@ -39,11 +40,18 @@ const originalFetch = window.fetch;
 window.fetch = async (...args) => {
   try {
     const response = await originalFetch(...args);
+    if (!response.ok) {
+      console.error('[Supabase] Request failed:', {
+        url: args[0],
+        status: response.status,
+        statusText: response.statusText
+      });
+    }
     return response;
   } catch (error) {
-    console.error('Supabase request failed:', error);
+    console.error('[Supabase] Network error:', error);
     if (error.message === 'Failed to fetch') {
-      console.error('Network error - please check your connection');
+      console.error('[Supabase] Network error - please check your connection');
     }
     throw error;
   }

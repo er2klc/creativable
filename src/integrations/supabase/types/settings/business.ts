@@ -5,4 +5,5 @@ export interface BusinessSettings {
   usp: string | null;
   business_description: string | null;
   about_me: string | null;
+  network_marketing_id: string | null;
 }
