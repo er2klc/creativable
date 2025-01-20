@@ -88,7 +88,7 @@ export const useAppointmentCount = () => {
         .eq('completed', false)
         .eq('cancelled', false);
 
-      // Get team appointments
+      // Get team memberships
       const { data: teamMemberships } = await supabase
         .from('team_members')
         .select('team_id')
@@ -98,12 +98,13 @@ export const useAppointmentCount = () => {
 
       if (teamIds.length === 0) return personalCount;
 
+      // Get team appointments using proper filter syntax
       const { count: teamCount = 0 } = await supabase
         .from('team_calendar_events')
         .select('*', { count: 'exact', head: true })
         .in('team_id', teamIds)
         .gte('start_time', startTime)
-        .lt('start_time', endTime)
+        .lt('end_time', endTime)
         .eq('cancelled', false);
 
       return personalCount + teamCount;
