@@ -98,7 +98,7 @@ export const useAppointmentCount = () => {
 
       if (teamIds.length === 0) return personalCount;
 
-      // Get team appointments with proper filter syntax
+      // Get team appointments with fixed query syntax
       const { count: teamCount = 0 } = await supabase
         .from('team_calendar_events')
         .select('*', { count: 'exact', head: true })
