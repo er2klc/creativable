@@ -17,12 +17,12 @@ interface LeadDetailTabsProps {
 }
 
 const tabColors = {
-  notes: "#FEF7CD",
-  tasks: "#FFE2DD",
-  appointments: "#DCF0FF",
-  messages: "#E5ECE9",
-  uploads: "#F4E4FF",
-  presentations: "#FFE4F3",
+  notes: "#FEF08A",         // Gelb-Pastell (passt zu border-yellow-500)
+  tasks: "#A5F3FC",         // Hell-Cyan (passt zu border-cyan-500)
+  appointments: "#FDBA74",  // Hell-Orange (passt zu border-orange-500)
+  messages: "#BFDBFE",      // Hell-Blau (passt zu border-blue-500)
+  uploads: "#E5E7EB",       // Hell-Grau (passt zu border-gray-500)
+  presentations: "#A5B4FC", // Hell-Indigo (passt zu border-indigo-500)
 };
 
 export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
