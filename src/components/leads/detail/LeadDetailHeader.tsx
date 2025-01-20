@@ -9,6 +9,7 @@ import { useSettings } from "@/hooks/use-settings";
 import confetti from 'canvas-confetti';
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { CompactPhaseSelector } from "./CompactPhaseSelector";
 
 interface LeadDetailHeaderProps {
   lead: Tables<"leads">;
@@ -181,6 +182,10 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
             </Button>
           </div>
         </div>
+        <CompactPhaseSelector
+          lead={lead}
+          onUpdateLead={onUpdateLead}
+        />
       </div>
     </DialogHeader>
   );
