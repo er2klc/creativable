@@ -83,7 +83,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     <div className="p-4">
       <TimelineHeader title="Aktivitäten" />
       <div className="relative space-y-6">
-        <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-200" />
+        <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400" />
         
         {timelineItems.length > 0 ? (
           timelineItems.map((item) => (
