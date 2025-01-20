@@ -1,100 +1,192 @@
+import { DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Tables } from "@/integrations/supabase/types";
+import { Star, XCircle, Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Platform } from "@/config/platforms";
 import { toast } from "sonner";
+import { useSettings } from "@/hooks/use-settings";
+import confetti from 'canvas-confetti';
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { CompactPhaseSelector } from "./CompactPhaseSelector";
 
 interface LeadDetailHeaderProps {
-  lead: any;
-  onUpdateLead: (updates: any) => void;
+  lead: Tables<"leads">;
+  onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
 }
 
-export const LeadDetailHeader = ({ lead, onUpdateLead }: LeadDetailHeaderProps) => {
+export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) {
+  const { settings } = useSettings();
   const navigate = useNavigate();
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  
+  const triggerPartnerAnimation = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#4CAF50', '#8BC34A', '#CDDC39']
+    });
+  };
 
-  const handleDelete = async () => {
+  const triggerCustomerAnimation = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#2196F3', '#03A9F4', '#00BCD4']
+    });
+  };
+
+  const handleNameChange = async (name: string) => {
+    await onUpdateLead({ name });
+  };
+
+  const handleStatusChange = async (status: string) => {
     try {
-      setIsDeleting(true);
+      await onUpdateLead({ 
+        status,
+        ...(status === 'partner' ? {
+          onboarding_progress: {
+            message_sent: false,
+            team_invited: false,
+            training_provided: false,
+            intro_meeting_scheduled: false
+          }
+        } : {})
+      });
+
+      // Create timeline entry
+      const { error: noteError } = await supabase
+        .from("notes")
+        .insert({
+          lead_id: lead.id,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          content: `Status geändert zu ${status}`,
+          color: status === 'partner' ? '#4CAF50' : 
+                 status === 'customer' ? '#2196F3' : 
+                 status === 'not_for_now' ? '#FFC107' : '#F44336',
+          metadata: {
+            type: 'status_change',
+            oldStatus: lead.status,
+            newStatus: status
+          }
+        });
+
+      if (noteError) throw noteError;
       
-      // Delete all related data first
-      await Promise.all([
-        supabase.from('messages').delete().eq('lead_id', lead.id),
-        supabase.from('tasks').delete().eq('lead_id', lead.id),
-        supabase.from('notes').delete().eq('lead_id', lead.id),
-        supabase.from('lead_files').delete().eq('lead_id', lead.id)
-      ]);
+      // Trigger animation for partner/customer
+      if (status === 'partner') {
+        triggerPartnerAnimation();
+      } else if (status === 'customer') {
+        triggerCustomerAnimation();
+      }
 
-      // Then delete the lead
-      const { error } = await supabase
-        .from('leads')
-        .delete()
-        .eq('id', lead.id);
+      toast.success(
+        settings?.language === "en"
+          ? "Status updated successfully"
+          : "Status erfolgreich aktualisiert"
+      );
 
-      if (error) throw error;
-
-      toast.success("Kontakt erfolgreich gelöscht");
-      navigate("/contacts");
+      // Navigate to pool page
+      navigate('/pool');
+      
     } catch (error) {
-      console.error('Error deleting lead:', error);
-      toast.error("Fehler beim Löschen des Kontakts");
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteDialog(false);
+      console.error('Error updating status:', error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error updating status"
+          : "Fehler beim Aktualisieren des Status"
+      );
+    }
+  };
+
+  const getPlatformIcon = (platform: Platform) => {
+    switch (platform) {
+      case "Instagram":
+        return <Instagram className="h-4 w-4 mr-2" />;
+      case "LinkedIn":
+        return <Linkedin className="h-4 w-4 mr-2" />;
+      case "Facebook":
+        return <Facebook className="h-4 w-4 mr-2" />;
+      case "TikTok":
+        return <Video className="h-4 w-4 mr-2" />;
+      case "Offline":
+        return <Users className="h-4 w-4 mr-2" />;
+      default:
+        return null;
     }
   };
 
   return (
-    <div className="flex justify-between items-center mb-6">
-      <h1 className="text-2xl font-bold text-white">{lead.name}</h1>
-      <div className="flex gap-2">
-        <Button
-          variant="destructive"
-          size="icon"
-          onClick={() => setShowDeleteDialog(true)}
-          className="bg-red-500/10 hover:bg-red-500/20 text-red-500"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+    <DialogHeader className="p-6 bg-card border-b">
+      <div className="flex flex-col space-y-4">
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-2">
+            {getPlatformIcon(lead.platform as Platform)}
+            <input
+              type="text"
+              value={lead.name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className="text-2xl font-semibold bg-transparent border-none focus:outline-none focus:ring-0 p-0"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "transition-colors border-b-2",
+                lead.status === 'partner' ? 'border-b-green-500 text-green-700 hover:bg-green-50' : 'border-b-transparent'
+              )}
+              onClick={() => handleStatusChange('partner')}
+            >
+              <Star className="h-4 w-4 mr-2" />
+              Partner
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "transition-colors border-b-2",
+                lead.status === 'customer' ? 'border-b-blue-500 text-blue-700 hover:bg-blue-50' : 'border-b-transparent'
+              )}
+              onClick={() => handleStatusChange('customer')}
+            >
+              <Star className="h-4 w-4 mr-2" />
+              Kunde
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "transition-colors border-b-2",
+                lead.status === 'not_for_now' ? 'border-b-yellow-500 text-yellow-700 hover:bg-yellow-50' : 'border-b-transparent'
+              )}
+              onClick={() => handleStatusChange('not_for_now')}
+            >
+              <XCircle className="h-4 w-4 mr-2" />
+              Not For Now
+            </Button>
+            <Button 
+              variant="outline"
+              size="sm"
+              className={cn(
+                "transition-colors border-b-2",
+                lead.status === 'no_interest' ? 'border-b-red-500 text-red-700 hover:bg-red-50' : 'border-b-transparent'
+              )}
+              onClick={() => handleStatusChange('no_interest')}
+            >
+              <XCircle className="h-4 w-4 mr-2" />
+              Kein Interesse
+            </Button>
+          </div>
+        </div>
+        <CompactPhaseSelector
+          lead={lead}
+          onUpdateLead={onUpdateLead}
+        />
       </div>
-
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="bg-[#1A1F2C] border-white/10 text-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Kontakt löschen</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-400">
-              Möchten Sie diesen Kontakt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel 
-              disabled={isDeleting}
-              className="border-white/10 text-white hover:bg-white/5"
-            >
-              Abbrechen
-            </AlertDialogCancel>
-            <AlertDialogAction
-              disabled={isDeleting}
-              onClick={handleDelete}
-              className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20"
-            >
-              {isDeleting ? "Wird gelöscht..." : "Löschen"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+    </DialogHeader>
   );
-};
+}
