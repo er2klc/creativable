@@ -12,7 +12,8 @@ import {
   Infinity,
   GraduationCap,
   Database,
-  Waves
+  Waves,
+  Tool
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -208,7 +209,7 @@ export const teamItems = [
 
 export const analysisItems = [
   { title: "Berichte", icon: BarChart, url: "/reports" },
-  { title: "Tools", icon: Wrench, url: "/tools" },
+  { title: "Tools", icon: Tool, url: "/tools" },
   { title: "Einstellungen", icon: Settings, url: "/settings" },
 ];
 
