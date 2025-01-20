@@ -4,6 +4,8 @@ import { Eye, Download, Trash, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
 
 interface TimelineItemCardProps {
   type: TimelineItemType;
@@ -47,6 +49,12 @@ export const TimelineItemCard = ({ type, content, metadata, status, onDelete }: 
     }
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const weekday = format(date, "EEE", { locale: de });
+    return `${weekday}. ${format(date, "dd.MM.yyyy | HH:mm 'Uhr'", { locale: de })}`;
+  };
+
   const handleDownload = async () => {
     if (metadata?.filePath) {
       try {
@@ -81,7 +89,7 @@ export const TimelineItemCard = ({ type, content, metadata, status, onDelete }: 
       
       {metadata?.dueDate && (
         <div className="text-sm text-gray-500">
-          Fällig am: {metadata.dueDate}
+          Fällig am: {formatDate(metadata.dueDate)}
         </div>
       )}
 
