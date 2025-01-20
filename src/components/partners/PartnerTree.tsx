@@ -18,7 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
 import { Card } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
-import { UserPlus, User } from 'lucide-react';
+import { UserPlus, User, Plus } from 'lucide-react';
 
 interface PartnerTreeProps {
   unassignedPartners: Tables<'leads'>[];
@@ -36,23 +36,33 @@ interface PartnerWithProfile extends Tables<'leads'> {
 const CustomNode = ({ data }: { data: any }) => (
   <Card className="min-w-[200px] p-4 bg-white/80 backdrop-blur-sm border border-white/20">
     <div className="flex items-center gap-4">
-      <Avatar className="w-12 h-12">
-        {!data.avatar_url && (
-          <div className="bg-primary text-primary-foreground w-full h-full rounded-full flex items-center justify-center text-xl font-semibold">
-            {data.name?.substring(0, 2).toUpperCase() || <User className="w-6 h-6" />}
-          </div>
-        )}
-        {data.avatar_url && (
-          <img
-            src={data.avatar_url}
-            alt={data.name}
-            className="w-full h-full object-cover rounded-full"
-          />
-        )}
-      </Avatar>
+      {data.isEmpty ? (
+        <Button 
+          variant="ghost" 
+          className="w-12 h-12 rounded-full flex items-center justify-center"
+          onClick={data.onAdd}
+        >
+          <Plus className="w-6 h-6" />
+        </Button>
+      ) : (
+        <Avatar className="w-12 h-12">
+          {!data.avatar_url && (
+            <div className="bg-primary text-primary-foreground w-full h-full rounded-full flex items-center justify-center text-xl font-semibold">
+              {data.name?.substring(0, 2).toUpperCase() || <User className="w-6 h-6" />}
+            </div>
+          )}
+          {data.avatar_url && (
+            <img
+              src={data.avatar_url}
+              alt={data.name}
+              className="w-full h-full object-cover rounded-full"
+            />
+          )}
+        </Avatar>
+      )}
       <div className="flex flex-col">
-        <span className="font-semibold">{data.name}</span>
-        {data.network_marketing_id && (
+        <span className="font-semibold">{data.isEmpty ? 'Partner hinzufügen' : data.name}</span>
+        {data.network_marketing_id && !data.isEmpty && (
           <span className="text-sm text-gray-500">ID: {data.network_marketing_id}</span>
         )}
       </div>
@@ -66,7 +76,22 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
   const [partners, setPartners] = useState<PartnerWithProfile[]>([]);
   const [assignedPartnerIds, setAssignedPartnerIds] = useState<Set<string>>(new Set());
 
+  const createEmptySlot = (id: string, position: { x: number, y: number }, parentId: string) => ({
+    id: `empty-${id}`,
+    type: 'custom',
+    position,
+    draggable: false,
+    data: {
+      isEmpty: true,
+      onAdd: () => {
+        setSelectedPosition({ ...position, parentId });
+        setIsAddingPartner(true);
+      }
+    },
+  });
+
   const initialNodes: Node[] = [
+    // Root node (current user)
     {
       id: 'root',
       type: 'custom',
@@ -78,10 +103,31 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
         network_marketing_id: null,
       },
     },
+    // Left empty slot
+    createEmptySlot('root-left', { x: 200, y: 200 }, 'root'),
+    // Right empty slot
+    createEmptySlot('root-right', { x: 600, y: 200 }, 'root'),
+  ];
+
+  const initialEdges: Edge[] = [
+    // Connection to left slot
+    {
+      id: 'root-to-left',
+      source: 'root',
+      target: 'empty-root-left',
+      type: 'smoothstep',
+    },
+    // Connection to right slot
+    {
+      id: 'root-to-right',
+      source: 'root',
+      target: 'empty-root-right',
+      type: 'smoothstep',
+    },
   ];
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -90,17 +136,6 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
 
   const nodeTypes = {
     custom: CustomNode,
-  };
-
-  const handleNodeClick = (event: React.MouseEvent, node: Node) => {
-    if (node.data.isEmpty) {
-      setSelectedPosition({
-        x: node.position.x,
-        y: node.position.y,
-        parentId: node.id.replace('empty-', '')
-      });
-      setIsAddingPartner(true);
-    }
   };
 
   useEffect(() => {
@@ -121,17 +156,16 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
         return;
       }
 
-      // Transform partners to include avatar_url
       const transformedPartners = partners?.map(partner => ({
         ...partner,
-        avatar_url: null // We'll implement profile avatars in a future update
+        avatar_url: null
       })) || [];
 
       setPartners(transformedPartners);
 
       // Create tree structure for assigned partners
       const newNodes = [...initialNodes];
-      const newEdges = [...edges];
+      const newEdges = [...initialEdges];
       const assignedIds = new Set<string>();
 
       transformedPartners.forEach((partner) => {
@@ -139,15 +173,16 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
           assignedIds.add(partner.id);
           const nodeId = `partner-${partner.id}`;
           const level = partner.level || 1;
-          const position = {
-            x: 200 + (level % 2) * 400,
-            y: 200 * level
-          };
+          
+          // Calculate position based on whether it's a left or right child
+          const isLeftChild = partner.position === 'left';
+          const baseX = isLeftChild ? 200 : 600;
+          const y = 200 * level;
 
           newNodes.push({
             id: nodeId,
             type: 'custom',
-            position,
+            position: { x: baseX, y },
             draggable: false,
             data: {
               name: partner.name,
@@ -156,32 +191,36 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
             }
           });
 
-          // Add connection to parent
-          newEdges.push({
-            id: `e-${partner.parent_id}-${nodeId}`,
-            source: partner.parent_id === 'root' ? 'root' : `partner-${partner.parent_id}`,
-            target: nodeId,
-            type: 'smoothstep'
-          });
+          // Add empty slots for this partner
+          const leftSlotId = `empty-${nodeId}-left`;
+          const rightSlotId = `empty-${nodeId}-right`;
 
-          // Add empty slots for potential children
-          ['left', 'right'].forEach((side, sideIndex) => {
-            const emptyId = `empty-${nodeId}-${side}`;
-            newNodes.push({
-              id: emptyId,
-              type: 'custom',
-              position: {
-                x: position.x - 200 + sideIndex * 400,
-                y: position.y + 200
-              },
-              draggable: false,
-              data: {
-                isEmpty: true,
-                name: '+ Partner hinzufügen',
-                parentId: nodeId
-              }
-            });
-          });
+          newNodes.push(
+            createEmptySlot(nodeId + '-left', { x: baseX - 200, y: y + 200 }, nodeId),
+            createEmptySlot(nodeId + '-right', { x: baseX + 200, y: y + 200 }, nodeId)
+          );
+
+          // Add connections
+          newEdges.push(
+            {
+              id: `e-${partner.parent_id}-${nodeId}`,
+              source: partner.parent_id === 'root' ? 'root' : `partner-${partner.parent_id}`,
+              target: nodeId,
+              type: 'smoothstep'
+            },
+            {
+              id: `e-${nodeId}-left`,
+              source: nodeId,
+              target: leftSlotId,
+              type: 'smoothstep'
+            },
+            {
+              id: `e-${nodeId}-right`,
+              source: nodeId,
+              target: rightSlotId,
+              type: 'smoothstep'
+            }
+          );
         }
       });
 
@@ -219,7 +258,6 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onNodeClick={handleNodeClick}
             nodeTypes={nodeTypes}
             fitView
             nodesDraggable={false}
