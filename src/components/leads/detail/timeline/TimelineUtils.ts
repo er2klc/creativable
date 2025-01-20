@@ -8,10 +8,9 @@ export type TimelineItemType =
   | 'phase_change' 
   | 'message' 
   | 'file_upload'
-  | 'contact_created'
-  | 'reminder'
-  | 'upload'
-  | 'presentation';
+  | 'contact_created';
+
+export type TimelineItemStatus = 'completed' | 'cancelled' | 'outdated';
 
 export interface TimelineItem {
   id: string;
@@ -27,7 +26,7 @@ export interface TimelineItem {
     fileType?: string;
     fileSize?: number;
     filePath?: string;
-    status?: 'completed' | 'cancelled' | 'outdated';
+    status?: TimelineItemStatus;
     completedAt?: string;
     cancelledAt?: string;
     updatedAt?: string;
