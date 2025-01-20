@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TeamEvent, Appointment } from "../types/calendar";
 
 // Debugging-Log hinzufügen
-console.log("useCalendarEvents.ts version 1.2 geladen");
+console.log("useCalendarEvents.ts version 1.3 geladen");
 
 const expandRecurringEvent = (event: TeamEvent, currentDate: Date): TeamEvent[] => {
   if (!event.isRecurring || event.recurring_pattern === 'none') {
@@ -117,6 +117,8 @@ export const useCalendarEvents = (
           teams:team_id (name)
         `)
         .in("team_id", teamIds)
+        .gte("start_time", startOfMonth(currentDate).toISOString())
+        .lte("start_time", endOfMonth(currentDate).toISOString())
         .or(
           isAdmin 
             ? `is_admin_only.eq.false,is_admin_only.eq.true`
