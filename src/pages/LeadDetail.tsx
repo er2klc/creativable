@@ -113,15 +113,15 @@ export default function LeadDetail() {
         onUpdateLead={updateLeadMutation.mutate}
       />
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        {/* Left Column */}
-        <div className="space-y-6">
+      <div className="grid grid-cols-12 gap-6 mt-6">
+        {/* Left Column - 5/12 width */}
+        <div className="col-span-12 lg:col-span-5 space-y-6">
           <LeadSummary lead={lead} />
           <LeadInfoCard lead={lead} />
         </div>
         
-        {/* Right Column */}
-        <div className="space-y-6">
+        {/* Right Column - 7/12 width */}
+        <div className="col-span-12 lg:col-span-7 space-y-6">
           <LeadDetailTabs lead={lead} />
           <LeadTimeline 
             lead={lead} 
