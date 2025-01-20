@@ -10,7 +10,6 @@ import {
   Node,
   Edge,
   Connection,
-  Position,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Button } from '@/components/ui/button';
@@ -103,9 +102,15 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      // Join with profiles to get avatar_url
       const { data: partners, error } = await supabase
         .from('leads')
-        .select('*')
+        .select(`
+          *,
+          profile:user_id (
+            avatar_url
+          )
+        `)
         .eq('status', 'partner')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -115,12 +120,18 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
         return;
       }
 
-      setPartners(partners || []);
+      // Transform the data to include avatar_url at the top level
+      const transformedPartners = partners?.map(partner => ({
+        ...partner,
+        avatar_url: partner.profile?.avatar_url
+      })) || [];
+
+      setPartners(transformedPartners);
 
       const newNodes = [...initialNodes];
       const newEdges = [...edges];
 
-      partners.forEach((partner, index) => {
+      transformedPartners.forEach((partner, index) => {
         const nodeId = `partner-${partner.id}`;
         const parentId = partner.parent_id || 'root';
         const level = partner.level || 1;
