@@ -5,6 +5,8 @@ import { Star, XCircle, Instagram, Linkedin, Facebook, Video, Users } from "luci
 import { cn } from "@/lib/utils";
 import { Platform } from "@/config/platforms";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
+import { toast } from "sonner";
+import { useSettings } from "@/hooks/use-settings";
 
 interface LeadDetailHeaderProps {
   lead: Tables<"leads">;
@@ -12,12 +14,40 @@ interface LeadDetailHeaderProps {
 }
 
 export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) {
+  const { settings } = useSettings();
+  
   const handleNameChange = async (name: string) => {
     await onUpdateLead({ name });
   };
 
-  const handleStatusChange = (status: string) => {
-    onUpdateLead({ status });
+  const handleStatusChange = async (status: string) => {
+    try {
+      await onUpdateLead({ 
+        status,
+        // Initialize onboarding progress when status changes to partner
+        ...(status === 'partner' ? {
+          onboarding_progress: {
+            message_sent: false,
+            team_invited: false,
+            training_provided: false,
+            intro_meeting_scheduled: false
+          }
+        } : {})
+      });
+      
+      toast.success(
+        settings?.language === "en"
+          ? "Status updated successfully"
+          : "Status erfolgreich aktualisiert"
+      );
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error updating status"
+          : "Fehler beim Aktualisieren des Status"
+      );
+    }
   };
 
   const getPlatformIcon = (platform: Platform) => {
