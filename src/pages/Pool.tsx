@@ -16,10 +16,24 @@ export default function Pool() {
   const { data: leads = [] } = useQuery({
     queryKey: ["pool-leads", status],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      // Get the user's network marketing ID
+      const { data: settings } = await supabase
+        .from('settings')
+        .select('network_marketing_id')
+        .eq('user_id', user.id)
+        .single();
+
+      // Get leads that are either:
+      // 1. Created by the current user
+      // 2. Have a matching network_marketing_id with the current user's settings
       const { data, error } = await supabase
         .from("leads")
         .select("*")
         .eq("status", status)
+        .or(`user_id.eq.${user.id},network_marketing_id.eq.${settings?.network_marketing_id}`)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

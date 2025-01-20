@@ -17,6 +17,9 @@ import { Button } from '@/components/ui/button';
 import { AddPartnerDialog } from './AddPartnerDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
+import { Card } from '@/components/ui/card';
+import { Avatar } from '@/components/ui/avatar';
+import { UserPlus } from 'lucide-react';
 
 interface PartnerTreeProps {
   unassignedPartners: Tables<'leads'>[];
@@ -108,20 +111,41 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
         <h3 className="text-lg font-semibold mb-2">Nicht zugeordnete Partner:</h3>
         <div className="flex flex-wrap gap-4">
           {unassignedPartners.map((partner) => (
-            <div
+            <Card
               key={partner.id}
-              className="bg-white rounded-full shadow p-3 flex items-center gap-2 min-w-[100px] min-h-[100px] justify-center"
+              className="p-4 flex flex-col items-center gap-2 w-[200px]"
             >
+              <Avatar className="w-16 h-16">
+                {!partner.avatar_url && (
+                  <div className="bg-primary text-primary-foreground w-full h-full rounded-full flex items-center justify-center text-xl font-semibold">
+                    {partner.name.substring(0, 2).toUpperCase()}
+                  </div>
+                )}
+                {partner.avatar_url && (
+                  <img
+                    src={partner.avatar_url}
+                    alt={partner.name}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                )}
+              </Avatar>
               <div className="text-center">
-                <div className="font-medium">{partner.name}</div>
+                <div className="font-semibold">{partner.name}</div>
                 {partner.network_marketing_id && (
                   <div className="text-sm text-gray-500">
                     ID: {partner.network_marketing_id}
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
           ))}
+          <Card
+            className="p-4 flex flex-col items-center justify-center gap-2 w-[200px] h-[160px] cursor-pointer hover:bg-accent transition-colors"
+            onClick={() => setIsAddingPartner(true)}
+          >
+            <UserPlus className="w-8 h-8 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Partner hinzufügen</span>
+          </Card>
         </div>
       </div>
 
@@ -142,14 +166,11 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
         </ReactFlow>
       </div>
 
-      {isAddingPartner && (
-        <AddPartnerDialog
-          open={isAddingPartner}
-          onOpenChange={setIsAddingPartner}
-          position={selectedPosition}
-          trigger={<Button className="hidden">Add Partner</Button>}
-        />
-      )}
+      <AddPartnerDialog
+        open={isAddingPartner}
+        onOpenChange={setIsAddingPartner}
+        position={selectedPosition}
+      />
     </div>
   );
 }

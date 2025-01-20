@@ -1,8 +1,8 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -41,6 +41,45 @@ export const AddPartnerDialog = ({ open, onOpenChange, position, trigger }: AddP
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      // First, check if a user exists with this network marketing ID
+      if (networkMarketingId) {
+        const { data: existingUser } = await supabase
+          .from('settings')
+          .select('user_id')
+          .eq('network_marketing_id', networkMarketingId)
+          .single();
+
+        if (!existingUser) {
+          toast.error("Kein Benutzer mit dieser ID gefunden");
+          return;
+        }
+      }
+
+      // Get the partner pipeline and phase IDs
+      const { data: pipeline } = await supabase
+        .from('pipelines')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('name', 'Standard Pipeline')
+        .single();
+
+      if (!pipeline) {
+        toast.error("Pipeline nicht gefunden");
+        return;
+      }
+
+      const { data: phase } = await supabase
+        .from('pipeline_phases')
+        .select('id')
+        .eq('pipeline_id', pipeline.id)
+        .eq('name', 'Erstkontakt')
+        .single();
+
+      if (!phase) {
+        toast.error("Phase nicht gefunden");
+        return;
+      }
+
       const { error } = await supabase
         .from('leads')
         .insert({
@@ -50,8 +89,8 @@ export const AddPartnerDialog = ({ open, onOpenChange, position, trigger }: AddP
           status: 'partner',
           industry: 'Network Marketing',
           platform: 'Direct',
-          phase_id: 'partner',
-          pipeline_id: 'partner'
+          phase_id: phase.id,
+          pipeline_id: pipeline.id
         });
 
       if (error) throw error;
