@@ -18,7 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
 import { Card } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, User } from 'lucide-react';
 
 interface PartnerTreeProps {
   unassignedPartners: Tables<'leads'>[];
@@ -29,13 +29,17 @@ interface PartnerTreeProps {
   } | null;
 }
 
+interface PartnerWithProfile extends Tables<'leads'> {
+  avatar_url?: string | null;
+}
+
 const CustomNode = ({ data }: { data: any }) => (
   <Card className="min-w-[200px] p-4 bg-white/80 backdrop-blur-sm border border-white/20">
     <div className="flex items-center gap-4">
       <Avatar className="w-12 h-12">
         {!data.avatar_url && (
           <div className="bg-primary text-primary-foreground w-full h-full rounded-full flex items-center justify-center text-xl font-semibold">
-            {data.name?.substring(0, 2).toUpperCase()}
+            {data.name?.substring(0, 2).toUpperCase() || <User className="w-6 h-6" />}
           </div>
         )}
         {data.avatar_url && (
@@ -59,7 +63,7 @@ const CustomNode = ({ data }: { data: any }) => (
 export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProps) {
   const [isAddingPartner, setIsAddingPartner] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<{ x: number; y: number; parentId: string } | null>(null);
-  const [partners, setPartners] = useState<Tables<'leads'>[]>([]);
+  const [partners, setPartners] = useState<PartnerWithProfile[]>([]);
 
   const initialNodes: Node[] = [
     {
@@ -102,15 +106,10 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // First get all partners
+      // Get all partners
       const { data: partners, error } = await supabase
         .from('leads')
-        .select(`
-          *,
-          profiles:leads_profiles!inner(
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('status', 'partner')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -120,10 +119,10 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
         return;
       }
 
-      // Transform the data to include avatar_url at the top level
+      // Transform partners to include avatar_url
       const transformedPartners = partners?.map(partner => ({
         ...partner,
-        avatar_url: partner.profiles?.avatar_url
+        avatar_url: null // We'll implement profile avatars in a future update
       })) || [];
 
       setPartners(transformedPartners);
