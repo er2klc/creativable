@@ -4,5 +4,6 @@ export interface BusinessSettings {
   target_audience: string | null;
   usp: string | null;
   business_description: string | null;
+  about_me: string | null;
   network_marketing_id: string | null;
 }
