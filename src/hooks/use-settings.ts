@@ -9,62 +9,74 @@ export const useSettings = () => {
   const { data: settings, isLoading, refetch: refetchSettings } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("No user found");
-      }
-
-      console.info("Fetching settings for user:", user.id);
-
-      const { data, error } = await supabase
-        .from("settings")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching settings:", error);
-        throw error;
-      }
-
-      if (data?.openai_api_key) {
-        console.info("✅ OpenAI API Key is set and loaded successfully");
-      } else {
-        console.warn("⚠️ OpenAI API Key is not set");
-      }
-
-      // If no settings exist, create initial settings
-      if (!data) {
-        console.info("No settings found, creating initial settings");
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
         
-        const { data: userMetadata } = await supabase.auth.getUser();
-        const phoneNumber = userMetadata.user?.phone || userMetadata.user?.user_metadata?.phoneNumber || null;
-        
-        const newSettings = {
-          user_id: user.id,
-          language: "Deutsch",
-          registration_step: 1,
-          registration_completed: false,
-          whatsapp_number: phoneNumber,
-        };
-
-        const { data: createdSettings, error: createError } = await supabase
-          .from("settings")
-          .insert(newSettings)
-          .select()
-          .single();
-
-        if (createError) {
-          console.error("Error creating settings:", createError);
-          throw createError;
+        if (!user) {
+          throw new Error("No user found");
         }
 
-        return createdSettings;
-      }
+        console.info("Fetching settings for user:", user.id);
 
-      return data;
+        const { data, error } = await supabase
+          .from("settings")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error fetching settings:", error);
+          throw error;
+        }
+
+        if (data?.openai_api_key) {
+          console.info("✅ OpenAI API Key is set and loaded successfully");
+        } else {
+          console.warn("⚠️ OpenAI API Key is not set");
+        }
+
+        // If no settings exist, create initial settings
+        if (!data) {
+          console.info("No settings found, creating initial settings");
+          
+          const { data: userMetadata } = await supabase.auth.getUser();
+          const phoneNumber = userMetadata.user?.phone || userMetadata.user?.user_metadata?.phoneNumber || null;
+          
+          const newSettings = {
+            user_id: user.id,
+            language: "Deutsch",
+            registration_step: 1,
+            registration_completed: false,
+            whatsapp_number: phoneNumber,
+          };
+
+          const { data: createdSettings, error: createError } = await supabase
+            .from("settings")
+            .insert(newSettings)
+            .select()
+            .single();
+
+          if (createError) {
+            console.error("Error creating settings:", createError);
+            throw createError;
+          }
+
+          return createdSettings;
+        }
+
+        return data;
+      } catch (error) {
+        console.error("Error fetching settings:", {
+          message: error.message,
+          details: error.stack,
+          hint: error.hint || "",
+          code: error.code || ""
+        });
+        throw error;
+      }
     },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const updateSettings = useMutation({
