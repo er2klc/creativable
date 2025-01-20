@@ -7,7 +7,6 @@ import { TaskTab } from "./tabs/TaskTab";
 import { MessageTab } from "./tabs/MessageTab";
 import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
 import { LeadFileUpload } from "./files/LeadFileUpload";
-import { LeadFileList } from "./files/LeadFileList";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon } from "lucide-react";
@@ -70,7 +69,7 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
           className="flex-1"
           style={{ borderBottom: `2px solid ${tabColors.uploads}` }}
         >
-          {settings?.language === "en" ? "Uploads" : "Uploads"}
+          {settings?.language === "en" ? "Upload File" : "Datei hochladen"}
         </TabsTrigger>
         <TabsTrigger
           value="presentations"
@@ -120,10 +119,7 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
       </TabsContent>
 
       <TabsContent value="uploads" className="mt-4">
-        <div className="space-y-4">
-          <LeadFileUpload leadId={lead.id} />
-          <LeadFileList leadId={lead.id} />
-        </div>
+        <LeadFileUpload leadId={lead.id} />
       </TabsContent>
 
       <TabsContent value="presentations" className="mt-4">
