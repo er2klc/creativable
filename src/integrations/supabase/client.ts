@@ -24,21 +24,37 @@ export const supabase = createClient<Database>(
         'X-Client-Info': 'supabase-js-web'
       },
       fetch: (url: string, options: RequestInit = {}) => {
-        return fetch(url, {
+        const fetchOptions: RequestInit = {
           ...options,
           credentials: 'include',
           headers: {
             ...(options.headers as Record<string, string>),
             'Cache-Control': 'no-cache',
           }
-        }).catch(error => {
-          console.error('Supabase request failed:', {
-            url,
-            error,
-            method: options.method || 'GET'
+        };
+
+        return fetch(url, fetchOptions)
+          .then(response => {
+            if (!response.ok) {
+              console.error('HTTP Error Response:', {
+                status: response.status,
+                statusText: response.statusText,
+                url: url
+              });
+            }
+            return response;
+          })
+          .catch(error => {
+            console.error('Supabase request failed:', {
+              url,
+              error,
+              method: options.method || 'GET'
+            });
+            if (error.message === 'Failed to fetch') {
+              console.error('Network error - please check your connection');
+            }
+            throw error;
           });
-          throw error;
-        });
       }
     },
     db: {
