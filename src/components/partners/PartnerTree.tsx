@@ -98,6 +98,7 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
   const [selectedPosition, setSelectedPosition] = useState<{ x: number; y: number; parentId: string } | null>(null);
   const [partners, setPartners] = useState<PartnerWithProfile[]>([]);
   const [assignedPartnerIds, setAssignedPartnerIds] = useState<Set<string>>(new Set());
+  const navigate = useNavigate();
 
   const createEmptySlot = (id: string, position: { x: number, y: number }, parentId: string) => ({
     id: `empty-${id}`,

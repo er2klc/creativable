@@ -18,6 +18,7 @@ import { type Platform } from "@/config/platforms";
 import { useLeadSubscription } from "@/components/leads/detail/hooks/useLeadSubscription";
 import { LeadWithRelations } from "./detail/types/lead";
 import { CheckCircle, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -208,3 +209,4 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     </Dialog>
   );
 };
+
