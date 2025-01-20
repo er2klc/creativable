@@ -20,11 +20,12 @@ export const LeadFileUpload = ({ leadId }: LeadFileUploadProps) => {
 
     setIsUploading(true);
     try {
-      // Upload original file
+      // Create a properly structured file path
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${leadId}/${fileName}`;
 
+      // Upload file to storage
       const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, file);
