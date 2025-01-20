@@ -45,7 +45,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       content: task.title,
       created_at: task.created_at || new Date().toISOString(),
       timestamp: task.created_at || new Date().toISOString(),
-      status: task.completed ? 'completed' : 'pending',
+      status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : 'pending',
       metadata: {
         dueDate: task.due_date,
         meetingType: task.meeting_type,

@@ -8,7 +8,10 @@ export type TimelineItemType =
   | 'phase_change' 
   | 'message' 
   | 'file_upload'
-  | 'contact_created';
+  | 'contact_created'
+  | 'reminder'
+  | 'upload'
+  | 'presentation';
 
 export type TimelineItemStatus = 'completed' | 'cancelled' | 'outdated';
 

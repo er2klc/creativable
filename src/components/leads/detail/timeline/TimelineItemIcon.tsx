@@ -12,6 +12,7 @@ import {
   ListTodo,
   Send,
   ArrowUpCircle,
+  Upload,
   X,
   Check
 } from "lucide-react";
@@ -48,6 +49,8 @@ export const TimelineItemIcon = ({ type, status, platform }: TimelineItemIconPro
       case 'reminder':
         return <Bell className="h-4 w-4 text-white" />;
       case 'upload':
+        return <Upload className="h-4 w-4 text-white" />;
+      case 'file_upload':
         return <FileText className="h-4 w-4 text-white" />;
       case 'presentation':
         return <Send className="h-4 w-4 text-white" />;
@@ -73,6 +76,7 @@ export const TimelineItemIcon = ({ type, status, platform }: TimelineItemIconPro
       case 'reminder':
         return 'bg-red-500';
       case 'upload':
+      case 'file_upload':
         return 'bg-gray-500';
       case 'presentation':
         return 'bg-indigo-500';
