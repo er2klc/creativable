@@ -38,7 +38,7 @@ const CustomNode = ({ data }: { data: any }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    if (!data.isEmpty && data.id) {
+    if (!data.isEmpty && data.id && !data.isManual) {
       navigate(`/leads/${data.id}`);
     }
   };
@@ -73,9 +73,9 @@ const CustomNode = ({ data }: { data: any }) => {
                 />
               )}
             </Avatar>
-            {data.user_created && (
+            {data.user_created && !data.isManual && (
               <img 
-                src="/your-logo.png" 
+                src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
                 alt="Company Logo" 
                 className="absolute -top-1 -right-1 w-5 h-5 rounded-full"
               />
@@ -99,6 +99,9 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
   const [partners, setPartners] = useState<PartnerWithProfile[]>([]);
   const [assignedPartnerIds, setAssignedPartnerIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
+
+  // Filter only user-created partners
+  const userCreatedPartners = partners.filter(partner => partner.user_id === currentUser?.id);
 
   const createEmptySlot = (id: string, position: { x: number, y: number }, parentId: string) => ({
     id: `empty-${id}`,
@@ -194,7 +197,6 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
           const nodeId = `partner-${partner.id}`;
           const level = partner.level || 1;
           
-          // Calculate position based on whether it's a left or right child
           const parentNode = partner.parent_id === null ? 
             newNodes.find(n => n.id === 'root') : 
             newNodes.find(n => n.id === `partner-${partner.parent_id}`);
@@ -218,7 +220,8 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
               network_marketing_id: partner.network_marketing_id,
               avatar_url: partner.avatar_url,
               user_created: partner.user_created,
-              onboarding_progress: partner.onboarding_progress
+              onboarding_progress: partner.onboarding_progress,
+              isManual: false
             }
           });
 
@@ -267,42 +270,21 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
     if (currentUser?.id) {
       loadPartners();
     }
-
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('partner-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'leads',
-          filter: `user_id=eq.${currentUser?.id}`
-        },
-        () => {
-          loadPartners(); // Reload partners when changes occur
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [currentUser?.id]);
 
-  // Filter partners for onboarding status
-  const pendingOnboardingPartners = partners.filter(partner => 
+  // Filter partners for onboarding status - only show user created partners
+  const pendingOnboardingPartners = userCreatedPartners.filter(partner => 
     partner.onboarding_progress && 
     Object.values(partner.onboarding_progress).some(value => !value)
   );
 
-  const completedOnboardingPartners = partners.filter(partner => 
+  const completedOnboardingPartners = userCreatedPartners.filter(partner => 
     partner.onboarding_progress && 
     Object.values(partner.onboarding_progress).every(value => value)
   );
 
-  // Filter unassigned partners for the lobby
-  const lobbyPartners = partners.filter(partner => !assignedPartnerIds.has(partner.id));
+  // Filter unassigned partners - only show user created partners
+  const lobbyPartners = userCreatedPartners.filter(partner => !assignedPartnerIds.has(partner.id));
 
   return (
     <div className="space-y-8">
