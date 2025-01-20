@@ -4,8 +4,7 @@ import { Eye, Download, Trash, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import { formatDate } from "./TimelineUtils";
 
 interface TimelineItemCardProps {
   type: TimelineItemType;
@@ -20,9 +19,12 @@ interface TimelineItemCardProps {
     fileType?: string;
     fileSize?: number;
     filePath?: string;
-    status?: 'completed' | 'cancelled';
+    status?: 'completed' | 'cancelled' | 'outdated';
     completedAt?: string;
     cancelledAt?: string;
+    updatedAt?: string;
+    oldDate?: string;
+    newDate?: string;
   };
   status?: string;
   onDelete?: () => void;
@@ -40,7 +42,10 @@ export const TimelineItemCard = ({ type, content, metadata, status, onDelete }: 
       case 'task':
         return status === 'completed' ? 'border-green-500' : 'border-cyan-500';
       case 'appointment':
-        return status === 'cancelled' ? 'border-red-500' : 'border-orange-500';
+        if (status === 'cancelled' || metadata?.status === 'outdated') {
+          return 'border-gray-400';
+        }
+        return 'border-orange-500';
       case 'note':
         return 'border-yellow-500';
       case 'phase_change':
@@ -50,12 +55,6 @@ export const TimelineItemCard = ({ type, content, metadata, status, onDelete }: 
       default:
         return 'border-gray-500';
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const weekday = format(date, "EEE", { locale: de });
-    return `${weekday}. ${format(date, "dd.MM.yyyy | HH:mm 'Uhr'", { locale: de })}`;
   };
 
   const handleDownload = async () => {
@@ -82,21 +81,34 @@ export const TimelineItemCard = ({ type, content, metadata, status, onDelete }: 
     }
   };
 
+  const isOutdated = type === 'appointment' && 
+    (status === 'cancelled' || metadata?.status === 'outdated');
+
   return (
     <div className={cn(
       "flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border group relative",
       getBorderColor(),
-      (status === 'completed' || status === 'cancelled') && "opacity-70"
+      isOutdated && "opacity-70"
     )}>
       <div className={cn(
         "font-medium mb-1",
-        status === 'completed' && "line-through text-gray-500",
-        status === 'cancelled' && "text-gray-400"
+        isOutdated && "text-gray-400"
       )}>{content}</div>
       
-      {metadata?.dueDate && (
+      {metadata?.dueDate && !isOutdated && (
         <div className="text-sm text-gray-500">
           Fällig am: {formatDate(metadata.dueDate)}
+        </div>
+      )}
+
+      {metadata?.oldDate && metadata?.newDate && (
+        <div className="text-sm">
+          <div className="text-gray-400">
+            Alter Termin: {formatDate(metadata.oldDate)}
+          </div>
+          <div className="text-blue-600">
+            Neuer Termin: {formatDate(metadata.newDate)}
+          </div>
         </div>
       )}
 

@@ -35,8 +35,11 @@ export interface TimelineItem {
     fileName?: string;
     fileType?: string;
     fileSize?: number;
-    status?: 'completed' | 'cancelled';
+    status?: 'completed' | 'cancelled' | 'outdated';
     completedAt?: string;
     cancelledAt?: string;
+    updatedAt?: string;
+    oldDate?: string;
+    newDate?: string;
   };
 }
