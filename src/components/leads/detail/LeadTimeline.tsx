@@ -41,7 +41,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     })),
     ...tasks.map(task => ({
       id: task.id,
-      type: (task.meeting_type ? 'appointment' : 'task') as const,
+      type: (task.meeting_type ? 'appointment' : 'task') as TimelineItemType,
       content: task.title,
       created_at: task.created_at || new Date().toISOString(),
       timestamp: task.created_at || new Date().toISOString(),
