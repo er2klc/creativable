@@ -5,9 +5,12 @@ import { Tables } from "@/integrations/supabase/types";
 import { NoteTab } from "./tabs/NoteTab";
 import { TaskTab } from "./tabs/TaskTab";
 import { MessageTab } from "./tabs/MessageTab";
-import { AppointmentForm } from "@/components/calendar/appointment-dialog/AppointmentForm";
+import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
 import { LeadFileUpload } from "./files/LeadFileUpload";
 import { LeadFileList } from "./files/LeadFileList";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { CalendarIcon } from "lucide-react";
 
 interface LeadDetailTabsProps {
   lead: Tables<"leads"> & {
@@ -29,11 +32,7 @@ const tabColors = {
 
 export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const { settings } = useSettings();
-
-  const handleAppointmentSubmit = async (values: any) => {
-    // Handle appointment creation
-    console.log("Creating appointment:", values);
-  };
+  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
 
   return (
     <Tabs defaultValue="notes" className="w-full">
@@ -92,9 +91,19 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
 
       <TabsContent value="appointments" className="mt-4">
         <div className="space-y-4">
-          <AppointmentForm 
-            onSubmit={handleAppointmentSubmit}
-            defaultValues={{
+          <Button 
+            onClick={() => setAppointmentDialogOpen(true)}
+            className="w-full"
+          >
+            <CalendarIcon className="w-4 h-4 mr-2" />
+            {settings?.language === "en" ? "Add Appointment" : "Termin hinzufügen"}
+          </Button>
+          
+          <NewAppointmentDialog
+            open={appointmentDialogOpen}
+            onOpenChange={setAppointmentDialogOpen}
+            initialSelectedDate={null}
+            appointmentToEdit={{
               id: "",
               leadId: lead.id,
               time: "09:00",
