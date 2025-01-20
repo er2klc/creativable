@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
 import { LeadWithRelations } from "@/components/leads/detail/types/lead";
+import { CompactPhaseSelector } from "@/components/leads/detail/CompactPhaseSelector";
 
 export default function LeadDetail() {
   const { leadId } = useParams<{ leadId: string }>();
@@ -122,6 +123,10 @@ export default function LeadDetail() {
         
         {/* Right Column - 8/12 width */}
         <div className="col-span-12 lg:col-span-8 space-y-6">
+          <CompactPhaseSelector
+            lead={lead}
+            onUpdateLead={updateLeadMutation.mutate}
+          />
           <LeadDetailTabs lead={lead} />
           <LeadTimeline 
             lead={lead} 
