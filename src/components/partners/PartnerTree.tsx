@@ -14,10 +14,9 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Button } from '@/components/ui/button';
-import { AddLeadDialog } from '@/components/leads/AddLeadDialog';
+import { AddPartnerDialog } from './AddPartnerDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
-import { Avatar } from '@/components/ui/avatar';
 
 interface PartnerTreeProps {
   unassignedPartners: Tables<'leads'>[];
@@ -29,21 +28,12 @@ interface PartnerTreeProps {
 }
 
 const CustomNode = ({ data }: { data: any }) => (
-  <div className="bg-white rounded-lg shadow-lg p-4 min-w-[200px]">
-    <div className="flex items-center gap-3">
-      <Avatar className="h-10 w-10">
-        {data.avatar_url ? (
-          <img src={data.avatar_url} alt={data.name} className="object-cover" />
-        ) : (
-          <div className="bg-primary h-full w-full flex items-center justify-center text-white font-semibold">
-            {data.name?.charAt(0)}
-          </div>
-        )}
-      </Avatar>
-      <div>
-        <div className="font-semibold">{data.name}</div>
-        <div className="text-sm text-gray-500">{data.company_name || 'Kein Unternehmen'}</div>
-      </div>
+  <div className="bg-white rounded-full shadow-lg p-4 min-w-[100px] min-h-[100px] flex items-center justify-center">
+    <div className="text-center">
+      <div className="font-semibold">{data.name}</div>
+      {data.network_marketing_id && (
+        <div className="text-sm text-gray-500">ID: {data.network_marketing_id}</div>
+      )}
     </div>
   </div>
 );
@@ -59,10 +49,9 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
       position: { x: 400, y: 50 },
       data: {
         name: currentUser?.display_name || 'Mein Profil',
-        avatar_url: currentUser?.avatar_url,
+        network_marketing_id: null,
       },
     },
-    // Empty nodes for potential partners
     {
       id: 'empty-1',
       type: 'custom',
@@ -78,8 +67,20 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
   ];
 
   const initialEdges: Edge[] = [
-    { id: 'e1', source: 'root', target: 'empty-1', type: 'smoothstep' },
-    { id: 'e2', source: 'root', target: 'empty-2', type: 'smoothstep' },
+    { 
+      id: 'e1', 
+      source: 'root', 
+      target: 'empty-1', 
+      type: 'smoothstep',
+      style: { stroke: '#999' }
+    },
+    { 
+      id: 'e2', 
+      source: 'root', 
+      target: 'empty-2', 
+      type: 'smoothstep',
+      style: { stroke: '#999' }
+    },
   ];
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -109,18 +110,15 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
           {unassignedPartners.map((partner) => (
             <div
               key={partner.id}
-              className="bg-white rounded-lg shadow p-3 flex items-center gap-2"
+              className="bg-white rounded-full shadow p-3 flex items-center gap-2 min-w-[100px] min-h-[100px] justify-center"
             >
-              <Avatar className="h-8 w-8">
-                <div className="bg-primary h-full w-full flex items-center justify-center text-white font-semibold">
-                  {partner.name.charAt(0)}
-                </div>
-              </Avatar>
-              <div>
+              <div className="text-center">
                 <div className="font-medium">{partner.name}</div>
-                <div className="text-sm text-gray-500">
-                  {partner.company_name || 'Kein Unternehmen'}
-                </div>
+                {partner.network_marketing_id && (
+                  <div className="text-sm text-gray-500">
+                    ID: {partner.network_marketing_id}
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -145,10 +143,10 @@ export function PartnerTree({ unassignedPartners, currentUser }: PartnerTreeProp
       </div>
 
       {isAddingPartner && (
-        <AddLeadDialog
+        <AddPartnerDialog
           open={isAddingPartner}
           onOpenChange={setIsAddingPartner}
-          defaultPhase="partner"
+          position={selectedPosition}
           trigger={<Button className="hidden">Add Partner</Button>}
         />
       )}

@@ -765,6 +765,7 @@ export type Database = {
           last_name: string | null
           last_social_media_scan: string | null
           name: string
+          network_marketing_id: string | null
           next_steps: Json | null
           notes: string | null
           onboarding_progress: Json | null
@@ -823,6 +824,7 @@ export type Database = {
           last_name?: string | null
           last_social_media_scan?: string | null
           name: string
+          network_marketing_id?: string | null
           next_steps?: Json | null
           notes?: string | null
           onboarding_progress?: Json | null
@@ -881,6 +883,7 @@ export type Database = {
           last_name?: string | null
           last_social_media_scan?: string | null
           name?: string
+          network_marketing_id?: string | null
           next_steps?: Json | null
           notes?: string | null
           onboarding_progress?: Json | null
@@ -1185,6 +1188,7 @@ export type Database = {
           last_selected_pipeline_id: string | null
           linkedin_auth_token: string | null
           linkedin_connected: boolean | null
+          network_marketing_id: string | null
           openai_api_key: string | null
           products_services: string | null
           registration_company_name: string | null
@@ -1217,6 +1221,7 @@ export type Database = {
           last_selected_pipeline_id?: string | null
           linkedin_auth_token?: string | null
           linkedin_connected?: boolean | null
+          network_marketing_id?: string | null
           openai_api_key?: string | null
           products_services?: string | null
           registration_company_name?: string | null
@@ -1249,6 +1254,7 @@ export type Database = {
           last_selected_pipeline_id?: string | null
           linkedin_auth_token?: string | null
           linkedin_connected?: boolean | null
+          network_marketing_id?: string | null
           openai_api_key?: string | null
           products_services?: string | null
           registration_company_name?: string | null
