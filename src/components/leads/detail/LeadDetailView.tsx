@@ -248,8 +248,8 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
                 <NoteList leadId={lead.id} />
                 <LeadMessages leadId={lead.id} messages={lead.messages} />
 
-                {/* Delete Button */}
-                <div className="absolute bottom-4 left-4">
+                {/* Delete Button in bottom left corner */}
+                <div className="fixed bottom-8 left-8 z-50">
                   <Button
                     variant="ghost"
                     size="sm"
