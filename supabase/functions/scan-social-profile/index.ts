@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { scanInstagramProfile } from "./instagram.ts";
-import { scanLinkedInProfile } from "./linkedin.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 interface ScanProfileRequest {
@@ -53,26 +52,21 @@ serve(async (req) => {
     let profileData;
     console.log(`Attempting to scan ${platform} profile for username: ${username}`);
     
-    switch (platform.toLowerCase()) {
-      case 'instagram':
-        profileData = await scanInstagramProfile(username);
-        break;
-      case 'linkedin':
-        profileData = await scanLinkedInProfile(username);
-        break;
-      default:
-        return new Response(
-          JSON.stringify({
-            error: `Unsupported platform: ${platform}`,
-          }),
-          {
-            headers: {
-              ...corsHeaders,
-              "Content-Type": "application/json",
-            },
-            status: 400,
-          }
-        );
+    if (platform.toLowerCase() === 'instagram') {
+      profileData = await scanInstagramProfile(username);
+    } else {
+      return new Response(
+        JSON.stringify({
+          error: `Unsupported platform: ${platform}`,
+        }),
+        {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+          status: 400,
+        }
+      );
     }
 
     console.log('Scanned profile data:', profileData);
@@ -89,7 +83,7 @@ serve(async (req) => {
             ...corsHeaders,
             "Content-Type": "application/json",
           },
-          status: 200, // Changed from 404 to 200 to prevent error
+          status: 200,
         }
       );
     }
@@ -99,14 +93,11 @@ serve(async (req) => {
       .from('leads')
       .update({
         social_media_bio: profileData.bio,
-        social_media_posts: {
-          followers: profileData.followers,
-          following: profileData.following,
-          posts: profileData.posts,
-          isPrivate: profileData.isPrivate,
-          headline: profileData.headline,
-          connections: profileData.connections,
-        },
+        instagram_followers: profileData.followers,
+        instagram_following: profileData.following,
+        instagram_posts: profileData.posts,
+        instagram_engagement_rate: profileData.engagement_rate,
+        instagram_profile_image_url: profileData.profileImageUrl,
         last_social_media_scan: new Date().toISOString(),
       })
       .eq('id', leadId);
@@ -141,7 +132,7 @@ serve(async (req) => {
           ...corsHeaders,
           "Content-Type": "application/json",
         },
-        status: 200, // Changed from 400 to 200 to prevent error
+        status: 200,
       }
     );
   }
