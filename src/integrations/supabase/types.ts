@@ -790,9 +790,7 @@ export type Database = {
         Row: {
           address: string | null
           archive_reason: string | null
-          avatar_url: string | null
           best_contact_times: string | null
-          bio: string | null
           birth_date: string | null
           business_description: string | null
           challenges: string[] | null
@@ -809,6 +807,14 @@ export type Database = {
           goals: string[] | null
           id: string
           industry: string
+          instagram_categories: string[] | null
+          instagram_engagement_rate: number | null
+          instagram_followers: number | null
+          instagram_following: number | null
+          instagram_last_post_date: string | null
+          instagram_posts: number | null
+          instagram_profile_image_url: string | null
+          instagram_verified: boolean | null
           interaction_prediction: Json | null
           interests: string[] | null
           languages: string[] | null
@@ -839,17 +845,9 @@ export type Database = {
           region: string | null
           slug: string | null
           social_media_bio: string | null
-          social_media_categories: string[] | null
-          social_media_engagement_rate: number | null
-          social_media_followers: number | null
-          social_media_following: number | null
           social_media_interests: string[] | null
-          social_media_last_post_date: string | null
           social_media_posts: Json | null
-          social_media_profile_image_url: string | null
-          social_media_stats: Json | null
           social_media_username: string | null
-          social_media_verified: boolean | null
           status: string | null
           street: string | null
           target_audience: string | null
@@ -861,9 +859,7 @@ export type Database = {
         Insert: {
           address?: string | null
           archive_reason?: string | null
-          avatar_url?: string | null
           best_contact_times?: string | null
-          bio?: string | null
           birth_date?: string | null
           business_description?: string | null
           challenges?: string[] | null
@@ -880,6 +876,14 @@ export type Database = {
           goals?: string[] | null
           id?: string
           industry: string
+          instagram_categories?: string[] | null
+          instagram_engagement_rate?: number | null
+          instagram_followers?: number | null
+          instagram_following?: number | null
+          instagram_last_post_date?: string | null
+          instagram_posts?: number | null
+          instagram_profile_image_url?: string | null
+          instagram_verified?: boolean | null
           interaction_prediction?: Json | null
           interests?: string[] | null
           languages?: string[] | null
@@ -910,17 +914,9 @@ export type Database = {
           region?: string | null
           slug?: string | null
           social_media_bio?: string | null
-          social_media_categories?: string[] | null
-          social_media_engagement_rate?: number | null
-          social_media_followers?: number | null
-          social_media_following?: number | null
           social_media_interests?: string[] | null
-          social_media_last_post_date?: string | null
           social_media_posts?: Json | null
-          social_media_profile_image_url?: string | null
-          social_media_stats?: Json | null
           social_media_username?: string | null
-          social_media_verified?: boolean | null
           status?: string | null
           street?: string | null
           target_audience?: string | null
@@ -932,9 +928,7 @@ export type Database = {
         Update: {
           address?: string | null
           archive_reason?: string | null
-          avatar_url?: string | null
           best_contact_times?: string | null
-          bio?: string | null
           birth_date?: string | null
           business_description?: string | null
           challenges?: string[] | null
@@ -951,6 +945,14 @@ export type Database = {
           goals?: string[] | null
           id?: string
           industry?: string
+          instagram_categories?: string[] | null
+          instagram_engagement_rate?: number | null
+          instagram_followers?: number | null
+          instagram_following?: number | null
+          instagram_last_post_date?: string | null
+          instagram_posts?: number | null
+          instagram_profile_image_url?: string | null
+          instagram_verified?: boolean | null
           interaction_prediction?: Json | null
           interests?: string[] | null
           languages?: string[] | null
@@ -981,17 +983,9 @@ export type Database = {
           region?: string | null
           slug?: string | null
           social_media_bio?: string | null
-          social_media_categories?: string[] | null
-          social_media_engagement_rate?: number | null
-          social_media_followers?: number | null
-          social_media_following?: number | null
           social_media_interests?: string[] | null
-          social_media_last_post_date?: string | null
           social_media_posts?: Json | null
-          social_media_profile_image_url?: string | null
-          social_media_stats?: Json | null
           social_media_username?: string | null
-          social_media_verified?: boolean | null
           status?: string | null
           street?: string | null
           target_audience?: string | null
