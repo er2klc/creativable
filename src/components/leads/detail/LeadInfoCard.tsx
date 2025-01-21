@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Contact2, Trash2, Scan } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
@@ -14,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useParams, useNavigate } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 interface LeadInfoCardProps {
@@ -78,11 +78,11 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
       if (data) {
         await updateLeadMutation.mutateAsync({
           social_media_bio: data.bio,
-          social_media_followers: data.followers,
-          social_media_following: data.following,
-          social_media_posts: data.posts,
-          social_media_engagement_rate: data.engagement_rate,
-          social_media_profile_image_url: data.profileImageUrl,
+          instagram_followers: data.followers,
+          instagram_following: data.following,
+          instagram_posts: data.posts,
+          instagram_engagement_rate: data.engagement_rate,
+          instagram_profile_image_url: data.profileImageUrl,
           last_social_media_scan: new Date().toISOString()
         });
         toast.success("Profil erfolgreich gescannt");
