@@ -3,6 +3,7 @@ import { LeadSearch } from "../LeadSearch";
 import { LayoutGrid, List, ChevronDown, Instagram, Linkedin } from "lucide-react";
 import { AddLeadDialog } from "../AddLeadDialog";
 import { CreateInstagramContactDialog } from "../instagram/CreateInstagramContactDialog";
+import { LeadFilters } from "../LeadFilters";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,7 @@ export const LeadsHeader = ({
 }: LeadsHeaderProps) => {
   const [showAddLead, setShowAddLead] = useState(false);
   const [showInstagramDialog, setShowInstagramDialog] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -58,17 +60,21 @@ export const LeadsHeader = ({
           </DropdownMenu>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex-1 min-w-[300px]">
+        <div className="flex items-center gap-4 flex-1 justify-between">
+          {/* Pipeline selection and edit mode */}
+          <LeadFilters
+            selectedPipelineId={selectedPipelineId}
+            setSelectedPipelineId={setSelectedPipelineId}
+            onEditPipeline={() => setIsEditMode(!isEditMode)}
+            isEditMode={isEditMode}
+          />
+
+          {/* Centered search */}
+          <div className="flex-1 max-w-md mx-auto">
             <LeadSearch value={searchQuery} onChange={setSearchQuery} />
           </div>
 
-          {/* Pipeline selection and edit mode moved here */}
-          <div className="flex items-center gap-2">
-            {/* Your pipeline selection component goes here */}
-            {/* Your edit mode button goes here */}
-          </div>
-
+          {/* View mode buttons */}
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
