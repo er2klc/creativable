@@ -1,5 +1,12 @@
 {
   "tasks": {
-    "serve": "deno run --allow-net --allow-env --allow-read --allow-run --allow-write index.ts"
+    "serve": "deno run --allow-net --allow-env --allow-read --allow-run --allow-write --unstable index.ts"
+  },
+  "permissions": {
+    "net": true,
+    "env": true,
+    "read": true,
+    "run": true,
+    "write": true
   }
 }
