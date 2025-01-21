@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { LeadDetailView } from "@/components/leads/LeadDetailView";
+import { Tables } from "@/integrations/supabase/types";
 import { PartnerTree } from "@/components/partners/PartnerTree";
 
 export default function Pool() {
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const { status = 'partner' } = useParams<{ status?: string }>();
-  const navigate = useNavigate();
 
   const { data: leads = [] } = useQuery({
     queryKey: ["pool-leads", status],
@@ -33,7 +35,7 @@ export default function Pool() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as Tables<"leads">[];
     },
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
@@ -57,10 +59,6 @@ export default function Pool() {
     retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
   });
 
-  const handleContactClick = (id: string) => {
-    navigate(`/pool/${status}/${id}`);
-  };
-
   return (
     <div className="container mx-auto py-6">
       <Tabs defaultValue={status} className="w-full">
@@ -75,7 +73,7 @@ export default function Pool() {
           <PartnerTree 
             unassignedPartners={leads} 
             currentUser={currentUser}
-            onContactClick={handleContactClick}
+            onContactClick={(id) => setSelectedLeadId(id)}
           />
         </TabsContent>
 
@@ -97,6 +95,13 @@ export default function Pool() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {selectedLeadId && (
+        <LeadDetailView
+          leadId={selectedLeadId}
+          onClose={() => setSelectedLeadId(null)}
+        />
+      )}
     </div>
   );
 }
