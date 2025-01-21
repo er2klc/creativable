@@ -71,6 +71,7 @@ export function AddLeadDialog({
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+console.log("onSubmit triggered", values); // Debugging
     try {
       setIsLoading(true);
       console.log("Starting form submission with values:", values);
