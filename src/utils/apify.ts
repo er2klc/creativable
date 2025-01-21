@@ -16,19 +16,19 @@ export interface InstagramProfile {
 export const getInstagramProfile = async (username: string): Promise<InstagramProfile> => {
   try {
     // Fetch API token from Supabase
-    const { data: { value: apiToken } } = await supabase
+    const { data: secrets, error: secretsError } = await supabase
       .from('secrets')
-      .select('value')
+      .select('*')
       .eq('name', 'APIFY_API_TOKEN')
       .single();
 
-    if (!apiToken) {
+    if (secretsError || !secrets?.value) {
       throw new Error('Apify API token not found');
     }
 
     // Initialize the ApifyClient
     const client = new ApifyClient({
-      token: apiToken,
+      token: secrets.value,
     });
 
     // Prepare Actor input
@@ -48,21 +48,21 @@ export const getInstagramProfile = async (username: string): Promise<InstagramPr
 
     // Fetch results
     const { items } = await client.dataset(run.defaultDatasetId).listItems();
-    const profile = items[0];
+    const profile = items[0] as any; // Type assertion for the raw response
 
     if (!profile) {
       throw new Error('Profile not found');
     }
 
     return {
-      username: profile.username,
+      username: profile.username || username,
       fullName: profile.fullName || null,
       biography: profile.biography || null,
-      followersCount: profile.followersCount || null,
-      followingCount: profile.followingCount || null,
-      postsCount: profile.postsCount || null,
+      followersCount: typeof profile.followersCount === 'number' ? profile.followersCount : null,
+      followingCount: typeof profile.followingCount === 'number' ? profile.followingCount : null,
+      postsCount: typeof profile.postsCount === 'number' ? profile.postsCount : null,
       profilePicUrl: profile.profilePicUrl || null,
-      isPrivate: profile.isPrivate || false,
+      isPrivate: Boolean(profile.isPrivate),
       timestamp: new Date().toISOString()
     };
   } catch (error) {

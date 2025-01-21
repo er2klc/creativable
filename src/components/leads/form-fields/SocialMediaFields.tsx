@@ -21,6 +21,11 @@ export const formSchema = z.object({
   company_name: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   industry: z.string().optional().nullable(),
+  instagram_followers: z.number().optional(),
+  instagram_following: z.number().optional(),
+  instagram_posts: z.number().optional(),
+  social_media_bio: z.string().optional(),
+  instagram_profile_image_url: z.string().optional()
 });
 
 interface SocialMediaFieldsProps {
