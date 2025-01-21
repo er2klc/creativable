@@ -1,5 +1,6 @@
 import { ApifyClient } from 'apify-client';
 import { supabase } from '@/integrations/supabase/client';
+import { Tables } from '@/integrations/supabase/types';
 
 export interface InstagramProfile {
   username: string;
@@ -13,6 +14,17 @@ export interface InstagramProfile {
   timestamp: string;
 }
 
+interface ApifyResponse {
+  username: string;
+  fullName?: string;
+  biography?: string;
+  followersCount?: number;
+  followingCount?: number;
+  postsCount?: number;
+  profilePicUrl?: string;
+  isPrivate?: boolean;
+}
+
 export const getInstagramProfile = async (username: string): Promise<InstagramProfile> => {
   try {
     // Fetch API token from Supabase
@@ -22,11 +34,12 @@ export const getInstagramProfile = async (username: string): Promise<InstagramPr
       .eq('name', 'APIFY_API_TOKEN')
       .single();
 
-    if (secretsError || !secrets?.value) {
+    if (secretsError || !secrets) {
+      console.error('Error fetching Apify API token:', secretsError);
       throw new Error('Apify API token not found');
     }
 
-    // Initialize the ApifyClient
+    // Initialize the ApifyClient with the token from secrets
     const client = new ApifyClient({
       token: secrets.value,
     });
@@ -48,12 +61,13 @@ export const getInstagramProfile = async (username: string): Promise<InstagramPr
 
     // Fetch results
     const { items } = await client.dataset(run.defaultDatasetId).listItems();
-    const profile = items[0] as any; // Type assertion for the raw response
+    const profile = items[0] as ApifyResponse;
 
     if (!profile) {
       throw new Error('Profile not found');
     }
 
+    // Transform and validate the response
     return {
       username: profile.username || username,
       fullName: profile.fullName || null,
