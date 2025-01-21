@@ -15,11 +15,20 @@ import PlatformDetail from "@/pages/PlatformDetail";
 import LeaderBoard from "@/pages/LeaderBoard";
 import Admin from "@/pages/Admin";
 import LeadDetail from "@/pages/LeadDetail";
+import Dashboard from "@/pages/Dashboard";
 
 export const protectedRoutes = [
   {
     path: "/dashboard",
+    element: <Dashboard />,
+  },
+  {
+    path: "/contacts",
     element: <Pool />,
+  },
+  {
+    path: "/contacts/:id",
+    element: <LeadDetail />,
   },
   {
     path: "/pool/:status/:leadId",
