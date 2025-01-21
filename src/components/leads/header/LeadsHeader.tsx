@@ -1,30 +1,52 @@
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { AddLeadDialog } from "../AddLeadDialog";
-import { AddFromSocialDialog } from "../AddFromSocialDialog";
+import { LeadSearch } from "../LeadSearch";
+import { LayoutGrid, List } from "lucide-react";
 
 interface LeadsHeaderProps {
-  defaultPhase?: string;
-  pipelineId?: string;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  selectedPipelineId: string | null;
+  setSelectedPipelineId: (id: string | null) => void;
+  viewMode: "kanban" | "list";
+  setViewMode: (mode: "kanban" | "list") => void;
 }
 
-export function LeadsHeader({ defaultPhase, pipelineId }: LeadsHeaderProps) {
+export const LeadsHeader = ({
+  searchQuery,
+  setSearchQuery,
+  selectedPipelineId,
+  setSelectedPipelineId,
+  viewMode,
+  setViewMode,
+}: LeadsHeaderProps) => {
   return (
-    <div className="flex items-center justify-between border-b px-6 py-3">
-      <h1 className="text-xl font-semibold">Kontakte</h1>
-      <div className="flex items-center space-x-2">
-        <AddFromSocialDialog defaultPhase={defaultPhase} pipelineId={pipelineId} />
-        <AddLeadDialog
-          trigger={
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Neuer Kontakt
-            </Button>
-          }
-          defaultPhase={defaultPhase}
-          pipelineId={pipelineId}
-        />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-semibold">Kontakte</h1>
+        <div className="flex-1 max-w-md">
+          <LeadSearch value={searchQuery} onChange={setSearchQuery} />
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setViewMode("kanban")}
+            className={viewMode === "kanban" ? "bg-muted" : ""}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setViewMode("list")}
+            className={viewMode === "list" ? "bg-muted" : ""}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
+
+      <div className="h-px bg-border" />
     </div>
   );
-}
+};
