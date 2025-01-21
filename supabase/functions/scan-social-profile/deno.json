@@ -1,8 +1,5 @@
 {
   "tasks": {
     "serve": "deno run --allow-net --allow-env --allow-read --allow-run --allow-write index.ts"
-  },
-  "imports": {
-    "puppeteer": "https://deno.land/x/puppeteer@16.2.0/mod.ts"
   }
 }
