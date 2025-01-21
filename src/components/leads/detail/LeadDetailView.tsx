@@ -37,7 +37,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const location = useLocation();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const { data: lead, isLoading } = useQuery({
+  const { data: lead, isLoading, error } = useQuery({
     queryKey: ["lead", leadId],
     queryFn: async () => {
       if (!leadId || !isValidUUID(leadId)) {
