@@ -187,7 +187,8 @@ export const LeadKanbanView = ({
         instagram_posts: socialData.posts,
         social_media_bio: socialData.bio,
         instagram_profile_image_url: socialData.profileImageUrl,
-        user_id: (await supabase.auth.getUser()).data.user?.id
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        industry: "Not Specified" // Added missing required field
       });
 
       if (error) throw error;
