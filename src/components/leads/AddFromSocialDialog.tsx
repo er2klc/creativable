@@ -44,6 +44,11 @@ export function AddFromSocialDialog({ trigger, defaultPhase, open, onOpenChange,
         return;
       }
 
+      if (!pipelineId || !defaultPhase) {
+        toast.error("Pipeline oder Phase nicht ausgewählt");
+        return;
+      }
+
       // Call the scan-social-profile function
       const { data, error } = await supabase.functions.invoke('scan-social-profile', {
         body: { platform: 'instagram', username: values.username }
@@ -56,6 +61,8 @@ export function AddFromSocialDialog({ trigger, defaultPhase, open, onOpenChange,
         return;
       }
 
+      console.log("Instagram data:", data);
+
       // Create new lead with Instagram data
       const { error: leadError } = await supabase
         .from("leads")
@@ -64,8 +71,8 @@ export function AddFromSocialDialog({ trigger, defaultPhase, open, onOpenChange,
           name: values.username,
           platform: "Instagram",
           social_media_username: values.username,
-          phase_id: defaultPhase || "",
-          pipeline_id: pipelineId || "",
+          phase_id: defaultPhase,
+          pipeline_id: pipelineId,
           instagram_followers: data.followers,
           instagram_following: data.following,
           instagram_posts: data.posts,
