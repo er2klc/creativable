@@ -11,7 +11,7 @@ import { SourceInfoFields } from "./contact-info/SourceInfoFields";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 
@@ -24,6 +24,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   const queryClient = useQueryClient();
   const { leadId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
@@ -76,7 +77,12 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
           ? "Contact deleted successfully"
           : "Kontakt erfolgreich gelöscht"
       );
-      navigate("/pool");
+      // Navigate back to the previous route or contacts page
+      if (location.pathname.includes('/pool')) {
+        navigate('/pool');
+      } else {
+        navigate('/contacts');
+      }
     },
     onError: (error) => {
       console.error("Error deleting lead:", error);
