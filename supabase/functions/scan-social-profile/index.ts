@@ -18,18 +18,14 @@ serve(async (req) => {
       
       // Clean the username (remove @ if present and any trailing/leading spaces)
       const cleanUsername = username.replace('@', '').trim();
-      
-      // Use Instagram's public GraphQL API
-      const url = `https://www.instagram.com/api/v1/users/web_profile_info/?username=${cleanUsername}`;
+      const url = `https://www.instagram.com/${cleanUsername}/`;
       
       console.log('Fetching data from:', url);
       
       const response = await fetch(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': 'application/json',
-          'X-IG-App-ID': '936619743392459',
-          'Cookie': 'ig_did=0; ig_nrcb=1; csrftoken=missing;'
+          'Accept': 'text/html',
         }
       });
 
@@ -38,24 +34,49 @@ serve(async (req) => {
         throw new Error(`Failed to fetch Instagram profile: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      console.log('Instagram API response:', data);
+      const html = await response.text();
+      
+      // Extract meta data from HTML
+      const getMetaContent = (name: string) => {
+        const match = html.match(new RegExp(`<meta property="${name}" content="([^"]*)"`, 'i'));
+        return match ? match[1] : null;
+      };
 
-      const user = data?.data?.user;
-      if (!user) {
-        throw new Error('No user data found');
-      }
+      // Extract follower count from text
+      const getFollowerCount = () => {
+        const match = html.match(/(\d+(?:[,.]\d+)*)\s*Followers/i);
+        return match ? parseInt(match[1].replace(/[,.]/g, '')) : null;
+      };
 
-      // Extract relevant data from the response
+      // Extract following count
+      const getFollowingCount = () => {
+        const match = html.match(/(\d+(?:[,.]\d+)*)\s*Following/i);
+        return match ? parseInt(match[1].replace(/[,.]/g, '')) : null;
+      };
+
+      // Extract posts count
+      const getPostsCount = () => {
+        const match = html.match(/(\d+(?:[,.]\d+)*)\s*Posts/i);
+        return match ? parseInt(match[1].replace(/[,.]/g, '')) : null;
+      };
+
+      // Extract bio
+      const getBio = () => {
+        const match = html.match(/<meta name="description" content="([^"]*)">/i);
+        return match ? match[1] : null;
+      };
+
       const profileData = {
         username: cleanUsername,
-        bio: user.biography || null,
-        followers: user.edge_followed_by?.count || null,
-        following: user.edge_follow?.count || null,
-        posts: user.edge_owner_to_timeline_media?.count || null,
-        isPrivate: user.is_private || false,
+        bio: getBio(),
+        followers: getFollowerCount(),
+        following: getFollowingCount(),
+        posts: getPostsCount(),
+        isPrivate: html.includes('"Private Account"') || html.includes('"This Account is Private"'),
         engagement_rate: null // Calculate if needed based on available data
       };
+
+      console.log('Extracted profile data:', profileData);
 
       return new Response(JSON.stringify(profileData), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
