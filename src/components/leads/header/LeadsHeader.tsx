@@ -1,6 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { LeadSearch } from "../LeadSearch";
-import { LayoutGrid, List } from "lucide-react";
+import { LayoutGrid, List, ChevronDown, Instagram, Linkedin } from "lucide-react";
+import { AddLeadDialog } from "../AddLeadDialog";
+import { CreateInstagramContactDialog } from "../instagram/CreateInstagramContactDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useState } from "react";
 
 interface LeadsHeaderProps {
   searchQuery: string;
@@ -19,6 +28,9 @@ export const LeadsHeader = ({
   viewMode,
   setViewMode,
 }: LeadsHeaderProps) => {
+  const [showAddLead, setShowAddLead] = useState(false);
+  const [showInstagramDialog, setShowInstagramDialog] = useState(false);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
@@ -43,10 +55,43 @@ export const LeadsHeader = ({
           >
             <List className="h-4 w-4" />
           </Button>
+          <Button onClick={() => setShowAddLead(true)}>
+            Kontakt hinzufügen ✨
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="bg-black text-white hover:bg-black/90">
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setShowInstagramDialog(true)}>
+                <Instagram className="h-4 w-4 mr-2" />
+                <span>Instagram</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled>
+                <Linkedin className="h-4 w-4 mr-2" />
+                <span>LinkedIn</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
       <div className="h-px bg-border" />
+
+      <AddLeadDialog
+        open={showAddLead}
+        onOpenChange={setShowAddLead}
+        pipelineId={selectedPipelineId}
+      />
+
+      <CreateInstagramContactDialog
+        open={showInstagramDialog}
+        onOpenChange={setShowInstagramDialog}
+        pipelineId={selectedPipelineId}
+        defaultPhase={undefined}
+      />
     </div>
   );
 };

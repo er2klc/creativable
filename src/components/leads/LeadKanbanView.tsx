@@ -11,19 +11,11 @@ import { usePhaseMutations } from "./kanban/usePhaseMutations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Save, ChevronDown, Instagram, Linkedin } from "lucide-react";
+import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LeadFilters } from "./LeadFilters";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
-import { AddLeadDialog } from "./AddLeadDialog";
 import { AddPhaseButton } from "./kanban/AddPhaseButton";
-import { CreateInstagramContactDialog } from "./instagram/CreateInstagramContactDialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -41,8 +33,6 @@ export const LeadKanbanView = ({
   const [editingPipelineName, setEditingPipelineName] = useState("");
   const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
   const [targetPhase, setTargetPhase] = useState<string>("");
-  const [showAddLead, setShowAddLead] = useState(false);
-  const [showInstagramDialog, setShowInstagramDialog] = useState(false);
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
   const { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePhaseOrder } = usePhaseMutations();
   const queryClient = useQueryClient();
@@ -186,28 +176,6 @@ export const LeadKanbanView = ({
               </>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setShowInstagramDialog(true)}>
-                  <Instagram className="h-4 w-4 mr-2" />
-                  <span>Instagram</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem disabled>
-                  <Linkedin className="h-4 w-4 mr-2" />
-                  <span>LinkedIn</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button onClick={() => setShowAddLead(true)}>
-              Kontakt hinzufügen ✨
-            </Button>
-          </div>
         </div>
 
         <div className="flex-1 overflow-x-auto no-scrollbar relative">
@@ -255,19 +223,6 @@ export const LeadKanbanView = ({
           onClose={() => setPhaseToDelete(null)}
           onConfirm={handleDeletePhase}
           phases={phases}
-        />
-
-        <AddLeadDialog
-          open={showAddLead}
-          onOpenChange={setShowAddLead}
-          pipelineId={selectedPipelineId}
-        />
-
-        <CreateInstagramContactDialog
-          open={showInstagramDialog}
-          onOpenChange={setShowInstagramDialog}
-          pipelineId={selectedPipelineId}
-          defaultPhase={phases[0]?.id}
         />
       </div>
     </DndContext>
