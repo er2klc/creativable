@@ -119,15 +119,18 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     mutationFn: async () => {
       if (!leadId) return;
 
-      // Delete related records in correct order
+      // Delete all related records in the correct order to avoid foreign key constraint errors
       const tables = [
         'contact_group_states',
+        'lead_subscriptions',
         'messages', 
         'tasks', 
         'notes', 
-        'lead_files'
+        'lead_files',
+        'instagram_scan_history'
       ] as const;
 
+      // First delete all related records
       for (const table of tables) {
         const { error } = await supabase
           .from(table)
@@ -140,7 +143,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         }
       }
 
-      // Finally delete the lead
+      // Then delete the lead itself
       const { error } = await supabase
         .from('leads')
         .delete()
