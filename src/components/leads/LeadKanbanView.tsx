@@ -1,5 +1,5 @@
-import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { useState } from "react";
+import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
 import { Input } from "@/components/ui/input";
@@ -11,19 +11,12 @@ import { usePhaseMutations } from "./kanban/usePhaseMutations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Save, ChevronDown } from "lucide-react";
+import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LeadFilters } from "./LeadFilters";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
 import { AddLeadDialog } from "./AddLeadDialog";
 import { AddPhaseButton } from "./kanban/AddPhaseButton";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { scanSocialProfile } from "@/utils/apify";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -158,48 +151,6 @@ export const LeadKanbanView = ({
     }
   };
 
-  const handleCreateSocialContact = async (platform: string) => {
-    const username = await prompt(`Bitte geben Sie den ${platform}-Benutzernamen ein:`);
-    if (!username) return;
-
-    try {
-      const socialData = await scanSocialProfile(platform.toLowerCase(), username);
-      if (!socialData) {
-        toast.error("Fehler beim Abrufen der Profildaten");
-        return;
-      }
-
-      // Get first phase of standard pipeline
-      const firstPhase = phases[0];
-      if (!firstPhase) {
-        toast.error("Keine Phase gefunden");
-        return;
-      }
-
-      const { error } = await supabase.from("leads").insert({
-        name: socialData.name || username,
-        platform: platform,
-        social_media_username: username,
-        pipeline_id: selectedPipelineId,
-        phase_id: firstPhase.id,
-        instagram_followers: socialData.followers,
-        instagram_following: socialData.following,
-        instagram_posts: socialData.posts,
-        social_media_bio: socialData.bio,
-        instagram_profile_image_url: socialData.profileImageUrl,
-        user_id: (await supabase.auth.getUser()).data.user?.id
-      });
-
-      if (error) throw error;
-
-      toast.success("Kontakt erfolgreich erstellt");
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-    } catch (error) {
-      console.error("Error creating contact:", error);
-      toast.error("Fehler beim Erstellen des Kontakts");
-    }
-  };
-
   return (
     <DndContext 
       collisionDetection={closestCenter} 
@@ -229,30 +180,9 @@ export const LeadKanbanView = ({
               </>
             )}
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="shrink-0">
-                Neuer Kontakt <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px]">
-              <DropdownMenuItem onClick={() => setShowAddLead(true)}>
-                Manuell erstellen
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleCreateSocialContact("Instagram")}>
-                Von Instagram
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleCreateSocialContact("LinkedIn")}>
-                Von LinkedIn
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleCreateSocialContact("Facebook")}>
-                Von Facebook
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleCreateSocialContact("TikTok")}>
-                Von TikTok
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button onClick={() => setShowAddLead(true)}>
+            Kontakt hinzufügen ✨
+          </Button>
         </div>
 
         <div className="flex-1 overflow-x-auto no-scrollbar relative">
