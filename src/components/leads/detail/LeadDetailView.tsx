@@ -147,9 +147,9 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       );
       onClose();
 
-      // Check if we came from the pool page
-      if (location.pathname.startsWith('/pool') && lead?.pool_category) {
-        navigate(`/pool/${lead.pool_category.toLowerCase()}`);
+      // Determine redirect based on previous route
+      if (location.pathname.startsWith('/pool')) {
+        navigate('/pool');
       } else {
         // Default to contacts page
         navigate('/contacts');
