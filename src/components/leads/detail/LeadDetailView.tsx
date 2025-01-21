@@ -46,13 +46,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
       const { data, error } = await supabase
         .from("leads")
-        .select(`
-          *,
-          messages (*),
-          tasks (*),
-          notes (*),
-          lead_files (*)
-        `)
+        .select("*, messages(*), tasks(*), notes(*), lead_files(*)")
         .eq("id", leadId)
         .maybeSingle();
 
@@ -68,6 +62,8 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
   });
 
   useLeadSubscription(leadId);
@@ -96,13 +92,19 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      toast.success(
-        settings?.language === "en"
-          ? "Contact updated successfully"
-          : "Kontakt erfolgreich aktualisiert"
+    onSuccess: (data, variables) => {
+      const hasChanges = Object.entries(variables).some(
+        ([key, value]) => lead?.[key as keyof typeof lead] !== value
       );
+      
+      if (hasChanges) {
+        queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+        toast.success(
+          settings?.language === "en"
+            ? "Contact updated successfully"
+            : "Kontakt erfolgreich aktualisiert"
+        );
+      }
     },
     onError: (error) => {
       console.error("Error updating lead:", error);
@@ -118,15 +120,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     mutationFn: async () => {
       if (!leadId) return;
 
-      // First delete contact_group_states
-      const { error: groupStatesError } = await supabase
-        .from('contact_group_states')
-        .delete()
-        .eq('lead_id', leadId);
-      
-      if (groupStatesError) throw groupStatesError;
-
-      // Then delete other related records
+      // Delete related records first
       const tables = ['messages', 'tasks', 'notes', 'lead_files'] as const;
       for (const table of tables) {
         const { error } = await supabase
@@ -153,13 +147,11 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       );
       onClose();
 
-      // Determine redirect based on current location
-      if (location.pathname.startsWith('/contacts')) {
-        navigate('/contacts');
-      } else if (location.pathname.startsWith('/pool')) {
-        navigate('/pool');
+      // Check if we came from the pool page
+      if (location.pathname.startsWith('/pool') && lead?.pool_category) {
+        navigate(`/pool/${lead.pool_category.toLowerCase()}`);
       } else {
-        // Default to contacts page if we can't determine the source
+        // Default to contacts page
         navigate('/contacts');
       }
     },

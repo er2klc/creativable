@@ -10,14 +10,6 @@ interface PartnerTreeProps {
   onContactClick: (id: string) => void;
 }
 
-// Define the type for onboarding_progress
-interface OnboardingProgress {
-  training_provided: boolean;
-  message_sent: boolean;
-  team_invited: boolean;
-  intro_meeting_scheduled: boolean;
-}
-
 export const PartnerTree = ({ unassignedPartners, currentUser, onContactClick }: PartnerTreeProps) => {
   const navigate = useNavigate();
 
@@ -49,9 +41,7 @@ export const PartnerTree = ({ unassignedPartners, currentUser, onContactClick }:
                   <div>
                     <h3 className="font-medium">{partner.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {(partner.onboarding_progress as unknown as OnboardingProgress)?.training_provided 
-                        ? "Training abgeschlossen" 
-                        : "Training ausstehend"}
+                      {partner.onboarding_progress?.training_provided ? "Training abgeschlossen" : "Training ausstehend"}
                     </p>
                   </div>
                 </CardContent>
