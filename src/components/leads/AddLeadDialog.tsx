@@ -134,14 +134,9 @@ export function AddLeadDialog({
   };
 
   return (
-    <Dialog open={open ?? isOpen} onOpenChange={onOpenChange ?? setIsOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="default" className="gap-2">
-            Kontakt hinzufügen ✨
-          </Button>
-        )}
-      </DialogTrigger>
+    <DialogTrigger asChild>
+  {trigger}
+</DialogTrigger>
 
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
