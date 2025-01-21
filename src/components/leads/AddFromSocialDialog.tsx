@@ -35,27 +35,51 @@ export function AddFromSocialDialog({ trigger, open, onOpenChange }: AddFromSoci
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
+      console.log("Fetching first pipeline for user:", session.user.id);
+      
       // Get the first pipeline
-      const { data: pipelines } = await supabase
+      const { data: pipelines, error: pipelineError } = await supabase
         .from("pipelines")
         .select("id")
         .eq("user_id", session.user.id)
         .order("order_index")
         .limit(1);
 
-      if (!pipelines?.[0]) return null;
+      if (pipelineError) {
+        console.error("Error fetching pipeline:", pipelineError);
+        return null;
+      }
+
+      if (!pipelines?.[0]) {
+        console.error("No pipeline found for user");
+        return null;
+      }
+
+      console.log("Found pipeline:", pipelines[0].id);
 
       // Get the first phase of this pipeline
-      const { data: phases } = await supabase
+      const { data: phases, error: phaseError } = await supabase
         .from("pipeline_phases")
         .select("id")
         .eq("pipeline_id", pipelines[0].id)
         .order("order_index")
         .limit(1);
 
+      if (phaseError) {
+        console.error("Error fetching phase:", phaseError);
+        return null;
+      }
+
+      if (!phases?.[0]) {
+        console.error("No phase found for pipeline");
+        return null;
+      }
+
+      console.log("Found phase:", phases[0].id);
+
       return {
         pipelineId: pipelines[0].id,
-        phaseId: phases?.[0]?.id
+        phaseId: phases[0].id
       };
     },
     enabled: !!session?.user?.id
@@ -82,14 +106,20 @@ export function AddFromSocialDialog({ trigger, open, onOpenChange }: AddFromSoci
         return;
       }
 
+      console.log("Starting Instagram profile scan for username:", values.username);
+
       // Call the scan-social-profile function
       const { data, error } = await supabase.functions.invoke('scan-social-profile', {
         body: { platform: 'instagram', username: values.username }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error scanning profile:", error);
+        throw error;
+      }
 
       if (!data) {
+        console.error("No data returned from scan");
         toast.error("Keine Daten gefunden");
         return;
       }
@@ -115,7 +145,10 @@ export function AddFromSocialDialog({ trigger, open, onOpenChange }: AddFromSoci
           industry: "Not Specified"
         });
 
-      if (leadError) throw leadError;
+      if (leadError) {
+        console.error("Error creating lead:", leadError);
+        throw leadError;
+      }
 
       toast.success("Kontakt erfolgreich importiert");
       setIsOpen(false);
