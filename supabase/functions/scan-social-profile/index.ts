@@ -18,8 +18,12 @@ serve(async (req) => {
       console.log('Starting Instagram profile scan for:', username);
       
       const browser = await launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        executablePath: Deno.env.get("PUPPETEER_EXECUTABLE_PATH") || undefined
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-gpu',
+          '--disable-dev-shm-usage'
+        ]
       });
       
       try {
@@ -30,7 +34,7 @@ serve(async (req) => {
         const profileUrl = username.startsWith('http') ? username : `https://www.instagram.com/${username}/`;
         console.log('Navigating to:', profileUrl);
         
-        await page.goto(profileUrl, { waitUntil: 'networkidle0' });
+        await page.goto(profileUrl, { waitUntil: 'networkidle0', timeout: 30000 });
         
         // Extract data using meta tags and page content
         const data = await page.evaluate(() => {
@@ -60,16 +64,15 @@ serve(async (req) => {
             username: urlUsername || metaUsername,
             fullName: fullName || null,
             biography,
-            followersCount: followersMatch ? parseInt(followersMatch[1].replace(/,/g, '')) : null,
-            followsCount: followsMatch ? parseInt(followsMatch[1].replace(/,/g, '')) : null,
-            postsCount: postsMatch ? parseInt(postsMatch[1].replace(/,/g, '')) : null,
+            followers: followersMatch ? parseInt(followersMatch[1].replace(/,/g, '')) : null,
+            following: followsMatch ? parseInt(followsMatch[1].replace(/,/g, '')) : null,
+            posts: postsMatch ? parseInt(postsMatch[1].replace(/,/g, '')) : null,
             url: window.location.href,
-            private: !document.querySelector('article'),
+            isPrivate: !document.querySelector('article'),
             verified: !!document.querySelector('[aria-label="Verified"]'),
             profilePicUrl: getMetaContent('og:image'),
-            externalUrl: null,
-            businessCategoryName: null,
-            isBusinessAccount: false
+            engagement_rate: null,
+            bio: biography
           };
         });
 
@@ -96,16 +99,15 @@ serve(async (req) => {
         username: null,
         fullName: null,
         biography: null,
-        followersCount: null,
-        followsCount: null,
-        postsCount: null,
+        followers: null,
+        following: null,
+        posts: null,
         url: null,
-        private: null,
+        isPrivate: null,
         verified: null,
         profilePicUrl: null,
-        externalUrl: null,
-        businessCategoryName: null,
-        isBusinessAccount: null
+        engagement_rate: null,
+        bio: null
       }),
       { 
         status: 200,
