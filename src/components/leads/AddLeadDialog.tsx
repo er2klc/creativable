@@ -53,9 +53,7 @@ export function AddLeadDialog({
 
   const scanInstagramProfile = async (username: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("No session found");
-
+      setIsLoading(true);
       const { data, error } = await supabase.functions.invoke('scan-social-profile', {
         body: { username, platform: 'Instagram' }
       });
@@ -77,10 +75,12 @@ export function AddLeadDialog({
       let profileData = null;
       if (values.platform === "Instagram" && values.social_media_username) {
         try {
+          toast.loading("Scanne Instagram Profil...");
           profileData = await scanInstagramProfile(values.social_media_username);
           if (!profileData) {
             throw new Error("Kein Profil gefunden");
           }
+          toast.success("Instagram Profil erfolgreich gescannt!");
         } catch (error) {
           console.error("Error scanning Instagram profile:", error);
           toast.error("Fehler beim Scannen des Instagram-Profils");
