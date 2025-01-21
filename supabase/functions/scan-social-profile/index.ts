@@ -1,126 +1,118 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { scanInstagramProfile } from "./instagram.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 interface ScanProfileRequest {
-  leadId: string;
-  platform: string;
   username: string;
+  platform: string;
+  leadId?: string | null;
 }
 
 serve(async (req) => {
-  console.log('Received scan request');
-  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('Handling CORS preflight request');
-    return new Response('ok', { 
-      headers: {
-        ...corsHeaders,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      }
-    });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { leadId, platform, username } = await req.json() as ScanProfileRequest;
-    console.log('Processing request:', { leadId, platform, username });
+    const { username, platform } = await req.json() as ScanProfileRequest;
+    console.log('Processing request:', { username, platform });
 
-    if (!username || platform === "Offline") {
-      console.log('No social media profile to scan');
-      return new Response(
-        JSON.stringify({
-          message: "No social media profile to scan for offline contacts",
-          data: null
-        }),
-        {
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-          },
-          status: 200,
-        }
-      );
+    if (!username) {
+      throw new Error('Username is required');
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    let profileData;
-    console.log(`Attempting to scan ${platform} profile for username: ${username}`);
-    
-    if (platform.toLowerCase() === 'instagram') {
-      profileData = await scanInstagramProfile(username);
-    } else {
-      return new Response(
-        JSON.stringify({
-          error: `Unsupported platform: ${platform}`,
-        }),
-        {
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-          },
-          status: 400,
-        }
-      );
+    // Get Apify API key from secrets
+    const apiKey = Deno.env.get('APIFY_API_TOKEN');
+    if (!apiKey) {
+      throw new Error('APIFY_API_TOKEN is not configured');
     }
 
-    console.log('Scanned profile data:', profileData);
+    const actorId = 'apify/instagram-profile-scraper';
 
-    if (!profileData || Object.keys(profileData).length === 0) {
-      console.log('No profile data found');
-      return new Response(
-        JSON.stringify({
-          message: "No profile data found",
-          data: null
-        }),
-        {
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-          },
-          status: 200,
-        }
-      );
-    }
-
-    // Update lead with scanned data
-    const { error: updateError } = await supabase
-      .from('leads')
-      .update({
-        social_media_bio: profileData.bio,
-        instagram_followers: profileData.followers,
-        instagram_following: profileData.following,
-        instagram_posts: profileData.posts,
-        instagram_engagement_rate: profileData.engagement_rate,
-        instagram_profile_image_url: profileData.profileImageUrl,
-        last_social_media_scan: new Date().toISOString(),
+    // Start the Apify actor run
+    const response = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        startUrls: [{
+          url: `https://www.instagram.com/${username}/`
+        }],
+        resultsLimit: 1
       })
-      .eq('id', leadId);
+    });
 
-    if (updateError) {
-      console.error('Error updating lead:', updateError);
-      throw updateError;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return new Response(
-      JSON.stringify({
-        message: "Profile scanned successfully",
-        data: profileData,
-      }),
-      {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-        status: 200,
-      }
-    );
+    const runData = await response.json();
+    const runId = runData.data.id;
 
+    // Wait for the run to finish and get results
+    let attempts = 0;
+    const maxAttempts = 30;
+    const delayMs = 2000;
+
+    while (attempts < maxAttempts) {
+      const statusResponse = await fetch(
+        `https://api.apify.com/v2/actor-runs/${runId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`
+          }
+        }
+      );
+
+      const runInfo = await statusResponse.json();
+      
+      if (runInfo.data.status === 'SUCCEEDED') {
+        const resultsResponse = await fetch(
+          `https://api.apify.com/v2/actor-runs/${runId}/dataset/items`,
+          {
+            headers: {
+              'Authorization': `Bearer ${apiKey}`
+            }
+          }
+        );
+        
+        const results = await resultsResponse.json();
+        
+        if (results && results.length > 0) {
+          const profile = results[0];
+          console.log('Apify scan results:', profile);
+          
+          return new Response(
+            JSON.stringify({
+              bio: profile.bio || profile.description || '',
+              followers: profile.followersCount || profile.followers || 0,
+              following: profile.followingCount || profile.following || 0,
+              posts: profile.postsCount || profile.posts || 0,
+              engagement_rate: profile.engagement_rate || null,
+              profileImageUrl: profile.profilePicUrl || profile.profileImageUrl || '',
+              name: profile.name || profile.fullName || username
+            }),
+            {
+              headers: {
+                ...corsHeaders,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+        }
+      }
+
+      if (runInfo.data.status === 'FAILED' || runInfo.data.status === 'ABORTED') {
+        throw new Error(`Run ${runId} ${runInfo.data.status}`);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      attempts++;
+    }
+
+    throw new Error('Timeout waiting for results');
   } catch (error) {
     console.error('Error in scan-social-profile:', error);
     return new Response(
@@ -130,9 +122,9 @@ serve(async (req) => {
       {
         headers: {
           ...corsHeaders,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json'
         },
-        status: 200,
+        status: 400
       }
     );
   }

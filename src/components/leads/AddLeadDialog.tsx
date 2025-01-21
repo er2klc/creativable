@@ -10,8 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Platform, platformsConfig } from "@/config/platforms";
-import { Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Loader2, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const formSchema = z.object({
   platform: z.custom<Platform>(),
@@ -39,7 +39,6 @@ export function AddLeadDialog({
 }: AddLeadDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -54,11 +53,19 @@ export function AddLeadDialog({
   const scanInstagramProfile = async (username: string) => {
     try {
       setIsLoading(true);
+      toast.loading("Scanne Instagram Profil...");
+      
       const { data, error } = await supabase.functions.invoke('scan-social-profile', {
-        body: { username, platform: 'Instagram' }
+        body: { 
+          username,
+          platform: 'Instagram',
+          leadId: null // Will be set after lead creation
+        }
       });
 
       if (error) throw error;
+      
+      console.log("Profile data received:", data);
       return data;
     } catch (error) {
       console.error('Error scanning Instagram profile:', error);
@@ -75,7 +82,6 @@ export function AddLeadDialog({
       let profileData = null;
       if ((defaultPlatform === "Instagram" || values.platform === "Instagram") && values.social_media_username) {
         try {
-          toast.loading("Scanne Instagram Profil...");
           profileData = await scanInstagramProfile(values.social_media_username);
           if (!profileData) {
             throw new Error("Kein Profil gefunden");
@@ -120,11 +126,45 @@ export function AddLeadDialog({
     }
   };
 
+  const handlePlatformSelect = (platform: Platform) => {
+    form.setValue("platform", platform);
+    if (platform === "Instagram") {
+      setIsOpen(true);
+    }
+  };
+
   return (
     <Dialog open={open ?? isOpen} onOpenChange={onOpenChange ?? setIsOpen}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
+      <div className="flex items-center gap-1">
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button variant="default" className="gap-2">
+              Kontakt hinzufügen ✨
+            </Button>
+          )}
+        </DialogTrigger>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="h-10 w-10">
+              <ChevronDown className="h-4 w-4 text-black" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {platformsConfig.map((config) => (
+              <DropdownMenuItem
+                key={config.name}
+                onClick={() => handlePlatformSelect(config.name as Platform)}
+              >
+                <div className="flex items-center gap-2">
+                  <config.icon className="h-4 w-4" />
+                  {config.name}
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Neuen Kontakt hinzufügen ✨</DialogTitle>
