@@ -123,7 +123,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       console.log('Starting deletion process for lead:', leadId);
 
       // Define tables with their correct types from Supabase
-      const relatedTables: Array<keyof Database['public']['Tables']> = [
+      const relatedTables = [
         'contact_group_states',
         'instagram_scan_history',
         'lead_files',
@@ -131,18 +131,18 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         'messages',
         'notes',
         'tasks'
-      ];
+      ] as const;
 
       // Delete related records first
       for (const table of relatedTables) {
-        console.log(`Deleting related records from ${String(table)}`);
+        console.log(`Deleting related records from ${table}`);
         const { error } = await supabase
-          .from(String(table))
+          .from(table)
           .delete()
           .eq('lead_id', leadId);
         
         if (error) {
-          console.error(`Error deleting from ${String(table)}:`, error);
+          console.error(`Error deleting from ${table}:`, error);
           throw error;
         }
       }
