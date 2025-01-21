@@ -81,7 +81,7 @@ export interface Tables {
     Relationships: [];
   };
 
-leads: {
+  leads: {
     Row: {
       id: string;
       user_id: string;
@@ -252,5 +252,29 @@ leads: {
       }
     ];
   };
-}
 
+  secrets: {
+    Row: {
+      id: string;
+      name: string;
+      value: string;
+      created_at: string | null;
+      updated_at: string | null;
+    };
+    Insert: {
+      id?: string;
+      name: string;
+      value: string;
+      created_at?: string | null;
+      updated_at?: string | null;
+    };
+    Update: {
+      id?: string;
+      name?: string;
+      value?: string;
+      created_at?: string | null;
+      updated_at?: string | null;
+    };
+    Relationships: [];
+  };
+}
