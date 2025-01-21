@@ -37,7 +37,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const location = useLocation();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const { data: lead, isLoading, error } = useQuery({
+  const { data: lead, isLoading } = useQuery({
     queryKey: ["lead", leadId],
     queryFn: async () => {
       if (!leadId || !isValidUUID(leadId)) {
@@ -46,7 +46,13 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
       const { data, error } = await supabase
         .from("leads")
-        .select("*, messages(*), tasks(*), notes(*), lead_files(*)")
+        .select(`
+          *,
+          messages (*),
+          tasks (*),
+          notes (*),
+          lead_files (*)
+        `)
         .eq("id", leadId)
         .maybeSingle();
 
@@ -62,8 +68,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
   });
 
   useLeadSubscription(leadId);
@@ -92,19 +96,13 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data, variables) => {
-      const hasChanges = Object.entries(variables).some(
-        ([key, value]) => lead?.[key as keyof typeof lead] !== value
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      toast.success(
+        settings?.language === "en"
+          ? "Contact updated successfully"
+          : "Kontakt erfolgreich aktualisiert"
       );
-      
-      if (hasChanges) {
-        queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-        toast.success(
-          settings?.language === "en"
-            ? "Contact updated successfully"
-            : "Kontakt erfolgreich aktualisiert"
-        );
-      }
     },
     onError: (error) => {
       console.error("Error updating lead:", error);
@@ -120,7 +118,15 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     mutationFn: async () => {
       if (!leadId) return;
 
-      // Delete related records first
+      // First delete contact_group_states
+      const { error: groupStatesError } = await supabase
+        .from('contact_group_states')
+        .delete()
+        .eq('lead_id', leadId);
+      
+      if (groupStatesError) throw groupStatesError;
+
+      // Then delete other related records
       const tables = ['messages', 'tasks', 'notes', 'lead_files'] as const;
       for (const table of tables) {
         const { error } = await supabase
