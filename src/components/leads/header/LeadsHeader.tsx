@@ -58,27 +58,35 @@ export const LeadsHeader = ({
           </DropdownMenu>
         </div>
 
-        <div className="flex-1 max-w-md">
-          <LeadSearch value={searchQuery} onChange={setSearchQuery} />
-        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex-1 min-w-[300px]">
+            <LeadSearch value={searchQuery} onChange={setSearchQuery} />
+          </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setViewMode("kanban")}
-            className={viewMode === "kanban" ? "bg-muted" : ""}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setViewMode("list")}
-            className={viewMode === "list" ? "bg-muted" : ""}
-          >
-            <List className="h-4 w-4" />
-          </Button>
+          {/* Pipeline selection and edit mode moved here */}
+          <div className="flex items-center gap-2">
+            {/* Your pipeline selection component goes here */}
+            {/* Your edit mode button goes here */}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setViewMode("kanban")}
+              className={viewMode === "kanban" ? "bg-muted" : ""}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setViewMode("list")}
+              className={viewMode === "list" ? "bg-muted" : ""}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
