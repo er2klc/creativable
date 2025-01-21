@@ -17,16 +17,12 @@ export default function Pool() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // Get the user's network marketing ID
       const { data: settings } = await supabase
         .from('settings')
         .select('network_marketing_id')
         .eq('user_id', user.id)
         .single();
 
-      // Get leads that are either:
-      // 1. Created by the current user
-      // 2. Have a matching network_marketing_id with the current user's settings
       const { data, error } = await supabase
         .from("leads")
         .select("*")
@@ -37,8 +33,6 @@ export default function Pool() {
       if (error) throw error;
       return data as Tables<"leads">[];
     },
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
   });
 
   const { data: currentUser } = useQuery({
@@ -53,10 +47,8 @@ export default function Pool() {
         .eq("id", user.id)
         .single();
 
-      return profile;
+      return profile as Tables<"profiles">;
     },
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
   });
 
   return (
@@ -73,7 +65,7 @@ export default function Pool() {
           <PartnerTree 
             unassignedPartners={leads} 
             currentUser={currentUser}
-            onContactClick={(id) => setSelectedLeadId(id)}
+            onContactClick={setSelectedLeadId}
           />
         </TabsContent>
 
