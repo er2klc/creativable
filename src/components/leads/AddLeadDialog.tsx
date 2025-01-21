@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Platform, platformsConfig } from "@/config/platforms";
 import { Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const formSchema = z.object({
   platform: z.custom<Platform>(),
@@ -38,6 +39,7 @@ export function AddLeadDialog({
 }: AddLeadDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

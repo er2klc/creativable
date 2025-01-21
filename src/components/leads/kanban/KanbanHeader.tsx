@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSettings } from "@/hooks/use-settings";
 import { PipelineSelector } from "../pipeline/PipelineSelector";
-import { Plus, Instagram, Linkedin, Facebook, Video } from "lucide-react";
+import { Plus, ChevronDown, Instagram, Linkedin, Facebook, Video } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,31 +69,30 @@ export const KanbanHeader = ({
           className="gap-2"
         >
           <Plus className="h-4 w-4" />
-          {settings?.language === "en" ? "Add Contact" : "Kontakt hinzufügen"}
+          {settings?.language === "en" ? "Add Contact ✨" : "Kontakt hinzufügen ✨"}
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="gap-2">
-              <Plus className="h-4 w-4" />
-              {settings?.language === "en" ? "From Social" : "Von Social Media"}
+            <Button variant="outline" size="icon">
+              <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[200px] bg-background">
-            <DropdownMenuItem onClick={() => onShowAddLead("Instagram")}>
-              <Instagram className="h-4 w-4 mr-2" />
+          <DropdownMenuContent align="end" className="w-[200px]">
+            <DropdownMenuItem onClick={() => onShowAddLead("Instagram")} className="gap-2">
+              <Instagram className="h-4 w-4" />
               Instagram
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onShowAddLead("LinkedIn")}>
-              <Linkedin className="h-4 w-4 mr-2" />
+            <DropdownMenuItem onClick={() => onShowAddLead("LinkedIn")} className="gap-2">
+              <Linkedin className="h-4 w-4" />
               LinkedIn
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onShowAddLead("Facebook")}>
-              <Facebook className="h-4 w-4 mr-2" />
+            <DropdownMenuItem onClick={() => onShowAddLead("Facebook")} className="gap-2">
+              <Facebook className="h-4 w-4" />
               Facebook
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onShowAddLead("TikTok")}>
-              <Video className="h-4 w-4 mr-2" />
+            <DropdownMenuItem onClick={() => onShowAddLead("TikTok")} className="gap-2">
+              <Video className="h-4 w-4" />
               TikTok
             </DropdownMenuItem>
           </DropdownMenuContent>
