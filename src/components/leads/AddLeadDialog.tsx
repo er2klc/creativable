@@ -25,22 +25,30 @@ const formSchema = z.object({
   notes: z.string().optional().nullable(),
 });
 
-interface AddLeadDialogProps {
+export interface AddLeadDialogProps {
   trigger?: React.ReactNode;
   defaultPhase?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   pipelineId?: string | null;
+  defaultPlatform?: Platform;
 }
 
-export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipelineId }: AddLeadDialogProps) {
+export function AddLeadDialog({ 
+  trigger, 
+  defaultPhase, 
+  open, 
+  onOpenChange, 
+  pipelineId,
+  defaultPlatform 
+}: AddLeadDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      platform: "LinkedIn" as Platform,
+      platform: defaultPlatform || "LinkedIn" as Platform,
       social_media_username: "",
       phase_id: defaultPhase || "",
       pipeline_id: pipelineId || "",
