@@ -14,19 +14,37 @@ serve(async (req) => {
     const { platform, username } = await req.json();
     
     if (platform === 'instagram') {
-      console.log('Scanning Instagram profile:', username);
+      console.log('Starting Instagram profile scan for:', username);
       
-      // Fetch the Instagram profile page
-      const response = await fetch(`https://www.instagram.com/${username}/?__a=1&__d=dis`);
-      const text = await response.text();
+      // First try with __a=1 parameter
+      let response = await fetch(`https://www.instagram.com/${username}/?__a=1&__d=dis`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
       
-      console.log('Instagram API response:', text);
+      let text = await response.text();
+      console.log('Initial response status:', response.status);
       
+      // If first attempt fails, try without parameters
+      if (!text || text.includes('login') || response.status === 404) {
+        console.log('Trying alternative fetch method...');
+        response = await fetch(`https://www.instagram.com/${username}/`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          }
+        });
+        text = await response.text();
+      }
+      
+      console.log('Response received, length:', text.length);
+      
+      // Try to parse JSON response
       try {
         const data = JSON.parse(text);
-        console.log('Parsed Instagram data:', data);
+        console.log('Successfully parsed JSON response');
         
-        if (data.graphql && data.graphql.user) {
+        if (data.graphql?.user) {
           const user = data.graphql.user;
           return new Response(
             JSON.stringify({
@@ -42,66 +60,81 @@ serve(async (req) => {
           );
         }
       } catch (parseError) {
-        console.error('Error parsing Instagram response:', parseError);
+        console.log('JSON parse failed, trying alternative methods');
         
-        // Try alternative parsing method for different response format
-        const altDataMatch = text.match(/<script type="application\/ld\+json">(.*?)<\/script>/);
-        if (altDataMatch) {
-          try {
-            const altData = JSON.parse(altDataMatch[1]);
-            console.log('Alternative parsed data:', altData);
-            
+        // Try to extract data using regex patterns
+        const followersMatch = text.match(/\"edge_followed_by\":\{\"count\":(\d+)\}/);
+        const followingMatch = text.match(/\"edge_follow\":\{\"count\":(\d+)\}/);
+        const postsMatch = text.match(/\"edge_owner_to_timeline_media\":\{\"count\":(\d+)\}/);
+        const bioMatch = text.match(/\"biography\":\"([^\"]+)\"/);
+        const isPrivateMatch = text.match(/\"is_private\":(\w+)/);
+        const profilePicMatch = text.match(/\"profile_pic_url_hd\":\"([^\"]+)\"/);
+        
+        console.log('Regex matches found:', {
+          followers: !!followersMatch,
+          following: !!followingMatch,
+          posts: !!postsMatch,
+          bio: !!bioMatch,
+          isPrivate: !!isPrivateMatch,
+          profilePic: !!profilePicMatch
+        });
+
+        // Try to find meta tags if regex fails
+        if (!followersMatch && !bioMatch) {
+          const metaDescription = text.match(/<meta name="description" content="([^"]*)">/);
+          const metaImage = text.match(/<meta property="og:image" content="([^"]*)">/);
+          
+          if (metaDescription || metaImage) {
             return new Response(
               JSON.stringify({
-                followers: extractNumber(altData.mainEntityofPage?.interactionStatistic?.userInteractionCount),
+                bio: metaDescription ? metaDescription[1] : null,
+                profile_pic_url: metaImage ? metaImage[1] : null,
+                followers: null,
                 following: null,
                 posts: null,
-                bio: altData.description,
                 isPrivate: null,
-                engagement_rate: null,
-                profile_pic_url: altData.image
+                engagement_rate: null
               }),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
-          } catch (altParseError) {
-            console.error('Error parsing alternative data:', altParseError);
           }
         }
+
+        const data = {
+          followers: followersMatch ? parseInt(followersMatch[1]) : null,
+          following: followingMatch ? parseInt(followingMatch[1]) : null,
+          posts: postsMatch ? parseInt(postsMatch[1]) : null,
+          bio: bioMatch ? bioMatch[1].replace(/\\n/g, '\n') : null,
+          isPrivate: isPrivateMatch ? isPrivateMatch[1] === 'true' : null,
+          engagement_rate: null,
+          profile_pic_url: profilePicMatch ? profilePicMatch[1].replace(/\\/g, '') : null
+        };
+
+        console.log('Extracted data:', data);
+        
+        return new Response(
+          JSON.stringify(data),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-      
-      // If we reach here, try one more fallback method using regex
-      const followersMatch = text.match(/"edge_followed_by":{"count":(\d+)}/);
-      const followingMatch = text.match(/"edge_follow":{"count":(\d+)}/);
-      const postsMatch = text.match(/"edge_owner_to_timeline_media":{"count":(\d+)}/);
-      const bioMatch = text.match(/"biography":"([^"]+)"/);
-      const isPrivateMatch = text.match(/"is_private":(\w+)/);
-      const profilePicMatch = text.match(/"profile_pic_url_hd":"([^"]+)"/);
-
-      const data = {
-        followers: followersMatch ? parseInt(followersMatch[1]) : null,
-        following: followingMatch ? parseInt(followingMatch[1]) : null,
-        posts: postsMatch ? parseInt(postsMatch[1]) : null,
-        bio: bioMatch ? bioMatch[1].replace(/\\n/g, '\n') : null,
-        isPrivate: isPrivateMatch ? isPrivateMatch[1] === 'true' : null,
-        engagement_rate: null,
-        profile_pic_url: profilePicMatch ? profilePicMatch[1].replace(/\\/g, '') : null
-      };
-
-      console.log('Extracted Instagram data:', data);
-      
-      return new Response(
-        JSON.stringify(data),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
     }
 
     throw new Error('Unsupported platform');
   } catch (error) {
     console.error('Error scanning profile:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        followers: null,
+        following: null,
+        posts: null,
+        bio: null,
+        isPrivate: null,
+        engagement_rate: null,
+        profile_pic_url: null
+      }),
       { 
-        status: 500,
+        status: 200, // Return 200 even on error, but with null values
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
@@ -123,10 +156,4 @@ function calculateEngagementRate(user: any) {
   }, 0);
   
   return (totalEngagement / recentPosts.length / followers) * 100;
-}
-
-function extractNumber(str: string | null | undefined): number | null {
-  if (!str) return null;
-  const match = str.match(/\d+/);
-  return match ? parseInt(match[0]) : null;
 }
