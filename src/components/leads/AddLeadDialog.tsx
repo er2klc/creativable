@@ -51,8 +51,6 @@ export function AddLeadDialog({
     },
   });
 
-  const platform = form.watch("platform");
-
   const scanInstagramProfile = async (username: string) => {
     try {
       setIsLoading(true);
@@ -75,7 +73,7 @@ export function AddLeadDialog({
       if (!user) throw new Error("No user found");
 
       let profileData = null;
-      if (values.platform === "Instagram" && values.social_media_username) {
+      if ((defaultPlatform === "Instagram" || values.platform === "Instagram") && values.social_media_username) {
         try {
           toast.loading("Scanne Instagram Profil...");
           profileData = await scanInstagramProfile(values.social_media_username);
@@ -95,7 +93,7 @@ export function AddLeadDialog({
         .insert({
           user_id: user.id,
           name: profileData?.name || values.social_media_username,
-          platform: values.platform,
+          platform: defaultPlatform || values.platform,
           social_media_username: values.social_media_username,
           phase_id: values.phase_id,
           pipeline_id: values.pipeline_id,
@@ -114,7 +112,6 @@ export function AddLeadDialog({
       setIsOpen(false);
       onOpenChange?.(false);
       form.reset();
-      navigate("/contacts");
     } catch (error) {
       console.error("Error adding contact:", error);
       toast.error("Fehler beim Hinzufügen des Kontakts");
