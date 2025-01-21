@@ -28,7 +28,8 @@ serve(async (req) => {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
           'Accept': 'application/json',
-          'X-IG-App-ID': '936619743392459'
+          'X-IG-App-ID': '936619743392459',
+          'Cookie': 'ig_did=0; ig_nrcb=1; csrftoken=missing;'
         }
       });
 
