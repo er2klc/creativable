@@ -153,30 +153,20 @@ export const LeadKanbanView = ({
       onDragEnd={handleDragEnd}
     >
       <div className="flex flex-col h-screen">
-        <div className="flex items-center justify-between p-4 flex-wrap gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <LeadFilters
-              selectedPipelineId={selectedPipelineId}
-              setSelectedPipelineId={setSelectedPipelineId}
-              onEditPipeline={handleEditModeToggle}
-              isEditMode={isEditMode}
+        {isEditMode && (
+          <div className="flex items-center justify-center gap-4 p-4 bg-muted/50">
+            <Input
+              value={editingPipelineName}
+              onChange={(e) => setEditingPipelineName(e.target.value)}
+              placeholder={settings?.language === "en" ? "Pipeline Name" : "Pipeline-Name"}
+              className="max-w-xs"
             />
-            {isEditMode && (
-              <>
-                <Input
-                  value={editingPipelineName}
-                  onChange={(e) => setEditingPipelineName(e.target.value)}
-                  placeholder={settings?.language === "en" ? "Pipeline Name" : "Pipeline-Name"}
-                  className="w-[200px]"
-                />
-                <Button onClick={handleSaveChanges} variant="outline" size="sm">
-                  <Save className="h-4 w-4 mr-2" />
-                  {settings?.language === "en" ? "Save Pipeline Name" : "Pipeline-Name speichern"}
-                </Button>
-              </>
-            )}
+            <Button onClick={handleSaveChanges} variant="outline" size="sm">
+              <Save className="h-4 w-4 mr-2" />
+              {settings?.language === "en" ? "Save Pipeline Name" : "Pipeline-Name speichern"}
+            </Button>
           </div>
-        </div>
+        )}
 
         <div className="flex-1 overflow-x-auto no-scrollbar relative">
           <div 
