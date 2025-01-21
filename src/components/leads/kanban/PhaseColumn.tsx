@@ -8,6 +8,7 @@ import { ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { AddLeadButton } from "./AddLeadButton";
 import { usePhaseMutations } from "./usePhaseMutations";
+import { cn } from "@/lib/utils";
 
 interface PhaseColumnProps {
   phase: Tables<"pipeline_phases">;
@@ -36,7 +37,7 @@ export const PhaseColumn = ({
 }: PhaseColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: phase.id,
-    disabled: isEditMode, // Disable dropping when in edit mode
+    disabled: isEditMode,
   });
 
   const [editingName, setEditingName] = useState(phase.name);
@@ -50,13 +51,18 @@ export const PhaseColumn = ({
   return (
     <Card
       ref={setNodeRef}
-      className={`h-full flex flex-col bg-muted/50 rounded-lg relative transition-colors duration-200 ${
-        isOver && !isEditMode ? 'ring-2 ring-primary/50 bg-primary/5 shadow-[0_-2px_4px_rgba(0,0,0,0.15)]' : ''
-      }`}
+      className={cn(
+        "h-full flex flex-col rounded-lg relative transition-all duration-200",
+        isOver && !isEditMode ? 'ring-2 ring-primary/50 shadow-lg scale-[1.02]' : '',
+        "bg-gradient-to-br from-background to-muted/30"
+      )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <CardHeader className="p-2 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-10 border-b">
+      <CardHeader className={cn(
+        "p-3 space-y-0 sticky top-0 backdrop-blur-sm z-10 border-b",
+        "bg-gradient-to-r from-background/80 to-muted/30"
+      )}>
         <div className="flex items-center justify-between gap-2">
           {isEditMode ? (
             <>
@@ -74,7 +80,7 @@ export const PhaseColumn = ({
                 <Input
                   value={editingName}
                   onChange={handleNameChange}
-                  className="h-8"
+                  className="h-8 bg-background/50 border-muted"
                 />
                 {!isLast && (
                   <Button
@@ -97,7 +103,15 @@ export const PhaseColumn = ({
               </Button>
             </>
           ) : (
-            <h3 className="font-medium text-sm tracking-tight">{phase.name}</h3>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary/80" />
+                <h3 className="font-medium text-sm tracking-tight">{phase.name}</h3>
+              </div>
+              <div className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">
+                {leads.length}
+              </div>
+            </div>
           )}
         </div>
       </CardHeader>
