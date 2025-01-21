@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
+import { launch } from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,8 +17,9 @@ serve(async (req) => {
     if (platform === 'instagram') {
       console.log('Starting Instagram profile scan for:', username);
       
-      const browser = await puppeteer.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      const browser = await launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        executablePath: Deno.env.get("PUPPETEER_EXECUTABLE_PATH") || undefined
       });
       
       try {
