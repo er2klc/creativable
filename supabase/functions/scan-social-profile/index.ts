@@ -17,54 +17,62 @@ serve(async (req) => {
     if (platform === 'instagram') {
       console.log('Starting Instagram profile scan for:', username);
       
-      // Launch browser
       const browser = await puppeteer.launch({
         args: ['--no-sandbox', '--disable-setuid-sandbox']
       });
       
       try {
         const page = await browser.newPage();
-        
-        // Set viewport and user agent
         await page.setViewport({ width: 1280, height: 800 });
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
 
-        // Navigate to profile
         const profileUrl = username.startsWith('http') ? username : `https://www.instagram.com/${username}/`;
+        console.log('Navigating to:', profileUrl);
+        
         await page.goto(profileUrl, { waitUntil: 'networkidle0' });
         
-        // Extract data using selectors and meta tags
+        // Extract data using meta tags and page content
         const data = await page.evaluate(() => {
           const getMetaContent = (property: string) => {
             const meta = document.querySelector(`meta[property="${property}"]`);
             return meta ? meta.getAttribute('content') : null;
           };
 
-          // Get follower count from meta description
+          // Get profile info from meta tags
           const description = getMetaContent('og:description') || '';
           const followersMatch = description.match(/(\d+(?:,\d+)*)\s+Followers/i);
-          const followers = followersMatch ? parseInt(followersMatch[1].replace(/,/g, '')) : null;
-
-          // Get profile image
-          const profileImage = getMetaContent('og:image');
+          const followsMatch = description.match(/(\d+(?:,\d+)*)\s+Following/i);
+          const postsMatch = description.match(/(\d+(?:,\d+)*)\s+Posts/i);
+          
+          // Get username from URL or meta tags
+          const urlUsername = window.location.pathname.split('/')[1];
+          const metaUsername = getMetaContent('og:title')?.split(' ')[0];
+          
+          // Get full name from meta title
+          const fullName = getMetaContent('og:title')?.split(' • ')[0];
           
           // Get bio from meta description
-          const bioMatch = description.match(/^([^.]+)/);
-          const bio = bioMatch ? bioMatch[1].trim() : null;
+          const bioMatch = description.match(/^([^.]+?)(?=\s+\d+\s+(?:Followers|Posts|Following))/i);
+          const biography = bioMatch ? bioMatch[1].trim() : null;
 
           return {
-            followers,
-            following: null, // Instagram API restrictions
-            posts: null, // Instagram API restrictions
-            bio,
-            isPrivate: !document.querySelector('article'), // If no posts are visible, likely private
-            profile_pic_url: profileImage,
-            engagement_rate: null
+            username: urlUsername || metaUsername,
+            fullName: fullName || null,
+            biography,
+            followersCount: followersMatch ? parseInt(followersMatch[1].replace(/,/g, '')) : null,
+            followsCount: followsMatch ? parseInt(followsMatch[1].replace(/,/g, '')) : null,
+            postsCount: postsMatch ? parseInt(postsMatch[1].replace(/,/g, '')) : null,
+            url: window.location.href,
+            private: !document.querySelector('article'),
+            verified: !!document.querySelector('[aria-label="Verified"]'),
+            profilePicUrl: getMetaContent('og:image'),
+            externalUrl: null,
+            businessCategoryName: null,
+            isBusinessAccount: false
           };
         });
 
         console.log('Extracted Instagram data:', data);
-        
         await browser.close();
         
         return new Response(
@@ -84,16 +92,22 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        followers: null,
-        following: null,
-        posts: null,
-        bio: null,
-        isPrivate: null,
-        engagement_rate: null,
-        profile_pic_url: null
+        username: null,
+        fullName: null,
+        biography: null,
+        followersCount: null,
+        followsCount: null,
+        postsCount: null,
+        url: null,
+        private: null,
+        verified: null,
+        profilePicUrl: null,
+        externalUrl: null,
+        businessCategoryName: null,
+        isBusinessAccount: null
       }),
       { 
-        status: 200, // Return 200 even on error, but with null values
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
