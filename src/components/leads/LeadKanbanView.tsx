@@ -14,8 +14,7 @@ import { AddLeadDialog } from "./AddLeadDialog";
 import { KanbanHeader } from "./kanban/KanbanHeader";
 import { KanbanColumns } from "./kanban/KanbanColumns";
 import { EmptyStateMessage } from "./kanban/EmptyStateMessage";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Platform } from "@/config/platforms";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -34,6 +33,7 @@ export const LeadKanbanView = ({
   const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
   const [targetPhase, setTargetPhase] = useState<string>("");
   const [showAddLead, setShowAddLead] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform>();
   const { data: phases = [], isLoading } = usePhaseQuery(selectedPipelineId);
   const { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePhaseOrder } = usePhaseMutations();
   const queryClient = useQueryClient();
@@ -139,6 +139,11 @@ export const LeadKanbanView = ({
     }
   };
 
+  const handleShowAddLead = (platform?: Platform) => {
+    setSelectedPlatform(platform);
+    setShowAddLead(true);
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -149,23 +154,16 @@ export const LeadKanbanView = ({
       onDragEnd={handleDragEnd}
     >
       <div className="flex flex-col h-screen">
-        <div className="flex items-center justify-between p-4 bg-background sticky top-0 z-20 border-b">
-          <KanbanHeader
-            isEditMode={isEditMode}
-            editingPipelineName={editingPipelineName}
-            onEditingPipelineNameChange={setEditingPipelineName}
-            onSaveChanges={handleSaveChanges}
-          />
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setShowAddLead(true)}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              {settings?.language === "en" ? "Add Contact" : "Kontakt hinzufügen"}
-            </Button>
-          </div>
-        </div>
+        <KanbanHeader
+          isEditMode={isEditMode}
+          setIsEditMode={setIsEditMode}
+          editingPipelineName={editingPipelineName}
+          onEditingPipelineNameChange={setEditingPipelineName}
+          onSaveChanges={handleSaveChanges}
+          selectedPipelineId={selectedPipelineId}
+          onPipelineSelect={setSelectedPipelineId}
+          onShowAddLead={handleShowAddLead}
+        />
 
         <div className="flex-1 overflow-x-auto no-scrollbar relative">
           <KanbanColumns
@@ -195,6 +193,7 @@ export const LeadKanbanView = ({
           open={showAddLead}
           onOpenChange={setShowAddLead}
           pipelineId={selectedPipelineId}
+          defaultPlatform={selectedPlatform}
         />
       </div>
     </DndContext>
