@@ -35,9 +35,12 @@ export const LeadsHeader = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-semibold">Kontakte</h1>
+      <div className="flex items-center gap-4">
+        {/* Page Title */}
+        <h1 className="text-2xl font-semibold">Kontakte</h1>
+
+        {/* Add Contact and Dropdown Buttons */}
+        <div className="flex items-center gap-2">
           <Button onClick={() => setShowAddLead(true)}>
             Kontakt hinzufügen ✨
           </Button>
@@ -60,39 +63,37 @@ export const LeadsHeader = ({
           </DropdownMenu>
         </div>
 
-        <div className="flex items-center gap-4 flex-1 justify-between">
-          {/* Pipeline selection and edit mode */}
-          <LeadFilters
-            selectedPipelineId={selectedPipelineId}
-            setSelectedPipelineId={setSelectedPipelineId}
-            onEditPipeline={() => setIsEditMode(!isEditMode)}
-            isEditMode={isEditMode}
-          />
+        {/* Search Field */}
+        <div className="flex-1 max-w-md">
+          <LeadSearch value={searchQuery} onChange={setSearchQuery} />
+        </div>
 
-          {/* Centered search */}
-          <div className="flex-1 max-w-md mx-auto">
-            <LeadSearch value={searchQuery} onChange={setSearchQuery} />
-          </div>
+        {/* Pipeline Selection and Edit Mode */}
+        <LeadFilters
+          selectedPipelineId={selectedPipelineId}
+          setSelectedPipelineId={setSelectedPipelineId}
+          onEditPipeline={() => setIsEditMode(!isEditMode)}
+          isEditMode={isEditMode}
+        />
 
-          {/* View mode buttons */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setViewMode("kanban")}
-              className={viewMode === "kanban" ? "bg-muted" : ""}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setViewMode("list")}
-              className={viewMode === "list" ? "bg-muted" : ""}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
+        {/* View Mode Buttons */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setViewMode("kanban")}
+            className={viewMode === "kanban" ? "bg-muted" : ""}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setViewMode("list")}
+            className={viewMode === "list" ? "bg-muted" : ""}
+          >
+            <List className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
