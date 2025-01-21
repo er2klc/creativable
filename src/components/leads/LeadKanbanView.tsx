@@ -201,6 +201,13 @@ export const LeadKanbanView = ({
     }
   };
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  const emptySlots = Math.max(0, 6 - leads.length);
+  const emptyButtons = Array(emptySlots).fill(null);
+
   return (
     <DndContext 
       collisionDetection={closestCenter} 
