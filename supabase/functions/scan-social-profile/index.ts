@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,77 +16,40 @@ serve(async (req) => {
     if (platform === 'instagram') {
       console.log('Starting Instagram profile scan for:', username);
       
-      const browser = await puppeteer.launch({
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-gpu',
-          '--disable-dev-shm-usage'
-        ]
-      });
+      // Clean the username (remove @ if present and any trailing/leading spaces)
+      const cleanUsername = username.replace('@', '').trim();
+      const profileUrl = `https://www.instagram.com/${cleanUsername}/?__a=1`;
+
+      console.log('Fetching data from:', profileUrl);
       
-      try {
-        const page = await browser.newPage();
-        await page.setViewport({ width: 1280, height: 800 });
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+      const response = await fetch(profileUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
 
-        const profileUrl = username.startsWith('http') ? username : `https://www.instagram.com/${username}/`;
-        console.log('Navigating to:', profileUrl);
-        
-        await page.goto(profileUrl, { waitUntil: 'networkidle0', timeout: 30000 });
-        
-        // Extract data using meta tags and page content
-        const data = await page.evaluate(() => {
-          const getMetaContent = (property: string) => {
-            const meta = document.querySelector(`meta[property="${property}"]`);
-            return meta ? meta.getAttribute('content') : null;
-          };
-
-          // Get profile info from meta tags
-          const description = getMetaContent('og:description') || '';
-          const followersMatch = description.match(/(\d+(?:,\d+)*)\s+Followers/i);
-          const followsMatch = description.match(/(\d+(?:,\d+)*)\s+Following/i);
-          const postsMatch = description.match(/(\d+(?:,\d+)*)\s+Posts/i);
-          
-          // Get username from URL or meta tags
-          const urlUsername = window.location.pathname.split('/')[1];
-          const metaUsername = getMetaContent('og:title')?.split(' ')[0];
-          
-          // Get full name from meta title
-          const fullName = getMetaContent('og:title')?.split(' • ')[0];
-          
-          // Get bio from meta description
-          const bioMatch = description.match(/^([^.]+?)(?=\s+\d+\s+(?:Followers|Posts|Following))/i);
-          const biography = bioMatch ? bioMatch[1].trim() : null;
-
-          return {
-            username: urlUsername || metaUsername,
-            fullName: fullName || null,
-            biography,
-            followers: followersMatch ? parseInt(followersMatch[1].replace(/,/g, '')) : null,
-            following: followsMatch ? parseInt(followsMatch[1].replace(/,/g, '')) : null,
-            posts: postsMatch ? parseInt(postsMatch[1].replace(/,/g, '')) : null,
-            url: window.location.href,
-            isPrivate: !document.querySelector('article'),
-            verified: !!document.querySelector('[aria-label="Verified"]'),
-            profilePicUrl: getMetaContent('og:image'),
-            engagement_rate: null,
-            bio: biography
-          };
-        });
-
-        console.log('Extracted Instagram data:', data);
-        await browser.close();
-        
-        return new Response(
-          JSON.stringify(data),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      } catch (error) {
-        console.error('Error during page evaluation:', error);
-        await browser.close();
-        throw error;
+      if (!response.ok) {
+        console.error('Error fetching Instagram profile:', response.status);
+        throw new Error(`Failed to fetch Instagram profile: ${response.statusText}`);
       }
+
+      const data = await response.json();
+      console.log('Instagram API response:', data);
+
+      // Extract relevant data from the response
+      const profileData = {
+        username: cleanUsername,
+        bio: data?.graphql?.user?.biography || null,
+        followers: data?.graphql?.user?.edge_followed_by?.count || null,
+        following: data?.graphql?.user?.edge_follow?.count || null,
+        posts: data?.graphql?.user?.edge_owner_to_timeline_media?.count || null,
+        isPrivate: data?.graphql?.user?.is_private || false,
+        engagement_rate: null, // Calculate if needed based on available data
+      };
+
+      return new Response(JSON.stringify(profileData), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     throw new Error('Unsupported platform');
@@ -97,20 +59,15 @@ serve(async (req) => {
       JSON.stringify({ 
         error: error.message,
         username: null,
-        fullName: null,
-        biography: null,
+        bio: null,
         followers: null,
         following: null,
         posts: null,
-        url: null,
         isPrivate: null,
-        verified: null,
-        profilePicUrl: null,
-        engagement_rate: null,
-        bio: null
+        engagement_rate: null
       }),
       { 
-        status: 200,
+        status: 200, // Keep 200 to handle errors gracefully in the frontend
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
