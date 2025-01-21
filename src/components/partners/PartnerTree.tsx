@@ -1,69 +1,124 @@
+import { useCallback, useEffect, useState } from "react";
+import ReactFlow, { Background, Controls, Edge, Node } from "reactflow";
+import "reactflow/dist/style.css";
+import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@supabase/auth-helpers-react";
 import { Tables } from "@/integrations/supabase/types";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useNavigate } from "react-router-dom";
 
-interface PartnerTreeProps {
-  unassignedPartners: Tables<"leads">[];
-  currentUser: Tables<"profiles"> | null;
-  onContactClick: (id: string) => void;
+interface Partner extends Tables<"leads"> {
+  level?: number;
+  parent_id?: string | null;
 }
 
-export const PartnerTree = ({ unassignedPartners, currentUser, onContactClick }: PartnerTreeProps) => {
-  const navigate = useNavigate();
+const nodeTypes = {
+  custom: ({ data }: { data: any }) => (
+    <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
+      <div className="flex items-center gap-4">
+        <div className="flex-shrink-0">
+          {data.avatar_url ? (
+            <img
+              src={data.avatar_url}
+              alt={data.name}
+              className="w-12 h-12 rounded-full"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="text-lg font-semibold text-primary">
+                {data.name?.charAt(0)?.toUpperCase() || '?'}
+              </span>
+            </div>
+          )}
+        </div>
+        <div>
+          <h3 className="font-semibold">{data.name}</h3>
+          <p className="text-sm text-gray-500">{data.level ? `Level ${data.level}` : ''}</p>
+        </div>
+      </div>
+    </div>
+  ),
+};
 
-  const handleContactClick = (id: string) => {
-    navigate(`/contacts/${id}`);
-  };
+export function PartnerTree() {
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
+  const user = useUser();
+
+  const buildTreeData = useCallback((partners: Partner[]) => {
+    const nodes: Node[] = [];
+    const edges: Edge[] = [];
+    const levelWidth = 300;
+    const levelHeight = 150;
+
+    partners.forEach((partner) => {
+      const level = partner.level || 0;
+      const partnersAtLevel = partners.filter((p) => p.level === level);
+      const indexAtLevel = partnersAtLevel.findIndex((p) => p.id === partner.id);
+      const totalAtLevel = partnersAtLevel.length;
+
+      const xOffset = (indexAtLevel - (totalAtLevel - 1) / 2) * levelWidth;
+      const yOffset = level * levelHeight;
+
+      nodes.push({
+        id: partner.id,
+        position: { x: xOffset, y: yOffset },
+        data: partner,
+        type: "custom",
+      });
+
+      if (partner.parent_id) {
+        edges.push({
+          id: `${partner.parent_id}-${partner.id}`,
+          source: partner.parent_id,
+          target: partner.id,
+          type: "smoothstep",
+        });
+      }
+    });
+
+    return { nodes, edges };
+  }, []);
+
+  useEffect(() => {
+    const fetchPartners = async () => {
+      if (!user) return;
+
+      const { data: partners, error } = await supabase
+        .from("leads")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching partners:", error);
+        return;
+      }
+
+      // Add level information
+      const partnersWithLevels = partners.map((partner: Partner) => {
+        const level = partner.parent_id ? 1 : 0;
+        return { ...partner, level };
+      });
+
+      const { nodes: newNodes, edges: newEdges } = buildTreeData(partnersWithLevels);
+      setNodes(newNodes);
+      setEdges(newEdges);
+    };
+
+    fetchPartners();
+  }, [user, buildTreeData]);
 
   return (
-    <Accordion type="single" collapsible className="w-full">
-      <AccordionItem value="unassigned">
-        <AccordionTrigger className="text-lg font-semibold">
-          Unzugewiesene Partner ({unassignedPartners.length})
-        </AccordionTrigger>
-        <AccordionContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-            {unassignedPartners.map((partner) => (
-              <Card 
-                key={partner.id} 
-                className="cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => handleContactClick(partner.id)}
-              >
-                <CardContent className="flex items-center gap-4 p-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={partner.instagram_profile_image_url || undefined} />
-                    <AvatarFallback>
-                      {partner.name.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-medium">{partner.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {partner.onboarding_progress && typeof partner.onboarding_progress === 'object' && 
-                       'training_provided' in partner.onboarding_progress ? 
-                        partner.onboarding_progress.training_provided ? "Training abgeschlossen" : "Training ausstehend"
-                        : "Training ausstehend"}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-
-      <AccordionItem value="tree">
-        <AccordionTrigger className="text-lg font-semibold">
-          Partner Baum
-        </AccordionTrigger>
-        <AccordionContent>
-          <div className="p-4 text-center text-muted-foreground">
-            Partner Baum Visualisierung kommt hier...
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+    <div style={{ width: "100%", height: "600px" }}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        fitView
+        attributionPosition="bottom-left"
+      >
+        <Background />
+        <Controls />
+      </ReactFlow>
+    </div>
   );
-};
+}
