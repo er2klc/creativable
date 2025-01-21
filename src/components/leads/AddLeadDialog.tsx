@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -34,6 +34,8 @@ export function AddLeadDialog({
   pipelineId,
   defaultPlatform 
 }: AddLeadDialogProps) {
+  console.log("AddLeadDialog rendered with props:", { defaultPhase, open, pipelineId, defaultPlatform });
+  
   const [isLoading, setIsLoading] = useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -45,6 +47,10 @@ export function AddLeadDialog({
       pipeline_id: pipelineId || "",
     },
   });
+
+  useEffect(() => {
+    console.log("Current form values:", form.getValues());
+  }, [form]);
 
   const scanInstagramProfile = async (username: string) => {
     try {
@@ -71,7 +77,8 @@ export function AddLeadDialog({
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-console.log("onSubmit triggered", values); // Debugging
+    console.log("Form submitted with values:", values);
+    
     try {
       setIsLoading(true);
       console.log("Starting form submission with values:", values);
