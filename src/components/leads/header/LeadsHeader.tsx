@@ -34,27 +34,8 @@ export const LeadsHeader = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">Kontakte</h1>
-        <div className="flex-1 max-w-md">
-          <LeadSearch value={searchQuery} onChange={setSearchQuery} />
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setViewMode("kanban")}
-            className={viewMode === "kanban" ? "bg-muted" : ""}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setViewMode("list")}
-            className={viewMode === "list" ? "bg-muted" : ""}
-          >
-            <List className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-semibold">Kontakte</h1>
           <Button onClick={() => setShowAddLead(true)}>
             Kontakt hinzufügen ✨
           </Button>
@@ -75,6 +56,29 @@ export const LeadsHeader = ({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
+
+        <div className="flex-1 max-w-md">
+          <LeadSearch value={searchQuery} onChange={setSearchQuery} />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setViewMode("kanban")}
+            className={viewMode === "kanban" ? "bg-muted" : ""}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setViewMode("list")}
+            className={viewMode === "list" ? "bg-muted" : ""}
+          >
+            <List className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
