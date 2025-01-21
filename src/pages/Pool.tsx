@@ -3,12 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { LeadDetailView } from "@/components/leads/LeadDetailView";
-import { Tables } from "@/integrations/supabase/types";
 import { PartnerTree } from "@/components/partners/PartnerTree";
 
 export default function Pool() {
-  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const { status = 'partner' } = useParams<{ status?: string }>();
   const navigate = useNavigate();
 
@@ -36,7 +33,7 @@ export default function Pool() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Tables<"leads">[];
+      return data;
     },
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
@@ -61,7 +58,7 @@ export default function Pool() {
   });
 
   const handleContactClick = (id: string) => {
-    navigate(`/contacts/${id}`);
+    navigate(`/pool/${status}/${id}`);
   };
 
   return (

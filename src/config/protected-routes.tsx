@@ -40,63 +40,7 @@ export const protectedRoutes = [
     element: <Pool />,
   },
   {
-    path: "/messages",
-    element: <Messages />,
+    path: "/pool/:status/:leadId",
+    element: <LeadDetail />,
   },
-  {
-    path: "/calendar",
-    element: <Calendar />,
-  },
-  {
-    path: "/settings",
-    element: <Settings />,
-  },
-  {
-    path: "/tools",
-    element: <Tools />,
-  },
-  {
-    path: "/signature-generator",
-    element: <SignatureGenerator />,
-  },
-  {
-    path: "/bio-generator",
-    element: <BioGenerator />,
-  },
-  {
-    path: "/tree-generator",
-    element: <TreeGenerator />,
-  },
-  {
-    path: "/todo",
-    element: <TodoList />,
-  },
-  {
-    path: "/vision-board",
-    element: <VisionBoard />,
-  },
-  {
-    path: "/unity",
-    element: <Unity />,
-  },
-  {
-    path: "/unity/team/:teamSlug",
-    element: <TeamDetail />,
-  },
-  {
-    path: "/elevate",
-    element: <Elevate />,
-  },
-  {
-    path: "/elevate/modul/:slug",
-    element: <PlatformDetail />,
-  },
-  {
-    path: "/leaderboard/:teamId",
-    element: <LeaderBoard />,
-  },
-  {
-    path: "/admin",
-    element: <Admin />,
-  }
 ];
