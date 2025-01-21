@@ -59,7 +59,7 @@ export function AddLeadDialog({
         body: { 
           username,
           platform: 'Instagram',
-          leadId: null // Will be set after lead creation
+          leadId: null
         }
       });
 
@@ -135,7 +135,7 @@ export function AddLeadDialog({
 
   return (
     <Dialog open={open ?? isOpen} onOpenChange={onOpenChange ?? setIsOpen}>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-[2px]">
         <DialogTrigger asChild>
           {trigger || (
             <Button variant="default" className="gap-2">
