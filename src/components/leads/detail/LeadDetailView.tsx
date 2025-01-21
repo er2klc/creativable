@@ -119,24 +119,43 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     mutationFn: async () => {
       if (!leadId) return;
 
+      console.log('Starting deletion process for lead:', leadId);
+
       // Delete related records first
-      const tables = ['messages', 'tasks', 'notes', 'lead_files'] as const;
+      const tables = [
+        'contact_group_states',
+        'instagram_scan_history',
+        'lead_files',
+        'lead_subscriptions',
+        'messages',
+        'notes',
+        'tasks'
+      ];
+
       for (const table of tables) {
+        console.log(`Deleting related records from ${table}`);
         const { error } = await supabase
           .from(table)
           .delete()
           .eq('lead_id', leadId);
         
-        if (error) throw error;
+        if (error) {
+          console.error(`Error deleting from ${table}:`, error);
+          throw error;
+        }
       }
 
       // Finally delete the lead
+      console.log('Deleting lead record');
       const { error } = await supabase
         .from('leads')
         .delete()
         .eq('id', leadId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting lead:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success(
