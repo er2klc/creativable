@@ -1,147 +1,45 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from "../_shared/cors.ts";
-import { scanInstagramProfile } from "./instagram.ts";
-import { scanLinkedInProfile } from "./linkedin.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { extractInstagramStats } from "../_shared/social-media-utils.ts";
 
-interface ScanProfileRequest {
-  leadId: string;
-  platform: string;
-  username: string;
-}
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
-  console.log('Received scan request');
-  
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('Handling CORS preflight request');
-    return new Response('ok', { 
-      headers: {
-        ...corsHeaders,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      }
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { leadId, platform, username } = await req.json() as ScanProfileRequest;
-    console.log('Processing request:', { leadId, platform, username });
-
-    if (!username || platform === "Offline") {
-      console.log('No social media profile to scan');
-      return new Response(
-        JSON.stringify({
-          message: "No social media profile to scan for offline contacts",
-          data: null
-        }),
-        {
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-          },
-          status: 200,
-        }
-      );
-    }
-
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    let profileData;
-    console.log(`Attempting to scan ${platform} profile for username: ${username}`);
+    const { platform, username } = await req.json();
     
-    switch (platform.toLowerCase()) {
-      case 'instagram':
-        profileData = await scanInstagramProfile(username);
-        break;
-      case 'linkedin':
-        profileData = await scanLinkedInProfile(username);
-        break;
-      default:
-        return new Response(
-          JSON.stringify({
-            error: `Unsupported platform: ${platform}`,
-          }),
-          {
-            headers: {
-              ...corsHeaders,
-              "Content-Type": "application/json",
-            },
-            status: 400,
-          }
-        );
-    }
-
-    console.log('Scanned profile data:', profileData);
-
-    if (!profileData || Object.keys(profileData).length === 0) {
-      console.log('No profile data found');
+    if (platform === 'instagram') {
+      console.log('Scanning Instagram profile:', username);
+      
+      // Fetch the Instagram profile page
+      const response = await fetch(`https://www.instagram.com/${username}/?__a=1`);
+      const html = await response.text();
+      
+      // Extract stats using utility function
+      const stats = extractInstagramStats(html);
+      
+      console.log('Extracted stats:', stats);
+      
       return new Response(
-        JSON.stringify({
-          message: "No profile data found",
-          data: null
-        }),
-        {
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-          },
-          status: 200, // Changed from 404 to 200 to prevent error
-        }
+        JSON.stringify(stats),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Update lead with scanned data
-    const { error: updateError } = await supabase
-      .from('leads')
-      .update({
-        social_media_bio: profileData.bio,
-        social_media_posts: {
-          followers: profileData.followers,
-          following: profileData.following,
-          posts: profileData.posts,
-          isPrivate: profileData.isPrivate,
-          headline: profileData.headline,
-          connections: profileData.connections,
-        },
-        last_social_media_scan: new Date().toISOString(),
-      })
-      .eq('id', leadId);
-
-    if (updateError) {
-      console.error('Error updating lead:', updateError);
-      throw updateError;
-    }
-
-    return new Response(
-      JSON.stringify({
-        message: "Profile scanned successfully",
-        data: profileData,
-      }),
-      {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-        status: 200,
-      }
-    );
-
+    throw new Error('Unsupported platform');
   } catch (error) {
-    console.error('Error in scan-social-profile:', error);
+    console.error('Error scanning profile:', error);
     return new Response(
-      JSON.stringify({
-        error: error.message,
-      }),
-      {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-        status: 200, // Changed from 400 to 200 to prevent error
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

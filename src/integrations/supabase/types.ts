@@ -623,6 +623,57 @@ export type Database = {
           },
         ]
       }
+      instagram_scan_history: {
+        Row: {
+          engagement_rate: number | null
+          error_message: string | null
+          followers_count: number | null
+          following_count: number | null
+          id: string
+          lead_id: string | null
+          posts_count: number | null
+          scanned_at: string | null
+          success: boolean | null
+        }
+        Insert: {
+          engagement_rate?: number | null
+          error_message?: string | null
+          followers_count?: number | null
+          following_count?: number | null
+          id?: string
+          lead_id?: string | null
+          posts_count?: number | null
+          scanned_at?: string | null
+          success?: boolean | null
+        }
+        Update: {
+          engagement_rate?: number | null
+          error_message?: string | null
+          followers_count?: number | null
+          following_count?: number | null
+          id?: string
+          lead_id?: string | null
+          posts_count?: number | null
+          scanned_at?: string | null
+          success?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_lead"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instagram_scan_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       keywords: {
         Row: {
           created_at: string | null
@@ -756,6 +807,14 @@ export type Database = {
           goals: string[] | null
           id: string
           industry: string
+          instagram_categories: string[] | null
+          instagram_engagement_rate: number | null
+          instagram_followers: number | null
+          instagram_following: number | null
+          instagram_last_post_date: string | null
+          instagram_posts: number | null
+          instagram_profile_image_url: string | null
+          instagram_verified: boolean | null
           interaction_prediction: Json | null
           interests: string[] | null
           languages: string[] | null
@@ -817,6 +876,14 @@ export type Database = {
           goals?: string[] | null
           id?: string
           industry: string
+          instagram_categories?: string[] | null
+          instagram_engagement_rate?: number | null
+          instagram_followers?: number | null
+          instagram_following?: number | null
+          instagram_last_post_date?: string | null
+          instagram_posts?: number | null
+          instagram_profile_image_url?: string | null
+          instagram_verified?: boolean | null
           interaction_prediction?: Json | null
           interests?: string[] | null
           languages?: string[] | null
@@ -878,6 +945,14 @@ export type Database = {
           goals?: string[] | null
           id?: string
           industry?: string
+          instagram_categories?: string[] | null
+          instagram_engagement_rate?: number | null
+          instagram_followers?: number | null
+          instagram_following?: number | null
+          instagram_last_post_date?: string | null
+          instagram_posts?: number | null
+          instagram_profile_image_url?: string | null
+          instagram_verified?: boolean | null
           interaction_prediction?: Json | null
           interests?: string[] | null
           languages?: string[] | null
