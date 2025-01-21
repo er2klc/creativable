@@ -8,13 +8,13 @@ import { protectedRoutes } from "@/config/protected-routes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 
-const App = () => {
+const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
   const publicPaths = publicRoutes.map(route => route.path);
   const showChat = useChatVisibility(publicPaths);
   
   return (
-    <AppProvider>
+    <>
       <Routes>
         {/* Public Routes */}
         {publicRoutes.map(route => (
@@ -61,6 +61,14 @@ const App = () => {
         />
       </Routes>
       {showChat && <ChatButton />}
+    </>
+  );
+};
+
+const App = () => {
+  return (
+    <AppProvider>
+      <AppRoutes />
     </AppProvider>
   );
 };

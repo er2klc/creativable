@@ -21,13 +21,15 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionContextProvider supabaseClient={supabase}>
-        <TooltipProvider>
-          <SidebarProvider>
-            <Toaster />
-            <Sonner />
-            <AuthProvider>{children}</AuthProvider>
-          </SidebarProvider>
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <SidebarProvider>
+              <Toaster />
+              <Sonner />
+              {children}
+            </SidebarProvider>
+          </TooltipProvider>
+        </AuthProvider>
       </SessionContextProvider>
     </QueryClientProvider>
   );
