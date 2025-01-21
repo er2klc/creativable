@@ -49,7 +49,7 @@ export const PartnerTree = ({ unassignedPartners, currentUser, onContactClick }:
                   <div>
                     <h3 className="font-medium">{partner.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {(partner.onboarding_progress as OnboardingProgress)?.training_provided 
+                      {(partner.onboarding_progress as unknown as OnboardingProgress)?.training_provided 
                         ? "Training abgeschlossen" 
                         : "Training ausstehend"}
                     </p>
