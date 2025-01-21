@@ -11,12 +11,19 @@ import { usePhaseMutations } from "./kanban/usePhaseMutations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Save } from "lucide-react";
+import { Save, ChevronDown, Instagram, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LeadFilters } from "./LeadFilters";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
 import { AddLeadDialog } from "./AddLeadDialog";
 import { AddPhaseButton } from "./kanban/AddPhaseButton";
+import { CreateInstagramContactDialog } from "./instagram/CreateInstagramContactDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -35,6 +42,7 @@ export const LeadKanbanView = ({
   const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
   const [targetPhase, setTargetPhase] = useState<string>("");
   const [showAddLead, setShowAddLead] = useState(false);
+  const [showInstagramDialog, setShowInstagramDialog] = useState(false);
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
   const { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePhaseOrder } = usePhaseMutations();
   const queryClient = useQueryClient();
@@ -42,7 +50,6 @@ export const LeadKanbanView = ({
 
   useKanbanSubscription();
 
-  // Add mutation for updating pipeline name
   const updatePipelineName = useMutation({
     mutationFn: async (newName: string) => {
       if (!selectedPipelineId) return;
@@ -138,7 +145,6 @@ export const LeadKanbanView = ({
     const [movedPhase] = updatedPhases.splice(currentIndex, 1);
     updatedPhases.splice(newIndex, 0, movedPhase);
 
-    // Update order_index for all phases
     const phasesWithNewOrder = updatedPhases.map((phase, index) => ({
       ...phase,
       order_index: index
@@ -180,9 +186,28 @@ export const LeadKanbanView = ({
               </>
             )}
           </div>
-          <Button onClick={() => setShowAddLead(true)}>
-            Kontakt hinzufügen ✨
-          </Button>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setShowInstagramDialog(true)}>
+                  <Instagram className="h-4 w-4 mr-2" />
+                  <span>Instagram</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled>
+                  <Linkedin className="h-4 w-4 mr-2" />
+                  <span>LinkedIn</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button onClick={() => setShowAddLead(true)}>
+              Kontakt hinzufügen ✨
+            </Button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-x-auto no-scrollbar relative">
@@ -192,7 +217,6 @@ export const LeadKanbanView = ({
               minWidth: 'fit-content',
             }}
           >
-            {/* Shadow indicator for left scroll */}
             <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
 
             {phases.map((phase, index) => (
@@ -220,7 +244,6 @@ export const LeadKanbanView = ({
               <AddPhaseButton pipelineId={selectedPipelineId} />
             )}
 
-            {/* Shadow indicator for right scroll */}
             <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
           </div>
         </div>
@@ -238,6 +261,13 @@ export const LeadKanbanView = ({
           open={showAddLead}
           onOpenChange={setShowAddLead}
           pipelineId={selectedPipelineId}
+        />
+
+        <CreateInstagramContactDialog
+          open={showInstagramDialog}
+          onOpenChange={setShowInstagramDialog}
+          pipelineId={selectedPipelineId}
+          defaultPhase={phases[0]?.id}
         />
       </div>
     </DndContext>
