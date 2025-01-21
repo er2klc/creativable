@@ -42,14 +42,13 @@ export const LeadKanbanView = ({
   const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
   const [targetPhase, setTargetPhase] = useState<string>("");
   const [showAddLead, setShowAddLead] = useState(false);
-  const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
+  const { data: phases = [], isLoading } = usePhaseQuery(selectedPipelineId);
   const { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePhaseOrder } = usePhaseMutations();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   useKanbanSubscription();
 
-  // Add mutation for updating pipeline name
   const updatePipelineName = useMutation({
     mutationFn: async (newName: string) => {
       if (!selectedPipelineId) return;
@@ -204,9 +203,6 @@ export const LeadKanbanView = ({
   if (isLoading) {
     return <div>Loading...</div>;
   }
-
-  const emptySlots = Math.max(0, 6 - leads.length);
-  const emptyButtons = Array(emptySlots).fill(null);
 
   return (
     <DndContext 
