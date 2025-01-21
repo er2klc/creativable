@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useState } from "react";
-import { Database } from "@/integrations/supabase/types";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -122,7 +121,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
       console.log('Starting deletion process for lead:', leadId);
 
-      // Define tables with their correct types from Supabase
       const relatedTables = [
         'contact_group_states',
         'instagram_scan_history',
