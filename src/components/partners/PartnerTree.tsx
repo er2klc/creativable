@@ -33,7 +33,7 @@ export const PartnerTree = ({ unassignedPartners, currentUser, onContactClick }:
               >
                 <CardContent className="flex items-center gap-4 p-4">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={partner.instagram_profile_image_url || undefined} />
+                    <AvatarImage src={partner.avatar_url || undefined} />
                     <AvatarFallback>
                       {partner.name.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
@@ -41,10 +41,7 @@ export const PartnerTree = ({ unassignedPartners, currentUser, onContactClick }:
                   <div>
                     <h3 className="font-medium">{partner.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {partner.onboarding_progress && typeof partner.onboarding_progress === 'object' && 
-                       'training_provided' in partner.onboarding_progress ? 
-                        partner.onboarding_progress.training_provided ? "Training abgeschlossen" : "Training ausstehend"
-                        : "Training ausstehend"}
+                      {partner.onboarding_progress?.training_provided ? "Training abgeschlossen" : "Training ausstehend"}
                     </p>
                   </div>
                 </CardContent>

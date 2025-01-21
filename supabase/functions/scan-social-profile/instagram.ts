@@ -1,101 +1,59 @@
 import { SocialMediaStats } from "../_shared/social-media-utils.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 export async function scanInstagramProfile(username: string): Promise<SocialMediaStats> {
   console.log('Scanning Instagram profile for:', username);
   
   try {
-    // Get Apify API key from secrets
-    const { data: secrets, error: secretError } = await supabase
-      .from('secrets')
-      .select('*')
-      .eq('name', 'APIFY_API_TOKEN')
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get Instagram access token from platform_auth_status
+    const { data: authStatus, error: authError } = await supabase
+      .from('platform_auth_status')
+      .select('access_token')
+      .eq('platform', 'instagram')
       .single();
 
-    if (secretError || !secrets?.value) {
-      console.error("Error fetching Apify API key:", secretError);
-      return {};
+    if (authError || !authStatus?.access_token) {
+      throw new Error('No valid Instagram access token found');
     }
 
-    const apiKey = secrets.value;
-    const actorId = 'apify/instagram-profile-scraper';
+    // First, we need to search for the user's Instagram Business Account ID
+    const businessAccountResponse = await fetch(
+      `https://graph.facebook.com/v18.0/ig_username/${username}?access_token=${authStatus.access_token}`
+    );
 
-    // Start the Apify actor run
-    const response = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        startUrls: [{
-          url: `https://www.instagram.com/${username}/`
-        }],
-        resultsLimit: 1
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (!businessAccountResponse.ok) {
+      console.error('Error getting Instagram business account:', await businessAccountResponse.text());
+      throw new Error('Could not find Instagram business account');
     }
 
-    const runData = await response.json();
-    const runId = runData.data.id;
+    const businessAccountData = await businessAccountResponse.json();
+    const instagramBusinessAccountId = businessAccountData.id;
 
-    // Wait for the run to finish and get results
-    let attempts = 0;
-    const maxAttempts = 30;
-    const delayMs = 2000;
+    // Now get the profile data using the business account ID
+    const profileResponse = await fetch(
+      `https://graph.facebook.com/v18.0/${instagramBusinessAccountId}?fields=biography,followers_count,follows_count,media_count,username&access_token=${authStatus.access_token}`
+    );
 
-    while (attempts < maxAttempts) {
-      const statusResponse = await fetch(
-        `https://api.apify.com/v2/actor-runs/${runId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${apiKey}`
-          }
-        }
-      );
-
-      const runInfo = await statusResponse.json();
-      
-      if (runInfo.data.status === 'SUCCEEDED') {
-        // Get the results
-        const resultsResponse = await fetch(
-          `https://api.apify.com/v2/actor-runs/${runId}/dataset/items`,
-          {
-            headers: {
-              'Authorization': `Bearer ${apiKey}`
-            }
-          }
-        );
-        
-        const results = await resultsResponse.json();
-        
-        if (results && results.length > 0) {
-          const profile = results[0];
-          console.log('Apify scan results:', profile);
-          
-          return {
-            bio: profile.bio || profile.description || '',
-            followers: profile.followersCount || profile.followers || 0,
-            following: profile.followingCount || profile.following || 0,
-            posts: profile.postsCount || profile.posts || 0,
-            isPrivate: profile.isPrivate || false,
-            profileImageUrl: profile.profilePicUrl || profile.profileImageUrl || '',
-            engagement_rate: profile.engagement_rate || null
-          };
-        }
-      }
-
-      if (runInfo.data.status === 'FAILED' || runInfo.data.status === 'ABORTED') {
-        throw new Error(`Run ${runId} ${runInfo.data.status}`);
-      }
-
-      await new Promise(resolve => setTimeout(resolve, delayMs));
-      attempts++;
+    if (!profileResponse.ok) {
+      console.error('Error getting Instagram profile data:', await profileResponse.text());
+      throw new Error('Could not get Instagram profile data');
     }
 
-    throw new Error('Timeout waiting for results');
+    const data = await profileResponse.json();
+    console.log('Instagram API response:', data);
+
+    return {
+      bio: data.biography,
+      followers: data.followers_count,
+      following: data.follows_count,
+      posts: data.media_count,
+      isPrivate: false // Instagram Business accounts are always public
+    };
   } catch (error) {
     console.error('Error scanning Instagram profile:', error);
     return {};
