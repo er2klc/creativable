@@ -18,7 +18,7 @@ export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadB
           className="w-full text-muted-foreground hover:text-foreground bg-transparent hover:bg-transparent"
         >
           <UserPlus className="h-4 w-4 mr-2" />
-          Neuer Kontakt
+          Kontakt hinzufügen ✨
         </Button>
       }
       defaultPhase={phase}
