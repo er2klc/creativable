@@ -23,6 +23,10 @@ export const protectedRoutes = [
     element: <Dashboard />,
   },
   {
+    path: "/pool",
+    element: <Pool />,
+  },
+  {
     path: "/contacts",
     element: <Pool />,
   },
