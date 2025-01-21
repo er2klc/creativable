@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import ReactFlow, { Background, Controls, Edge, Node } from "reactflow";
-import "reactflow/dist/style.css";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  Edge,
+  Node,
+} from '@xyflow/react';
+import "@xyflow/react/dist/style.css";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Tables } from "@/integrations/supabase/types";
