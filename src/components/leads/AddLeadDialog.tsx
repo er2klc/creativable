@@ -142,26 +142,6 @@ export function AddLeadDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="h-10 w-10">
-            <ChevronDown className="h-4 w-4 text-black" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {platformsConfig.map((config) => (
-            <DropdownMenuItem
-              key={config.name}
-              onClick={() => handlePlatformSelect(config.name as Platform)}
-            >
-              <div className="flex items-center gap-2">
-                <config.icon className="h-4 w-4" />
-                {config.name}
-              </div>
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
 
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
