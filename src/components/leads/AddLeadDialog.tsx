@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,6 +30,7 @@ export interface AddLeadDialogProps {
 }
 
 export function AddLeadDialog({ 
+  trigger, 
   defaultPhase, 
   open, 
   onOpenChange, 
@@ -122,6 +123,13 @@ export function AddLeadDialog({
       toast.error("Fehler beim Hinzufügen des Kontakts");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePlatformSelect = (platform: Platform) => {
+    form.setValue("platform", platform);
+    if (platform === "Instagram") {
+      setIsOpen(true);
     }
   };
 
