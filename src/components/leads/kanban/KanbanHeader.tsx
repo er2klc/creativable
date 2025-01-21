@@ -63,7 +63,7 @@ export const KanbanHeader = ({
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-[2px]">
         <Button
           onClick={() => onShowAddLead()}
           className="gap-2"
@@ -74,7 +74,7 @@ export const KanbanHeader = ({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" className="text-black">
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

@@ -114,6 +114,7 @@ export function AddLeadDialog({
       setIsOpen(false);
       onOpenChange?.(false);
       form.reset();
+      navigate("/contacts");
     } catch (error) {
       console.error("Error adding contact:", error);
       toast.error("Fehler beim Hinzufügen des Kontakts");
@@ -131,42 +132,44 @@ export function AddLeadDialog({
         <DialogHeader>
           <DialogTitle>Neuen Kontakt hinzufügen ✨</DialogTitle>
           <DialogDescription>
-            {platform === "Instagram" 
+            {defaultPlatform === "Instagram" 
               ? "Geben Sie den Instagram Benutzernamen ein. Wir holen automatisch die Profildaten."
               : "Fügen Sie hier die Details Ihres neuen Kontakts hinzu."}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="platform"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Kontaktquelle 🌐</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Wo haben Sie den Kontakt kennengelernt?" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {platformsConfig.map((config) => (
-                        <SelectItem key={config.name} value={config.name}>
-                          <div className="flex items-center">
-                            <config.icon className="h-4 w-4 mr-2" />
-                            {config.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!defaultPlatform && (
+              <FormField
+                control={form.control}
+                name="platform"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Kontaktquelle 🌐</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Wo haben Sie den Kontakt kennengelernt?" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {platformsConfig.map((config) => (
+                          <SelectItem key={config.name} value={config.name}>
+                            <div className="flex items-center">
+                              <config.icon className="h-4 w-4 mr-2" />
+                              {config.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
-            {platform === "Instagram" && (
+            {(defaultPlatform === "Instagram" || form.watch("platform") === "Instagram") && (
               <FormField
                 control={form.control}
                 name="social_media_username"
