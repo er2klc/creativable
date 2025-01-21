@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { Database } from "@/integrations/supabase/types";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -122,7 +123,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       console.log('Starting deletion process for lead:', leadId);
 
       // Define tables with their correct types from Supabase
-      const tables: Array<keyof Database['public']['Tables']> = [
+      const relatedTables: Array<keyof Database['public']['Tables']> = [
         'contact_group_states',
         'instagram_scan_history',
         'lead_files',
@@ -133,15 +134,15 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       ];
 
       // Delete related records first
-      for (const table of tables) {
-        console.log(`Deleting related records from ${table}`);
+      for (const table of relatedTables) {
+        console.log(`Deleting related records from ${String(table)}`);
         const { error } = await supabase
-          .from(table)
+          .from(String(table))
           .delete()
           .eq('lead_id', leadId);
         
         if (error) {
-          console.error(`Error deleting from ${table}:`, error);
+          console.error(`Error deleting from ${String(table)}:`, error);
           throw error;
         }
       }
