@@ -101,14 +101,7 @@ const Leads = () => {
 
   return (
     <div className="w-full space-y-8">
-      <LeadsHeader
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        selectedPipelineId={selectedPipelineId}
-        setSelectedPipelineId={setSelectedPipelineId}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-      />
+      <LeadsHeader />
 
       {viewMode === "kanban" ? (
         <LeadKanbanView 

@@ -10,6 +10,7 @@ import { Instagram } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
 
 const formSchema = z.object({
   username: z.string().min(1, "Username ist erforderlich"),
@@ -23,11 +24,43 @@ interface AddFromSocialDialogProps {
   pipelineId?: string | null;
 }
 
-export function AddFromSocialDialog({ trigger, defaultPhase, open, onOpenChange, pipelineId }: AddFromSocialDialogProps) {
+export function AddFromSocialDialog({ trigger, open, onOpenChange }: AddFromSocialDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const session = useSession();
   
+  // Query to get the first pipeline and its first phase
+  const { data: firstPipelineData } = useQuery({
+    queryKey: ["firstPipeline"],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      
+      // Get the first pipeline
+      const { data: pipelines } = await supabase
+        .from("pipelines")
+        .select("id")
+        .eq("user_id", session.user.id)
+        .order("order_index")
+        .limit(1);
+
+      if (!pipelines?.[0]) return null;
+
+      // Get the first phase of this pipeline
+      const { data: phases } = await supabase
+        .from("pipeline_phases")
+        .select("id")
+        .eq("pipeline_id", pipelines[0].id)
+        .order("order_index")
+        .limit(1);
+
+      return {
+        pipelineId: pipelines[0].id,
+        phaseId: phases?.[0]?.id
+      };
+    },
+    enabled: !!session?.user?.id
+  });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -44,8 +77,8 @@ export function AddFromSocialDialog({ trigger, defaultPhase, open, onOpenChange,
         return;
       }
 
-      if (!pipelineId || !defaultPhase) {
-        toast.error("Pipeline oder Phase nicht ausgewählt");
+      if (!firstPipelineData?.pipelineId || !firstPipelineData?.phaseId) {
+        toast.error("Pipeline oder Phase nicht gefunden");
         return;
       }
 
@@ -71,8 +104,8 @@ export function AddFromSocialDialog({ trigger, defaultPhase, open, onOpenChange,
           name: values.username,
           platform: "Instagram",
           social_media_username: values.username,
-          phase_id: defaultPhase,
-          pipeline_id: pipelineId,
+          phase_id: firstPipelineData.phaseId,
+          pipeline_id: firstPipelineData.pipelineId,
           instagram_followers: data.followers,
           instagram_following: data.following,
           instagram_posts: data.posts,
