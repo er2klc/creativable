@@ -119,15 +119,25 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     mutationFn: async () => {
       if (!leadId) return;
 
-      // Delete related records first
-      const tables = ['messages', 'tasks', 'notes', 'lead_files'] as const;
+      // Delete related records in correct order
+      const tables = [
+        'contact_group_states',
+        'messages', 
+        'tasks', 
+        'notes', 
+        'lead_files'
+      ] as const;
+
       for (const table of tables) {
         const { error } = await supabase
           .from(table)
           .delete()
           .eq('lead_id', leadId);
         
-        if (error) throw error;
+        if (error) {
+          console.error(`Error deleting ${table}:`, error);
+          throw error;
+        }
       }
 
       // Finally delete the lead
@@ -211,7 +221,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
                 </div>
               ) : (
                 <LeadDetailHeader
-                  lead={lead}
+                  lead={lead} 
                   onUpdateLead={updateLeadMutation.mutate}
                 />
               )
