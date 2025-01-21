@@ -2,10 +2,13 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, RefreshCw } from "lucide-react";
 import { Platform, platformsConfig, generateSocialMediaUrl } from "@/config/platforms";
 import { UseFormReturn } from "react-hook-form";
+import { getInstagramProfile } from "@/utils/apify";
+import { toast } from "sonner";
 import * as z from "zod";
+import { useState } from "react";
 
 export const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich 📝"),
@@ -25,9 +28,36 @@ interface SocialMediaFieldsProps {
 }
 
 export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
+  const [isLoading, setIsLoading] = useState(false);
   const platform = form.watch("platform");
   const username = form.watch("socialMediaUsername");
   const profileUrl = generateSocialMediaUrl(platform, username || "");
+
+  const handleScanProfile = async () => {
+    if (!username) {
+      toast.error("Bitte geben Sie einen Benutzernamen ein");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const profile = await getInstagramProfile(username);
+      
+      // Update form fields with Instagram data
+      form.setValue("instagram_followers", profile.followersCount || 0);
+      form.setValue("instagram_following", profile.followingCount || 0);
+      form.setValue("instagram_posts", profile.postsCount || 0);
+      form.setValue("social_media_bio", profile.biography || "");
+      form.setValue("instagram_profile_image_url", profile.profilePicUrl || "");
+      
+      toast.success("Instagram Profil erfolgreich gescannt");
+    } catch (error) {
+      console.error("Error scanning Instagram profile:", error);
+      toast.error("Fehler beim Scannen des Instagram Profils");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <>
@@ -76,6 +106,16 @@ export function SocialMediaFields({ form }: SocialMediaFieldsProps) {
                   }}
                 />
               </FormControl>
+              {platform === "Instagram" && username && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleScanProfile}
+                  disabled={isLoading}
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              )}
               {username && profileUrl && (
                 <Button
                   variant="ghost"
