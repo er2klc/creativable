@@ -9,6 +9,7 @@ import * as z from "zod";
 import { Instagram } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@supabase/auth-helpers-react";
 
 const formSchema = z.object({
   username: z.string().min(1, "Username ist erforderlich"),
@@ -25,6 +26,7 @@ interface AddFromSocialDialogProps {
 export function AddFromSocialDialog({ trigger, defaultPhase, open, onOpenChange, pipelineId }: AddFromSocialDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const session = useSession();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -37,6 +39,11 @@ export function AddFromSocialDialog({ trigger, defaultPhase, open, onOpenChange,
     try {
       setIsLoading(true);
       
+      if (!session?.user?.id) {
+        toast.error("Nicht eingeloggt");
+        return;
+      }
+
       // Call the scan-social-profile function
       const { data, error } = await supabase.functions.invoke('scan-social-profile', {
         body: { platform: 'instagram', username: values.username }
@@ -53,6 +60,7 @@ export function AddFromSocialDialog({ trigger, defaultPhase, open, onOpenChange,
       const { error: leadError } = await supabase
         .from("leads")
         .insert({
+          user_id: session.user.id,
           name: values.username,
           platform: "Instagram",
           social_media_username: values.username,
