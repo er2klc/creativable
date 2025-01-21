@@ -147,11 +147,13 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       );
       onClose();
 
-      // Determine redirect based on previous route
-      if (location.pathname.startsWith('/pool')) {
+      // Determine redirect based on current location
+      if (location.pathname.startsWith('/contacts')) {
+        navigate('/contacts');
+      } else if (location.pathname.startsWith('/pool')) {
         navigate('/pool');
       } else {
-        // Default to contacts page
+        // Default to contacts page if we can't determine the source
         navigate('/contacts');
       }
     },
