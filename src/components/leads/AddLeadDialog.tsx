@@ -134,10 +134,7 @@ export function AddLeadDialog({
   };
 
   return (
-    <DialogTrigger asChild>
-  {trigger}
-</DialogTrigger>
-
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Neuen Kontakt hinzufügen ✨</DialogTitle>
