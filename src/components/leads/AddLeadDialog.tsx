@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Platform, platformsConfig } from "@/config/platforms";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const formSchema = z.object({
   platform: z.custom<Platform>(),
@@ -132,4 +133,108 @@ export function AddLeadDialog({
     }
   };
 
-  
+  return (
+    <Dialog open={open ?? isOpen} onOpenChange={onOpenChange ?? setIsOpen}>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button variant="default" className="gap-2">
+            Kontakt hinzufügen ✨
+          </Button>
+        )}
+      </DialogTrigger>
+
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Neuen Kontakt hinzufügen ✨</DialogTitle>
+          <DialogDescription>
+            {defaultPlatform === "Instagram" 
+              ? "Geben Sie den Instagram Benutzernamen ein. Wir holen automatisch die Profildaten."
+              : "Fügen Sie hier die Details Ihres neuen Kontakts hinzu."}
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {!defaultPlatform && (
+              <FormField
+                control={form.control}
+                name="platform"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Kontaktquelle 🌐</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Wo haben Sie den Kontakt kennengelernt?" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {platformsConfig.map((config) => (
+                          <SelectItem key={config.name} value={config.name}>
+                            <div className="flex items-center">
+                              <config.icon className="h-4 w-4 mr-2" />
+                              {config.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {(defaultPlatform === "Instagram" || form.watch("platform") === "Instagram") && (
+              <FormField
+                control={form.control}
+                name="social_media_username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Instagram Benutzername 📱</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Benutzername (ohne @ oder URL)" 
+                        {...field} 
+                        onChange={(e) => {
+                          const username = e.target.value.replace(/^@/, '');
+                          field.onChange(username);
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <input type="hidden" {...form.register("phase_id")} />
+            <input type="hidden" {...form.register("pipeline_id")} />
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsOpen(false);
+                  onOpenChange?.(false);
+                }}
+              >
+                Abbrechen ❌
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Scanne Profil...
+                  </>
+                ) : (
+                  'Speichern ✅'
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
