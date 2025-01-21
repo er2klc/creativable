@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Platform, platformsConfig } from "@/config/platforms";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const formSchema = z.object({
   platform: z.custom<Platform>(),
@@ -20,6 +21,7 @@ const formSchema = z.object({
 });
 
 export interface AddLeadDialogProps {
+  trigger?: React.ReactNode;
   defaultPhase?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -34,8 +36,7 @@ export function AddLeadDialog({
   pipelineId,
   defaultPlatform 
 }: AddLeadDialogProps) {
-  console.log("AddLeadDialog rendered with props:", { defaultPhase, open, pipelineId, defaultPlatform });
-  
+  const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -48,13 +49,11 @@ export function AddLeadDialog({
     },
   });
 
-  useEffect(() => {
-    console.log("Current form values:", form.getValues());
-  }, [form]);
-
   const scanInstagramProfile = async (username: string) => {
     try {
-      console.log("Starting Instagram profile scan for:", username);
+      setIsLoading(true);
+      toast.loading("Scanne Instagram Profil...");
+      
       const { data, error } = await supabase.functions.invoke('scan-social-profile', {
         body: { 
           username,
@@ -63,10 +62,7 @@ export function AddLeadDialog({
         }
       });
 
-      if (error) {
-        console.error('Error scanning Instagram profile:', error);
-        throw error;
-      }
+      if (error) throw error;
       
       console.log("Profile data received:", data);
       return data;
@@ -77,27 +73,19 @@ export function AddLeadDialog({
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log("Form submitted with values:", values);
-    
     try {
       setIsLoading(true);
-      console.log("Starting form submission with values:", values);
-
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
       let profileData = null;
       if ((defaultPlatform === "Instagram" || values.platform === "Instagram") && values.social_media_username) {
         try {
-          toast.loading("Scanne Instagram Profil...");
           profileData = await scanInstagramProfile(values.social_media_username);
-          
           if (!profileData) {
             throw new Error("Kein Profil gefunden");
           }
-          
           toast.success("Instagram Profil erfolgreich gescannt!");
-          console.log("Instagram profile data:", profileData);
         } catch (error) {
           console.error("Error scanning Instagram profile:", error);
           toast.error("Fehler beim Scannen des Instagram-Profils");
@@ -105,9 +93,7 @@ export function AddLeadDialog({
         }
       }
 
-      console.log("Creating lead with profile data:", profileData);
-
-      const { error: insertError } = await supabase
+      const { error } = await supabase
         .from("leads")
         .insert({
           user_id: user.id,
@@ -125,12 +111,10 @@ export function AddLeadDialog({
           instagram_profile_image_url: profileData?.profileImageUrl,
         });
 
-      if (insertError) {
-        console.error("Error inserting lead:", insertError);
-        throw insertError;
-      }
+      if (error) throw error;
 
       toast.success("Kontakt erfolgreich hinzugefügt");
+      setIsOpen(false);
       onOpenChange?.(false);
       form.reset();
     } catch (error) {
@@ -214,7 +198,10 @@ export function AddLeadDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange?.(false)}
+                onClick={() => {
+                  setIsOpen(false);
+                  onOpenChange?.(false);
+                }}
               >
                 Abbrechen ❌
               </Button>
