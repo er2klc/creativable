@@ -1,4 +1,6 @@
+import Dashboard from "@/pages/Dashboard";
 import Pool from "@/pages/Pool";
+import Leads from "@/pages/Leads";
 import Messages from "@/pages/Messages";
 import Calendar from "@/pages/Calendar";
 import Settings from "@/pages/Settings";
@@ -15,7 +17,6 @@ import PlatformDetail from "@/pages/PlatformDetail";
 import LeaderBoard from "@/pages/LeaderBoard";
 import Admin from "@/pages/Admin";
 import LeadDetail from "@/pages/LeadDetail";
-import Dashboard from "@/pages/Dashboard";
 
 export const protectedRoutes = [
   {
@@ -28,7 +29,7 @@ export const protectedRoutes = [
   },
   {
     path: "/contacts",
-    element: <Pool />,
+    element: <Leads />,
   },
   {
     path: "/contacts/:id",
