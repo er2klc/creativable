@@ -14,6 +14,8 @@ import { AddLeadDialog } from "./AddLeadDialog";
 import { KanbanHeader } from "./kanban/KanbanHeader";
 import { KanbanColumns } from "./kanban/KanbanColumns";
 import { EmptyStateMessage } from "./kanban/EmptyStateMessage";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -147,12 +149,23 @@ export const LeadKanbanView = ({
       onDragEnd={handleDragEnd}
     >
       <div className="flex flex-col h-screen">
-        <KanbanHeader
-          isEditMode={isEditMode}
-          editingPipelineName={editingPipelineName}
-          onEditingPipelineNameChange={setEditingPipelineName}
-          onSaveChanges={handleSaveChanges}
-        />
+        <div className="flex items-center justify-between p-4 bg-background sticky top-0 z-20 border-b">
+          <KanbanHeader
+            isEditMode={isEditMode}
+            editingPipelineName={editingPipelineName}
+            onEditingPipelineNameChange={setEditingPipelineName}
+            onSaveChanges={handleSaveChanges}
+          />
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setShowAddLead(true)}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              {settings?.language === "en" ? "Add Contact" : "Kontakt hinzufügen"}
+            </Button>
+          </div>
+        </div>
 
         <div className="flex-1 overflow-x-auto no-scrollbar relative">
           <KanbanColumns
