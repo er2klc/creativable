@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { LeadSearch } from "../LeadSearch";
-import { LayoutGrid, List } from "lucide-react";
+import { LayoutGrid, List, ChevronDown, Instagram, Linkedin } from "lucide-react";
 import { AddLeadDialog } from "../AddLeadDialog";
 import { CreateInstagramContactDialog } from "../instagram/CreateInstagramContactDialog";
 import { LeadFilters } from "../LeadFilters";
 import { useState } from "react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface LeadsHeaderProps {
   searchQuery: string;
@@ -31,15 +32,39 @@ export const LeadsHeader = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
-        {/* Add Contact Button */}
-        <div className="flex">
+        {/* Add Contact and Dropdown Buttons */}
+        <div className="flex items-center gap-0">
+          {/* Kontakt hinzufügen Button */}
           <Button
             variant="default"
-            className="bg-black text-white hover:bg-black/90"
+            className="bg-black text-white hover:bg-black/90 rounded-r-none"
             onClick={() => setShowAddLead(true)}
           >
             Kontakt hinzufügen ✨
           </Button>
+
+          {/* Dropdown Button */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="default"
+                size="icon"
+                className="bg-black text-white hover:bg-black/90 rounded-l-none"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setShowInstagramDialog(true)}>
+                <Instagram className="h-4 w-4 mr-2" />
+                <span>Instagram</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled>
+                <Linkedin className="h-4 w-4 mr-2" />
+                <span>LinkedIn</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Search Field */}
