@@ -48,15 +48,14 @@ export const PhaseColumn = ({
   };
 
   return (
-   <Card
-  ref={setNodeRef}
-  className={`h-full flex flex-col bg-muted/50 rounded-lg relative transition-colors duration-200 ${
-    isOver && !isEditMode ? 'ring-2 ring-primary/50 bg-primary/5 shadow-[0_-2px_4px_rgba(0,0,0,0.15)]' : ''
-  }`}
-  style={{ height: 'calc(100vh - 4rem)' }} // Höhe explizit setzen
-  onMouseEnter={() => setIsHovered(true)}
-  onMouseLeave={() => setIsHovered(false)}
->
+    <Card
+      ref={setNodeRef}
+      className={`h-full flex flex-col bg-muted/50 rounded-lg relative transition-colors duration-200 ${
+        isOver && !isEditMode ? 'ring-2 ring-primary/50 bg-primary/5 shadow-[0_-2px_4px_rgba(0,0,0,0.15)]' : ''
+      }`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <CardHeader className="p-2 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-10 border-b">
         <div className="flex items-center justify-between gap-2">
           {isEditMode ? (
@@ -102,7 +101,7 @@ export const PhaseColumn = ({
           )}
         </div>
       </CardHeader>
-      <div className="flex-1 overflow-y-auto no-scrollbar min-h-[calc(100vh-16rem)]">
+      <div className="flex-1 overflow-y-auto no-scrollbar">
         <div className="space-y-2 p-4 pb-14">
           {leads.map((lead) => (
             <SortableLeadItem

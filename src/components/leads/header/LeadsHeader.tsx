@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { LeadSearch } from "../LeadSearch";
-import { LayoutGrid, List, ChevronDown, Instagram, Linkedin } from "lucide-react";
+import { LayoutGrid, List, ChevronDown, Instagram, Linkedin, Users } from "lucide-react";
 import { AddLeadDialog } from "../AddLeadDialog";
 import { CreateInstagramContactDialog } from "../instagram/CreateInstagramContactDialog";
 import { LeadFilters } from "../LeadFilters";
@@ -32,39 +32,47 @@ export const LeadsHeader = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
-        {/* Add Contact and Dropdown Buttons */}
-        <div className="flex items-center gap-0">
-          {/* Kontakt hinzufügen Button */}
-          <Button
-            variant="default"
-            className="bg-black text-white hover:bg-black/90 rounded-r-none"
-            onClick={() => setShowAddLead(true)}
-          >
-            ✨ Kontakt hinzufügen
-          </Button>
+        <div className="flex items-center gap-4">
+          {/* Page Title */}
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            <h1 className="text-xl font-semibold">Kontakte</h1>
+          </div>
 
-          {/* Dropdown Button */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="default"
-                size="icon"
-                className="bg-black text-white hover:bg-black/90 rounded-l-none"
-              >
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setShowInstagramDialog(true)}>
-                <Instagram className="h-4 w-4 mr-2" />
-                <span>Instagram</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                <Linkedin className="h-4 w-4 mr-2" />
-                <span>LinkedIn</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Add Contact and Dropdown Buttons */}
+          <div className="flex items-center gap-0">
+            {/* Kontakt hinzufügen Button */}
+            <Button
+              variant="default"
+              className="bg-black text-white hover:bg-black/90 rounded-r-none"
+              onClick={() => setShowAddLead(true)}
+            >
+              ✨ Kontakt hinzufügen
+            </Button>
+
+            {/* Dropdown Button */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="bg-black text-white hover:bg-black/90 rounded-l-none"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setShowInstagramDialog(true)}>
+                  <Instagram className="h-4 w-4 mr-2" />
+                  <span>Instagram</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled>
+                  <Linkedin className="h-4 w-4 mr-2" />
+                  <span>LinkedIn</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Search Field */}
