@@ -1,33 +1,47 @@
-import { Users, UserPlus, MessageSquare } from "lucide-react";
-
 interface LeadSocialStatsProps {
-  followers?: number | null;
-  following?: number | null;
-  posts?: any[] | null;
+  followers: number | null;
+  following: number | null;
+  social_media_engagement_rate?: number | null;
+  isTeamOwner: boolean;
 }
 
-export const LeadSocialStats = ({ followers, following, posts }: LeadSocialStatsProps) => {
-  if (!followers && !following && !posts) return null;
-
+export const LeadSocialStats = ({ 
+  followers, 
+  following, 
+  social_media_engagement_rate,
+  isTeamOwner 
+}: LeadSocialStatsProps) => {
   return (
-    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+    <div className="flex items-center gap-6 text-base text-muted-foreground">
       {followers !== null && (
-        <div className="flex items-center gap-1">
-          <Users className="h-4 w-4" />
-          {followers.toLocaleString()}
-        </div>
+        <span className="flex items-center gap-2">
+          <Users className="h-5 w-5" />
+          <span>{followers.toLocaleString()}</span>
+        </span>
       )}
       {following !== null && (
-        <div className="flex items-center gap-1">
-          <UserPlus className="h-4 w-4" />
-          {following.toLocaleString()}
-        </div>
+        <>
+          <span>•</span>
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            <span>{following.toLocaleString()}</span>
+          </div>
+        </>
       )}
-      {Array.isArray(posts) && (
-        <div className="flex items-center gap-1">
-          <MessageSquare className="h-4 w-4" />
-          {posts.length.toLocaleString()}
-        </div>
+      {social_media_engagement_rate !== null && (
+        <>
+          <span>•</span>
+          <div className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            <span>{(social_media_engagement_rate * 100).toFixed(2)}%</span>
+          </div>
+        </>
+      )}
+      {isTeamOwner && (
+        <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5">
+          <Crown className="h-4 w-4" />
+          Team Owner
+        </span>
       )}
     </div>
   );
