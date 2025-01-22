@@ -153,27 +153,34 @@ export const LeadKanbanView = ({
       onDragEnd={handleDragEnd}
     >
       <div className="flex flex-col h-screen">
-        {isEditMode && (
-          <div className="flex items-center justify-center gap-4 p-4 bg-muted/50">
-            <Input
-              value={editingPipelineName}
-              onChange={(e) => setEditingPipelineName(e.target.value)}
-              placeholder={settings?.language === "en" ? "Pipeline Name" : "Pipeline-Name"}
-              className="max-w-xs"
-            />
-            <Button onClick={handleSaveChanges} variant="outline" size="sm">
-              <Save className="h-4 w-4 mr-2" />
-              {settings?.language === "en" ? "Save Pipeline Name" : "Pipeline-Name speichern"}
-            </Button>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30 w-full border-b">
+          <LeadFilters
+            selectedPipelineId={selectedPipelineId}
+            setSelectedPipelineId={setSelectedPipelineId}
+            onEditPipeline={handleEditModeToggle}
+            isEditMode={isEditMode}
+          />
+          
+          {isEditMode && (
+            <div className="flex items-center gap-2">
+              <Input
+                value={editingPipelineName}
+                onChange={(e) => setEditingPipelineName(e.target.value)}
+                placeholder={settings?.language === "en" ? "Pipeline Name" : "Pipeline-Name"}
+                className="max-w-xs"
+              />
+              <Button onClick={handleSaveChanges} variant="outline" size="sm">
+                <Save className="h-4 w-4 mr-2" />
+                {settings?.language === "en" ? "Save Pipeline Name" : "Pipeline-Name speichern"}
+              </Button>
+            </div>
+          )}
+        </div>
 
         <div className="flex-1 overflow-x-auto no-scrollbar relative">
           <div 
             className="flex gap-4 px-4 h-full" 
-            style={{ 
-              minWidth: 'fit-content',
-            }}
+            style={{ minWidth: 'fit-content' }}
           >
             <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
 

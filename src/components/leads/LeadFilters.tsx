@@ -75,10 +75,13 @@ export const LeadFilters = ({
   const selectedPipeline = pipelines.find(p => p.id === selectedPipelineId);
 
   return (
-    <div className="flex gap-2">
+    <div className="flex items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="min-w-[200px] justify-between">
+          <Button 
+            variant="outline" 
+            className={`min-w-[200px] justify-between ${isEditMode ? 'bg-primary/10 border-primary/20' : ''}`}
+          >
             <div className="flex items-center gap-2">
               <GitBranch className="h-4 w-4" />
               {selectedPipeline?.name || "Pipeline wählen"}
@@ -112,7 +115,10 @@ export const LeadFilters = ({
         variant={isEditMode ? "default" : "outline"}
         size="icon"
         onClick={onEditPipeline}
-        className="h-9 w-9"
+        className={`h-9 w-9 transition-colors ${
+          isEditMode ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''
+        }`}
+        title={isEditMode ? "Bearbeitungsmodus beenden" : "Bearbeitungsmodus aktivieren"}
       >
         <Pencil className="h-4 w-4" />
       </Button>
