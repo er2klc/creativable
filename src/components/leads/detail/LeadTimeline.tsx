@@ -49,7 +49,24 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           ))}
         </div>
       ) : (
-        <SocialMediaTimeline posts={lead.social_media_posts || []} />
+        <SocialMediaTimeline 
+          posts={lead.social_media_posts as Array<{
+            comments_count: number;
+            content: string;
+            created_at: string;
+            id: string;
+            lead_id: string;
+            likes_count: number;
+            location: string;
+            mentioned_profiles: string[];
+            metadata: any;
+            platform: string;
+            post_type: string;
+            posted_at: string;
+            tagged_profiles: string[];
+            url: string;
+          }>} 
+        />
       )}
     </div>
   );
