@@ -7,7 +7,14 @@ export type TimelineItemType =
   | 'contact_created'
   | 'phase_change';
 
-export type TimelineItemStatus = 'completed' | 'cancelled' | 'pending' | 'outdated' | 'instagram' | 'linkedin' | 'whatsapp';
+export type TimelineItemStatus = 
+  | 'completed' 
+  | 'cancelled' 
+  | 'pending' 
+  | 'outdated' 
+  | 'instagram' 
+  | 'linkedin' 
+  | 'whatsapp';
 
 export interface TimelineItem {
   id: string;
