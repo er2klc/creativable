@@ -12,6 +12,7 @@ interface ContactInfoGroupProps {
   showEmptyFields?: boolean;
   onToggleEmptyFields?: () => void;
   groupName: string;
+  rightIcon?: React.ReactNode;
 }
 
 export function ContactInfoGroup({
@@ -21,6 +22,7 @@ export function ContactInfoGroup({
   showEmptyFields = true,
   onToggleEmptyFields,
   groupName,
+  rightIcon,
 }: ContactInfoGroupProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showEmpty, setShowEmpty] = useState(showEmptyFields);
@@ -65,6 +67,7 @@ export function ContactInfoGroup({
             )}
           </Button>
           <h3 className="text-sm font-medium text-gray-600">{title}</h3>
+          {rightIcon}
         </div>
         
         {showActions && (
