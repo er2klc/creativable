@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { TimelineHeader } from "./TimelineHeader";
-import { TimelineItem } from "./TimelineItem";
-import { SocialMediaTimeline } from "./SocialMediaTimeline";
+import { TimelineHeader } from "./timeline/TimelineHeader";
+import { TimelineItem } from "./timeline/TimelineItem";
+import { SocialMediaTimeline } from "./timeline/SocialMediaTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "./types/lead";
-import { TimelineItem as TimelineItemType } from "./TimelineUtils";
+import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
