@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Contact2, Trash2, Users, MessageSquare, Circle } from "lucide-react";
+import { Contact2, Trash2, Users, MessageSquare, Instagram, Linkedin, Facebook, Video } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { BasicInformationFields } from "./contact-info/BasicInformationFields";
@@ -22,10 +22,25 @@ interface LeadInfoCardProps {
 }
 
 const PlatformIndicator = ({ platform }: { platform: string }) => {
+  const getPlatformIcon = (platform: string) => {
+    switch (platform.toLowerCase()) {
+      case 'instagram':
+        return <Instagram className="h-5 w-5 text-white" />;
+      case 'linkedin':
+        return <Linkedin className="h-5 w-5 text-white" />;
+      case 'facebook':
+        return <Facebook className="h-5 w-5 text-white" />;
+      case 'tiktok':
+        return <Video className="h-5 w-5 text-white" />;
+      default:
+        return <Users className="h-5 w-5 text-white" />;
+    }
+  };
+
   const getColor = (platform: string) => {
     switch (platform.toLowerCase()) {
       case 'instagram':
-        return 'bg-pink-500';
+        return 'bg-gradient-to-br from-purple-600 to-pink-500';
       case 'linkedin':
         return 'bg-blue-600';
       case 'facebook':
@@ -39,9 +54,11 @@ const PlatformIndicator = ({ platform }: { platform: string }) => {
 
   return (
     <div className={cn(
-      "absolute -right-1 -top-1 rounded-full w-4 h-4 border-2 border-white",
+      "absolute -right-2 -top-2 rounded-full w-8 h-8 border-2 border-white shadow-lg flex items-center justify-center",
       getColor(platform)
-    )} />
+    )}>
+      {getPlatformIcon(platform)}
+    </div>
   );
 };
 
@@ -127,10 +144,10 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
 
   return (
     <Card className="shadow-sm">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 border-b border-gray-200/30 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <Avatar className="h-16 w-16">
+            <Avatar className="h-20 w-20">
               <AvatarImage 
                 src={lead.social_media_profile_image_url || lead.avatar_url} 
                 alt={lead.name} 
@@ -147,9 +164,9 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
               <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                 <div className="flex items-center gap-1">
                   <Users className="h-4 w-4" />
-                  {lead.social_media_followers.toLocaleString()}
+                  {lead.social_media_followers?.toLocaleString()}
                 </div>
-                {lead.social_media_posts?.length && (
+                {Array.isArray(lead.social_media_posts) && (
                   <div className="flex items-center gap-1">
                     <MessageSquare className="h-4 w-4" />
                     {lead.social_media_posts.length.toLocaleString()}
