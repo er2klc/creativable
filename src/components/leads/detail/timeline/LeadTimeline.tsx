@@ -35,7 +35,9 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     content: `Kontakt ${lead.name} erstellt`,
     created_at: lead.created_at,
     timestamp: lead.created_at,
-    metadata: {}
+    metadata: {
+      type: 'contact_created'
+    }
   };
 
   // Sort notes in reverse chronological order (newest first)
@@ -43,8 +45,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     .map(mapNoteToTimelineItem)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-  // Add contact creation item at the beginning
-  const timelineItems = [contactCreationItem, ...sortedNotes];
+  // Add contact creation item at the end (it will appear at the bottom)
+  const timelineItems = [...sortedNotes, contactCreationItem];
 
   return (
     <div className="space-y-4">
