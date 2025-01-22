@@ -13,6 +13,7 @@ interface LeadsHeaderProps {
   setSelectedPipelineId: (id: string | null) => void;
   viewMode: "kanban" | "list";
   setViewMode: (mode: "kanban" | "list") => void;
+  setIsEditMode: (isEdit: boolean) => void;
 }
 
 export const LeadsHeader = ({
@@ -22,6 +23,7 @@ export const LeadsHeader = ({
   setSelectedPipelineId,
   viewMode,
   setViewMode,
+  setIsEditMode,
 }: LeadsHeaderProps) => {
   const [showAddLead, setShowAddLead] = useState(false);
   const [showInstagramDialog, setShowInstagramDialog] = useState(false);
@@ -82,6 +84,7 @@ export const LeadsHeader = ({
       <CreateInstagramContactDialog
         open={showInstagramDialog}
         onOpenChange={setShowInstagramDialog}
+        pipelineId={selectedPipelineId}
       />
     </div>
   );
