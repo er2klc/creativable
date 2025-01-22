@@ -28,10 +28,23 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     status: note.status
   });
 
-  // Sort notes in ascending chronological order (oldest first)
-  const sortedNotes = [...(lead.notes || [])].sort((a, b) => {
-    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-  });
+  // Create contact creation timeline item
+  const contactCreationItem: TimelineItemType = {
+    id: 'contact-creation',
+    type: 'contact_created',
+    content: `Kontakt ${lead.name} erstellt`,
+    created_at: lead.created_at,
+    timestamp: lead.created_at,
+    metadata: {}
+  };
+
+  // Sort notes in reverse chronological order (newest first) and add contact creation
+  const sortedItems = [
+    ...((lead.notes || [])
+      .map(mapNoteToTimelineItem)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())),
+    contactCreationItem
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   return (
     <div className="space-y-4">
@@ -45,11 +58,14 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       {activeTimeline === 'activities' ? (
         <div className="relative space-y-6">
           <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400" />
-          {sortedNotes.map((note) => (
+          {sortedItems.map((item) => (
             <TimelineItem 
-              key={note.id} 
-              item={mapNoteToTimelineItem(note)} 
-              onDelete={onDeletePhaseChange ? () => onDeletePhaseChange(note.id) : undefined} 
+              key={item.id} 
+              item={item} 
+              onDelete={onDeletePhaseChange && item.type !== 'contact_created' ? 
+                () => onDeletePhaseChange(item.id) : 
+                undefined
+              } 
             />
           ))}
         </div>
