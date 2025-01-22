@@ -4,7 +4,7 @@ import { LeadSocialStats } from "./LeadSocialStats";
 import { type Tables } from "@/integrations/supabase/types";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,7 +39,7 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
     try {
       setIsScanning(true);
       
-      const { data: { session } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No user found");
 
       const response = await supabase.functions.invoke('scan-social-profile', {
@@ -91,7 +91,11 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
               disabled={isScanning}
               className="ml-2"
             >
-              <RefreshCw className={`h-4 w-4 ${isScanning ? 'animate-spin' : ''}`} />
+              {isScanning ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
             </Button>
           </div>
           {(lead.social_media_followers !== null || lead.social_media_following !== null) && (
