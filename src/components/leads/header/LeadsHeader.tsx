@@ -31,7 +31,6 @@ export const LeadsHeader = ({
 }: LeadsHeaderProps) => {
   const [showAddLead, setShowAddLead] = useState(false);
   const [showInstagramDialog, setShowInstagramDialog] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -72,8 +71,6 @@ export const LeadsHeader = ({
         <LeadFilters
           selectedPipelineId={selectedPipelineId}
           setSelectedPipelineId={setSelectedPipelineId}
-          onEditPipeline={() => setIsEditMode(!isEditMode)}
-          isEditMode={isEditMode}
         />
 
         {/* View Mode Buttons */}
