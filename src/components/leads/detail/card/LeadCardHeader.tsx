@@ -1,53 +1,36 @@
+import { Tables } from "@/integrations/supabase/types";
 import { LeadAvatar } from "./LeadAvatar";
+import { PlatformIndicator } from "./PlatformIndicator";
 import { LeadSocialStats } from "./LeadSocialStats";
-import { type Tables } from "@/integrations/supabase/types";
-import { useUser } from "@supabase/auth-helpers-react";
 
 interface LeadCardHeaderProps {
-  lead: Tables<"leads"> & {
-    stats?: {
-      totalMembers: number;
-      admins: number;
-    };
-  };
+  lead: Tables<"leads">;
 }
 
 export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
-  const user = useUser();
-  const isTeamOwner = user?.id === lead.created_by;
-
-  // Prioritize username over name
-  const displayName = lead.social_media_username?.split('/')?.pop() || lead.name;
-
   return (
-    <div className="space-y-4">
+    <div className="flex items-start justify-between p-4">
       <div className="flex items-center gap-4">
-        <LeadAvatar
-          imageUrl={lead.social_media_profile_image_url || lead.avatar_url}
-          name={displayName}
-          platform={lead.platform}
-        />
-        <div className="flex-1">
-          <div className="font-medium text-lg">
-            {displayName}
+        <LeadAvatar lead={lead} />
+        <div>
+          <h3 className="font-semibold">{lead.name}</h3>
+          <div className="text-sm text-muted-foreground">
+            {lead.created_at && (
+              <span>
+                Mitglied seit {format(new Date(lead.created_at), "dd.MM.yyyy", { locale: de })}
+              </span>
+            )}
           </div>
-          {(lead.social_media_followers !== null || lead.social_media_following !== null) && (
-            <LeadSocialStats
-              followers={lead.social_media_followers}
-              following={lead.social_media_following}
-              engagementRate={lead.social_media_engagement_rate}
-              isTeamOwner={isTeamOwner}
-            />
-          )}
         </div>
       </div>
-      
-      {/* Bio section - only show if there's a bio available */}
-      {lead.social_media_bio && (
-        <div className="text-sm text-gray-600 leading-relaxed border-t pt-4">
-          {lead.social_media_bio}
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        <LeadSocialStats 
+          followers={lead.social_media_followers} 
+          following={lead.social_media_following}
+          posts={lead.social_media_posts}
+        />
+        <PlatformIndicator platform={lead.platform} />
+      </div>
     </div>
   );
 };
