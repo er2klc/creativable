@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { TimelineItemType } from "../TimelineUtils";
+import { TimelineItemType } from "../types";
 
 interface TimelineItemStatusProps {
   type: TimelineItemType;

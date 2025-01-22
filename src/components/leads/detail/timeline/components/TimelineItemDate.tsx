@@ -1,4 +1,4 @@
-import { formatDate } from "../TimelineUtils";
+import { formatDate } from "../types";
 
 interface TimelineItemDateProps {
   dueDate?: string;
