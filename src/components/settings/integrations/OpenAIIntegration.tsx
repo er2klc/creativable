@@ -54,12 +54,17 @@ export function OpenAIIntegration() {
     }
   };
 
-  const saveApiKeys = async (values: z.infer<typeof formSchema>) => {
+  const saveOpenAIKey = async (value: string) => {
     await updateSettings.mutateAsync({
-      openai_api_key: values.openai_api_key,
-      apify_api_key: values.apify_api_key,
+      openai_api_key: value,
     });
     await updateOpenAIContext();
+  };
+
+  const saveApifyKey = async (value: string) => {
+    await updateSettings.mutateAsync({
+      apify_api_key: value,
+    });
   };
 
   return (
@@ -76,7 +81,17 @@ export function OpenAIIntegration() {
               name="openai_api_key"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>OpenAI API-Key</FormLabel>
+                  <FormLabel>
+                    OpenAI API-Key{" "}
+                    <a 
+                      href="https://platform.openai.com/api-keys" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:text-blue-700 text-sm"
+                    >
+                      (API Key erstellen)
+                    </a>
+                  </FormLabel>
                   <div className="flex gap-2">
                     <FormControl>
                       <Input 
@@ -85,6 +100,12 @@ export function OpenAIIntegration() {
                         {...field} 
                       />
                     </FormControl>
+                    <Button 
+                      type="button"
+                      onClick={() => saveOpenAIKey(field.value)}
+                    >
+                      Speichern
+                    </Button>
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -100,13 +121,23 @@ export function OpenAIIntegration() {
           <h3 className="text-lg font-medium">Apify Integration 🔍</h3>
         </div>
         <Form {...form}>
-          <form className="space-y-4" onSubmit={form.handleSubmit(saveApiKeys)}>
+          <form className="space-y-4">
             <FormField
               control={form.control}
               name="apify_api_key"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Apify API-Key</FormLabel>
+                  <FormLabel>
+                    Apify API-Key{" "}
+                    <a 
+                      href="https://console.apify.com/account/integrations" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:text-blue-700 text-sm"
+                    >
+                      (API Key erstellen)
+                    </a>
+                  </FormLabel>
                   <div className="flex gap-2">
                     <FormControl>
                       <Input 
@@ -115,14 +146,17 @@ export function OpenAIIntegration() {
                         {...field} 
                       />
                     </FormControl>
+                    <Button 
+                      type="button"
+                      onClick={() => saveApifyKey(field.value)}
+                    >
+                      Speichern
+                    </Button>
                   </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit">
-              API-Keys Speichern
-            </Button>
           </form>
         </Form>
       </div>
