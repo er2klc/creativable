@@ -28,6 +28,11 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     status: note.status
   });
 
+  // Sort notes in reverse chronological order (newest first)
+  const sortedNotes = [...(lead.notes || [])].sort((a, b) => {
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
   return (
     <div className="space-y-4">
       <TimelineHeader 
@@ -40,7 +45,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       {activeTimeline === 'activities' ? (
         <div className="relative space-y-6">
           <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400" />
-          {lead.notes?.map((note) => (
+          {sortedNotes.map((note) => (
             <TimelineItem 
               key={note.id} 
               item={mapNoteToTimelineItem(note)} 
