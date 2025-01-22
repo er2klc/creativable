@@ -10,7 +10,7 @@ export type TimelineItemType =
 export type TimelineItemStatus = 
   | 'completed' 
   | 'cancelled' 
-  | 'pending' 
+  | 'pending'
   | 'outdated'
   | 'instagram'
   | 'linkedin'
