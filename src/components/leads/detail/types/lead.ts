@@ -85,7 +85,7 @@ export interface LeadWithRelations {
   pipeline_id: string;
   phase_id: string;
   status: string | null;
-  notes: Note[];
+  notes: string;  // Changed from Note[] to string to match database
   messages: Message[];
   tasks: Task[];
   lead_files: LeadFile[];
