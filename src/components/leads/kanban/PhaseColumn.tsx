@@ -36,7 +36,7 @@ export const PhaseColumn = ({
 }: PhaseColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: phase.id,
-    disabled: isEditMode, // Disable dropping when in edit mode
+    disabled: isEditMode,
   });
 
   const [editingName, setEditingName] = useState(phase.name);
@@ -101,7 +101,7 @@ export const PhaseColumn = ({
           )}
         </div>
       </CardHeader>
-      <div className="flex-1 overflow-y-auto no-scrollbar">
+      <div className="flex-1 overflow-y-auto no-scrollbar min-h-[calc(100vh-16rem)]">
         <div className="space-y-2 p-4 pb-14">
           {leads.map((lead) => (
             <SortableLeadItem
