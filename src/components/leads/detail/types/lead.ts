@@ -1,33 +1,14 @@
 import { Json } from "@/integrations/supabase/types";
 
-export interface SocialMediaPost {
-  id: string;
-  lead_id: string;
-  platform: string;
-  post_type: string;
-  content: string | null;
-  likes_count: number | null;
-  comments_count: number | null;
-  url: string | null;
-  location: string | null;
-  mentioned_profiles: string[] | null;
-  tagged_profiles: string[] | null;
-  posted_at: string | null;
-  created_at: string | null;
-  metadata: Json | null;
-  engagement_count: number | null;
-  first_comment: string | null;
-  media_type: string | null;
-  media_urls: string[] | null;
-  tagged_users: string[] | null;
-}
+export type Gender = "male" | "female" | "other" | "prefer_not_to_say";
+export type PreferredCommunicationChannel = "email" | "phone" | "whatsapp" | "instagram" | "other";
 
 export interface Note {
   id: string;
   user_id: string;
   lead_id: string;
   content: string;
-  color: string | null;
+  color: string;
   created_at: string | null;
   updated_at: string | null;
   metadata: Json | null;
@@ -73,6 +54,28 @@ export interface LeadFile {
   metadata: Json | null;
 }
 
+export interface SocialMediaPost {
+  id: string;
+  lead_id: string;
+  platform: string;
+  post_type: string;
+  content: string | null;
+  likes_count: number | null;
+  comments_count: number | null;
+  url: string | null;
+  location: string | null;
+  mentioned_profiles: string[] | null;
+  tagged_profiles: string[] | null;
+  posted_at: string | null;
+  created_at: string | null;
+  metadata: Json | null;
+  engagement_count: number | null;
+  first_comment: string | null;
+  media_type: string | null;
+  media_urls: string[] | null;
+  tagged_users: string[] | null;
+}
+
 export interface LeadWithRelations {
   id: string;
   user_id: string;
@@ -115,7 +118,7 @@ export interface LeadWithRelations {
   region: string | null;
   country: string | null;
   birth_date: string | null;
-  gender: string | null;
+  gender: Gender | null;
   languages: string[] | null;
   interests: string[] | null;
   goals: string[] | null;
@@ -125,7 +128,7 @@ export interface LeadWithRelations {
   usp: string | null;
   business_description: string | null;
   contact_type: string | null;
-  preferred_communication_channel: string | null;
+  preferred_communication_channel: PreferredCommunicationChannel | null;
   best_contact_times: string | null;
   referred_by: string | null;
   pool_category: string | null;
