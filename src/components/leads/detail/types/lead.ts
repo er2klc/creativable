@@ -85,7 +85,7 @@ export interface LeadWithRelations {
   pipeline_id: string;
   phase_id: string;
   status: string | null;
-  notes: Note[];  // Changed back to Note[] since it's used as an array in the components
+  notes: string | null;  // Changed to match database schema
   messages: Message[];
   tasks: Task[];
   lead_files: LeadFile[];
