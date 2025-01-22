@@ -1,7 +1,7 @@
 import { Json } from "@/integrations/supabase/types";
 
 export type Gender = "male" | "female" | "other" | "prefer_not_to_say";
-export type PreferredCommunicationChannel = "email" | "phone" | "whatsapp" | "instagram" | "other";
+export type PreferredCommunicationChannel = "email" | "phone" | "whatsapp" | "instagram" | "other" | "sms" | "social_media";
 
 export interface Note {
   id: string;
@@ -85,7 +85,7 @@ export interface LeadWithRelations {
   pipeline_id: string;
   phase_id: string;
   status: string | null;
-  notes: string | null;  // Changed to match database schema
+  notes: string | null;
   messages: Message[];
   tasks: Task[];
   lead_files: LeadFile[];
