@@ -38,13 +38,13 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     metadata: {}
   };
 
-  // Sort notes in reverse chronological order (newest first) and add contact creation
-  const sortedItems = [
-    ...((lead.notes || [])
-      .map(mapNoteToTimelineItem)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())),
-    contactCreationItem
-  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  // Sort notes in reverse chronological order (newest first)
+  const sortedNotes = (lead.notes || [])
+    .map(mapNoteToTimelineItem)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  // Add contact creation item at the beginning
+  const timelineItems = [contactCreationItem, ...sortedNotes];
 
   return (
     <div className="space-y-4">
@@ -58,7 +58,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       {activeTimeline === 'activities' ? (
         <div className="relative space-y-6">
           <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400" />
-          {sortedItems.map((item) => (
+          {timelineItems.map((item) => (
             <TimelineItem 
               key={item.id} 
               item={item} 
