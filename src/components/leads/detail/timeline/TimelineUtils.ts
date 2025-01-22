@@ -43,7 +43,14 @@ export interface TimelineItem {
 }
 
 export const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  const weekday = format(date, "EEE", { locale: de });
-  return `${weekday}. ${format(date, "dd.MM.yyyy | HH:mm 'Uhr'", { locale: de })}`;
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return "Ungültiges Datum";
+    }
+    const weekday = format(date, "EEE", { locale: de });
+    return `${weekday}. ${format(date, "dd.MM.yyyy | HH:mm 'Uhr'", { locale: de })}`;
+  } catch (error) {
+    return "Ungültiges Datum";
+  }
 };

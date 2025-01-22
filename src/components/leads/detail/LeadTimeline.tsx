@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { TimelineHeader } from "./timeline/TimelineHeader";
-import { TimelineItem } from "./timeline/TimelineItem";
-import { SocialMediaTimeline } from "./timeline/SocialMediaTimeline";
+import { TimelineHeader } from "./TimelineHeader";
+import { TimelineItem } from "./TimelineItem";
+import { SocialMediaTimeline } from "./SocialMediaTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "./types/lead";
+import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -17,6 +18,16 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   // Check if lead was created via Apify (has social media data)
   const showSocialTimeline = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
 
+  const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
+    id: note.id,
+    type: note.metadata?.type === 'phase_change' ? 'phase_change' : 'note',
+    content: note.content,
+    created_at: note.created_at,
+    timestamp: note.created_at,
+    metadata: note.metadata,
+    status: note.status
+  });
+
   return (
     <div className="space-y-4">
       <TimelineHeader 
@@ -29,12 +40,11 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       {activeTimeline === 'activities' ? (
         <div className="relative space-y-6">
           <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400" />
-          {/* Render activities timeline items */}
-          {lead.notes?.map((activity) => (
+          {lead.notes?.map((note) => (
             <TimelineItem 
-              key={activity.id} 
-              item={activity} 
-              onDelete={onDeletePhaseChange ? () => onDeletePhaseChange(activity.id) : undefined} 
+              key={note.id} 
+              item={mapNoteToTimelineItem(note)} 
+              onDelete={onDeletePhaseChange ? () => onDeletePhaseChange(note.id) : undefined} 
             />
           ))}
         </div>
