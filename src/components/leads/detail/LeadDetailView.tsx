@@ -1,24 +1,15 @@
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
-import { Bot, CheckCircle, ArrowRight, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadInfoCard } from "./LeadInfoCard";
-import { TaskList } from "./TaskList";
-import { NoteList } from "./NoteList";
-import { LeadSummary } from "./LeadSummary";
-import { LeadDetailHeader } from "./LeadDetailHeader";
-import { LeadMessages } from "./LeadMessages";
-import { CompactPhaseSelector } from "./CompactPhaseSelector";
-import { LeadTimeline } from "./LeadTimeline";
-import { ContactFieldManager } from "@/components/leads/detail/contact-info/ContactFieldManager";
 import { toast } from "sonner";
-import { useLeadSubscription } from "@/components/leads/detail/hooks/useLeadSubscription";
+import { useLeadSubscription } from "./hooks/useLeadSubscription";
 import { LeadWithRelations } from "./types/lead";
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { DeleteLeadDialog } from "./components/DeleteLeadDialog";
+import { LeadDetailHeader } from "./components/LeadDetailHeader";
+import { LeadDetailContent } from "./components/LeadDetailContent";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -131,7 +122,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         'tasks'
       ] as const;
 
-      // Delete related records first
       for (const table of relatedTables) {
         console.log(`Deleting related records from ${table}`);
         const { error } = await supabase
@@ -145,7 +135,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         }
       }
 
-      // Finally delete the lead
       console.log('Deleting lead record');
       const { error } = await supabase
         .from('leads')
@@ -164,7 +153,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           : "Kontakt erfolgreich gelöscht"
       );
       onClose();
-      // Always redirect to contacts page after deletion
       navigate('/contacts', { replace: true });
     },
     onError: (error) => {
@@ -193,103 +181,31 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg overflow-hidden">
           <DialogHeader className="p-0">
             {lead && (
-              lead.status === 'partner' && lead.onboarding_progress && 
-              Object.values(lead.onboarding_progress).every(value => value) ? (
-                <div className="p-4 bg-green-50 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span className="font-semibold text-green-700">Onboarding abgeschlossen</span>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-gray-500 hover:text-gray-700"
-                    onClick={() => onClose()}
-                  >
-                    <ArrowRight className="h-4 w-4 mr-2" />
-                    Zurück zur Kontakt Page
-                  </Button>
-                </div>
-              ) : (
-                <LeadDetailHeader
-                  lead={lead}
-                  onUpdateLead={updateLeadMutation.mutate}
-                />
-              )
+              <LeadDetailHeader
+                lead={lead}
+                onUpdateLead={updateLeadMutation.mutate}
+                onClose={onClose}
+              />
             )}
           </DialogHeader>
 
           {isLoading ? (
             <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
           ) : lead ? (
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="space-y-6">
-                <CompactPhaseSelector
-                  lead={lead}
-                  onUpdateLead={updateLeadMutation.mutate}
-                />
-                
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Bot className="h-5 w-5" />
-                    <h3 className="text-lg font-semibold">
-                      {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
-                    </h3>
-                  </div>
-                  <LeadSummary lead={lead} />
-                </div>
-                
-                <LeadInfoCard lead={lead} />
-                <ContactFieldManager />
-                <LeadTimeline lead={lead} />
-                <TaskList leadId={lead.id} />
-                <NoteList leadId={lead.id} />
-                <LeadMessages leadId={lead.id} messages={lead.messages} />
-
-                {/* Delete Button */}
-                <div className="absolute bottom-4 left-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-gray-400 hover:text-red-600"
-                    onClick={() => setShowDeleteDialog(true)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <LeadDetailContent
+              lead={lead}
+              onUpdateLead={updateLeadMutation.mutate}
+              onShowDeleteDialog={() => setShowDeleteDialog(true)}
+            />
           ) : null}
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {settings?.language === "en" 
-                ? "Delete Contact" 
-                : "Kontakt löschen"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {settings?.language === "en"
-                ? "This action cannot be undone. This will permanently delete the contact and all associated data."
-                : "Diese Aktion kann nicht rückgängig gemacht werden. Der Kontakt und alle zugehörigen Daten werden dauerhaft gelöscht."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              {settings?.language === "en" ? "Cancel" : "Abbrechen"}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteLeadMutation.mutate()}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {settings?.language === "en" ? "Delete" : "Löschen"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteLeadDialog
+        showDialog={showDeleteDialog}
+        setShowDialog={setShowDeleteDialog}
+        onDelete={() => deleteLeadMutation.mutate()}
+      />
     </>
   );
 };
