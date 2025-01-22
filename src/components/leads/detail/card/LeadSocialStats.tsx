@@ -1,33 +1,32 @@
-import { Users, UserPlus, MessageSquare } from "lucide-react";
-
 interface LeadSocialStatsProps {
-  followers?: number | null;
-  following?: number | null;
-  posts?: any[] | null;
+  followers: number | null;
+  following: number | null;
+  engagement_rate: number | null;
+  isTeamOwner: boolean;
 }
 
-export const LeadSocialStats = ({ followers, following, posts }: LeadSocialStatsProps) => {
-  if (!followers && !following && !posts) return null;
-
+export const LeadSocialStats = ({
+  followers,
+  following,
+  engagement_rate,
+  isTeamOwner
+}: LeadSocialStatsProps) => {
   return (
-    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+    <div className="flex items-center gap-4 text-sm text-muted-foreground">
       {followers !== null && (
-        <div className="flex items-center gap-1">
-          <Users className="h-4 w-4" />
-          {followers.toLocaleString()}
-        </div>
+        <span>{followers.toLocaleString()} Followers</span>
       )}
       {following !== null && (
-        <div className="flex items-center gap-1">
-          <UserPlus className="h-4 w-4" />
-          {following.toLocaleString()}
-        </div>
+        <>
+          <span>•</span>
+          <span>{following.toLocaleString()} Following</span>
+        </>
       )}
-      {Array.isArray(posts) && (
-        <div className="flex items-center gap-1">
-          <MessageSquare className="h-4 w-4" />
-          {posts.length.toLocaleString()}
-        </div>
+      {engagement_rate !== null && (
+        <>
+          <span>•</span>
+          <span>{(engagement_rate * 100).toFixed(2)}% Engagement</span>
+        </>
       )}
     </div>
   );

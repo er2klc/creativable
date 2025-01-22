@@ -15,7 +15,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
   
   // Check if lead was created via Apify (has social media data)
-  const showSocialTimeline = !!lead.social_media_posts && lead.social_media_posts.length > 0;
+  const showSocialTimeline = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
 
   return (
     <div className="space-y-4">
@@ -30,7 +30,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         <div className="relative space-y-6">
           <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400" />
           {/* Render activities timeline items */}
-          {lead.activities.map((activity) => (
+          {lead.notes?.map((activity) => (
             <TimelineItem 
               key={activity.id} 
               item={activity} 
@@ -39,7 +39,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           ))}
         </div>
       ) : (
-        <SocialMediaTimeline posts={lead.social_media_posts} />
+        <SocialMediaTimeline posts={lead.social_media_posts || []} />
       )}
     </div>
   );
