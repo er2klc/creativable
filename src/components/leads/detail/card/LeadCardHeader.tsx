@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LeadCardHeaderProps {
   lead: Tables<"leads"> & {
@@ -38,39 +39,29 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
     try {
       setIsScanning(true);
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      const { data: { session } } = await supabase.auth.getUser();
+      if (!session) throw new Error("No user found");
 
-      const response = await fetch('/api/scan-social-profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.id}`
-        },
-        body: JSON.stringify({
+      const response = await supabase.functions.invoke('scan-social-profile', {
+        body: {
           leadId: lead.id,
           platform: lead.platform,
           username: lead.social_media_username
-        })
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to scan profile');
+      if (response.error) {
+        throw response.error;
       }
 
-      const result = await response.json();
+      toast.success(settings?.language === "en"
+        ? "Profile scanned successfully"
+        : "Profil erfolgreich gescannt"
+      );
+
+      // Reload the page to show updated data
+      window.location.reload();
       
-      if (result.success) {
-        toast.success(settings?.language === "en"
-          ? "Profile scanned successfully"
-          : "Profil erfolgreich gescannt"
-        );
-      } else {
-        toast.error(result.error || (settings?.language === "en"
-          ? "Failed to scan profile"
-          : "Fehler beim Scannen des Profils"
-        ));
-      }
     } catch (error) {
       console.error('Error scanning profile:', error);
       toast.error(settings?.language === "en"
