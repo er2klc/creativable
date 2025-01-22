@@ -60,7 +60,13 @@ export function CreateInstagramContactDialog({
           social_media_followers: profileData.followers,
           social_media_following: profileData.following,
           social_media_profile_image_url: profileData.profileImageUrl,
-          industry: "Not Specified"
+          industry: "Not Specified",
+          social_media_posts_count: profileData.posts,
+          social_media_stats: {
+            followers: profileData.followers,
+            following: profileData.following,
+            posts: profileData.posts
+          }
         });
 
       if (error) throw error;
