@@ -1,88 +1,36 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Tables } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@supabase/auth-helpers-react";
-import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
+import { useSettings } from "@/hooks/use-settings";
+import { LeadWithRelations } from "../types/lead";
+import { useNavigate } from "react-router-dom";
 
-interface MutationResult {
-  data: Tables<"leads"> | null;
-  hasChanges: boolean;
-}
-
-export const useLeadMutations = (leadId: string | null) => {
+export const useLeadMutations = (leadId: string | null, onClose: () => void) => {
   const queryClient = useQueryClient();
-  const user = useUser();
+  const navigate = useNavigate();
   const { settings } = useSettings();
 
   const updateLeadMutation = useMutation({
-    mutationFn: async (updates: Partial<Tables<"leads">>): Promise<MutationResult> => {
-      if (!leadId || !user?.id) {
-        throw new Error("Invalid lead ID or user not authenticated");
-      }
+    mutationFn: async (updates: Partial<LeadWithRelations>) => {
+      if (!leadId) throw new Error("Invalid lead ID");
 
-      // Get current lead data from cache
-      const currentLead = queryClient.getQueryData<Tables<"leads">>(["lead", leadId]);
-
-      // Check if there are actual changes
-      const hasChanges = Object.entries(updates).some(
-        ([key, value]) => currentLead?.[key as keyof Tables<"leads">] !== value
-      );
-
-      // If no changes, return current data without updating
-      if (!hasChanges) {
-        return { data: currentLead, hasChanges: false };
-      }
-
-      // First create the phase change note if this is a phase change
-      if (updates.phase_id) {
-        const oldPhase = currentLead?.phase_id;
-        const newPhase = updates.phase_id;
-        
-        if (oldPhase !== newPhase) {
-          const { error: noteError } = await supabase
-            .from("notes")
-            .insert({
-              lead_id: leadId,
-              user_id: user.id,
-              content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
-              color: "#E9D5FF",
-              metadata: {
-                type: "phase_change",
-                oldPhase,
-                newPhase
-              }
-            });
-
-          if (noteError) {
-            console.error("Error creating phase change note:", noteError);
-            throw noteError;
-          }
-        }
-      }
-
-      // Then update the lead
       const { data, error } = await supabase
         .from("leads")
         .update(updates)
         .eq("id", leadId)
-        .select("*, messages(*), tasks(*), notes(*)")
+        .select()
         .single();
 
       if (error) throw error;
-      return { data, hasChanges };
+      return data;
     },
-    onSuccess: (result) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      
-      // Only show success toast if there were actual changes
-      if (result.hasChanges) {
-        toast.success(
-          settings?.language === "en"
-            ? "Contact updated successfully"
-            : "Kontakt erfolgreich aktualisiert"
-        );
-      }
+      toast.success(
+        settings?.language === "en"
+          ? "Contact updated successfully"
+          : "Kontakt erfolgreich aktualisiert"
+      );
     },
     onError: (error) => {
       console.error("Error updating lead:", error);
@@ -94,27 +42,62 @@ export const useLeadMutations = (leadId: string | null) => {
     }
   });
 
-  const deletePhaseChangeMutation = useMutation({
-    mutationFn: async (noteId: string) => {
+  const deleteLeadMutation = useMutation({
+    mutationFn: async () => {
+      if (!leadId) return;
+
+      console.log('Starting deletion process for lead:', leadId);
+
+      const relatedTables = [
+        'contact_group_states',
+        'instagram_scan_history',
+        'lead_files',
+        'lead_subscriptions',
+        'messages',
+        'notes',
+        'tasks'
+      ] as const;
+
+      for (const table of relatedTables) {
+        const { error } = await supabase
+          .from(table)
+          .delete()
+          .eq('lead_id', leadId);
+        
+        if (error) {
+          console.error(`Error deleting from ${table}:`, error);
+          throw error;
+        }
+      }
+
       const { error } = await supabase
-        .from("notes")
+        .from('leads')
         .delete()
-        .eq("id", noteId);
+        .eq('id', leadId);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
       toast.success(
         settings?.language === "en"
-          ? "Phase change deleted successfully"
-          : "Phasenänderung erfolgreich gelöscht"
+          ? "Contact deleted successfully"
+          : "Kontakt erfolgreich gelöscht"
       );
+      onClose();
+      navigate('/contacts', { replace: true });
     },
+    onError: (error) => {
+      console.error("Error deleting lead:", error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error deleting contact"
+          : "Fehler beim Löschen des Kontakts"
+      );
+    }
   });
 
   return {
     updateLeadMutation,
-    deletePhaseChangeMutation
+    deleteLeadMutation
   };
 };
