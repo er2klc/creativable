@@ -40,12 +40,15 @@ export const LeadsHeader = ({
 
         {/* Add Contact and Dropdown Buttons */}
         <div className="flex items-center gap-[1px]">
-          <Button onClick={() => setShowAddLead(true)}>
+          <Button
+              onClick={() => setShowAddLead(true)}
+              className="rounded-r-none"
+            >
             Kontakt hinzufügen ✨
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="bg-black text-white hover:bg-black/90">
+              <Button variant="outline" size="icon" className="bg-black text-white hover:bg-black/90 rounded-l-none">
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
