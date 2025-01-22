@@ -9,46 +9,32 @@ import { LeadMessages } from "./LeadMessages";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { LeadTimeline } from "./LeadTimeline";
 import { ContactFieldManager } from "./contact-info/ContactFieldManager";
-import { LeadFileUpload } from "./files/LeadFileUpload";
-import { LeadFileList } from "./files/LeadFileList";
-import { AddAppointmentDialog } from "./appointments/AddAppointmentDialog";
-import { LeadWithRelations } from "./types/lead";
+import { InstagramProfileCard } from "./social-media/InstagramProfileCard";
 
 interface LeadDetailContentProps {
-  lead: LeadWithRelations;
+  lead: Tables<"leads">;
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
-  isLoading: boolean;
+  onDeleteClick: () => void;
 }
 
-export const LeadDetailContent = ({ 
+export function LeadDetailContent({ 
   lead, 
   onUpdateLead,
-  isLoading 
-}: LeadDetailContentProps) => {
+  onDeleteClick 
+}: LeadDetailContentProps) {
   const { settings } = useSettings();
-
-  // Only hide phase selector if lead has a status other than 'lead'
-  const showPhaseSelector = !lead.status || lead.status === 'lead';
-
-  if (isLoading) {
-    return <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>;
-  }
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          {showPhaseSelector ? (
-            <CompactPhaseSelector
-              lead={lead}
-              onUpdateLead={onUpdateLead}
-            />
-          ) : null}
-          <div className="flex gap-4">
-            <LeadFileUpload leadId={lead.id} />
-            <AddAppointmentDialog leadId={lead.id} leadName={lead.name} />
-          </div>
-        </div>
+        <CompactPhaseSelector
+          lead={lead}
+          onUpdateLead={onUpdateLead}
+        />
+        
+        {lead.platform === "Instagram" && (
+          <InstagramProfileCard lead={lead} />
+        )}
         
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -62,7 +48,6 @@ export const LeadDetailContent = ({
         
         <LeadInfoCard lead={lead} onUpdate={onUpdateLead} />
         <ContactFieldManager />
-        <LeadFileList leadId={lead.id} />
         <LeadTimeline lead={lead} />
         <TaskList leadId={lead.id} />
         <NoteList leadId={lead.id} />
@@ -70,4 +55,4 @@ export const LeadDetailContent = ({
       </div>
     </div>
   );
-};
+}
