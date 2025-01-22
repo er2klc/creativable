@@ -32,7 +32,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const contactCreationItem: TimelineItemType = {
     id: 'contact-creation',
     type: 'contact_created',
-    content: `Kontakt ${lead.name} erstellt`,
+    content: `Kontakt ${lead.name} wurde erstellt`,
     created_at: lead.created_at,
     timestamp: lead.created_at,
     metadata: {
