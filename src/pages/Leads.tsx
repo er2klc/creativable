@@ -25,15 +25,6 @@ const Leads = () => {
         setSelectedPipelineId={setSelectedPipelineId}
         viewMode={viewMode}
         setViewMode={setViewMode}
-        onEditModeChange={(isEditMode) => {
-          if (viewMode === "kanban") {
-            // Pass edit mode to KanbanView
-            const kanbanView = document.querySelector('[data-kanban-view]');
-            if (kanbanView) {
-              (kanbanView as any).__kanbanView?.setIsEditMode(isEditMode);
-            }
-          }
-        }}
       />
 
       {viewMode === "kanban" ? (
@@ -41,6 +32,7 @@ const Leads = () => {
           leads={leads}
           selectedPipelineId={selectedPipelineId}
           setSelectedPipelineId={setSelectedPipelineId}
+          isEditMode={true}
         />
       ) : (
         <LeadTableView

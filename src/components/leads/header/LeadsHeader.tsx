@@ -1,15 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { LeadSearch } from "../LeadSearch";
-import { LayoutGrid, List, ChevronDown, Instagram, Linkedin, Pencil } from "lucide-react";
+import { LayoutGrid, List } from "lucide-react";
 import { AddLeadDialog } from "../AddLeadDialog";
 import { CreateInstagramContactDialog } from "../instagram/CreateInstagramContactDialog";
 import { LeadFilters } from "../LeadFilters";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 
 interface LeadsHeaderProps {
@@ -19,7 +13,6 @@ interface LeadsHeaderProps {
   setSelectedPipelineId: (id: string | null) => void;
   viewMode: "kanban" | "list";
   setViewMode: (mode: "kanban" | "list") => void;
-  onEditModeChange?: (isEditMode: boolean) => void;
 }
 
 export const LeadsHeader = ({
@@ -29,17 +22,9 @@ export const LeadsHeader = ({
   setSelectedPipelineId,
   viewMode,
   setViewMode,
-  onEditModeChange,
 }: LeadsHeaderProps) => {
   const [showAddLead, setShowAddLead] = useState(false);
   const [showInstagramDialog, setShowInstagramDialog] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-
-  const handleEditModeToggle = () => {
-    const newEditMode = !isEditMode;
-    setIsEditMode(newEditMode);
-    onEditModeChange?.(newEditMode);
-  };
 
   return (
     <div className="space-y-4">
@@ -55,23 +40,6 @@ export const LeadsHeader = ({
             >
             Kontakt hinzufügen ✨
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="bg-black text-white hover:bg-black/90 rounded-l-none">
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setShowInstagramDialog(true)}>
-                <Instagram className="h-4 w-4 mr-2" />
-                <span>Instagram</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                <Linkedin className="h-4 w-4 mr-2" />
-                <span>LinkedIn</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
 
         {/* Search Field */}
@@ -79,25 +47,11 @@ export const LeadsHeader = ({
           <LeadSearch value={searchQuery} onChange={setSearchQuery} />
         </div>
 
-        {/* Pipeline Selection and Edit Mode */}
+        {/* Pipeline Selection */}
         <LeadFilters
           selectedPipelineId={selectedPipelineId}
           setSelectedPipelineId={setSelectedPipelineId}
-          onEditModeChange={onEditModeChange}
         />
-
-        {/* Edit Mode Button */}
-        <Button
-          variant={isEditMode ? "default" : "outline"}
-          size="icon"
-          onClick={handleEditModeToggle}
-          className={`h-9 w-9 transition-colors ${
-            isEditMode ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''
-          }`}
-          title={isEditMode ? "Bearbeitungsmodus beenden" : "Bearbeitungsmodus aktivieren"}
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
 
         {/* View Mode Buttons */}
         <div className="flex items-center gap-2">
