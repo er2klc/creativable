@@ -3,10 +3,16 @@ import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { InfoRow } from "./InfoRow";
 import { ContactInfoGroup } from "./ContactInfoGroup";
-import { User, AtSign, Phone, Globe, Calendar, Building2, MapPin } from "lucide-react";
+import { User, AtSign, Phone, Globe, Calendar, Building2, MapPin, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 interface BasicInformationFieldsProps {
@@ -62,25 +68,37 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
   const TagSection = ({ type, title }: { type: "interests" | "goals" | "challenges", title: string }) => (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <Input
-          value={newTag}
-          onChange={(e) => setNewTag(e.target.value)}
-          placeholder={`${title} hinzufügen`}
-          className="flex-1"
-          onKeyPress={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              handleAddTag(type);
-            }
-          }}
-        />
-        <Button 
-          onClick={() => handleAddTag(type)}
-          size="sm"
-          variant="outline"
-        >
-          +
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="flex items-center gap-1">
+              <Plus className="h-4 w-4" />
+              {title}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-56 p-2">
+            <div className="flex flex-col gap-2">
+              <Input
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                placeholder={`${title} hinzufügen`}
+                className="h-8"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddTag(type);
+                  }
+                }}
+              />
+              <Button 
+                onClick={() => handleAddTag(type)}
+                size="sm"
+                className="w-full"
+              >
+                Hinzufügen
+              </Button>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <div className="flex flex-wrap gap-2">
         {(lead[type] || []).map((tag, index) => (
