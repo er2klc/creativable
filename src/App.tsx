@@ -59,6 +59,10 @@ const AppRoutes = () => {
           path="/leads/:id" 
           element={<Navigate to="/contacts/:id" replace />} 
         />
+        <Route 
+          path="/pool" 
+          element={<Navigate to="/contacts" replace />} 
+        />
       </Routes>
       {showChat && <ChatButton />}
     </>

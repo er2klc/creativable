@@ -16,7 +16,6 @@ import PlatformDetail from "@/pages/PlatformDetail";
 import SignatureGenerator from "@/pages/SignatureGenerator";
 import LeaderBoard from "@/pages/LeaderBoard";
 import Admin from "@/pages/Admin";
-import Pool from "@/pages/Pool";
 
 export const protectedRoutes = [
   {
@@ -30,14 +29,6 @@ export const protectedRoutes = [
   {
     path: "/contacts/:leadId",
     element: <LeadDetail />,
-  },
-  {
-    path: "/pool",
-    element: <Pool />,
-  },
-  {
-    path: "/pool/:status",
-    element: <Pool />,
   },
   {
     path: "/messages",
