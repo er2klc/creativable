@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/use-settings";
 import { supabase } from "@/integrations/supabase/client";
-import { Bot } from "lucide-react";
+import { Bot, Scan } from "lucide-react";
 
 const formSchema = z.object({
   openai_api_key: z.string().min(1, "OpenAI API-Key ist erforderlich"),
+  apify_api_key: z.string().min(1, "Apify API-Key ist erforderlich"),
 });
 
 export function OpenAIIntegration() {
@@ -20,6 +21,7 @@ export function OpenAIIntegration() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       openai_api_key: settings?.openai_api_key || "",
+      apify_api_key: settings?.apify_api_key || "",
     },
   });
 
@@ -28,6 +30,7 @@ export function OpenAIIntegration() {
     if (settings) {
       form.reset({
         openai_api_key: settings.openai_api_key || "",
+        apify_api_key: settings.apify_api_key || "",
       });
     }
   }, [settings, form]);
@@ -51,46 +54,78 @@ export function OpenAIIntegration() {
     }
   };
 
-  const saveApiKey = async (value: string) => {
-    await updateSettings.mutateAsync({ openai_api_key: value });
+  const saveApiKeys = async (values: z.infer<typeof formSchema>) => {
+    await updateSettings.mutateAsync({
+      openai_api_key: values.openai_api_key,
+      apify_api_key: values.apify_api_key,
+    });
     await updateOpenAIContext();
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Bot className="h-6 w-6" />
-        <h3 className="text-lg font-medium">OpenAI Integration 🤖</h3>
+    <div className="space-y-8">
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Bot className="h-6 w-6" />
+          <h3 className="text-lg font-medium">OpenAI Integration 🤖</h3>
+        </div>
+        <Form {...form}>
+          <form className="space-y-4">
+            <FormField
+              control={form.control}
+              name="openai_api_key"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>OpenAI API-Key</FormLabel>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        placeholder="sk-..." 
+                        {...field} 
+                      />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </form>
+        </Form>
       </div>
-      <Form {...form}>
-        <form className="space-y-4">
-          <FormField
-            control={form.control}
-            name="openai_api_key"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>OpenAI API-Key</FormLabel>
-                <div className="flex gap-2">
-                  <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="sk-..." 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <Button 
-                    type="button"
-                    onClick={() => saveApiKey(field.value)}
-                  >
-                    Speichern
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </form>
-      </Form>
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Scan className="h-6 w-6" />
+          <h3 className="text-lg font-medium">Apify Integration 🔍</h3>
+        </div>
+        <Form {...form}>
+          <form className="space-y-4" onSubmit={form.handleSubmit(saveApiKeys)}>
+            <FormField
+              control={form.control}
+              name="apify_api_key"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Apify API-Key</FormLabel>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        placeholder="apify_api_..." 
+                        {...field} 
+                      />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit">
+              API-Keys Speichern
+            </Button>
+          </form>
+        </Form>
+      </div>
     </div>
   );
 }
