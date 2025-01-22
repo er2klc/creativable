@@ -14,7 +14,7 @@ interface LeadCardHeaderProps {
 
 export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
   const user = useUser();
-  const isTeamOwner = user?.id === lead.user_id;
+  const isTeamOwner = user?.id === lead.created_by;
 
   // Prioritize username over name
   const displayName = lead.social_media_username?.split('/')?.pop() || lead.name;
@@ -35,7 +35,7 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
             <LeadSocialStats
               followers={lead.social_media_followers}
               following={lead.social_media_following}
-              social_media_engagement_rate={lead.social_media_engagement_rate}
+              engagementRate={lead.social_media_engagement_rate}
               isTeamOwner={isTeamOwner}
             />
           )}

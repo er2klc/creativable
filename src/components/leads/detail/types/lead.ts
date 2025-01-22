@@ -7,5 +7,7 @@ export type LeadWithRelations = Tables<"leads"> & {
   tasks: Tables<"tasks">[];
   notes: Tables<"notes">[];
   lead_files: Tables<"lead_files">[];
-  social_media_posts: Tables<"social_media_posts">[];
+  parent_id?: string | null;
+  level?: number | null;
+  avatar_url?: string | null;
 };

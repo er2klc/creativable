@@ -46,14 +46,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
       const { data, error } = await supabase
         .from("leads")
-        .select(`
-          *,
-          messages(*),
-          tasks(*),
-          notes(*),
-          lead_files(*),
-          social_media_posts(*)
-        `)
+        .select("*, messages(*), tasks(*), notes(*), lead_files(*)")
         .eq("id", leadId)
         .maybeSingle();
 

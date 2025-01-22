@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
 import { LeadWithRelations } from "@/components/leads/detail/types/lead";
-import { Platform } from "@/config/platforms";
 
 export default function LeadDetail() {
   const { leadId } = useParams<{ leadId: string }>();

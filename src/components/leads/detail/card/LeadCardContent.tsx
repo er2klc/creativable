@@ -13,7 +13,7 @@ interface LeadCardContentProps {
 
 export const LeadCardContent = ({ lead }: LeadCardContentProps) => {
   const user = useUser();
-  const isTeamOwner = user?.id === lead.user_id;
+  const isTeamOwner = user?.id === lead.created_by;
 
   // Prioritize username over name for display
   const displayName = lead.social_media_username?.split('/')?.pop() || lead.name;
