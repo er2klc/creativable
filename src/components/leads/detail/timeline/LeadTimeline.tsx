@@ -28,9 +28,9 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     status: note.status
   });
 
-  // Sort notes in reverse chronological order (newest first)
+  // Sort notes in ascending chronological order (oldest first)
   const sortedNotes = [...(lead.notes || [])].sort((a, b) => {
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
   });
 
   return (
