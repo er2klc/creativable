@@ -1,17 +1,25 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { PlatformIndicator } from "./PlatformIndicator";
 
 interface LeadAvatarProps {
-  avatarUrl?: string | null;
+  imageUrl?: string | null;
   name: string;
+  platform: string;
 }
 
-export const LeadAvatar = ({ avatarUrl, name }: LeadAvatarProps) => {
+export const LeadAvatar = ({ imageUrl, name, platform }: LeadAvatarProps) => {
   return (
-    <Avatar className="h-10 w-10">
-      <AvatarImage src={avatarUrl || undefined} alt={name} />
-      <AvatarFallback>
-        {name?.substring(0, 2).toUpperCase() || '??'}
-      </AvatarFallback>
-    </Avatar>
+    <div className="relative">
+      <Avatar className="h-20 w-20">
+        <AvatarImage 
+          src={imageUrl} 
+          alt={name} 
+        />
+        <AvatarFallback>
+          {name?.split(' ').map(n => n[0]).join('').toUpperCase()}
+        </AvatarFallback>
+      </Avatar>
+      <PlatformIndicator platform={platform} />
+    </div>
   );
 };
