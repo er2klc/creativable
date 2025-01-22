@@ -27,11 +27,23 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
   // Prioritize username over name
   const displayName = lead.social_media_username?.split('/')?.pop() || lead.name;
 
+  // Only show scan button for Instagram contacts
+  const canScan = lead.platform === "Instagram" && lead.social_media_username;
+
   const handleScanProfile = async () => {
     if (!lead.social_media_username) {
       toast.error(settings?.language === "en" 
         ? "Please enter a social media username first"
         : "Bitte geben Sie zuerst einen Social Media Benutzernamen ein"
+      );
+      return;
+    }
+
+    // Check if platform is Instagram
+    if (lead.platform !== "Instagram") {
+      toast.error(settings?.language === "en"
+        ? "Scanning is currently only supported for Instagram profiles"
+        : "Das Scannen wird derzeit nur für Instagram-Profile unterstützt"
       );
       return;
     }
@@ -42,6 +54,12 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No user found");
 
+      console.log('Starting scan for Instagram profile:', {
+        leadId: lead.id,
+        username: lead.social_media_username,
+        timestamp: new Date().toISOString()
+      });
+
       const response = await supabase.functions.invoke('scan-social-profile', {
         body: {
           leadId: lead.id,
@@ -49,6 +67,8 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
           username: lead.social_media_username
         }
       });
+
+      console.log('Scan response:', response);
 
       if (response.error) {
         throw response.error;
@@ -84,19 +104,21 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
         <div className="flex-1">
           <div className="font-medium text-lg flex items-center justify-between">
             <span>{displayName}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleScanProfile}
-              disabled={isScanning}
-              className="ml-2"
-            >
-              {isScanning ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-            </Button>
+            {canScan && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleScanProfile}
+                disabled={isScanning}
+                className="ml-2"
+              >
+                {isScanning ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+              </Button>
+            )}
           </div>
           {(lead.social_media_followers !== null || lead.social_media_following !== null) && (
             <LeadSocialStats
