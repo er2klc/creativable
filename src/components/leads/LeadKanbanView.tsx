@@ -99,39 +99,41 @@ export const LeadKanbanView = ({
       collisionDetection={closestCenter} 
       onDragEnd={handleDragEnd}
     >
-      <div className="flex-1 overflow-x-auto no-scrollbar relative h-[calc(100vh-13rem)]">
-        <div 
-          className="flex gap-4 px-4 h-full" 
-          style={{ minWidth: 'fit-content' }}
-        >
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
+      <div className="mt-6 border-t border-gray-200 shadow-sm pt-6">
+        <div className="flex-1 overflow-x-auto no-scrollbar relative h-[calc(100vh-16rem)]">
+          <div 
+            className="flex gap-4 px-4 h-full" 
+            style={{ minWidth: 'fit-content' }}
+          >
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
 
-          {phases.map((phase, index) => (
-            <div key={phase.id} className="flex-1" style={{ minWidth: '190px', width: `${100 / phases.length}%` }}>
-              <PhaseColumn
-                phase={phase}
-                leads={leads.filter((lead) => lead.phase_id === phase.id)}
-                onLeadClick={handleLeadClick}
-                isEditMode={isEditMode}
-                onDeletePhase={() => setPhaseToDelete(phase)}
-                onUpdatePhaseName={(newName) => updatePhaseName.mutate({ id: phase.id, name: newName })}
-                pipelineId={selectedPipelineId}
-                isFirst={index === 0}
-                isLast={index === phases.length - 1}
-                onMovePhase={
-                  isEditMode 
-                    ? (direction) => handleMovePhase(phase.id, direction)
-                    : undefined
-                }
-              />
-            </div>
-          ))}
+            {phases.map((phase, index) => (
+              <div key={phase.id} className="flex-1" style={{ minWidth: '190px', width: `${100 / phases.length}%` }}>
+                <PhaseColumn
+                  phase={phase}
+                  leads={leads.filter((lead) => lead.phase_id === phase.id)}
+                  onLeadClick={handleLeadClick}
+                  isEditMode={isEditMode}
+                  onDeletePhase={() => setPhaseToDelete(phase)}
+                  onUpdatePhaseName={(newName) => updatePhaseName.mutate({ id: phase.id, name: newName })}
+                  pipelineId={selectedPipelineId}
+                  isFirst={index === 0}
+                  isLast={index === phases.length - 1}
+                  onMovePhase={
+                    isEditMode 
+                      ? (direction) => handleMovePhase(phase.id, direction)
+                      : undefined
+                  }
+                />
+              </div>
+            ))}
 
-          {isEditMode && (
-            <AddPhaseButton pipelineId={selectedPipelineId} />
-          )}
+            {isEditMode && (
+              <AddPhaseButton pipelineId={selectedPipelineId} />
+            )}
 
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
+          </div>
         </div>
       </div>
 
