@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { BasicInformationFields } from "./contact-info/BasicInformationFields";
-import { InterestsGoalsFields } from "./contact-info/InterestsGoalsFields";
 import { LeadCardHeader } from "./card/LeadCardHeader";
 
 interface LeadInfoCardProps {
@@ -20,8 +19,6 @@ export function LeadInfoCard({ lead, onUpdate }: LeadInfoCardProps) {
       </CardHeader>
       <CardContent className="space-y-6">
         <BasicInformationFields lead={lead} onUpdate={onUpdate} />
-        <div className="h-px bg-gray-200/80" />
-        <InterestsGoalsFields lead={lead} onUpdate={onUpdate} />
       </CardContent>
     </Card>
   );
