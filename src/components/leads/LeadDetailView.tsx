@@ -59,9 +59,11 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Lead not found");
       }
 
-      return data as unknown as LeadWithRelations;
+      return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
   });
 
   useLeadSubscription(leadId);
@@ -234,11 +236,14 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
                   onUpdate={updateLeadMutation.mutate}
                 />
                 <ContactFieldManager />
-                <LeadTimeline lead={lead} />
+                <LeadTimeline 
+                  lead={lead} 
+                />
                 <TaskList leadId={lead.id} />
                 <NoteList leadId={lead.id} />
                 <LeadMessages leadId={lead.id} messages={lead.messages} />
 
+                {/* Delete Button */}
                 <div className="absolute bottom-4 left-4">
                   <Button
                     variant="ghost"

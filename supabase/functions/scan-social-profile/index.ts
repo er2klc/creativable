@@ -2,6 +2,12 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
+interface ApifyResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -10,7 +16,7 @@ serve(async (req) => {
   try {
     const { platform, username, leadId } = await req.json()
     
-    console.log('Starting scan for profile:', {
+    console.log('Starting scan for:', {
       platform,
       username,
       leadId,
@@ -86,33 +92,18 @@ serve(async (req) => {
         const profileData = items[0]
         console.log('Profile data received:', profileData);
 
-        // Calculate engagement rate
-        const engagementRate = profileData.followersCount > 0 
-          ? ((profileData.latestPosts?.reduce((sum: number, post: any) => 
-              sum + (post.likesCount || 0) + (post.commentsCount || 0), 0) / 
-              (profileData.latestPosts?.length || 1)) / profileData.followersCount)
-          : 0;
-
-        // Extract hashtags from posts
-        const hashtags = new Set<string>();
-        profileData.latestPosts?.forEach((post: any) => {
-          post.hashtags?.forEach((tag: string) => hashtags.add(tag));
-        });
-
         // Update lead with social media data
         const { error: updateError } = await supabaseClient
           .from('leads')
           .update({
-            name: profileData.fullName || profileData.username,
             social_media_bio: profileData.biography,
             social_media_followers: profileData.followersCount,
             social_media_following: profileData.followsCount,
-            social_media_engagement_rate: engagementRate,
-            social_media_profile_image_url: profileData.profilePicUrlHD || profileData.profilePicUrl,
+            social_media_engagement_rate: profileData.engagementRate,
+            social_media_profile_image_url: profileData.profilePicUrl,
             social_media_posts: profileData.latestPosts,
             social_media_verified: profileData.verified,
             social_media_categories: profileData.businessCategoryName ? [profileData.businessCategoryName] : null,
-            social_media_interests: Array.from(hashtags),
             last_social_media_scan: new Date().toISOString()
           })
           .eq('id', leadId)
@@ -130,7 +121,7 @@ serve(async (req) => {
             followers_count: profileData.followersCount,
             following_count: profileData.followsCount,
             posts_count: profileData.postsCount,
-            engagement_rate: engagementRate,
+            engagement_rate: profileData.engagementRate,
             success: true
           })
 
@@ -139,7 +130,7 @@ serve(async (req) => {
           throw historyError
         }
 
-        // Store posts with detailed metadata
+        // Store posts
         if (profileData.latestPosts?.length > 0) {
           const posts = profileData.latestPosts.map((post: any) => ({
             lead_id: leadId,
@@ -157,9 +148,7 @@ serve(async (req) => {
               hashtags: post.hashtags,
               images: post.images,
               videoUrl: post.videoUrl,
-              musicInfo: post.musicInfo,
-              alt: post.alt,
-              childPosts: post.childPosts
+              musicInfo: post.musicInfo
             }
           }))
 
@@ -172,7 +161,7 @@ serve(async (req) => {
 
           if (postsError) {
             console.error('Error storing posts:', postsError);
-            // Log error but don't throw to still return success for profile scan
+            // Don't throw here, we still want to return success for the profile scan
           }
         }
 

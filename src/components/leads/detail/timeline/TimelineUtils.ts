@@ -13,6 +13,8 @@ export type TimelineItemType =
   | 'upload'
   | 'presentation';
 
+export type TimelineItemStatus = 'completed' | 'cancelled' | 'outdated';
+
 export interface TimelineItem {
   id: string;
   type: TimelineItemType;
@@ -27,7 +29,7 @@ export interface TimelineItem {
     fileType?: string;
     fileSize?: number;
     filePath?: string;
-    status?: 'completed' | 'cancelled' | 'outdated';
+    status?: TimelineItemStatus;
     completedAt?: string;
     cancelledAt?: string;
     updatedAt?: string;

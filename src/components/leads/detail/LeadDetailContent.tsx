@@ -1,7 +1,6 @@
-import { Bot, Trash2 } from "lucide-react";
+import { Bot } from "lucide-react";
+import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadWithRelations } from "./types/lead";
-import { Button } from "@/components/ui/button";
 import { LeadInfoCard } from "./LeadInfoCard";
 import { TaskList } from "./TaskList";
 import { NoteList } from "./NoteList";
@@ -10,28 +9,46 @@ import { LeadMessages } from "./LeadMessages";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { LeadTimeline } from "./LeadTimeline";
 import { ContactFieldManager } from "./contact-info/ContactFieldManager";
-import { UseMutateFunction } from "@tanstack/react-query";
+import { LeadFileUpload } from "./files/LeadFileUpload";
+import { LeadFileList } from "./files/LeadFileList";
+import { AddAppointmentDialog } from "./appointments/AddAppointmentDialog";
+import { LeadWithRelations } from "./types/lead";
 
 interface LeadDetailContentProps {
   lead: LeadWithRelations;
-  onUpdateLead: UseMutateFunction<any, Error, Partial<LeadWithRelations>, unknown>;
-  onDeleteClick: () => void;
+  onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
+  isLoading: boolean;
 }
 
 export const LeadDetailContent = ({ 
   lead, 
   onUpdateLead,
-  onDeleteClick
+  isLoading 
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
+
+  // Only hide phase selector if lead has a status other than 'lead'
+  const showPhaseSelector = !lead.status || lead.status === 'lead';
+
+  if (isLoading) {
+    return <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>;
+  }
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="space-y-6">
-        <CompactPhaseSelector
-          lead={lead}
-          onUpdateLead={onUpdateLead}
-        />
+        <div className="flex justify-between items-center">
+          {showPhaseSelector ? (
+            <CompactPhaseSelector
+              lead={lead}
+              onUpdateLead={onUpdateLead}
+            />
+          ) : null}
+          <div className="flex gap-4">
+            <LeadFileUpload leadId={lead.id} />
+            <AddAppointmentDialog leadId={lead.id} leadName={lead.name} />
+          </div>
+        </div>
         
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -45,21 +62,11 @@ export const LeadDetailContent = ({
         
         <LeadInfoCard lead={lead} onUpdate={onUpdateLead} />
         <ContactFieldManager />
+        <LeadFileList leadId={lead.id} />
         <LeadTimeline lead={lead} />
         <TaskList leadId={lead.id} />
         <NoteList leadId={lead.id} />
         <LeadMessages leadId={lead.id} messages={lead.messages} />
-
-        <div className="absolute bottom-4 left-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-400 hover:text-red-600"
-            onClick={onDeleteClick}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
     </div>
   );

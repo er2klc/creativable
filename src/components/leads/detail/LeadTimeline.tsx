@@ -8,9 +8,10 @@ import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
+  onDeletePhaseChange?: (noteId: string) => void;
 }
 
-export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
+export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
   const { settings } = useSettings();
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
   
@@ -62,13 +63,32 @@ export const LeadTimeline = ({ lead }: LeadTimelineProps) => {
           {timelineItems.map((item) => (
             <TimelineItem 
               key={item.id} 
-              item={item}
+              item={item} 
+              onDelete={onDeletePhaseChange && item.type !== 'contact_created' ? 
+                () => onDeletePhaseChange(item.id) : 
+                undefined
+              } 
             />
           ))}
         </div>
       ) : (
         <SocialMediaTimeline 
-          posts={lead.social_media_posts || []}
+          posts={lead.social_media_posts as Array<{
+            comments_count: number;
+            content: string;
+            created_at: string;
+            id: string;
+            lead_id: string;
+            likes_count: number;
+            location: string;
+            mentioned_profiles: string[];
+            metadata: any;
+            platform: string;
+            post_type: string;
+            posted_at: string;
+            tagged_profiles: string[];
+            url: string;
+          }>} 
         />
       )}
     </div>
