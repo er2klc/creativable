@@ -196,7 +196,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
             <LeadDetailContent
               lead={lead}
               onUpdateLead={updateLeadMutation.mutate}
-              onShowDeleteDialog={() => setShowDeleteDialog(true)}
+              isLoading={isLoading}
             />
           ) : null}
         </DialogContent>

@@ -13,7 +13,7 @@ interface LeadTimelineProps {
     created_at: string;
     name: string;
   };
-  onDeletePhaseChange: (noteId: string) => void;
+  onDeletePhaseChange?: (noteId: string) => void;
 }
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
@@ -112,7 +112,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
             <TimelineItem 
               key={item.id} 
               item={item} 
-              onDelete={item.type === 'phase_change' ? () => onDeletePhaseChange(item.id) : undefined}
+              onDelete={item.type === 'phase_change' && onDeletePhaseChange ? () => onDeletePhaseChange(item.id) : undefined}
             />
           ))
         ) : (

@@ -17,14 +17,12 @@ import { LeadWithRelations } from "./types/lead";
 interface LeadDetailContentProps {
   lead: LeadWithRelations;
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
-  onDeletePhaseChange: (noteId: string) => void;
   isLoading: boolean;
 }
 
 export const LeadDetailContent = ({ 
   lead, 
-  onUpdateLead, 
-  onDeletePhaseChange,
+  onUpdateLead,
   isLoading 
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
@@ -65,10 +63,7 @@ export const LeadDetailContent = ({
         <LeadInfoCard lead={lead} />
         <ContactFieldManager />
         <LeadFileList leadId={lead.id} />
-        <LeadTimeline 
-          lead={lead} 
-          onDeletePhaseChange={onDeletePhaseChange}
-        />
+        <LeadTimeline lead={lead} />
         <TaskList leadId={lead.id} />
         <NoteList leadId={lead.id} />
         <LeadMessages leadId={lead.id} messages={lead.messages} />
