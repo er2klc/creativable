@@ -9,7 +9,7 @@ export type TimelineItemType =
 
 export type TimelineItemStatus = 
   | 'completed' 
-  | 'cancelled' 
+  | 'cancelled'
   | 'pending'
   | 'outdated'
   | 'instagram'
@@ -42,3 +42,13 @@ export interface TimelineItem {
     color?: string;
   };
 }
+
+export const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};

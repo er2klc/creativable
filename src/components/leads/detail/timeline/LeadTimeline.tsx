@@ -25,7 +25,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const timelineItems: TimelineItem[] = useMemo(() => [
     {
       id: 'contact-created',
-      type: 'contact_created',
+      type: 'contact_created' as TimelineItemType,
       content: `Kontakt ${lead.name} wurde erstellt`,
       created_at: lead.created_at || new Date().toISOString(),
       timestamp: lead.created_at || new Date().toISOString(),
