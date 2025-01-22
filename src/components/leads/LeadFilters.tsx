@@ -77,6 +77,7 @@ export const LeadFilters = ({
   const handleEditModeToggle = () => {
     const newEditMode = !isEditMode;
     setIsEditMode(newEditMode);
+    onEditModeChange?.(newEditMode);
     const currentPipeline = pipelines.find(p => p.id === selectedPipelineId);
     setEditingPipelineName(currentPipeline?.name || "");
   };
@@ -99,6 +100,7 @@ export const LeadFilters = ({
           : "Pipeline-Name erfolgreich aktualisiert"
       );
       setIsEditMode(false);
+      onEditModeChange?.(false);
     } catch (error) {
       console.error("Error updating pipeline name:", error);
       toast.error(

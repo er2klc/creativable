@@ -28,16 +28,14 @@ export const LeadsHeader = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        {/* Page Title */}
-        <h1 className="text-2xl font-semibold">Kontakte</h1>
-
-        {/* Add Contact and Dropdown Buttons */}
-        <div className="flex items-center gap-[1px]">
+      <div className="flex items-center justify-between gap-4">
+        {/* Add Contact Button */}
+        <div className="flex">
           <Button
-              onClick={() => setShowAddLead(true)}
-              className="rounded-r-none"
-            >
+            variant="default"
+            className="bg-black text-white hover:bg-black/90"
+            onClick={() => setShowAddLead(true)}
+          >
             Kontakt hinzufügen ✨
           </Button>
         </div>
@@ -51,30 +49,29 @@ export const LeadsHeader = ({
         <LeadFilters
           selectedPipelineId={selectedPipelineId}
           setSelectedPipelineId={setSelectedPipelineId}
+          onEditModeChange={setIsEditMode}
         />
 
         {/* View Mode Buttons */}
         <div className="flex items-center gap-2">
           <Button
-            variant="outline"
+            variant={viewMode === "kanban" ? "default" : "outline"}
             size="icon"
             onClick={() => setViewMode("kanban")}
-            className={viewMode === "kanban" ? "bg-muted" : ""}
+            className="h-9 w-9"
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>
           <Button
-            variant="outline"
+            variant={viewMode === "list" ? "default" : "outline"}
             size="icon"
             onClick={() => setViewMode("list")}
-            className={viewMode === "list" ? "bg-muted" : ""}
+            className="h-9 w-9"
           >
             <List className="h-4 w-4" />
           </Button>
         </div>
       </div>
-
-      <div className="h-px bg-border" />
 
       <AddLeadDialog
         open={showAddLead}
@@ -85,8 +82,6 @@ export const LeadsHeader = ({
       <CreateInstagramContactDialog
         open={showInstagramDialog}
         onOpenChange={setShowInstagramDialog}
-        pipelineId={selectedPipelineId}
-        defaultPhase={undefined}
       />
     </div>
   );
