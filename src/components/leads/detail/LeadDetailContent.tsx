@@ -1,27 +1,29 @@
-import { Bot } from "lucide-react";
-import { Tables } from "@/integrations/supabase/types";
+import { Bot, Trash2 } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadInfoCard } from "./LeadInfoCard";
-import { TaskList } from "./TaskList";
-import { NoteList } from "./NoteList";
-import { LeadSummary } from "./LeadSummary";
-import { LeadMessages } from "./LeadMessages";
-import { CompactPhaseSelector } from "./CompactPhaseSelector";
-import { LeadTimeline } from "./LeadTimeline";
-import { ContactFieldManager } from "./contact-info/ContactFieldManager";
+import { LeadWithRelations } from "../types/lead";
+import { Button } from "@/components/ui/button";
+import { LeadInfoCard } from "../LeadInfoCard";
+import { TaskList } from "../TaskList";
+import { NoteList } from "../NoteList";
+import { LeadSummary } from "../LeadSummary";
+import { LeadMessages } from "../LeadMessages";
+import { CompactPhaseSelector } from "../CompactPhaseSelector";
+import { LeadTimeline } from "../LeadTimeline";
+import { ContactFieldManager } from "../contact-info/ContactFieldManager";
 import { InstagramProfileCard } from "./social-media/InstagramProfileCard";
+import { UseMutateFunction } from "@tanstack/react-query";
 
 interface LeadDetailContentProps {
-  lead: Tables<"leads">;
-  onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
+  lead: LeadWithRelations;
+  onUpdateLead: UseMutateFunction<any, Error, Partial<LeadWithRelations>, unknown>;
   onDeleteClick: () => void;
 }
 
-export function LeadDetailContent({ 
+export const LeadDetailContent = ({ 
   lead, 
   onUpdateLead,
-  onDeleteClick 
-}: LeadDetailContentProps) {
+  onDeleteClick
+}: LeadDetailContentProps) => {
   const { settings } = useSettings();
 
   return (
@@ -51,8 +53,19 @@ export function LeadDetailContent({
         <LeadTimeline lead={lead} />
         <TaskList leadId={lead.id} />
         <NoteList leadId={lead.id} />
-        <LeadMessages leadId={lead.id} messages={lead.messages} />
+        <LeadMessages leadId={lead.id} messages={lead.messages || []} />
+
+        <div className="absolute bottom-4 left-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-400 hover:text-red-600"
+            onClick={onDeleteClick}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
-}
+};

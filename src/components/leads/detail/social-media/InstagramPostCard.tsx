@@ -1,4 +1,4 @@
-import { MessageSquare, Heart, Link2, MapPin, Image, Video, Slideshow } from "lucide-react";
+import { MessageSquare, Heart, Link2, MapPin, Image, Video, Images } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -14,7 +14,7 @@ export function InstagramPostCard({ post }: InstagramPostCardProps) {
       case 'video':
         return <Video className="h-4 w-4 text-blue-500" />;
       case 'carousel':
-        return <Slideshow className="h-4 w-4 text-purple-500" />;
+        return <Images className="h-4 w-4 text-purple-500" />;
       default:
         return <Image className="h-4 w-4 text-green-500" />;
     }
