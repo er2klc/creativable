@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { AddLeadButton } from "./AddLeadButton";
-import { usePhaseMutations } from "./usePhaseMutations";
 
 interface PhaseColumnProps {
   phase: Tables<"pipeline_phases">;
@@ -56,7 +55,7 @@ export const PhaseColumn = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <CardHeader className="p-2 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-50 border-b shadow-sm">
+      <CardHeader className="p-2 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-40 border-b shadow-sm">
         <div className="flex items-center justify-between gap-2">
           {isEditMode ? (
             <>
