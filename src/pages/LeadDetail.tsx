@@ -114,7 +114,6 @@ export default function LeadDetail() {
       />
       
       <div className="grid grid-cols-12 gap-6 mt-6">
-        {/* Left Column - 4/12 width */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <LeadSummary lead={lead} />
           <LeadInfoCard 
@@ -123,13 +122,9 @@ export default function LeadDetail() {
           />
         </div>
         
-        {/* Right Column - 8/12 width */}
         <div className="col-span-12 lg:col-span-8 space-y-6">
           <LeadDetailTabs lead={lead} />
-          <LeadTimeline 
-            lead={lead} 
-            onDeletePhaseChange={deletePhaseChangeMutation.mutate}
-          />
+          <LeadTimeline lead={lead} />
         </div>
       </div>
     </div>

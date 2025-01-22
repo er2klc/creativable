@@ -7,17 +7,16 @@ import { NoteList } from "./NoteList";
 import { LeadSummary } from "./LeadSummary";
 import { LeadMessages } from "./LeadMessages";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
-import { LeadTimeline } from "./LeadTimeline";
+import { LeadTimeline } from "./timeline/LeadTimeline";
 import { ContactFieldManager } from "./contact-info/ContactFieldManager";
 import { LeadWithRelations } from "./types/lead";
 
 interface LeadContentProps {
   lead: LeadWithRelations;
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
-  onDeletePhaseChange: (noteId: string) => void;
 }
 
-export const LeadContent = ({ lead, onUpdateLead, onDeletePhaseChange }: LeadContentProps) => {
+export const LeadContent = ({ lead, onUpdateLead }: LeadContentProps) => {
   const { settings } = useSettings();
 
   return (
@@ -40,10 +39,7 @@ export const LeadContent = ({ lead, onUpdateLead, onDeletePhaseChange }: LeadCon
         
         <LeadInfoCard lead={lead} onUpdate={onUpdateLead} />
         <ContactFieldManager />
-        <LeadTimeline 
-          lead={lead} 
-          onDeletePhaseChange={onDeletePhaseChange}
-        />
+        <LeadTimeline lead={lead} />
         <TaskList leadId={lead.id} />
         <NoteList leadId={lead.id} />
         <LeadMessages leadId={lead.id} messages={lead.messages} />
