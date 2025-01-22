@@ -231,7 +231,10 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
                   <LeadSummary lead={lead} />
                 </div>
                 
-                <LeadInfoCard lead={lead} />
+                <LeadInfoCard 
+                  lead={lead} 
+                  onUpdate={updateLeadMutation.mutate}
+                />
                 <ContactFieldManager />
                 <LeadTimeline 
                   lead={lead} 

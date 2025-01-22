@@ -10,6 +10,7 @@ interface LeadCardHeaderProps {
     social_media_profile_image_url?: string | null;
     avatar_url?: string | null;
     social_media_followers?: number | null;
+    social_media_following?: number | null;
     social_media_posts?: Json | null;
     social_media_bio?: string | null;
   };
@@ -35,9 +36,10 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
           <div className="font-medium text-lg">
             {lead.social_media_username || lead.name}
           </div>
-          {lead.social_media_followers !== null && (
+          {(lead.social_media_followers !== null || lead.social_media_following !== null || parsedPosts) && (
             <LeadSocialStats
               followers={lead.social_media_followers}
+              following={lead.social_media_following}
               posts={parsedPosts}
             />
           )}
