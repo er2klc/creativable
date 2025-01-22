@@ -14,15 +14,16 @@ interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
   selectedPipelineId: string | null;
   setSelectedPipelineId: (id: string | null) => void;
+  isEditMode?: boolean;
 }
 
 export const LeadKanbanView = ({ 
   leads, 
   selectedPipelineId,
-  setSelectedPipelineId 
+  setSelectedPipelineId,
+  isEditMode = false
 }: LeadKanbanViewProps) => {
   const { settings } = useSettings();
-  const [isEditMode, setIsEditMode] = useState(false);
   const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
   const [targetPhase, setTargetPhase] = useState<string>("");
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);

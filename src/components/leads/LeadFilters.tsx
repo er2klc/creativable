@@ -6,7 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PlusCircle, GitBranch, Pencil } from "lucide-react";
+import { PlusCircle, GitBranch, Pencil, Save } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +14,6 @@ import { CreatePipelineDialog } from "./pipeline/CreatePipelineDialog";
 import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { Input } from "@/components/ui/input";
-import { Save } from "lucide-react";
 import { toast } from "sonner";
 
 interface LeadFiltersProps {
@@ -78,7 +77,6 @@ export const LeadFilters = ({
   const handleEditModeToggle = () => {
     const newEditMode = !isEditMode;
     setIsEditMode(newEditMode);
-    onEditModeChange?.(newEditMode);
     const currentPipeline = pipelines.find(p => p.id === selectedPipelineId);
     setEditingPipelineName(currentPipeline?.name || "");
   };
@@ -101,7 +99,6 @@ export const LeadFilters = ({
           : "Pipeline-Name erfolgreich aktualisiert"
       );
       setIsEditMode(false);
-      onEditModeChange?.(false);
     } catch (error) {
       console.error("Error updating pipeline name:", error);
       toast.error(
@@ -158,7 +155,7 @@ export const LeadFilters = ({
         className={`h-9 w-9 transition-colors ${
           isEditMode ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''
         }`}
-        title={isEditMode ? "Bearbeitungsmodus beenden" : "Bearbeitungsmodus aktivieren"}
+        title={isEditMode ? "Bearbeitungsmodus beenden" : "Pipeline-Name bearbeiten"}
       >
         <Pencil className="h-4 w-4" />
       </Button>
@@ -171,9 +168,14 @@ export const LeadFilters = ({
             placeholder={settings?.language === "en" ? "Pipeline Name" : "Pipeline-Name"}
             className="max-w-xs"
           />
-          <Button onClick={handleSaveChanges} variant="outline" size="sm">
-            <Save className="h-4 w-4 mr-2" />
-            {settings?.language === "en" ? "Save Pipeline Name" : "Pipeline-Name speichern"}
+          <Button 
+            onClick={handleSaveChanges} 
+            variant="outline" 
+            size="icon"
+            className="h-9 w-9"
+            title={settings?.language === "en" ? "Save Pipeline Name" : "Pipeline-Name speichern"}
+          >
+            <Save className="h-4 w-4" />
           </Button>
         </div>
       )}
