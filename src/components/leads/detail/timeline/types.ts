@@ -11,9 +11,9 @@ export type TimelineItemStatus =
   | 'completed' 
   | 'cancelled' 
   | 'pending' 
-  | 'outdated' 
-  | 'instagram' 
-  | 'linkedin' 
+  | 'outdated'
+  | 'instagram'
+  | 'linkedin'
   | 'whatsapp';
 
 export interface TimelineItem {
