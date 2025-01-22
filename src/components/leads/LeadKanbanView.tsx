@@ -100,7 +100,7 @@ export const LeadKanbanView = ({
       onDragEnd={handleDragEnd}
     >
       <div className="mt-6 border-t border-gray-200 shadow-sm pt-6">
-    <div className="flex-1 overflow-x-auto no-scrollbar relative h-[calc(100vh)]">
+    <div className="flex-1 overflow-y-auto">
           <div 
             className="flex gap-4 px-4 h-full" 
             style={{ minWidth: 'fit-content' }}
