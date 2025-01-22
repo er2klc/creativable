@@ -11,13 +11,14 @@ import { useSettings } from "@/hooks/use-settings";
 interface CreateInstagramContactDialogProps {
   open: boolean;
   onClose: () => void;
+  pipelineId?: string | null;
 }
 
 interface FormData {
   username: string;
 }
 
-export const CreateInstagramContactDialog = ({ open, onClose }: CreateInstagramContactDialogProps) => {
+export const CreateInstagramContactDialog = ({ open, onClose, pipelineId }: CreateInstagramContactDialogProps) => {
   const { settings } = useSettings();
   const [isLoading, setIsLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
@@ -25,6 +26,20 @@ export const CreateInstagramContactDialog = ({ open, onClose }: CreateInstagramC
   const onSubmit = async (data: FormData) => {
     try {
       setIsLoading(true);
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      // Get the first pipeline and its first phase if no pipeline specified
+      const { data: pipelines, error: pipelineError } = await supabase
+        .from('pipelines')
+        .select('id, pipeline_phases(id)')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single();
+
+      if (pipelineError) throw pipelineError;
 
       // Call the scan-social-profile function
       const { data: profileData, error: scanError } = await supabase.functions.invoke('scan-social-profile', {
@@ -36,40 +51,31 @@ export const CreateInstagramContactDialog = ({ open, onClose }: CreateInstagramC
 
       if (scanError) throw scanError;
 
-      // Get the first pipeline and its first phase
-      const { data: pipelines, error: pipelineError } = await supabase
-        .from('pipelines')
-        .select('id, pipeline_phases(id)')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .limit(1)
-        .single();
-
-      if (pipelineError) throw pipelineError;
-
       // Create the lead
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from('leads')
         .insert({
-          name: profileData.name || data.username,
+          user_id: user.id,
+          name: profileData.fullName || data.username,
           platform: 'instagram',
           social_media_username: data.username,
-          social_media_bio: profileData.bio,
-          social_media_followers: profileData.followers,
-          social_media_following: profileData.following,
-          social_media_profile_image_url: profileData.profileImageUrl,
-          social_media_posts_count: profileData.posts,
+          social_media_bio: profileData.biography,
+          social_media_followers: profileData.followersCount,
+          social_media_following: profileData.followsCount,
+          social_media_profile_image_url: profileData.profilePicUrlHD || profileData.profilePicUrl,
+          social_media_posts_count: profileData.postsCount,
           industry: "Not Specified",
-          pipeline_id: pipelines.id,
+          pipeline_id: pipelineId || pipelines.id,
           phase_id: pipelines.pipeline_phases[0].id,
           social_media_stats: {
-            followers: profileData.followers,
-            following: profileData.following,
-            posts: profileData.posts,
+            followers: profileData.followersCount,
+            following: profileData.followsCount,
+            posts: profileData.postsCount,
             engagement_rate: profileData.engagementRate
           }
         });
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
       toast.success(
         settings?.language === "en" 
