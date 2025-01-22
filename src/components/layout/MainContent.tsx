@@ -28,7 +28,17 @@ export const MainContent = ({ children, className }: MainContentProps) => {
         "container mx-auto px-4 lg:px-6",
         isLeadsPage ? "" : "py-4"
       )}>
-        {children}
+        {isLeadsPage && (
+          <div className="flex items-center py-4">
+            <h1 className="text-2xl font-semibold">Leads</h1>
+          </div>
+        )}
+        <div className="relative">
+          {children}
+          {isLeadsPage && (
+            <div className="absolute -top-4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent shadow-sm" />
+          )}
+        </div>
       </div>
     </main>
   );

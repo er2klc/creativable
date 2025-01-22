@@ -99,7 +99,7 @@ export const LeadKanbanView = ({
       collisionDetection={closestCenter} 
       onDragEnd={handleDragEnd}
     >
-      <div className="flex-1 overflow-x-auto no-scrollbar relative">
+      <div className="flex-1 overflow-x-auto no-scrollbar relative h-[calc(100vh-13rem)]">
         <div 
           className="flex gap-4 px-4 h-full" 
           style={{ minWidth: 'fit-content' }}
