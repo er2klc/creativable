@@ -1,14 +1,34 @@
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Tables } from "@/integrations/supabase/types";
-import { TimelineHeader } from "./TimelineHeader";
 import { cn } from "@/lib/utils";
 import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
+interface SocialMediaPost {
+  comments_count: number | null;
+  content: string | null;
+  created_at: string | null;
+  engagement_count: number | null;
+  first_comment: string | null;
+  id: string;
+  lead_id: string | null;
+  likes_count: number | null;
+  location: string | null;
+  media_type: string | null;
+  media_urls: string[] | null;
+  mentioned_profiles: string[] | null;
+  metadata: any;
+  platform: string;
+  post_type: string;
+  posted_at: string | null;
+  tagged_profiles: string[] | null;
+  tagged_users: any | null;
+  url: string | null;
+}
+
 interface SocialMediaTimelineProps {
-  posts: Tables<"social_media_posts">[];
+  posts: SocialMediaPost[];
 }
 
 export const SocialMediaTimeline = ({ posts }: SocialMediaTimelineProps) => {

@@ -1,128 +1,136 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { scanSocialProfile } from "@/utils/apify";
-
-const formSchema = z.object({
-  username: z.string().min(1, "Username ist erforderlich"),
-});
+import { useSettings } from "@/hooks/use-settings";
 
 interface CreateInstagramContactDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  pipelineId: string | null;
-  defaultPhase?: string;
+  onClose: () => void;
 }
 
-export function CreateInstagramContactDialog({ 
-  open, 
-  onOpenChange,
-  pipelineId,
-  defaultPhase 
-}: CreateInstagramContactDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      username: "",
-    },
-  });
+interface FormData {
+  username: string;
+}
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+export const CreateInstagramContactDialog = ({ open, onClose }: CreateInstagramContactDialogProps) => {
+  const { settings } = useSettings();
+  const [isLoading, setIsLoading] = useState(false);
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
+
+  const onSubmit = async (data: FormData) => {
     try {
       setIsLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
 
-      // Scan Instagram profile
-      const profileData = await scanSocialProfile("instagram", values.username);
-      if (!profileData) throw new Error("Failed to fetch Instagram profile data");
+      // Call the scan-social-profile function
+      const { data: profileData, error: scanError } = await supabase.functions.invoke('scan-social-profile', {
+        body: {
+          username: data.username,
+          platform: 'instagram'
+        }
+      });
 
-      // Create new lead
+      if (scanError) throw scanError;
+
+      // Get the first pipeline and its first phase
+      const { data: pipelines, error: pipelineError } = await supabase
+        .from('pipelines')
+        .select('id, pipeline_phases(id)')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .limit(1)
+        .single();
+
+      if (pipelineError) throw pipelineError;
+
+      // Create the lead
       const { error } = await supabase
-        .from("leads")
+        .from('leads')
         .insert({
-          user_id: user.id,
-          name: profileData.name || values.username,
-          platform: "Instagram",
-          social_media_username: values.username,
-          pipeline_id: pipelineId,
-          phase_id: defaultPhase || "",
+          name: profileData.name || data.username,
+          platform: 'instagram',
+          social_media_username: data.username,
           social_media_bio: profileData.bio,
           social_media_followers: profileData.followers,
           social_media_following: profileData.following,
           social_media_profile_image_url: profileData.profileImageUrl,
-          industry: "Not Specified",
           social_media_posts_count: profileData.posts,
+          industry: "Not Specified",
+          pipeline_id: pipelines.id,
+          phase_id: pipelines.pipeline_phases[0].id,
           social_media_stats: {
             followers: profileData.followers,
             following: profileData.following,
-            posts: profileData.posts
+            posts: profileData.posts,
+            engagement_rate: profileData.engagementRate
           }
         });
 
       if (error) throw error;
 
-      toast.success("Instagram-Kontakt erfolgreich hinzugefügt");
-      onOpenChange(false);
-      form.reset();
-    } catch (error) {
+      toast.success(
+        settings?.language === "en" 
+          ? "Contact created successfully" 
+          : "Kontakt erfolgreich erstellt"
+      );
+      onClose();
+    } catch (error: any) {
       console.error("Error adding Instagram contact:", error);
-      toast.error("Fehler beim Hinzufügen des Instagram-Kontakts");
+      toast.error(
+        settings?.language === "en"
+          ? "Error creating contact"
+          : "Fehler beim Erstellen des Kontakts"
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Instagram-Kontakt hinzufügen</DialogTitle>
+          <DialogTitle>
+            {settings?.language === "en" 
+              ? "Add Instagram Contact" 
+              : "Instagram Kontakt hinzufügen"}
+          </DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Instagram Username</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Instagram-Username eingeben" 
-                      {...field} 
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <Label htmlFor="username">
+              {settings?.language === "en" ? "Username" : "Benutzername"}
+            </Label>
+            <Input
+              id="username"
+              {...register("username", { required: true })}
+              placeholder={settings?.language === "en" ? "Enter username" : "Benutzername eingeben"}
             />
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
-              >
-                Abbrechen
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Lädt..." : "Kontakt hinzufügen"}
-              </Button>
-            </div>
-          </form>
-        </Form>
+            {errors.username && (
+              <span className="text-sm text-red-500">
+                {settings?.language === "en" 
+                  ? "Username is required" 
+                  : "Benutzername ist erforderlich"}
+              </span>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={onClose} type="button">
+              {settings?.language === "en" ? "Cancel" : "Abbrechen"}
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading 
+                ? (settings?.language === "en" ? "Creating..." : "Erstelle...") 
+                : (settings?.language === "en" ? "Create" : "Erstellen")}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
-}
+};
