@@ -7,7 +7,6 @@ import { useKanbanSubscription } from "./kanban/useKanbanSubscription";
 import { usePhaseQuery } from "./kanban/usePhaseQuery";
 import { usePhaseMutations } from "./kanban/usePhaseMutations";
 import { useNavigate } from "react-router-dom";
-import { LeadFilters } from "./LeadFilters";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
 import { AddPhaseButton } from "./kanban/AddPhaseButton";
 
@@ -99,60 +98,50 @@ export const LeadKanbanView = ({
       collisionDetection={closestCenter} 
       onDragEnd={handleDragEnd}
     >
-      <div className="flex flex-col h-screen">
-        <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30 w-full border-b">
-          <LeadFilters
-            selectedPipelineId={selectedPipelineId}
-            setSelectedPipelineId={setSelectedPipelineId}
-            onEditModeChange={setIsEditMode}
-          />
+      <div className="flex-1 overflow-x-auto no-scrollbar relative">
+        <div 
+          className="flex gap-4 px-4 h-full" 
+          style={{ minWidth: 'fit-content' }}
+        >
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
+
+          {phases.map((phase, index) => (
+            <div key={phase.id} className="flex-1" style={{ minWidth: '190px', width: `${100 / phases.length}%` }}>
+              <PhaseColumn
+                phase={phase}
+                leads={leads.filter((lead) => lead.phase_id === phase.id)}
+                onLeadClick={handleLeadClick}
+                isEditMode={isEditMode}
+                onDeletePhase={() => setPhaseToDelete(phase)}
+                onUpdatePhaseName={(newName) => updatePhaseName.mutate({ id: phase.id, name: newName })}
+                pipelineId={selectedPipelineId}
+                isFirst={index === 0}
+                isLast={index === phases.length - 1}
+                onMovePhase={
+                  isEditMode 
+                    ? (direction) => handleMovePhase(phase.id, direction)
+                    : undefined
+                }
+              />
+            </div>
+          ))}
+
+          {isEditMode && (
+            <AddPhaseButton pipelineId={selectedPipelineId} />
+          )}
+
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
         </div>
-
-        <div className="flex-1 overflow-x-auto no-scrollbar relative">
-          <div 
-            className="flex gap-4 px-4 h-full" 
-            style={{ minWidth: 'fit-content' }}
-          >
-            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
-
-            {phases.map((phase, index) => (
-              <div key={phase.id} className="flex-1" style={{ minWidth: '190px', width: `${100 / phases.length}%` }}>
-                <PhaseColumn
-                  phase={phase}
-                  leads={leads.filter((lead) => lead.phase_id === phase.id)}
-                  onLeadClick={handleLeadClick}
-                  isEditMode={isEditMode}
-                  onDeletePhase={() => setPhaseToDelete(phase)}
-                  onUpdatePhaseName={(newName) => updatePhaseName.mutate({ id: phase.id, name: newName })}
-                  pipelineId={selectedPipelineId}
-                  isFirst={index === 0}
-                  isLast={index === phases.length - 1}
-                  onMovePhase={
-                    isEditMode 
-                      ? (direction) => handleMovePhase(phase.id, direction)
-                      : undefined
-                  }
-                />
-              </div>
-            ))}
-
-            {isEditMode && (
-              <AddPhaseButton pipelineId={selectedPipelineId} />
-            )}
-
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
-          </div>
-        </div>
-
-        <DeletePhaseDialog
-          phaseToDelete={phaseToDelete}
-          targetPhase={targetPhase}
-          setTargetPhase={setTargetPhase}
-          onClose={() => setPhaseToDelete(null)}
-          onConfirm={handleDeletePhase}
-          phases={phases}
-        />
       </div>
+
+      <DeletePhaseDialog
+        phaseToDelete={phaseToDelete}
+        targetPhase={targetPhase}
+        setTargetPhase={setTargetPhase}
+        onClose={() => setPhaseToDelete(null)}
+        onConfirm={handleDeletePhase}
+        phases={phases}
+      />
     </DndContext>
   );
 };
