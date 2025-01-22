@@ -1,7 +1,7 @@
 import { Tables } from "@/integrations/supabase/types";
 import { TimelineHeader } from "./TimelineHeader";
-import { TimelineItem } from "./TimelineItem";
-import { TimelineItem as TimelineItemType, TimelineItemStatus } from "./types";
+import { TimelineItem as TimelineItemComponent } from "./TimelineItem";
+import { TimelineItem, TimelineItemType, TimelineItemStatus } from "./types";
 import { useEffect, useRef, useMemo } from "react";
 
 interface LeadTimelineProps {
@@ -22,7 +22,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const notes = Array.isArray(lead.notes) ? lead.notes : [];
   const files = Array.isArray(lead.lead_files) ? lead.lead_files : [];
 
-  const timelineItems: TimelineItemType[] = useMemo(() => [
+  const timelineItems: TimelineItem[] = useMemo(() => [
     {
       id: 'contact-created',
       type: 'contact_created',
@@ -32,7 +32,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     },
     ...messages.map(message => ({
       id: message.id,
-      type: 'message',
+      type: 'message' as TimelineItemType,
       content: message.content,
       created_at: message.sent_at || new Date().toISOString(),
       timestamp: message.sent_at || new Date().toISOString(),
@@ -41,7 +41,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     })),
     ...tasks.map(task => ({
       id: task.id,
-      type: task.meeting_type ? 'appointment' : 'task',
+      type: (task.meeting_type ? 'appointment' : 'task') as TimelineItemType,
       content: task.title,
       created_at: task.created_at || new Date().toISOString(),
       timestamp: task.created_at || new Date().toISOString(),
@@ -63,7 +63,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       if (metadata?.type === 'phase_change') {
         return {
           id: note.id,
-          type: 'phase_change',
+          type: 'phase_change' as TimelineItemType,
           content: note.content,
           created_at: note.created_at || new Date().toISOString(),
           timestamp: note.created_at || new Date().toISOString(),
@@ -76,7 +76,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       }
       return {
         id: note.id,
-        type: 'note',
+        type: 'note' as TimelineItemType,
         content: note.content,
         created_at: note.created_at || new Date().toISOString(),
         timestamp: note.created_at || new Date().toISOString(),
@@ -87,7 +87,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     }),
     ...files.map(file => ({
       id: file.id,
-      type: 'file_upload',
+      type: 'file_upload' as TimelineItemType,
       content: `Datei "${file.file_name}" wurde hochgeladen`,
       created_at: file.created_at || new Date().toISOString(),
       timestamp: file.created_at || new Date().toISOString(),
@@ -111,7 +111,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         
         {timelineItems.length > 0 ? (
           timelineItems.map((item) => (
-            <TimelineItem 
+            <TimelineItemComponent 
               key={item.id} 
               item={item} 
               onDelete={item.type === 'phase_change' && onDeletePhaseChange ? () => onDeletePhaseChange(item.id) : undefined}

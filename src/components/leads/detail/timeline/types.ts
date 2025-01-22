@@ -1,6 +1,6 @@
 export type TimelineItemType = 
   | 'message'
-  | 'task'
+  | 'task' 
   | 'note'
   | 'appointment'
   | 'file_upload'
