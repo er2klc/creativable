@@ -1,9 +1,9 @@
 import { Tables } from "@/integrations/supabase/types";
 import { TimelineHeader } from "./TimelineHeader";
 import { TimelineItem } from "./TimelineItem";
-import { TimelineItem as TimelineItemType } from "./TimelineUtils";
-import { SocialMediaTimeline } from "./SocialMediaTimeline";
+import { TimelineItem as TimelineItemType, TimelineItemStatus } from "./types";
 import { useState, useMemo } from "react";
+import { SocialMediaTimeline } from "./SocialMediaTimeline";
 
 interface LeadTimelineProps {
   lead: {
@@ -138,3 +138,4 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     </div>
   );
 };
+

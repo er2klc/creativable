@@ -1,3 +1,5 @@
+import { Activity, Shield, Crown, Users } from "lucide-react";
+
 interface LeadSocialStatsProps {
   followers: number | null;
   following: number | null;
