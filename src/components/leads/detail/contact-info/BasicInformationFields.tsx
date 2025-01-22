@@ -26,6 +26,7 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
   const [newTag, setNewTag] = useState("");
 
   const fields = [
+    { icon: User, label: settings?.language === "en" ? "Username" : "Benutzername", field: "social_media_username", value: lead.social_media_username },
     { icon: User, label: settings?.language === "en" ? "Name" : "Name", field: "name", value: lead.name },
     { icon: AtSign, label: "E-Mail", field: "email", value: lead.email },
     { icon: Phone, label: settings?.language === "en" ? "Phone" : "Telefon", field: "phone_number", value: lead.phone_number },

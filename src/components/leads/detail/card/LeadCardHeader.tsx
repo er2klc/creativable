@@ -24,17 +24,20 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
         : lead.social_media_posts)
     : null;
 
+  // Prioritize username over name
+  const displayName = lead.social_media_username || lead.name;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <LeadAvatar
           imageUrl={lead.social_media_profile_image_url || lead.avatar_url}
-          name={lead.name}
+          name={displayName}
           platform={lead.platform}
         />
         <div className="flex-1">
           <div className="font-medium text-lg">
-            {lead.social_media_username || lead.name}
+            {displayName}
           </div>
           {(lead.social_media_followers !== null || lead.social_media_following !== null || parsedPosts) && (
             <LeadSocialStats
