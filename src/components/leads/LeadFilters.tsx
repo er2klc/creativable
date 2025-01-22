@@ -13,25 +13,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { CreatePipelineDialog } from "./pipeline/CreatePipelineDialog";
 import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/use-settings";
+import { Input } from "@/components/ui/input";
+import { Save } from "lucide-react";
+import { toast } from "sonner";
 
 interface LeadFiltersProps {
   selectedPipelineId: string | null;
   setSelectedPipelineId: (id: string | null) => void;
-  onEditPipeline?: () => void;
-  isEditMode?: boolean;
 }
 
 export const LeadFilters = ({
   selectedPipelineId,
   setSelectedPipelineId,
-  onEditPipeline,
-  isEditMode,
 }: LeadFiltersProps) => {
   const session = useSession();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [hoveredPipeline, setHoveredPipeline] = useState<string | null>(null);
   const { settings, updateSettings } = useSettings();
   const queryClient = useQueryClient();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingPipelineName, setEditingPipelineName] = useState("");
 
   const { data: pipelines = [] } = useQuery({
     queryKey: ["pipelines"],
@@ -69,6 +70,40 @@ export const LeadFilters = ({
       queryClient.invalidateQueries({ queryKey: ["settings"] });
     } catch (error) {
       console.error("Error saving selected pipeline:", error);
+    }
+  };
+
+  const handleEditModeToggle = () => {
+    const currentPipeline = pipelines.find(p => p.id === selectedPipelineId);
+    setIsEditMode(!isEditMode);
+    setEditingPipelineName(currentPipeline?.name || "");
+  };
+
+  const handleSaveChanges = async () => {
+    if (!selectedPipelineId || !editingPipelineName.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from("pipelines")
+        .update({ name: editingPipelineName })
+        .eq("id", selectedPipelineId);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
+      toast.success(
+        settings?.language === "en" 
+          ? "Pipeline name updated successfully" 
+          : "Pipeline-Name erfolgreich aktualisiert"
+      );
+      setIsEditMode(false);
+    } catch (error) {
+      console.error("Error updating pipeline name:", error);
+      toast.error(
+        settings?.language === "en"
+          ? "Failed to update pipeline name"
+          : "Fehler beim Aktualisieren des Pipeline-Namens"
+      );
     }
   };
 
@@ -114,7 +149,7 @@ export const LeadFilters = ({
       <Button
         variant={isEditMode ? "default" : "outline"}
         size="icon"
-        onClick={onEditPipeline}
+        onClick={handleEditModeToggle}
         className={`h-9 w-9 transition-colors ${
           isEditMode ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''
         }`}
@@ -122,6 +157,21 @@ export const LeadFilters = ({
       >
         <Pencil className="h-4 w-4" />
       </Button>
+
+      {isEditMode && (
+        <div className="flex items-center gap-2">
+          <Input
+            value={editingPipelineName}
+            onChange={(e) => setEditingPipelineName(e.target.value)}
+            placeholder={settings?.language === "en" ? "Pipeline Name" : "Pipeline-Name"}
+            className="max-w-xs"
+          />
+          <Button onClick={handleSaveChanges} variant="outline" size="sm">
+            <Save className="h-4 w-4 mr-2" />
+            {settings?.language === "en" ? "Save Pipeline Name" : "Pipeline-Name speichern"}
+          </Button>
+        </div>
+      )}
 
       <CreatePipelineDialog 
         open={showCreateDialog} 

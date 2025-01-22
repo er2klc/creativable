@@ -2,17 +2,11 @@ import { useState } from "react";
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
 import { PhaseColumn } from "./kanban/PhaseColumn";
 import { useKanbanSubscription } from "./kanban/useKanbanSubscription";
 import { usePhaseQuery } from "./kanban/usePhaseQuery";
 import { usePhaseMutations } from "./kanban/usePhaseMutations";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Save } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { LeadFilters } from "./LeadFilters";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
 import { AddPhaseButton } from "./kanban/AddPhaseButton";
@@ -30,44 +24,13 @@ export const LeadKanbanView = ({
 }: LeadKanbanViewProps) => {
   const { settings } = useSettings();
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingPipelineName, setEditingPipelineName] = useState("");
   const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
   const [targetPhase, setTargetPhase] = useState<string>("");
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
   const { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePhaseOrder } = usePhaseMutations();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   useKanbanSubscription();
-
-  const updatePipelineName = useMutation({
-    mutationFn: async (newName: string) => {
-      if (!selectedPipelineId) return;
-
-      const { error } = await supabase
-        .from("pipelines")
-        .update({ name: newName })
-        .eq("id", selectedPipelineId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
-      toast.success(
-        settings?.language === "en" 
-          ? "Pipeline name updated successfully" 
-          : "Pipeline-Name erfolgreich aktualisiert"
-      );
-    },
-    onError: (error) => {
-      console.error("Error updating pipeline name:", error);
-      toast.error(
-        settings?.language === "en"
-          ? "Failed to update pipeline name"
-          : "Fehler beim Aktualisieren des Pipeline-Namens"
-      );
-    },
-  });
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -91,22 +54,6 @@ export const LeadKanbanView = ({
 
   const handleLeadClick = (id: string) => {
     navigate(`/contacts/${id}`);
-  };
-
-  const handleSaveChanges = async () => {
-    if (editingPipelineName) {
-      await updatePipelineName.mutateAsync(editingPipelineName);
-    }
-    setIsEditMode(false);
-  };
-
-  const handleEditModeToggle = () => {
-    const currentPipeline = phases[0]?.pipeline_id ? {
-      name: phases[0]?.name || ""
-    } : null;
-    
-    setIsEditMode(!isEditMode);
-    setEditingPipelineName(currentPipeline?.name || "");
   };
 
   const handleDeletePhase = async () => {
@@ -157,24 +104,7 @@ export const LeadKanbanView = ({
           <LeadFilters
             selectedPipelineId={selectedPipelineId}
             setSelectedPipelineId={setSelectedPipelineId}
-            onEditPipeline={handleEditModeToggle}
-            isEditMode={isEditMode}
           />
-          
-          {isEditMode && (
-            <div className="flex items-center gap-2">
-              <Input
-                value={editingPipelineName}
-                onChange={(e) => setEditingPipelineName(e.target.value)}
-                placeholder={settings?.language === "en" ? "Pipeline Name" : "Pipeline-Name"}
-                className="max-w-xs"
-              />
-              <Button onClick={handleSaveChanges} variant="outline" size="sm">
-                <Save className="h-4 w-4 mr-2" />
-                {settings?.language === "en" ? "Save Pipeline Name" : "Pipeline-Name speichern"}
-              </Button>
-            </div>
-          )}
         </div>
 
         <div className="flex-1 overflow-x-auto no-scrollbar relative">
