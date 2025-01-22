@@ -71,7 +71,7 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
     : fields.filter(field => field.value);
 
   return (
-    <>
+    <div className="mt-8 space-y-6">
       <ContactInfoGroup
         title={settings?.language === "en" ? "Basic Information" : "Basis Informationen"}
         leadId={lead.id}
@@ -99,7 +99,7 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
         rightIcon={
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-4 w-4 p-0 hover:bg-transparent">
+              <Button variant="ghost" size="sm" className="h-4 w-4 p-0 hover:bg-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                 <Plus className="h-4 w-4 text-gray-500 hover:text-gray-900" />
               </Button>
             </DropdownMenuTrigger>
@@ -152,6 +152,6 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
           ))}
         </div>
       </ContactInfoGroup>
-    </>
+    </div>
   );
 }

@@ -61,7 +61,12 @@ export function InfoRow({
     return value.join(", ");
   };
 
-  const displayValue = Array.isArray(value) ? formatArrayField(value) : value;
+  // Extract username from social media URL if field is social_media_username
+  const displayValue = field === 'social_media_username' 
+    ? (value as string)?.split('/')?.pop() || value 
+    : Array.isArray(value) 
+      ? formatArrayField(value) 
+      : value;
 
   if (!isVisible && (!displayValue || displayValue === "")) {
     return null;
@@ -69,7 +74,7 @@ export function InfoRow({
 
   return (
     <div className={cn(
-      "group relative",
+      "group relative py-2",
       isReordering && "cursor-move"
     )}>
       <div className={cn(

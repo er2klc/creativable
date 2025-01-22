@@ -31,14 +31,14 @@ export function GroupActionsMenu({
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+          className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <MoreVertical className="h-4 w-4 text-gray-500" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="w-48 bg-white border rounded-md shadow-md"
+        className="w-48 bg-white border rounded-md shadow-md z-50"
       >
         <DropdownMenuItem 
           onClick={onAddField}
