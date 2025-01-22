@@ -1,5 +1,3 @@
-export type TimelineItemStatus = 'completed' | 'cancelled' | 'pending' | 'outdated';
-
 export type TimelineItemType = 
   | 'message'
   | 'task'
@@ -8,6 +6,8 @@ export type TimelineItemType =
   | 'file_upload'
   | 'contact_created'
   | 'phase_change';
+
+export type TimelineItemStatus = 'completed' | 'cancelled' | 'pending' | 'outdated';
 
 export interface TimelineItem {
   id: string;
@@ -29,6 +29,8 @@ export interface TimelineItem {
     updatedAt?: string;
     oldDate?: string;
     newDate?: string;
+    oldPhase?: string;
+    newPhase?: string;
     meetingType?: string;
     color?: string;
   };
