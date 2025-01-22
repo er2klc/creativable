@@ -40,7 +40,7 @@ export const LeadsHeader = ({
             className="bg-black text-white hover:bg-black/90 rounded-r-none"
             onClick={() => setShowAddLead(true)}
           >
-            Kontakt hinzufügen ✨
+            ✨ Kontakt hinzufügen
           </Button>
 
           {/* Dropdown Button */}
