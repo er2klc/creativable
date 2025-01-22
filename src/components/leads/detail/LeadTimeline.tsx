@@ -1,7 +1,7 @@
 import { Tables } from "@/integrations/supabase/types";
 import { TimelineHeader } from "./timeline/TimelineHeader";
-import { TimelineItem as TimelineItemComponent } from "./timeline/TimelineItem";
-import { TimelineItem, TimelineItemType, TimelineItemStatus } from "./timeline/types";
+import { TimelineItem } from "./timeline/TimelineItem";
+import { TimelineItem as TimelineItemType, TimelineItemStatus } from "./timeline/TimelineUtils";
 import { useEffect, useRef, useMemo } from "react";
 
 interface LeadTimelineProps {
@@ -109,7 +109,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         
         {timelineItems.length > 0 ? (
           timelineItems.map((item) => (
-            <TimelineItemComponent 
+            <TimelineItem 
               key={item.id} 
               item={item} 
               onDelete={item.type === 'phase_change' && onDeletePhaseChange ? () => onDeletePhaseChange(item.id) : undefined}

@@ -1,7 +1,8 @@
+import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 import { TimelineItemIcon } from "./TimelineItemIcon";
 import { TimelineItemCard } from "./TimelineItemCard";
+import { formatDate } from "./TimelineUtils";
 import { motion } from "framer-motion";
-import { TimelineItem as TimelineItemType } from "./types";
 
 interface TimelineItemProps {
   item: TimelineItemType;
@@ -22,13 +23,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
     >
       {/* Date above the card */}
       <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
-        {new Date(item.timestamp).toLocaleDateString('de-DE', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })}
+        {formatDate(item.timestamp)}
       </div>
       
       <div className="flex gap-4 items-start group relative">

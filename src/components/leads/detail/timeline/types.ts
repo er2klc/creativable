@@ -1,20 +1,13 @@
+export type TimelineItemStatus = 'completed' | 'cancelled' | 'pending' | 'outdated';
+
 export type TimelineItemType = 
   | 'message'
-  | 'task' 
+  | 'task'
   | 'note'
   | 'appointment'
   | 'file_upload'
   | 'contact_created'
   | 'phase_change';
-
-export type TimelineItemStatus = 
-  | 'completed' 
-  | 'cancelled'
-  | 'pending'
-  | 'outdated'
-  | 'instagram'
-  | 'linkedin'
-  | 'whatsapp';
 
 export interface TimelineItem {
   id: string;
@@ -36,19 +29,7 @@ export interface TimelineItem {
     updatedAt?: string;
     oldDate?: string;
     newDate?: string;
-    oldPhase?: string;
-    newPhase?: string;
     meetingType?: string;
     color?: string;
   };
 }
-
-export const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
