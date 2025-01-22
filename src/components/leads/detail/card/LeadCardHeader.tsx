@@ -1,31 +1,23 @@
 import { LeadAvatar } from "./LeadAvatar";
 import { LeadSocialStats } from "./LeadSocialStats";
-import { Json } from "@/integrations/supabase/types";
+import { type Tables } from "@/integrations/supabase/types";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface LeadCardHeaderProps {
-  lead: {
-    name: string;
-    platform: string;
-    social_media_username?: string | null;
-    social_media_profile_image_url?: string | null;
-    avatar_url?: string | null;
-    social_media_followers?: number | null;
-    social_media_following?: number | null;
-    social_media_posts?: Json | null;
-    social_media_bio?: string | null;
+  lead: Tables<"leads"> & {
+    stats?: {
+      totalMembers: number;
+      admins: number;
+    };
   };
 }
 
 export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
-  // Parse social_media_posts from JSON if it exists
-  const parsedPosts = lead.social_media_posts 
-    ? (typeof lead.social_media_posts === 'string' 
-        ? JSON.parse(lead.social_media_posts) 
-        : lead.social_media_posts)
-    : null;
+  const user = useUser();
+  const isTeamOwner = user?.id === lead.created_by;
 
   // Prioritize username over name
-  const displayName = lead.social_media_username || lead.name;
+  const displayName = lead.social_media_username?.split('/')?.pop() || lead.name;
 
   return (
     <div className="space-y-4">
@@ -39,11 +31,12 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
           <div className="font-medium text-lg">
             {displayName}
           </div>
-          {(lead.social_media_followers !== null || lead.social_media_following !== null || parsedPosts) && (
+          {(lead.social_media_followers !== null || lead.social_media_following !== null) && (
             <LeadSocialStats
               followers={lead.social_media_followers}
               following={lead.social_media_following}
-              posts={parsedPosts}
+              engagementRate={lead.social_media_engagement_rate}
+              isTeamOwner={isTeamOwner}
             />
           )}
         </div>
