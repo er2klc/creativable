@@ -179,16 +179,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     }
   });
 
-  if (error) {
-    toast.error(
-      settings?.language === "en"
-        ? "Error loading contact"
-        : "Fehler beim Laden des Kontakts"
-    );
-    onClose();
-    return null;
-  }
-
   return (
     <>
       <Dialog open={!!leadId} onOpenChange={() => onClose()}>
@@ -245,7 +235,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
                 <ContactFieldManager />
                 <LeadTimeline 
                   lead={lead} 
-                  onDeletePhaseChange={deletePhaseChangeMutation.mutate}
                 />
                 <TaskList leadId={lead.id} />
                 <NoteList leadId={lead.id} />
