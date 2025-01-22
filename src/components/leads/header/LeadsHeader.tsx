@@ -39,7 +39,7 @@ export const LeadsHeader = ({
         <h1 className="text-2xl font-semibold">Kontakte</h1>
 
         {/* Add Contact and Dropdown Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-[1px]">
           <Button onClick={() => setShowAddLead(true)}>
             Kontakt hinzufügen ✨
           </Button>
