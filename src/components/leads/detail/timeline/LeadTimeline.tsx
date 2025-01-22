@@ -1,126 +1,73 @@
-import { Tables } from "@/integrations/supabase/types";
+import { useState } from "react";
 import { TimelineHeader } from "./TimelineHeader";
 import { TimelineItem } from "./TimelineItem";
-import { TimelineItem as TimelineItemType, TimelineItemStatus } from "./TimelineUtils";
-import { useEffect, useRef, useMemo } from "react";
+import { SocialMediaTimeline } from "./SocialMediaTimeline";
+import { useSettings } from "@/hooks/use-settings";
+import { LeadWithRelations } from "./types/lead";
+import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 
 interface LeadTimelineProps {
-  lead: {
-    messages: Tables<"messages">[];
-    tasks: Tables<"tasks">[];
-    notes: Tables<"notes">[];
-    lead_files: Tables<"lead_files">[];
-    created_at: string;
-    name: string;
-  };
+  lead: LeadWithRelations;
   onDeletePhaseChange?: (noteId: string) => void;
 }
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
-  const messages = Array.isArray(lead.messages) ? lead.messages : [];
-  const tasks = Array.isArray(lead.tasks) ? lead.tasks : [];
-  const notes = Array.isArray(lead.notes) ? lead.notes : [];
-  const files = Array.isArray(lead.lead_files) ? lead.lead_files : [];
+  const { settings } = useSettings();
+  const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
+  
+  // Check if lead was created via Apify (has social media data)
+  const showSocialTimeline = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
 
-  const timelineItems: TimelineItemType[] = useMemo(() => [
-    {
-      id: 'contact-created',
-      type: 'contact_created' as TimelineItemType['type'],
-      content: `Kontakt ${lead.name} wurde erstellt`,
-      created_at: lead.created_at || new Date().toISOString(),
-      timestamp: lead.created_at || new Date().toISOString(),
-    },
-    ...messages.map(message => ({
-      id: message.id,
-      type: 'message' as TimelineItemType['type'],
-      content: message.content,
-      created_at: message.sent_at || new Date().toISOString(),
-      timestamp: message.sent_at || new Date().toISOString(),
-      status: message.platform,
-      platform: message.platform
-    })),
-    ...tasks.map(task => ({
-      id: task.id,
-      type: (task.meeting_type ? 'appointment' : 'task') as TimelineItemType['type'],
-      content: task.title,
-      created_at: task.created_at || new Date().toISOString(),
-      timestamp: task.created_at || new Date().toISOString(),
-      status: task.completed ? 'completed' as const : task.cancelled ? 'cancelled' as const : 'pending' as const,
-      metadata: {
-        dueDate: task.due_date,
-        meetingType: task.meeting_type,
-        color: task.color,
-        status: task.completed ? 'completed' as TimelineItemStatus : 
-               task.cancelled ? 'cancelled' as TimelineItemStatus : 
-               undefined
-      }
-    })),
-    ...notes.map(note => {
-      const metadata = note.metadata as { type?: string; oldPhase?: string; newPhase?: string; color?: string };
-      
-      if (metadata?.type === 'phase_change') {
-        return {
-          id: note.id,
-          type: 'phase_change' as TimelineItemType['type'],
-          content: note.content,
-          created_at: note.created_at || new Date().toISOString(),
-          timestamp: note.created_at || new Date().toISOString(),
-          metadata: {
-            oldPhase: metadata.oldPhase,
-            newPhase: metadata.newPhase,
-            color: note.color
-          }
-        };
-      }
-      return {
-        id: note.id,
-        type: 'note' as TimelineItemType['type'],
-        content: note.content,
-        created_at: note.created_at || new Date().toISOString(),
-        timestamp: note.created_at || new Date().toISOString(),
-        metadata: {
-          color: note.color
-        }
-      };
-    }),
-    ...files.map(file => ({
-      id: file.id,
-      type: 'file_upload' as TimelineItemType['type'],
-      content: `Datei "${file.file_name}" wurde hochgeladen`,
-      created_at: file.created_at || new Date().toISOString(),
-      timestamp: file.created_at || new Date().toISOString(),
-      metadata: {
-        fileName: file.file_name,
-        fileType: file.file_type,
-        fileSize: file.file_size
-      }
-    }))
-  ].sort((a, b) => {
-    const dateA = new Date(a.timestamp || new Date());
-    const dateB = new Date(b.timestamp || new Date());
-    return dateB.getTime() - dateA.getTime();
-  }), [messages, tasks, notes, files, lead.created_at, lead.name]);
+  const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
+    id: note.id,
+    type: note.metadata?.type === 'phase_change' ? 'phase_change' : 'note',
+    content: note.content,
+    created_at: note.created_at,
+    timestamp: note.created_at,
+    metadata: note.metadata,
+    status: note.status
+  });
 
   return (
-    <div className="p-4">
-      <TimelineHeader title="Aktivitäten" />
-      <div className="relative space-y-6">
-        <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400" />
-        
-        {timelineItems.length > 0 ? (
-          timelineItems.map((item) => (
+    <div className="space-y-4">
+      <TimelineHeader 
+        title={settings?.language === "en" ? "Activities" : "Aktivitäten"}
+        showSocialTimeline={showSocialTimeline}
+        activeTimeline={activeTimeline}
+        onTimelineChange={setActiveTimeline}
+      />
+
+      {activeTimeline === 'activities' ? (
+        <div className="relative space-y-6">
+          <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400" />
+          {lead.notes?.map((note) => (
             <TimelineItem 
-              key={item.id} 
-              item={item} 
-              onDelete={item.type === 'phase_change' && onDeletePhaseChange ? () => onDeletePhaseChange(item.id) : undefined}
+              key={note.id} 
+              item={mapNoteToTimelineItem(note)} 
+              onDelete={onDeletePhaseChange ? () => onDeletePhaseChange(note.id) : undefined} 
             />
-          ))
-        ) : (
-          <div className="text-center text-muted-foreground py-4">
-            Noch keine Aktivitäten vorhanden
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <SocialMediaTimeline 
+          posts={lead.social_media_posts as Array<{
+            comments_count: number;
+            content: string;
+            created_at: string;
+            id: string;
+            lead_id: string;
+            likes_count: number;
+            location: string;
+            mentioned_profiles: string[];
+            metadata: any;
+            platform: string;
+            post_type: string;
+            posted_at: string;
+            tagged_profiles: string[];
+            url: string;
+          }>} 
+        />
+      )}
     </div>
   );
 };
