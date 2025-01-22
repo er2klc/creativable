@@ -1398,6 +1398,65 @@ export type Database = {
           },
         ]
       }
+      social_media_posts: {
+        Row: {
+          comments_count: number | null
+          content: string | null
+          created_at: string | null
+          id: string
+          lead_id: string | null
+          likes_count: number | null
+          location: string | null
+          mentioned_profiles: string[] | null
+          metadata: Json | null
+          platform: string
+          post_type: string
+          posted_at: string | null
+          tagged_profiles: string[] | null
+          url: string | null
+        }
+        Insert: {
+          comments_count?: number | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          likes_count?: number | null
+          location?: string | null
+          mentioned_profiles?: string[] | null
+          metadata?: Json | null
+          platform: string
+          post_type: string
+          posted_at?: string | null
+          tagged_profiles?: string[] | null
+          url?: string | null
+        }
+        Update: {
+          comments_count?: number | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          likes_count?: number | null
+          location?: string | null
+          mentioned_profiles?: string[] | null
+          metadata?: Json | null
+          platform?: string
+          post_type?: string
+          posted_at?: string | null
+          tagged_profiles?: string[] | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_media_posts_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_ticket_attachments: {
         Row: {
           created_at: string | null

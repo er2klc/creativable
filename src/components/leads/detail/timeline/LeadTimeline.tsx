@@ -1,8 +1,9 @@
 import { Tables } from "@/integrations/supabase/types";
 import { TimelineHeader } from "./TimelineHeader";
 import { TimelineItem } from "./TimelineItem";
-import { TimelineItem as TimelineItemType, TimelineItemStatus } from "./TimelineUtils";
-import { useEffect, useRef, useMemo } from "react";
+import { TimelineItem as TimelineItemType } from "./TimelineUtils";
+import { SocialMediaTimeline } from "./SocialMediaTimeline";
+import { useState, useMemo } from "react";
 
 interface LeadTimelineProps {
   lead: {
@@ -10,6 +11,7 @@ interface LeadTimelineProps {
     tasks: Tables<"tasks">[];
     notes: Tables<"notes">[];
     lead_files: Tables<"lead_files">[];
+    social_media_posts: Tables<"social_media_posts">[];
     created_at: string;
     name: string;
   };
@@ -17,10 +19,12 @@ interface LeadTimelineProps {
 }
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
+  const [activeTab, setActiveTab] = useState<'activities' | 'social'>('activities');
   const messages = Array.isArray(lead.messages) ? lead.messages : [];
   const tasks = Array.isArray(lead.tasks) ? lead.tasks : [];
   const notes = Array.isArray(lead.notes) ? lead.notes : [];
   const files = Array.isArray(lead.lead_files) ? lead.lead_files : [];
+  const socialMediaPosts = Array.isArray(lead.social_media_posts) ? lead.social_media_posts : [];
 
   const timelineItems: TimelineItemType[] = useMemo(() => [
     {
@@ -55,34 +59,16 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
                undefined
       }
     })),
-    ...notes.map(note => {
-      const metadata = note.metadata as { type?: string; oldPhase?: string; newPhase?: string; color?: string };
-      
-      if (metadata?.type === 'phase_change') {
-        return {
-          id: note.id,
-          type: 'phase_change' as TimelineItemType['type'],
-          content: note.content,
-          created_at: note.created_at || new Date().toISOString(),
-          timestamp: note.created_at || new Date().toISOString(),
-          metadata: {
-            oldPhase: metadata.oldPhase,
-            newPhase: metadata.newPhase,
-            color: note.color
-          }
-        };
+    ...notes.map(note => ({
+      id: note.id,
+      type: 'note' as TimelineItemType['type'],
+      content: note.content,
+      created_at: note.created_at || new Date().toISOString(),
+      timestamp: note.created_at || new Date().toISOString(),
+      metadata: {
+        color: note.color
       }
-      return {
-        id: note.id,
-        type: 'note' as TimelineItemType['type'],
-        content: note.content,
-        created_at: note.created_at || new Date().toISOString(),
-        timestamp: note.created_at || new Date().toISOString(),
-        metadata: {
-          color: note.color
-        }
-      };
-    }),
+    })),
     ...files.map(file => ({
       id: file.id,
       type: 'file_upload' as TimelineItemType['type'],
@@ -103,24 +89,52 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
 
   return (
     <div className="p-4">
-      <TimelineHeader title="Aktivitäten" />
-      <div className="relative space-y-6">
-        <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400" />
-        
-        {timelineItems.length > 0 ? (
-          timelineItems.map((item) => (
-            <TimelineItem 
-              key={item.id} 
-              item={item} 
-              onDelete={item.type === 'phase_change' && onDeletePhaseChange ? () => onDeletePhaseChange(item.id) : undefined}
-            />
-          ))
-        ) : (
-          <div className="text-center text-muted-foreground py-4">
-            Noch keine Aktivitäten vorhanden
-          </div>
-        )}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex gap-6">
+          <button
+            onClick={() => setActiveTab('activities')}
+            className={`text-lg font-semibold ${
+              activeTab === 'activities' 
+                ? 'text-primary border-b-2 border-primary' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Aktivitäten
+          </button>
+          <button
+            onClick={() => setActiveTab('social')}
+            className={`text-lg font-semibold ${
+              activeTab === 'social' 
+                ? 'text-primary border-b-2 border-primary' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Kontakt Social Aktivitäten
+          </button>
+        </div>
       </div>
+
+      {activeTab === 'activities' ? (
+        <div className="relative space-y-6">
+          <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400" />
+          
+          {timelineItems.length > 0 ? (
+            timelineItems.map((item) => (
+              <TimelineItem 
+                key={item.id} 
+                item={item} 
+                onDelete={item.type === 'phase_change' && onDeletePhaseChange ? () => onDeletePhaseChange(item.id) : undefined}
+              />
+            ))
+          ) : (
+            <div className="text-center text-muted-foreground py-4">
+              Noch keine Aktivitäten vorhanden
+            </div>
+          )}
+        </div>
+      ) : (
+        <SocialMediaTimeline posts={socialMediaPosts} />
+      )}
     </div>
   );
 };
