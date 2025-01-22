@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useLeadSubscription } from "@/components/leads/detail/hooks/useLeadSubscription";
 import { LeadWithRelations } from "./types/lead";
 import { Button } from "@/components/ui/button";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 
@@ -34,7 +34,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const location = useLocation();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: lead, isLoading, error } = useQuery({
@@ -165,9 +164,8 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           : "Kontakt erfolgreich gelöscht"
       );
       onClose();
-      // Check if we came from the contacts page
-      const shouldNavigateToContacts = location.pathname.startsWith('/contacts');
-      navigate(shouldNavigateToContacts ? '/contacts' : '/pool', { replace: true });
+      // Always redirect to contacts page after deletion
+      navigate('/contacts', { replace: true });
     },
     onError: (error) => {
       console.error("Error deleting lead:", error);
@@ -177,25 +175,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           : "Fehler beim Löschen des Kontakts"
       );
     }
-  });
-
-  const deletePhaseChangeMutation = useMutation({
-    mutationFn: async (noteId: string) => {
-      const { error } = await supabase
-        .from("notes")
-        .delete()
-        .eq("id", noteId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      toast.success(
-        settings?.language === "en"
-          ? "Phase change deleted successfully"
-          : "Phasenänderung erfolgreich gelöscht"
-      );
-    },
   });
 
   if (error) {
@@ -262,10 +241,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
                 
                 <LeadInfoCard lead={lead} />
                 <ContactFieldManager />
-                <LeadTimeline 
-                  lead={lead} 
-                  onDeletePhaseChange={deletePhaseChangeMutation.mutate}
-                />
+                <LeadTimeline lead={lead} />
                 <TaskList leadId={lead.id} />
                 <NoteList leadId={lead.id} />
                 <LeadMessages leadId={lead.id} messages={lead.messages} />
