@@ -1,5 +1,8 @@
 import { Json } from "@/integrations/supabase/types";
 
+export type Gender = "male" | "female" | "other" | "prefer_not_to_say";
+export type PreferredCommunicationChannel = "email" | "phone" | "whatsapp" | "instagram" | "other";
+
 export interface Note {
   id: string;
   user_id: string;
@@ -36,6 +39,21 @@ export interface Message {
   read: boolean;
 }
 
+export interface LeadFile {
+  id: string;
+  lead_id: string | null;
+  user_id: string | null;
+  file_name: string;
+  file_path: string;
+  file_type: string | null;
+  file_size: number | null;
+  compressed_file_path: string | null;
+  compressed_file_size: number | null;
+  preview_path: string | null;
+  created_at: string | null;
+  metadata: Json | null;
+}
+
 export interface SocialMediaPost {
   id: string;
   lead_id: string;
@@ -70,7 +88,7 @@ export interface LeadWithRelations {
   notes: Note[];
   messages: Message[];
   tasks: Task[];
-  lead_files: any[];
+  lead_files: LeadFile[];
   social_media_posts: SocialMediaPost[] | null;
   social_media_username: string | null;
   social_media_bio: string | null;
@@ -100,7 +118,7 @@ export interface LeadWithRelations {
   region: string | null;
   country: string | null;
   birth_date: string | null;
-  gender: string | null;
+  gender: Gender | null;
   languages: string[] | null;
   interests: string[] | null;
   goals: string[] | null;
@@ -113,7 +131,7 @@ export interface LeadWithRelations {
   usp: string | null;
   business_description: string | null;
   contact_type: string | null;
-  preferred_communication_channel: string | null;
+  preferred_communication_channel: PreferredCommunicationChannel | null;
   best_contact_times: string | null;
   referred_by: string | null;
   pool_category: string | null;
