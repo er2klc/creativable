@@ -1291,6 +1291,7 @@ export type Database = {
       settings: {
         Row: {
           about_me: string | null
+          apify_api_key: string | null
           business_description: string | null
           company_name: string | null
           created_at: string | null
@@ -1324,6 +1325,7 @@ export type Database = {
         }
         Insert: {
           about_me?: string | null
+          apify_api_key?: string | null
           business_description?: string | null
           company_name?: string | null
           created_at?: string | null
@@ -1357,6 +1359,7 @@ export type Database = {
         }
         Update: {
           about_me?: string | null
+          apify_api_key?: string | null
           business_description?: string | null
           company_name?: string | null
           created_at?: string | null

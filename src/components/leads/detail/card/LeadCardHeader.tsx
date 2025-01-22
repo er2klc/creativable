@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { LeadAvatar } from "./LeadAvatar";
 import { LeadSocialStats } from "./LeadSocialStats";
 import { type Tables } from "@/integrations/supabase/types";
@@ -5,8 +6,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useSettings } from "@/hooks/use-settings";
 
 interface LeadCardHeaderProps {
   lead: Tables<"leads"> & {
@@ -19,6 +19,7 @@ interface LeadCardHeaderProps {
 
 export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
   const user = useUser();
+  const { settings } = useSettings();
   const isTeamOwner = user?.id === lead.user_id;
   const [isScanning, setIsScanning] = useState(false);
 
@@ -27,7 +28,10 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
 
   const handleScanProfile = async () => {
     if (!lead.social_media_username) {
-      toast.error("Bitte geben Sie zuerst einen Social Media Benutzernamen ein");
+      toast.error(settings?.language === "en" 
+        ? "Please enter a social media username first"
+        : "Bitte geben Sie zuerst einen Social Media Benutzernamen ein"
+      );
       return;
     }
 
@@ -57,13 +61,22 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
       const result = await response.json();
       
       if (result.success) {
-        toast.success("Profil erfolgreich gescannt");
+        toast.success(settings?.language === "en"
+          ? "Profile scanned successfully"
+          : "Profil erfolgreich gescannt"
+        );
       } else {
-        toast.error(result.message || "Fehler beim Scannen des Profils");
+        toast.error(result.error || (settings?.language === "en"
+          ? "Failed to scan profile"
+          : "Fehler beim Scannen des Profils"
+        ));
       }
     } catch (error) {
       console.error('Error scanning profile:', error);
-      toast.error("Fehler beim Scannen des Profils");
+      toast.error(settings?.language === "en"
+        ? "Error scanning profile"
+        : "Fehler beim Scannen des Profils"
+      );
     } finally {
       setIsScanning(false);
     }
@@ -101,7 +114,6 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
         </div>
       </div>
       
-      {/* Bio section - only show if there's a bio available */}
       {lead.social_media_bio && (
         <div className="text-sm text-gray-600 leading-relaxed border-t pt-4">
           {lead.social_media_bio}
