@@ -5,7 +5,7 @@ import { LeadTableView } from "@/components/leads/LeadTableView";
 import { useLeadsQuery } from "@/hooks/use-leads-query";
 import { useNavigate } from "react-router-dom";
 
-export const Leads = () => {
+const Leads = () => {
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
@@ -52,3 +52,5 @@ export const Leads = () => {
     </div>
   );
 };
+
+export default Leads;
