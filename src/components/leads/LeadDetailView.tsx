@@ -145,7 +145,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           : "Kontakt erfolgreich gelöscht"
       );
       onClose();
-      navigate('/contacts');
+      navigate('/contacts', { replace: true });
     },
     onError: (error) => {
       console.error("Error deleting lead:", error);
