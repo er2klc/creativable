@@ -104,6 +104,7 @@ export const LeadKanbanView = ({
           <LeadFilters
             selectedPipelineId={selectedPipelineId}
             setSelectedPipelineId={setSelectedPipelineId}
+            onEditModeChange={setIsEditMode}
           />
         </div>
 

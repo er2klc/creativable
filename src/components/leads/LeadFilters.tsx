@@ -20,11 +20,13 @@ import { toast } from "sonner";
 interface LeadFiltersProps {
   selectedPipelineId: string | null;
   setSelectedPipelineId: (id: string | null) => void;
+  onEditModeChange?: (isEditMode: boolean) => void;
 }
 
 export const LeadFilters = ({
   selectedPipelineId,
   setSelectedPipelineId,
+  onEditModeChange,
 }: LeadFiltersProps) => {
   const session = useSession();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -74,8 +76,10 @@ export const LeadFilters = ({
   };
 
   const handleEditModeToggle = () => {
+    const newEditMode = !isEditMode;
+    setIsEditMode(newEditMode);
+    onEditModeChange?.(newEditMode);
     const currentPipeline = pipelines.find(p => p.id === selectedPipelineId);
-    setIsEditMode(!isEditMode);
     setEditingPipelineName(currentPipeline?.name || "");
   };
 
@@ -97,6 +101,7 @@ export const LeadFilters = ({
           : "Pipeline-Name erfolgreich aktualisiert"
       );
       setIsEditMode(false);
+      onEditModeChange?.(false);
     } catch (error) {
       console.error("Error updating pipeline name:", error);
       toast.error(
