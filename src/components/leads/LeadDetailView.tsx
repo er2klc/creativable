@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useLeadSubscription } from "@/components/leads/detail/hooks/useLeadSubscription";
 import { LeadWithRelations } from "./detail/types/lead";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 
@@ -34,6 +34,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: lead, isLoading, error } = useQuery({
@@ -119,24 +120,43 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     mutationFn: async () => {
       if (!leadId) return;
 
+      console.log('Starting deletion process for lead:', leadId);
+
+      const relatedTables = [
+        'contact_group_states',
+        'instagram_scan_history',
+        'lead_files',
+        'lead_subscriptions',
+        'messages',
+        'notes',
+        'tasks'
+      ] as const;
+
       // Delete related records first
-      const tables = ['messages', 'tasks', 'notes', 'lead_files'] as const;
-      for (const table of tables) {
+      for (const table of relatedTables) {
+        console.log(`Deleting related records from ${table}`);
         const { error } = await supabase
           .from(table)
           .delete()
           .eq('lead_id', leadId);
         
-        if (error) throw error;
+        if (error) {
+          console.error(`Error deleting from ${table}:`, error);
+          throw error;
+        }
       }
 
       // Finally delete the lead
+      console.log('Deleting lead record');
       const { error } = await supabase
         .from('leads')
         .delete()
         .eq('id', leadId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting lead:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success(
@@ -145,7 +165,9 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           : "Kontakt erfolgreich gelöscht"
       );
       onClose();
-      navigate('/contacts', { replace: true });
+      // Check if we came from the contacts page
+      const shouldNavigateToContacts = location.pathname.startsWith('/contacts');
+      navigate(shouldNavigateToContacts ? '/contacts' : '/pool', { replace: true });
     },
     onError: (error) => {
       console.error("Error deleting lead:", error);
@@ -155,25 +177,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           : "Fehler beim Löschen des Kontakts"
       );
     }
-  });
-
-  const deletePhaseChangeMutation = useMutation({
-    mutationFn: async (noteId: string) => {
-      const { error } = await supabase
-        .from("notes")
-        .delete()
-        .eq("id", noteId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      toast.success(
-        settings?.language === "en"
-          ? "Phase change deleted successfully"
-          : "Phasenänderung erfolgreich gelöscht"
-      );
-    },
   });
 
   if (error) {

@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useLeadSubscription } from "@/components/leads/detail/hooks/useLeadSubscription";
 import { LeadWithRelations } from "./types/lead";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 
@@ -34,6 +34,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: lead, isLoading, error } = useQuery({
@@ -164,7 +165,9 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           : "Kontakt erfolgreich gelöscht"
       );
       onClose();
-      navigate('/contacts', { replace: true });
+      // Check if we came from the contacts page
+      const shouldNavigateToContacts = location.pathname.startsWith('/contacts');
+      navigate(shouldNavigateToContacts ? '/contacts' : '/pool', { replace: true });
     },
     onError: (error) => {
       console.error("Error deleting lead:", error);
@@ -314,3 +317,4 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     </>
   );
 };
+});
