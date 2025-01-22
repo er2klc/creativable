@@ -117,7 +117,10 @@ export default function LeadDetail() {
         {/* Left Column - 4/12 width */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <LeadSummary lead={lead} />
-          <LeadInfoCard lead={lead} />
+          <LeadInfoCard 
+            lead={lead} 
+            onUpdate={updateLeadMutation.mutate}
+          />
         </div>
         
         {/* Right Column - 8/12 width */}

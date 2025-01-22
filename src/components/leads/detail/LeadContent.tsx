@@ -38,7 +38,7 @@ export const LeadContent = ({ lead, onUpdateLead, onDeletePhaseChange }: LeadCon
           <LeadSummary lead={lead} />
         </div>
         
-        <LeadInfoCard lead={lead} />
+        <LeadInfoCard lead={lead} onUpdate={onUpdateLead} />
         <ContactFieldManager />
         <LeadTimeline 
           lead={lead} 

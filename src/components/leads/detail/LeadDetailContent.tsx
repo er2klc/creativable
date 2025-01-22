@@ -60,7 +60,7 @@ export const LeadDetailContent = ({
           <LeadSummary lead={lead} />
         </div>
         
-        <LeadInfoCard lead={lead} />
+        <LeadInfoCard lead={lead} onUpdate={onUpdateLead} />
         <ContactFieldManager />
         <LeadFileList leadId={lead.id} />
         <LeadTimeline lead={lead} />
