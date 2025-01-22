@@ -32,7 +32,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     },
     ...messages.map(message => ({
       id: message.id,
-      type: 'message' as TimelineItemType['type'],
+      type: 'message' as TimelineItemType["type"],
       content: message.content,
       created_at: message.sent_at || new Date().toISOString(),
       timestamp: message.sent_at || new Date().toISOString(),
@@ -41,7 +41,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     })),
     ...tasks.map(task => ({
       id: task.id,
-      type: (task.meeting_type ? 'appointment' : 'task') as TimelineItemType['type'],
+      type: (task.meeting_type ? 'appointment' : 'task') as TimelineItemType["type"],
       content: task.title,
       created_at: task.created_at || new Date().toISOString(),
       timestamp: task.created_at || new Date().toISOString(),
@@ -63,7 +63,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       if (metadata?.type === 'phase_change') {
         return {
           id: note.id,
-          type: 'phase_change' as TimelineItemType['type'],
+          type: 'phase_change' as TimelineItemType["type"],
           content: note.content,
           created_at: note.created_at || new Date().toISOString(),
           timestamp: note.created_at || new Date().toISOString(),
@@ -76,7 +76,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       }
       return {
         id: note.id,
-        type: 'note' as TimelineItemType['type'],
+        type: 'note' as TimelineItemType["type"],
         content: note.content,
         created_at: note.created_at || new Date().toISOString(),
         timestamp: note.created_at || new Date().toISOString(),
@@ -87,7 +87,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     }),
     ...files.map(file => ({
       id: file.id,
-      type: 'file_upload' as TimelineItemType['type'],
+      type: 'file_upload' as TimelineItemType["type"],
       content: `Datei "${file.file_name}" wurde hochgeladen`,
       created_at: file.created_at || new Date().toISOString(),
       timestamp: file.created_at || new Date().toISOString(),
