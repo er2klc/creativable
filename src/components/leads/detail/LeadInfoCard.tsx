@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Contact2, Trash2, Users, MessageSquare, Instagram, Linkedin, Facebook, Video } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { BasicInformationFields } from "./contact-info/BasicInformationFields";
@@ -14,53 +14,11 @@ import { toast } from "sonner";
 import { useParams, useNavigate } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { LeadCardHeader } from "./card/LeadCardHeader";
 
 interface LeadInfoCardProps {
   lead: Tables<"leads">;
 }
-
-const PlatformIndicator = ({ platform }: { platform: string }) => {
-  const getPlatformIcon = (platform: string) => {
-    switch (platform.toLowerCase()) {
-      case 'instagram':
-        return <Instagram className="h-5 w-5 text-white" />;
-      case 'linkedin':
-        return <Linkedin className="h-5 w-5 text-white" />;
-      case 'facebook':
-        return <Facebook className="h-5 w-5 text-white" />;
-      case 'tiktok':
-        return <Video className="h-5 w-5 text-white" />;
-      default:
-        return <Users className="h-5 w-5 text-white" />;
-    }
-  };
-
-  const getColor = (platform: string) => {
-    switch (platform.toLowerCase()) {
-      case 'instagram':
-        return 'bg-gradient-to-br from-purple-600 to-pink-500';
-      case 'linkedin':
-        return 'bg-blue-600';
-      case 'facebook':
-        return 'bg-blue-700';
-      case 'tiktok':
-        return 'bg-black';
-      default:
-        return 'bg-gray-500';
-    }
-  };
-
-  return (
-    <div className={cn(
-      "absolute -right-2 -top-2 rounded-full w-8 h-8 border-2 border-white shadow-lg flex items-center justify-center",
-      getColor(platform)
-    )}>
-      {getPlatformIcon(platform)}
-    </div>
-  );
-};
 
 export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   const { settings } = useSettings();
@@ -145,37 +103,7 @@ export function LeadInfoCard({ lead }: LeadInfoCardProps) {
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-2 border-b border-gray-200/30 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Avatar className="h-20 w-20">
-              <AvatarImage 
-                src={lead.social_media_profile_image_url || lead.avatar_url} 
-                alt={lead.name} 
-              />
-              <AvatarFallback>
-                {lead.name?.split(' ').map(n => n[0]).join('').toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <PlatformIndicator platform={lead.platform} />
-          </div>
-          <div className="flex-1">
-            <div className="font-medium text-lg">{lead.social_media_username || lead.name}</div>
-            {lead.social_media_followers !== null && (
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  {lead.social_media_followers?.toLocaleString()}
-                </div>
-                {Array.isArray(lead.social_media_posts) && (
-                  <div className="flex items-center gap-1">
-                    <MessageSquare className="h-4 w-4" />
-                    {lead.social_media_posts.length.toLocaleString()}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        <LeadCardHeader lead={lead} />
       </CardHeader>
       <CardContent className="space-y-6">
         <BasicInformationFields lead={lead} onUpdate={handleUpdate} />
