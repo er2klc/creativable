@@ -29,7 +29,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const timelineItems: TimelineItemType[] = useMemo(() => [
     {
       id: 'contact-created',
-      type: 'contact_created' as TimelineItemType['type'],
+      type: 'contact_created',
       content: `Kontakt ${lead.name} wurde erstellt`,
       created_at: lead.created_at || new Date().toISOString(),
       timestamp: lead.created_at || new Date().toISOString(),
@@ -40,7 +40,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       content: message.content,
       created_at: message.sent_at || new Date().toISOString(),
       timestamp: message.sent_at || new Date().toISOString(),
-      status: message.platform,
+      status: message.platform as TimelineItemStatus,
       platform: message.platform
     })),
     ...tasks.map(task => ({
@@ -49,14 +49,16 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       content: task.title,
       created_at: task.created_at || new Date().toISOString(),
       timestamp: task.created_at || new Date().toISOString(),
-      status: task.completed ? 'completed' as const : task.cancelled ? 'cancelled' as const : 'pending' as const,
+      status: task.completed ? 'completed' as TimelineItemStatus : 
+             task.cancelled ? 'cancelled' as TimelineItemStatus : 
+             'pending' as TimelineItemStatus,
       metadata: {
         dueDate: task.due_date,
         meetingType: task.meeting_type,
         color: task.color,
         status: task.completed ? 'completed' as TimelineItemStatus : 
                task.cancelled ? 'cancelled' as TimelineItemStatus : 
-               undefined
+               'pending' as TimelineItemStatus
       }
     })),
     ...notes.map(note => ({
@@ -138,4 +140,3 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     </div>
   );
 };
-
