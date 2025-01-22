@@ -317,4 +317,3 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     </>
   );
 };
-});
