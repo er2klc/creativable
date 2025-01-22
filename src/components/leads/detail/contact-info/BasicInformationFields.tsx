@@ -35,22 +35,22 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
     { icon: MapPin, label: settings?.language === "en" ? "City" : "Stadt", field: "city", value: lead.city },
   ];
 
-  const handleAddTag = (type: "interests" | "goals" | "challenges") => {
-    if (!newTag.trim()) return;
+  const handleAddTag = (tag: string) => {
+    if (!tag.trim()) return;
     
-    const currentTags = lead[type] || [];
-    if (!currentTags.includes(newTag)) {
+    const allTags = lead.interests || [];
+    if (!allTags.includes(tag)) {
       onUpdate({
-        [type]: [...currentTags, newTag.startsWith("#") ? newTag : `#${newTag}`]
+        interests: [...allTags, tag.startsWith("#") ? tag : `#${tag}`]
       });
     }
     setNewTag("");
   };
 
-  const handleRemoveTag = (type: "interests" | "goals" | "challenges", tag: string) => {
-    const currentTags = lead[type] || [];
+  const handleRemoveTag = (tagToRemove: string) => {
+    const currentTags = lead.interests || [];
     onUpdate({
-      [type]: currentTags.filter(t => t !== tag)
+      interests: currentTags.filter(t => t !== tagToRemove)
     });
   };
 
@@ -64,66 +64,6 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
         return "bg-gray-100 text-gray-800 hover:bg-gray-200";
     }
   };
-
-  const TagSection = ({ type, title }: { type: "interests" | "goals" | "challenges", title: string }) => (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="flex items-center gap-1">
-              <Plus className="h-4 w-4" />
-              {title}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56 p-2">
-            <div className="flex flex-col gap-2">
-              <Input
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                placeholder={`${title} hinzufügen`}
-                className="h-8"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTag(type);
-                  }
-                }}
-              />
-              <Button 
-                onClick={() => handleAddTag(type)}
-                size="sm"
-                className="w-full"
-              >
-                Hinzufügen
-              </Button>
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {(lead[type] || []).map((tag, index) => (
-          <Badge
-            key={index}
-            variant="secondary"
-            className={cn(
-              "flex items-center gap-1 px-3 py-1",
-              getTagStyle(lead.platform)
-            )}
-          >
-            {tag}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-4 w-4 p-0 hover:bg-transparent text-current"
-              onClick={() => handleRemoveTag(type, tag)}
-            >
-              ×
-            </Button>
-          </Badge>
-        ))}
-      </div>
-    </div>
-  );
 
   const visibleFields = showEmptyFields 
     ? fields 
@@ -155,11 +95,60 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
         leadId={lead.id}
         showEmptyFields={true}
         groupName="interests_goals"
+        rightIcon={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-4 w-4 p-0 hover:bg-transparent">
+                <Plus className="h-4 w-4 text-gray-500 hover:text-gray-900" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 p-2">
+              <div className="flex flex-col gap-2">
+                <Input
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  placeholder={settings?.language === "en" ? "Add tag" : "Tag hinzufügen"}
+                  className="h-8"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag(newTag);
+                    }
+                  }}
+                />
+                <Button 
+                  onClick={() => handleAddTag(newTag)}
+                  size="sm"
+                  className="w-full"
+                >
+                  {settings?.language === "en" ? "Add" : "Hinzufügen"}
+                </Button>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
       >
-        <div className="space-y-4">
-          <TagSection type="interests" title={settings?.language === "en" ? "Interest" : "Interesse"} />
-          <TagSection type="goals" title={settings?.language === "en" ? "Goal" : "Ziel"} />
-          <TagSection type="challenges" title={settings?.language === "en" ? "Challenge" : "Herausforderung"} />
+        <div className="flex flex-wrap gap-2">
+          {(lead.interests || []).map((tag, index) => (
+            <Badge
+              key={index}
+              variant="secondary"
+              className={cn(
+                "flex items-center gap-1 px-3 py-1",
+                getTagStyle(lead.platform)
+              )}
+            >
+              {tag}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0 hover:bg-transparent text-current"
+                onClick={() => handleRemoveTag(tag)}
+              >
+                ×
+              </Button>
+            </Badge>
+          ))}
         </div>
       </ContactInfoGroup>
     </>
