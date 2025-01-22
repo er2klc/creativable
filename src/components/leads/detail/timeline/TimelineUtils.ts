@@ -39,6 +39,7 @@ export interface TimelineItem {
     newPhase?: string;
     color?: string;
     meetingType?: string;
+    type?: string; // Added this line to allow the 'type' property
   };
 }
 
