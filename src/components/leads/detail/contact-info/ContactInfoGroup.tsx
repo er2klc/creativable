@@ -67,10 +67,12 @@ export function ContactInfoGroup({
             )}
           </Button>
           <h3 className="text-sm font-medium text-gray-600">{title}</h3>
-          {rightIcon}
+          <div className={`transition-opacity duration-200 ${showActions ? 'opacity-100' : 'opacity-0'}`}>
+            {rightIcon}
+          </div>
         </div>
         
-        {showActions && (
+        {showActions && groupName !== 'interests_goals' && (
           <GroupActionsMenu
             showEmpty={showEmpty}
             isReordering={isReordering}
@@ -83,7 +85,7 @@ export function ContactInfoGroup({
 
       {!isCollapsed && (
         <div className="space-y-1">
-          {isAddingField && (
+          {isAddingField && groupName !== 'interests_goals' && (
             <AddFieldForm 
               groupName={groupName}
               onComplete={() => setIsAddingField(false)}
