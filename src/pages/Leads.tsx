@@ -18,7 +18,7 @@ const Leads = () => {
   };
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="flex flex-col h-screen overflow-hidden">
       <LeadsHeader
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
