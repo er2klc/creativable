@@ -1,16 +1,15 @@
 import { Bot, Trash2 } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadWithRelations } from "../types/lead";
+import { LeadWithRelations } from "./types/lead";
 import { Button } from "@/components/ui/button";
-import { LeadInfoCard } from "../LeadInfoCard";
-import { TaskList } from "../TaskList";
-import { NoteList } from "../NoteList";
-import { LeadSummary } from "../LeadSummary";
-import { LeadMessages } from "../LeadMessages";
-import { CompactPhaseSelector } from "../CompactPhaseSelector";
-import { LeadTimeline } from "../LeadTimeline";
-import { ContactFieldManager } from "../contact-info/ContactFieldManager";
-import { InstagramProfileCard } from "./social-media/InstagramProfileCard";
+import { LeadInfoCard } from "./LeadInfoCard";
+import { TaskList } from "./TaskList";
+import { NoteList } from "./NoteList";
+import { LeadSummary } from "./LeadSummary";
+import { LeadMessages } from "./LeadMessages";
+import { CompactPhaseSelector } from "./CompactPhaseSelector";
+import { LeadTimeline } from "./LeadTimeline";
+import { ContactFieldManager } from "./contact-info/ContactFieldManager";
 import { UseMutateFunction } from "@tanstack/react-query";
 
 interface LeadDetailContentProps {
@@ -34,10 +33,6 @@ export const LeadDetailContent = ({
           onUpdateLead={onUpdateLead}
         />
         
-        {lead.platform === "Instagram" && (
-          <InstagramProfileCard lead={lead} />
-        )}
-        
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
@@ -53,7 +48,7 @@ export const LeadDetailContent = ({
         <LeadTimeline lead={lead} />
         <TaskList leadId={lead.id} />
         <NoteList leadId={lead.id} />
-        <LeadMessages leadId={lead.id} messages={lead.messages || []} />
+        <LeadMessages leadId={lead.id} messages={lead.messages} />
 
         <div className="absolute bottom-4 left-4">
           <Button
