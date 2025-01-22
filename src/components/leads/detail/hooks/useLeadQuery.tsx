@@ -17,7 +17,8 @@ export const useLeadQuery = (leadId: string | null) => {
           messages (*),
           tasks (*),
           notes (*),
-          lead_files (*)
+          lead_files (*),
+          social_media_posts (*)
         `)
         .eq("id", leadId)
         .single();
@@ -31,12 +32,7 @@ export const useLeadQuery = (leadId: string | null) => {
         throw new Error("Lead not found");
       }
 
-      // Cast social_media_posts to proper type
-      if (data.social_media_posts) {
-        data.social_media_posts = data.social_media_posts as unknown as LeadWithRelations['social_media_posts'];
-      }
-
-      return data as LeadWithRelations;
+      return data as unknown as LeadWithRelations;
     },
     enabled: !!leadId,
   });
