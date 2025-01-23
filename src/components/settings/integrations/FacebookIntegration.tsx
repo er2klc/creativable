@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 declare global {
   interface Window {
@@ -25,13 +26,52 @@ export function FacebookIntegration() {
   const redirectUri = `${window.location.origin}/auth/callback/facebook`;
   const isConnected = settings?.facebook_connected || false;
 
+  const initializeFacebookSDK = async () => {
+    try {
+      const { data: { secret: appId }, error: appIdError } = await supabase.functions.invoke('get-secret', {
+        body: { name: 'FACEBOOK_APP_ID' }
+      });
+
+      if (appIdError) throw appIdError;
+
+      // Initialize Facebook SDK
+      window.fbAsyncInit = function() {
+        window.FB.init({
+          appId,
+          cookie: true,
+          xfbml: true,
+          version: 'v18.0'
+        });
+      };
+
+      // Load Facebook SDK
+      (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+
+    } catch (error) {
+      console.error("Error initializing Facebook SDK:", error);
+      toast({
+        title: "Fehler bei der Facebook-Initialisierung",
+        description: "Bitte versuchen Sie es später erneut",
+        variant: "destructive",
+      });
+    }
+  };
+
+  React.useEffect(() => {
+    initializeFacebookSDK();
+  }, []);
+
   const connectFacebook = async () => {
     try {
-      // Initialize Facebook login
       if (typeof window.FB !== 'undefined') {
         window.FB.login(function(response) {
           if (response.authResponse) {
-            // User successfully authenticated with Facebook
             const accessToken = response.authResponse.accessToken;
             updateSettings.mutate({
               facebook_auth_token: accessToken,
