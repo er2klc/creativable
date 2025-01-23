@@ -55,8 +55,8 @@ export const formatDate = (dateString: string) => {
   }
 };
 
-export const getStatusChangeMessage = (newStatus: string) => {
-  switch(newStatus) {
+export const getStatusChangeMessage = (status: string) => {
+  switch(status) {
     case 'partner':
       return "Herzlichen Glückwunsch zu einem neuen Partner! OnBoarding beginnt jetzt.";
     case 'customer':
@@ -66,21 +66,6 @@ export const getStatusChangeMessage = (newStatus: string) => {
     case 'no_interest':
       return "Kontakt hat kein Interesse, Next!";
     default:
-      return `Status wurde zu ${newStatus} geändert`;
-  }
-};
-
-export const getStatusColor = (status: string) => {
-  switch(status) {
-    case 'partner':
-      return '#8B5CF6'; // Vivid Purple
-    case 'customer':
-      return '#D946EF'; // Magenta Pink
-    case 'not_for_now':
-      return '#F2FCE2'; // Soft Green
-    case 'no_interest':
-      return '#ea384c'; // Red
-    default:
-      return '#8E9196'; // Neutral Gray
+      return `Status wurde zu ${status} geändert`;
   }
 };

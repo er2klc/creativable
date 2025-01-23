@@ -29,11 +29,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
       <div className="flex gap-4 items-start group relative">
         {/* Circle with Icon */}
         <div className="relative">
-          <TimelineItemIcon 
-            type={item.type} 
-            status={item.status} 
-            platform={item.platform} 
-          />
+          <TimelineItemIcon item={item} />
           {isOutdated && (
             <div className="absolute -top-1 -right-1 bg-gray-400 rounded-full p-0.5">
               <svg 
@@ -54,10 +50,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
         
         {/* Event Card */}
         <TimelineItemCard 
-          type={item.type}
-          content={item.content}
-          metadata={item.metadata}
-          status={item.status}
+          item={item}
           onDelete={onDelete}
         />
       </div>

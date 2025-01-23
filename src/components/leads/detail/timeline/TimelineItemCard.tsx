@@ -3,23 +3,24 @@ import { TimelineItemIcon } from "./TimelineItemIcon";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TimelineItem } from "./TimelineUtils";
 
 interface TimelineItemCardProps {
-  item: any;
+  item: TimelineItem;
   onDelete?: () => void;
 }
 
 export const TimelineItemCard = ({ item, onDelete }: TimelineItemCardProps) => {
   const getContent = () => {
     if (item.type === 'phase_change' && item.metadata?.type === 'status_change') {
-      return getStatusChangeMessage(item.metadata.newStatus);
+      return getStatusChangeMessage(item.metadata.status);
     }
     return item.content;
   };
 
   const getBackgroundColor = () => {
     if (item.type === 'phase_change' && item.metadata?.type === 'status_change') {
-      switch(item.metadata.newStatus) {
+      switch(item.metadata.status) {
         case 'partner':
           return 'bg-[#8B5CF6]/10';
         case 'customer':

@@ -18,7 +18,7 @@ interface TimelineItemIconProps {
 
 export const TimelineItemIcon = ({ item }: TimelineItemIconProps) => {
   if (item.type === 'phase_change' && item.metadata?.type === 'status_change') {
-    switch(item.metadata.newStatus) {
+    switch(item.metadata.status) {
       case 'partner':
         return <Heart className="h-4 w-4 text-[#8B5CF6]" />;
       case 'customer':
