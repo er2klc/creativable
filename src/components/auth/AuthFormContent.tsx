@@ -85,7 +85,6 @@ export const AuthFormContent = () => {
         email: "",
         password: "",
         confirmPassword: "",
-        language: "Deutsch",
       } as RegistrationData);
       navigate("/register", { replace: true });
     } else {
@@ -119,11 +118,6 @@ export const AuthFormContent = () => {
             formData={formData as RegistrationData}
             isLoading={isLoading}
             onInputChange={handleInputChange}
-            onLanguageChange={(value) =>
-              handleInputChange({
-                target: { name: "language", value },
-              } as React.ChangeEvent<HTMLInputElement>)
-            }
           />
         ) : (
           <LoginForm

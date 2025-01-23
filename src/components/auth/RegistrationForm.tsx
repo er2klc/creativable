@@ -12,9 +12,11 @@ interface RegistrationFormProps {
     email: string;
     password: string;
     confirmPassword: string;
+    language?: string;
   };
   isLoading: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onLanguageChange?: (value: string) => void;
 }
 
 const passwordRequirements = [
