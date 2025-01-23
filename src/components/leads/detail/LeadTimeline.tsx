@@ -90,7 +90,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         platform: post.platform || 'unknown',
         post_type: post.post_type || 'post',
         url: post.url || null,
-        lead_id: post.lead_id || lead.id // Ensure lead_id is always set
+        lead_id: post.lead_id || lead.id, // Ensure lead_id is always set
+        metadata: post.metadata || {} // Ensure metadata is always present
       }))
     : [];
 
