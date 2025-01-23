@@ -11,11 +11,8 @@ export default {
   prefix: "",
   theme: {
     container: {
-      center: true,
-      padding: '2rem',
-      screens: {
-        '2xl': '1400px'
-      }
+      center: true, // Zentriert den Container
+      padding: "30px", // Gibt dem Container auf allen Bildschirmen links und rechts 30px Abstand
     },
     extend: {
       fontFamily: {
