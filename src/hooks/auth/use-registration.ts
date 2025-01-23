@@ -8,7 +8,6 @@ export interface RegistrationData {
   email: string;
   password: string;
   confirmPassword: string;
-  language: string;
 }
 
 export const useRegistration = () => {
@@ -20,7 +19,6 @@ export const useRegistration = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    language: "Deutsch",
   });
 
   const handleRegistration = async () => {
@@ -50,20 +48,6 @@ export const useRegistration = () => {
 
       if (!authData.user) {
         toast.error("Fehler bei der Registrierung");
-        return false;
-      }
-
-      const { error: settingsError } = await supabase
-        .from('settings')
-        .insert({
-          user_id: authData.user.id,
-          language: formData.language,
-          name: formData.name,
-        });
-
-      if (settingsError) {
-        console.error('Settings creation error:', settingsError);
-        toast.error("Fehler beim Erstellen der Benutzereinstellungen");
         return false;
       }
 
