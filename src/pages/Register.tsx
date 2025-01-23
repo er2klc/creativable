@@ -87,6 +87,20 @@ const Register = () => {
       }
 
       if (data?.user) {
+        // Create initial settings for the user
+        const { error: settingsError } = await supabase
+          .from('settings')
+          .insert({
+            user_id: data.user.id,
+            language: "Deutsch",
+            name: formData.name,
+          });
+
+        if (settingsError) {
+          console.error('Settings creation error:', settingsError);
+          // Don't throw here, as the user is already created
+        }
+
         toast.success("Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail-Adresse.");
         navigate("/auth");
       }
