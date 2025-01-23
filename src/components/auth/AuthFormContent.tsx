@@ -56,6 +56,18 @@ export const AuthFormContent = () => {
     e.preventDefault();
     try {
       if (isSignUp) {
+        // Validate required fields
+        if (!formData.name || !formData.email || !formData.password) {
+          toast.error("Bitte füllen Sie alle Pflichtfelder aus");
+          return;
+        }
+
+        // Validate password match
+        if (formData.password !== formData.confirmPassword) {
+          toast.error("Die Passwörter stimmen nicht überein");
+          return;
+        }
+
         if (registrationStep === 1) {
           setRegistrationStep(2);
           return;
