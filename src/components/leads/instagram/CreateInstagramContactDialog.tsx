@@ -9,6 +9,7 @@ import * as z from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
+import { useQuery } from "@tanstack/react-query";
 
 const formSchema = z.object({
   username: z.string().min(1, "Username ist erforderlich"),
@@ -29,6 +30,45 @@ export function CreateInstagramContactDialog({
 }: CreateInstagramContactDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { settings } = useSettings();
+
+  // Fetch default pipeline if none provided
+  const { data: defaultPipeline } = useQuery({
+    queryKey: ["default-pipeline"],
+    queryFn: async () => {
+      if (pipelineId) return null;
+      
+      const { data: pipeline } = await supabase
+        .from("pipelines")
+        .select("*")
+        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+        .order("order_index")
+        .limit(1)
+        .single();
+      
+      return pipeline;
+    },
+    enabled: !pipelineId
+  });
+
+  // Fetch first phase of pipeline
+  const { data: firstPhase } = useQuery({
+    queryKey: ["first-phase", pipelineId || defaultPipeline?.id],
+    queryFn: async () => {
+      const targetPipelineId = pipelineId || defaultPipeline?.id;
+      if (!targetPipelineId) return null;
+
+      const { data: phase } = await supabase
+        .from("pipeline_phases")
+        .select("*")
+        .eq("pipeline_id", targetPipelineId)
+        .order("order_index")
+        .limit(1)
+        .single();
+      
+      return phase;
+    },
+    enabled: !!(pipelineId || defaultPipeline?.id)
+  });
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -48,6 +88,14 @@ export function CreateInstagramContactDialog({
         return;
       }
 
+      const targetPipelineId = pipelineId || defaultPipeline?.id;
+      const targetPhaseId = defaultPhase || firstPhase?.id;
+
+      if (!targetPipelineId || !targetPhaseId) {
+        toast.error("Keine Pipeline oder Phase gefunden");
+        return;
+      }
+
       // First create the lead with basic info
       const { data: lead, error: leadError } = await supabase
         .from("leads")
@@ -56,8 +104,8 @@ export function CreateInstagramContactDialog({
           name: values.username,
           platform: "Instagram",
           social_media_username: values.username,
-          pipeline_id: pipelineId || "",
-          phase_id: defaultPhase || "",
+          pipeline_id: targetPipelineId,
+          phase_id: targetPhaseId,
           industry: "Not Specified"
         })
         .select()
