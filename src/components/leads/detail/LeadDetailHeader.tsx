@@ -175,12 +175,12 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-2">
               {getPlatformIcon(lead.platform as Platform)}
-              <input
-                type="text"
-                value={lead.name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                className="text-2xl font-semibold bg-transparent border-none focus:outline-none focus:ring-0 p-0"
-              />
+              <div
+  className="text-2xl font-semibold bg-transparent border-none p-0 overflow-hidden whitespace-nowrap text-ellipsis"
+  title={lead.name} // Zeigt den vollständigen Namen beim Hover als Tooltip an
+>
+  {lead.name}
+</div>
             </div>
             <div className="flex gap-2">
               <Button
