@@ -13,7 +13,6 @@ interface RegistrationFormProps {
     email: string;
     password: string;
     confirmPassword: string;
-    phoneNumber: string;
     language: string;
   };
   isLoading: boolean;
@@ -84,20 +83,6 @@ export const RegistrationForm = ({
             type="email"
             placeholder="name@example.com"
             value={formData.email}
-            onChange={onInputChange}
-            disabled={isLoading}
-            required
-            className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="phoneNumber">Telefonnummer</Label>
-          <Input
-            id="phoneNumber"
-            name="phoneNumber"
-            type="tel"
-            placeholder="+49 123 45678900"
-            value={formData.phoneNumber}
             onChange={onInputChange}
             disabled={isLoading}
             required

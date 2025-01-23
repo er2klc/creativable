@@ -8,7 +8,6 @@ export interface RegistrationData {
   email: string;
   password: string;
   confirmPassword: string;
-  phoneNumber: string;
   language: string;
 }
 
@@ -21,7 +20,6 @@ export const useRegistration = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    phoneNumber: "",
     language: "Deutsch",
   });
 
@@ -29,15 +27,13 @@ export const useRegistration = () => {
     try {
       console.log("Starting registration process with email:", formData.email);
       
-      // Create the user account with display_name in metadata
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
-            display_name: formData.name, // This will be used by the trigger
+            display_name: formData.name,
             full_name: formData.name,
-            phoneNumber: formData.phoneNumber,
           },
         },
       });
@@ -57,13 +53,11 @@ export const useRegistration = () => {
         return false;
       }
 
-      // Create initial settings with phone number
       const { error: settingsError } = await supabase
         .from('settings')
         .insert({
           user_id: authData.user.id,
           language: formData.language,
-          whatsapp_number: formData.phoneNumber,
           name: formData.name,
         });
 
