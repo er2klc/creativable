@@ -113,21 +113,16 @@ export function CreateInstagramContactDialog({
 
       if (leadError) throw leadError;
 
-      // Then trigger the scan profile function
-      const response = await fetch(`${window.location.origin}/functions/scan-social-profile`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: JSON.stringify({
+      // Then trigger the scan profile function using Supabase Edge Function invocation
+      const { data, error } = await supabase.functions.invoke('scan-social-profile', {
+        body: {
           platform: 'instagram',
           username: values.username,
           leadId: lead.id
-        })
+        }
       });
 
-      if (!response.ok) {
+      if (error) {
         throw new Error('Failed to scan Instagram profile');
       }
 
