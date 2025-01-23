@@ -42,9 +42,15 @@ export function FacebookIntegration() {
 
   const initializeFacebookSDK = async () => {
     try {
-      const { data: { secret: appId }, error: appIdError } = await supabase.functions.invoke('get-secret', {
+      const { data: { FACEBOOK_APP_ID }, error: appIdError } = await supabase.functions.invoke('get-secret', {
         body: { name: 'FACEBOOK_APP_ID' }
       });
+
+      // Wenn kein App ID vorhanden ist, zeigen wir keinen Fehler
+      if (!FACEBOOK_APP_ID) {
+        console.log("Facebook App ID nicht konfiguriert");
+        return;
+      }
 
       if (appIdError) throw appIdError;
 
@@ -52,7 +58,7 @@ export function FacebookIntegration() {
       window.fbAsyncInit = function() {
         if (window.FB) {
           window.FB.init({
-            appId,
+            appId: FACEBOOK_APP_ID,
             cookie: true,
             xfbml: true,
             version: 'v18.0'
@@ -66,16 +72,11 @@ export function FacebookIntegration() {
         if (d.getElementById(id)) return;
         js = d.createElement(s); js.id = id;
         js.src = "https://connect.facebook.net/en_US/sdk.js";
-        fjs.parentNode.insertBefore(js, fjs);
+        fjs.parentNode?.insertBefore(js, fjs);
       }(document, 'script', 'facebook-jssdk'));
 
     } catch (error) {
       console.error("Error initializing Facebook SDK:", error);
-      toast({
-        title: "Fehler bei der Facebook-Initialisierung",
-        description: "Bitte versuchen Sie es später erneut",
-        variant: "destructive",
-      });
     }
   };
 
@@ -97,19 +98,12 @@ export function FacebookIntegration() {
               title: "Facebook erfolgreich verbunden",
               description: "Ihre Facebook-Integration wurde erfolgreich eingerichtet.",
             });
-          } else {
-            toast({
-              title: "Facebook-Verbindung fehlgeschlagen",
-              description: "Bitte versuchen Sie es später erneut",
-              variant: "destructive",
-            });
           }
         }, {scope: 'email,public_profile,pages_show_list,pages_messaging,pages_manage_metadata'});
       } else {
         toast({
-          title: "Facebook SDK nicht geladen",
-          description: "Bitte laden Sie die Seite neu und versuchen Sie es erneut.",
-          variant: "destructive",
+          title: "Facebook SDK nicht verfügbar",
+          description: "Die Integration ist derzeit nicht verfügbar.",
         });
       }
     } catch (error) {
@@ -126,6 +120,7 @@ export function FacebookIntegration() {
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
+          <MessageSquare className="h-6 w-6 text-[#1877F2]" />
           <h3 className="text-lg font-medium">Facebook Integration</h3>
           {isConnected ? (
             <CheckCircle className="h-5 w-5 text-green-500" />

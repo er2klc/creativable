@@ -11,15 +11,33 @@ serve(async (req) => {
   }
 
   try {
-    const { secretName } = await req.json();
-    const secretValue = Deno.env.get(secretName);
+    const { name } = await req.json();
+    
+    if (!name) {
+      return new Response(
+        JSON.stringify({ error: "Secret name is required" }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        },
+      );
+    }
+
+    const secretValue = Deno.env.get(name);
 
     if (!secretValue) {
-      throw new Error(`Secret ${secretName} not found`);
+      // Statt eines Fehlers geben wir einen leeren String zurück
+      return new Response(
+        JSON.stringify({ [name]: "" }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      );
     }
 
     return new Response(
-      JSON.stringify({ [secretName]: secretValue }),
+      JSON.stringify({ [name]: secretValue }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
