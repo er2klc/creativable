@@ -4,7 +4,7 @@ import { TimelineItem } from "./timeline/TimelineItem";
 import { SocialMediaTimeline } from "./timeline/SocialMediaTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "./types/lead";
-import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
+import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -72,18 +72,19 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
 
   // Transform social media posts to include required fields
   const transformedPosts = Array.isArray(lead.social_media_posts) 
-    ? (lead.social_media_posts as SocialMediaPostRaw[]).map(post => ({
+    ? (lead.social_media_posts as unknown as SocialMediaPostRaw[]).map(post => ({
         ...post,
-        engagement_count: post.engagement_count || null,
-        first_comment: post.first_comment || null,
-        media_type: post.media_type || null,
+        engagement_count: post.engagement_count || 0,
+        first_comment: post.first_comment || '',
+        media_type: post.media_type || 'post',
         media_urls: post.media_urls || [],
         tagged_users: post.tagged_users || [],
         // Ensure all required fields have default values
         comments_count: post.comments_count || 0,
-        content: post.content || null,
+        content: post.content || '',
+        created_at: post.created_at || post.posted_at || new Date().toISOString(),
         likes_count: post.likes_count || 0,
-        location: post.location || null,
+        location: post.location || '',
         mentioned_profiles: post.mentioned_profiles || [],
         tagged_profiles: post.tagged_profiles || [],
         platform: post.platform || 'unknown',
