@@ -35,12 +35,22 @@ export const PipelineSelector = ({
     },
   });
 
-  // Select first pipeline by default
+  // Select last used pipeline from settings, or first pipeline as fallback
   useEffect(() => {
     if (pipelines.length > 0 && !selectedPipelineId) {
-      onPipelineSelect(pipelines[0].id);
+      const lastSelectedPipelineId = settings?.last_selected_pipeline_id;
+      
+      // Check if the last selected pipeline still exists
+      const pipelineExists = lastSelectedPipelineId && 
+        pipelines.some(p => p.id === lastSelectedPipelineId);
+      
+      if (pipelineExists) {
+        onPipelineSelect(lastSelectedPipelineId);
+      } else {
+        onPipelineSelect(pipelines[0].id);
+      }
     }
-  }, [pipelines, selectedPipelineId, onPipelineSelect]);
+  }, [pipelines, selectedPipelineId, settings?.last_selected_pipeline_id, onPipelineSelect]);
 
   const selectedPipeline = pipelines.find((p) => p.id === selectedPipelineId);
 
