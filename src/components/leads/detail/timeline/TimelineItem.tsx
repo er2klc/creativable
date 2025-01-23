@@ -1,6 +1,8 @@
+import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 import { TimelineItemIcon } from "./TimelineItemIcon";
 import { TimelineItemCard } from "./TimelineItemCard";
-import { TimelineItem as TimelineItemType } from "./TimelineUtils";
+import { formatDate } from "./TimelineUtils";
+import { motion } from "framer-motion";
 
 interface TimelineItemProps {
   item: TimelineItemType;
@@ -8,22 +10,30 @@ interface TimelineItemProps {
 }
 
 export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
-  if (!item) return null;
-
   const isOutdated = item.type === 'appointment' && 
     (item.status === 'cancelled' || item.metadata?.status === 'outdated');
 
   return (
-    <div className="flex flex-col gap-1">
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      key={item.id} 
+      className="flex flex-col gap-1"
+    >
       {/* Date above the card */}
       <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
-        {item.timestamp || item.created_at}
+        {formatDate(item.timestamp)}
       </div>
       
       <div className="flex gap-4 items-start group relative">
         {/* Circle with Icon */}
         <div className="relative">
-          <TimelineItemIcon item={item} />
+          <TimelineItemIcon 
+            type={item.type} 
+            status={item.status} 
+            platform={item.platform} 
+          />
           {isOutdated && (
             <div className="absolute -top-1 -right-1 bg-gray-400 rounded-full p-0.5">
               <svg 
@@ -44,10 +54,13 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
         
         {/* Event Card */}
         <TimelineItemCard 
-          item={item}
+          type={item.type}
+          content={item.content}
+          metadata={item.metadata}
+          status={item.status}
           onDelete={onDelete}
         />
       </div>
-    </div>
+    </motion.div>
   );
 };
