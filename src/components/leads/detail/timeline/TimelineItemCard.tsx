@@ -1,77 +1,84 @@
-import { formatDate, getStatusChangeMessage } from "./TimelineUtils";
-import { TimelineItemIcon } from "./TimelineItemIcon";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TimelineItemType } from "./TimelineUtils";
+import { TimelineItemStatus } from "./components/TimelineItemStatus";
+import { TimelineItemDate } from "./components/TimelineItemDate";
+import { TimelineItemActions } from "./components/TimelineItemActions";
 
 interface TimelineItemCardProps {
-  item: any;
+  type: TimelineItemType;
+  content: string;
+  platform?: string;
+  metadata?: {
+    dueDate?: string;
+    fileName?: string;
+    fileType?: string;
+    fileSize?: number;
+    filePath?: string;
+    status?: 'completed' | 'cancelled' | 'outdated';
+    completedAt?: string;
+    cancelledAt?: string;
+    updatedAt?: string;
+    oldDate?: string;
+    newDate?: string;
+    type?: string;
+    oldStatus?: string;
+    newStatus?: string;
+  };
+  status?: string;
   onDelete?: () => void;
 }
 
-export const TimelineItemCard = ({ item, onDelete }: TimelineItemCardProps) => {
-  const getContent = () => {
-    if (item.type === 'phase_change' && item.metadata?.type === 'status_change') {
-      return getStatusChangeMessage(item.metadata.newStatus);
-    }
-    return item.content;
-  };
+export const TimelineItemCard = ({ 
+  type,
+  content,
+  metadata,
+  status,
+  onDelete 
+}: TimelineItemCardProps) => {
+  const { borderColor, isOutdated, textStyles } = TimelineItemStatus({ 
+    type, 
+    status, 
+    metadata 
+  });
 
-  const getBackgroundColor = () => {
-    if (item.type === 'phase_change' && item.metadata?.type === 'status_change') {
-      switch(item.metadata.newStatus) {
+  const getStatusChangeContent = () => {
+    if (type === 'phase_change' && metadata?.type === 'status_change') {
+      switch(metadata.newStatus) {
         case 'partner':
-          return 'bg-[#8B5CF6]/10';
+          return "Herzlichen Glückwunsch zu einem neuen Partner! OnBoarding beginnt jetzt.";
         case 'customer':
-          return 'bg-[#D946EF]/10';
+          return "Herzlichen Glückwunsch zu einem neuen Kunden!";
         case 'not_for_now':
-          return 'bg-[#F2FCE2]/10';
+          return "Kontakt möchte später mehr wissen, Status angepasst NotForNow und gemerkt!";
         case 'no_interest':
-          return 'bg-[#ea384c]/10';
+          return "Kontakt hat kein Interesse, Next!";
         default:
-          return 'bg-gray-100';
+          return content;
       }
     }
-
-    switch (item.type) {
-      case 'appointment':
-        return 'bg-orange-50';
-      case 'message':
-        return 'bg-blue-50';
-      case 'file_upload':
-        return 'bg-purple-50';
-      case 'task':
-        return 'bg-cyan-50';
-      case 'note':
-        return 'bg-yellow-50';
-      default:
-        return 'bg-gray-50';
-    }
+    return content;
   };
 
   return (
-    <div className={cn("p-4 rounded-lg relative", getBackgroundColor())}>
-      <div className="flex items-start gap-4">
-        <div className="mt-1">
-          <TimelineItemIcon item={item} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-gray-900">{getContent()}</p>
-          <p className="text-xs text-gray-500 mt-1">
-            {formatDate(item.timestamp || item.created_at)}
-          </p>
-        </div>
-        {onDelete && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-gray-400 hover:text-red-600"
-            onClick={onDelete}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
+    <div className={cn(
+      "flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border group relative",
+      borderColor,
+      isOutdated && "opacity-70"
+    )}>
+      <div className={textStyles}>{getStatusChangeContent()}</div>
+      
+      <TimelineItemDate
+        dueDate={metadata?.dueDate}
+        oldDate={metadata?.oldDate}
+        newDate={metadata?.newDate}
+        isOutdated={isOutdated}
+      />
+
+      <TimelineItemActions
+        filePath={metadata?.filePath}
+        fileName={metadata?.fileName}
+        onDelete={onDelete}
+      />
     </div>
   );
 };
