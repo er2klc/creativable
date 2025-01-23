@@ -3,8 +3,16 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
+DECLARE
+  pipeline_id uuid;
 BEGIN
-  INSERT INTO public.profiles (id, display_name, email, avatar_url)
+  -- First create the profile
+  INSERT INTO public.profiles (
+    id,
+    display_name,
+    email,
+    avatar_url
+  )
   VALUES (
     new.id,
     COALESCE(
@@ -21,6 +29,21 @@ BEGIN
       ELSE '/lovable-uploads/16a38ed9-b681-4f77-9bf8-8ca9f8439556.png'
     END
   );
+
+  -- Then create the pipeline and store its ID
+  INSERT INTO pipelines (user_id, name, order_index)
+  VALUES (new.id, 'Pipeline', 0)
+  RETURNING id INTO pipeline_id;
+
+  -- Finally create the phases using the pipeline_id
+  INSERT INTO pipeline_phases (pipeline_id, name, order_index)
+  VALUES 
+    (pipeline_id, 'Kontakt erstellt', 0),
+    (pipeline_id, 'Kontaktaufnahme', 1),
+    (pipeline_id, 'Kennenlernen', 2),
+    (pipeline_id, 'Präsentation', 3),
+    (pipeline_id, 'Follow-Up', 4);
+
   RETURN new;
 END;
 $$;
