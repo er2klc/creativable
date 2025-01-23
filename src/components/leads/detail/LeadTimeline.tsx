@@ -79,7 +79,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         media_type: post.media_type || 'post',
         media_urls: post.media_urls || [],
         tagged_users: post.tagged_users || [],
-        // Ensure all required fields have default values
         comments_count: post.comments_count || 0,
         content: post.content || '',
         created_at: post.created_at || post.posted_at || new Date().toISOString(),
@@ -91,7 +90,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         post_type: post.post_type || 'post',
         url: post.url || null,
         lead_id: post.lead_id || lead.id, // Ensure lead_id is always set
-        metadata: post.metadata || {} // Ensure metadata is always present
+        metadata: post.metadata || {}, // Ensure metadata is always present
+        posted_at: post.posted_at || post.created_at || new Date().toISOString() // Ensure posted_at is always set
       }))
     : [];
 
