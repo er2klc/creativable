@@ -15,7 +15,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const { settings } = useSettings();
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
   
-  // Check if lead was created via Apify (has social media data)
   const showSocialTimeline = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
 
   const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
@@ -26,6 +25,43 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     timestamp: note.created_at,
     metadata: note.metadata,
     status: note.status
+  });
+
+  const mapTaskToTimelineItem = (task: any): TimelineItemType => ({
+    id: task.id,
+    type: 'task',
+    content: task.title,
+    created_at: task.created_at,
+    timestamp: task.created_at,
+    metadata: {
+      completed: task.completed,
+      due_date: task.due_date,
+      color: task.color
+    }
+  });
+
+  const mapMessageToTimelineItem = (message: any): TimelineItemType => ({
+    id: message.id,
+    type: 'message',
+    content: message.content,
+    created_at: message.created_at,
+    timestamp: message.sent_at || message.created_at,
+    metadata: {
+      platform: message.platform
+    }
+  });
+
+  const mapFileToTimelineItem = (file: any): TimelineItemType => ({
+    id: file.id,
+    type: 'file',
+    content: file.file_name,
+    created_at: file.created_at,
+    timestamp: file.created_at,
+    metadata: {
+      file_path: file.file_path,
+      file_type: file.file_type,
+      file_size: file.file_size
+    }
   });
 
   // Create contact creation timeline item
@@ -40,17 +76,23 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     }
   };
 
-  // Sort notes in reverse chronological order (newest first)
-  const sortedNotes = (lead.notes || [])
-    .map(mapNoteToTimelineItem)
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  // Combine all activities
+  const allActivities = [
+    ...(lead.notes || []).map(mapNoteToTimelineItem),
+    ...(lead.tasks || []).map(mapTaskToTimelineItem),
+    ...(lead.messages || []).map(mapMessageToTimelineItem),
+    ...(lead.lead_files || []).map(mapFileToTimelineItem),
+    contactCreationItem
+  ];
 
-  // Add contact creation item at the end (it will appear at the bottom)
-  const timelineItems = [...sortedNotes, contactCreationItem];
+  // Sort all activities by timestamp in reverse chronological order
+  const timelineItems = allActivities.sort((a, b) => 
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
 
-  // Transform social media posts to include required fields
+  // Transform social media posts
   const transformedPosts = Array.isArray(lead.social_media_posts) 
-    ? (lead.social_media_posts as any[]).map(post => ({
+    ? lead.social_media_posts.map(post => ({
         ...post,
         engagement_count: post.engagement_count || 0,
         first_comment: post.first_comment || '',
