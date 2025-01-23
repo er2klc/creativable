@@ -82,10 +82,14 @@ export const AuthFormContent = () => {
       }
     } catch (error: any) {
       console.error('Registration error:', error);
-      if (error.message?.includes('already registered')) {
+      const errorMessage = error.message || "Ein unerwarteter Fehler ist aufgetreten";
+      
+      if (errorMessage.includes('already registered')) {
         setShowLoginDialog(true);
+      } else if (errorMessage.includes('Database error')) {
+        toast.error("Fehler bei der Registrierung. Bitte versuchen Sie es später erneut.");
       } else {
-        toast.error(error.message || "Ein unerwarteter Fehler ist aufgetreten");
+        toast.error(errorMessage);
       }
     }
   };
