@@ -1,5 +1,4 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Platform } from "@/config/platforms";
 import { LeadWithRelations } from "./types/lead";
 import { MessageTab } from "./tabs/MessageTab";
 import { NoteTab } from "./tabs/NoteTab";
@@ -34,7 +33,7 @@ export const LeadDetailTabs = ({ lead, onUpdateLead }: LeadDetailTabsProps) => {
       </TabsContent>
 
       <TabsContent value="files">
-        <PlaceholderTab />
+        <PlaceholderTab title="Dateien werden bald verfügbar sein" />
       </TabsContent>
     </Tabs>
   );

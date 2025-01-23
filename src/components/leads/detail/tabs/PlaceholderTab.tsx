@@ -1,23 +1,11 @@
-import { Label } from "@/components/ui/label";
-import { useSettings } from "@/hooks/use-settings";
-
-interface PlaceholderTabProps {
-  title: string;
+export interface PlaceholderTabProps {
+  title?: string;
 }
 
-export const PlaceholderTab = ({ title }: PlaceholderTabProps) => {
-  const { settings } = useSettings();
-  
+export const PlaceholderTab = ({ title = "Coming Soon" }: PlaceholderTabProps) => {
   return (
-    <div className="space-y-4">
-      <div>
-        <Label>
-          {settings?.language === "en" ? `Add ${title}` : `${title} hinzufügen`}
-        </Label>
-        <div className="mt-2">
-          {/* Placeholder for future implementation */}
-        </div>
-      </div>
+    <div className="p-4 text-center text-gray-500">
+      <p>{title}</p>
     </div>
   );
 };
