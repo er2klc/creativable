@@ -1,7 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings } from "@/hooks/use-settings";
-import { Platform } from "@/config/platforms";
-import { Tables } from "@/integrations/supabase/types";
+import { LeadWithRelations } from "./types/lead";
 import { NoteTab } from "./tabs/NoteTab";
 import { TaskTab } from "./tabs/TaskTab";
 import { MessageTab } from "./tabs/MessageTab";
@@ -10,7 +9,6 @@ import { LeadFileUpload } from "./files/LeadFileUpload";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon } from "lucide-react";
-import { LeadWithRelations } from "./types/lead";
 
 interface LeadDetailTabsProps {
   lead: LeadWithRelations;
