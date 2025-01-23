@@ -845,9 +845,12 @@ export type Database = {
           social_media_following: number | null
           social_media_interests: string[] | null
           social_media_last_post_date: string | null
+          social_media_mentioned_users: Json | null
           social_media_posts: Json | null
+          social_media_posts_count: number | null
           social_media_profile_image_url: string | null
           social_media_stats: Json | null
+          social_media_tagged_users: Json | null
           social_media_username: string | null
           social_media_verified: boolean | null
           status: string | null
@@ -916,9 +919,12 @@ export type Database = {
           social_media_following?: number | null
           social_media_interests?: string[] | null
           social_media_last_post_date?: string | null
+          social_media_mentioned_users?: Json | null
           social_media_posts?: Json | null
+          social_media_posts_count?: number | null
           social_media_profile_image_url?: string | null
           social_media_stats?: Json | null
+          social_media_tagged_users?: Json | null
           social_media_username?: string | null
           social_media_verified?: boolean | null
           status?: string | null
@@ -987,9 +993,12 @@ export type Database = {
           social_media_following?: number | null
           social_media_interests?: string[] | null
           social_media_last_post_date?: string | null
+          social_media_mentioned_users?: Json | null
           social_media_posts?: Json | null
+          social_media_posts_count?: number | null
           social_media_profile_image_url?: string | null
           social_media_stats?: Json | null
+          social_media_tagged_users?: Json | null
           social_media_username?: string | null
           social_media_verified?: boolean | null
           status?: string | null
@@ -1406,48 +1415,63 @@ export type Database = {
           comments_count: number | null
           content: string | null
           created_at: string | null
+          engagement_count: number | null
+          first_comment: string | null
           id: string
           lead_id: string | null
           likes_count: number | null
           location: string | null
+          media_type: string | null
+          media_urls: string[] | null
           mentioned_profiles: string[] | null
           metadata: Json | null
           platform: string
           post_type: string
           posted_at: string | null
           tagged_profiles: string[] | null
+          tagged_users: Json | null
           url: string | null
         }
         Insert: {
           comments_count?: number | null
           content?: string | null
           created_at?: string | null
+          engagement_count?: number | null
+          first_comment?: string | null
           id?: string
           lead_id?: string | null
           likes_count?: number | null
           location?: string | null
+          media_type?: string | null
+          media_urls?: string[] | null
           mentioned_profiles?: string[] | null
           metadata?: Json | null
           platform: string
           post_type: string
           posted_at?: string | null
           tagged_profiles?: string[] | null
+          tagged_users?: Json | null
           url?: string | null
         }
         Update: {
           comments_count?: number | null
           content?: string | null
           created_at?: string | null
+          engagement_count?: number | null
+          first_comment?: string | null
           id?: string
           lead_id?: string | null
           likes_count?: number | null
           location?: string | null
+          media_type?: string | null
+          media_urls?: string[] | null
           mentioned_profiles?: string[] | null
           metadata?: Json | null
           platform?: string
           post_type?: string
           posted_at?: string | null
           tagged_profiles?: string[] | null
+          tagged_users?: Json | null
           url?: string | null
         }
         Relationships: [

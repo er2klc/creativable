@@ -54,13 +54,21 @@ export function CreateInstagramContactDialog({
           name: profileData.name || values.username,
           platform: "Instagram",
           social_media_username: values.username,
-          pipeline_id: pipelineId,
+          pipeline_id: pipelineId || "",
           phase_id: defaultPhase || "",
           social_media_bio: profileData.bio,
           social_media_followers: profileData.followers,
           social_media_following: profileData.following,
           social_media_profile_image_url: profileData.profileImageUrl,
-          industry: "Not Specified"
+          industry: "Not Specified",
+          social_media_posts: [],
+          social_media_engagement_rate: 0,
+          social_media_last_post_date: null,
+          social_media_categories: [],
+          social_media_verified: false,
+          social_media_stats: {},
+          social_media_tagged_users: [],
+          social_media_mentioned_users: []
         });
 
       if (error) throw error;
