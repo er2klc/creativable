@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
-import { Bot, CheckCircle, ArrowRight } from "lucide-react";
+import { Bot, CheckCircle, ArrowRight, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
@@ -75,6 +75,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
                 <LeadDetailContent
                   lead={lead}
                   onUpdateLead={updateLeadMutation.mutate}
+                  isLoading={isLoading}
                   onDeleteClick={() => setShowDeleteDialog(true)}
                 />
               )}
