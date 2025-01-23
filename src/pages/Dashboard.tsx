@@ -23,7 +23,7 @@ const Dashboard = () => {
   if (!user) return null;
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="mx-auto">
       <DashboardHeader userEmail={user.email} />
       <QuickActions />
       <SearchBar />
