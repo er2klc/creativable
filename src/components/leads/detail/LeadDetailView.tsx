@@ -55,6 +55,10 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
   useLeadSubscription(leadId);
 
+  const handleDelete = () => {
+    deleteLeadMutation.mutate();
+  };
+
   return (
     <>
       <Dialog open={!!leadId} onOpenChange={() => onClose()}>
@@ -80,7 +84,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       <DeleteLeadDialog 
         showDialog={showDeleteDialog} 
         setShowDialog={setShowDeleteDialog}
-        onDelete={() => deleteLeadMutation.mutate()}
+        onDelete={handleDelete}
       />
     </>
   );
