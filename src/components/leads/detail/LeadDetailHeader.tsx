@@ -61,7 +61,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
 
       // Create timeline entry
       const { error: noteError } = await supabase
-        .from("notes")
+        .from('notes')
         .insert({
           lead_id: lead.id,
           user_id: (await supabase.auth.getUser()).data.user?.id,
@@ -114,7 +114,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
         'messages',
         'notes',
         'tasks'
-      ];
+      ] as const;
 
       // Delete related records first
       for (const table of relatedTables) {
