@@ -12,7 +12,14 @@ export type TimelineItemType =
   | 'reminder'
   | 'upload';
 
-export type TimelineItemStatus = 'completed' | 'cancelled' | 'outdated';
+export type TimelineItemStatus = 
+  | 'completed' 
+  | 'cancelled' 
+  | 'outdated'
+  | 'partner'
+  | 'customer'
+  | 'not_for_now'
+  | 'no_interest';
 
 export interface TimelineItem {
   id: string;
@@ -20,7 +27,7 @@ export interface TimelineItem {
   content: string;
   created_at: string;
   timestamp: string;
-  status?: string;
+  status?: TimelineItemStatus;
   platform?: string;
   metadata?: {
     dueDate?: string;
@@ -55,7 +62,7 @@ export const formatDate = (dateString: string) => {
   }
 };
 
-export const getStatusChangeMessage = (status: string) => {
+export const getStatusChangeMessage = (status: TimelineItemStatus) => {
   switch(status) {
     case 'partner':
       return "Herzlichen Glückwunsch zu einem neuen Partner! OnBoarding beginnt jetzt.";

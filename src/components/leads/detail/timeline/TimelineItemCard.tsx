@@ -1,9 +1,7 @@
-import { formatDate, getStatusChangeMessage } from "./TimelineUtils";
-import { TimelineItemIcon } from "./TimelineItemIcon";
+import { formatDate, getStatusChangeMessage, TimelineItem } from "./TimelineUtils";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { TimelineItem } from "./TimelineUtils";
 
 interface TimelineItemCardProps {
   item: TimelineItem;
@@ -11,8 +9,10 @@ interface TimelineItemCardProps {
 }
 
 export const TimelineItemCard = ({ item, onDelete }: TimelineItemCardProps) => {
+  if (!item) return null;
+
   const getContent = () => {
-    if (item.type === 'phase_change' && item.metadata?.type === 'status_change') {
+    if (item.type === 'phase_change' && item.metadata?.type === 'status_change' && item.metadata.status) {
       return getStatusChangeMessage(item.metadata.status);
     }
     return item.content;
@@ -53,9 +53,6 @@ export const TimelineItemCard = ({ item, onDelete }: TimelineItemCardProps) => {
   return (
     <div className={cn("p-4 rounded-lg relative", getBackgroundColor())}>
       <div className="flex items-start gap-4">
-        <div className="mt-1">
-          <TimelineItemIcon item={item} />
-        </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm text-gray-900">{getContent()}</p>
           <p className="text-xs text-gray-500 mt-1">

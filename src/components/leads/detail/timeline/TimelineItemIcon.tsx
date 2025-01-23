@@ -17,6 +17,8 @@ interface TimelineItemIconProps {
 }
 
 export const TimelineItemIcon = ({ item }: TimelineItemIconProps) => {
+  if (!item) return null;
+
   if (item.type === 'phase_change' && item.metadata?.type === 'status_change') {
     switch(item.metadata.status) {
       case 'partner':
