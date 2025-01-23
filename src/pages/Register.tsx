@@ -1,13 +1,13 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { supabase } from "@/integrations/supabase/client";
+import { CheckCircle2, XCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, XCircle } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const passwordRequirements = [
   { check: (pwd: string) => pwd.length >= 8, label: "Mindestens 8 Zeichen" },
@@ -78,32 +78,21 @@ const Register = () => {
       });
 
       if (error) {
+        console.error('Registration error:', error);
         if (error.message?.includes('already registered')) {
           setShowLoginDialog(true);
-          setIsLoading(false);
           return;
         }
         throw error;
       }
 
-      if (data?.user) {
-        // Create initial settings for the user
-        const { error: settingsError } = await supabase
-          .from('settings')
-          .insert({
-            user_id: data.user.id,
-            language: "Deutsch",
-            name: formData.name,
-          });
-
-        if (settingsError) {
-          console.error('Settings creation error:', settingsError);
-          // Don't throw here, as the user is already created
-        }
-
-        toast.success("Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail-Adresse.");
-        navigate("/auth");
+      if (!data?.user?.id) {
+        throw new Error("Fehler bei der Registrierung - keine Benutzer-ID erhalten");
       }
+
+      toast.success("Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail-Adresse.");
+      navigate("/auth");
+      
     } catch (error: any) {
       console.error('Registration error:', error);
       toast.error(error.message || "Ein Fehler ist aufgetreten");
