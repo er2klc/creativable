@@ -24,6 +24,10 @@ export const useRegistration = () => {
   const handleRegistration = async () => {
     try {
       console.log("Starting basic registration process with email:", formData.email);
+      console.log("Registration request details:", {
+        email: formData.email,
+        hasPassword: !!formData.password
+      });
       
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
@@ -35,6 +39,7 @@ export const useRegistration = () => {
         if (signUpError.message.includes('already registered')) {
           throw new Error("Diese E-Mail-Adresse ist bereits registriert. Bitte verwenden Sie eine andere E-Mail-Adresse.");
         } else {
+          console.error('Detailed registration error:', signUpError);
           throw signUpError;
         }
       }
