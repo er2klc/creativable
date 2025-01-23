@@ -23,25 +23,17 @@ export const useRegistration = () => {
 
   const handleRegistration = async () => {
     try {
-      console.log("Starting registration process with email:", formData.email);
+      console.log("Starting basic registration process with email:", formData.email);
       
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
-        options: {
-          data: {
-            display_name: formData.name,
-          },
-        },
       });
 
       if (signUpError) {
         console.error('Registration error:', signUpError);
         if (signUpError.message.includes('already registered')) {
           throw new Error("Diese E-Mail-Adresse ist bereits registriert. Bitte verwenden Sie eine andere E-Mail-Adresse.");
-        } else if (signUpError.message.includes('Database error')) {
-          console.error('Database error details:', signUpError);
-          throw new Error("Datenbankfehler bei der Registrierung. Bitte versuchen Sie es später erneut.");
         } else {
           throw signUpError;
         }
