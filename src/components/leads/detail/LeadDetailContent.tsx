@@ -18,12 +18,14 @@ interface LeadDetailContentProps {
   lead: LeadWithRelations;
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
   isLoading: boolean;
+  onDeleteClick?: () => void;
 }
 
 export const LeadDetailContent = ({ 
   lead, 
   onUpdateLead,
-  isLoading 
+  isLoading,
+  onDeleteClick
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
 
@@ -60,7 +62,11 @@ export const LeadDetailContent = ({
           <LeadSummary lead={lead} />
         </div>
         
-        <LeadInfoCard lead={lead} onUpdate={onUpdateLead} />
+        <LeadInfoCard 
+          lead={lead} 
+          onUpdate={onUpdateLead} 
+          onDelete={onDeleteClick}
+        />
         <ContactFieldManager />
         <LeadFileList leadId={lead.id} />
         <LeadTimeline lead={lead} />

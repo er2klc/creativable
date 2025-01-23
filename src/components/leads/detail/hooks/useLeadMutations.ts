@@ -58,7 +58,9 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         'tasks'
       ] as const;
 
+      // Delete related records first
       for (const table of relatedTables) {
+        console.log(`Deleting related records from ${table}`);
         const { error } = await supabase
           .from(table)
           .delete()
@@ -70,12 +72,17 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         }
       }
 
+      // Finally delete the lead
+      console.log('Deleting lead record');
       const { error } = await supabase
         .from('leads')
         .delete()
         .eq('id', leadId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting lead:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success(
