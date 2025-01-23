@@ -13,6 +13,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+declare global {
+  interface Window {
+    FB: any;
+  }
+}
+
 export function FacebookIntegration() {
   const { settings, updateSettings } = useSettings();
   const { toast } = useToast();
@@ -22,12 +28,12 @@ export function FacebookIntegration() {
   const connectFacebook = async () => {
     try {
       // Initialize Facebook login
-      if (typeof FB !== 'undefined') {
-        FB.login(function(response) {
+      if (typeof window.FB !== 'undefined') {
+        window.FB.login(function(response) {
           if (response.authResponse) {
             // User successfully authenticated with Facebook
             const accessToken = response.authResponse.accessToken;
-            updateSettings({
+            updateSettings.mutate({
               facebook_auth_token: accessToken,
               facebook_connected: true
             });
@@ -92,7 +98,16 @@ export function FacebookIntegration() {
                 </p>
               </div>
               <div className="space-y-2">
-                <h4 className="font-medium">2. OAuth 2.0 Einstellungen</h4>
+                <h4 className="font-medium">2. Domain Einstellungen</h4>
+                <p className="text-sm text-muted-foreground">
+                  Fügen Sie diese Domain zu Ihrer Meta App hinzu:
+                </p>
+                <code className="block p-2 bg-muted rounded-md text-sm">
+                  creativable.de
+                </code>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-medium">3. OAuth 2.0 Einstellungen</h4>
                 <p className="text-sm text-muted-foreground">
                   Fügen Sie diese Redirect URI zu Ihrer Meta App hinzu:
                 </p>
