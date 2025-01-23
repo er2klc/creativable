@@ -10,8 +10,7 @@ export type TimelineItemType =
   | 'file_upload'
   | 'contact_created'
   | 'reminder'
-  | 'upload'
-  | 'presentation';
+  | 'upload';
 
 export type TimelineItemStatus = 'completed' | 'cancelled' | 'outdated';
 
@@ -53,5 +52,35 @@ export const formatDate = (dateString: string) => {
     return `${weekday}. ${format(date, "dd.MM.yyyy | HH:mm 'Uhr'", { locale: de })}`;
   } catch (error) {
     return "Ungültiges Datum";
+  }
+};
+
+export const getStatusChangeMessage = (newStatus: string) => {
+  switch(newStatus) {
+    case 'partner':
+      return "Herzlichen Glückwunsch zu einem neuen Partner! OnBoarding beginnt jetzt.";
+    case 'customer':
+      return "Herzlichen Glückwunsch zu einem neuen Kunden!";
+    case 'not_for_now':
+      return "Kontakt möchte später mehr wissen, Status angepasst NotForNow und gemerkt!";
+    case 'no_interest':
+      return "Kontakt hat kein Interesse, Next!";
+    default:
+      return `Status wurde zu ${newStatus} geändert`;
+  }
+};
+
+export const getStatusColor = (status: string) => {
+  switch(status) {
+    case 'partner':
+      return '#8B5CF6'; // Vivid Purple
+    case 'customer':
+      return '#D946EF'; // Magenta Pink
+    case 'not_for_now':
+      return '#F2FCE2'; // Soft Green
+    case 'no_interest':
+      return '#ea384c'; // Red
+    default:
+      return '#8E9196'; // Neutral Gray
   }
 };
