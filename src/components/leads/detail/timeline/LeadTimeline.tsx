@@ -48,6 +48,30 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   // Add contact creation item at the end (it will appear at the bottom)
   const timelineItems = [...sortedNotes, contactCreationItem];
 
+  // Transform social media posts to include required fields
+  const transformedPosts = Array.isArray(lead.social_media_posts) 
+    ? (lead.social_media_posts as any[]).map(post => ({
+        ...post,
+        engagement_count: post.engagement_count || 0,
+        first_comment: post.first_comment || '',
+        media_type: post.media_type || 'post',
+        media_urls: post.media_urls || [],
+        tagged_users: post.tagged_users || [],
+        comments_count: post.comments_count || 0,
+        content: post.content || '',
+        created_at: post.created_at || post.posted_at || new Date().toISOString(),
+        likes_count: post.likes_count || 0,
+        location: post.location || '',
+        mentioned_profiles: post.mentioned_profiles || [],
+        tagged_profiles: post.tagged_profiles || [],
+        platform: post.platform || 'unknown',
+        post_type: post.post_type || 'post',
+        url: post.url || null,
+        lead_id: post.lead_id || lead.id,
+        metadata: post.metadata || {}
+      }))
+    : [];
+
   return (
     <div className="space-y-4">
       <TimelineHeader 
@@ -72,24 +96,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           ))}
         </div>
       ) : (
-        <SocialMediaTimeline 
-          posts={lead.social_media_posts as Array<{
-            comments_count: number;
-            content: string;
-            created_at: string;
-            id: string;
-            lead_id: string;
-            likes_count: number;
-            location: string;
-            mentioned_profiles: string[];
-            metadata: any;
-            platform: string;
-            post_type: string;
-            posted_at: string;
-            tagged_profiles: string[];
-            url: string;
-          }>} 
-        />
+        <SocialMediaTimeline posts={transformedPosts} />
       )}
     </div>
   );
