@@ -3,7 +3,7 @@ import { TimelineHeader } from "./TimelineHeader";
 import { TimelineItem } from "./TimelineItem";
 import { SocialMediaTimeline } from "./SocialMediaTimeline";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadWithRelations } from "../types/lead";
+import { LeadWithRelations } from "./types/lead";
 import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 
 interface LeadTimelineProps {
@@ -36,7 +36,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     metadata: {
       completedAt: task.completed ? task.updated_at : undefined,
       dueDate: task.due_date,
-      status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : 'pending'
+      status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : 'outdated'
     }
   });
 
@@ -53,7 +53,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
 
   const mapFileToTimelineItem = (file: any): TimelineItemType => ({
     id: file.id,
-    type: 'file',
+    type: 'file_upload',
     content: file.file_name,
     created_at: file.created_at,
     timestamp: file.created_at,
@@ -103,6 +103,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         comments_count: post.comments_count || 0,
         content: post.content || '',
         created_at: post.created_at || post.posted_at || new Date().toISOString(),
+        posted_at: post.posted_at || post.created_at || new Date().toISOString(),
         likes_count: post.likes_count || 0,
         location: post.location || '',
         mentioned_profiles: post.mentioned_profiles || [],
