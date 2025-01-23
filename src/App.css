@@ -3,6 +3,11 @@
   text-align: center;
 }
 
+.container {
+padding-right: 0px !important;
+padding-right: 0px !important;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
