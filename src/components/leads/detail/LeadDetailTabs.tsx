@@ -1,51 +1,133 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageTab } from "./tabs/MessageTab";
+import { useSettings } from "@/hooks/use-settings";
+import { Platform } from "@/config/platforms";
+import { Tables } from "@/integrations/supabase/types";
 import { NoteTab } from "./tabs/NoteTab";
 import { TaskTab } from "./tabs/TaskTab";
-import { PlaceholderTab } from "./tabs/PlaceholderTab";
-import { LeadWithRelations } from "./types/lead";
-import { useSettings } from "@/hooks/use-settings";
+import { MessageTab } from "./tabs/MessageTab";
+import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
+import { LeadFileUpload } from "./files/LeadFileUpload";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { CalendarIcon } from "lucide-react";
 
 interface LeadDetailTabsProps {
-  lead: LeadWithRelations;
-  onUpdateLead: (updates: Partial<LeadWithRelations>) => void;
+  lead: Tables<"leads"> & {
+    platform: Platform;
+    messages: Tables<"messages">[];
+    tasks: Tables<"tasks">[];
+    notes: Tables<"notes">[];
+  };
 }
 
-export const LeadDetailTabs = ({ lead, onUpdateLead }: LeadDetailTabsProps) => {
+const tabColors = {
+  notes: "#FEF08A",
+  tasks: "#A5F3FC",
+  appointments: "#FDBA74",
+  messages: "#BFDBFE",
+  uploads: "#E5E7EB",
+  presentations: "#A5B4FC",
+};
+
+export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const { settings } = useSettings();
+  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
 
   return (
-    <Tabs defaultValue="messages" className="w-full">
-      <TabsList>
-        <TabsTrigger value="messages">
-          {settings?.language === "en" ? "Messages" : "Nachrichten"}
-        </TabsTrigger>
-        <TabsTrigger value="notes">
+    <Tabs defaultValue="notes" className="w-full">
+      <TabsList className="w-full">
+        <TabsTrigger
+          value="notes"
+          className="flex-1"
+          style={{ borderBottom: `2px solid ${tabColors.notes}` }}
+        >
           {settings?.language === "en" ? "Notes" : "Notizen"}
         </TabsTrigger>
-        <TabsTrigger value="tasks">
+        <TabsTrigger
+          value="tasks"
+          className="flex-1"
+          style={{ borderBottom: `2px solid ${tabColors.tasks}` }}
+        >
           {settings?.language === "en" ? "Tasks" : "Aufgaben"}
         </TabsTrigger>
-        <TabsTrigger value="files">
-          {settings?.language === "en" ? "Files" : "Dateien"}
+        <TabsTrigger
+          value="appointments"
+          className="flex-1"
+          style={{ borderBottom: `2px solid ${tabColors.appointments}` }}
+        >
+          {settings?.language === "en" ? "Appointments" : "Termine"}
+        </TabsTrigger>
+        <TabsTrigger
+          value="messages"
+          className="flex-1"
+          style={{ borderBottom: `2px solid ${tabColors.messages}` }}
+        >
+          {settings?.language === "en" ? "Messages" : "Nachrichten"}
+        </TabsTrigger>
+        <TabsTrigger
+          value="uploads"
+          className="flex-1"
+          style={{ borderBottom: `2px solid ${tabColors.uploads}` }}
+        >
+          {settings?.language === "en" ? "Upload File" : "Datei hochladen"}
+        </TabsTrigger>
+        <TabsTrigger
+          value="presentations"
+          className="flex-1"
+          style={{ borderBottom: `2px solid ${tabColors.presentations}` }}
+        >
+          {settings?.language === "en" ? "Presentations" : "Präsentationen"}
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="messages">
-        <MessageTab lead={lead} />
+      <TabsContent value="notes" className="mt-4">
+        <NoteTab leadId={lead.id} />
       </TabsContent>
 
-      <TabsContent value="notes">
-        <NoteTab lead={lead} />
+      <TabsContent value="tasks" className="mt-4">
+        <TaskTab leadId={lead.id} />
       </TabsContent>
 
-      <TabsContent value="tasks">
-        <TaskTab lead={lead} />
+      <TabsContent value="appointments" className="mt-4">
+        <div className="space-y-4">
+          <Button 
+            onClick={() => setAppointmentDialogOpen(true)}
+            className="w-full"
+          >
+            <CalendarIcon className="w-4 h-4 mr-2" />
+            {settings?.language === "en" ? "Add Appointment" : "Termin hinzufügen"}
+          </Button>
+          
+          <NewAppointmentDialog
+            open={appointmentDialogOpen}
+            onOpenChange={setAppointmentDialogOpen}
+            initialSelectedDate={new Date()}
+            defaultValues={{
+              leadId: lead.id,
+              time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false }),
+              title: "",
+              color: "#40E0D0",
+              meeting_type: "phone_call"
+            }}
+          />
+        </div>
       </TabsContent>
 
-      <TabsContent value="files">
-        <PlaceholderTab title={settings?.language === "en" ? "Coming soon" : "Demnächst verfügbar"} />
+      <TabsContent value="messages" className="mt-4">
+        <MessageTab leadId={lead.id} platform={lead.platform} />
+      </TabsContent>
+
+      <TabsContent value="uploads" className="mt-4">
+        <LeadFileUpload leadId={lead.id} />
+      </TabsContent>
+
+      <TabsContent value="presentations" className="mt-4">
+        <div className="p-4 text-center text-muted-foreground">
+          {settings?.language === "en" 
+            ? "Presentations feature coming soon" 
+            : "Präsentationen-Funktion kommt bald"}
+        </div>
       </TabsContent>
     </Tabs>
   );
-};
+}

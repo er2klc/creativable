@@ -4,22 +4,17 @@ import { useSettings } from "@/hooks/use-settings";
 interface DeleteLeadDialogProps {
   showDialog: boolean;
   setShowDialog: (show: boolean) => void;
-  onDelete: () => void;
-  isDeleting?: boolean;
+  onDelete?: () => void;
 }
 
-export const DeleteLeadDialog = ({ 
-  showDialog, 
-  setShowDialog, 
-  onDelete,
-  isDeleting = false 
-}: DeleteLeadDialogProps) => {
+export const DeleteLeadDialog = ({ showDialog, setShowDialog, onDelete }: DeleteLeadDialogProps) => {
   const { settings } = useSettings();
   
   const handleDelete = () => {
-    if (onDelete && !isDeleting) {
+    if (onDelete) {
       onDelete();
     }
+    setShowDialog(false);
   };
 
   return (
@@ -38,17 +33,14 @@ export const DeleteLeadDialog = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>
+          <AlertDialogCancel>
             {settings?.language === "en" ? "Cancel" : "Abbrechen"}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             className="bg-red-600 hover:bg-red-700"
-            disabled={isDeleting}
           >
-            {isDeleting 
-              ? (settings?.language === "en" ? "Deleting..." : "Wird gelöscht...") 
-              : (settings?.language === "en" ? "Delete" : "Löschen")}
+            {settings?.language === "en" ? "Delete" : "Löschen"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

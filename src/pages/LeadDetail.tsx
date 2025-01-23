@@ -125,10 +125,7 @@ export default function LeadDetail() {
         
         {/* Right Column - 8/12 width */}
         <div className="col-span-12 lg:col-span-8 space-y-6">
-          <LeadDetailTabs 
-            lead={lead} 
-            onUpdateLead={updateLeadMutation.mutate}
-          />
+          <LeadDetailTabs lead={lead} />
           <LeadTimeline 
             lead={lead} 
             onDeletePhaseChange={deletePhaseChangeMutation.mutate}

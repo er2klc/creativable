@@ -1,15 +1,13 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 
-export type Note = Tables<"notes">;
-export type Message = Tables<"messages">;
-export type Task = Tables<"tasks">;
-export type LeadFile = Tables<"lead_files">;
-
-export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "platform"> {
+export type LeadWithRelations = Tables<"leads"> & {
   platform: Platform;
-  messages: Message[];
-  tasks: Task[];
-  notes: Note[];
-  lead_files: LeadFile[];
-}
+  messages: Tables<"messages">[];
+  tasks: Tables<"tasks">[];
+  notes: Tables<"notes">[];
+  lead_files: Tables<"lead_files">[];
+  parent_id?: string | null;
+  level?: number | null;
+  avatar_url?: string | null;
+};
