@@ -36,6 +36,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: lead, isLoading, error } = useQuery({
     queryKey: ["lead", leadId],
@@ -119,6 +120,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const deleteLeadMutation = useMutation({
     mutationFn: async () => {
       if (!leadId) return;
+      setIsDeleting(true);
 
       console.log('Starting deletion process for lead:', leadId);
 
@@ -159,6 +161,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast.success(
         settings?.language === "en"
           ? "Contact deleted successfully"
@@ -176,8 +179,19 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           ? "Error deleting contact"
           : "Fehler beim Löschen des Kontakts"
       );
+      setIsDeleting(false);
+    },
+    onSettled: () => {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
     }
   });
+
+  const handleDelete = () => {
+    if (!isDeleting) {
+      deleteLeadMutation.mutate();
+    }
+  };
 
   return (
     <>
@@ -250,6 +264,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
                     size="sm"
                     className="text-gray-400 hover:text-red-600"
                     onClick={() => setShowDeleteDialog(true)}
+                    disabled={isDeleting}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -275,14 +290,17 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>
               {settings?.language === "en" ? "Cancel" : "Abbrechen"}
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteLeadMutation.mutate()}
+              onClick={handleDelete}
               className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
             >
-              {settings?.language === "en" ? "Delete" : "Löschen"}
+              {isDeleting 
+                ? (settings?.language === "en" ? "Deleting..." : "Wird gelöscht...") 
+                : (settings?.language === "en" ? "Delete" : "Löschen")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
