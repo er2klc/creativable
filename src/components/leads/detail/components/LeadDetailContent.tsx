@@ -10,9 +10,9 @@ import { LeadMessages } from "../LeadMessages";
 import { CompactPhaseSelector } from "../CompactPhaseSelector";
 import { LeadTimeline } from "../LeadTimeline";
 import { ContactFieldManager } from "../contact-info/ContactFieldManager";
-import { LeadFileUpload } from "./files/LeadFileUpload";
-import { LeadFileList } from "./files/LeadFileList";
-import { AddAppointmentDialog } from "./appointments/AddAppointmentDialog";
+import { LeadFileUpload } from "../files/LeadFileUpload";
+import { LeadFileList } from "../files/LeadFileList";
+import { AddAppointmentDialog } from "../appointments/AddAppointmentDialog";
 import { UseMutateFunction } from "@tanstack/react-query";
 
 interface LeadDetailContentProps {
