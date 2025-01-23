@@ -14,7 +14,10 @@ import {
   ArrowUpCircle,
   Upload,
   X,
-  Check
+  Check,
+  Heart,
+  Clock,
+  ThumbsDown
 } from "lucide-react";
 import { TimelineItemType } from "./TimelineUtils";
 
@@ -22,10 +25,30 @@ interface TimelineItemIconProps {
   type: TimelineItemType;
   status?: string;
   platform?: string;
+  metadata?: {
+    type?: string;
+    oldStatus?: string;
+    newStatus?: string;
+  };
 }
 
-export const TimelineItemIcon = ({ type, status, platform }: TimelineItemIconProps) => {
+export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineItemIconProps) => {
   const getIcon = () => {
+    if (type === 'phase_change' && metadata?.type === 'status_change') {
+      switch(metadata.newStatus) {
+        case 'partner':
+          return <Heart className="h-4 w-4 text-white" />;
+        case 'customer':
+          return <UserPlus className="h-4 w-4 text-white" />;
+        case 'not_for_now':
+          return <Clock className="h-4 w-4 text-white" />;
+        case 'no_interest':
+          return <ThumbsDown className="h-4 w-4 text-white" />;
+        default:
+          return <ArrowUpCircle className="h-4 w-4 text-white" />;
+      }
+    }
+
     switch (type) {
       case 'contact_created':
         return <UserPlus className="h-4 w-4 text-white" />;
@@ -48,8 +71,6 @@ export const TimelineItemIcon = ({ type, status, platform }: TimelineItemIconPro
         return <ArrowUpCircle className="h-4 w-4 text-white" />;
       case 'reminder':
         return <Bell className="h-4 w-4 text-white" />;
-      case 'upload':
-        return <Upload className="h-4 w-4 text-white" />;
       case 'file_upload':
         return <FileText className="h-4 w-4 text-white" />;
       case 'presentation':
@@ -60,6 +81,21 @@ export const TimelineItemIcon = ({ type, status, platform }: TimelineItemIconPro
   };
 
   const getIconColor = () => {
+    if (type === 'phase_change' && metadata?.type === 'status_change') {
+      switch(metadata.newStatus) {
+        case 'partner':
+          return 'bg-[#8B5CF6]'; // Vivid Purple
+        case 'customer':
+          return 'bg-[#D946EF]'; // Magenta Pink
+        case 'not_for_now':
+          return 'bg-[#F2FCE2]'; // Soft Green
+        case 'no_interest':
+          return 'bg-[#ea384c]'; // Red
+        default:
+          return 'bg-gray-500';
+      }
+    }
+
     switch (type) {
       case 'contact_created':
         return 'bg-green-500';
@@ -75,7 +111,6 @@ export const TimelineItemIcon = ({ type, status, platform }: TimelineItemIconPro
         return 'bg-purple-500';
       case 'reminder':
         return 'bg-red-500';
-      case 'upload':
       case 'file_upload':
         return 'bg-gray-500';
       case 'presentation':

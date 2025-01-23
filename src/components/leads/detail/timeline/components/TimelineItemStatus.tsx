@@ -6,6 +6,8 @@ interface TimelineItemStatusProps {
   status?: string;
   metadata?: {
     status?: 'completed' | 'cancelled' | 'outdated';
+    type?: string;
+    newStatus?: string;
   };
 }
 
@@ -14,6 +16,21 @@ export const TimelineItemStatus = ({ type, status, metadata }: TimelineItemStatu
     (status === 'cancelled' || metadata?.status === 'outdated');
 
   const getBorderColor = () => {
+    if (type === 'phase_change' && metadata?.type === 'status_change') {
+      switch(metadata.newStatus) {
+        case 'partner':
+          return 'border-[#8B5CF6]'; // Vivid Purple
+        case 'customer':
+          return 'border-[#D946EF]'; // Magenta Pink
+        case 'not_for_now':
+          return 'border-[#F2FCE2]'; // Soft Green
+        case 'no_interest':
+          return 'border-[#ea384c]'; // Red
+        default:
+          return 'border-gray-500';
+      }
+    }
+
     switch (type) {
       case 'task':
         return status === 'completed' ? 'border-green-500' : 'border-cyan-500';
