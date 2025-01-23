@@ -73,6 +73,12 @@ export const AuthFormContent = () => {
           setRegistrationStep(2);
           return;
         }
+
+        console.log("Attempting registration with data:", {
+          email: registrationData.email,
+          name: registrationData.name,
+          hasPassword: !!registrationData.password
+        });
       }
       
       const success = await handleSubmit(e);
@@ -88,6 +94,7 @@ export const AuthFormContent = () => {
         setShowLoginDialog(true);
       } else if (errorMessage.includes('Database error')) {
         toast.error("Fehler bei der Registrierung. Bitte versuchen Sie es später erneut.");
+        console.error('Detailed registration error:', error);
       } else {
         toast.error(errorMessage);
       }

@@ -40,6 +40,7 @@ export const useRegistration = () => {
         if (signUpError.message.includes('already registered')) {
           throw new Error("Diese E-Mail-Adresse ist bereits registriert. Bitte verwenden Sie eine andere E-Mail-Adresse.");
         } else if (signUpError.message.includes('Database error')) {
+          console.error('Database error details:', signUpError);
           throw new Error("Datenbankfehler bei der Registrierung. Bitte versuchen Sie es später erneut.");
         } else {
           throw signUpError;
