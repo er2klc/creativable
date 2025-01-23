@@ -11,8 +11,15 @@ export default {
   prefix: "",
   theme: {
     container: {
-      center: true, // Zentriert den Container
-      padding: "30px", // Gibt dem Container auf allen Bildschirmen links und rechts 30px Abstand
+      center: true,
+      padding: {
+        DEFAULT: "30px", // Padding für alle Bildschirmgrößen
+      },
+      screens: {
+        sm: "100%", // Max-Breite nur bis zur Handygröße
+        md: "100%", // Max-Breite nur bis zur Tablet-Größe
+        // Keine weiteren max-width Definitionen für größere Bildschirme
+      },
     },
     extend: {
       fontFamily: {
