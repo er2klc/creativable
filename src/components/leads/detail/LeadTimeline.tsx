@@ -49,14 +49,14 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const timelineItems = [...sortedNotes, contactCreationItem];
 
   // Transform social media posts to include required fields
-  const transformedPosts = (lead.social_media_posts || []).map(post => ({
+  const transformedPosts = Array.isArray(lead.social_media_posts) ? lead.social_media_posts.map(post => ({
     ...post,
     engagement_count: post.engagement_count || null,
     first_comment: post.first_comment || null,
     media_type: post.media_type || null,
-    media_urls: post.media_urls || null,
+    media_urls: post.media_urls || [],
     tagged_users: post.tagged_users || []
-  }));
+  })) : [];
 
   return (
     <div className="space-y-4">
