@@ -3,43 +3,26 @@ import { Button } from "@/components/ui/button";
 import { useUser } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
 import { useState } from "react";
-import { EditPlatformDialog } from "../platform/EditPlatformDialog";
 import { DeleteLeadDialog } from "../components/DeleteLeadDialog";
 
-interface PlatformCardActionsProps {
-  platformId: string;
-  inviteCode: string;
+interface LeadCardActionsProps {
+  leadId: string;
   createdBy: string;
-  onDelete: (e: React.MouseEvent) => void;
+  onDelete: () => void;
 }
 
-export const PlatformCardActions = ({ 
-  platformId, 
-  inviteCode,
+export const LeadCardActions = ({ 
+  leadId, 
   createdBy, 
   onDelete 
-}: PlatformCardActionsProps) => {
+}: LeadCardActionsProps) => {
   const user = useUser();
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
-  // Only show actions if user is the platform owner
+  // Only show actions if user is the lead owner
   if (!user || user.id !== createdBy) {
     return null;
   }
-
-  const handleCopy = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (inviteCode) {
-      await navigator.clipboard.writeText(inviteCode);
-      toast.success("Einladungscode kopiert!");
-    }
-  };
-
-  const handleEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowEditDialog(true);
-  };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -53,32 +36,11 @@ export const PlatformCardActions = ({
           variant="ghost"
           size="icon"
           className="h-8 w-8 bg-black/20 hover:bg-black/40 text-white"
-          onClick={handleEdit}
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 bg-black/20 hover:bg-black/40 text-white"
-          onClick={handleCopy}
-        >
-          <Copy className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 bg-black/20 hover:bg-black/40 text-white"
           onClick={handleDelete}
         >
           <Trash className="h-4 w-4" />
         </Button>
       </div>
-      <EditPlatformDialog 
-        platformId={platformId} 
-        open={showEditDialog} 
-        onOpenChange={setShowEditDialog}
-      />
       <DeleteLeadDialog
         showDialog={showDeleteDialog}
         setShowDialog={setShowDeleteDialog}
