@@ -21,11 +21,35 @@ export function FacebookIntegration() {
 
   const connectFacebook = async () => {
     try {
-      // Facebook OAuth flow will be implemented here
-      toast({
-        title: "Facebook Integration",
-        description: "Facebook Integration wird bald verfügbar sein.",
-      });
+      // Initialize Facebook login
+      if (typeof FB !== 'undefined') {
+        FB.login(function(response) {
+          if (response.authResponse) {
+            // User successfully authenticated with Facebook
+            const accessToken = response.authResponse.accessToken;
+            updateSettings({
+              facebook_auth_token: accessToken,
+              facebook_connected: true
+            });
+            toast({
+              title: "Facebook erfolgreich verbunden",
+              description: "Ihre Facebook-Integration wurde erfolgreich eingerichtet.",
+            });
+          } else {
+            toast({
+              title: "Facebook-Verbindung fehlgeschlagen",
+              description: "Bitte versuchen Sie es später erneut",
+              variant: "destructive",
+            });
+          }
+        }, {scope: 'email,public_profile,pages_show_list,pages_messaging,pages_manage_metadata'});
+      } else {
+        toast({
+          title: "Facebook SDK nicht geladen",
+          description: "Bitte laden Sie die Seite neu und versuchen Sie es erneut.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Error connecting to Facebook:", error);
       toast({

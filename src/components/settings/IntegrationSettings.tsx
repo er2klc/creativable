@@ -5,6 +5,7 @@ import { InstagramIntegration } from "./integrations/InstagramIntegration";
 import { LinkedInIntegration } from "./integrations/LinkedInIntegration";
 import { TikTokIntegration } from "./integrations/TikTokIntegration";
 import { WhatsAppIntegration } from "./integrations/WhatsAppIntegration";
+import { FacebookIntegration } from "./integrations/FacebookIntegration";
 
 export function IntegrationSettings() {
   return (
@@ -25,6 +26,7 @@ export function IntegrationSettings() {
           <h2 className="text-xl font-semibold mb-4">Social Media Integrationen</h2>
           <div className="space-y-4">
             <InstagramIntegration />
+            <FacebookIntegration />
             <LinkedInIntegration />
             <TikTokIntegration />
             <WhatsAppIntegration />
