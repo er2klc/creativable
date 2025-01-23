@@ -107,7 +107,7 @@ export default function LeadDetail() {
   }
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="mx-auto py-6">
       <LeadDetailHeader 
         lead={lead} 
         onUpdateLead={updateLeadMutation.mutate}
