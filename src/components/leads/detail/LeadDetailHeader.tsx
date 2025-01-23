@@ -45,10 +45,38 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
     await onUpdateLead({ name });
   };
 
-  const handleStatusChange = async (status: string) => {
+  const handleStatusChange = async (newStatus: string) => {
     try {
-      await onUpdateLead({ 
+      // If clicking the same status button, reset to normal state
+      const status = lead.status === newStatus ? 'lead' : newStatus;
+      
+      // Get default pipeline and phase
+      const { data: defaultPipeline } = await supabase
+        .from('pipelines')
+        .select('id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .order('order_index')
+        .limit(1)
+        .single();
+
+      if (!defaultPipeline) throw new Error('No default pipeline found');
+
+      const { data: defaultPhase } = await supabase
+        .from('pipeline_phases')
+        .select('id')
+        .eq('pipeline_id', defaultPipeline.id)
+        .order('order_index')
+        .limit(1)
+        .single();
+
+      if (!defaultPhase) throw new Error('No default phase found');
+
+      const updates: Partial<Tables<"leads">> = {
         status,
+        ...(status === 'lead' ? {
+          pipeline_id: defaultPipeline.id,
+          phase_id: defaultPhase.id
+        } : {}),
         ...(status === 'partner' ? {
           onboarding_progress: {
             message_sent: false,
@@ -57,7 +85,9 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
             intro_meeting_scheduled: false
           }
         } : {})
-      });
+      };
+
+      await onUpdateLead(updates);
 
       // Create timeline entry
       const { error: noteError } = await supabase
@@ -90,9 +120,6 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
           ? "Status updated successfully"
           : "Status erfolgreich aktualisiert"
       );
-
-      // Navigate to pool page
-      navigate('/pool');
       
     } catch (error) {
       console.error('Error updating status:', error);
@@ -176,11 +203,11 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
             <div className="flex items-center gap-2">
               {getPlatformIcon(lead.platform as Platform)}
               <div
-  className="text-2xl font-semibold bg-transparent border-none p-0 overflow-hidden whitespace-nowrap text-ellipsis"
-  title={lead.name} // Zeigt den vollständigen Namen beim Hover als Tooltip an
->
-  {lead.name}
-</div>
+                className="text-2xl font-semibold bg-transparent border-none p-0 overflow-hidden whitespace-nowrap text-ellipsis"
+                title={lead.name}
+              >
+                {lead.name}
+              </div>
             </div>
             <div className="flex gap-2">
               <Button
