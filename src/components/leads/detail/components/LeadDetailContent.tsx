@@ -10,28 +10,48 @@ import { LeadMessages } from "../LeadMessages";
 import { CompactPhaseSelector } from "../CompactPhaseSelector";
 import { LeadTimeline } from "../LeadTimeline";
 import { ContactFieldManager } from "../contact-info/ContactFieldManager";
+import { LeadFileUpload } from "./files/LeadFileUpload";
+import { LeadFileList } from "./files/LeadFileList";
+import { AddAppointmentDialog } from "./appointments/AddAppointmentDialog";
 import { UseMutateFunction } from "@tanstack/react-query";
 
 interface LeadDetailContentProps {
   lead: LeadWithRelations;
   onUpdateLead: UseMutateFunction<any, Error, Partial<LeadWithRelations>, unknown>;
-  onDeleteClick: () => void;
+  onDeleteClick?: () => void;
+  isLoading?: boolean;
 }
 
 export const LeadDetailContent = ({ 
   lead, 
   onUpdateLead,
-  onDeleteClick
+  onDeleteClick,
+  isLoading
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
+
+  // Only hide phase selector if lead has a status other than 'lead'
+  const showPhaseSelector = !lead.status || lead.status === 'lead';
+
+  if (isLoading) {
+    return <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>;
+  }
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="space-y-6">
-        <CompactPhaseSelector
-          lead={lead}
-          onUpdateLead={onUpdateLead}
-        />
+        <div className="flex justify-between items-center">
+          {showPhaseSelector ? (
+            <CompactPhaseSelector
+              lead={lead}
+              onUpdateLead={onUpdateLead}
+            />
+          ) : null}
+          <div className="flex gap-4">
+            <LeadFileUpload leadId={lead.id} />
+            <AddAppointmentDialog leadId={lead.id} leadName={lead.name} />
+          </div>
+        </div>
         
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -45,10 +65,11 @@ export const LeadDetailContent = ({
         
         <LeadInfoCard 
           lead={lead} 
-          onUpdate={onUpdateLead}
+          onUpdate={onUpdateLead} 
           onDelete={onDeleteClick}
         />
         <ContactFieldManager />
+        <LeadFileList leadId={lead.id} />
         <LeadTimeline lead={lead} />
         <TaskList leadId={lead.id} />
         <NoteList leadId={lead.id} />
