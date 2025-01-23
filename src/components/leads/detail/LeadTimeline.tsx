@@ -11,6 +11,28 @@ interface LeadTimelineProps {
   onDeletePhaseChange?: (noteId: string) => void;
 }
 
+interface SocialMediaPostRaw {
+  comments_count?: number | null;
+  content?: string | null;
+  created_at?: string | null;
+  id: string;
+  lead_id?: string | null;
+  likes_count?: number | null;
+  location?: string | null;
+  mentioned_profiles?: string[] | null;
+  metadata?: any;
+  platform: string;
+  post_type: string;
+  posted_at?: string | null;
+  tagged_profiles?: string[] | null;
+  url?: string | null;
+  engagement_count?: number | null;
+  first_comment?: string | null;
+  media_type?: string | null;
+  media_urls?: string[] | null;
+  tagged_users?: any[] | null;
+}
+
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
   const { settings } = useSettings();
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
@@ -49,14 +71,26 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const timelineItems = [...sortedNotes, contactCreationItem];
 
   // Transform social media posts to include required fields
-  const transformedPosts = Array.isArray(lead.social_media_posts) ? lead.social_media_posts.map(post => ({
-    ...post,
-    engagement_count: post.engagement_count || null,
-    first_comment: post.first_comment || null,
-    media_type: post.media_type || null,
-    media_urls: post.media_urls || [],
-    tagged_users: post.tagged_users || []
-  })) : [];
+  const transformedPosts = Array.isArray(lead.social_media_posts) 
+    ? (lead.social_media_posts as SocialMediaPostRaw[]).map(post => ({
+        ...post,
+        engagement_count: post.engagement_count || null,
+        first_comment: post.first_comment || null,
+        media_type: post.media_type || null,
+        media_urls: post.media_urls || [],
+        tagged_users: post.tagged_users || [],
+        // Ensure all required fields have default values
+        comments_count: post.comments_count || 0,
+        content: post.content || null,
+        likes_count: post.likes_count || 0,
+        location: post.location || null,
+        mentioned_profiles: post.mentioned_profiles || [],
+        tagged_profiles: post.tagged_profiles || [],
+        platform: post.platform || 'unknown',
+        post_type: post.post_type || 'post',
+        url: post.url || null
+      }))
+    : [];
 
   return (
     <div className="space-y-4">
