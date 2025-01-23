@@ -16,7 +16,7 @@ export function LeadInfoCard({ lead, onUpdate, onDelete }: LeadInfoCardProps) {
   const { settings } = useSettings();
 
   return (
-    <Card className="shadow-sm relative">
+    <Card className="shadow-sm relative pb-16">
       <CardHeader className="pb-2 border-b border-gray-200/30 shadow-sm">
         <LeadCardHeader lead={lead} />
       </CardHeader>
