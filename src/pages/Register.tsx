@@ -2,19 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, XCircle } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-const passwordRequirements = [
-  { check: (pwd: string) => pwd.length >= 8, label: "Mindestens 8 Zeichen" },
-  { check: (pwd: string) => /[A-Z]/.test(pwd), label: "Ein Großbuchstabe" },
-  { check: (pwd: string) => /[0-9]/.test(pwd), label: "Eine Zahl" },
-  { check: (pwd: string) => /[!@#$%^&*(),.?":{}|<>\-]/.test(pwd), label: "Ein Sonderzeichen" },
-];
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -27,42 +19,19 @@ const Register = () => {
     confirmPassword: "",
   });
 
-  const [passwordStrength, setPasswordStrength] = useState<{
-    [key: string]: boolean;
-  }>({});
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value,
+      [e.target.name]: e.target.value,
     });
-
-    if (name === "password") {
-      const strength = passwordRequirements.reduce(
-        (acc, req) => ({
-          ...acc,
-          [req.label]: req.check(value),
-        }),
-        {}
-      );
-      setPasswordStrength(strength);
-    }
   };
-
-  const isPasswordValid = Object.values(passwordStrength).every(Boolean);
-  const doPasswordsMatch = formData.password === formData.confirmPassword;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      if (!isPasswordValid) {
-        throw new Error("Passwort erfüllt nicht alle Anforderungen");
-      }
-
-      if (!doPasswordsMatch) {
+      if (formData.password !== formData.confirmPassword) {
         throw new Error("Passwörter stimmen nicht überein");
       }
 
@@ -78,7 +47,6 @@ const Register = () => {
       });
 
       if (error) {
-        console.error('Registration error:', error);
         if (error.message?.includes('already registered')) {
           setShowLoginDialog(true);
           return;
@@ -150,18 +118,6 @@ const Register = () => {
             required
             className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
           />
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            {passwordRequirements.map(({ label }) => (
-              <div key={label} className="flex items-center gap-2 transition-opacity duration-200" style={{ opacity: passwordStrength[label] ? 1 : 0.5 }}>
-                {passwordStrength[label] ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-500 transition-transform duration-200 animate-in fade-in-0" />
-                ) : (
-                  <XCircle className="h-4 w-4 text-gray-400" />
-                )}
-                <span>{label}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="space-y-2">
@@ -182,7 +138,7 @@ const Register = () => {
         <Button
           type="submit"
           className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-lg backdrop-blur-sm relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-full after:bg-gradient-to-r after:from-red-500 after:via-yellow-500 after:to-blue-500"
-          disabled={isLoading || !isPasswordValid || !doPasswordsMatch}
+          disabled={isLoading}
         >
           {isLoading ? "Laden..." : "Registrieren"}
         </Button>
