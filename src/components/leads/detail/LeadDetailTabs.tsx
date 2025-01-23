@@ -34,7 +34,7 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
 
   return (
-    <Tabs defaultValue="notes" className="w-full">
+    <Tabs defaultValue="notes" className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-4 pt-4">
       <TabsList className="w-full">
         <TabsTrigger
           value="notes"
