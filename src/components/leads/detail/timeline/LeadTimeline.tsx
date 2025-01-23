@@ -34,9 +34,9 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     created_at: task.created_at,
     timestamp: task.created_at,
     metadata: {
-      completed: task.completed,
-      due_date: task.due_date,
-      color: task.color
+      completedAt: task.completed ? task.updated_at : undefined,
+      dueDate: task.due_date,
+      status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : 'pending'
     }
   });
 
@@ -47,7 +47,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     created_at: message.created_at,
     timestamp: message.sent_at || message.created_at,
     metadata: {
-      platform: message.platform
+      type: message.platform
     }
   });
 
@@ -58,9 +58,10 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     created_at: file.created_at,
     timestamp: file.created_at,
     metadata: {
-      file_path: file.file_path,
-      file_type: file.file_type,
-      file_size: file.file_size
+      fileName: file.file_name,
+      filePath: file.file_path,
+      fileType: file.file_type,
+      fileSize: file.file_size
     }
   });
 
@@ -92,8 +93,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
 
   // Transform social media posts
   const transformedPosts = Array.isArray(lead.social_media_posts) 
-    ? lead.social_media_posts.map(post => ({
-        ...post,
+    ? (lead.social_media_posts as any[]).map(post => ({
+        id: post.id || '',
         engagement_count: post.engagement_count || 0,
         first_comment: post.first_comment || '',
         media_type: post.media_type || 'post',
