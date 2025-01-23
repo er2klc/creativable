@@ -1,5 +1,4 @@
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
-import { Bot, CheckCircle, ArrowRight, Trash2 } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
@@ -9,7 +8,7 @@ import { useLeadSubscription } from "./hooks/useLeadSubscription";
 import { useLeadMutations } from "./hooks/useLeadMutations";
 import { LeadDetailHeader } from "./components/LeadDetailHeader";
 import { LeadDetailContent } from "./components/LeadDetailContent";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { DeleteLeadDialog } from "./components/DeleteLeadDialog";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -67,50 +66,22 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
                 onUpdateLead={updateLeadMutation.mutate}
                 onClose={onClose}
               />
-              {isLoading ? (
-                <div className="p-6">
-                  {settings?.language === "en" ? "Loading..." : "Lädt..."}
-                </div>
-              ) : (
-                <LeadDetailContent
-                  lead={lead}
-                  onUpdateLead={updateLeadMutation.mutate}
-                  isLoading={isLoading}
-                  onDeleteClick={() => setShowDeleteDialog(true)}
-                />
-              )}
+              <LeadDetailContent
+                lead={lead}
+                onUpdateLead={updateLeadMutation.mutate}
+                isLoading={isLoading}
+                onDeleteClick={() => setShowDeleteDialog(true)}
+              />
             </>
           )}
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {settings?.language === "en" 
-                ? "Delete Contact" 
-                : "Kontakt löschen"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {settings?.language === "en"
-                ? "This action cannot be undone. This will permanently delete the contact and all associated data."
-                : "Diese Aktion kann nicht rückgängig gemacht werden. Der Kontakt und alle zugehörigen Daten werden dauerhaft gelöscht."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              {settings?.language === "en" ? "Cancel" : "Abbrechen"}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteLeadMutation.mutate()}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {settings?.language === "en" ? "Delete" : "Löschen"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteLeadDialog 
+        showDialog={showDeleteDialog} 
+        setShowDialog={setShowDeleteDialog}
+        onDelete={() => deleteLeadMutation.mutate()}
+      />
     </>
   );
 };

@@ -1,4 +1,4 @@
-import { Bot, Trash2 } from "lucide-react";
+import { Bot } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "../types/lead";
 import { Button } from "@/components/ui/button";
