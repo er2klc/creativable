@@ -1,11 +1,11 @@
 export interface PlaceholderTabProps {
-  title?: string;
+  title: string;
 }
 
-export const PlaceholderTab = ({ title = "Coming Soon" }: PlaceholderTabProps) => {
+export const PlaceholderTab = ({ title }: PlaceholderTabProps) => {
   return (
-    <div className="p-4 text-center text-gray-500">
-      <p>{title}</p>
+    <div className="p-4">
+      <p className="text-muted-foreground">{title}</p>
     </div>
   );
 };

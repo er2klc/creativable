@@ -6,7 +6,7 @@ export type Message = Tables<"messages">;
 export type Task = Tables<"tasks">;
 export type LeadFile = Tables<"lead_files">;
 
-export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
+export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "platform"> {
   platform: Platform;
   messages: Message[];
   tasks: Task[];

@@ -1,9 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LeadWithRelations } from "./types/lead";
 import { MessageTab } from "./tabs/MessageTab";
 import { NoteTab } from "./tabs/NoteTab";
 import { TaskTab } from "./tabs/TaskTab";
 import { PlaceholderTab } from "./tabs/PlaceholderTab";
+import { LeadWithRelations } from "./types/lead";
+import { useSettings } from "@/hooks/use-settings";
 
 interface LeadDetailTabsProps {
   lead: LeadWithRelations;
@@ -11,13 +12,23 @@ interface LeadDetailTabsProps {
 }
 
 export const LeadDetailTabs = ({ lead, onUpdateLead }: LeadDetailTabsProps) => {
+  const { settings } = useSettings();
+
   return (
     <Tabs defaultValue="messages" className="w-full">
       <TabsList>
-        <TabsTrigger value="messages">Nachrichten</TabsTrigger>
-        <TabsTrigger value="notes">Notizen</TabsTrigger>
-        <TabsTrigger value="tasks">Aufgaben</TabsTrigger>
-        <TabsTrigger value="files">Dateien</TabsTrigger>
+        <TabsTrigger value="messages">
+          {settings?.language === "en" ? "Messages" : "Nachrichten"}
+        </TabsTrigger>
+        <TabsTrigger value="notes">
+          {settings?.language === "en" ? "Notes" : "Notizen"}
+        </TabsTrigger>
+        <TabsTrigger value="tasks">
+          {settings?.language === "en" ? "Tasks" : "Aufgaben"}
+        </TabsTrigger>
+        <TabsTrigger value="files">
+          {settings?.language === "en" ? "Files" : "Dateien"}
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="messages">
@@ -33,7 +44,7 @@ export const LeadDetailTabs = ({ lead, onUpdateLead }: LeadDetailTabsProps) => {
       </TabsContent>
 
       <TabsContent value="files">
-        <PlaceholderTab title="Dateien werden bald verfügbar sein" />
+        <PlaceholderTab title={settings?.language === "en" ? "Coming soon" : "Demnächst verfügbar"} />
       </TabsContent>
     </Tabs>
   );
