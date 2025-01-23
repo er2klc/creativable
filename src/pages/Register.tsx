@@ -31,18 +31,19 @@ const Register = () => {
     setIsLoading(true);
 
     try {
+      console.log("Starting basic registration process with email:", formData.email);
+      console.log("Registration request details:", {
+        email: formData.email,
+        hasPassword: !!formData.password
+      });
+      
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
-        options: {
-          data: {
-            display_name: formData.name,
-            full_name: formData.name,
-          },
-        },
       });
 
       if (error) {
+        console.error('Registration error:', error);
         if (error.message?.includes('already registered')) {
           setShowLoginDialog(true);
           return;
