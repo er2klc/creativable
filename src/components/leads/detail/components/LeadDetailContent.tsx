@@ -26,7 +26,10 @@ export const LeadDetailContent = ({
           />
         </div>
         <div className="lg:col-span-2">
-          <LeadDetailTabs lead={lead} onUpdate={onUpdateLead} />
+          <LeadDetailTabs 
+            lead={lead} 
+            onUpdateLead={onUpdateLead}
+          />
         </div>
       </div>
     </div>

@@ -10,73 +10,37 @@ import { LeadFileUpload } from "./files/LeadFileUpload";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon } from "lucide-react";
+import { LeadWithRelations } from "./types/lead";
 
 interface LeadDetailTabsProps {
-  lead: Tables<"leads"> & {
-    platform: Platform;
-    messages: Tables<"messages">[];
-    tasks: Tables<"tasks">[];
-    notes: Tables<"notes">[];
-  };
+  lead: LeadWithRelations;
+  onUpdateLead: (updates: Partial<LeadWithRelations>) => void;
 }
 
-const tabColors = {
-  notes: "#FEF08A",
-  tasks: "#A5F3FC",
-  appointments: "#FDBA74",
-  messages: "#BFDBFE",
-  uploads: "#E5E7EB",
-  presentations: "#A5B4FC",
-};
-
-export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
+export const LeadDetailTabs = ({
+  lead,
+  onUpdateLead,
+}: LeadDetailTabsProps) => {
   const { settings } = useSettings();
   const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
 
   return (
     <Tabs defaultValue="notes" className="w-full">
       <TabsList className="w-full">
-        <TabsTrigger
-          value="notes"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.notes}` }}
-        >
+        <TabsTrigger value="notes">
           {settings?.language === "en" ? "Notes" : "Notizen"}
         </TabsTrigger>
-        <TabsTrigger
-          value="tasks"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.tasks}` }}
-        >
+        <TabsTrigger value="tasks">
           {settings?.language === "en" ? "Tasks" : "Aufgaben"}
         </TabsTrigger>
-        <TabsTrigger
-          value="appointments"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.appointments}` }}
-        >
+        <TabsTrigger value="appointments">
           {settings?.language === "en" ? "Appointments" : "Termine"}
         </TabsTrigger>
-        <TabsTrigger
-          value="messages"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.messages}` }}
-        >
+        <TabsTrigger value="messages">
           {settings?.language === "en" ? "Messages" : "Nachrichten"}
         </TabsTrigger>
-        <TabsTrigger
-          value="uploads"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.uploads}` }}
-        >
+        <TabsTrigger value="uploads">
           {settings?.language === "en" ? "Upload File" : "Datei hochladen"}
-        </TabsTrigger>
-        <TabsTrigger
-          value="presentations"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.presentations}` }}
-        >
-          {settings?.language === "en" ? "Presentations" : "Präsentationen"}
         </TabsTrigger>
       </TabsList>
 
@@ -120,14 +84,6 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
       <TabsContent value="uploads" className="mt-4">
         <LeadFileUpload leadId={lead.id} />
       </TabsContent>
-
-      <TabsContent value="presentations" className="mt-4">
-        <div className="p-4 text-center text-muted-foreground">
-          {settings?.language === "en" 
-            ? "Presentations feature coming soon" 
-            : "Präsentationen-Funktion kommt bald"}
-        </div>
-      </TabsContent>
     </Tabs>
   );
-}
+};
