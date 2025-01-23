@@ -30,7 +30,7 @@ export const useRegistration = () => {
         password: formData.password,
         options: {
           data: {
-            display_name: formData.name, // Set display_name for both auth.users and profiles table
+            display_name: formData.name,
           },
         },
       });
