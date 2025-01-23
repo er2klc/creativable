@@ -30,8 +30,7 @@ export const useRegistration = () => {
         password: formData.password,
         options: {
           data: {
-            display_name: formData.name, // Set display_name for team visibility
-            full_name: formData.name,    // Set full_name for billing etc.
+            display_name: formData.name, // Set display_name for both auth.users and profiles table
           },
         },
       });

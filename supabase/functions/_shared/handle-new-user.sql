@@ -9,7 +9,6 @@ BEGIN
     new.id,
     COALESCE(
       new.raw_user_meta_data->>'display_name',
-      new.raw_user_meta_data->>'full_name',
       new.email
     ),
     new.email,
