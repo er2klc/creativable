@@ -35,7 +35,7 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
 
   return (
     <Tabs defaultValue="notes" className="w-full">
-      <TabsList className="w-full">
+      <TabsList className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-4 pt-4">
         <TabsTrigger
           value="notes"
           className="flex-1"
