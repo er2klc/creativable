@@ -56,7 +56,6 @@ export const AuthFormContent = () => {
     e.preventDefault();
     try {
       if (isSignUp) {
-        // If we're in registration mode and on step 1, just move to step 2
         if (registrationStep === 1) {
           setRegistrationStep(2);
           return;
@@ -85,7 +84,7 @@ export const AuthFormContent = () => {
         name: "",
         email: "",
         password: "",
-        phoneNumber: "",
+        confirmPassword: "",
         language: "Deutsch",
       } as RegistrationData);
       navigate("/register", { replace: true });

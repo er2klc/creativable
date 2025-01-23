@@ -64,11 +64,6 @@ export const useAuthForm = () => {
           setRegistrationLoading(false);
           return true;
         } else {
-          if (!data.phoneNumber) {
-            toast.error("Bitte geben Sie Ihre Telefonnummer ein");
-            setRegistrationLoading(false);
-            return false;
-          }
           const success = await handleRegistration();
           setRegistrationLoading(false);
           return success;
