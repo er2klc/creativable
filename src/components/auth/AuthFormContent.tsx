@@ -56,14 +56,15 @@ export const AuthFormContent = () => {
     e.preventDefault();
     try {
       if (isSignUp) {
+        const registrationData = formData as RegistrationData;
         // Validate required fields
-        if (!formData.name || !formData.email || !formData.password) {
+        if (!registrationData.name || !registrationData.email || !registrationData.password) {
           toast.error("Bitte füllen Sie alle Pflichtfelder aus");
           return;
         }
 
         // Validate password match
-        if (formData.password !== formData.confirmPassword) {
+        if (registrationData.password !== registrationData.confirmPassword) {
           toast.error("Die Passwörter stimmen nicht überein");
           return;
         }
