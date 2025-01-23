@@ -14,9 +14,23 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 
+interface FacebookSDK {
+  init(options: {
+    appId: string;
+    cookie?: boolean;
+    xfbml?: boolean;
+    version: string;
+  }): void;
+  login(
+    callback: (response: { authResponse?: { accessToken: string } }) => void,
+    options?: { scope: string }
+  ): void;
+}
+
 declare global {
   interface Window {
-    FB: any;
+    FB?: FacebookSDK;
+    fbAsyncInit?: () => void;
   }
 }
 
@@ -36,12 +50,14 @@ export function FacebookIntegration() {
 
       // Initialize Facebook SDK
       window.fbAsyncInit = function() {
-        window.FB.init({
-          appId,
-          cookie: true,
-          xfbml: true,
-          version: 'v18.0'
-        });
+        if (window.FB) {
+          window.FB.init({
+            appId,
+            cookie: true,
+            xfbml: true,
+            version: 'v18.0'
+          });
+        }
       };
 
       // Load Facebook SDK
