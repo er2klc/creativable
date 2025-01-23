@@ -46,6 +46,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     content: message.content,
     created_at: message.created_at,
     timestamp: message.sent_at || message.created_at,
+    platform: message.platform,
     metadata: {
       type: message.platform
     }
@@ -94,7 +95,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   // Transform social media posts
   const transformedPosts = Array.isArray(lead.social_media_posts) 
     ? (lead.social_media_posts as any[]).map(post => ({
-        id: post.id || '',
+        ...post,
+        posted_at: post.posted_at || post.created_at || new Date().toISOString(),
         engagement_count: post.engagement_count || 0,
         first_comment: post.first_comment || '',
         media_type: post.media_type || 'post',
@@ -103,7 +105,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         comments_count: post.comments_count || 0,
         content: post.content || '',
         created_at: post.created_at || post.posted_at || new Date().toISOString(),
-        posted_at: post.posted_at || post.created_at || new Date().toISOString(),
         likes_count: post.likes_count || 0,
         location: post.location || '',
         mentioned_profiles: post.mentioned_profiles || [],
