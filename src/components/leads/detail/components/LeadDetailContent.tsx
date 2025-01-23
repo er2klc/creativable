@@ -43,23 +43,16 @@ export const LeadDetailContent = ({
           <LeadSummary lead={lead} />
         </div>
         
-        <LeadInfoCard lead={lead} onUpdate={onUpdateLead} />
+        <LeadInfoCard 
+          lead={lead} 
+          onUpdate={onUpdateLead}
+          onDelete={onDeleteClick}
+        />
         <ContactFieldManager />
         <LeadTimeline lead={lead} />
         <TaskList leadId={lead.id} />
         <NoteList leadId={lead.id} />
         <LeadMessages leadId={lead.id} messages={lead.messages} />
-
-        <div className="absolute bottom-4 left-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-400 hover:text-red-600"
-            onClick={onDeleteClick}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
     </div>
   );
