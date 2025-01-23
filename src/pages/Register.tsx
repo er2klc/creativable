@@ -71,6 +71,7 @@ const Register = () => {
         password: formData.password,
         options: {
           data: {
+            display_name: formData.name,
             full_name: formData.name,
           },
         },
@@ -86,15 +87,6 @@ const Register = () => {
       }
 
       if (data?.user) {
-        const { error: settingsError } = await supabase
-          .from('settings')
-          .insert({
-            user_id: data.user.id,
-            language: "Deutsch",
-          });
-
-        if (settingsError) throw settingsError;
-
         toast.success("Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail-Adresse.");
         navigate("/auth");
       }
