@@ -39,24 +39,21 @@ export const useRegistration = () => {
       if (signUpError) {
         console.error('Registration error:', signUpError);
         if (signUpError.message.includes('already registered')) {
-          toast.error("Diese E-Mail-Adresse ist bereits registriert. Bitte verwenden Sie eine andere E-Mail-Adresse.");
+          throw new Error("Diese E-Mail-Adresse ist bereits registriert. Bitte verwenden Sie eine andere E-Mail-Adresse.");
         } else {
-          toast.error(signUpError.message);
+          throw signUpError;
         }
-        return false;
       }
 
       if (!authData.user) {
-        toast.error("Fehler bei der Registrierung");
-        return false;
+        throw new Error("Fehler bei der Registrierung");
       }
 
       toast.success("Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail-Adresse.");
       return true;
     } catch (error: any) {
       console.error('Registration error:', error);
-      toast.error(error.message || "Ein unerwarteter Fehler ist aufgetreten");
-      return false;
+      throw error;
     }
   };
 
