@@ -68,6 +68,7 @@ export const AuthFormContent = () => {
         navigate("/dashboard");
       }
     } catch (error: any) {
+      console.error('Registration error:', error);
       if (error.message?.includes('already registered')) {
         setShowLoginDialog(true);
       } else {
