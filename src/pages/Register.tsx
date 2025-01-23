@@ -25,7 +25,6 @@ const Register = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    phoneNumber: "",
   });
 
   const [passwordStrength, setPasswordStrength] = useState<{
@@ -73,7 +72,6 @@ const Register = () => {
         options: {
           data: {
             full_name: formData.name,
-            phone: formData.phoneNumber,
           },
         },
       });
@@ -93,7 +91,6 @@ const Register = () => {
           .insert({
             user_id: data.user.id,
             language: "Deutsch",
-            whatsapp_number: formData.phoneNumber,
           });
 
         if (settingsError) throw settingsError;
@@ -180,21 +177,6 @@ const Register = () => {
             type="password"
             placeholder="••••••••"
             value={formData.confirmPassword}
-            onChange={handleInputChange}
-            disabled={isLoading}
-            required
-            className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="phoneNumber">Telefonnummer</Label>
-          <Input
-            id="phoneNumber"
-            name="phoneNumber"
-            type="tel"
-            placeholder="+49 123 4567890"
-            value={formData.phoneNumber}
             onChange={handleInputChange}
             disabled={isLoading}
             required
