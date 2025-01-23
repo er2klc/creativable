@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { scanSocialProfile } from "@/utils/apify";
+import { useSettings } from "@/hooks/use-settings";
 
 const formSchema = z.object({
   username: z.string().min(1, "Username ist erforderlich"),
@@ -28,6 +28,7 @@ export function CreateInstagramContactDialog({
   defaultPhase 
 }: CreateInstagramContactDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const { settings } = useSettings();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,36 +43,45 @@ export function CreateInstagramContactDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // Scan Instagram profile
-      const profileData = await scanSocialProfile("instagram", values.username);
-      if (!profileData) throw new Error("Failed to fetch Instagram profile data");
+      if (!settings?.apify_api_key) {
+        toast.error("Bitte fügen Sie zuerst einen Apify API Key in den Einstellungen hinzu");
+        return;
+      }
 
-      // Create new lead
-      const { error } = await supabase
+      // First create the lead with basic info
+      const { data: lead, error: leadError } = await supabase
         .from("leads")
         .insert({
           user_id: user.id,
-          name: profileData.name || values.username,
+          name: values.username,
           platform: "Instagram",
           social_media_username: values.username,
           pipeline_id: pipelineId || "",
           phase_id: defaultPhase || "",
-          social_media_bio: profileData.bio,
-          social_media_followers: profileData.followers,
-          social_media_following: profileData.following,
-          social_media_profile_image_url: profileData.profileImageUrl,
-          industry: "Not Specified",
-          social_media_posts: [],
-          social_media_engagement_rate: 0,
-          social_media_last_post_date: null,
-          social_media_categories: [],
-          social_media_verified: false,
-          social_media_stats: {},
-          social_media_tagged_users: [],
-          social_media_mentioned_users: []
-        });
+          industry: "Not Specified"
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (leadError) throw leadError;
+
+      // Then trigger the scan profile function
+      const response = await fetch(`${window.location.origin}/functions/scan-social-profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          platform: 'instagram',
+          username: values.username,
+          leadId: lead.id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to scan Instagram profile');
+      }
 
       toast.success("Instagram-Kontakt erfolgreich hinzugefügt");
       onOpenChange(false);
