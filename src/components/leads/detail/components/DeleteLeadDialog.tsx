@@ -4,7 +4,7 @@ import { useSettings } from "@/hooks/use-settings";
 interface DeleteLeadDialogProps {
   showDialog: boolean;
   setShowDialog: (show: boolean) => void;
-  onDelete?: () => void;
+  onDelete: () => void;
   isDeleting?: boolean;
 }
 

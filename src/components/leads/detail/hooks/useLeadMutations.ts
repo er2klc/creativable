@@ -3,11 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "../types/lead";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export const useLeadMutations = (leadId: string | null, onClose: () => void) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
   const { settings } = useSettings();
 
   const updateLeadMutation = useMutation({
@@ -24,7 +25,7 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
       if (error) throw error;
       return data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
       toast.success(
         settings?.language === "en"
@@ -45,7 +46,6 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
   const deleteLeadMutation = useMutation({
     mutationFn: async () => {
       if (!leadId) return;
-
       console.log('Starting deletion process for lead:', leadId);
 
       const relatedTables = [
@@ -85,13 +85,21 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
       }
     },
     onSuccess: () => {
+      console.log("Lead deleted successfully, invalidating queries");
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      
       toast.success(
         settings?.language === "en"
           ? "Contact deleted successfully"
           : "Kontakt erfolgreich gelöscht"
       );
+      
+      // Close the dialog and navigate
       onClose();
-      navigate('/contacts', { replace: true });
+      
+      // Check if we came from the contacts page
+      const shouldNavigateToContacts = location.pathname.startsWith('/contacts');
+      navigate(shouldNavigateToContacts ? '/contacts' : '/pool', { replace: true });
     },
     onError: (error) => {
       console.error("Error deleting lead:", error);

@@ -1,10 +1,9 @@
 import { LeadWithRelations } from "../types/lead";
-import { LeadInfoCard } from "../LeadInfoCard";
-import { LeadDetailTabs } from "../LeadDetailTabs";
+import { UseMutateFunction } from "@tanstack/react-query";
 
 interface LeadDetailContentProps {
   lead: LeadWithRelations;
-  onUpdateLead: (updates: Partial<LeadWithRelations>) => void;
+  onUpdateLead: UseMutateFunction<any, Error, Partial<LeadWithRelations>, unknown>;
   isLoading: boolean;
   onDeleteClick: () => void;
 }
@@ -16,22 +15,13 @@ export const LeadDetailContent = ({
   onDeleteClick
 }: LeadDetailContentProps) => {
   return (
-    <div className="flex-1 overflow-y-auto p-6 space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <LeadInfoCard 
-            lead={lead} 
-            onUpdate={onUpdateLead} 
-            onDelete={onDeleteClick}
-          />
-        </div>
-        <div className="lg:col-span-2">
-          <LeadDetailTabs 
-            lead={lead} 
-            onUpdateLead={onUpdateLead}
-          />
-        </div>
-      </div>
+    <div className="p-4">
+      <button
+        onClick={onDeleteClick}
+        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+      >
+        Delete Contact
+      </button>
     </div>
   );
 };

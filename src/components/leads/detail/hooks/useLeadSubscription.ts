@@ -1,85 +1,27 @@
-import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useLeadDataHandler } from "./subscriptionHandlers/useLeadDataHandler";
-import { useRelatedDataHandler } from "./subscriptionHandlers/useRelatedDataHandler";
+import { useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const useLeadSubscription = (leadId: string | null) => {
   const queryClient = useQueryClient();
-  const handleLeadChange = useLeadDataHandler(leadId, queryClient);
-  const {
-    handleNotesChange,
-    handleTasksChange,
-    handleMessagesChange
-  } = useRelatedDataHandler(leadId, queryClient);
 
   useEffect(() => {
-    if (!leadId) {
-      console.log('No leadId provided for subscription');
-      return;
-    }
+    if (!leadId) return;
 
-    console.log('Setting up real-time subscriptions for leadId:', leadId);
-
-    const channel = supabase
-      .channel(`lead-details-${leadId}`)
-      // Lead changes
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'leads',
-          filter: `id=eq.${leadId}`
-        },
-        handleLeadChange
-      )
-      // Notes changes
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notes',
-          filter: `lead_id=eq.${leadId}`
-        },
-        handleNotesChange
-      )
-      // Tasks changes
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks',
-          filter: `lead_id=eq.${leadId}`
-        },
-        handleTasksChange
-      )
-      // Messages changes
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'messages',
-          filter: `lead_id=eq.${leadId}`
-        },
-        handleMessagesChange
-      )
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
-        
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to changes');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('Failed to subscribe to changes');
-        }
-      });
+    const subscription = supabase
+      .channel(`lead_${leadId}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public',
+        table: 'leads',
+        filter: `id=eq.${leadId}`
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ['lead', leadId] });
+      })
+      .subscribe();
 
     return () => {
-      console.log('Cleaning up subscriptions for leadId:', leadId);
-      supabase.removeChannel(channel);
+      subscription.unsubscribe();
     };
-  }, [leadId, queryClient, handleLeadChange, handleNotesChange, handleTasksChange, handleMessagesChange]);
+  }, [leadId, queryClient]);
 };
