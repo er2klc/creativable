@@ -199,7 +199,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
     <>
       <DialogHeader className="p-6 bg-card border-b">
         <div className="flex flex-col space-y-4">
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start border-b">
             <div className="flex items-center gap-2">
               {getPlatformIcon(lead.platform as Platform)}
               <div
