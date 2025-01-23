@@ -13,7 +13,7 @@ export default {
     container: {
       center: true,
       padding: {
-        DEFAULT: "30px", // Padding für alle Bildschirmgrößen
+        DEFAULT: "60px", // Padding für alle Bildschirmgrößen
       },
       screens: {
         sm: "100%", // Max-Breite nur bis zur Handygröße
