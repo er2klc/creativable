@@ -5,7 +5,6 @@ import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon, Video } fr
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PostMetadata } from "./PostMetadata";
 
 interface SocialMediaPost {
   id: string;
@@ -56,11 +55,13 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
   // Debugging: Gib die gefundenen Medien-URLs in der Konsole aus
   useEffect(() => {
+    console.log("Post-Daten:", post);
     console.log("Media URLs:", getMediaUrls());
-  }, [post.local_media_paths, post.local_video_path]);
+  }, [post]);
 
   return (
     <div className="flex gap-4 items-start ml-4">
+      {/* Medien-Symbol */}
       <div className="relative">
         <div className="h-8 w-8 rounded-full bg-background flex items-center justify-center border-2 border-white">
           {post.media_type === "video" ? (
@@ -71,17 +72,20 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
         </div>
       </div>
 
+      {/* Haupt-Post-Karte */}
       <Card className="flex-1 p-4 space-y-4">
+        {/* Header: Datum und Typ */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
             {post.posted_at &&
               format(new Date(post.posted_at), "PPp", { locale: de })}
           </span>
           <span className="text-xs bg-muted px-2 py-1 rounded-full">
-            {post.media_type === "video" ? "Video" : "Post"}
+            {post.media_type === "video" ? "Video" : post.post_type || "Post"}
           </span>
         </div>
 
+        {/* Inhalt des Posts */}
         {post.content && (
           <p className="text-sm whitespace-pre-wrap">{post.content}</p>
         )}
@@ -100,8 +104,27 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           </div>
         )}
 
-        {/* Metadaten des Posts */}
-        <PostMetadata post={post} />
+        {/* Metadaten: Likes, Kommentare, Location */}
+        <div className="flex gap-4 text-sm text-muted-foreground">
+          {typeof post.likes_count === "number" && (
+            <div className="flex items-center gap-1">
+              <Heart className="h-4 w-4" />
+              <span>{post.likes_count.toLocaleString()}</span>
+            </div>
+          )}
+          {typeof post.comments_count === "number" && (
+            <div className="flex items-center gap-1">
+              <MessageCircle className="h-4 w-4" />
+              <span>{post.comments_count.toLocaleString()}</span>
+            </div>
+          )}
+          {post.location && (
+            <div className="flex items-center gap-1">
+              <MapPin className="h-4 w-4" />
+              <span>{post.location}</span>
+            </div>
+          )}
+        </div>
 
         {/* Getaggte Profile */}
         {post.tagged_profiles && post.tagged_profiles.length > 0 && (
