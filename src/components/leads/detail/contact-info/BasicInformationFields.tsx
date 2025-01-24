@@ -94,20 +94,6 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
         onToggleEmptyFields={() => setShowEmptyFields(!showEmptyFields)}
         groupName="basic_info"
       >
-        {lead.social_media_profile_image_url && (
-          <div className="mb-4 flex items-center gap-4">
-            <img 
-              src={lead.social_media_profile_image_url} 
-              alt={lead.name || "Profile"} 
-              className="w-16 h-16 rounded-full object-cover"
-            />
-            <div>
-              <div className="font-medium">{lead.name}</div>
-              <div className="text-sm text-gray-500">{lead.social_media_username}</div>
-            </div>
-          </div>
-        )}
-        
         {visibleFields.map((field) => (
           <InfoRow
             key={field.field}

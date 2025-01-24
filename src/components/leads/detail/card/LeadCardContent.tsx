@@ -1,4 +1,5 @@
-import { Shield, Crown, Users } from "lucide-react";
+import { LeadAvatar } from "./LeadAvatar";
+import { LeadSocialStats } from "./LeadSocialStats";
 import { type Tables } from "@/integrations/supabase/types";
 import { useUser } from "@supabase/auth-helpers-react";
 
@@ -15,43 +16,33 @@ export const LeadCardContent = ({ lead }: LeadCardContentProps) => {
   const user = useUser();
   const isTeamOwner = user?.id === lead.user_id;
 
-  // Prioritize username over name for display
+  // Prioritize username over name
   const displayName = lead.social_media_username?.split('/')?.pop() || lead.name;
 
   return (
     <div className="space-y-4">
-      <div>
-        <h3 className="text-xl font-semibold mb-2">{displayName}</h3>
-        {lead.social_media_bio && (
-          <div 
-            className="text-base text-muted-foreground prose"
-            dangerouslySetInnerHTML={{ __html: lead.social_media_bio }}
-          />
-        )}
+      <div className="flex items-center gap-4">
+        <LeadAvatar
+          imageUrl={lead.social_media_profile_image_url || lead.avatar_url}
+          name={displayName}
+          platform={lead.platform}
+        />
+        <div className="flex-1">
+          <div className="font-medium text-lg">{displayName}</div>
+          {(lead.social_media_followers !== null || lead.social_media_following !== null) && (
+            <LeadSocialStats
+              followers={lead.social_media_followers}
+              following={lead.social_media_following}
+              engagement_rate={lead.social_media_engagement_rate}
+              isTeamOwner={isTeamOwner}
+            />
+          )}
+        </div>
       </div>
-      {(lead.social_media_followers !== null || lead.social_media_following !== null) && (
-        <div className="flex items-center gap-6 text-base text-muted-foreground">
-          {lead.social_media_followers !== null && (
-            <span className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              <span>{lead.social_media_followers.toLocaleString()}</span>
-            </span>
-          )}
-          {lead.social_media_following !== null && (
-            <>
-              <span>•</span>
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                <span>{lead.social_media_following.toLocaleString()}</span>
-              </div>
-            </>
-          )}
-          {isTeamOwner && (
-            <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5">
-              <Crown className="h-4 w-4" />
-              Team Owner
-            </span>
-          )}
+      
+      {lead.social_media_bio && (
+        <div className="text-sm text-gray-600 leading-relaxed border-t pt-4">
+          {lead.social_media_bio}
         </div>
       )}
     </div>
