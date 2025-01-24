@@ -27,6 +27,7 @@ async function fetchWithInstagramHeaders(url: string) {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -37,108 +38,136 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Hole alle Posts mit media_urls die noch nicht lokal gespeichert sind
-    const { data: posts, error: fetchError } = await supabase
-      .from('social_media_posts')
-      .select('id, lead_id, media_urls')
-      .is('local_media_paths', null)
-      .not('media_urls', 'is', null);
+    // Parse request body if present
+    let leadId: string | undefined;
+    if (req.method === 'POST') {
+      const body = await req.json();
+      leadId = body.leadId;
+    }
 
-    if (fetchError) throw fetchError;
+    // Build query for social media posts
+    let query = supabase
+      .from('social_media_posts')
+      .select('*')
+      .is('local_media_paths', null)
+      .not('media_urls', 'eq', '[]');
+
+    // If leadId is provided, only process posts for that lead
+    if (leadId) {
+      query = query.eq('lead_id', leadId);
+      console.log(`Processing posts for lead: ${leadId}`);
+    }
+
+    const { data: posts, error: postsError } = await query;
+
+    if (postsError) {
+      console.error('Error fetching posts:', postsError);
+      throw postsError;
+    }
 
     console.log(`Found ${posts?.length || 0} posts to process`);
 
-    const results = await Promise.all((posts || []).map(async (post) => {
-      try {
-        if (!post.media_urls || !Array.isArray(post.media_urls)) {
-          console.log(`Skipping post ${post.id} - no media URLs`);
-          return null;
+    if (!posts || posts.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'No posts to process' 
+        }),
+        { 
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          } 
         }
+      );
+    }
 
-        const processedUrls = await Promise.all(post.media_urls.map(async (url, index) => {
-          try {
-            console.log(`Processing URL for post ${post.id}:`, url);
-            const response = await fetchWithInstagramHeaders(url);
-            const buffer = await response.arrayBuffer();
-
-            // Get file extension from URL or default to jpg
-            const fileExt = url.split('.').pop()?.split('?')[0].toLowerCase() || 'jpg';
-            const timestamp = Date.now();
-            const bucketPath = `${post.lead_id}/${timestamp}_${index}.${fileExt}`;
-
-            console.log('Uploading to storage:', bucketPath);
-            const { data: uploadData, error: uploadError } = await supabase.storage
-              .from('social-media-files')
-              .upload(bucketPath, buffer, {
-                contentType: `image/${fileExt}`,
-                upsert: true,
-                cacheControl: '3600'
-              });
-
-            if (uploadError) {
-              console.error('Upload error:', uploadError);
-              throw uploadError;
-            }
-
-            const { data: { publicUrl } } = supabase.storage
-              .from('social-media-files')
-              .getPublicUrl(bucketPath);
-
-            console.log('Media stored at:', publicUrl);
-            return publicUrl;
-          } catch (error) {
-            console.error(`Error processing URL ${url}:`, error);
+    let processedCount = 0;
+    const results = await Promise.all(
+      posts.map(async (post) => {
+        try {
+          if (!post.media_urls || post.media_urls.length === 0) {
+            console.log(`No media URLs for post ${post.id}`);
             return null;
           }
-        }));
 
-        const successfulUrls = processedUrls.filter((url): url is string => url !== null);
+          const processedUrls = await Promise.all(
+            post.media_urls.map(async (url: string, index: number) => {
+              try {
+                console.log(`Processing media URL for post ${post.id}:`, url);
+                const response = await fetchWithInstagramHeaders(url);
+                const buffer = await response.arrayBuffer();
 
-        if (successfulUrls.length > 0) {
-          const { error: updateError } = await supabase
-            .from('social_media_posts')
-            .update({ 
-              local_media_paths: successfulUrls,
-              media_urls: successfulUrls 
+                // Get file extension from URL or default to jpg
+                const fileExt = url.split('.').pop()?.split('?')[0].toLowerCase() || 'jpg';
+                const timestamp = Date.now();
+                const bucketPath = `${post.lead_id}/${timestamp}_${index}.${fileExt}`;
+
+                console.log('Uploading to storage:', bucketPath);
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                  .from('social-media-files')
+                  .upload(bucketPath, buffer, {
+                    contentType: `image/${fileExt}`,
+                    upsert: true,
+                    cacheControl: '3600'
+                  });
+
+                if (uploadError) {
+                  console.error('Upload error:', uploadError);
+                  return null;
+                }
+
+                const { data: { publicUrl } } = supabase.storage
+                  .from('social-media-files')
+                  .getPublicUrl(bucketPath);
+
+                console.log('Media stored at:', publicUrl);
+                return publicUrl;
+              } catch (error) {
+                console.error(`Error processing URL ${url}:`, error);
+                return null;
+              }
             })
-            .eq('id', post.id);
+          );
 
-          if (updateError) {
-            console.error('Error updating post:', updateError);
-            throw updateError;
+          const successfulUrls = processedUrls.filter((url): url is string => url !== null);
+
+          if (successfulUrls.length > 0) {
+            const { error: updateError } = await supabase
+              .from('social_media_posts')
+              .update({ 
+                local_media_paths: successfulUrls,
+                media_urls: successfulUrls 
+              })
+              .eq('id', post.id);
+
+            if (updateError) {
+              console.error('Error updating post:', updateError);
+            } else {
+              processedCount++;
+            }
           }
 
           return {
             postId: post.id,
-            success: true,
-            processedUrls: successfulUrls.length
+            processedUrls: successfulUrls
           };
+        } catch (error) {
+          console.error(`Error processing post ${post.id}:`, error);
+          return null;
         }
+      })
+    );
 
-        return {
-          postId: post.id,
-          success: false,
-          error: 'No URLs were successfully processed'
-        };
+    const successfulResults = results.filter((result): result is NonNullable<typeof result> => result !== null);
 
-      } catch (error) {
-        console.error(`Error processing post ${post.id}:`, error);
-        return {
-          postId: post.id,
-          success: false,
-          error: error.message
-        };
-      }
-    }));
-
-    const successCount = results.filter(r => r?.success).length;
-    
     return new Response(
-      JSON.stringify({
-        success: true,
-        processed: results.length,
-        successful: successCount,
-        results
+      JSON.stringify({ 
+        success: true, 
+        processed: processedCount,
+        total: posts.length,
+        results: successfulResults,
+        message: `Successfully processed ${processedCount} of ${posts.length} posts` 
       }),
       {
         headers: {
