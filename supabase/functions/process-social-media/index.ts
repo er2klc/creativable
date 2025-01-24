@@ -17,12 +17,6 @@ serve(async (req) => {
 
     console.log(`Processing ${mediaType} from URL: ${mediaUrl} for post: ${postId}`)
 
-    // Initialize Supabase client
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
     // Download the media file
     const response = await fetch(mediaUrl)
     if (!response.ok) {
@@ -36,8 +30,9 @@ serve(async (req) => {
       throw new Error('Received empty media file')
     }
 
+    console.log(`Successfully downloaded file, size: ${buffer.byteLength} bytes`)
+
     const file = new Uint8Array(buffer)
-    console.log(`Successfully downloaded file, size: ${file.length} bytes`)
 
     // Generate a unique filename with timestamp to avoid collisions
     const timestamp = new Date().getTime()
@@ -46,6 +41,12 @@ serve(async (req) => {
     const filePath = `${postId}/${filename}`
 
     console.log(`Attempting to upload ${mediaType} to path: ${filePath}`)
+
+    // Initialize Supabase client
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
     // Upload to storage bucket
     const { data: uploadData, error: uploadError } = await supabase.storage
