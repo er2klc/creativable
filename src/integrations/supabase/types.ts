@@ -1426,7 +1426,7 @@ export type Database = {
           mentioned_profiles: string[] | null
           metadata: Json | null
           platform: string
-          post_type: string
+          post_type: Database["public"]["Enums"]["post_type"]
           posted_at: string | null
           tagged_profiles: string[] | null
           tagged_users: Json | null
@@ -1447,7 +1447,7 @@ export type Database = {
           mentioned_profiles?: string[] | null
           metadata?: Json | null
           platform: string
-          post_type: string
+          post_type: Database["public"]["Enums"]["post_type"]
           posted_at?: string | null
           tagged_profiles?: string[] | null
           tagged_users?: Json | null
@@ -1468,7 +1468,7 @@ export type Database = {
           mentioned_profiles?: string[] | null
           metadata?: Json | null
           platform?: string
-          post_type?: string
+          post_type?: Database["public"]["Enums"]["post_type"]
           posted_at?: string | null
           tagged_profiles?: string[] | null
           tagged_users?: Json | null
@@ -2725,6 +2725,7 @@ export type Database = {
         | "whatsapp"
         | "social_media"
       gender_type: "male" | "female" | "other" | "prefer_not_to_say"
+      post_type: "post" | "video" | "reel" | "story" | "igtv"
       recurring_pattern: "none" | "daily" | "weekly" | "monthly" | "yearly"
       shortcut_type:
         | "team"
