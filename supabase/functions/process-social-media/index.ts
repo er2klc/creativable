@@ -26,11 +26,18 @@ serve(async (req) => {
     // Download the media file
     const response = await fetch(mediaUrl)
     if (!response.ok) {
+      console.error(`Failed to fetch media from URL: ${mediaUrl}`)
       throw new Error(`Failed to fetch media: ${response.statusText}`)
     }
     
     const buffer = await response.arrayBuffer()
+    if (!buffer || buffer.byteLength === 0) {
+      console.error('Received empty buffer from media URL')
+      throw new Error('Received empty media file')
+    }
+
     const file = new Uint8Array(buffer)
+    console.log(`Successfully downloaded file, size: ${file.length} bytes`)
 
     // Generate a unique filename with timestamp to avoid collisions
     const timestamp = new Date().getTime()
@@ -38,7 +45,7 @@ serve(async (req) => {
     const filename = `${postId}-${timestamp}${extension}`
     const filePath = `${postId}/${filename}`
 
-    console.log(`Uploading ${mediaType} to path: ${filePath}`)
+    console.log(`Attempting to upload ${mediaType} to path: ${filePath}`)
 
     // Upload to storage bucket
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -46,7 +53,7 @@ serve(async (req) => {
       .upload(filePath, file, {
         contentType: mediaType === 'video' ? 'video/mp4' : 'image/jpeg',
         cacheControl: '3600',
-        upsert: false
+        upsert: true // Changed to true to handle potential retries
       })
 
     if (uploadError) {
@@ -62,6 +69,8 @@ serve(async (req) => {
       : {
           local_media_paths: supabase.sql`array_append(COALESCE(local_media_paths, ARRAY[]::text[]), ${filePath})`
         }
+
+    console.log('Updating post with file path:', updates)
 
     const { error: updateError } = await supabase
       .from('social_media_posts')
@@ -79,6 +88,8 @@ serve(async (req) => {
     const { data: { publicUrl } } = supabase.storage
       .from('social-media-files')
       .getPublicUrl(filePath)
+
+    console.log('Generated public URL:', publicUrl)
 
     return new Response(
       JSON.stringify({ 
