@@ -11,18 +11,18 @@ interface SocialMediaPost {
   platform: string;
   post_type: string;
   content: string | null;
-  likes_count: number | null;
-  comments_count: number | null;
+  likesCount: number | null;  // Geändert zu likesCount
+  commentsCount: number | null;  // Geändert zu commentsCount
   url: string | null;
   location: string | null;
   mentioned_profiles: string[] | null;
   tagged_profiles: string[] | null;
   posted_at: string | null;
-  media_urls: string[] | null; // Original URLs (falls vorhanden)
+  media_urls: string[] | null;
   media_type: string | null;
-  local_video_path: string | null; // Lokaler Pfad für Videos in Supabase
-  local_media_paths: string[] | null; // Lokale Pfade für Bilder in Supabase
-  video_url: string | null; // Original Video-URL (falls vorhanden)
+  local_video_path: string | null;
+  local_media_paths: string[] | null;
+  video_url: string | null;
 }
 
 interface SocialMediaPostProps {
@@ -30,7 +30,6 @@ interface SocialMediaPostProps {
 }
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
-  // Funktion, um die URLs der Medien zurückzugeben
   const getMediaUrls = () => {
     const urls: string[] = [];
 
@@ -106,16 +105,16 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
         {/* Metadaten: Likes, Kommentare, Location */}
         <div className="flex gap-4 text-sm text-muted-foreground">
-          {typeof post.likes_count === "number" && (
+          {typeof post.likesCount === "number" && (
             <div className="flex items-center gap-1">
               <Heart className="h-4 w-4" />
-              <span>{post.likes_count.toLocaleString()}</span>
+              <span>{post.likesCount.toLocaleString()}</span>
             </div>
           )}
-          {typeof post.comments_count === "number" && (
+          {typeof post.commentsCount === "number" && (
             <div className="flex items-center gap-1">
               <MessageCircle className="h-4 w-4" />
-              <span>{post.comments_count.toLocaleString()}</span>
+              <span>{post.commentsCount.toLocaleString()}</span>
             </div>
           )}
           {post.location && (
