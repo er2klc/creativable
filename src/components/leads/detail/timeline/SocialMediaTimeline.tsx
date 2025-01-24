@@ -15,6 +15,8 @@ interface SocialMediaPostRaw {
   metadata: any;
   media_urls: string[] | null;
   media_type: string | null;
+  local_video_path: string | null;  // Added this
+  local_media_paths: string[] | null;  // Added this
 }
 
 interface SocialMediaTimelineProps {
