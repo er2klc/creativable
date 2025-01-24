@@ -2,6 +2,22 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
+const normalizePostType = (type: string): 'post' | 'video' | 'reel' | 'story' | 'igtv' => {
+  if (!type) return 'post';
+  
+  const normalizedType = type.toLowerCase();
+  
+  switch (normalizedType) {
+    case 'video':
+    case 'reel':
+    case 'story':
+    case 'igtv':
+      return normalizedType;
+    default:
+      return 'post';
+  }
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -82,21 +98,18 @@ serve(async (req) => {
         const profileData = items[0]
         console.log('Profile data received:', profileData);
 
-        // Extract all hashtags from posts
         const allHashtags = new Set<string>();
         profileData.latestPosts?.forEach((post: any) => {
           const hashtags = post.hashtags || [];
           hashtags.forEach((tag: string) => allHashtags.add(tag));
         });
 
-        // Calculate engagement rate
         const engagementRate = profileData.followersCount > 0 
           ? ((profileData.latestPosts?.reduce((sum: number, post: any) => 
               sum + (parseInt(post.likesCount) || 0) + (parseInt(post.commentsCount) || 0), 0) / 
               (profileData.latestPosts?.length || 1)) / profileData.followersCount)
           : 0;
 
-        // Update lead with social media data and hashtags as interests
         const { error: updateError } = await supabaseClient
           .from('leads')
           .update({
@@ -119,11 +132,10 @@ serve(async (req) => {
           throw updateError
         }
 
-        // Transform posts for insertion
         const posts = profileData.latestPosts?.map((post: any) => ({
           lead_id: leadId,
           platform: 'Instagram',
-          post_type: post.type || 'post',
+          post_type: normalizePostType(post.type),
           content: post.caption,
           likes_count: parseInt(post.likesCount) || 0,
           comments_count: parseInt(post.commentsCount) || 0,
@@ -145,7 +157,6 @@ serve(async (req) => {
           first_comment: post.firstComment
         })) || [];
 
-        // Insert posts with unique constraint handling
         if (posts.length > 0) {
           const { error: postsError } = await supabaseClient
             .from('social_media_posts')
@@ -160,7 +171,6 @@ serve(async (req) => {
           }
         }
 
-        // Store scan history
         const { error: historyError } = await supabaseClient
           .from('instagram_scan_history')
           .insert({
