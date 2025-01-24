@@ -8,6 +8,13 @@ interface LeadAvatarProps {
 }
 
 export const LeadAvatar = ({ imageUrl, name, platform }: LeadAvatarProps) => {
+  // Get initials from name
+  const initials = name
+    ?.split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase() || '';
+
   return (
     <div className="relative">
       <Avatar className="h-20 w-20">
@@ -18,8 +25,8 @@ export const LeadAvatar = ({ imageUrl, name, platform }: LeadAvatarProps) => {
             className="object-cover"
           />
         ) : (
-          <AvatarFallback className="bg-primary/10">
-            {name?.split(' ').map(n => n[0]).join('').toUpperCase()}
+          <AvatarFallback className="bg-primary/10 text-lg font-semibold">
+            {initials}
           </AvatarFallback>
         )}
       </Avatar>
