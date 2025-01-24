@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon } from "lucide-react";
@@ -7,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { MediaGallery } from "./MediaGallery";
 import { PostMetadata } from "./PostMetadata";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
 
 interface SocialMediaPost {
   id: string;

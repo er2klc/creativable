@@ -14,6 +14,8 @@ serve(async (req) => {
   try {
     const { mediaUrl, postId, mediaType } = await req.json()
 
+    console.log(`Processing ${mediaType} from URL: ${mediaUrl}`)
+
     // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -72,6 +74,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
+    console.error('Error processing social media:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
