@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
-import { compress } from "https://deno.land/x/image_compress@v0.1.0/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,22 +20,6 @@ async function downloadAndStoreMedia(url: string, postId: string): Promise<strin
     const filename = `${postId}${extension}`
     const bucketPath = `social-media/${filename}`
 
-    let finalBuffer = buffer
-    if (!isVideo) {
-      try {
-        console.log('Compressing image...')
-        const compressedImage = await compress(new Uint8Array(buffer), {
-          quality: 0.8,
-          maxWidth: 1200,
-          maxHeight: 1200
-        })
-        finalBuffer = compressedImage.buffer
-        console.log('Image compressed successfully')
-      } catch (error) {
-        console.error('Error compressing image:', error)
-      }
-    }
-
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -46,7 +29,7 @@ async function downloadAndStoreMedia(url: string, postId: string): Promise<strin
     const { data, error } = await supabase
       .storage
       .from('social-media-files')
-      .upload(bucketPath, finalBuffer, {
+      .upload(bucketPath, buffer, {
         contentType: contentType || 'application/octet-stream',
         upsert: true
       })
@@ -68,7 +51,7 @@ async function downloadAndStoreMedia(url: string, postId: string): Promise<strin
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
