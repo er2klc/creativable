@@ -66,6 +66,21 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
     }
   };
 
+  // Get hashtags from social media posts
+  const getHashtagsFromPosts = () => {
+    if (!Array.isArray(lead.social_media_posts)) return [];
+    
+    const hashtags = new Set<string>();
+    lead.social_media_posts.forEach((post: any) => {
+      if (post.metadata?.hashtags) {
+        post.metadata.hashtags.forEach((tag: string) => {
+          hashtags.add(tag.startsWith('#') ? tag : `#${tag}`);
+        });
+      }
+    });
+    return Array.from(hashtags);
+  };
+
   const visibleFields = showEmptyFields 
     ? fields 
     : fields.filter(field => field.value);
@@ -79,6 +94,20 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
         onToggleEmptyFields={() => setShowEmptyFields(!showEmptyFields)}
         groupName="basic_info"
       >
+        {lead.social_media_profile_image_url && (
+          <div className="mb-4 flex items-center gap-4">
+            <img 
+              src={lead.social_media_profile_image_url} 
+              alt={lead.name || "Profile"} 
+              className="w-16 h-16 rounded-full object-cover"
+            />
+            <div>
+              <div className="font-medium">{lead.name}</div>
+              <div className="text-sm text-gray-500">{lead.social_media_username}</div>
+            </div>
+          </div>
+        )}
+        
         {visibleFields.map((field) => (
           <InfoRow
             key={field.field}
@@ -130,7 +159,7 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
         }
       >
         <div className="flex flex-wrap gap-2">
-          {(lead.interests || []).map((tag, index) => (
+          {[...(lead.interests || []), ...getHashtagsFromPosts()].map((tag, index) => (
             <Badge
               key={index}
               variant="secondary"
