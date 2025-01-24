@@ -15,6 +15,7 @@ async function fetchWithInstagramHeaders(url: string) {
       'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
       'Accept-Language': 'en-US,en;q=0.9',
       'Referer': 'https://www.instagram.com/',
+      'Cookie': 'ig_did=; ig_nrcb=1; csrftoken=; mid=; ds_user_id=; sessionid=;'
     }
   });
 
