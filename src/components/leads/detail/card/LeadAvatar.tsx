@@ -11,13 +11,17 @@ export const LeadAvatar = ({ imageUrl, name, platform }: LeadAvatarProps) => {
   return (
     <div className="relative">
       <Avatar className="h-20 w-20">
-        <AvatarImage 
-          src={imageUrl} 
-          alt={name} 
-        />
-        <AvatarFallback>
-          {name?.split(' ').map(n => n[0]).join('').toUpperCase()}
-        </AvatarFallback>
+        {imageUrl ? (
+          <AvatarImage 
+            src={imageUrl} 
+            alt={name}
+            className="object-cover"
+          />
+        ) : (
+          <AvatarFallback className="bg-primary/10">
+            {name?.split(' ').map(n => n[0]).join('').toUpperCase()}
+          </AvatarFallback>
+        )}
       </Avatar>
       <PlatformIndicator platform={platform} />
     </div>
