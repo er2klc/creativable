@@ -4,7 +4,7 @@ import { TimelineItem } from "./timeline/TimelineItem";
 import { SocialMediaTimeline } from "./timeline/SocialMediaTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "./types/lead";
-import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
+import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -14,32 +14,33 @@ interface LeadTimelineProps {
 interface SocialMediaPostRaw {
   id: string;
   platform: string;
+  type: string;
   post_type: string;
   content: string | null;
-  likes_count: number | null;
-  comments_count: number | null;
+  caption: string | null;
+  likesCount: number | null;
+  commentsCount: number | null;
   url: string | null;
   location: string | null;
+  locationName?: string | null;
   mentioned_profiles: string[] | null;
   tagged_profiles: string[] | null;
   posted_at: string | null;
-  metadata: any;
+  timestamp: string | null;
   media_urls: string[] | null;
   media_type: string | null;
   local_video_path: string | null;
   local_media_paths: string[] | null;
-  engagement_count: number | null;
-  first_comment: string | null;
-  lead_id?: string | null;
-  tagged_users?: any[] | null;
   video_url: string | null;
+  videoUrl?: string | null;
+  images?: string[] | null;
+  hashtags?: string[] | null;
 }
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
   const { settings } = useSettings();
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
   
-  // Check if lead was created via Apify (has social media data)
   const showSocialTimeline = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
 
   const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
@@ -76,6 +77,11 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const transformedPosts: SocialMediaPostRaw[] = Array.isArray(lead.social_media_posts) 
     ? (lead.social_media_posts as any[]).map(post => ({
         ...post,
+        type: post.type || 'post',
+        caption: post.caption || '',
+        likesCount: post.likesCount || 0,
+        commentsCount: post.commentsCount || 0,
+        timestamp: post.timestamp || post.posted_at || new Date().toISOString(),
         engagement_count: post.engagement_count || 0,
         first_comment: post.first_comment || '',
         media_type: post.media_type || 'post',
@@ -86,6 +92,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         created_at: post.created_at || post.posted_at || new Date().toISOString(),
         likes_count: post.likes_count || 0,
         location: post.location || '',
+        locationName: post.locationName || '',
         mentioned_profiles: post.mentioned_profiles || [],
         tagged_profiles: post.tagged_profiles || [],
         platform: post.platform || 'unknown',
@@ -96,7 +103,9 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         posted_at: post.posted_at || post.created_at || new Date().toISOString(),
         local_video_path: post.local_video_path || null,
         local_media_paths: post.local_media_paths || null,
-        video_url: post.video_url || null
+        video_url: post.video_url || post.videoUrl || null,
+        images: post.images || [],
+        hashtags: post.hashtags || []
       }))
     : [];
 
