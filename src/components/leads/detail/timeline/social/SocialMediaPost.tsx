@@ -134,6 +134,28 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
         <PostMetadata post={post} />
 
+        {/* Tagged Profiles Section */}
+        {post.tagged_profiles && post.tagged_profiles.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <User className="h-4 w-4" />
+              <span>Getaggte Profile:</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {post.tagged_profiles.map((profile, index) => (
+                <Badge 
+                  key={index} 
+                  variant="secondary"
+                  className="flex items-center gap-1"
+                >
+                  <User className="h-3 w-3" />
+                  {profile}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
         {post.url && (
           <Button 
             variant="outline" 
