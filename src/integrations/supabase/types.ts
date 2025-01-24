@@ -1421,6 +1421,8 @@ export type Database = {
           id: string
           lead_id: string | null
           likes_count: number | null
+          local_media_paths: string[] | null
+          local_video_path: string | null
           location: string | null
           media_type: string | null
           media_urls: string[] | null
@@ -1444,6 +1446,8 @@ export type Database = {
           id?: string
           lead_id?: string | null
           likes_count?: number | null
+          local_media_paths?: string[] | null
+          local_video_path?: string | null
           location?: string | null
           media_type?: string | null
           media_urls?: string[] | null
@@ -1467,6 +1471,8 @@ export type Database = {
           id?: string
           lead_id?: string | null
           likes_count?: number | null
+          local_media_paths?: string[] | null
+          local_video_path?: string | null
           location?: string | null
           media_type?: string | null
           media_urls?: string[] | null

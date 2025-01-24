@@ -3,16 +3,10 @@ import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { InfoRow } from "./InfoRow";
 import { ContactInfoGroup } from "./ContactInfoGroup";
-import { User, AtSign, Phone, Globe, Calendar, Building2, MapPin, Plus } from "lucide-react";
+import { User, AtSign, Phone, Globe, Calendar, Building2, MapPin, Plus, Hash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 interface BasicInformationFieldsProps {
@@ -55,25 +49,14 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
     });
   };
 
-  const getTagStyle = (platform: string) => {
-    switch (platform?.toLowerCase()) {
-      case "linkedin":
-        return "bg-[#0077B5] text-white hover:bg-[#006097]";
-      case "instagram":
-        return "bg-[#E1306C] text-white hover:bg-[#C13584]";
-      default:
-        return "bg-gray-100 text-gray-800 hover:bg-gray-200";
-    }
-  };
-
   // Get hashtags from social media posts
   const getHashtagsFromPosts = () => {
     if (!Array.isArray(lead.social_media_posts)) return [];
     
     const hashtags = new Set<string>();
     lead.social_media_posts.forEach((post: any) => {
-      if (post.metadata?.hashtags) {
-        post.metadata.hashtags.forEach((tag: string) => {
+      if (post.hashtags) {
+        post.hashtags.forEach((tag: string) => {
           hashtags.add(tag.startsWith('#') ? tag : `#${tag}`);
         });
       }
@@ -111,60 +94,53 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
         leadId={lead.id}
         showEmptyFields={true}
         groupName="interests_goals"
-        rightIcon={
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-4 w-4 p-0 hover:bg-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                <Plus className="h-4 w-4 text-gray-500 hover:text-gray-900" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 p-2">
-              <div className="flex flex-col gap-2">
-                <Input
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  placeholder={settings?.language === "en" ? "Add tag" : "Tag hinzufügen"}
-                  className="h-8"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddTag(newTag);
-                    }
-                  }}
-                />
-                <Button 
-                  onClick={() => handleAddTag(newTag)}
-                  size="sm"
-                  className="w-full"
-                >
-                  {settings?.language === "en" ? "Add" : "Hinzufügen"}
-                </Button>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        }
       >
-        <div className="flex flex-wrap gap-2">
-          {[...(lead.interests || []), ...getHashtagsFromPosts()].map((tag, index) => (
-            <Badge
-              key={index}
-              variant="secondary"
-              className={cn(
-                "flex items-center gap-1 px-3 py-1",
-                getTagStyle(lead.platform)
-              )}
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-2">
+            <Input
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              placeholder={settings?.language === "en" ? "Add tag" : "Tag hinzufügen"}
+              className="h-8"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddTag(newTag);
+                }
+              }}
+            />
+            <Button 
+              onClick={() => handleAddTag(newTag)}
+              size="sm"
+              className="whitespace-nowrap"
             >
-              {tag}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-4 w-4 p-0 hover:bg-transparent text-current"
-                onClick={() => handleRemoveTag(tag)}
+              {settings?.language === "en" ? "Add" : "Hinzufügen"}
+            </Button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {[...(lead.interests || []), ...getHashtagsFromPosts()].map((tag, index) => (
+              <Badge
+                key={index}
+                variant="secondary"
+                className={cn(
+                  "flex items-center gap-1 px-3 py-1",
+                  tag.startsWith('#') ? "bg-blue-100 text-blue-800 hover:bg-blue-200" : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                )}
               >
-                ×
-              </Button>
-            </Badge>
-          ))}
+                {tag.startsWith('#') && <Hash className="h-3 w-3" />}
+                {tag}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-4 p-0 hover:bg-transparent text-current"
+                  onClick={() => handleRemoveTag(tag)}
+                >
+                  ×
+                </Button>
+              </Badge>
+            ))}
+          </div>
         </div>
       </ContactInfoGroup>
     </div>

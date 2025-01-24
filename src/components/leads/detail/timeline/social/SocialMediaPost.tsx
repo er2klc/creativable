@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MediaGallery } from "./MediaGallery";
 import { PostMetadata } from "./PostMetadata";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 interface SocialMediaPost {
   id: string;
@@ -28,6 +30,8 @@ interface SocialMediaPost {
   };
   media_urls: string[] | null;
   media_type: string | null;
+  local_video_path: string | null;
+  local_media_paths: string[] | null;
 }
 
 interface SocialMediaPostProps {
@@ -35,6 +39,70 @@ interface SocialMediaPostProps {
 }
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
+  useEffect(() => {
+    const processMedia = async () => {
+      // Process video if exists and not already processed
+      if (post.media_type === 'video' && !post.local_video_path) {
+        const videoUrl = post.media_urls?.[0] || post.metadata?.videoUrl;
+        if (videoUrl) {
+          await fetch('/functions/process-social-media', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              mediaUrl: videoUrl,
+              postId: post.id,
+              mediaType: 'video'
+            })
+          });
+        }
+      }
+
+      // Process images if exist and not already processed
+      const imageUrls = post.media_urls?.filter(url => !url.includes('.mp4'));
+      if (imageUrls?.length && (!post.local_media_paths || post.local_media_paths.length < imageUrls.length)) {
+        for (const imageUrl of imageUrls) {
+          await fetch('/functions/process-social-media', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              mediaUrl: imageUrl,
+              postId: post.id,
+              mediaType: 'image'
+            })
+          });
+        }
+      }
+    };
+
+    processMedia();
+  }, [post.id, post.media_urls, post.local_video_path, post.local_media_paths]);
+
+  const getMediaUrls = () => {
+    if (!post.local_media_paths?.length && !post.local_video_path) {
+      return post.media_urls || [];
+    }
+
+    const urls = [];
+    
+    if (post.local_video_path) {
+      const { data: { publicUrl } } = supabase.storage
+        .from('social-media-files')
+        .getPublicUrl(post.local_video_path);
+      urls.push(publicUrl);
+    }
+
+    if (post.local_media_paths?.length) {
+      post.local_media_paths.forEach(path => {
+        const { data: { publicUrl } } = supabase.storage
+          .from('social-media-files')
+          .getPublicUrl(path);
+        urls.push(publicUrl);
+      });
+    }
+
+    return urls;
+  };
+
   return (
     <div className="flex gap-4 items-start ml-4">
       <div className="relative">
@@ -57,22 +125,11 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           <p className="text-sm whitespace-pre-wrap">{post.content}</p>
         )}
 
-        {post.media_urls && post.media_urls.length > 0 && (
+        {getMediaUrls().length > 0 && (
           <MediaGallery 
-            mediaUrls={post.media_urls} 
+            mediaUrls={getMediaUrls()} 
             mediaType={post.media_type} 
           />
-        )}
-
-        {post.metadata?.hashtags && post.metadata.hashtags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {post.metadata.hashtags.map((tag: string, index: number) => (
-              <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                <Hash className="h-3 w-3" />
-                {tag}
-              </Badge>
-            ))}
-          </div>
         )}
 
         <PostMetadata post={post} />
