@@ -23,18 +23,20 @@ async function downloadAndUploadImage(imageUrl: string, supabaseClient: any, lea
     // Download image
     const response = await fetch(imageUrl);
     if (!response.ok) throw new Error('Failed to fetch image');
-    const imageBlob = await response.blob();
+    
+    // Get the image data as ArrayBuffer instead of Blob for Deno
+    const imageBuffer = await response.arrayBuffer();
 
     // Generate unique filename
     const fileExt = 'jpg'; // Instagram profile pics are usually JPG
     const fileName = `${leadId}-${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    // Upload to Supabase Storage
+    // Upload to Supabase Storage using ArrayBuffer
     const { data: uploadData, error: uploadError } = await supabaseClient
       .storage
       .from('contact-avatars')
-      .upload(filePath, imageBlob, {
+      .upload(filePath, imageBuffer, {
         contentType: 'image/jpeg',
         upsert: true
       });
