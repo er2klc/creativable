@@ -13,6 +13,8 @@ interface ContactInfoGroupProps {
   onToggleEmptyFields?: () => void;
   groupName: string;
   rightIcon?: React.ReactNode;
+  actionIcon?: React.ReactNode;  // Added this
+  onActionClick?: () => void;    // Added this
 }
 
 export function ContactInfoGroup({
