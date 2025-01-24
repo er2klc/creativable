@@ -19,6 +19,7 @@ interface SocialMediaPostRaw {
   local_media_paths: string[] | null;
   engagement_count: number | null;
   first_comment: string | null;
+  video_url: string | null;
 }
 
 interface SocialMediaTimelineProps {
