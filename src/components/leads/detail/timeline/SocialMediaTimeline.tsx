@@ -3,23 +3,27 @@ import { SocialMediaPost } from "./social/SocialMediaPost";
 interface SocialMediaPostRaw {
   id: string;
   platform: string;
+  type: string;
   post_type: string;
   content: string | null;
-  likes_count: number | null;
-  comments_count: number | null;
+  caption: string | null;
+  likesCount: number | null;
+  commentsCount: number | null;
   url: string | null;
   location: string | null;
+  locationName?: string | null;
   mentioned_profiles: string[] | null;
   tagged_profiles: string[] | null;
   posted_at: string | null;
-  metadata: any;
+  timestamp: string | null;
   media_urls: string[] | null;
   media_type: string | null;
   local_video_path: string | null;
   local_media_paths: string[] | null;
-  engagement_count: number | null;
-  first_comment: string | null;
   video_url: string | null;
+  videoUrl?: string | null;
+  images?: string[] | null;
+  hashtags?: string[] | null;
 }
 
 interface SocialMediaTimelineProps {
@@ -28,7 +32,9 @@ interface SocialMediaTimelineProps {
 
 export const SocialMediaTimeline = ({ posts }: SocialMediaTimelineProps) => {
   const sortedPosts = [...posts].sort((a, b) => {
-    return new Date(b.posted_at || '').getTime() - new Date(a.posted_at || '').getTime();
+    const dateA = a.timestamp ? new Date(a.timestamp) : new Date(a.posted_at || '');
+    const dateB = b.timestamp ? new Date(b.timestamp) : new Date(b.posted_at || '');
+    return dateB.getTime() - dateA.getTime();
   });
 
   return (
