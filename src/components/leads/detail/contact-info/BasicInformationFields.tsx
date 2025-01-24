@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface BasicInformationFieldsProps {
   lead: Tables<"leads">;
@@ -18,6 +19,7 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
   const { settings } = useSettings();
   const [showEmptyFields, setShowEmptyFields] = useState(true);
   const [newTag, setNewTag] = useState("");
+  const [showTagDialog, setShowTagDialog] = useState(false);
 
   const fields = [
     { icon: User, label: settings?.language === "en" ? "Username" : "Benutzername", field: "social_media_username", value: lead.social_media_username },
@@ -34,12 +36,15 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
     if (!tag.trim()) return;
     
     const allTags = lead.interests || [];
-    if (!allTags.includes(tag)) {
+    const newTag = tag.startsWith('#') ? tag : `#${tag}`;
+    
+    if (!allTags.includes(newTag)) {
       onUpdate({
-        interests: [...allTags, tag.startsWith("#") ? tag : `#${tag}`]
+        interests: [...allTags, newTag]
       });
     }
     setNewTag("");
+    setShowTagDialog(false);
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
@@ -49,8 +54,8 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
     });
   };
 
-  // Get hashtags from social media posts
-  const getHashtagsFromPosts = () => {
+  // Get unique hashtags from social media posts
+  const getUniqueHashtagsFromPosts = () => {
     if (!Array.isArray(lead.social_media_posts)) return [];
     
     const hashtags = new Set<string>();
@@ -62,6 +67,14 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
       }
     });
     return Array.from(hashtags);
+  };
+
+  // Combine manual tags and social media hashtags, removing duplicates
+  const getAllUniqueTags = () => {
+    const manualTags = lead.interests || [];
+    const socialHashtags = getUniqueHashtagsFromPosts();
+    const allTags = new Set([...manualTags, ...socialHashtags]);
+    return Array.from(allTags);
   };
 
   const visibleFields = showEmptyFields 
@@ -94,14 +107,46 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
         leadId={lead.id}
         showEmptyFields={true}
         groupName="interests_goals"
+        actionIcon={<Plus className="h-4 w-4" />}
+        onActionClick={() => setShowTagDialog(true)}
       >
-        <div className="flex flex-col gap-4">
-          <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {getAllUniqueTags().map((tag, index) => (
+            <Badge
+              key={index}
+              variant="secondary"
+              className={cn(
+                "flex items-center gap-1 px-3 py-1",
+                tag.startsWith('#') ? "bg-blue-100 text-blue-800 hover:bg-blue-200" : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+              )}
+            >
+              {tag.startsWith('#') && <Hash className="h-3 w-3" />}
+              {tag}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0 hover:bg-transparent text-current"
+                onClick={() => handleRemoveTag(tag)}
+              >
+                ×
+              </Button>
+            </Badge>
+          ))}
+        </div>
+      </ContactInfoGroup>
+
+      <Dialog open={showTagDialog} onOpenChange={setShowTagDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>
+              {settings?.language === "en" ? "Add Tag" : "Tag hinzufügen"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex gap-2 mt-4">
             <Input
               value={newTag}
               onChange={(e) => setNewTag(e.target.value)}
-              placeholder={settings?.language === "en" ? "Add tag" : "Tag hinzufügen"}
-              className="h-8"
+              placeholder={settings?.language === "en" ? "Enter tag" : "Tag eingeben"}
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -109,40 +154,12 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
                 }
               }}
             />
-            <Button 
-              onClick={() => handleAddTag(newTag)}
-              size="sm"
-              className="whitespace-nowrap"
-            >
+            <Button onClick={() => handleAddTag(newTag)}>
               {settings?.language === "en" ? "Add" : "Hinzufügen"}
             </Button>
           </div>
-
-          <div className="flex flex-wrap gap-2">
-            {[...(lead.interests || []), ...getHashtagsFromPosts()].map((tag, index) => (
-              <Badge
-                key={index}
-                variant="secondary"
-                className={cn(
-                  "flex items-center gap-1 px-3 py-1",
-                  tag.startsWith('#') ? "bg-blue-100 text-blue-800 hover:bg-blue-200" : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                )}
-              >
-                {tag.startsWith('#') && <Hash className="h-3 w-3" />}
-                {tag}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 hover:bg-transparent text-current"
-                  onClick={() => handleRemoveTag(tag)}
-                >
-                  ×
-                </Button>
-              </Badge>
-            ))}
-          </div>
-        </div>
-      </ContactInfoGroup>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
