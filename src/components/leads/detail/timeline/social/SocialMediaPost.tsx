@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon, Hash } from "lucide-react";
+import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -117,7 +117,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
             {post.posted_at && format(new Date(post.posted_at), 'PPp', { locale: de })}
           </span>
           <span className="text-xs bg-muted px-2 py-1 rounded-full">
-            {post.post_type}
+            {post.media_type || post.post_type}
           </span>
         </div>
 
