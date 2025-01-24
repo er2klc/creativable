@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { compress } from 'https://deno.land/x/compress@v0.4.5/mod.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,6 +7,7 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -25,44 +25,36 @@ serve(async (req) => {
 
     // Download the media file
     const response = await fetch(mediaUrl)
-    if (!response.ok) throw new Error('Failed to fetch media')
+    if (!response.ok) {
+      throw new Error(`Failed to fetch media: ${response.statusText}`)
+    }
     
     const buffer = await response.arrayBuffer()
     const file = new Uint8Array(buffer)
 
-    // Generate a unique filename
+    // Generate a unique filename with timestamp to avoid collisions
     const timestamp = new Date().getTime()
     const extension = mediaType === 'video' ? '.mp4' : '.jpg'
     const filename = `${postId}-${timestamp}${extension}`
     const filePath = `${postId}/${filename}`
 
-    // Compress the file if it's an image
-    let fileToUpload = file
-    if (mediaType === 'image') {
-      try {
-        const compressed = await compress(file, {
-          quality: 0.8,
-          maxWidth: 1200,
-          maxHeight: 1200
-        })
-        fileToUpload = compressed
-        console.log('Image compressed successfully')
-      } catch (error) {
-        console.error('Error compressing image:', error)
-        // Continue with original file if compression fails
-      }
-    }
+    console.log(`Uploading ${mediaType} to path: ${filePath}`)
 
     // Upload to storage bucket
-    const { error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from('social-media-files')
-      .upload(filePath, fileToUpload, {
+      .upload(filePath, file, {
         contentType: mediaType === 'video' ? 'video/mp4' : 'image/jpeg',
         cacheControl: '3600',
         upsert: false
       })
 
-    if (uploadError) throw uploadError
+    if (uploadError) {
+      console.error('Upload error:', uploadError)
+      throw uploadError
+    }
+
+    console.log('File uploaded successfully:', uploadData)
 
     // Update the post record with the local file path
     const updates = mediaType === 'video'
@@ -76,20 +68,46 @@ serve(async (req) => {
       .update(updates)
       .eq('id', postId)
 
-    if (updateError) throw updateError
+    if (updateError) {
+      console.error('Error updating post:', updateError)
+      throw updateError
+    }
 
     console.log(`Successfully processed ${mediaType} for post ${postId}`)
 
+    // Get the public URL for the uploaded file
+    const { data: { publicUrl } } = supabase.storage
+      .from('social-media-files')
+      .getPublicUrl(filePath)
+
     return new Response(
-      JSON.stringify({ success: true, filePath }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        success: true, 
+        filePath,
+        publicUrl
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     )
 
   } catch (error) {
     console.error('Error processing social media:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        }, 
+        status: 500 
+      }
     )
   }
 })
