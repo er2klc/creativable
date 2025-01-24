@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { TimelineHeader } from "./timeline/TimelineHeader";
-import { TimelineItem } from "./TimelineItem";
+import { TimelineItem } from "./timeline/TimelineItem";
 import { SocialMediaTimeline } from "./timeline/SocialMediaTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "./types/lead";
-import { TimelineItem as TimelineItemType } from "./TimelineUtils";
+import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -12,27 +12,26 @@ interface LeadTimelineProps {
 }
 
 interface SocialMediaPostRaw {
-  comments_count?: number | null;
-  content?: string | null;
-  created_at?: string | null;
   id: string;
-  lead_id?: string | null;
-  likes_count?: number | null;
-  location?: string | null;
-  mentioned_profiles?: string[] | null;
-  metadata?: any;
   platform: string;
   post_type: string;
-  posted_at?: string | null;
-  tagged_profiles?: string[] | null;
+  content?: string | null;
+  likes_count?: number | null;
+  comments_count?: number | null;
   url?: string | null;
-  engagement_count?: number | null;
-  first_comment?: string | null;
-  media_type?: string | null;
+  location?: string | null;
+  mentioned_profiles?: string[] | null;
+  tagged_profiles?: string[] | null;
+  posted_at: string | null;
+  metadata?: any;
   media_urls?: string[] | null;
+  media_type?: string | null;
   tagged_users?: any[] | null;
   local_video_path?: string | null;
   local_media_paths?: string[] | null;
+  engagement_count?: number | null;
+  first_comment?: string | null;
+  lead_id?: string | null;
 }
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
@@ -73,8 +72,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const timelineItems = [...sortedNotes, contactCreationItem];
 
   // Transform social media posts to include required fields
-  const transformedPosts = Array.isArray(lead.social_media_posts) 
-    ? (lead.social_media_posts as unknown as SocialMediaPostRaw[]).map(post => ({
+  const transformedPosts: SocialMediaPostRaw[] = Array.isArray(lead.social_media_posts) 
+    ? (lead.social_media_posts as any[]).map(post => ({
         ...post,
         engagement_count: post.engagement_count || 0,
         first_comment: post.first_comment || '',
@@ -93,6 +92,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         url: post.url || null,
         lead_id: post.lead_id || lead.id,
         metadata: post.metadata || {},
+        posted_at: post.posted_at || post.created_at || new Date().toISOString(),
         local_video_path: post.local_video_path || null,
         local_media_paths: post.local_media_paths || null
       }))
