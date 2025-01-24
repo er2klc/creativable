@@ -4,7 +4,7 @@ import { TimelineItem } from "./timeline/TimelineItem";
 import { SocialMediaTimeline } from "./timeline/SocialMediaTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "./types/lead";
-import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
+import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -32,6 +32,7 @@ interface SocialMediaPostRaw {
   first_comment: string | null;
   lead_id?: string | null;
   tagged_users?: any[] | null;
+  video_url: string | null;
 }
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
@@ -94,7 +95,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         metadata: post.metadata || {},
         posted_at: post.posted_at || post.created_at || new Date().toISOString(),
         local_video_path: post.local_video_path || null,
-        local_media_paths: post.local_media_paths || null
+        local_media_paths: post.local_media_paths || null,
+        video_url: post.video_url || null
       }))
     : [];
 
