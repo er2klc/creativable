@@ -41,16 +41,16 @@ interface SocialMediaPostProps {
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   // Funktion, um die URLs der Medien zurückzugeben
   const getMediaUrls = () => {
-    if (post.media_urls && post.media_urls.length > 0) {
-      return post.media_urls; // Gebe die Bild-URLs zurück
-    }
+  if (post.images && post.images.length > 0) {
+    return post.images; // Gib die Bild-URLs aus dem Feld `images` zurück
+  }
 
-    if (post.video_url) {
-      return [post.video_url]; // Gebe die Video-URL zurück
-    }
+  if (post.video_url) {
+    return [post.video_url]; // Falls ein Video vorhanden ist
+  }
 
-    return []; // Keine Medien vorhanden
-  };
+  return []; // Keine Medien vorhanden
+};
 
   // Debugging: Gib die gefundenen Medien-URLs in der Konsole aus
   useEffect(() => {
