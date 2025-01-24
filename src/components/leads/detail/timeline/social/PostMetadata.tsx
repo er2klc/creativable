@@ -11,20 +11,24 @@ interface PostMetadataProps {
 
 export const PostMetadata = ({ post }: PostMetadataProps) => {
   console.log('Post-Daten:', post); // Debugging
-  
+
   return (
     <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
       {/* Likes */}
-      <div className="flex items-center gap-1">
-        <Heart className="h-4 w-4" />
-        <span>{post.likes_count != null ? post.likes_count.toLocaleString() : 0}</span>
-      </div>
+      {post.likesCount != null && (
+        <div className="flex items-center gap-1">
+          <Heart className="h-4 w-4" />
+          <span>{post.likesCount.toLocaleString()}</span>
+        </div>
+      )}
 
       {/* Kommentare */}
-      <div className="flex items-center gap-1">
-        <MessageCircle className="h-4 w-4" />
-        <span>{post.comments_count != null ? post.comments_count.toLocaleString() : 0}</span>
-      </div>
+      {post.commentsCount != null && (
+        <div className="flex items-center gap-1">
+          <MessageCircle className="h-4 w-4" />
+          <span>{post.commentsCount.toLocaleString()}</span>
+        </div>
+      )}
 
       {/* Location */}
       {post.location && (
