@@ -32,6 +32,7 @@ interface SocialMediaPost {
   media_type: string | null;
   local_video_path: string | null;
   local_media_paths: string[] | null;
+  video_url: string | null;
 }
 
 interface SocialMediaPostProps {
@@ -48,28 +49,24 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
         console.log('Starting media processing for post:', post.id);
         
         // Process video
-        if (post.media_type === 'video' && !post.local_video_path) {
-          const videoUrl = post.media_urls?.[0] || post.metadata?.videoUrl;
-          if (videoUrl) {
-            console.log('Processing video:', videoUrl);
-            const { data, error } = await supabase.functions.invoke('process-social-media', {
-              body: {
-                mediaUrl: videoUrl,
-                postId: post.id,
-                mediaType: 'video'
-              }
-            });
-            
-            if (error) console.error('Error processing video:', error);
-            else console.log('Video processed successfully:', data);
-          }
+        if (post.media_type === 'video' && !post.local_video_path && post.video_url) {
+          console.log('Processing video:', post.video_url);
+          const { data, error } = await supabase.functions.invoke('process-social-media', {
+            body: {
+              mediaUrl: post.video_url,
+              postId: post.id,
+              mediaType: 'video'
+            }
+          });
+          
+          if (error) console.error('Error processing video:', error);
+          else console.log('Video processed successfully:', data);
         }
 
         // Process images
-        const imageUrls = post.media_urls?.filter(url => !url.includes('.mp4'));
-        if (imageUrls?.length && (!post.local_media_paths || post.local_media_paths.length < imageUrls.length)) {
-          console.log('Processing images:', imageUrls);
-          for (const imageUrl of imageUrls) {
+        if (post.media_urls?.length && (!post.local_media_paths || post.local_media_paths.length < post.media_urls.length)) {
+          console.log('Processing images:', post.media_urls);
+          for (const imageUrl of post.media_urls) {
             const { data, error } = await supabase.functions.invoke('process-social-media', {
               body: {
                 mediaUrl: imageUrl,
@@ -86,7 +83,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     };
 
     processMedia();
-  }, [post.id, post.media_urls, post.local_video_path, post.local_media_paths]);
+  }, [post.id, post.media_urls, post.video_url, post.local_video_path, post.local_media_paths]);
 
   const getMediaUrls = () => {
     if (!post.local_media_paths?.length && !post.local_video_path) {
