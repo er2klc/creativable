@@ -1,36 +1,40 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
+import { createClient } from '@supabase/supabase-js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function downloadAndStoreMedia(url: string, postId: string): Promise<string> {
+// Initialize Supabase client
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+async function downloadAndStoreMedia(url: string, leadId: string, index: number): Promise<string | null> {
   try {
     console.log('Downloading media from:', url)
-    const response = await fetch(url)
-    if (!response.ok) throw new Error(`Failed to fetch media: ${response.statusText}`)
     
-    const contentType = response.headers.get('content-type')
-    const isVideo = contentType?.includes('video')
-    const buffer = await response.arrayBuffer()
-    
-    const extension = isVideo ? '.mp4' : '.jpg'
-    const filename = `${postId}${extension}`
-    const bucketPath = `social-media/${filename}`
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    })
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
+    if (!response.ok) {
+      throw new Error(`Failed to fetch media: ${response.status} ${response.statusText}`)
+    }
+
+    const buffer = await response.arrayBuffer()
+    const fileExt = url.split('.').pop()?.split('?')[0] || 'jpg'
+    const bucketPath = `${leadId}/${Date.now()}_${index}.${fileExt}`
 
     console.log('Uploading to storage:', bucketPath)
-    const { data, error: uploadError } = await supabase
+    const { data: uploadData, error: uploadError } = await supabase
       .storage
       .from('social-media-files')
       .upload(bucketPath, buffer, {
-        contentType: contentType || 'application/octet-stream',
+        contentType: `image/${fileExt}`,
         upsert: true
       })
 
@@ -44,11 +48,11 @@ async function downloadAndStoreMedia(url: string, postId: string): Promise<strin
       .from('social-media-files')
       .getPublicUrl(bucketPath)
 
-    console.log('File uploaded successfully:', publicUrl)
+    console.log('Media stored at:', publicUrl)
     return publicUrl
   } catch (error) {
     console.error('Error processing media:', error)
-    throw error
+    return null
   }
 }
 
@@ -59,63 +63,26 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Processing social media request')
-    const { posts } = await req.json()
-    
-    const processedPosts = await Promise.all(posts.map(async (post: any) => {
-      const processedMediaUrls = []
-      
-      if (post.media_urls && Array.isArray(post.media_urls)) {
-        console.log(`Processing ${post.media_urls.length} media files for post:`, post.id)
-        for (const url of post.media_urls) {
-          try {
-            const localUrl = await downloadAndStoreMedia(url, post.id)
-            processedMediaUrls.push(localUrl)
-          } catch (error) {
-            console.error(`Failed to process media URL ${url}:`, error)
-          }
-        }
-      }
+    const { mediaUrls, leadId } = await req.json()
 
-      let processedVideoUrl = null
-      if (post.video_url) {
-        try {
-          console.log('Processing video for post:', post.id)
-          processedVideoUrl = await downloadAndStoreMedia(post.video_url, `${post.id}-video`)
-        } catch (error) {
-          console.error('Failed to process video URL:', error)
-        }
-      }
+    if (!Array.isArray(mediaUrls) || !leadId) {
+      throw new Error('Invalid request body')
+    }
 
-      const supabase = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-      )
+    console.log('Processing media for lead:', leadId)
+    console.log('Media URLs:', mediaUrls)
 
-      console.log('Updating post record:', post.id)
-      const { error: updateError } = await supabase
-        .from('social_media_posts')
-        .update({
-          local_media_paths: processedMediaUrls,
-          local_video_path: processedVideoUrl
-        })
-        .eq('id', post.id)
+    const processedUrls = await Promise.all(
+      mediaUrls.map((url, index) => downloadAndStoreMedia(url, leadId, index))
+    )
 
-      if (updateError) {
-        console.error('Error updating post record:', updateError)
-      }
-
-      return {
-        ...post,
-        local_media_paths: processedMediaUrls,
-        local_video_path: processedVideoUrl
-      }
-    }))
+    const successfulUrls = processedUrls.filter((url): url is string => url !== null)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        data: processedPosts 
+        urls: successfulUrls,
+        message: `Successfully processed ${successfulUrls.length} of ${mediaUrls.length} media files`
       }),
       {
         headers: {
@@ -126,18 +93,18 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error processing request:', error)
+    console.error('Error:', error)
     return new Response(
       JSON.stringify({ 
         success: false, 
         error: error.message 
       }),
       {
+        status: 400,
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json'
-        },
-        status: 400
+        }
       }
     )
   }
