@@ -13,8 +13,8 @@ interface ContactInfoGroupProps {
   onToggleEmptyFields?: () => void;
   groupName: string;
   rightIcon?: React.ReactNode;
-  actionIcon?: React.ReactNode;  // Added this
-  onActionClick?: () => void;    // Added this
+  actionIcon?: React.ReactNode;
+  onActionClick?: () => void;
 }
 
 export function ContactInfoGroup({
@@ -25,6 +25,8 @@ export function ContactInfoGroup({
   onToggleEmptyFields,
   groupName,
   rightIcon,
+  actionIcon,
+  onActionClick
 }: ContactInfoGroupProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showEmpty, setShowEmpty] = useState(showEmptyFields);
@@ -74,15 +76,28 @@ export function ContactInfoGroup({
           </div>
         </div>
         
-        {showActions && groupName !== 'interests_goals' && (
-          <GroupActionsMenu
-            showEmpty={showEmpty}
-            isReordering={isReordering}
-            onToggleEmpty={handleToggleEmpty}
-            onToggleReordering={handleToggleReordering}
-            onAddField={() => setIsAddingField(true)}
-          />
-        )}
+        <div className="flex items-center gap-2">
+          {actionIcon && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onActionClick}
+              className="p-0 hover:bg-transparent"
+            >
+              {actionIcon}
+            </Button>
+          )}
+          
+          {showActions && groupName !== 'interests_goals' && (
+            <GroupActionsMenu
+              showEmpty={showEmpty}
+              isReordering={isReordering}
+              onToggleEmpty={handleToggleEmpty}
+              onToggleReordering={handleToggleReordering}
+              onAddField={() => setIsAddingField(true)}
+            />
+          )}
+        </div>
       </div>
 
       {!isCollapsed && (
