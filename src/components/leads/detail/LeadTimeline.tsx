@@ -15,23 +15,23 @@ interface SocialMediaPostRaw {
   id: string;
   platform: string;
   post_type: string;
-  content?: string | null;
-  likes_count?: number | null;
-  comments_count?: number | null;
-  url?: string | null;
-  location?: string | null;
-  mentioned_profiles?: string[] | null;
-  tagged_profiles?: string[] | null;
+  content: string | null;
+  likes_count: number | null;
+  comments_count: number | null;
+  url: string | null;
+  location: string | null;
+  mentioned_profiles: string[] | null;
+  tagged_profiles: string[] | null;
   posted_at: string | null;
-  metadata?: any;
-  media_urls?: string[] | null;
-  media_type?: string | null;
-  tagged_users?: any[] | null;
-  local_video_path?: string | null;
-  local_media_paths?: string[] | null;
-  engagement_count?: number | null;
-  first_comment?: string | null;
+  metadata: any;
+  media_urls: string[] | null;
+  media_type: string | null;
+  local_video_path: string | null;
+  local_media_paths: string[] | null;
+  engagement_count: number | null;
+  first_comment: string | null;
   lead_id?: string | null;
+  tagged_users?: any[] | null;
 }
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
