@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { compress } from 'https://deno.land/x/compress@v0.4.5/mod.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,7 +15,7 @@ serve(async (req) => {
   try {
     const { mediaUrl, postId, mediaType } = await req.json()
 
-    console.log(`Processing ${mediaType} from URL: ${mediaUrl}`)
+    console.log(`Processing ${mediaType} from URL: ${mediaUrl} for post: ${postId}`)
 
     // Initialize Supabase client
     const supabase = createClient(
@@ -35,10 +36,27 @@ serve(async (req) => {
     const filename = `${postId}-${timestamp}${extension}`
     const filePath = `${postId}/${filename}`
 
+    // Compress the file if it's an image
+    let fileToUpload = file
+    if (mediaType === 'image') {
+      try {
+        const compressed = await compress(file, {
+          quality: 0.8,
+          maxWidth: 1200,
+          maxHeight: 1200
+        })
+        fileToUpload = compressed
+        console.log('Image compressed successfully')
+      } catch (error) {
+        console.error('Error compressing image:', error)
+        // Continue with original file if compression fails
+      }
+    }
+
     // Upload to storage bucket
     const { error: uploadError } = await supabase.storage
       .from('social-media-files')
-      .upload(filePath, file, {
+      .upload(filePath, fileToUpload, {
         contentType: mediaType === 'video' ? 'video/mp4' : 'image/jpeg',
         cacheControl: '3600',
         upsert: false
@@ -59,6 +77,8 @@ serve(async (req) => {
       .eq('id', postId)
 
     if (updateError) throw updateError
+
+    console.log(`Successfully processed ${mediaType} for post ${postId}`)
 
     return new Response(
       JSON.stringify({ success: true, filePath }),

@@ -41,37 +41,46 @@ interface SocialMediaPostProps {
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   useEffect(() => {
     const processMedia = async () => {
-      // Process video if exists and not already processed
-      if (post.media_type === 'video' && !post.local_video_path) {
-        const videoUrl = post.media_urls?.[0] || post.metadata?.videoUrl;
-        if (videoUrl) {
-          console.log('Processing video:', videoUrl);
-          await fetch('/functions/process-social-media', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              mediaUrl: videoUrl,
-              postId: post.id,
-              mediaType: 'video'
-            })
-          });
+      // Only process if we have media and it hasn't been processed yet
+      if ((post.media_type === 'video' && !post.local_video_path) || 
+          (post.media_urls?.length && (!post.local_media_paths || post.local_media_paths.length < post.media_urls.length))) {
+        
+        console.log('Starting media processing for post:', post.id);
+        
+        // Process video
+        if (post.media_type === 'video' && !post.local_video_path) {
+          const videoUrl = post.media_urls?.[0] || post.metadata?.videoUrl;
+          if (videoUrl) {
+            console.log('Processing video:', videoUrl);
+            const { data, error } = await supabase.functions.invoke('process-social-media', {
+              body: {
+                mediaUrl: videoUrl,
+                postId: post.id,
+                mediaType: 'video'
+              }
+            });
+            
+            if (error) console.error('Error processing video:', error);
+            else console.log('Video processed successfully:', data);
+          }
         }
-      }
 
-      // Process images if exist and not already processed
-      const imageUrls = post.media_urls?.filter(url => !url.includes('.mp4'));
-      if (imageUrls?.length && (!post.local_media_paths || post.local_media_paths.length < imageUrls.length)) {
-        console.log('Processing images:', imageUrls);
-        for (const imageUrl of imageUrls) {
-          await fetch('/functions/process-social-media', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              mediaUrl: imageUrl,
-              postId: post.id,
-              mediaType: 'image'
-            })
-          });
+        // Process images
+        const imageUrls = post.media_urls?.filter(url => !url.includes('.mp4'));
+        if (imageUrls?.length && (!post.local_media_paths || post.local_media_paths.length < imageUrls.length)) {
+          console.log('Processing images:', imageUrls);
+          for (const imageUrl of imageUrls) {
+            const { data, error } = await supabase.functions.invoke('process-social-media', {
+              body: {
+                mediaUrl: imageUrl,
+                postId: post.id,
+                mediaType: 'image'
+              }
+            });
+            
+            if (error) console.error('Error processing image:', error);
+            else console.log('Image processed successfully:', data);
+          }
         }
       }
     };
@@ -140,7 +149,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
         <PostMetadata post={post} />
 
-        {/* Tagged Profiles Section */}
         {post.tagged_profiles && post.tagged_profiles.length > 0 && (
           <div className="mt-4 space-y-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
