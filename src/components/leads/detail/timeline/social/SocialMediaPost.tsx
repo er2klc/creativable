@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MediaGallery } from "./MediaGallery";
 import { PostMetadata } from "./PostMetadata";
-import { supabase } from "@/integrations/supabase/client";
 
 interface SocialMediaPost {
   id: string;
@@ -40,76 +39,23 @@ interface SocialMediaPostProps {
 }
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
-  useEffect(() => {
-    const processMedia = async () => {
-      // Only process if we have media and it hasn't been processed yet
-      if ((post.media_type === 'video' && !post.local_video_path) || 
-          (post.media_urls?.length && (!post.local_media_paths || post.local_media_paths.length < post.media_urls.length))) {
-        
-        console.log('Starting media processing for post:', post.id);
-        
-        // Process video
-        if (post.media_type === 'video' && !post.local_video_path && post.video_url) {
-          console.log('Processing video:', post.video_url);
-          const { data, error } = await supabase.functions.invoke('process-social-media', {
-            body: {
-              mediaUrl: post.video_url,
-              postId: post.id,
-              mediaType: 'video'
-            }
-          });
-          
-          if (error) console.error('Error processing video:', error);
-          else console.log('Video processed successfully:', data);
-        }
-
-        // Process images
-        if (post.media_urls?.length && (!post.local_media_paths || post.local_media_paths.length < post.media_urls.length)) {
-          console.log('Processing images:', post.media_urls);
-          for (const imageUrl of post.media_urls) {
-            const { data, error } = await supabase.functions.invoke('process-social-media', {
-              body: {
-                mediaUrl: imageUrl,
-                postId: post.id,
-                mediaType: 'image'
-              }
-            });
-            
-            if (error) console.error('Error processing image:', error);
-            else console.log('Image processed successfully:', data);
-          }
-        }
-      }
-    };
-
-    processMedia();
-  }, [post.id, post.media_urls, post.video_url, post.local_video_path, post.local_media_paths]);
-
+  // Funktion, um die URLs der Medien zurückzugeben
   const getMediaUrls = () => {
-    if (!post.local_media_paths?.length && !post.local_video_path) {
-      return post.media_urls || [];
+    if (post.media_urls && post.media_urls.length > 0) {
+      return post.media_urls; // Gebe die Bild-URLs zurück
     }
 
-    const urls = [];
-    
-    if (post.local_video_path) {
-      const { data: { publicUrl } } = supabase.storage
-        .from('social-media-files')
-        .getPublicUrl(post.local_video_path);
-      urls.push(publicUrl);
+    if (post.video_url) {
+      return [post.video_url]; // Gebe die Video-URL zurück
     }
 
-    if (post.local_media_paths?.length) {
-      post.local_media_paths.forEach(path => {
-        const { data: { publicUrl } } = supabase.storage
-          .from('social-media-files')
-          .getPublicUrl(path);
-        urls.push(publicUrl);
-      });
-    }
-
-    return urls;
+    return []; // Keine Medien vorhanden
   };
+
+  // Debugging: Gib die gefundenen Medien-URLs in der Konsole aus
+  useEffect(() => {
+    console.log('Media URLs:', getMediaUrls());
+  }, [post.media_urls, post.video_url]);
 
   return (
     <div className="flex gap-4 items-start ml-4">
@@ -122,7 +68,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           )}
         </div>
       </div>
-      
+
       <Card className="flex-1 p-4 space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
@@ -137,15 +83,24 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           <p className="text-sm whitespace-pre-wrap">{post.content}</p>
         )}
 
+        {/* Medienanzeige */}
         {getMediaUrls().length > 0 && (
-          <MediaGallery 
-            mediaUrls={getMediaUrls()} 
-            mediaType={post.media_type} 
-          />
+          <div className="flex gap-4">
+            {getMediaUrls().map((url, index) => (
+              <img 
+                key={index} 
+                src={url} 
+                alt={`Media ${index + 1}`} 
+                className="w-32 h-32 object-cover rounded-md"
+              />
+            ))}
+          </div>
         )}
 
+        {/* Metadaten des Posts */}
         <PostMetadata post={post} />
 
+        {/* Getaggte Profile */}
         {post.tagged_profiles && post.tagged_profiles.length > 0 && (
           <div className="mt-4 space-y-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -167,6 +122,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           </div>
         )}
 
+        {/* Link zum Beitrag */}
         {post.url && (
           <Button 
             variant="outline" 
