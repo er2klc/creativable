@@ -15,18 +15,18 @@ export const PostMetadata = ({ post }: PostMetadataProps) => {
   return (
     <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
       {/* Likes */}
-      {post.likesCount != null && (
+      {post.likes_count != null && (
         <div className="flex items-center gap-1">
           <Heart className="h-4 w-4" />
-          <span>{post.likesCount.toLocaleString()}</span>
+          <span>{post.likes_count.toLocaleString()}</span>
         </div>
       )}
 
       {/* Kommentare */}
-      {post.commentsCount != null && (
+      {post.comments_count != null && (
         <div className="flex items-center gap-1">
           <MessageCircle className="h-4 w-4" />
-          <span>{post.commentsCount.toLocaleString()}</span>
+          <span>{post.comments_count.toLocaleString()}</span>
         </div>
       )}
 
