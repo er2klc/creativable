@@ -1417,6 +1417,7 @@ export type Database = {
           created_at: string | null
           engagement_count: number | null
           first_comment: string | null
+          hashtags: string[] | null
           id: string
           lead_id: string | null
           likes_count: number | null
@@ -1431,6 +1432,7 @@ export type Database = {
           tagged_profiles: string[] | null
           tagged_users: Json | null
           url: string | null
+          video_url: string | null
         }
         Insert: {
           comments_count?: number | null
@@ -1438,6 +1440,7 @@ export type Database = {
           created_at?: string | null
           engagement_count?: number | null
           first_comment?: string | null
+          hashtags?: string[] | null
           id?: string
           lead_id?: string | null
           likes_count?: number | null
@@ -1452,6 +1455,7 @@ export type Database = {
           tagged_profiles?: string[] | null
           tagged_users?: Json | null
           url?: string | null
+          video_url?: string | null
         }
         Update: {
           comments_count?: number | null
@@ -1459,6 +1463,7 @@ export type Database = {
           created_at?: string | null
           engagement_count?: number | null
           first_comment?: string | null
+          hashtags?: string[] | null
           id?: string
           lead_id?: string | null
           likes_count?: number | null
@@ -1473,6 +1478,7 @@ export type Database = {
           tagged_profiles?: string[] | null
           tagged_users?: Json | null
           url?: string | null
+          video_url?: string | null
         }
         Relationships: [
           {
