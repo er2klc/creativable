@@ -26,7 +26,7 @@ async function downloadAndStoreMedia(url: string, postId: string): Promise<strin
     )
 
     console.log('Uploading to storage:', bucketPath)
-    const { data, error } = await supabase
+    const { data, error: uploadError } = await supabase
       .storage
       .from('social-media-files')
       .upload(bucketPath, buffer, {
@@ -34,7 +34,10 @@ async function downloadAndStoreMedia(url: string, postId: string): Promise<strin
         upsert: true
       })
 
-    if (error) throw error
+    if (uploadError) {
+      console.error('Upload error:', uploadError)
+      throw uploadError
+    }
 
     const { data: { publicUrl } } = supabase
       .storage
@@ -50,6 +53,7 @@ async function downloadAndStoreMedia(url: string, postId: string): Promise<strin
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
