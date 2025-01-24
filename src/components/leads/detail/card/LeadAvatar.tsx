@@ -15,8 +15,6 @@ export const LeadAvatar = ({ imageUrl, name, platform }: LeadAvatarProps) => {
     .join('')
     .toUpperCase() || '';
 
-  console.log('LeadAvatar - imageUrl:', imageUrl); // Debug log
-
   return (
     <div className="relative">
       <Avatar className="h-20 w-20">
