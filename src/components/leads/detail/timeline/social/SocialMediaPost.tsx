@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon } from "lucide-react";
+import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +45,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       if (post.media_type === 'video' && !post.local_video_path) {
         const videoUrl = post.media_urls?.[0] || post.metadata?.videoUrl;
         if (videoUrl) {
+          console.log('Processing video:', videoUrl);
           await fetch('/functions/process-social-media', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -60,6 +61,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       // Process images if exist and not already processed
       const imageUrls = post.media_urls?.filter(url => !url.includes('.mp4'));
       if (imageUrls?.length && (!post.local_media_paths || post.local_media_paths.length < imageUrls.length)) {
+        console.log('Processing images:', imageUrls);
         for (const imageUrl of imageUrls) {
           await fetch('/functions/process-social-media', {
             method: 'POST',
@@ -107,7 +109,11 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     <div className="flex gap-4 items-start ml-4">
       <div className="relative">
         <div className="h-8 w-8 rounded-full bg-background flex items-center justify-center border-2 border-white">
-          <Image className="h-4 w-4" />
+          {post.media_type === 'video' ? (
+            <Video className="h-4 w-4" />
+          ) : (
+            <Image className="h-4 w-4" />
+          )}
         </div>
       </div>
       
@@ -117,7 +123,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
             {post.posted_at && format(new Date(post.posted_at), 'PPp', { locale: de })}
           </span>
           <span className="text-xs bg-muted px-2 py-1 rounded-full">
-            {post.media_type || post.post_type}
+            {post.media_type === 'video' ? 'Video' : 'Post'}
           </span>
         </div>
 

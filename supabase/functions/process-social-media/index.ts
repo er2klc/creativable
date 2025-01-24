@@ -8,7 +8,7 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
@@ -24,52 +24,44 @@ serve(async (req) => {
 
     // Download the media file
     const response = await fetch(mediaUrl)
-    if (!response.ok) {
-      throw new Error(`Failed to fetch media: ${response.statusText}`)
-    }
+    if (!response.ok) throw new Error('Failed to fetch media')
+    
+    const buffer = await response.arrayBuffer()
+    const file = new Uint8Array(buffer)
 
-    const contentType = response.headers.get('content-type')
-    const fileData = await response.arrayBuffer()
-    
-    // Generate unique filename
-    const fileExt = mediaType === 'video' ? 'mp4' : 'jpg'
-    const fileName = `${crypto.randomUUID()}.${fileExt}`
-    
-    // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    // Generate a unique filename
+    const timestamp = new Date().getTime()
+    const extension = mediaType === 'video' ? '.mp4' : '.jpg'
+    const filename = `${postId}-${timestamp}${extension}`
+    const filePath = `${postId}/${filename}`
+
+    // Upload to storage bucket
+    const { error: uploadError } = await supabase.storage
       .from('social-media-files')
-      .upload(fileName, fileData, {
-        contentType,
-        upsert: true
+      .upload(filePath, file, {
+        contentType: mediaType === 'video' ? 'video/mp4' : 'image/jpeg',
+        cacheControl: '3600',
+        upsert: false
       })
 
-    if (uploadError) {
-      throw uploadError
-    }
+    if (uploadError) throw uploadError
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('social-media-files')
-      .getPublicUrl(fileName)
-
-    // Update post with local file path
-    const updateData = mediaType === 'video' 
-      ? { local_video_path: fileName }
-      : { 
-          local_media_paths: supabase.sql`array_append(local_media_paths, ${fileName})`
+    // Update the post record with the local file path
+    const updates = mediaType === 'video'
+      ? { local_video_path: filePath }
+      : {
+          local_media_paths: supabase.sql`array_append(COALESCE(local_media_paths, ARRAY[]::text[]), ${filePath})`
         }
 
     const { error: updateError } = await supabase
       .from('social_media_posts')
-      .update(updateData)
+      .update(updates)
       .eq('id', postId)
 
-    if (updateError) {
-      throw updateError
-    }
+    if (updateError) throw updateError
 
     return new Response(
-      JSON.stringify({ success: true, path: fileName, url: publicUrl }),
+      JSON.stringify({ success: true, filePath }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
