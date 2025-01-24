@@ -4,9 +4,7 @@ import { corsHeaders } from '../_shared/cors.ts'
 
 const normalizePostType = (type: string): 'post' | 'video' | 'reel' | 'story' | 'igtv' => {
   if (!type) return 'post';
-  
   const normalizedType = type.toLowerCase();
-  
   switch (normalizedType) {
     case 'video':
     case 'reel':
@@ -17,6 +15,47 @@ const normalizePostType = (type: string): 'post' | 'video' | 'reel' | 'story' | 
       return 'post';
   }
 };
+
+async function downloadAndUploadImage(imageUrl: string, supabaseClient: any, leadId: string): Promise<string | null> {
+  try {
+    if (!imageUrl) return null;
+
+    // Download image
+    const response = await fetch(imageUrl);
+    if (!response.ok) throw new Error('Failed to fetch image');
+    const imageBlob = await response.blob();
+
+    // Generate unique filename
+    const fileExt = 'jpg'; // Instagram profile pics are usually JPG
+    const fileName = `${leadId}-${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabaseClient
+      .storage
+      .from('contact-avatars')
+      .upload(filePath, imageBlob, {
+        contentType: 'image/jpeg',
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('Error uploading image:', uploadError);
+      return null;
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabaseClient
+      .storage
+      .from('contact-avatars')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  } catch (error) {
+    console.error('Error processing image:', error);
+    return null;
+  }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -98,6 +137,13 @@ serve(async (req) => {
         const profileData = items[0]
         console.log('Profile data received:', profileData);
 
+        // Download and upload profile image
+        const newProfileImageUrl = await downloadAndUploadImage(
+          profileData.profilePicUrlHD || profileData.profilePicUrl,
+          supabaseClient,
+          leadId
+        );
+
         const allHashtags = new Set<string>();
         profileData.latestPosts?.forEach((post: any) => {
           const hashtags = post.hashtags || [];
@@ -118,7 +164,7 @@ serve(async (req) => {
             social_media_followers: parseInt(profileData.followersCount) || 0,
             social_media_following: parseInt(profileData.followsCount) || 0,
             social_media_engagement_rate: engagementRate,
-            social_media_profile_image_url: profileData.profilePicUrlHD || profileData.profilePicUrl,
+            social_media_profile_image_url: newProfileImageUrl,
             social_media_posts: profileData.latestPosts,
             social_media_verified: profileData.verified,
             social_media_categories: profileData.businessCategoryName ? [profileData.businessCategoryName] : null,
