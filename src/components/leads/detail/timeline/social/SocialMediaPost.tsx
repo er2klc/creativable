@@ -5,7 +5,6 @@ import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon, Video } fr
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MediaGallery } from "./MediaGallery";
 import { PostMetadata } from "./PostMetadata";
 
 interface SocialMediaPost {
@@ -20,18 +19,11 @@ interface SocialMediaPost {
   mentioned_profiles: string[] | null;
   tagged_profiles: string[] | null;
   posted_at: string | null;
-  metadata: {
-    hashtags?: string[];
-    media_urls?: string[];
-    videoUrl?: string;
-    musicInfo?: any;
-    alt?: string;
-  };
-  media_urls: string[] | null;
+  media_urls: string[] | null; // Original URLs (falls vorhanden)
   media_type: string | null;
-  local_video_path: string | null;
-  local_media_paths: string[] | null;
-  video_url: string | null;
+  local_video_path: string | null; // Lokaler Pfad für Videos in Supabase
+  local_media_paths: string[] | null; // Lokale Pfade für Bilder in Supabase
+  video_url: string | null; // Original Video-URL (falls vorhanden)
 }
 
 interface SocialMediaPostProps {
@@ -41,27 +33,37 @@ interface SocialMediaPostProps {
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   // Funktion, um die URLs der Medien zurückzugeben
   const getMediaUrls = () => {
-  if (post.images && post.images.length > 0) {
-    return post.images; // Gib die Bild-URLs aus dem Feld `images` zurück
-  }
+    const urls: string[] = [];
 
-  if (post.video_url) {
-    return [post.video_url]; // Falls ein Video vorhanden ist
-  }
+    // Falls lokaler Video-Pfad vorhanden ist, füge ihn hinzu
+    if (post.local_video_path) {
+      urls.push(
+        `${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}/social-media-files/${post.local_video_path}`
+      );
+    }
 
-  return []; // Keine Medien vorhanden
-};
+    // Falls lokale Medienpfade für Bilder vorhanden sind, füge sie hinzu
+    if (post.local_media_paths && post.local_media_paths.length > 0) {
+      post.local_media_paths.forEach((path) => {
+        urls.push(
+          `${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}/social-media-files/${path}`
+        );
+      });
+    }
+
+    return urls;
+  };
 
   // Debugging: Gib die gefundenen Medien-URLs in der Konsole aus
   useEffect(() => {
-    console.log('Media URLs:', getMediaUrls());
-  }, [post.media_urls, post.video_url]);
+    console.log("Media URLs:", getMediaUrls());
+  }, [post.local_media_paths, post.local_video_path]);
 
   return (
     <div className="flex gap-4 items-start ml-4">
       <div className="relative">
         <div className="h-8 w-8 rounded-full bg-background flex items-center justify-center border-2 border-white">
-          {post.media_type === 'video' ? (
+          {post.media_type === "video" ? (
             <Video className="h-4 w-4" />
           ) : (
             <Image className="h-4 w-4" />
@@ -72,10 +74,11 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       <Card className="flex-1 p-4 space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
-            {post.posted_at && format(new Date(post.posted_at), 'PPp', { locale: de })}
+            {post.posted_at &&
+              format(new Date(post.posted_at), "PPp", { locale: de })}
           </span>
           <span className="text-xs bg-muted px-2 py-1 rounded-full">
-            {post.media_type === 'video' ? 'Video' : 'Post'}
+            {post.media_type === "video" ? "Video" : "Post"}
           </span>
         </div>
 
@@ -87,10 +90,10 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
         {getMediaUrls().length > 0 && (
           <div className="flex gap-4">
             {getMediaUrls().map((url, index) => (
-              <img 
-                key={index} 
-                src={url} 
-                alt={`Media ${index + 1}`} 
+              <img
+                key={index}
+                src={url}
+                alt={`Media ${index + 1}`}
                 className="w-32 h-32 object-cover rounded-md"
               />
             ))}
@@ -109,8 +112,8 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
             </div>
             <div className="flex flex-wrap gap-2">
               {post.tagged_profiles.map((profile, index) => (
-                <Badge 
-                  key={index} 
+                <Badge
+                  key={index}
                   variant="secondary"
                   className="flex items-center gap-1"
                 >
@@ -124,11 +127,11 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
         {/* Link zum Beitrag */}
         {post.url && (
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="w-full mt-4"
-            onClick={() => window.open(post.url, '_blank')}
+            onClick={() => window.open(post.url, "_blank")}
           >
             <LinkIcon className="h-4 w-4 mr-2" />
             Zum Beitrag
