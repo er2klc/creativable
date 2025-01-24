@@ -18,7 +18,7 @@ export const LeadCardContent = ({ lead }: LeadCardContentProps) => {
 
   // Prioritize username over name
   const displayName = lead.social_media_username?.split('/')?.pop() || lead.name;
-
+console.log('Lead Avatar imageUrl:', lead.social_media_profile_image_url);
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
