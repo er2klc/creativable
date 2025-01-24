@@ -1,9 +1,10 @@
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon } from "lucide-react";
+import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface SocialMediaPost {
   comments_count: number | null;
@@ -37,7 +38,7 @@ export const SocialMediaTimeline = ({ posts }: SocialMediaTimelineProps) => {
   });
 
   const getPostTypeIcon = (type: string) => {
-    switch (type) {
+    switch (type?.toLowerCase()) {
       case 'video':
         return 'video';
       case 'slideshow':
@@ -71,21 +72,54 @@ export const SocialMediaTimeline = ({ posts }: SocialMediaTimelineProps) => {
               </div>
 
               {post.content && (
-                <p className="text-sm">{post.content}</p>
+                <p className="text-sm whitespace-pre-wrap">{post.content}</p>
+              )}
+
+              {post.media_urls && post.media_urls.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {post.media_urls.map((url, index) => (
+                    <div key={index} className="relative aspect-square">
+                      {post.media_type?.toLowerCase() === 'video' ? (
+                        <video 
+                          src={url} 
+                          controls 
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <img 
+                          src={url} 
+                          alt={`Media ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {post.metadata?.hashtags && post.metadata.hashtags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {post.metadata.hashtags.map((tag: string, index: number) => (
+                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                      <Hash className="h-3 w-3" />
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
               )}
 
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                {post.likes_count !== null && (
+                {typeof post.likes_count === 'number' && (
                   <div className="flex items-center gap-1">
                     <Heart className="h-4 w-4" />
-                    <span>{post.likes_count}</span>
+                    <span>{post.likes_count.toLocaleString()}</span>
                   </div>
                 )}
                 
-                {post.comments_count !== null && (
+                {typeof post.comments_count === 'number' && (
                   <div className="flex items-center gap-1">
                     <MessageCircle className="h-4 w-4" />
-                    <span>{post.comments_count}</span>
+                    <span>{post.comments_count.toLocaleString()}</span>
                   </div>
                 )}
 

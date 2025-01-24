@@ -17,13 +17,11 @@ serve(async (req) => {
       timestamp: new Date().toISOString()
     });
 
-    // Create Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Get Apify API key from secrets
     const { data: secrets, error: secretError } = await supabaseClient
       .from('secrets')
       .select('value')
@@ -40,7 +38,6 @@ serve(async (req) => {
 
     console.log('Starting Apify scraping run');
 
-    // Start the scraping run
     const runResponse = await fetch(`${BASE_URL}/acts/apify~instagram-profile-scraper/runs`, {
       method: 'POST',
       headers: {
@@ -62,7 +59,6 @@ serve(async (req) => {
 
     console.log('Apify run started:', { runId });
 
-    // Poll for results
     let attempts = 0
     const maxAttempts = 30
     
@@ -86,33 +82,34 @@ serve(async (req) => {
         const profileData = items[0]
         console.log('Profile data received:', profileData);
 
+        // Extract all hashtags from posts
+        const allHashtags = new Set<string>();
+        profileData.latestPosts?.forEach((post: any) => {
+          const hashtags = post.hashtags || [];
+          hashtags.forEach((tag: string) => allHashtags.add(tag));
+        });
+
         // Calculate engagement rate
         const engagementRate = profileData.followersCount > 0 
           ? ((profileData.latestPosts?.reduce((sum: number, post: any) => 
-              sum + (post.likesCount || 0) + (post.commentsCount || 0), 0) / 
+              sum + (parseInt(post.likesCount) || 0) + (parseInt(post.commentsCount) || 0), 0) / 
               (profileData.latestPosts?.length || 1)) / profileData.followersCount)
           : 0;
 
-        // Extract hashtags from posts
-        const hashtags = new Set<string>();
-        profileData.latestPosts?.forEach((post: any) => {
-          post.hashtags?.forEach((tag: string) => hashtags.add(tag));
-        });
-
-        // Update lead with social media data
+        // Update lead with social media data and hashtags as interests
         const { error: updateError } = await supabaseClient
           .from('leads')
           .update({
             name: profileData.fullName || profileData.username,
             social_media_bio: profileData.biography,
-            social_media_followers: profileData.followersCount,
-            social_media_following: profileData.followsCount,
+            social_media_followers: parseInt(profileData.followersCount) || 0,
+            social_media_following: parseInt(profileData.followsCount) || 0,
             social_media_engagement_rate: engagementRate,
             social_media_profile_image_url: profileData.profilePicUrlHD || profileData.profilePicUrl,
             social_media_posts: profileData.latestPosts,
             social_media_verified: profileData.verified,
             social_media_categories: profileData.businessCategoryName ? [profileData.businessCategoryName] : null,
-            social_media_interests: Array.from(hashtags),
+            social_media_interests: Array.from(allHashtags),
             last_social_media_scan: new Date().toISOString()
           })
           .eq('id', leadId)
@@ -122,45 +119,29 @@ serve(async (req) => {
           throw updateError
         }
 
-        // Add scan history entry
-        const { error: historyError } = await supabaseClient
-          .from('instagram_scan_history')
-          .insert({
-            lead_id: leadId,
-            followers_count: profileData.followersCount,
-            following_count: profileData.followsCount,
-            posts_count: profileData.postsCount,
-            engagement_rate: engagementRate,
-            success: true
-          })
-
-        if (historyError) {
-          console.error('Error creating scan history:', historyError);
-          throw historyError
-        }
-
         // Store posts with detailed metadata
         if (profileData.latestPosts?.length > 0) {
           const posts = profileData.latestPosts.map((post: any) => ({
             lead_id: leadId,
             platform: 'Instagram',
-            post_type: post.type,
+            post_type: post.type || 'post',
             content: post.caption,
-            likes_count: post.likesCount,
-            comments_count: post.commentsCount,
+            likes_count: parseInt(post.likesCount) || 0,
+            comments_count: parseInt(post.commentsCount) || 0,
             url: post.url,
             location: post.locationName,
-            mentioned_profiles: post.mentions,
+            mentioned_profiles: post.mentions || [],
             tagged_profiles: post.taggedUsers?.map((u: any) => u.username) || [],
             posted_at: post.timestamp,
             metadata: {
-              hashtags: post.hashtags,
-              images: post.images,
+              hashtags: post.hashtags || [],
+              media_urls: post.images || [post.displayUrl],
               videoUrl: post.videoUrl,
               musicInfo: post.musicInfo,
               alt: post.alt,
-              childPosts: post.childPosts
-            }
+            },
+            media_urls: post.images || [post.displayUrl],
+            media_type: post.videoUrl ? 'video' : 'image'
           }))
 
           const { error: postsError } = await supabaseClient
@@ -172,11 +153,8 @@ serve(async (req) => {
 
           if (postsError) {
             console.error('Error storing posts:', postsError);
-            // Log error but don't throw to still return success for profile scan
           }
         }
-
-        console.log('Scan completed successfully');
 
         return new Response(
           JSON.stringify({ success: true, data: profileData }),
@@ -188,7 +166,6 @@ serve(async (req) => {
       attempts++
     }
 
-    console.error('Timeout waiting for results');
     throw new Error('Timeout waiting for results')
   } catch (error) {
     console.error('Error during scan:', error);
