@@ -119,70 +119,61 @@ serve(async (req) => {
           throw updateError
         }
 
-        // Store posts with detailed metadata in social_media_posts table
-        if (profileData.latestPosts?.length > 0) {
-          // First, delete existing posts for this lead to avoid duplicates
-          const { error: deleteError } = await supabaseClient
-            .from('social_media_posts')
-            .delete()
-            .eq('lead_id', leadId)
-
-          if (deleteError) {
-            console.error('Error deleting existing posts:', deleteError);
-          }
-
-          // Transform and insert new posts
-          const posts = profileData.latestPosts.map((post: any) => ({
-            lead_id: leadId,
-            platform: 'Instagram',
-            post_type: post.type || 'post',
-            content: post.caption,
-            likes_count: parseInt(post.likesCount) || 0,
-            comments_count: parseInt(post.commentsCount) || 0,
-            url: post.url,
-            location: post.locationName,
-            mentioned_profiles: post.mentions || [],
-            tagged_profiles: post.taggedUsers?.map((u: any) => u.username) || [],
-            posted_at: post.timestamp,
-            metadata: {
-              hashtags: post.hashtags || [],
-              media_urls: post.images || [post.displayUrl],
-              videoUrl: post.videoUrl,
-              musicInfo: post.musicInfo,
-              alt: post.alt,
-            },
+        // Transform posts for insertion
+        const posts = profileData.latestPosts?.map((post: any) => ({
+          lead_id: leadId,
+          platform: 'Instagram',
+          post_type: post.type || 'post',
+          content: post.caption,
+          likes_count: parseInt(post.likesCount) || 0,
+          comments_count: parseInt(post.commentsCount) || 0,
+          url: post.url,
+          location: post.locationName,
+          mentioned_profiles: post.mentions || [],
+          tagged_profiles: post.taggedUsers?.map((u: any) => u.username) || [],
+          posted_at: post.timestamp,
+          metadata: {
+            hashtags: post.hashtags || [],
             media_urls: post.images || [post.displayUrl],
-            media_type: post.videoUrl ? 'video' : 'image',
-            engagement_count: (parseInt(post.likesCount) || 0) + (parseInt(post.commentsCount) || 0),
-            first_comment: post.firstComment
-          }))
+            videoUrl: post.videoUrl,
+            musicInfo: post.musicInfo,
+            alt: post.alt,
+          },
+          media_urls: post.images || [post.displayUrl],
+          media_type: post.videoUrl ? 'video' : 'image',
+          engagement_count: (parseInt(post.likesCount) || 0) + (parseInt(post.commentsCount) || 0),
+          first_comment: post.firstComment
+        })) || [];
 
+        // Insert posts with unique constraint handling
+        if (posts.length > 0) {
           const { error: postsError } = await supabaseClient
             .from('social_media_posts')
-            .upsert(posts, { 
-              onConflict: 'lead_id,url',
-              ignoreDuplicates: true 
-            })
+            .upsert(posts, {
+              onConflict: 'lead_id,url'
+            });
 
           if (postsError) {
             console.error('Error storing posts:', postsError);
+          } else {
+            console.log(`Successfully stored ${posts.length} posts`);
           }
+        }
 
-          // Store scan history
-          const { error: historyError } = await supabaseClient
-            .from('instagram_scan_history')
-            .insert({
-              lead_id: leadId,
-              followers_count: parseInt(profileData.followersCount) || 0,
-              following_count: parseInt(profileData.followsCount) || 0,
-              posts_count: profileData.latestPosts.length,
-              engagement_rate: engagementRate,
-              success: true
-            })
+        // Store scan history
+        const { error: historyError } = await supabaseClient
+          .from('instagram_scan_history')
+          .insert({
+            lead_id: leadId,
+            followers_count: parseInt(profileData.followersCount) || 0,
+            following_count: parseInt(profileData.followsCount) || 0,
+            posts_count: profileData.latestPosts?.length || 0,
+            engagement_rate: engagementRate,
+            success: true
+          })
 
-          if (historyError) {
-            console.error('Error storing scan history:', historyError);
-          }
+        if (historyError) {
+          console.error('Error storing scan history:', historyError);
         }
 
         return new Response(
