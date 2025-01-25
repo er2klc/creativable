@@ -81,11 +81,7 @@ serve(async (req) => {
             throw uploadError;
           }
 
-          const { data: { publicUrl } } = supabase.storage
-            .from('social-media-files')
-            .getPublicUrl(bucketPath);
-
-          console.log('Media stored at:', publicUrl);
+          console.log('Media stored at:', `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/social-media-files/${bucketPath}`);
           return bucketPath;
         } catch (error) {
           console.error('Error processing media:', error);
@@ -96,7 +92,7 @@ serve(async (req) => {
 
     const successfulUrls = processedUrls.filter((url): url is string => url !== null);
 
-    // Update the social media post with the new URLs only if we have a valid postId
+    // Update the social media post with the new URLs
     if (successfulUrls.length > 0 && postId) {
       console.log('Updating post with ID:', postId);
       console.log('Successful URLs:', successfulUrls);
@@ -122,6 +118,8 @@ serve(async (req) => {
         console.error('Error updating social media posts:', updateError);
         throw updateError;
       }
+
+      console.log('Successfully updated post with new media paths:', updates);
     } else {
       console.log('Skipping database update - no valid postId provided or no successful uploads');
     }

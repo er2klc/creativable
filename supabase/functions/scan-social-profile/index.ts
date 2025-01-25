@@ -234,7 +234,8 @@ serve(async (req) => {
                   body: {
                     mediaUrls: post.media_urls,
                     leadId: post.lead_id,
-                    mediaType: post.media_type
+                    mediaType: post.media_type,
+                    postId: post.id // Make sure to pass the post ID
                   }
                 });
                 console.log('Media processing response:', response);
