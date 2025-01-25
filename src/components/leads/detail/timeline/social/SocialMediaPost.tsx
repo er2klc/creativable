@@ -78,22 +78,30 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       media_type: post.media_type,
       video_url: post.video_url,
       local_media_paths: post.local_media_paths,
-      media_urls: post.media_urls
+      media_urls: post.media_urls,
+      metadata: post.metadata
     });
 
-    // For videos, always use Instagram's video URL
-    if (post.media_type === 'video' && post.video_url) {
-      console.log("Using video_url for post", post.id, ":", post.video_url);
-      return [post.video_url];
+    // First check for video URL (either direct or in metadata)
+    if (post.video_url || (post.metadata?.videoUrl)) {
+      const videoUrl = post.video_url || post.metadata?.videoUrl;
+      console.log("Using video URL for post", post.id, ":", videoUrl);
+      return videoUrl ? [videoUrl] : [];
     }
 
-    // For images, use local_media_paths from bucket if available
+    // Then check for local media paths
     if (post.local_media_paths && post.local_media_paths.length > 0) {
       console.log("Using local_media_paths for post", post.id, ":", post.local_media_paths);
       return post.local_media_paths;
     }
 
-    // Fallback to media_urls if no local paths
+    // Then check media_urls from metadata
+    if (post.metadata?.media_urls && post.metadata.media_urls.length > 0) {
+      console.log("Using metadata.media_urls for post", post.id, ":", post.metadata.media_urls);
+      return post.metadata.media_urls;
+    }
+
+    // Finally fallback to media_urls
     if (post.media_urls && post.media_urls.length > 0) {
       console.log("Using media_urls for post", post.id, ":", post.media_urls);
       return post.media_urls;
@@ -106,7 +114,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const mediaUrls = getMediaUrls();
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = postType === 'sidecar' && mediaUrls.length > 1;
-  const hasVideo = post.media_type === 'video' || postType === 'video';
+  const hasVideo = post.media_type === 'video' || postType === 'video' || post.video_url || post.metadata?.videoUrl;
   const postTypeColor = getPostTypeColor(post.type || post.post_type);
 
   console.log("Final media setup for post", post.id, {
