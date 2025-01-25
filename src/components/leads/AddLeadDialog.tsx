@@ -11,7 +11,6 @@ import { BasicLeadFields } from "./form-fields/BasicLeadFields";
 import { ContactTypeField } from "./form-fields/ContactTypeField";
 import { NotesFields } from "./form-fields/NotesFields";
 import { Platform } from "@/config/platforms";
-import { linkedInApi } from "@/utils/linkedin";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich"),
@@ -57,16 +56,6 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
-
-      // Validate LinkedIn profile URL if platform is LinkedIn
-      if (values.platform === "LinkedIn" && values.social_media_username) {
-        try {
-          values.social_media_username = linkedInApi.validateProfileUrl(values.social_media_username);
-        } catch (error) {
-          toast.error(error instanceof Error ? error.message : "Ungültige LinkedIn URL");
-          return;
-        }
-      }
 
       const { error } = await supabase
         .from("leads")
