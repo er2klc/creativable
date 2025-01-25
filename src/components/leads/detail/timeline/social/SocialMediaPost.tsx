@@ -1,10 +1,22 @@
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon, Video, ChevronLeft, ChevronRight, Grid } from "lucide-react";
+import { 
+  Image, 
+  MessageCircle, 
+  Heart, 
+  MapPin, 
+  User, 
+  Link as LinkIcon, 
+  Video, 
+  ChevronLeft, 
+  ChevronRight, 
+  Grid, 
+  PlayCircle 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import useEmblaCarousel from 'embla-carousel-react';
+import useEmblaCarousel from "embla-carousel-react";
 import { cn } from "@/lib/utils";
 
 interface SocialMediaPost {
@@ -39,22 +51,22 @@ interface SocialMediaPostProps {
 
 const getPostTypeColor = (type: string) => {
   switch (type?.toLowerCase()) {
-    case 'video':
-      return 'text-cyan-500 border-cyan-500';
-    case 'image':
-      return 'text-purple-500 border-purple-500';
-    case 'sidecar':
-      return 'text-amber-500 border-amber-500';
+    case "video":
+      return "text-cyan-500 border-cyan-500";
+    case "image":
+      return "text-purple-500 border-purple-500";
+    case "sidecar":
+      return "text-amber-500 border-amber-500";
     default:
-      return 'text-gray-500 border-gray-500';
+      return "text-gray-500 border-gray-500";
   }
 };
 
 const getPostTypeIcon = (type: string, className: string) => {
   switch (type?.toLowerCase()) {
-    case 'video':
+    case "video":
       return <Video className={className} strokeWidth={1.5} />;
-    case 'sidecar':
+    case "sidecar":
       return <Grid className={className} strokeWidth={1.5} />;
     default:
       return <Image className={className} strokeWidth={1.5} />;
@@ -65,35 +77,27 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
 
   const getMediaUrls = () => {
-  const urls: string[] = [];
-  const storageUrl = import.meta.env.VITE_SUPABASE_STORAGE_URL;
+    const urls: string[] = [];
+    const storageUrl = import.meta.env.VITE_SUPABASE_STORAGE_URL;
 
-  // Überprüfe zuerst local_media_paths
-  if (post.local_media_paths && Array.isArray(post.local_media_paths) && post.local_media_paths.length > 0) {
-    console.log("Using local_media_paths:", post.local_media_paths);
-    return post.local_media_paths;
-  }
+    if (post.video_url) {
+      console.log("Using video_url:", post.video_url);
+      return [post.video_url];
+    }
 
-  // Überprüfe media_urls (Fallback)
-  if (post.media_urls && post.media_urls.length > 0) {
-    console.log("Using media_urls:", post.media_urls);
-    return post.media_urls;
-  }
+    if (post.local_media_paths && post.local_media_paths.length > 0) {
+      console.log("Using local_media_paths:", post.local_media_paths);
+      return post.local_media_paths;
+    }
 
-  // Prüfe video_url (für Videos)
-  if (post.video_url) {
-    console.log("Using video_url:", post.video_url);
-    return [post.video_url];
-  }
-
-  console.log("No media paths found.");
-  return urls; // Keine Medien gefunden
-};
-
+    console.log("No media paths found.");
+    return urls;
+  };
 
   const mediaUrls = getMediaUrls();
-  const isSidecar = post.type === "Sidecar" && mediaUrls.length > 1;
+  const isSidecar = mediaUrls.length > 1; // Mehrere Bilder (Sidecar)
   const postTypeColor = getPostTypeColor(post.type || post.post_type);
+  const hasVideo = !!post.video_url;
 
   return (
     <div className="flex gap-4 items-start ml-4 relative">
@@ -101,18 +105,17 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       <div className="absolute left-8 top-4 w-4 h-0.5 bg-gray-400" />
 
       <div className="relative z-10">
-        <div className={cn(
-          "h-8 w-8 rounded-full bg-white flex items-center justify-center border",
-          postTypeColor
-        )}>
+        <div
+          className={cn(
+            "h-8 w-8 rounded-full bg-white flex items-center justify-center border",
+            postTypeColor
+          )}
+        >
           {getPostTypeIcon(post.type || post.post_type, "h-4 w-4")}
         </div>
       </div>
 
-      <Card className={cn(
-        "flex-1 overflow-hidden border",
-        postTypeColor
-      )}>
+      <Card className={cn("flex-1 overflow-hidden border", postTypeColor)}>
         {mediaUrls.length > 0 && (
           <div className="relative">
             {isSidecar ? (
@@ -120,19 +123,11 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                 <div className="flex">
                   {mediaUrls.map((url, index) => (
                     <div key={index} className="flex-[0_0_100%] min-w-0">
-                      {url.includes('.mp4') ? (
-                        <video
-                          controls
-                          className="w-full aspect-square object-cover"
-                          src={url}
-                        />
-                      ) : (
-                        <img
-                          src={url}
-                          alt={`Media ${index + 1}`}
-                          className="w-full aspect-square object-cover"
-                        />
-                      )}
+                      <img
+                        src={url}
+                        alt={`Media ${index + 1}`}
+                        className="w-full aspect-square object-cover"
+                      />
                     </div>
                   ))}
                 </div>
@@ -141,7 +136,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full"
                       onClick={() => emblaApi?.scrollPrev()}
                     >
                       <ChevronLeft className="h-6 w-6" />
@@ -149,7 +144,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full"
                       onClick={() => emblaApi?.scrollNext()}
                     >
                       <ChevronRight className="h-6 w-6" />
@@ -158,13 +153,21 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                 )}
               </div>
             ) : (
-              <div className="w-full">
-                {post.type === "Video" || post.media_type === "video" ? (
-                  <video
-                    controls
-                    className="w-full aspect-square object-cover"
-                    src={mediaUrls[0]}
-                  />
+              <div className="relative">
+                {hasVideo ? (
+                  <div className="relative">
+                    <img
+                      src={mediaUrls[0]}
+                      alt="Video Thumbnail"
+                      className="w-full aspect-square object-cover"
+                    />
+                    <button
+                      onClick={() => window.open(post.video_url, "_blank")}
+                      className="absolute inset-0 flex items-center justify-center bg-black/40 text-white hover:bg-black/60"
+                    >
+                      <PlayCircle className="h-12 w-12" />
+                    </button>
+                  </div>
                 ) : (
                   <img
                     src={mediaUrls[0]}
@@ -183,13 +186,17 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
               {post.timestamp &&
                 format(new Date(post.timestamp), "PPp", { locale: de })}
             </span>
-            <span className={cn("text-xs px-2 py-1 rounded-full border", postTypeColor)}>
+            <span
+              className={cn("text-xs px-2 py-1 rounded-full border", postTypeColor)}
+            >
               {post.type || post.post_type || "Post"}
             </span>
           </div>
 
           {(post.caption || post.content) && (
-            <p className="text-sm whitespace-pre-wrap">{post.caption || post.content}</p>
+            <p className="text-sm whitespace-pre-wrap">
+              {post.caption || post.content}
+            </p>
           )}
 
           <div className="flex gap-4 text-sm text-muted-foreground">
@@ -220,27 +227,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                   #{tag}
                 </Badge>
               ))}
-            </div>
-          )}
-
-          {post.tagged_profiles && post.tagged_profiles.length > 0 && (
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <User className="h-4 w-4" />
-                <span>Getaggte Profile:</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {post.tagged_profiles.map((profile, index) => (
-                  <Badge
-                    key={index}
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                  >
-                    <User className="h-3 w-3" />
-                    {profile}
-                  </Badge>
-                ))}
-              </div>
             </div>
           )}
 
