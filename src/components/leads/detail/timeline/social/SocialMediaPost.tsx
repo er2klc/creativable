@@ -1,21 +1,17 @@
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { 
   Image, 
   MessageCircle, 
   Heart, 
   MapPin, 
   Link as LinkIcon, 
-  Video, 
-  ChevronLeft, 
-  ChevronRight, 
-  Grid
+  Video 
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import useEmblaCarousel from "embla-carousel-react";
 import { cn } from "@/lib/utils";
+import useEmblaCarousel from "embla-carousel-react";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
 
 interface SocialMediaPost {
   id: string;
@@ -65,7 +61,7 @@ const getPostTypeIcon = (type: string, className: string) => {
     case "video":
       return <Video className={className} strokeWidth={1.5} />;
     case "sidecar":
-      return <Grid className={className} strokeWidth={1.5} />;
+      return <Image className={className} strokeWidth={1.5} />;
     default:
       return <Image className={className} strokeWidth={1.5} />;
   }
@@ -75,20 +71,16 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
 
   const getMediaUrls = () => {
-    // For videos, always use the Instagram video URL
+    // For videos, always use Instagram's video URL
     if (post.media_type === 'video' && post.video_url) {
-      console.log("Using video_url:", post.video_url);
+      console.log("Using Instagram video_url:", post.video_url);
       return [post.video_url];
     }
 
-    // For images, prefer local media paths from bucket
+    // For images, use local_media_paths from bucket if available
     if (post.local_media_paths && post.local_media_paths.length > 0) {
       console.log("Using local_media_paths:", post.local_media_paths);
-      const bucketUrls = post.local_media_paths.map(path => {
-        if (path.startsWith('http')) return path;
-        return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/social-media-files/${path}`;
-      });
-      return bucketUrls;
+      return post.local_media_paths;
     }
 
     // Fallback to media_urls if no local paths
@@ -147,6 +139,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                       className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full"
                       onClick={() => emblaApi?.scrollPrev()}
                     >
+                      <span className="sr-only">Previous slide</span>
                       <ChevronLeft className="h-6 w-6" />
                     </Button>
                     <Button
@@ -155,6 +148,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                       className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full"
                       onClick={() => emblaApi?.scrollNext()}
                     >
+                      <span className="sr-only">Next slide</span>
                       <ChevronRight className="h-6 w-6" />
                     </Button>
                   </>
