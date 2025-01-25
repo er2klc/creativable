@@ -76,8 +76,10 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
 
   const getMediaUrls = () => {
+    const postType = post.type?.toLowerCase() || post.post_type?.toLowerCase();
+    
     // For videos, use the direct Instagram video URL
-    if (post.type?.toLowerCase() === 'video') {
+    if (postType === 'video') {
       if (post.video_url) {
         console.log("Using video_url:", post.video_url);
         return [post.video_url];
@@ -101,9 +103,10 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   };
 
   const mediaUrls = getMediaUrls();
-  const isSidecar = mediaUrls.length > 1; // Multiple images (Sidecar)
+  const postType = post.type?.toLowerCase() || post.post_type?.toLowerCase();
+  const isSidecar = postType === 'sidecar' && mediaUrls.length > 1;
   const postTypeColor = getPostTypeColor(post.type || post.post_type);
-  const hasVideo = post.type?.toLowerCase() === 'video';
+  const hasVideo = postType === 'video';
 
   return (
     <div className="flex gap-4 items-start ml-4 relative">
