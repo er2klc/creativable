@@ -196,7 +196,7 @@ serve(async (req) => {
           
           if (post.type === 'Video') {
             // For videos, only use the display URL (preview image)
-            mediaUrls = [post.displayUrl].filter(Boolean);
+            mediaUrls = post.displayUrl ? [post.displayUrl] : [];
           } else if (post.type === 'Sidecar' && post.images) {
             // For sidecar posts, use all images
             mediaUrls = post.images;
@@ -246,7 +246,6 @@ serve(async (req) => {
           }
 
           console.log(`Successfully stored ${posts.length} posts`);
-          console.log('Inserted posts:', insertedPosts);
 
           // Process media files after storing posts
           if (Array.isArray(insertedPosts)) {

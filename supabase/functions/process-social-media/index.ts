@@ -14,7 +14,7 @@ serve(async (req) => {
       leadId,
       postId,
       mediaType,
-      mediaUrls
+      mediaUrls: mediaUrls?.length
     });
 
     if (!mediaUrls || !Array.isArray(mediaUrls) || mediaUrls.length === 0) {
@@ -42,6 +42,12 @@ serve(async (req) => {
 
     for (const [index, url] of mediaUrls.entries()) {
       try {
+        // Skip video URLs, only process images
+        if (url.includes('video')) {
+          console.log('Skipping video URL:', url);
+          continue;
+        }
+
         const timestamp = Date.now();
         const fileName = `${timestamp}_${index}.jpg`;
         const filePath = `${leadId}/${fileName}`;
@@ -101,7 +107,7 @@ serve(async (req) => {
     }
 
     // Update the post with local paths if we have a postId
-    if (postId) {
+    if (postId && localPaths.length > 0) {
       console.log('Updating post with local paths:', {
         postId,
         localPaths
