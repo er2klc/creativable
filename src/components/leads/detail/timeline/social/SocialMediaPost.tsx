@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import useEmblaCarousel from "embla-carousel-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SocialMediaPost {
   id: string;
@@ -87,25 +88,30 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       metadata_videoUrl: post.metadata?.videoUrl
     });
 
-    // Check local_media_paths first (from Supabase bucket)
+    // Wenn local_media_paths vorhanden sind, diese aus dem Supabase Storage laden
     if (post.local_media_paths && post.local_media_paths.length > 0) {
       console.log("Using local_media_paths for post", post.id, ":", post.local_media_paths);
-      return post.local_media_paths;
+      return post.local_media_paths.map(path => {
+        const { data } = supabase.storage
+          .from('social-media-files')
+          .getPublicUrl(path);
+        return data.publicUrl;
+      });
     }
 
-    // Then check media_urls
+    // Dann media_urls prüfen
     if (post.media_urls && post.media_urls.length > 0) {
       console.log("Using media_urls for post", post.id, ":", post.media_urls);
       return post.media_urls;
     }
 
-    // Check metadata media_urls
+    // Metadata media_urls prüfen
     if (post.metadata?.media_urls && post.metadata.media_urls.length > 0) {
       console.log("Using metadata.media_urls for post", post.id, ":", post.metadata.media_urls);
       return post.metadata.media_urls;
     }
 
-    // Check for video URLs
+    // Video URLs prüfen
     const videoUrl = post.video_url || post.videoUrl || post.metadata?.videoUrl;
     if (videoUrl) {
       console.log("Using video_url for post", post.id, ":", videoUrl);
