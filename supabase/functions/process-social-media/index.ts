@@ -39,12 +39,11 @@ serve(async (req) => {
     );
 
     const localPaths: string[] = [];
-    let localVideoPath: string | null = null;
 
     for (const [index, url] of mediaUrls.entries()) {
       try {
         const timestamp = Date.now();
-        const fileName = `${timestamp}_${index}.${mediaType === 'video' ? 'mp4' : 'jpg'}`;
+        const fileName = `${timestamp}_${index}.jpg`;
         const filePath = `${leadId}/${fileName}`;
 
         // Check if file already exists
@@ -62,11 +61,7 @@ serve(async (req) => {
             .from('social-media-files')
             .getPublicUrl(filePath);
           
-          if (mediaType === 'video') {
-            localVideoPath = publicUrl;
-          } else {
-            localPaths.push(publicUrl);
-          }
+          localPaths.push(publicUrl);
           continue;
         }
 
@@ -84,7 +79,7 @@ serve(async (req) => {
           .storage
           .from('social-media-files')
           .upload(filePath, mediaBuffer, {
-            contentType: mediaType === 'video' ? 'video/mp4' : 'image/jpeg',
+            contentType: 'image/jpeg',
             upsert: true
           });
 
@@ -98,12 +93,7 @@ serve(async (req) => {
           .getPublicUrl(filePath);
 
         console.log('Media stored at:', publicUrl);
-
-        if (mediaType === 'video') {
-          localVideoPath = publicUrl;
-        } else {
-          localPaths.push(publicUrl);
-        }
+        localPaths.push(publicUrl);
 
       } catch (error) {
         console.error('Error processing media URL:', url, error);
@@ -114,15 +104,13 @@ serve(async (req) => {
     if (postId) {
       console.log('Updating post with local paths:', {
         postId,
-        localPaths,
-        localVideoPath
+        localPaths
       });
 
       const { error: updateError } = await supabase
         .from('social_media_posts')
         .update({
           local_media_paths: localPaths,
-          local_video_path: localVideoPath
         })
         .eq('id', postId);
 
@@ -130,15 +118,12 @@ serve(async (req) => {
         console.error('Error updating post with local paths:', updateError);
         throw updateError;
       }
-    } else {
-      console.log('Skipping database update - no valid postId provided');
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        localPaths,
-        localVideoPath
+        localPaths
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

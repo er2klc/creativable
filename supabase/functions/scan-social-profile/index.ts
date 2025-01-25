@@ -193,14 +193,15 @@ serve(async (req) => {
         // Transform and insert posts
         const posts = profileData.latestPosts?.map((post: any) => {
           let mediaUrls = [];
-          let videoUrl = null;
           
-          if (post.type === 'Video' || post.videoUrl) {
-            videoUrl = post.videoUrl;
-            mediaUrls = videoUrl ? [videoUrl] : [];
+          if (post.type === 'Video') {
+            // For videos, only use the display URL (preview image)
+            mediaUrls = [post.displayUrl].filter(Boolean);
           } else if (post.type === 'Sidecar' && post.images) {
+            // For sidecar posts, use all images
             mediaUrls = post.images;
-          } else {
+          } else if (!post.videoUrl) {
+            // For regular image posts (no video)
             mediaUrls = [post.displayUrl || (post.images && post.images[0])].filter(Boolean);
           }
 
@@ -219,17 +220,13 @@ serve(async (req) => {
             metadata: {
               hashtags: post.hashtags || [],
               media_urls: mediaUrls,
-              videoUrl: videoUrl,
-              musicInfo: post.musicInfo,
               alt: post.alt,
             },
             media_urls: mediaUrls,
-            media_type: videoUrl ? 'video' : 'image',
+            media_type: post.videoUrl ? 'video' : 'image',
             engagement_count: (parseInt(post.likesCount) || 0) + (parseInt(post.commentsCount) || 0),
             first_comment: post.firstComment,
-            video_url: videoUrl,
             local_media_paths: [],
-            local_video_path: null
           };
         }) || [];
 
@@ -254,19 +251,21 @@ serve(async (req) => {
           // Process media files after storing posts
           if (Array.isArray(insertedPosts)) {
             for (const post of insertedPosts) {
-              try {
-                console.log('Processing media for post:', post.id);
-                const response = await supabaseClient.functions.invoke('process-social-media', {
-                  body: {
-                    mediaUrls: post.media_urls,
-                    leadId: post.lead_id,
-                    mediaType: post.media_type,
-                    postId: post.id
-                  }
-                });
-                console.log('Media processing response:', response);
-              } catch (error) {
-                console.error('Error processing media for post:', error);
+              if (post.media_urls && post.media_urls.length > 0) {
+                try {
+                  console.log('Processing media for post:', post.id);
+                  const response = await supabaseClient.functions.invoke('process-social-media', {
+                    body: {
+                      mediaUrls: post.media_urls,
+                      leadId: post.lead_id,
+                      mediaType: post.media_type,
+                      postId: post.id
+                    }
+                  });
+                  console.log('Media processing response:', response);
+                } catch (error) {
+                  console.error('Error processing media for post:', error);
+                }
               }
             }
           }
