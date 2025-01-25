@@ -44,7 +44,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const getMediaUrls = () => {
     const urls: string[] = [];
 
-    // Check for local paths first
+    // First priority: Check local paths in Supabase storage
     if (post.local_video_path) {
       urls.push(
         `${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}/social-media-files/${post.local_video_path}`
@@ -57,15 +57,38 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           `${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}/social-media-files/${path}`
         );
       });
+      return urls;
     }
 
-    // If no local paths, use original URLs
-    if (urls.length === 0) {
-      if (post.images && post.images.length > 0) {
-        urls.push(...post.images);
-      }
-      if (post.videoUrl) {
-        urls.push(post.videoUrl);
+    // Second priority: Check media_urls array
+    if (post.media_urls && post.media_urls.length > 0) {
+      return post.media_urls.map(url => {
+        if (url.startsWith('http')) {
+          return url;
+        }
+        return `${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}/social-media-files/${url}`;
+      });
+    }
+
+    // Third priority: Check images array
+    if (post.images && post.images.length > 0) {
+      return post.images.map(url => {
+        if (url.startsWith('http')) {
+          return url;
+        }
+        return `${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}/social-media-files/${url}`;
+      });
+    }
+
+    // Fourth priority: Check video URL
+    if (post.videoUrl || post.video_url) {
+      const videoUrl = post.videoUrl || post.video_url;
+      if (videoUrl) {
+        if (videoUrl.startsWith('http')) {
+          urls.push(videoUrl);
+        } else {
+          urls.push(`${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}/social-media-files/${videoUrl}`);
+        }
       }
     }
 
