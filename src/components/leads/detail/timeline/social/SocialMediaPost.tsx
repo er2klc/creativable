@@ -41,7 +41,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
   const getMediaUrls = () => {
     const urls: string[] = [];
-    const storageUrl = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL;
+    const storageUrl = import.meta.env.VITE_SUPABASE_STORAGE_URL;
 
     // First priority: Check local paths in Supabase storage
     if (post.local_video_path) {
