@@ -110,11 +110,19 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                   <div className="flex">
                     {mediaUrls.map((url, index) => (
                       <div key={index} className="flex-[0_0_100%] min-w-0">
-                        <img
-                          src={url}
-                          alt={`Media ${index + 1}`}
-                          className="w-full h-[400px] object-cover"
-                        />
+                        {url.includes('.mp4') ? (
+                          <video
+                            controls
+                            className="w-full aspect-square object-cover"
+                            src={url}
+                          />
+                        ) : (
+                          <img
+                            src={url}
+                            alt={`Media ${index + 1}`}
+                            className="w-full aspect-square object-cover"
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -145,14 +153,14 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                 {post.type === "Video" || post.media_type === "video" || post.local_video_path ? (
                   <video
                     controls
-                    className="w-full h-[400px] object-cover rounded-lg"
+                    className="w-full aspect-square object-cover rounded-lg"
                     src={mediaUrls[0]}
                   />
                 ) : (
                   <img
                     src={mediaUrls[0]}
                     alt="Post media"
-                    className="w-full h-[400px] object-cover rounded-lg"
+                    className="w-full aspect-square object-cover rounded-lg"
                   />
                 )}
               </div>
