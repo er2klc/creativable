@@ -10,8 +10,7 @@ import {
   Video, 
   ChevronLeft, 
   ChevronRight, 
-  Grid, 
-  PlayCircle 
+  Grid
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -78,12 +77,14 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
   const getMediaUrls = () => {
     // For videos, use the direct Instagram video URL
-    if (post.type?.toLowerCase() === 'video' && post.video_url) {
-      console.log("Using video_url:", post.video_url);
-      return [post.video_url];
+    if (post.type?.toLowerCase() === 'video') {
+      if (post.video_url) {
+        console.log("Using video_url:", post.video_url);
+        return [post.video_url];
+      }
     }
 
-    // For images and sidecar posts, first try local_media_paths
+    // For images and sidecar posts, use local_media_paths
     if (post.local_media_paths && post.local_media_paths.length > 0) {
       console.log("Using local_media_paths:", post.local_media_paths);
       return post.local_media_paths;
@@ -102,7 +103,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const mediaUrls = getMediaUrls();
   const isSidecar = mediaUrls.length > 1; // Multiple images (Sidecar)
   const postTypeColor = getPostTypeColor(post.type || post.post_type);
-  const hasVideo = post.type?.toLowerCase() === 'video' && post.video_url;
+  const hasVideo = post.type?.toLowerCase() === 'video';
 
   return (
     <div className="flex gap-4 items-start ml-4 relative">
@@ -241,6 +242,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
             </Button>
           )}
         </div>
+
       </Card>
     </div>
   );
