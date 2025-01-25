@@ -5,7 +5,6 @@ import {
   MessageCircle, 
   Heart, 
   MapPin, 
-  User, 
   Link as LinkIcon, 
   Video, 
   ChevronLeft, 
@@ -76,23 +75,19 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
 
   const getMediaUrls = () => {
-    const postType = post.type?.toLowerCase() || post.post_type?.toLowerCase();
-    
-    // For videos, use the direct Instagram video URL
-    if (postType === 'video') {
-      if (post.video_url) {
-        console.log("Using video_url:", post.video_url);
-        return [post.video_url];
-      }
-    }
-
-    // For images and sidecar posts, use local_media_paths
+    // First check for local media paths
     if (post.local_media_paths && post.local_media_paths.length > 0) {
       console.log("Using local_media_paths:", post.local_media_paths);
       return post.local_media_paths;
     }
 
-    // Fallback to media_urls if no local paths
+    // Then check for video URL
+    if (post.media_type === 'video' && post.video_url) {
+      console.log("Using video_url:", post.video_url);
+      return [post.video_url];
+    }
+
+    // Finally check for media_urls
     if (post.media_urls && post.media_urls.length > 0) {
       console.log("Using media_urls:", post.media_urls);
       return post.media_urls;
@@ -103,10 +98,10 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   };
 
   const mediaUrls = getMediaUrls();
-  const postType = post.type?.toLowerCase() || post.post_type?.toLowerCase();
+  const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = postType === 'sidecar' && mediaUrls.length > 1;
   const postTypeColor = getPostTypeColor(post.type || post.post_type);
-  const hasVideo = postType === 'video';
+  const hasVideo = post.media_type === 'video' || postType === 'video';
 
   return (
     <div className="flex gap-4 items-start ml-4 relative">
@@ -245,7 +240,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
             </Button>
           )}
         </div>
-
       </Card>
     </div>
   );
