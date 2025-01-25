@@ -28,13 +28,12 @@ async function fetchWithInstagramHeaders(url: string) {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { mediaUrls, leadId, mediaType } = await req.json();
+    const { mediaUrls, leadId, mediaType, postId } = await req.json();
 
     if (!Array.isArray(mediaUrls) || !leadId) {
       throw new Error('Invalid request body');
@@ -86,7 +85,7 @@ serve(async (req) => {
             .getPublicUrl(bucketPath);
 
           console.log('Media stored at:', publicUrl);
-          return publicUrl;
+          return bucketPath;
         } catch (error) {
           console.error('Error processing media:', error);
           return null;
@@ -96,15 +95,24 @@ serve(async (req) => {
 
     const successfulUrls = processedUrls.filter((url): url is string => url !== null);
 
-    // Update the lead's social media posts with the new URLs
+    // Update the social media post with the new URLs
     if (successfulUrls.length > 0) {
+      const updates: Record<string, any> = {};
+      
+      if (mediaType === 'video') {
+        updates.local_video_path = successfulUrls[0];
+        // Store preview image if available
+        if (successfulUrls.length > 1) {
+          updates.local_media_paths = [successfulUrls[1]];
+        }
+      } else {
+        updates.local_media_paths = successfulUrls;
+      }
+
       const { error: updateError } = await supabase
         .from('social_media_posts')
-        .update({ 
-          local_media_paths: successfulUrls,
-          media_urls: mediaUrls // Keep original URLs as reference
-        })
-        .eq('lead_id', leadId);
+        .update(updates)
+        .eq('id', postId);
 
       if (updateError) {
         console.error('Error updating social media posts:', updateError);

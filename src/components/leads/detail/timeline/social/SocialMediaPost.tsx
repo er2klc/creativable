@@ -1,6 +1,5 @@
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
-import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon, Video, ChevronLeft, ChevronRight, Grid } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, ArrowRight, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -53,41 +52,111 @@ const getPostTypeColor = (type: string) => {
 const getPostTypeIcon = (type: string, className: string) => {
   switch (type?.toLowerCase()) {
     case 'video':
-      return <Video className={className} strokeWidth={1.5} />;
+      return <Play className={className} strokeWidth={1.5} />;
     case 'sidecar':
-      return <Grid className={className} strokeWidth={1.5} />;
+      return <ArrowRight className={className} strokeWidth={1.5} />;
     default:
-      return <Image className={className} strokeWidth={1.5} />;
+      return null;
   }
 };
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const storageUrl = import.meta.env.VITE_SUPABASE_STORAGE_URL;
 
-  const getMediaUrls = () => {
-    const urls: string[] = [];
-    const storageUrl = import.meta.env.VITE_SUPABASE_STORAGE_URL;
+  const isVideo = post.local_video_path || post.video_url;
+  const hasPreviewImage = post.local_media_paths && post.local_media_paths.length > 0;
+  const isSidecar = !isVideo && post.local_media_paths && post.local_media_paths.length > 1;
+  const isImage = !isVideo && post.local_media_paths && post.local_media_paths.length === 1;
 
-    // Falls lokale Medienpfade für Bilder vorhanden sind, füge sie hinzu
-    if (post.local_media_paths && post.local_media_paths.length > 0) {
-      urls.push(...post.local_media_paths);
-    }
-
-    // Falls ein lokaler Video-Pfad vorhanden ist, füge ihn hinzu
-    if (post.local_video_path) {
-      urls.push(`${storageUrl}/social-media-files/${post.local_video_path}`);
-    }
-
-    // Falls `video_url` vorhanden ist, füge sie hinzu (externe Videos)
-    if (post.video_url) {
-      urls.push(post.video_url);
-    }
-
-    return urls;
+  const getMediaUrl = (path: string) => {
+    if (path.startsWith('http')) return path;
+    return `${storageUrl}/social-media-files/${path}`;
   };
 
-  const mediaUrls = getMediaUrls();
-  const isSidecar = post.type === "Sidecar" && mediaUrls.length > 1;
+  const handleVideoClick = () => {
+    setIsPlaying(true);
+  };
+
+  const renderMedia = () => {
+    if (isVideo) {
+      return (
+        <div className="relative">
+          {!isPlaying && hasPreviewImage ? (
+            <div className="relative cursor-pointer" onClick={handleVideoClick}>
+              <img
+                src={getMediaUrl(post.local_media_paths[0])}
+                alt="Video preview"
+                className="w-full aspect-square object-cover"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                <Play className="h-12 w-12 text-white" />
+              </div>
+            </div>
+          ) : (
+            <video
+              controls
+              autoPlay={isPlaying}
+              className="w-full aspect-square object-cover"
+              src={post.local_video_path ? getMediaUrl(post.local_video_path) : post.video_url || undefined}
+            />
+          )}
+        </div>
+      );
+    }
+
+    if (isSidecar) {
+      return (
+        <div className="relative overflow-hidden" ref={emblaRef}>
+          <div className="flex">
+            {post.local_media_paths.map((path, index) => (
+              <div key={index} className="flex-[0_0_100%] min-w-0">
+                <img
+                  src={getMediaUrl(path)}
+                  alt={`Media ${index + 1}`}
+                  className="w-full aspect-square object-cover"
+                />
+              </div>
+            ))}
+          </div>
+          {emblaApi && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90"
+                onClick={() => emblaApi.scrollPrev()}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90"
+                onClick={() => emblaApi.scrollNext()}
+              >
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    if (isImage) {
+      return (
+        <img
+          src={getMediaUrl(post.local_media_paths[0])}
+          alt="Post media"
+          className="w-full aspect-square object-cover"
+        />
+      );
+    }
+
+    return null;
+  };
+
   const postTypeColor = getPostTypeColor(post.type || post.post_type);
 
   return (
@@ -105,55 +174,19 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
         "flex-1 overflow-hidden border",
         postTypeColor
       )}>
-        {mediaUrls.length > 0 && (
-          <div className="relative">
-            {isSidecar ? (
-              <div className="overflow-hidden" ref={emblaRef}>
-                <div className="flex">
-                  {mediaUrls.map((url, index) => (
-                    <div key={index} className="flex-[0_0_100%] min-w-0">
-                      {url.includes('.mp4') ? (
-                        <video
-                          controls
-                          className="w-full aspect-square object-cover"
-                          src={url}
-                        />
-                      ) : (
-                        <img
-                          src={url}
-                          alt={`Media ${index + 1}`}
-                          className="w-full aspect-square object-cover"
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="w-full">
-                {post.type === "Video" || post.media_type === "video" || post.local_video_path ? (
-                  <video
-                    controls
-                    className="w-full aspect-square object-cover"
-                    src={mediaUrls[0]}
-                  />
-                ) : (
-                  <img
-                    src={mediaUrls[0]}
-                    alt="Post media"
-                    className="w-full aspect-square object-cover"
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        {renderMedia()}
 
         <div className="p-4 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
               {post.timestamp &&
-                format(new Date(post.timestamp), "PPp", { locale: de })}
+                new Date(post.timestamp).toLocaleDateString('de-DE', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
             </span>
             <span className={cn("text-xs px-2 py-1 rounded-full border", postTypeColor)}>
               {post.type || post.post_type || "Post"}
@@ -163,27 +196,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           {(post.caption || post.content) && (
             <p className="text-sm whitespace-pre-wrap">{post.caption || post.content}</p>
           )}
-
-          <div className="flex gap-4 text-sm text-muted-foreground">
-            {typeof post.likesCount === "number" && (
-              <div className="flex items-center gap-1">
-                <Heart className="h-4 w-4" />
-                <span>{post.likesCount.toLocaleString()}</span>
-              </div>
-            )}
-            {typeof post.commentsCount === "number" && (
-              <div className="flex items-center gap-1">
-                <MessageCircle className="h-4 w-4" />
-                <span>{post.commentsCount.toLocaleString()}</span>
-              </div>
-            )}
-            {(post.location || post.locationName) && (
-              <div className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                <span>{post.locationName || post.location}</span>
-              </div>
-            )}
-          </div>
 
           {post.hashtags && post.hashtags.length > 0 && (
             <div className="flex flex-wrap gap-2">
@@ -195,27 +207,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
             </div>
           )}
 
-          {post.tagged_profiles && post.tagged_profiles.length > 0 && (
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <User className="h-4 w-4" />
-                <span>Getaggte Profile:</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {post.tagged_profiles.map((profile, index) => (
-                  <Badge
-                    key={index}
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                  >
-                    <User className="h-3 w-3" />
-                    {profile}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
           {post.url && (
             <Button
               variant="outline"
@@ -223,7 +214,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
               className="w-full"
               onClick={() => window.open(post.url, "_blank")}
             >
-              <LinkIcon className="h-4 w-4 mr-2" />
               Zum Beitrag
             </Button>
           )}
