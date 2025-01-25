@@ -216,11 +216,12 @@ serve(async (req) => {
         }) || [];
 
         if (posts.length > 0) {
-          const { error: postsError } = await supabaseClient
+          const { data: savedPosts, error: postsError } = await supabaseClient
             .from('social_media_posts')
             .upsert(posts, {
               onConflict: 'lead_id,url'
-            });
+            })
+            .select();
 
           if (postsError) {
             console.error('Error storing posts:', postsError);
@@ -228,13 +229,16 @@ serve(async (req) => {
             console.log(`Successfully stored ${posts.length} posts`);
 
             // Process media files after storing posts
-            for (const post of posts) {
+            for (const post of savedPosts) {
+              if (!post.media_urls || post.media_urls.length === 0) continue;
+
               try {
                 const response = await supabaseClient.functions.invoke('process-social-media', {
                   body: {
                     mediaUrls: post.media_urls,
                     leadId: post.lead_id,
-                    mediaType: post.media_type
+                    mediaType: post.media_type,
+                    postId: post.id
                   }
                 });
                 console.log('Media processing response:', response);
