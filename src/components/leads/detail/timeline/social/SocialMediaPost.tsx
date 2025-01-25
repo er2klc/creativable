@@ -40,6 +40,10 @@ interface SocialMediaPost {
   videoUrl?: string | null;
   images?: string[] | null;
   hashtags?: string[] | null;
+  metadata?: {
+    videoUrl?: string;
+    media_urls?: string[];
+  } | null;
 }
 
 interface SocialMediaPostProps {
