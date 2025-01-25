@@ -122,6 +122,56 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
       console.log('Starting deletion process for lead:', leadId);
 
+      // First, get all files for this lead
+      const { data: leadFiles } = await supabase
+        .from('lead_files')
+        .select('file_path')
+        .eq('lead_id', leadId);
+
+      const { data: socialMediaPosts } = await supabase
+        .from('social_media_posts')
+        .select('local_video_path, local_media_paths')
+        .eq('lead_id', leadId);
+
+      // Delete files from storage
+      if (leadFiles && leadFiles.length > 0) {
+        console.log('Deleting lead files from storage');
+        const { error: storageError } = await supabase.storage
+          .from('documents')
+          .remove(leadFiles.map(file => file.file_path));
+
+        if (storageError) {
+          console.error('Error deleting files from storage:', storageError);
+        }
+      }
+
+      // Delete social media files from storage
+      if (socialMediaPosts && socialMediaPosts.length > 0) {
+        const filesToDelete: string[] = [];
+        
+        socialMediaPosts.forEach(post => {
+          if (post.local_video_path) {
+            filesToDelete.push(post.local_video_path);
+          }
+          if (post.local_media_paths) {
+            // Handle comma-separated paths
+            const mediaPaths = post.local_media_paths.split(',').map(path => path.trim());
+            filesToDelete.push(...mediaPaths);
+          }
+        });
+
+        if (filesToDelete.length > 0) {
+          console.log('Deleting social media files from storage:', filesToDelete);
+          const { error: socialMediaStorageError } = await supabase.storage
+            .from('social-media-files')
+            .remove(filesToDelete);
+
+          if (socialMediaStorageError) {
+            console.error('Error deleting social media files:', socialMediaStorageError);
+          }
+        }
+      }
+
       const relatedTables = [
         'contact_group_states',
         'instagram_scan_history',
@@ -129,7 +179,8 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         'lead_subscriptions',
         'messages',
         'notes',
-        'tasks'
+        'tasks',
+        'social_media_posts'
       ] as const;
 
       // Delete related records first
