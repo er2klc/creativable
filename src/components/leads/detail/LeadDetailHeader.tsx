@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Instagram, Linkedin } from "lucide-react";
-import { CreateSocialContactDialog } from "../instagram/CreateInstagramContactDialog";
+import { CreateSocialContactDialog } from "../instagram/CreateSocialContactDialog";
+import { CreateLinkedInContactDialog } from "../linkedin/CreateLinkedInContactDialog";
 
 interface LeadDetailHeaderProps {
   pipelineId: string | null;
@@ -44,12 +45,11 @@ export function LeadDetailHeader({ pipelineId, defaultPhase }: LeadDetailHeaderP
         platform="Instagram"
       />
 
-      <CreateSocialContactDialog
+      <CreateLinkedInContactDialog
         open={showLinkedInDialog}
         onOpenChange={setShowLinkedInDialog}
         pipelineId={pipelineId}
         defaultPhase={defaultPhase}
-        platform="LinkedIn"
       />
     </div>
   );
