@@ -93,7 +93,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       return videoUrl ? [videoUrl] : [];
     }
 
-    // Then check for local media paths
+    // Then check for local media paths from our Supabase bucket
     if (post.local_media_paths && post.local_media_paths.length > 0) {
       console.log("Using local_media_paths for post", post.id, ":", post.local_media_paths);
       return post.local_media_paths;
@@ -156,11 +156,19 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                 <div className="flex">
                   {mediaUrls.map((url, index) => (
                     <div key={index} className="flex-[0_0_100%] min-w-0">
-                      <img
-                        src={url}
-                        alt={`Media ${index + 1}`}
-                        className="w-full aspect-square object-cover"
-                      />
+                      {hasVideo ? (
+                        <video
+                          controls
+                          className="w-full aspect-square object-cover"
+                          src={url}
+                        />
+                      ) : (
+                        <img
+                          src={url}
+                          alt={`Media ${index + 1}`}
+                          className="w-full aspect-square object-cover"
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
@@ -190,13 +198,11 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
             ) : (
               <div className="relative">
                 {hasVideo ? (
-                  <div className="relative">
-                    <video
-                      controls
-                      className="w-full aspect-square object-cover"
-                      src={mediaUrls[0]}
-                    />
-                  </div>
+                  <video
+                    controls
+                    className="w-full aspect-square object-cover"
+                    src={mediaUrls[0]}
+                  />
                 ) : (
                   <img
                     src={mediaUrls[0]}
