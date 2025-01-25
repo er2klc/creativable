@@ -1,4 +1,3 @@
-import React from "react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon, Video, ChevronLeft, ChevronRight } from "lucide-react";
@@ -42,38 +41,39 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
   const getMediaUrls = () => {
     const urls: string[] = [];
+    const storageUrl = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL;
 
     // First priority: Check local paths in Supabase storage
     if (post.local_video_path) {
-      urls.push(
-        `${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}/social-media-files/${post.local_video_path}`
-      );
+      urls.push(`${storageUrl}/social-media-files/${post.local_video_path}`);
     }
 
     if (post.local_media_paths && post.local_media_paths.length > 0) {
       post.local_media_paths.forEach((path) => {
-        urls.push(
-          `${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}/social-media-files/${path}`
-        );
+        urls.push(`${storageUrl}/social-media-files/${path}`);
       });
       return urls;
     }
 
     // Second priority: Check media_urls array
     if (post.media_urls && post.media_urls.length > 0) {
-      return post.media_urls;
+      return post.media_urls.map(url => 
+        url.startsWith('http') ? url : `${storageUrl}/social-media-files/${url}`
+      );
     }
 
     // Third priority: Check images array
     if (post.images && post.images.length > 0) {
-      return post.images;
+      return post.images.map(url => 
+        url.startsWith('http') ? url : `${storageUrl}/social-media-files/${url}`
+      );
     }
 
     // Fourth priority: Check video URL
     if (post.videoUrl || post.video_url) {
       const videoUrl = post.videoUrl || post.video_url;
       if (videoUrl) {
-        urls.push(videoUrl);
+        urls.push(videoUrl.startsWith('http') ? videoUrl : `${storageUrl}/social-media-files/${videoUrl}`);
       }
     }
 
@@ -123,6 +123,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                             controls
                             className="w-full aspect-square object-cover"
                             src={url}
+                            crossOrigin="anonymous"
                           />
                         ) : (
                           <img
@@ -164,6 +165,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                     controls
                     className="w-full aspect-square object-cover rounded-lg"
                     src={mediaUrls[0]}
+                    crossOrigin="anonymous"
                   />
                 ) : (
                   <img
