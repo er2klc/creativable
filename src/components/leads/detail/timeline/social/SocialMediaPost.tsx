@@ -87,7 +87,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     });
 
     // First check for video URL (either direct or in metadata)
-    if (post.video_url || (post.metadata?.videoUrl)) {
+    if (post.video_url || post.metadata?.videoUrl) {
       const videoUrl = post.video_url || post.metadata?.videoUrl;
       console.log("Using video URL for post", post.id, ":", videoUrl);
       return videoUrl ? [videoUrl] : [];
@@ -118,8 +118,11 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const mediaUrls = getMediaUrls();
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = postType === 'sidecar' && mediaUrls.length > 1;
-  const hasVideo = post.media_type === 'video' || postType === 'video' || post.video_url || post.metadata?.videoUrl;
-  const postTypeColor = getPostTypeColor(post.type || post.post_type);
+  const hasVideo = post.media_type === 'video' || 
+                  postType === 'video' || 
+                  post.video_url || 
+                  post.metadata?.videoUrl;
+  const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
   console.log("Final media setup for post", post.id, {
     mediaUrls,
