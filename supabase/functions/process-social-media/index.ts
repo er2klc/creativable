@@ -34,7 +34,7 @@ serve(async (req) => {
   }
 
   try {
-    const { mediaUrls, leadId } = await req.json();
+    const { mediaUrls, leadId, mediaType } = await req.json();
 
     if (!Array.isArray(mediaUrls) || !leadId) {
       throw new Error('Invalid request body');
@@ -42,6 +42,7 @@ serve(async (req) => {
 
     console.log('Processing media for lead:', leadId);
     console.log('Media URLs:', mediaUrls);
+    console.log('Media Type:', mediaType);
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -55,8 +56,14 @@ serve(async (req) => {
           const response = await fetchWithInstagramHeaders(url);
           const buffer = await response.arrayBuffer();
 
-          // Get file extension from URL or default to jpg
-          const fileExt = url.split('.').pop()?.split('?')[0].toLowerCase() || 'jpg';
+          // Get file extension from URL or content type
+          let fileExt = 'jpg'; // default
+          if (mediaType === 'video' || url.includes('.mp4')) {
+            fileExt = 'mp4';
+          } else if (url.includes('.png')) {
+            fileExt = 'png';
+          }
+
           const timestamp = Date.now();
           const bucketPath = `${leadId}/${timestamp}_${index}.${fileExt}`;
 
@@ -64,7 +71,7 @@ serve(async (req) => {
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('social-media-files')
             .upload(bucketPath, buffer, {
-              contentType: `image/${fileExt}`,
+              contentType: mediaType === 'video' ? 'video/mp4' : `image/${fileExt}`,
               upsert: true,
               cacheControl: '3600'
             });
@@ -95,7 +102,7 @@ serve(async (req) => {
         .from('social_media_posts')
         .update({ 
           local_media_paths: successfulUrls,
-          media_urls: successfulUrls 
+          media_urls: mediaUrls // Keep original URLs as reference
         })
         .eq('lead_id', leadId);
 

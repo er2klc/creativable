@@ -68,31 +68,19 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     const urls: string[] = [];
     const storageUrl = import.meta.env.VITE_SUPABASE_STORAGE_URL;
 
-    // First priority: Check media_urls array
-    if (post.media_urls && post.media_urls.length > 0) {
-      return post.media_urls;
-    }
-
-    // Second priority: Check local paths
+    // First priority: Check local paths (our stored files)
     if (post.local_media_paths && post.local_media_paths.length > 0) {
-      return post.local_media_paths.map(path => 
-        `${storageUrl}/social-media-files/${path}`
-      );
+      return post.local_media_paths;
     }
 
-    // Third priority: Check images array
-    if (post.images && post.images.length > 0) {
-      return post.images;
-    }
-
-    // Fourth priority: Check video URLs
+    // Second priority: Check local video path
     if (post.local_video_path) {
       urls.push(`${storageUrl}/social-media-files/${post.local_video_path}`);
-    } else if (post.videoUrl || post.video_url) {
-      urls.push(post.videoUrl || post.video_url || '');
+      return urls;
     }
 
-    return urls.filter(url => url);
+    // Fallback: Return empty array if no valid URLs found
+    return urls;
   };
 
   const mediaUrls = getMediaUrls();
@@ -112,7 +100,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           "h-8 w-8 rounded-full bg-white flex items-center justify-center border",
           postTypeColor
         )}>
-          {getPostTypeIcon(post.type || post.post_type, postTypeColor)}
+          {getPostTypeIcon(post.type || post.post_type, "h-4 w-4")}
         </div>
       </div>
 
@@ -133,14 +121,12 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                           controls
                           className="w-full aspect-square object-cover"
                           src={url}
-                          crossOrigin="anonymous"
                         />
                       ) : (
                         <img
                           src={url}
                           alt={`Media ${index + 1}`}
                           className="w-full aspect-square object-cover"
-                          crossOrigin="anonymous"
                         />
                       )}
                     </div>
@@ -174,14 +160,12 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                     controls
                     className="w-full aspect-square object-cover"
                     src={mediaUrls[0]}
-                    crossOrigin="anonymous"
                   />
                 ) : (
                   <img
                     src={mediaUrls[0]}
                     alt="Post media"
                     className="w-full aspect-square object-cover"
-                    crossOrigin="anonymous"
                   />
                 )}
               </div>
