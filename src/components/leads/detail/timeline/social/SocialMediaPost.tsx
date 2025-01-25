@@ -1,11 +1,12 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon, Video } from "lucide-react";
+import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon, Video, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import useEmblaCarousel from 'embla-carousel-react';
 
 interface SocialMediaPost {
   id: string;
@@ -38,10 +39,12 @@ interface SocialMediaPostProps {
 }
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
+  const [emblaRef, emblaApi] = useEmblaCarousel();
+
   const getMediaUrls = () => {
     const urls: string[] = [];
 
-    // Prüfe zuerst auf lokale Pfade
+    // Check for local paths first
     if (post.local_video_path) {
       urls.push(
         `${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}/social-media-files/${post.local_video_path}`
@@ -56,7 +59,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       });
     }
 
-    // Wenn keine lokalen Pfade vorhanden sind, verwende die Original-URLs
+    // If no local paths, use original URLs
     if (urls.length === 0) {
       if (post.images && post.images.length > 0) {
         urls.push(...post.images);
@@ -69,10 +72,8 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     return urls;
   };
 
-  useEffect(() => {
-    console.log("Post-Daten:", post);
-    console.log("Media URLs:", getMediaUrls());
-  }, [post]);
+  const mediaUrls = getMediaUrls();
+  const isSidecar = post.type === "Sidecar" && mediaUrls.length > 1;
 
   return (
     <div className="flex gap-4 items-start ml-4">
@@ -101,30 +102,61 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           <p className="text-sm whitespace-pre-wrap">{post.caption || post.content}</p>
         )}
 
-        {getMediaUrls().length > 0 && (
-          <div className="flex gap-4 flex-wrap">
-            {getMediaUrls().map((url, index) => {
-              const isVideo = post.type === "Video" || 
-                            post.media_type === "video" || 
-                            post.local_video_path || 
-                            url.includes(".mp4");
-              
-              return isVideo ? (
-                <video
-                  key={index}
-                  controls
-                  className="w-32 h-32 object-cover rounded-md"
-                  src={url}
-                />
-              ) : (
-                <img
-                  key={index}
-                  src={url}
-                  alt={`Media ${index + 1}`}
-                  className="w-32 h-32 object-cover rounded-md"
-                />
-              );
-            })}
+        {mediaUrls.length > 0 && (
+          <div className="relative rounded-lg overflow-hidden">
+            {isSidecar ? (
+              <div className="relative">
+                <div className="overflow-hidden" ref={emblaRef}>
+                  <div className="flex">
+                    {mediaUrls.map((url, index) => (
+                      <div key={index} className="flex-[0_0_100%] min-w-0">
+                        <img
+                          src={url}
+                          alt={`Media ${index + 1}`}
+                          className="w-full h-[400px] object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {mediaUrls.length > 1 && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full"
+                      onClick={() => emblaApi?.scrollPrev()}
+                    >
+                      <ChevronLeft className="h-6 w-6" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full"
+                      onClick={() => emblaApi?.scrollNext()}
+                    >
+                      <ChevronRight className="h-6 w-6" />
+                    </Button>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="w-full">
+                {post.type === "Video" || post.media_type === "video" || post.local_video_path ? (
+                  <video
+                    controls
+                    className="w-full h-[400px] object-cover rounded-lg"
+                    src={mediaUrls[0]}
+                  />
+                ) : (
+                  <img
+                    src={mediaUrls[0]}
+                    alt="Post media"
+                    className="w-full h-[400px] object-cover rounded-lg"
+                  />
+                )}
+              </div>
+            )}
           </div>
         )}
 
