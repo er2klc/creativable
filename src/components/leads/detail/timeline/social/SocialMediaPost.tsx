@@ -7,9 +7,9 @@ import {
   Heart, 
   MapPin, 
   Link as LinkIcon, 
-  Video, 
-  ChevronLeft, 
-  ChevronRight 
+  Video,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useEmblaCarousel from "embla-carousel-react";
@@ -32,8 +32,18 @@ interface SocialMediaPost {
   tagged_profiles: string[] | null;
   posted_at: string | null;
   timestamp: string | null;
+  media_urls: string[] | null;
+  media_type: string | null;
+  local_video_path: string | null;
   local_media_paths: string[] | null;
   video_url: string | null;
+  videoUrl?: string | null;
+  images?: string[] | null;
+  hashtags?: string[] | null;
+  metadata?: {
+    videoUrl?: string;
+    media_urls?: string[];
+  } | null;
 }
 
 interface SocialMediaPostProps {
@@ -43,13 +53,13 @@ interface SocialMediaPostProps {
 const getPostTypeColor = (type: string) => {
   switch (type?.toLowerCase()) {
     case "video":
-      return "text-cyan-500 border-cyan-500";
+      return "text-#4b5563 border-cyan-500";
     case "image":
-      return "text-purple-500 border-purple-500";
+      return "text-#4b5563 border-purple-500";
     case "sidecar":
-      return "text-amber-500 border-amber-500";
+      return "text-#4b5563 border-amber-500";
     default:
-      return "text-gray-500 border-gray-500";
+      return "text-#4b5563 border-gray-500";
   }
 };
 
@@ -73,13 +83,13 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       local_media_paths: post.local_media_paths,
     });
 
-    // Priorität 1: Video URL
+    // Video hat Priorität
     if (post.video_url) {
       console.log("Using video_url for post", post.id, ":", post.video_url);
       return [post.video_url];
     }
 
-    // Priorität 2: Lokale Medienpfade
+    // Lokale Medienpfade aus dem Bucket
     if (post.local_media_paths && post.local_media_paths.length > 0) {
       console.log("Using local_media_paths for post", post.id, ":", post.local_media_paths);
       return post.local_media_paths;
@@ -90,14 +100,17 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   };
 
   const mediaUrls = getMediaUrls();
-  const isSidecar = mediaUrls.length > 1; // Mehrere Bilder = Karussell
-  const hasVideo = post.video_url !== null; // Video vorhanden
-  const postTypeColor = getPostTypeColor(hasVideo ? "video" : isSidecar ? "sidecar" : "image");
+  const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
+  const isSidecar = mediaUrls.length > 1; // Mehr als ein Bild im Karussell
+  const hasVideo = post.video_url !== null;
+  const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
   console.log("Final media setup for post", post.id, {
     mediaUrls,
+    postType,
     isSidecar,
     hasVideo,
+    postTypeColor
   });
 
   return (
@@ -112,7 +125,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
             postTypeColor
           )}
         >
-          {getPostTypeIcon(hasVideo ? "video" : isSidecar ? "sidecar" : "image", "h-4 w-4")}
+          {getPostTypeIcon(post.type || post.post_type, "h-4 w-4")}
         </div>
       </div>
 
@@ -124,19 +137,11 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                 <div className="flex">
                   {mediaUrls.map((url, index) => (
                     <div key={index} className="flex-[0_0_100%] min-w-0">
-                      {hasVideo ? (
-                        <video
-                          controls
-                          className="w-full aspect-square object-cover"
-                          src={url}
-                        />
-                      ) : (
-                        <img
-                          src={url}
-                          alt={`Media ${index + 1}`}
-                          className="w-full aspect-square object-cover"
-                        />
-                      )}
+                      <img
+                        src={url}
+                        alt={`Media ${index + 1}`}
+                        className="w-full aspect-square object-cover"
+                      />
                     </div>
                   ))}
                 </div>
@@ -148,7 +153,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                       className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full"
                       onClick={() => emblaApi?.scrollPrev()}
                     >
-                      <span className="sr-only">Previous slide</span>
                       <ChevronLeft className="h-6 w-6" />
                     </Button>
                     <Button
@@ -157,7 +161,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                       className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full"
                       onClick={() => emblaApi?.scrollNext()}
                     >
-                      <span className="sr-only">Next slide</span>
                       <ChevronRight className="h-6 w-6" />
                     </Button>
                   </>
@@ -192,7 +195,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
             <span
               className={cn("text-xs px-2 py-1 rounded-full border", postTypeColor)}
             >
-              {hasVideo ? "Video" : isSidecar ? "Sidecar" : "Image"}
+              {post.type || post.post_type || "Post"}
             </span>
           </div>
 
@@ -222,6 +225,28 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
               </div>
             )}
           </div>
+
+          {post.hashtags && post.hashtags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {post.hashtags.map((tag, index) => (
+                <Badge key={index} variant="secondary">
+                  #{tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          {post.url && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => window.open(post.url, "_blank")}
+            >
+              <LinkIcon className="h-4 w-4 mr-2" />
+              Zum Beitrag
+            </Button>
+          )}
         </div>
       </Card>
     </div>
