@@ -1,10 +1,11 @@
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon, Video, ChevronLeft, ChevronRight } from "lucide-react";
+import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon, Video, ChevronLeft, ChevronRight, Grid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import useEmblaCarousel from 'embla-carousel-react';
+import { cn } from "@/lib/utils";
 
 interface SocialMediaPost {
   id: string;
@@ -36,6 +37,30 @@ interface SocialMediaPostProps {
   post: SocialMediaPost;
 }
 
+const getPostTypeColor = (type: string) => {
+  switch (type?.toLowerCase()) {
+    case 'video':
+      return 'text-cyan-500';
+    case 'image':
+      return 'text-purple-500';
+    case 'sidecar':
+      return 'text-amber-500';
+    default:
+      return 'text-gray-500';
+  }
+};
+
+const getPostTypeIcon = (type: string, className: string) => {
+  switch (type?.toLowerCase()) {
+    case 'video':
+      return <Video className={className} strokeWidth={1.5} />;
+    case 'sidecar':
+      return <Grid className={className} strokeWidth={1.5} />;
+    default:
+      return <Image className={className} strokeWidth={1.5} />;
+  }
+};
+
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
 
@@ -43,99 +68,77 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     const urls: string[] = [];
     const storageUrl = import.meta.env.VITE_SUPABASE_STORAGE_URL;
 
-    // First priority: Check local paths in Supabase storage
-    if (post.local_video_path) {
-      urls.push(`${storageUrl}/social-media-files/${post.local_video_path}`);
-    }
-
-    if (post.local_media_paths && post.local_media_paths.length > 0) {
-      post.local_media_paths.forEach((path) => {
-        urls.push(`${storageUrl}/social-media-files/${path}`);
-      });
-      return urls;
-    }
-
-    // Second priority: Check media_urls array
+    // First priority: Check media_urls array
     if (post.media_urls && post.media_urls.length > 0) {
-      return post.media_urls.map(url => 
-        url.startsWith('http') ? url : `${storageUrl}/social-media-files/${url}`
+      return post.media_urls;
+    }
+
+    // Second priority: Check local paths
+    if (post.local_media_paths && post.local_media_paths.length > 0) {
+      return post.local_media_paths.map(path => 
+        `${storageUrl}/social-media-files/${path}`
       );
     }
 
     // Third priority: Check images array
     if (post.images && post.images.length > 0) {
-      return post.images.map(url => 
-        url.startsWith('http') ? url : `${storageUrl}/social-media-files/${url}`
-      );
+      return post.images;
     }
 
-    // Fourth priority: Check video URL
-    if (post.videoUrl || post.video_url) {
-      const videoUrl = post.videoUrl || post.video_url;
-      if (videoUrl) {
-        urls.push(videoUrl.startsWith('http') ? videoUrl : `${storageUrl}/social-media-files/${videoUrl}`);
-      }
+    // Fourth priority: Check video URLs
+    if (post.local_video_path) {
+      urls.push(`${storageUrl}/social-media-files/${post.local_video_path}`);
+    } else if (post.videoUrl || post.video_url) {
+      urls.push(post.videoUrl || post.video_url || '');
     }
 
-    return urls;
+    return urls.filter(url => url);
   };
 
   const mediaUrls = getMediaUrls();
   const isSidecar = post.type === "Sidecar" && mediaUrls.length > 1;
+  const postTypeColor = getPostTypeColor(post.type || post.post_type);
 
   return (
-    <div className="flex gap-4 items-start ml-4">
-      <div className="relative">
-        <div className="h-8 w-8 rounded-full bg-background flex items-center justify-center border-2 border-white">
-          {post.type === "Video" || post.media_type === "video" ? (
-            <Video className="h-4 w-4" />
-          ) : (
-            <Image className="h-4 w-4" />
-          )}
+    <div className="flex gap-4 items-start ml-4 relative">
+      {/* Timeline line */}
+      <div className="absolute left-4 top-8 bottom-0 w-[2px] bg-gray-200" />
+
+      <div className="relative z-10">
+        <div className={cn(
+          "h-8 w-8 rounded-full bg-white flex items-center justify-center border-2",
+          postTypeColor.replace('text-', 'border-')
+        )}>
+          {getPostTypeIcon(post.type || post.post_type, postTypeColor)}
         </div>
       </div>
 
-      <Card className="flex-1 p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            {post.timestamp &&
-              format(new Date(post.timestamp), "PPp", { locale: de })}
-          </span>
-          <span className="text-xs bg-muted px-2 py-1 rounded-full">
-            {post.type || post.post_type || "Post"}
-          </span>
-        </div>
-
-        {(post.caption || post.content) && (
-          <p className="text-sm whitespace-pre-wrap">{post.caption || post.content}</p>
-        )}
-
+      <Card className="flex-1 overflow-hidden">
+        {/* Media Section */}
         {mediaUrls.length > 0 && (
-          <div className="relative rounded-lg overflow-hidden">
+          <div className="relative">
             {isSidecar ? (
-              <div className="relative">
-                <div className="overflow-hidden" ref={emblaRef}>
-                  <div className="flex">
-                    {mediaUrls.map((url, index) => (
-                      <div key={index} className="flex-[0_0_100%] min-w-0">
-                        {url.includes('.mp4') ? (
-                          <video
-                            controls
-                            className="w-full aspect-square object-cover"
-                            src={url}
-                            crossOrigin="anonymous"
-                          />
-                        ) : (
-                          <img
-                            src={url}
-                            alt={`Media ${index + 1}`}
-                            className="w-full aspect-square object-cover"
-                            crossOrigin="anonymous"
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
+              <div className="overflow-hidden" ref={emblaRef}>
+                <div className="flex">
+                  {mediaUrls.map((url, index) => (
+                    <div key={index} className="flex-[0_0_100%] min-w-0">
+                      {url.includes('.mp4') ? (
+                        <video
+                          controls
+                          className="w-full aspect-square object-cover"
+                          src={url}
+                          crossOrigin="anonymous"
+                        />
+                      ) : (
+                        <img
+                          src={url}
+                          alt={`Media ${index + 1}`}
+                          className="w-full aspect-square object-cover"
+                          crossOrigin="anonymous"
+                        />
+                      )}
+                    </div>
+                  ))}
                 </div>
                 {mediaUrls.length > 1 && (
                   <>
@@ -163,7 +166,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                 {post.type === "Video" || post.media_type === "video" || post.local_video_path ? (
                   <video
                     controls
-                    className="w-full aspect-square object-cover rounded-lg"
+                    className="w-full aspect-square object-cover"
                     src={mediaUrls[0]}
                     crossOrigin="anonymous"
                   />
@@ -171,7 +174,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                   <img
                     src={mediaUrls[0]}
                     alt="Post media"
-                    className="w-full aspect-square object-cover rounded-lg"
+                    className="w-full aspect-square object-cover"
                     crossOrigin="anonymous"
                   />
                 )}
@@ -180,69 +183,86 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           </div>
         )}
 
-        <div className="flex gap-4 text-sm text-muted-foreground">
-          {typeof post.likesCount === "number" && (
-            <div className="flex items-center gap-1">
-              <Heart className="h-4 w-4" />
-              <span>{post.likesCount.toLocaleString()}</span>
-            </div>
-          )}
-          {typeof post.commentsCount === "number" && (
-            <div className="flex items-center gap-1">
-              <MessageCircle className="h-4 w-4" />
-              <span>{post.commentsCount.toLocaleString()}</span>
-            </div>
-          )}
-          {(post.location || post.locationName) && (
-            <div className="flex items-center gap-1">
-              <MapPin className="h-4 w-4" />
-              <span>{post.locationName || post.location}</span>
-            </div>
-          )}
-        </div>
-
-        {post.hashtags && post.hashtags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {post.hashtags.map((tag, index) => (
-              <Badge key={index} variant="secondary">
-                #{tag}
-              </Badge>
-            ))}
+        {/* Content Section */}
+        <div className="p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              {post.timestamp &&
+                format(new Date(post.timestamp), "PPp", { locale: de })}
+            </span>
+            <span className={cn("text-xs px-2 py-1 rounded-full border", postTypeColor, "border-current")}>
+              {post.type || post.post_type || "Post"}
+            </span>
           </div>
-        )}
 
-        {post.tagged_profiles && post.tagged_profiles.length > 0 && (
-          <div className="mt-4 space-y-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <User className="h-4 w-4" />
-              <span>Getaggte Profile:</span>
-            </div>
+          {(post.caption || post.content) && (
+            <p className="text-sm whitespace-pre-wrap">{post.caption || post.content}</p>
+          )}
+
+          <div className="flex gap-4 text-sm text-muted-foreground">
+            {typeof post.likesCount === "number" && (
+              <div className="flex items-center gap-1">
+                <Heart className="h-4 w-4" />
+                <span>{post.likesCount.toLocaleString()}</span>
+              </div>
+            )}
+            {typeof post.commentsCount === "number" && (
+              <div className="flex items-center gap-1">
+                <MessageCircle className="h-4 w-4" />
+                <span>{post.commentsCount.toLocaleString()}</span>
+              </div>
+            )}
+            {(post.location || post.locationName) && (
+              <div className="flex items-center gap-1">
+                <MapPin className="h-4 w-4" />
+                <span>{post.locationName || post.location}</span>
+              </div>
+            )}
+          </div>
+
+          {post.hashtags && post.hashtags.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {post.tagged_profiles.map((profile, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="flex items-center gap-1"
-                >
-                  <User className="h-3 w-3" />
-                  {profile}
+              {post.hashtags.map((tag, index) => (
+                <Badge key={index} variant="secondary">
+                  #{tag}
                 </Badge>
               ))}
             </div>
-          </div>
-        )}
+          )}
 
-        {post.url && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full mt-4"
-            onClick={() => window.open(post.url, "_blank")}
-          >
-            <LinkIcon className="h-4 w-4 mr-2" />
-            Zum Beitrag
-          </Button>
-        )}
+          {post.tagged_profiles && post.tagged_profiles.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <User className="h-4 w-4" />
+                <span>Getaggte Profile:</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {post.tagged_profiles.map((profile, index) => (
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="flex items-center gap-1"
+                  >
+                    <User className="h-3 w-3" />
+                    {profile}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {post.url && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => window.open(post.url, "_blank")}
+            >
+              <LinkIcon className="h-4 w-4 mr-2" />
+              Zum Beitrag
+            </Button>
+          )}
+        </div>
       </Card>
     </div>
   );
