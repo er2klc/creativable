@@ -15,7 +15,6 @@ async function fetchWithInstagramHeaders(url: string) {
       'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
       'Accept-Language': 'en-US,en;q=0.9',
       'Referer': 'https://www.instagram.com/',
-      'Cookie': 'ig_did=; ig_nrcb=1; csrftoken=; mid=; ds_user_id=; sessionid=;'
     }
   });
 
@@ -28,26 +27,40 @@ async function fetchWithInstagramHeaders(url: string) {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { mediaUrls, leadId, mediaType } = await req.json();
+    const { mediaUrls, leadId, mediaType, postId } = await req.json();
 
-    if (!Array.isArray(mediaUrls) || !leadId) {
-      throw new Error('Invalid request body');
+    if (!Array.isArray(mediaUrls) || !leadId || !postId) {
+      throw new Error('Invalid request body - missing required fields');
     }
 
     console.log('Processing media for lead:', leadId);
     console.log('Media URLs:', mediaUrls);
     console.log('Media Type:', mediaType);
+    console.log('Post ID:', postId);
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Skip video processing since we're using direct Instagram URLs
+    if (mediaType === 'video') {
+      console.log('Skipping video processing, using direct Instagram URL');
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Using direct video URL'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     const processedUrls = await Promise.all(
       mediaUrls.map(async (url, index) => {
@@ -58,20 +71,18 @@ serve(async (req) => {
 
           // Get file extension from URL or content type
           let fileExt = 'jpg'; // default
-          if (mediaType === 'video' || url.includes('.mp4')) {
-            fileExt = 'mp4';
-          } else if (url.includes('.png')) {
+          if (url.includes('.png')) {
             fileExt = 'png';
           }
 
-          const timestamp = Date.now();
-          const bucketPath = `${leadId}/${timestamp}_${index}.${fileExt}`;
+          // Create unique path using postId and index
+          const bucketPath = `${leadId}/${postId}_${index}.${fileExt}`;
 
           console.log('Uploading to storage:', bucketPath);
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('social-media-files')
             .upload(bucketPath, buffer, {
-              contentType: mediaType === 'video' ? 'video/mp4' : `image/${fileExt}`,
+              contentType: `image/${fileExt}`,
               upsert: true,
               cacheControl: '3600'
             });
@@ -96,7 +107,7 @@ serve(async (req) => {
 
     const successfulUrls = processedUrls.filter((url): url is string => url !== null);
 
-    // Update the lead's social media posts with the new URLs
+    // Update the social media post with the new URLs
     if (successfulUrls.length > 0) {
       const { error: updateError } = await supabase
         .from('social_media_posts')
@@ -104,7 +115,7 @@ serve(async (req) => {
           local_media_paths: successfulUrls,
           media_urls: mediaUrls // Keep original URLs as reference
         })
-        .eq('lead_id', leadId);
+        .eq('id', postId);
 
       if (updateError) {
         console.error('Error updating social media posts:', updateError);
