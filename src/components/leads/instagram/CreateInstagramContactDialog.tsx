@@ -10,24 +10,27 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { useQuery } from "@tanstack/react-query";
+import { Platform } from "@/config/platforms";
 
 const formSchema = z.object({
   username: z.string().min(1, "Username ist erforderlich"),
 });
 
-interface CreateInstagramContactDialogProps {
+interface CreateSocialContactDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   pipelineId: string | null;
   defaultPhase?: string;
+  platform: Platform;
 }
 
-export function CreateInstagramContactDialog({ 
+export function CreateSocialContactDialog({ 
   open, 
   onOpenChange,
   pipelineId,
-  defaultPhase 
-}: CreateInstagramContactDialogProps) {
+  defaultPhase,
+  platform 
+}: CreateSocialContactDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { settings } = useSettings();
 
@@ -80,8 +83,11 @@ export function CreateInstagramContactDialog({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Bitte melden Sie sich an, um fortzufahren");
+        return;
+      }
 
       if (!settings?.apify_api_key) {
         toast.error("Bitte fügen Sie zuerst einen Apify API Key in den Einstellungen hinzu");
@@ -100,9 +106,9 @@ export function CreateInstagramContactDialog({
       const { data: lead, error: leadError } = await supabase
         .from("leads")
         .insert({
-          user_id: user.id,
+          user_id: session.user.id,
           name: values.username,
-          platform: "Instagram",
+          platform: platform,
           social_media_username: values.username,
           pipeline_id: targetPipelineId,
           phase_id: targetPhaseId,
@@ -116,22 +122,22 @@ export function CreateInstagramContactDialog({
       // Then trigger the scan profile function using Supabase Edge Function invocation
       const { data, error } = await supabase.functions.invoke('scan-social-profile', {
         body: {
-          platform: 'instagram',
+          platform: platform.toLowerCase(),
           username: values.username,
           leadId: lead.id
         }
       });
 
       if (error) {
-        throw new Error('Failed to scan Instagram profile');
+        throw new Error(`Failed to scan ${platform} profile`);
       }
 
-      toast.success("Instagram-Kontakt erfolgreich hinzugefügt");
+      toast.success(`${platform}-Kontakt erfolgreich hinzugefügt`);
       onOpenChange(false);
       form.reset();
     } catch (error) {
-      console.error("Error adding Instagram contact:", error);
-      toast.error("Fehler beim Hinzufügen des Instagram-Kontakts");
+      console.error(`Error adding ${platform} contact:`, error);
+      toast.error(`Fehler beim Hinzufügen des ${platform}-Kontakts`);
     } finally {
       setIsLoading(false);
     }
@@ -141,7 +147,7 @@ export function CreateInstagramContactDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Instagram-Kontakt hinzufügen</DialogTitle>
+          <DialogTitle>{platform}-Kontakt hinzufügen</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -150,10 +156,10 @@ export function CreateInstagramContactDialog({
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Instagram Username</FormLabel>
+                  <FormLabel>{platform} Username oder URL</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Instagram-Username eingeben" 
+                      placeholder={`${platform}-Username oder URL eingeben`} 
                       {...field} 
                       disabled={isLoading}
                     />
