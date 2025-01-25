@@ -77,27 +77,32 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
 
   const getMediaUrls = () => {
-    const urls: string[] = [];
-    const storageUrl = import.meta.env.VITE_SUPABASE_STORAGE_URL;
-
-    if (post.video_url) {
+    // For videos, use the direct Instagram video URL
+    if (post.type?.toLowerCase() === 'video' && post.video_url) {
       console.log("Using video_url:", post.video_url);
       return [post.video_url];
     }
 
+    // For images and sidecar posts, first try local_media_paths
     if (post.local_media_paths && post.local_media_paths.length > 0) {
       console.log("Using local_media_paths:", post.local_media_paths);
       return post.local_media_paths;
     }
 
+    // Fallback to media_urls if no local paths
+    if (post.media_urls && post.media_urls.length > 0) {
+      console.log("Using media_urls:", post.media_urls);
+      return post.media_urls;
+    }
+
     console.log("No media paths found.");
-    return urls;
+    return [];
   };
 
   const mediaUrls = getMediaUrls();
-  const isSidecar = mediaUrls.length > 1; // Mehrere Bilder (Sidecar)
+  const isSidecar = mediaUrls.length > 1; // Multiple images (Sidecar)
   const postTypeColor = getPostTypeColor(post.type || post.post_type);
-  const hasVideo = !!post.video_url;
+  const hasVideo = post.type?.toLowerCase() === 'video' && post.video_url;
 
   return (
     <div className="flex gap-4 items-start ml-4 relative">
@@ -156,17 +161,11 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
               <div className="relative">
                 {hasVideo ? (
                   <div className="relative">
-                    <img
-                      src={mediaUrls[0]}
-                      alt="Video Thumbnail"
+                    <video
+                      controls
                       className="w-full aspect-square object-cover"
+                      src={mediaUrls[0]}
                     />
-                    <button
-                      onClick={() => window.open(post.video_url, "_blank")}
-                      className="absolute inset-0 flex items-center justify-center bg-black/40 text-white hover:bg-black/60"
-                    >
-                      <PlayCircle className="h-12 w-12" />
-                    </button>
                   </div>
                 ) : (
                   <img
