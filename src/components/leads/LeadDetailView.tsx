@@ -153,10 +153,8 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           if (post.local_video_path) {
             filesToDelete.push(post.local_video_path);
           }
-          if (post.local_media_paths) {
-            // Handle comma-separated paths
-            const mediaPaths = post.local_media_paths.split(',').map(path => path.trim());
-            filesToDelete.push(...mediaPaths);
+          if (post.local_media_paths && Array.isArray(post.local_media_paths)) {
+            filesToDelete.push(...post.local_media_paths);
           }
         });
 
