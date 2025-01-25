@@ -26,24 +26,13 @@ export default function LeadDetail() {
       // Get the lead data
       const { data, error } = await supabase
         .from("leads")
-.select(`
-  *,
-  messages (*),
-  tasks (*),
-  notes (*),
-  lead_files (*),
-  social_media_posts (
-    id,
-    platform,
-    post_type,
-    content,
-    caption,
-    local_media_paths,
-    media_urls,
-    video_url,
-    posted_at
-  )
-`)
+        .select(`
+          *,
+          messages (*),
+          tasks (*),
+          notes (*),
+          lead_files (*)
+        `)
         .eq("id", leadId)
         .single();
 
