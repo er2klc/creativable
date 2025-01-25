@@ -42,6 +42,7 @@ serve(async (req) => {
     console.log('Processing media for lead:', leadId);
     console.log('Media URLs:', mediaUrls);
     console.log('Media Type:', mediaType);
+    console.log('Post ID:', postId);
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -95,8 +96,11 @@ serve(async (req) => {
 
     const successfulUrls = processedUrls.filter((url): url is string => url !== null);
 
-    // Update the social media post with the new URLs
-    if (successfulUrls.length > 0) {
+    // Update the social media post with the new URLs only if we have a valid postId
+    if (successfulUrls.length > 0 && postId) {
+      console.log('Updating post with ID:', postId);
+      console.log('Successful URLs:', successfulUrls);
+      
       const updates: Record<string, any> = {};
       
       if (mediaType === 'video') {
@@ -116,7 +120,10 @@ serve(async (req) => {
 
       if (updateError) {
         console.error('Error updating social media posts:', updateError);
+        throw updateError;
       }
+    } else {
+      console.log('Skipping database update - no valid postId provided or no successful uploads');
     }
 
     return new Response(
