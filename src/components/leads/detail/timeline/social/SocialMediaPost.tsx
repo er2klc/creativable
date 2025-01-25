@@ -68,23 +68,21 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     const urls: string[] = [];
     const storageUrl = import.meta.env.VITE_SUPABASE_STORAGE_URL;
 
-    // First priority: Check local paths (our stored files)
-    if (post.local_media_paths && post.local_media_paths.length > 0) {
-      return post.local_media_paths;
+    // For videos, use the direct Instagram video URL
+    if (post.type?.toLowerCase() === 'video' && post.video_url) {
+      return [post.video_url];
     }
 
-    // Second priority: Check local video path
-    if (post.local_video_path) {
-      urls.push(`${storageUrl}/social-media-files/${post.local_video_path}`);
-      return urls;
-    }
-
-    // Third priority: Check media_urls from metadata
+    // For images and sidecar posts
     if (post.media_urls && post.media_urls.length > 0) {
       return post.media_urls;
     }
 
-    // Fallback: Return empty array if no valid URLs found
+    // Fallback to local paths if available
+    if (post.local_media_paths && post.local_media_paths.length > 0) {
+      return post.local_media_paths.map(path => `${storageUrl}/social-media-files/${path}`);
+    }
+
     return urls;
   };
 
@@ -156,7 +154,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
               </div>
             ) : (
               <div className="w-full">
-                {post.type === "Video" || post.media_type === "video" || post.local_video_path ? (
+                {post.type === "Video" || post.media_type === "video" ? (
                   <video
                     controls
                     className="w-full aspect-square object-cover"
