@@ -40,13 +40,13 @@ interface SocialMediaPostProps {
 const getPostTypeColor = (type: string) => {
   switch (type?.toLowerCase()) {
     case 'video':
-      return 'text-cyan-500';
+      return 'text-cyan-500 border-cyan-500';
     case 'image':
-      return 'text-purple-500';
+      return 'text-purple-500 border-purple-500';
     case 'sidecar':
-      return 'text-amber-500';
+      return 'text-amber-500 border-amber-500';
     default:
-      return 'text-gray-500';
+      return 'text-gray-500 border-gray-500';
   }
 };
 
@@ -103,17 +103,23 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     <div className="flex gap-4 items-start ml-4 relative">
       {/* Timeline line */}
       <div className="absolute left-4 top-8 bottom-0 w-[2px] bg-gray-200" />
+      
+      {/* Connecting Line to Card */}
+      <div className="absolute left-8 top-4 w-4 h-0.5 bg-gray-400" />
 
       <div className="relative z-10">
         <div className={cn(
-          "h-8 w-8 rounded-full bg-white flex items-center justify-center border-2",
-          postTypeColor.replace('text-', 'border-')
+          "h-8 w-8 rounded-full bg-white flex items-center justify-center border",
+          postTypeColor
         )}>
           {getPostTypeIcon(post.type || post.post_type, postTypeColor)}
         </div>
       </div>
 
-      <Card className="flex-1 overflow-hidden">
+      <Card className={cn(
+        "flex-1 overflow-hidden border",
+        postTypeColor
+      )}>
         {/* Media Section */}
         {mediaUrls.length > 0 && (
           <div className="relative">
@@ -190,7 +196,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
               {post.timestamp &&
                 format(new Date(post.timestamp), "PPp", { locale: de })}
             </span>
-            <span className={cn("text-xs px-2 py-1 rounded-full border", postTypeColor, "border-current")}>
+            <span className={cn("text-xs px-2 py-1 rounded-full border", postTypeColor)}>
               {post.type || post.post_type || "Post"}
             </span>
           </div>
