@@ -66,30 +66,28 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
   const getMediaUrls = () => {
   const urls: string[] = [];
-  console.log("Raw local_media_paths:", post.local_media_paths);
-  console.log("Raw media_urls:", post.media_urls);
+  const storageUrl = import.meta.env.VITE_SUPABASE_STORAGE_URL;
 
-  // Prüfen, ob `local_media_paths` ein JSON-Array ist
-  if (post.local_media_paths && typeof post.local_media_paths === "string") {
-    try {
-      const parsedPaths = JSON.parse(post.local_media_paths); // Parse JSON-Array
-      if (Array.isArray(parsedPaths)) {
-        console.log("Parsed local_media_paths:", parsedPaths);
-        return parsedPaths; // Return parsed URLs directly
-      }
-    } catch (error) {
-      console.error("Error parsing local_media_paths:", error);
-    }
+  // Überprüfe zuerst local_media_paths
+  if (post.local_media_paths && Array.isArray(post.local_media_paths) && post.local_media_paths.length > 0) {
+    console.log("Using local_media_paths:", post.local_media_paths);
+    return post.local_media_paths;
   }
 
-  // Fallback auf `media_urls`
+  // Überprüfe media_urls (Fallback)
   if (post.media_urls && post.media_urls.length > 0) {
     console.log("Using media_urls:", post.media_urls);
     return post.media_urls;
   }
 
+  // Prüfe video_url (für Videos)
+  if (post.video_url) {
+    console.log("Using video_url:", post.video_url);
+    return [post.video_url];
+  }
+
   console.log("No media paths found.");
-  return urls;
+  return urls; // Keine Medien gefunden
 };
 
 
