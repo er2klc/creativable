@@ -4,12 +4,37 @@ import { TimelineItem } from "./timeline/TimelineItem";
 import { SocialMediaTimeline } from "./timeline/SocialMediaTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "./types/lead";
-import { TimelineItem as TimelineItemType } from "./TimelineUtils";
-import { SocialMediaPost } from "./timeline/types/socialMedia";
+import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
   onDeletePhaseChange?: (noteId: string) => void;
+}
+
+interface SocialMediaPostRaw {
+  id: string;
+  platform: string;
+  type: string;
+  post_type: string;
+  content: string | null;
+  caption: string | null;
+  likesCount: number | null;
+  commentsCount: number | null;
+  url: string | null;
+  location: string | null;
+  locationName?: string | null;
+  mentioned_profiles: string[] | null;
+  tagged_profiles: string[] | null;
+  posted_at: string | null;
+  timestamp: string | null;
+  media_urls: string[] | null;
+  media_type: string | null;
+  local_video_path: string | null;
+  local_media_paths: string[] | null;
+  video_url: string | null;
+  videoUrl?: string | null;
+  images?: string[] | null;
+  hashtags?: string[] | null;
 }
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
@@ -49,18 +74,37 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const timelineItems = [...sortedNotes, contactCreationItem];
 
   // Transform social media posts to include required fields
-  const transformedPosts: SocialMediaPost[] = Array.isArray(lead.social_media_posts) 
+  const transformedPosts: SocialMediaPostRaw[] = Array.isArray(lead.social_media_posts) 
     ? (lead.social_media_posts as any[]).map(post => ({
         ...post,
-        likes_count: post.likes_count || 0,
+        type: post.type || 'post',
+        caption: post.caption || '',
+        likesCount: post.likesCount || 0,
+        commentsCount: post.commentsCount || 0,
+        timestamp: post.timestamp || post.posted_at || new Date().toISOString(),
+        engagement_count: post.engagement_count || 0,
+        first_comment: post.first_comment || '',
+        media_type: post.media_type || 'post',
+        media_urls: post.media_urls || [],
+        tagged_users: post.tagged_users || [],
         comments_count: post.comments_count || 0,
         content: post.content || '',
-        caption: post.caption || '',
+        created_at: post.created_at || post.posted_at || new Date().toISOString(),
+        likes_count: post.likes_count || 0,
+        location: post.location || '',
+        locationName: post.locationName || '',
+        mentioned_profiles: post.mentioned_profiles || [],
+        tagged_profiles: post.tagged_profiles || [],
+        platform: post.platform || 'unknown',
+        post_type: post.post_type || 'post',
         url: post.url || null,
-        location: post.location || null,
+        lead_id: post.lead_id || lead.id,
+        metadata: post.metadata || {},
         posted_at: post.posted_at || post.created_at || new Date().toISOString(),
-        local_media_paths: post.local_media_paths || [],
-        video_url: post.video_url || null,
+        local_video_path: post.local_video_path || null,
+        local_media_paths: post.local_media_paths || null,
+        video_url: post.video_url || post.videoUrl || null,
+        images: post.images || [],
         hashtags: post.hashtags || []
       }))
     : [];
