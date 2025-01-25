@@ -176,13 +176,16 @@ serve(async (req) => {
         const posts = profileData.latestPosts?.map((post: any) => {
           // Determine media URLs based on post type
           let mediaUrls = [];
+          let videoUrl = null;
+          
           if (post.type === 'Video' || post.videoUrl) {
-            mediaUrls = [post.videoUrl];
+            videoUrl = post.videoUrl;
+            mediaUrls = videoUrl ? [videoUrl] : [];
           } else if (post.type === 'Sidecar' && post.images) {
             mediaUrls = post.images;
           } else {
-            // Single image post
-            mediaUrls = [post.displayUrl];
+            // Single image post - use displayUrl if available, otherwise use first image
+            mediaUrls = [post.displayUrl || (post.images && post.images[0])].filter(Boolean);
           }
 
           return {
@@ -200,14 +203,15 @@ serve(async (req) => {
             metadata: {
               hashtags: post.hashtags || [],
               media_urls: mediaUrls,
-              videoUrl: post.videoUrl,
+              videoUrl: videoUrl,
               musicInfo: post.musicInfo,
               alt: post.alt,
             },
             media_urls: mediaUrls,
-            media_type: post.videoUrl ? 'video' : 'image',
+            media_type: videoUrl ? 'video' : 'image',
             engagement_count: (parseInt(post.likesCount) || 0) + (parseInt(post.commentsCount) || 0),
-            first_comment: post.firstComment
+            first_comment: post.firstComment,
+            video_url: videoUrl
           };
         }) || [];
 
