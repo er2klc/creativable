@@ -5,6 +5,7 @@ import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon, Video } fr
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SocialMediaPost {
   id: string;
@@ -77,7 +78,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     <div className="flex gap-4 items-start ml-4">
       <div className="relative">
         <div className="h-8 w-8 rounded-full bg-background flex items-center justify-center border-2 border-white">
-          {post.type === "Video" ? (
+          {post.type === "Video" || post.media_type === "video" ? (
             <Video className="h-4 w-4" />
           ) : (
             <Image className="h-4 w-4" />
@@ -102,14 +103,28 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
         {getMediaUrls().length > 0 && (
           <div className="flex gap-4 flex-wrap">
-            {getMediaUrls().map((url, index) => (
-              <img
-                key={index}
-                src={url}
-                alt={`Media ${index + 1}`}
-                className="w-32 h-32 object-cover rounded-md"
-              />
-            ))}
+            {getMediaUrls().map((url, index) => {
+              const isVideo = post.type === "Video" || 
+                            post.media_type === "video" || 
+                            post.local_video_path || 
+                            url.includes(".mp4");
+              
+              return isVideo ? (
+                <video
+                  key={index}
+                  controls
+                  className="w-32 h-32 object-cover rounded-md"
+                  src={url}
+                />
+              ) : (
+                <img
+                  key={index}
+                  src={url}
+                  alt={`Media ${index + 1}`}
+                  className="w-32 h-32 object-cover rounded-md"
+                />
+              );
+            })}
           </div>
         )}
 
