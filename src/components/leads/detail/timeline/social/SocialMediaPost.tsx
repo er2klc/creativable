@@ -87,10 +87,10 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     });
 
     // First check for video URL (either direct or in metadata)
-    if (post.video_url || post.metadata?.videoUrl) {
-      const videoUrl = post.video_url || post.metadata?.videoUrl;
+    const videoUrl = post.video_url || post.metadata?.videoUrl;
+    if (videoUrl) {
       console.log("Using video URL for post", post.id, ":", videoUrl);
-      return videoUrl ? [videoUrl] : [];
+      return [videoUrl];
     }
 
     // Then check for local media paths from our Supabase bucket
