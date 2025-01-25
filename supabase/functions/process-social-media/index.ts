@@ -35,19 +35,47 @@ serve(async (req) => {
   try {
     const { mediaUrls, leadId, mediaType, postId } = await req.json();
 
-    if (!Array.isArray(mediaUrls) || !leadId) {
-      throw new Error('Invalid request body');
+    if (!Array.isArray(mediaUrls) || !leadId || !postId) {
+      console.error('Invalid request parameters:', { mediaUrls, leadId, postId });
+      throw new Error('Invalid request body - missing required parameters');
     }
 
     console.log('Processing media for lead:', leadId);
-    console.log('Media URLs:', mediaUrls);
-    console.log('Media Type:', mediaType);
     console.log('Post ID:', postId);
+    console.log('Media Type:', mediaType);
+    console.log('Media URLs:', mediaUrls);
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // First check if we already have processed this post
+    const { data: existingPost } = await supabase
+      .from('social_media_posts')
+      .select('local_media_paths, local_video_path')
+      .eq('id', postId)
+      .single();
+
+    if (existingPost?.local_media_paths?.length > 0 || existingPost?.local_video_path) {
+      console.log('Post already has processed media, skipping:', postId);
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Media already processed for this post',
+          existingPaths: {
+            local_media_paths: existingPost.local_media_paths,
+            local_video_path: existingPost.local_video_path
+          }
+        }),
+        {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
 
     const processedUrls = await Promise.all(
       mediaUrls.map(async (url, index) => {
@@ -66,6 +94,18 @@ serve(async (req) => {
 
           const timestamp = Date.now();
           const bucketPath = `${leadId}/${timestamp}_${index}.${fileExt}`;
+
+          // Check if file already exists
+          const { data: existingFile } = await supabase.storage
+            .from('social-media-files')
+            .list(leadId, {
+              search: `${timestamp}_${index}.${fileExt}`
+            });
+
+          if (existingFile && existingFile.length > 0) {
+            console.log('File already exists, skipping upload:', bucketPath);
+            return bucketPath;
+          }
 
           console.log('Uploading to storage:', bucketPath);
           const { data: uploadData, error: uploadError } = await supabase.storage
@@ -92,8 +132,7 @@ serve(async (req) => {
 
     const successfulUrls = processedUrls.filter((url): url is string => url !== null);
 
-    // Update the social media post with the new URLs
-    if (successfulUrls.length > 0 && postId) {
+    if (successfulUrls.length > 0) {
       console.log('Updating post with ID:', postId);
       console.log('Successful URLs:', successfulUrls);
       
@@ -121,7 +160,7 @@ serve(async (req) => {
 
       console.log('Successfully updated post with new media paths:', updates);
     } else {
-      console.log('Skipping database update - no valid postId provided or no successful uploads');
+      console.log('No successful uploads to process');
     }
 
     return new Response(

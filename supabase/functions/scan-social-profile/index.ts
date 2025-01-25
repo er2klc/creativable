@@ -188,7 +188,8 @@ serve(async (req) => {
             mediaUrls = [post.displayUrl || (post.images && post.images[0])].filter(Boolean);
           }
 
-          return {
+          // Create the post record first to get an ID
+          const postData = {
             lead_id: leadId,
             platform: 'Instagram',
             post_type: normalizePostType(post.type),
@@ -213,29 +214,34 @@ serve(async (req) => {
             first_comment: post.firstComment,
             video_url: videoUrl
           };
+
+          return postData;
         }) || [];
 
         if (posts.length > 0) {
-          const { error: postsError } = await supabaseClient
+          const { data: insertedPosts, error: postsError } = await supabaseClient
             .from('social_media_posts')
             .upsert(posts, {
-              onConflict: 'lead_id,url'
+              onConflict: 'lead_id,url',
+              returning: true
             });
 
           if (postsError) {
             console.error('Error storing posts:', postsError);
           } else {
             console.log(`Successfully stored ${posts.length} posts`);
+            console.log('Inserted posts:', insertedPosts);
 
             // Process media files after storing posts
-            for (const post of posts) {
+            for (const post of insertedPosts) {
               try {
+                console.log('Processing media for post:', post.id);
                 const response = await supabaseClient.functions.invoke('process-social-media', {
                   body: {
                     mediaUrls: post.media_urls,
                     leadId: post.lead_id,
                     mediaType: post.media_type,
-                    postId: post.id // Make sure to pass the post ID
+                    postId: post.id
                   }
                 });
                 console.log('Media processing response:', response);
