@@ -68,23 +68,21 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     const urls: string[] = [];
     const storageUrl = import.meta.env.VITE_SUPABASE_STORAGE_URL;
 
-    // First priority: Check local paths (our stored files)
+    // Falls lokale Medienpfade für Bilder vorhanden sind, füge sie hinzu
     if (post.local_media_paths && post.local_media_paths.length > 0) {
-      return post.local_media_paths;
+      urls.push(...post.local_media_paths);
     }
 
-    // Second priority: Check local video path
+    // Falls ein lokaler Video-Pfad vorhanden ist, füge ihn hinzu
     if (post.local_video_path) {
       urls.push(`${storageUrl}/social-media-files/${post.local_video_path}`);
-      return urls;
     }
 
-    // Third priority: Check media_urls from metadata
-    if (post.media_urls && post.media_urls.length > 0) {
-      return post.media_urls;
+    // Falls `video_url` vorhanden ist, füge sie hinzu (externe Videos)
+    if (post.video_url) {
+      urls.push(post.video_url);
     }
 
-    // Fallback: Return empty array if no valid URLs found
     return urls;
   };
 
@@ -94,9 +92,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
   return (
     <div className="flex gap-4 items-start ml-4 relative">
-      <div className="absolute left-4 top-8 bottom-0 w-[2px] bg-gray-200" />
-      <div className="absolute left-8 top-4 w-4 h-0.5 bg-gray-400" />
-
       <div className="relative z-10">
         <div className={cn(
           "h-8 w-8 rounded-full bg-white flex items-center justify-center border",
@@ -133,26 +128,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                     </div>
                   ))}
                 </div>
-                {mediaUrls.length > 1 && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full"
-                      onClick={() => emblaApi?.scrollPrev()}
-                    >
-                      <ChevronLeft className="h-6 w-6" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full"
-                      onClick={() => emblaApi?.scrollNext()}
-                    >
-                      <ChevronRight className="h-6 w-6" />
-                    </Button>
-                  </>
-                )}
               </div>
             ) : (
               <div className="w-full">
