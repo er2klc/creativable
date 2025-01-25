@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -9,25 +10,24 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 
 const formSchema = z.object({
-  username: z.string().min(1, "LinkedIn URL oder Username ist erforderlich"),
+  username: z.string().min(1, "Username ist erforderlich"),
 });
 
-interface CreateLinkedInContactDialogProps {
+interface CreateInstagramContactDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   pipelineId: string | null;
   defaultPhase?: string;
 }
 
-export function CreateLinkedInContactDialog({ 
+export function CreateInstagramContactDialog({ 
   open, 
   onOpenChange,
   pipelineId,
   defaultPhase 
-}: CreateLinkedInContactDialogProps) {
+}: CreateInstagramContactDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { settings } = useSettings();
 
@@ -80,11 +80,8 @@ export function CreateLinkedInContactDialog({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Bitte melden Sie sich an, um fortzufahren");
-        return;
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
 
       if (!settings?.apify_api_key) {
         toast.error("Bitte fügen Sie zuerst einen Apify API Key in den Einstellungen hinzu");
@@ -103,9 +100,9 @@ export function CreateLinkedInContactDialog({
       const { data: lead, error: leadError } = await supabase
         .from("leads")
         .insert({
-          user_id: session.user.id,
+          user_id: user.id,
           name: values.username,
-          platform: 'LinkedIn',
+          platform: "Instagram",
           social_media_username: values.username,
           pipeline_id: targetPipelineId,
           phase_id: targetPhaseId,
@@ -116,25 +113,25 @@ export function CreateLinkedInContactDialog({
 
       if (leadError) throw leadError;
 
-      // Then trigger the scan profile function
+      // Then trigger the scan profile function using Supabase Edge Function invocation
       const { data, error } = await supabase.functions.invoke('scan-social-profile', {
         body: {
-          platform: 'linkedin',
+          platform: 'instagram',
           username: values.username,
           leadId: lead.id
         }
       });
 
       if (error) {
-        throw new Error('Failed to scan LinkedIn profile');
+        throw new Error('Failed to scan Instagram profile');
       }
 
-      toast.success('LinkedIn-Kontakt erfolgreich hinzugefügt');
+      toast.success("Instagram-Kontakt erfolgreich hinzugefügt");
       onOpenChange(false);
       form.reset();
     } catch (error) {
-      console.error('Error adding LinkedIn contact:', error);
-      toast.error('Fehler beim Hinzufügen des LinkedIn-Kontakts');
+      console.error("Error adding Instagram contact:", error);
+      toast.error("Fehler beim Hinzufügen des Instagram-Kontakts");
     } finally {
       setIsLoading(false);
     }
@@ -144,7 +141,7 @@ export function CreateLinkedInContactDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>LinkedIn-Kontakt hinzufügen</DialogTitle>
+          <DialogTitle>Instagram-Kontakt hinzufügen</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -153,10 +150,10 @@ export function CreateLinkedInContactDialog({
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>LinkedIn URL oder Username</FormLabel>
+                  <FormLabel>Instagram Username</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="LinkedIn URL oder Username eingeben" 
+                      placeholder="Instagram-Username eingeben" 
                       {...field} 
                       disabled={isLoading}
                     />

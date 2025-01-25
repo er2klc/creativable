@@ -2,8 +2,7 @@ import { Button } from "@/components/ui/button";
 import { LeadSearch } from "../LeadSearch";
 import { LayoutGrid, List, ChevronDown, Instagram, Linkedin, Users } from "lucide-react";
 import { AddLeadDialog } from "../AddLeadDialog";
-import { CreateSocialContactDialog } from "../instagram/CreateSocialContactDialog";
-import { CreateLinkedInContactDialog } from "../linkedin/CreateLinkedInContactDialog";
+import { CreateInstagramContactDialog } from "../instagram/CreateInstagramContactDialog";
 import { LeadFilters } from "../LeadFilters";
 import { useState } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -29,7 +28,6 @@ export const LeadsHeader = ({
 }: LeadsHeaderProps) => {
   const [showAddLead, setShowAddLead] = useState(false);
   const [showInstagramDialog, setShowInstagramDialog] = useState(false);
-  const [showLinkedInDialog, setShowLinkedInDialog] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -68,7 +66,7 @@ export const LeadsHeader = ({
                   <Instagram className="h-4 w-4 mr-2" />
                   <span>Instagram</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShowLinkedInDialog(true)}>
+                <DropdownMenuItem disabled>
                   <Linkedin className="h-4 w-4 mr-2" />
                   <span>LinkedIn</span>
                 </DropdownMenuItem>
@@ -116,18 +114,11 @@ export const LeadsHeader = ({
         pipelineId={selectedPipelineId}
       />
 
-      <CreateSocialContactDialog
+      <CreateInstagramContactDialog
         open={showInstagramDialog}
         onOpenChange={setShowInstagramDialog}
-        pipelineId={selectedPipelineId}
-        platform="Instagram"
-      />
-
-      <CreateLinkedInContactDialog
-        open={showLinkedInDialog}
-        onOpenChange={setShowLinkedInDialog}
         pipelineId={selectedPipelineId}
       />
     </div>
   );
-}
+};
