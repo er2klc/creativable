@@ -79,20 +79,37 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
   const getMediaUrls = () => {
     console.log("Processing post:", post.id, {
-      video_url: post.video_url,
       local_media_paths: post.local_media_paths,
+      media_urls: post.media_urls,
+      metadata_media_urls: post.metadata?.media_urls,
+      video_url: post.video_url,
+      videoUrl: post.videoUrl,
+      metadata_videoUrl: post.metadata?.videoUrl
     });
 
-    // Video hat Priorität
-    if (post.video_url) {
-      console.log("Using video_url for post", post.id, ":", post.video_url);
-      return [post.video_url];
-    }
-
-    // Lokale Medienpfade aus dem Bucket
+    // Check local_media_paths first (from Supabase bucket)
     if (post.local_media_paths && post.local_media_paths.length > 0) {
       console.log("Using local_media_paths for post", post.id, ":", post.local_media_paths);
       return post.local_media_paths;
+    }
+
+    // Then check media_urls
+    if (post.media_urls && post.media_urls.length > 0) {
+      console.log("Using media_urls for post", post.id, ":", post.media_urls);
+      return post.media_urls;
+    }
+
+    // Check metadata media_urls
+    if (post.metadata?.media_urls && post.metadata.media_urls.length > 0) {
+      console.log("Using metadata.media_urls for post", post.id, ":", post.metadata.media_urls);
+      return post.metadata.media_urls;
+    }
+
+    // Check for video URLs
+    const videoUrl = post.video_url || post.videoUrl || post.metadata?.videoUrl;
+    if (videoUrl) {
+      console.log("Using video_url for post", post.id, ":", videoUrl);
+      return [videoUrl];
     }
 
     console.log("No media found for post", post.id);
@@ -101,7 +118,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
   const mediaUrls = getMediaUrls();
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
-  const isSidecar = mediaUrls.length > 1; // Mehr als ein Bild im Karussell
+  const isSidecar = mediaUrls.length > 1;
   const hasVideo = post.video_url !== null;
   const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
