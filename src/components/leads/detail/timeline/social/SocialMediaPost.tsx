@@ -1,5 +1,3 @@
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
 import { 
   Image, 
   MessageCircle, 
@@ -75,19 +73,23 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
 
   const getMediaUrls = () => {
-    // First check for local media paths
-    if (post.local_media_paths && post.local_media_paths.length > 0) {
-      console.log("Using local_media_paths:", post.local_media_paths);
-      return post.local_media_paths;
-    }
-
-    // Then check for video URL
+    // For videos, always use the Instagram video URL
     if (post.media_type === 'video' && post.video_url) {
       console.log("Using video_url:", post.video_url);
       return [post.video_url];
     }
 
-    // Finally check for media_urls
+    // For images, prefer local media paths from bucket
+    if (post.local_media_paths && post.local_media_paths.length > 0) {
+      console.log("Using local_media_paths:", post.local_media_paths);
+      const bucketUrls = post.local_media_paths.map(path => {
+        if (path.startsWith('http')) return path;
+        return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/social-media-files/${path}`;
+      });
+      return bucketUrls;
+    }
+
+    // Fallback to media_urls if no local paths
     if (post.media_urls && post.media_urls.length > 0) {
       console.log("Using media_urls:", post.media_urls);
       return post.media_urls;
