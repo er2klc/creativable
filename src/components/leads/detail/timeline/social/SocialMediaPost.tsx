@@ -5,7 +5,6 @@ import { Image, MessageCircle, Heart, MapPin, User, Link as LinkIcon, Video, Che
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import useEmblaCarousel from 'embla-carousel-react';
 
 interface SocialMediaPost {
@@ -62,33 +61,19 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
     // Second priority: Check media_urls array
     if (post.media_urls && post.media_urls.length > 0) {
-      return post.media_urls.map(url => {
-        if (url.startsWith('http')) {
-          return url;
-        }
-        return `${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}/social-media-files/${url}`;
-      });
+      return post.media_urls;
     }
 
     // Third priority: Check images array
     if (post.images && post.images.length > 0) {
-      return post.images.map(url => {
-        if (url.startsWith('http')) {
-          return url;
-        }
-        return `${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}/social-media-files/${url}`;
-      });
+      return post.images;
     }
 
     // Fourth priority: Check video URL
     if (post.videoUrl || post.video_url) {
       const videoUrl = post.videoUrl || post.video_url;
       if (videoUrl) {
-        if (videoUrl.startsWith('http')) {
-          urls.push(videoUrl);
-        } else {
-          urls.push(`${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}/social-media-files/${videoUrl}`);
-        }
+        urls.push(videoUrl);
       }
     }
 
@@ -144,6 +129,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                             src={url}
                             alt={`Media ${index + 1}`}
                             className="w-full aspect-square object-cover"
+                            crossOrigin="anonymous"
                           />
                         )}
                       </div>
@@ -184,6 +170,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                     src={mediaUrls[0]}
                     alt="Post media"
                     className="w-full aspect-square object-cover rounded-lg"
+                    crossOrigin="anonymous"
                   />
                 )}
               </div>
