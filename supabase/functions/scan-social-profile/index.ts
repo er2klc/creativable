@@ -32,6 +32,11 @@ serve(async (req) => {
     if (platform === 'linkedin') {
       profileData = await scanLinkedInProfile(username);
     } else if (platform === 'instagram') {
+      const { data: settings } = await supabaseClient
+        .from('settings')
+        .select('apify_api_key')
+        .single();
+
       const response = await fetch(
         'https://api.apify.com/v2/acts/scrap3r~instagram-profile-scraper/run-sync-get-dataset-items', 
         {

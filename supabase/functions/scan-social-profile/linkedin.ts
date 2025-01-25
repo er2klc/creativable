@@ -36,6 +36,9 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
       throw new Error('Could not retrieve Apify API key');
     }
 
+    // Format the LinkedIn URL correctly
+    const profileUrl = username.includes('linkedin.com') ? username : `https://www.linkedin.com/in/${username}`;
+
     // Start the Apify scraper
     const response = await fetch(
       'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/run-sync-get-dataset-items', 
@@ -46,7 +49,7 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
           'Authorization': `Bearer ${settings.apify_api_key}`
         },
         body: JSON.stringify({
-          "url": [username]
+          "url": [profileUrl]
         })
       }
     );
