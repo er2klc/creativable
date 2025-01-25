@@ -65,26 +65,32 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
 
   const getMediaUrls = () => {
-    const urls: string[] = [];
-    const storageUrl = import.meta.env.VITE_SUPABASE_STORAGE_URL;
+  const urls: string[] = [];
+  const storageUrl = import.meta.env.VITE_SUPABASE_STORAGE_URL;
 
-    // For videos, use the direct Instagram video URL
-    if (post.type?.toLowerCase() === 'video' && post.video_url) {
-      return [post.video_url];
+  // Prüfen, ob `local_media_paths` ein JSON-Array ist
+  if (post.local_media_paths && typeof post.local_media_paths === "string") {
+    try {
+      const parsedPaths = JSON.parse(post.local_media_paths); // Parse JSON-Array
+      if (Array.isArray(parsedPaths)) {
+        console.log("Using parsed local_media_paths:", parsedPaths);
+        return parsedPaths; // Return parsed URLs directly
+      }
+    } catch (error) {
+      console.error("Error parsing local_media_paths:", error);
     }
+  }
 
-    // For images and sidecar posts
-    if (post.media_urls && post.media_urls.length > 0) {
-      return post.media_urls;
-    }
+  // Fallback auf `media_urls`
+  if (post.media_urls && post.media_urls.length > 0) {
+    console.log("Using media_urls:", post.media_urls);
+    return post.media_urls;
+  }
 
-    // Fallback to local paths if available
-    if (post.local_media_paths && post.local_media_paths.length > 0) {
-      return post.local_media_paths.map(path => `${storageUrl}/social-media-files/${path}`);
-    }
+  console.log("No media paths found.");
+  return urls;
+};
 
-    return urls;
-  };
 
   const mediaUrls = getMediaUrls();
   const isSidecar = post.type === "Sidecar" && mediaUrls.length > 1;
