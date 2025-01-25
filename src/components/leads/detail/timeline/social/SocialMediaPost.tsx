@@ -66,14 +66,15 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
   const getMediaUrls = () => {
   const urls: string[] = [];
-  const storageUrl = import.meta.env.VITE_SUPABASE_STORAGE_URL;
+  console.log("Raw local_media_paths:", post.local_media_paths);
+  console.log("Raw media_urls:", post.media_urls);
 
   // Prüfen, ob `local_media_paths` ein JSON-Array ist
   if (post.local_media_paths && typeof post.local_media_paths === "string") {
     try {
       const parsedPaths = JSON.parse(post.local_media_paths); // Parse JSON-Array
       if (Array.isArray(parsedPaths)) {
-        console.log("Using parsed local_media_paths:", parsedPaths);
+        console.log("Parsed local_media_paths:", parsedPaths);
         return parsedPaths; // Return parsed URLs directly
       }
     } catch (error) {
