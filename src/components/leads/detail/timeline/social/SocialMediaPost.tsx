@@ -1,12 +1,15 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   Image, 
   MessageCircle, 
   Heart, 
   MapPin, 
   Link as LinkIcon, 
-  Video 
+  Video,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useEmblaCarousel from "embla-carousel-react";
@@ -96,8 +99,8 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const mediaUrls = getMediaUrls();
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = postType === 'sidecar' && mediaUrls.length > 1;
-  const postTypeColor = getPostTypeColor(post.type || post.post_type);
   const hasVideo = post.media_type === 'video' || postType === 'video';
+  const postTypeColor = getPostTypeColor(post.type || post.post_type);
 
   return (
     <div className="flex gap-4 items-start ml-4 relative">
