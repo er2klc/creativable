@@ -20,19 +20,14 @@ async function downloadAndUploadImage(imageUrl: string, supabaseClient: any, lea
   try {
     if (!imageUrl) return null;
 
-    // Download image
     const response = await fetch(imageUrl);
     if (!response.ok) throw new Error('Failed to fetch image');
     
-    // Get the image data as ArrayBuffer instead of Blob for Deno
     const imageBuffer = await response.arrayBuffer();
-
-    // Generate unique filename
-    const fileExt = 'jpg'; // Instagram profile pics are usually JPG
+    const fileExt = 'jpg';
     const fileName = `${leadId}-${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    // Upload to Supabase Storage using ArrayBuffer
     const { data: uploadData, error: uploadError } = await supabaseClient
       .storage
       .from('contact-avatars')
@@ -46,7 +41,6 @@ async function downloadAndUploadImage(imageUrl: string, supabaseClient: any, lea
       return null;
     }
 
-    // Get public URL
     const { data: { publicUrl } } = supabaseClient
       .storage
       .from('contact-avatars')
@@ -139,7 +133,6 @@ serve(async (req) => {
         const profileData = items[0]
         console.log('Profile data received:', profileData);
 
-        // Download and upload profile image
         const newProfileImageUrl = await downloadAndUploadImage(
           profileData.profilePicUrlHD || profileData.profilePicUrl,
           supabaseClient,
@@ -180,30 +173,43 @@ serve(async (req) => {
           throw updateError
         }
 
-        const posts = profileData.latestPosts?.map((post: any) => ({
-          lead_id: leadId,
-          platform: 'Instagram',
-          post_type: normalizePostType(post.type),
-          content: post.caption,
-          likes_count: parseInt(post.likesCount) || 0,
-          comments_count: parseInt(post.commentsCount) || 0,
-          url: post.url,
-          location: post.locationName,
-          mentioned_profiles: post.mentions || [],
-          tagged_profiles: post.taggedUsers?.map((u: any) => u.username) || [],
-          posted_at: post.timestamp,
-          metadata: {
-            hashtags: post.hashtags || [],
-            media_urls: post.images || [post.displayUrl],
-            videoUrl: post.videoUrl,
-            musicInfo: post.musicInfo,
-            alt: post.alt,
-          },
-          media_urls: post.images || [post.displayUrl],
-          media_type: post.videoUrl ? 'video' : 'image',
-          engagement_count: (parseInt(post.likesCount) || 0) + (parseInt(post.commentsCount) || 0),
-          first_comment: post.firstComment
-        })) || [];
+        const posts = profileData.latestPosts?.map((post: any) => {
+          // Determine media URLs based on post type
+          let mediaUrls = [];
+          if (post.type === 'Video' || post.videoUrl) {
+            mediaUrls = [post.videoUrl];
+          } else if (post.type === 'Sidecar' && post.images) {
+            mediaUrls = post.images;
+          } else {
+            // Single image post
+            mediaUrls = [post.displayUrl];
+          }
+
+          return {
+            lead_id: leadId,
+            platform: 'Instagram',
+            post_type: normalizePostType(post.type),
+            content: post.caption,
+            likes_count: parseInt(post.likesCount) || 0,
+            comments_count: parseInt(post.commentsCount) || 0,
+            url: post.url,
+            location: post.locationName,
+            mentioned_profiles: post.mentions || [],
+            tagged_profiles: post.taggedUsers?.map((u: any) => u.username) || [],
+            posted_at: post.timestamp,
+            metadata: {
+              hashtags: post.hashtags || [],
+              media_urls: mediaUrls,
+              videoUrl: post.videoUrl,
+              musicInfo: post.musicInfo,
+              alt: post.alt,
+            },
+            media_urls: mediaUrls,
+            media_type: post.videoUrl ? 'video' : 'image',
+            engagement_count: (parseInt(post.likesCount) || 0) + (parseInt(post.commentsCount) || 0),
+            first_comment: post.firstComment
+          };
+        }) || [];
 
         if (posts.length > 0) {
           const { error: postsError } = await supabaseClient
@@ -216,6 +222,22 @@ serve(async (req) => {
             console.error('Error storing posts:', postsError);
           } else {
             console.log(`Successfully stored ${posts.length} posts`);
+
+            // Process media files after storing posts
+            for (const post of posts) {
+              try {
+                const response = await supabaseClient.functions.invoke('process-social-media', {
+                  body: {
+                    mediaUrls: post.media_urls,
+                    leadId: post.lead_id,
+                    mediaType: post.media_type
+                  }
+                });
+                console.log('Media processing response:', response);
+              } catch (error) {
+                console.error('Error processing media for post:', error);
+              }
+            }
           }
         }
 

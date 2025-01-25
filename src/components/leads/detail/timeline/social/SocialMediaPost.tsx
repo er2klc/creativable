@@ -79,6 +79,11 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       return urls;
     }
 
+    // Third priority: Check media_urls from metadata
+    if (post.media_urls && post.media_urls.length > 0) {
+      return post.media_urls;
+    }
+
     // Fallback: Return empty array if no valid URLs found
     return urls;
   };
@@ -89,10 +94,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
   return (
     <div className="flex gap-4 items-start ml-4 relative">
-      {/* Timeline line */}
       <div className="absolute left-4 top-8 bottom-0 w-[2px] bg-gray-200" />
-      
-      {/* Connecting Line to Card */}
       <div className="absolute left-8 top-4 w-4 h-0.5 bg-gray-400" />
 
       <div className="relative z-10">
@@ -108,7 +110,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
         "flex-1 overflow-hidden border",
         postTypeColor
       )}>
-        {/* Media Section */}
         {mediaUrls.length > 0 && (
           <div className="relative">
             {isSidecar ? (
@@ -173,7 +174,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           </div>
         )}
 
-        {/* Content Section */}
         <div className="p-4 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
