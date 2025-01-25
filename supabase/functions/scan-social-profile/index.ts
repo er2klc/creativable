@@ -1,61 +1,14 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
 
-const normalizePostType = (type: string): 'post' | 'video' | 'reel' | 'story' | 'igtv' => {
-  if (!type) return 'post';
-  const normalizedType = type.toLowerCase();
-  switch (normalizedType) {
-    case 'video':
-    case 'reel':
-    case 'story':
-    case 'igtv':
-      return normalizedType;
-    default:
-      return 'post';
-  }
-};
-
-async function downloadAndUploadImage(imageUrl: string, supabaseClient: any, leadId: string): Promise<string | null> {
-  try {
-    if (!imageUrl) return null;
-
-    const response = await fetch(imageUrl);
-    if (!response.ok) throw new Error('Failed to fetch image');
-    
-    const imageBuffer = await response.arrayBuffer();
-    const fileExt = 'jpg';
-    const fileName = `${leadId}-${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
-
-    const { data: uploadData, error: uploadError } = await supabaseClient
-      .storage
-      .from('contact-avatars')
-      .upload(filePath, imageBuffer, {
-        contentType: 'image/jpeg',
-        upsert: true
-      });
-
-    if (uploadError) {
-      console.error('Error uploading image:', uploadError);
-      return null;
-    }
-
-    const { data: { publicUrl } } = supabaseClient
-      .storage
-      .from('contact-avatars')
-      .getPublicUrl(filePath);
-
-    return publicUrl;
-  } catch (error) {
-    console.error('Error processing image:', error);
-    return null;
-  }
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
@@ -184,11 +137,11 @@ serve(async (req) => {
           } else if (post.type === 'Sidecar' && post.images) {
             mediaUrls = post.images;
           } else {
-            // Single image post - use displayUrl if available, otherwise use first image
             mediaUrls = [post.displayUrl || (post.images && post.images[0])].filter(Boolean);
           }
 
           return {
+            id: post.id, // Using Instagram's post ID directly
             lead_id: leadId,
             platform: 'Instagram',
             post_type: normalizePostType(post.type),
@@ -211,7 +164,8 @@ serve(async (req) => {
             media_type: videoUrl ? 'video' : 'image',
             engagement_count: (parseInt(post.likesCount) || 0) + (parseInt(post.commentsCount) || 0),
             first_comment: post.firstComment,
-            video_url: videoUrl
+            video_url: videoUrl,
+            hashtags: post.hashtags || []
           };
         }) || [];
 
@@ -219,7 +173,8 @@ serve(async (req) => {
           const { data: savedPosts, error: postsError } = await supabaseClient
             .from('social_media_posts')
             .upsert(posts, {
-              onConflict: 'lead_id,url'
+              onConflict: 'id',
+              ignoreDuplicates: false
             })
             .select();
 
@@ -289,3 +244,54 @@ serve(async (req) => {
     )
   }
 })
+
+async function downloadAndUploadImage(imageUrl: string, supabaseClient: any, leadId: string): Promise<string | null> {
+  try {
+    if (!imageUrl) return null;
+
+    const response = await fetch(imageUrl);
+    if (!response.ok) throw new Error('Failed to fetch image');
+    
+    const imageBuffer = await response.arrayBuffer();
+    const fileExt = 'jpg';
+    const fileName = `${leadId}-${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { data: uploadData, error: uploadError } = await supabaseClient
+      .storage
+      .from('contact-avatars')
+      .upload(filePath, imageBuffer, {
+        contentType: 'image/jpeg',
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('Error uploading image:', uploadError);
+      return null;
+    }
+
+    const { data: { publicUrl } } = supabaseClient
+      .storage
+      .from('contact-avatars')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  } catch (error) {
+    console.error('Error processing image:', error);
+    return null;
+  }
+}
+
+const normalizePostType = (type: string): 'post' | 'video' | 'reel' | 'story' | 'igtv' => {
+  if (!type) return 'post';
+  const normalizedType = type.toLowerCase();
+  switch (normalizedType) {
+    case 'video':
+    case 'reel':
+    case 'story':
+    case 'igtv':
+      return normalizedType;
+    default:
+      return 'post';
+  }
+};
