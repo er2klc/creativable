@@ -128,20 +128,28 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         .select('file_path')
         .eq('lead_id', leadId);
 
+      console.log('Found lead files:', leadFiles);
+
+      // Get social media posts with files
       const { data: socialMediaPosts } = await supabase
         .from('social_media_posts')
         .select('local_video_path, local_media_paths')
         .eq('lead_id', leadId);
 
-      // Delete files from storage
+      console.log('Found social media posts:', socialMediaPosts);
+
+      // Delete files from documents storage
       if (leadFiles && leadFiles.length > 0) {
         console.log('Deleting lead files from storage');
-        const { error: storageError } = await supabase.storage
-          .from('documents')
-          .remove(leadFiles.map(file => file.file_path));
+        const filePaths = leadFiles.map(file => file.file_path).filter(Boolean);
+        if (filePaths.length > 0) {
+          const { error: storageError } = await supabase.storage
+            .from('documents')
+            .remove(filePaths);
 
-        if (storageError) {
-          console.error('Error deleting files from storage:', storageError);
+          if (storageError) {
+            console.error('Error deleting files from storage:', storageError);
+          }
         }
       }
 
@@ -170,6 +178,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         }
       }
 
+      // Delete related records first
       const relatedTables = [
         'contact_group_states',
         'instagram_scan_history',
