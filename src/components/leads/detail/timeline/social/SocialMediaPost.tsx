@@ -3,11 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Image, 
-  MessageCircle, 
-  Heart, 
-  MapPin, 
-  Link as LinkIcon, 
   Video,
+  Link as LinkIcon,
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
@@ -19,31 +16,17 @@ import { de } from "date-fns/locale";
 interface SocialMediaPost {
   id: string;
   platform: string;
-  type: string;
   post_type: string;
   content: string | null;
   caption: string | null;
-  likesCount: number | null;
-  commentsCount: number | null;
+  likes_count: number | null;
+  comments_count: number | null;
   url: string | null;
   location: string | null;
-  locationName?: string | null;
-  mentioned_profiles: string[] | null;
-  tagged_profiles: string[] | null;
   posted_at: string | null;
-  timestamp: string | null;
-  media_urls: string[] | null;
-  media_type: string | null;
-  local_video_path: string | null;
   local_media_paths: string[] | null;
   video_url: string | null;
-  videoUrl?: string | null;
-  images?: string[] | null;
-  hashtags?: string[] | null;
-  metadata?: {
-    videoUrl?: string;
-    media_urls?: string[];
-  } | null;
+  hashtags: string[] | null;
 }
 
 interface SocialMediaPostProps {
@@ -54,9 +37,9 @@ const getPostTypeColor = (type: string) => {
   switch (type?.toLowerCase()) {
     case "video":
       return "text-#4b5563 border-cyan-500";
-    case "image":
-      return "text-#4b5563 border-purple-500";
     case "sidecar":
+      return "text-#4b5563 border-purple-500";
+    case "image":
       return "text-#4b5563 border-amber-500";
     default:
       return "text-#4b5563 border-gray-500";
@@ -77,58 +60,82 @@ const getPostTypeIcon = (type: string, className: string) => {
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
 
-  const getMediaUrls = () => {
-    console.log("Processing post:", post.id, {
-      local_media_paths: post.local_media_paths,
-      media_urls: post.media_urls,
-      metadata_media_urls: post.metadata?.media_urls,
-      video_url: post.video_url,
-      videoUrl: post.videoUrl,
-      metadata_videoUrl: post.metadata?.videoUrl
-    });
+  console.log("Processing post:", {
+    id: post.id,
+    local_media_paths: post.local_media_paths,
+    video_url: post.video_url,
+    post_type: post.post_type
+  });
 
-    // Check local_media_paths first (from Supabase bucket)
+  const getMediaContent = () => {
+    if (post.video_url) {
+      console.log("Using video_url for post", post.id);
+      return (
+        <video
+          controls
+          className="w-full aspect-square object-cover"
+          src={post.video_url}
+        />
+      );
+    }
+
     if (post.local_media_paths && post.local_media_paths.length > 0) {
-      console.log("Using local_media_paths for post", post.id, ":", post.local_media_paths);
-      return post.local_media_paths;
+      console.log("Using local_media_paths for post", post.id, post.local_media_paths);
+      
+      if (post.local_media_paths.length === 1) {
+        return (
+          <img
+            src={post.local_media_paths[0]}
+            alt="Post media"
+            className="w-full aspect-square object-cover"
+          />
+        );
+      }
+
+      return (
+        <div className="overflow-hidden" ref={emblaRef}>
+          <div className="flex">
+            {post.local_media_paths.map((url, index) => (
+              <div key={index} className="flex-[0_0_100%] min-w-0">
+                <img
+                  src={url}
+                  alt={`Media ${index + 1}`}
+                  className="w-full aspect-square object-cover"
+                />
+              </div>
+            ))}
+          </div>
+          {post.local_media_paths.length > 1 && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full"
+                onClick={() => emblaApi?.scrollPrev()}
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full"
+                onClick={() => emblaApi?.scrollNext()}
+              >
+                <ChevronRight className="h-6 w-6" />
+              </Button>
+            </>
+          )}
+        </div>
+      );
     }
 
-    // Then check media_urls
-    if (post.media_urls && post.media_urls.length > 0) {
-      console.log("Using media_urls for post", post.id, ":", post.media_urls);
-      return post.media_urls;
-    }
-
-    // Check metadata media_urls
-    if (post.metadata?.media_urls && post.metadata.media_urls.length > 0) {
-      console.log("Using metadata.media_urls for post", post.id, ":", post.metadata.media_urls);
-      return post.metadata.media_urls;
-    }
-
-    // Check for video URLs
-    const videoUrl = post.video_url || post.videoUrl || post.metadata?.videoUrl;
-    if (videoUrl) {
-      console.log("Using video_url for post", post.id, ":", videoUrl);
-      return [videoUrl];
-    }
-
-    console.log("No media found for post", post.id);
-    return [];
+    return null;
   };
 
-  const mediaUrls = getMediaUrls();
-  const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
-  const isSidecar = mediaUrls.length > 1;
-  const hasVideo = post.video_url !== null;
-  const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
-
-  console.log("Final media setup for post", post.id, {
-    mediaUrls,
-    postType,
-    isSidecar,
-    hasVideo,
-    postTypeColor
-  });
+  const mediaContent = getMediaContent();
+  const postType = post.video_url ? 'video' : 
+                  (post.local_media_paths?.length || 0) > 1 ? 'sidecar' : 'image';
+  const postTypeColor = getPostTypeColor(postType);
 
   return (
     <div className="flex gap-4 items-start ml-4 relative">
@@ -136,109 +143,49 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       <div className="absolute left-8 top-4 w-4 h-0.5 bg-gray-400" />
 
       <div className="relative z-10">
-        <div
-          className={cn(
-            "h-8 w-8 rounded-full bg-white flex items-center justify-center border",
-            postTypeColor
-          )}
-        >
-          {getPostTypeIcon(post.type || post.post_type, "h-4 w-4")}
+        <div className={cn("h-8 w-8 rounded-full bg-white flex items-center justify-center border", postTypeColor)}>
+          {getPostTypeIcon(postType, "h-4 w-4")}
         </div>
       </div>
 
       <Card className={cn("flex-1 overflow-hidden border", postTypeColor)}>
-        {mediaUrls.length > 0 && (
+        {mediaContent && (
           <div className="relative">
-            {isSidecar ? (
-              <div className="overflow-hidden" ref={emblaRef}>
-                <div className="flex">
-                  {mediaUrls.map((url, index) => (
-                    <div key={index} className="flex-[0_0_100%] min-w-0">
-                      <img
-                        src={url}
-                        alt={`Media ${index + 1}`}
-                        className="w-full aspect-square object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-                {mediaUrls.length > 1 && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full"
-                      onClick={() => emblaApi?.scrollPrev()}
-                    >
-                      <ChevronLeft className="h-6 w-6" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full"
-                      onClick={() => emblaApi?.scrollNext()}
-                    >
-                      <ChevronRight className="h-6 w-6" />
-                    </Button>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="relative">
-                {hasVideo ? (
-                  <video
-                    controls
-                    className="w-full aspect-square object-cover"
-                    src={mediaUrls[0]}
-                  />
-                ) : (
-                  <img
-                    src={mediaUrls[0]}
-                    alt="Post media"
-                    className="w-full aspect-square object-cover"
-                  />
-                )}
-              </div>
-            )}
+            {mediaContent}
           </div>
         )}
 
         <div className="p-4 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
-              {post.timestamp &&
-                format(new Date(post.timestamp), "PPp", { locale: de })}
+              {post.posted_at &&
+                format(new Date(post.posted_at), "PPp", { locale: de })}
             </span>
-            <span
-              className={cn("text-xs px-2 py-1 rounded-full border", postTypeColor)}
-            >
-              {post.type || post.post_type || "Post"}
+            <span className={cn("text-xs px-2 py-1 rounded-full border", postTypeColor)}>
+              {postType}
             </span>
           </div>
 
-          {(post.caption || post.content) && (
+          {post.caption && (
             <p className="text-sm whitespace-pre-wrap">
-              {post.caption || post.content}
+              {post.caption}
             </p>
           )}
 
           <div className="flex gap-4 text-sm text-muted-foreground">
-            {typeof post.likesCount === "number" && (
+            {typeof post.likes_count === "number" && (
               <div className="flex items-center gap-1">
-                <Heart className="h-4 w-4" />
-                <span>{post.likesCount.toLocaleString()}</span>
+                <span>{post.likes_count.toLocaleString()} Likes</span>
               </div>
             )}
-            {typeof post.commentsCount === "number" && (
+            {typeof post.comments_count === "number" && (
               <div className="flex items-center gap-1">
-                <MessageCircle className="h-4 w-4" />
-                <span>{post.commentsCount.toLocaleString()}</span>
+                <span>{post.comments_count.toLocaleString()} Kommentare</span>
               </div>
             )}
-            {(post.location || post.locationName) && (
+            {post.location && (
               <div className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                <span>{post.locationName || post.location}</span>
+                <span>{post.location}</span>
               </div>
             )}
           </div>
