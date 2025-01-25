@@ -7,9 +7,9 @@ import {
   Heart, 
   MapPin, 
   Link as LinkIcon, 
-  Video,
-  ChevronLeft,
-  ChevronRight
+  Video, 
+  ChevronLeft, 
+  ChevronRight 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useEmblaCarousel from "embla-carousel-react";
@@ -32,18 +32,8 @@ interface SocialMediaPost {
   tagged_profiles: string[] | null;
   posted_at: string | null;
   timestamp: string | null;
-  media_urls: string[] | null;
-  media_type: string | null;
-  local_video_path: string | null;
   local_media_paths: string[] | null;
   video_url: string | null;
-  videoUrl?: string | null;
-  images?: string[] | null;
-  hashtags?: string[] | null;
-  metadata?: {
-    videoUrl?: string;
-    media_urls?: string[];
-  } | null;
 }
 
 interface SocialMediaPostProps {
@@ -79,36 +69,20 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
   const getMediaUrls = () => {
     console.log("Processing post:", post.id, {
-      media_type: post.media_type,
       video_url: post.video_url,
       local_media_paths: post.local_media_paths,
-      media_urls: post.media_urls,
-      metadata: post.metadata
     });
 
-    // First check for video URL (either direct or in metadata)
-    const videoUrl = post.video_url || post.metadata?.videoUrl;
-    if (videoUrl) {
-      console.log("Using video URL for post", post.id, ":", videoUrl);
-      return [videoUrl];
+    // Priorität 1: Video URL
+    if (post.video_url) {
+      console.log("Using video_url for post", post.id, ":", post.video_url);
+      return [post.video_url];
     }
 
-    // Then check for local media paths from our Supabase bucket
+    // Priorität 2: Lokale Medienpfade
     if (post.local_media_paths && post.local_media_paths.length > 0) {
       console.log("Using local_media_paths for post", post.id, ":", post.local_media_paths);
       return post.local_media_paths;
-    }
-
-    // Then check media_urls from metadata
-    if (post.metadata?.media_urls && post.metadata.media_urls.length > 0) {
-      console.log("Using metadata.media_urls for post", post.id, ":", post.metadata.media_urls);
-      return post.metadata.media_urls;
-    }
-
-    // Finally fallback to media_urls
-    if (post.media_urls && post.media_urls.length > 0) {
-      console.log("Using media_urls for post", post.id, ":", post.media_urls);
-      return post.media_urls;
     }
 
     console.log("No media found for post", post.id);
@@ -116,20 +90,14 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   };
 
   const mediaUrls = getMediaUrls();
-  const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
-  const isSidecar = postType === 'sidecar' && mediaUrls.length > 1;
-  const hasVideo = post.media_type === 'video' || 
-                  postType === 'video' || 
-                  post.video_url || 
-                  post.metadata?.videoUrl;
-  const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
+  const isSidecar = mediaUrls.length > 1; // Mehrere Bilder = Karussell
+  const hasVideo = post.video_url !== null; // Video vorhanden
+  const postTypeColor = getPostTypeColor(hasVideo ? "video" : isSidecar ? "sidecar" : "image");
 
   console.log("Final media setup for post", post.id, {
     mediaUrls,
-    postType,
     isSidecar,
     hasVideo,
-    postTypeColor
   });
 
   return (
@@ -144,7 +112,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
             postTypeColor
           )}
         >
-          {getPostTypeIcon(post.type || post.post_type, "h-4 w-4")}
+          {getPostTypeIcon(hasVideo ? "video" : isSidecar ? "sidecar" : "image", "h-4 w-4")}
         </div>
       </div>
 
@@ -224,7 +192,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
             <span
               className={cn("text-xs px-2 py-1 rounded-full border", postTypeColor)}
             >
-              {post.type || post.post_type || "Post"}
+              {hasVideo ? "Video" : isSidecar ? "Sidecar" : "Image"}
             </span>
           </div>
 
@@ -254,28 +222,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
               </div>
             )}
           </div>
-
-          {post.hashtags && post.hashtags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {post.hashtags.map((tag, index) => (
-                <Badge key={index} variant="secondary">
-                  #{tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          {post.url && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => window.open(post.url, "_blank")}
-            >
-              <LinkIcon className="h-4 w-4 mr-2" />
-              Zum Beitrag
-            </Button>
-          )}
         </div>
       </Card>
     </div>
