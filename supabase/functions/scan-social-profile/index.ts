@@ -20,30 +20,13 @@ async function downloadAndUploadImage(imageUrl: string, supabaseClient: any, lea
   try {
     if (!imageUrl) return null;
 
-    // Check if file already exists
-    const fileName = `${leadId}-${Date.now()}.jpg`;
-    const filePath = `${leadId}/${fileName}`;
-    
-    const { data: existingFile } = await supabaseClient
-      .storage
-      .from('contact-avatars')
-      .list(leadId, {
-        search: fileName
-      });
-
-    if (existingFile && existingFile.length > 0) {
-      console.log('File already exists, skipping download:', fileName);
-      const { data: { publicUrl } } = supabaseClient
-        .storage
-        .from('contact-avatars')
-        .getPublicUrl(filePath);
-      return publicUrl;
-    }
-
     const response = await fetch(imageUrl);
     if (!response.ok) throw new Error('Failed to fetch image');
     
     const imageBuffer = await response.arrayBuffer();
+    const fileExt = 'jpg';
+    const fileName = `${leadId}-${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
 
     const { data: uploadData, error: uploadError } = await supabaseClient
       .storage
@@ -190,18 +173,18 @@ serve(async (req) => {
           throw updateError
         }
 
-        // Transform and insert posts
         const posts = profileData.latestPosts?.map((post: any) => {
+          // Determine media URLs based on post type
           let mediaUrls = [];
+          let videoUrl = null;
           
-          if (post.type === 'Video') {
-            // For videos, only use the display URL (preview image)
-            mediaUrls = post.displayUrl ? [post.displayUrl] : [];
+          if (post.type === 'Video' || post.videoUrl) {
+            videoUrl = post.videoUrl;
+            mediaUrls = videoUrl ? [videoUrl] : [];
           } else if (post.type === 'Sidecar' && post.images) {
-            // For sidecar posts, use all images
             mediaUrls = post.images;
-          } else if (!post.videoUrl) {
-            // For regular image posts (no video)
+          } else {
+            // Single image post - use displayUrl if available, otherwise use first image
             mediaUrls = [post.displayUrl || (post.images && post.images[0])].filter(Boolean);
           }
 
@@ -220,51 +203,43 @@ serve(async (req) => {
             metadata: {
               hashtags: post.hashtags || [],
               media_urls: mediaUrls,
+              videoUrl: videoUrl,
+              musicInfo: post.musicInfo,
               alt: post.alt,
             },
             media_urls: mediaUrls,
-            media_type: post.videoUrl ? 'video' : 'image',
+            media_type: videoUrl ? 'video' : 'image',
             engagement_count: (parseInt(post.likesCount) || 0) + (parseInt(post.commentsCount) || 0),
             first_comment: post.firstComment,
-            local_media_paths: [],
+            video_url: videoUrl
           };
         }) || [];
 
         if (posts.length > 0) {
-          console.log(`Attempting to insert ${posts.length} posts`);
-          
-          const { data: insertedPosts, error: postsError } = await supabaseClient
+          const { error: postsError } = await supabaseClient
             .from('social_media_posts')
             .upsert(posts, {
-              onConflict: 'lead_id,url',
-              returning: true
+              onConflict: 'lead_id,url'
             });
 
           if (postsError) {
             console.error('Error storing posts:', postsError);
-            throw postsError;
-          }
+          } else {
+            console.log(`Successfully stored ${posts.length} posts`);
 
-          console.log(`Successfully stored ${posts.length} posts`);
-
-          // Process media files after storing posts
-          if (Array.isArray(insertedPosts)) {
-            for (const post of insertedPosts) {
-              if (post.media_urls && post.media_urls.length > 0) {
-                try {
-                  console.log('Processing media for post:', post.id);
-                  const response = await supabaseClient.functions.invoke('process-social-media', {
-                    body: {
-                      mediaUrls: post.media_urls,
-                      leadId: post.lead_id,
-                      mediaType: post.media_type,
-                      postId: post.id
-                    }
-                  });
-                  console.log('Media processing response:', response);
-                } catch (error) {
-                  console.error('Error processing media for post:', error);
-                }
+            // Process media files after storing posts
+            for (const post of posts) {
+              try {
+                const response = await supabaseClient.functions.invoke('process-social-media', {
+                  body: {
+                    mediaUrls: post.media_urls,
+                    leadId: post.lead_id,
+                    mediaType: post.media_type
+                  }
+                });
+                console.log('Media processing response:', response);
+              } catch (error) {
+                console.error('Error processing media for post:', error);
               }
             }
           }
