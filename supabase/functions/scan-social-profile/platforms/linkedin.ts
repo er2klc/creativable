@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { SocialMediaStats } from "../../_shared/social-media-utils.ts";
+import { SocialMediaStats } from "../_shared/social-media-utils.ts";
 
 export async function scanLinkedInProfile(username: string, leadId: string): Promise<SocialMediaStats> {
   console.log('Starting LinkedIn profile scan for:', { username, leadId });
@@ -21,7 +21,7 @@ export async function scanLinkedInProfile(username: string, leadId: string): Pro
     }
 
     const apiKey = settings.apify_api_key;
-    const profileUrl = `https://www.linkedin.com/in/${username}/`;
+    const profileUrl = `https://www.linkedin.com/in/${username}`;
     console.log('LinkedIn profile URL:', profileUrl);
 
     // Start Apify scraping run
@@ -73,10 +73,12 @@ export async function scanLinkedInProfile(username: string, leadId: string): Pro
         const { error: updateError } = await supabase
           .from('leads')
           .update({
-            name: profileData.fullName || username,
-            social_media_bio: profileData.summary,
-            social_media_connections: parseInt(profileData.connectionsCount) || 0,
-            social_media_profile_image_url: profileData.profilePicture || null,
+            name: profileData.fullName,
+            current_company_name: profileData.currentCompany,
+            experience: profileData.experience || [],
+            linkedin_id: username,
+            social_media_bio: profileData.summary || profileData.headline,
+            social_media_profile_image_url: profileData.profileImageUrl,
             last_social_media_scan: new Date().toISOString()
           })
           .eq('id', leadId);
@@ -87,7 +89,7 @@ export async function scanLinkedInProfile(username: string, leadId: string): Pro
         }
 
         return {
-          bio: profileData.summary || null,
+          bio: profileData.summary || profileData.headline || null,
           connections: profileData.connectionsCount || null,
           headline: profileData.headline || null,
           isPrivate: false

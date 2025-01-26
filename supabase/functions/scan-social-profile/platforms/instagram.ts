@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { SocialMediaStats } from "../../_shared/social-media-utils.ts";
+import { SocialMediaStats } from "../_shared/social-media-utils.ts";
 
 export async function scanInstagramProfile(username: string, leadId: string): Promise<SocialMediaStats> {
   console.log('Starting Instagram profile scan for:', { username, leadId });
