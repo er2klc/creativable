@@ -24,7 +24,7 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
       if (error) throw error;
       return data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
       toast.success(
         settings?.language === "en"
