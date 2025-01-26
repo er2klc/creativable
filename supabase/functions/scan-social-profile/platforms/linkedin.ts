@@ -18,7 +18,7 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
 
     if (secretError || !secrets?.value) {
       console.error('Error getting Apify API key:', secretError);
-      throw new Error('Could not retrieve Apify API key');
+      throw new Error('Could not retrieve Apify API key. Please make sure it is configured in the secrets.');
     }
 
     const apiKey = secrets.value;
@@ -28,6 +28,7 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     const linkedInUrl = `https://www.linkedin.com/in/${username}`;
     console.log('Starting Apify scraping run for LinkedIn URL:', linkedInUrl);
 
+    // Start the scraping run
     const runResponse = await fetch(`${BASE_URL}/acts/scrap3r~linkedin-people-profiles-by-url/runs`, {
       method: 'POST',
       headers: {
@@ -47,8 +48,13 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     });
 
     if (!runResponse.ok) {
-      console.error('Error starting Apify run:', await runResponse.text());
-      throw new Error(`HTTP error! status: ${runResponse.status}`);
+      const errorText = await runResponse.text();
+      console.error('Error starting Apify run:', {
+        status: runResponse.status,
+        statusText: runResponse.statusText,
+        body: errorText
+      });
+      throw new Error(`Failed to start LinkedIn profile scan: ${errorText}`);
     }
 
     const runData = await runResponse.json();
@@ -69,24 +75,30 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
       });
 
       if (!datasetResponse.ok) {
-        console.error('Error fetching dataset:', await datasetResponse.text());
-        throw new Error(`HTTP error! status: ${datasetResponse.status}`);
+        console.error('Error fetching dataset:', {
+          status: datasetResponse.status,
+          statusText: datasetResponse.statusText
+        });
+        throw new Error(`Failed to fetch LinkedIn profile data: ${datasetResponse.statusText}`);
       }
 
       const items = await datasetResponse.json();
       
       if (items.length > 0) {
         const profileData = items[0];
-        console.log('LinkedIn profile data:', profileData);
+        console.log('LinkedIn profile data retrieved:', profileData);
 
         return {
-          bio: profileData.summary || profileData.description,
-          connections: profileData.connections,
-          headline: profileData.headline,
-          isPrivate: false,
-          name: profileData.name,
-          company_name: profileData.currentCompany,
-          position: profileData.currentPosition
+          bio: profileData.summary || profileData.description || null,
+          connections: profileData.connections || null,
+          headline: profileData.headline || null,
+          name: profileData.name || null,
+          company_name: profileData.currentCompany || null,
+          position: profileData.currentPosition || null,
+          followers: null,
+          following: null,
+          posts: null,
+          isPrivate: false
         };
       }
 
