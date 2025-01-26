@@ -801,8 +801,10 @@ export type Database = {
           contact_type: string | null
           country: string | null
           created_at: string | null
+          current_company_name: string | null
           email: string | null
           emotional_analysis: Json | null
+          experience: Json | null
           first_name: string | null
           follow_up_date: string | null
           gender: Database["public"]["Enums"]["gender_type"] | null
@@ -818,6 +820,7 @@ export type Database = {
           last_name: string | null
           last_social_media_scan: string | null
           level: number | null
+          linkedin_id: string | null
           name: string
           network_marketing_id: string | null
           next_steps: Json | null
@@ -875,8 +878,10 @@ export type Database = {
           contact_type?: string | null
           country?: string | null
           created_at?: string | null
+          current_company_name?: string | null
           email?: string | null
           emotional_analysis?: Json | null
+          experience?: Json | null
           first_name?: string | null
           follow_up_date?: string | null
           gender?: Database["public"]["Enums"]["gender_type"] | null
@@ -892,6 +897,7 @@ export type Database = {
           last_name?: string | null
           last_social_media_scan?: string | null
           level?: number | null
+          linkedin_id?: string | null
           name: string
           network_marketing_id?: string | null
           next_steps?: Json | null
@@ -949,8 +955,10 @@ export type Database = {
           contact_type?: string | null
           country?: string | null
           created_at?: string | null
+          current_company_name?: string | null
           email?: string | null
           emotional_analysis?: Json | null
+          experience?: Json | null
           first_name?: string | null
           follow_up_date?: string | null
           gender?: Database["public"]["Enums"]["gender_type"] | null
@@ -966,6 +974,7 @@ export type Database = {
           last_name?: string | null
           last_social_media_scan?: string | null
           level?: number | null
+          linkedin_id?: string | null
           name?: string
           network_marketing_id?: string | null
           next_steps?: Json | null
