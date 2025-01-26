@@ -13,9 +13,22 @@ serve(async (req) => {
   try {
     const { platform, username, leadId } = await req.json();
     
+    // Validate required parameters
     if (!platform || !username || !leadId) {
       console.error('Missing required parameters:', { platform, username, leadId });
-      throw new Error('Missing required parameters: platform, username, and leadId are required');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Missing required parameters: platform, username, and leadId are required'
+        }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          },
+          status: 400
+        }
+      );
     }
     
     console.log('Starting scan for profile:', {
@@ -43,7 +56,7 @@ serve(async (req) => {
     }
 
     if (!profileData) {
-      throw new Error('No profile data returned');
+      throw new Error('No profile data returned from platform handler');
     }
 
     console.log('Profile data retrieved:', profileData);

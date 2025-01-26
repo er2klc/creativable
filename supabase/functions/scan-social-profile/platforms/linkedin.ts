@@ -24,6 +24,11 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     const apiKey = secrets.value;
     const BASE_URL = 'https://api.apify.com/v2';
 
+    // Validate and format LinkedIn URL
+    if (!username) {
+      throw new Error('LinkedIn username is required');
+    }
+
     // Construct LinkedIn URL from username
     const linkedInUrl = `https://www.linkedin.com/in/${username}`;
     console.log('Starting Apify scraping run for LinkedIn URL:', linkedInUrl);
