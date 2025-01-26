@@ -10,11 +10,13 @@ import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
 import { LeadWithRelations } from "@/components/leads/detail/types/lead";
+import { useNavigate } from "react-router-dom";
 
 export default function LeadDetail() {
   const { leadId } = useParams<{ leadId: string }>();
   const queryClient = useQueryClient();
   const { settings } = useSettings();
+  const navigate = useNavigate();
 
   const { data: lead, isLoading } = useQuery({
     queryKey: ["lead", leadId],
@@ -83,21 +85,55 @@ export default function LeadDetail() {
     },
   });
 
-  const deletePhaseChangeMutation = useMutation({
-    mutationFn: async (noteId: string) => {
+  const deleteLeadMutation = useMutation({
+    mutationFn: async () => {
+      if (!leadId) return;
+
+      // Delete related records first
+      const relatedTables = [
+        'messages',
+        'tasks',
+        'notes',
+        'lead_files',
+        'contact_group_states',
+        'instagram_scan_history',
+        'lead_subscriptions'
+      ];
+
+      for (const table of relatedTables) {
+        const { error } = await supabase
+          .from(table)
+          .delete()
+          .eq('lead_id', leadId);
+        
+        if (error) {
+          console.error(`Error deleting from ${table}:`, error);
+          throw error;
+        }
+      }
+
+      // Finally delete the lead
       const { error } = await supabase
-        .from("notes")
+        .from('leads')
         .delete()
-        .eq("id", noteId);
+        .eq('id', leadId);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
       toast.success(
         settings?.language === "en"
-          ? "Phase change deleted successfully"
-          : "Phasenänderung erfolgreich gelöscht"
+          ? "Contact deleted successfully"
+          : "Kontakt erfolgreich gelöscht"
+      );
+      navigate('/contacts');
+    },
+    onError: (error) => {
+      console.error("Error deleting lead:", error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error deleting contact"
+          : "Fehler beim Löschen des Kontakts"
       );
     },
   });
@@ -111,6 +147,7 @@ export default function LeadDetail() {
       <LeadDetailHeader 
         lead={lead} 
         onUpdateLead={updateLeadMutation.mutate}
+        onDeleteLead={() => deleteLeadMutation.mutate()}
       />
       
       <div className="grid grid-cols-12 gap-6 mt-6">

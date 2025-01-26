@@ -11,6 +11,7 @@ import { DeleteLeadDialog } from "./header/DeleteLeadDialog";
 import { LeadName } from "./header/LeadName";
 import { Platform } from "@/config/platforms";
 import { Tables } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface LeadDetailHeaderProps {
   lead: LeadWithRelations;
