@@ -1,7 +1,7 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { LeadDetailHeader } from "@/components/leads/detail/LeadDetailHeader";
+import { LeadDetailHeader } from "@/components/leads/detail/header/LeadDetailHeader";
 import { LeadSummary } from "@/components/leads/detail/LeadSummary";
 import { LeadInfoCard } from "@/components/leads/detail/LeadInfoCard";
 import { LeadDetailTabs } from "@/components/leads/detail/LeadDetailTabs";
@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
 import { LeadWithRelations } from "@/components/leads/detail/types/lead";
-import { useNavigate } from "react-router-dom";
 
 export default function LeadDetail() {
   const { leadId } = useParams<{ leadId: string }>();
@@ -35,7 +34,7 @@ export default function LeadDetail() {
           lead_files (*)
         `)
         .eq("id", leadId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching lead:", error);
@@ -151,7 +150,6 @@ export default function LeadDetail() {
       />
       
       <div className="grid grid-cols-12 gap-6 mt-6">
-        {/* Left Column - 4/12 width */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <LeadSummary lead={lead} />
           <LeadInfoCard 
@@ -160,13 +158,9 @@ export default function LeadDetail() {
           />
         </div>
         
-        {/* Right Column - 8/12 width */}
         <div className="col-span-12 lg:col-span-8 space-y-6">
           <LeadDetailTabs lead={lead} />
-          <LeadTimeline 
-            lead={lead} 
-            onDeletePhaseChange={deletePhaseChangeMutation.mutate}
-          />
+          <LeadTimeline lead={lead} />
         </div>
       </div>
     </div>

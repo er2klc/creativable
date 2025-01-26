@@ -1,12 +1,12 @@
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadDetailHeader } from "./detail/LeadDetailHeader";
-import { useLeadSubscription } from "./detail/hooks/useLeadSubscription";
-import { LeadWithRelations } from "./detail/types/lead";
-import { LeadDetailContent } from "./detail/components/LeadDetailContent";
-import { useLeadMutations } from "./detail/hooks/useLeadMutations";
+import { LeadDetailHeader } from "@/components/leads/detail/header/LeadDetailHeader";
+import { useLeadSubscription } from "@/components/leads/detail/hooks/useLeadSubscription";
+import { LeadWithRelations } from "@/components/leads/detail/types/lead";
+import { LeadDetailContent } from "@/components/leads/detail/components/LeadDetailContent";
+import { useLeadMutations } from "@/components/leads/detail/hooks/useLeadMutations";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -56,22 +56,19 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg overflow-hidden">
-        <DialogHeader className="p-0">
-          {lead && (
+        {lead && (
+          <>
             <LeadDetailHeader
               lead={lead}
               onUpdateLead={updateLeadMutation.mutate}
               onDeleteLead={() => deleteLeadMutation.mutate()}
             />
-          )}
-        </DialogHeader>
-
-        {lead && (
-          <LeadDetailContent
-            lead={lead}
-            onUpdateLead={updateLeadMutation.mutate}
-            isLoading={isLoading}
-          />
+            <LeadDetailContent
+              lead={lead}
+              onUpdateLead={updateLeadMutation.mutate}
+              isLoading={isLoading}
+            />
+          </>
         )}
       </DialogContent>
     </Dialog>
