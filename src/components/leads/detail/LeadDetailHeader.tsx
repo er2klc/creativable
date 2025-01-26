@@ -12,9 +12,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { LeadWithRelations } from "./types/lead";
 
-interface LeadDetailHeaderProps {
-  lead: Tables<"leads">;
+export interface LeadDetailHeaderProps {
+  lead: LeadWithRelations;
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
 }
 
