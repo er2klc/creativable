@@ -1,20 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
-import { SocialMediaStats } from "../_shared/social-media-utils.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { SocialMediaStats } from "../../_shared/social-media-utils.ts";
 
 export async function scanLinkedInProfile(username: string, leadId: string): Promise<SocialMediaStats> {
   console.log('Starting LinkedIn profile scan for:', { username, leadId });
   
   try {
-    if (!username) {
-      console.error('LinkedIn username is missing');
-      throw new Error('LinkedIn username is missing or invalid');
-    }
-
-    // Clean up username and generate LinkedIn URL
-    const cleanUsername = username.replace(/^https?:\/\/(?:www\.)?linkedin\.com\/in\//i, '').replace(/\/$/, '');
-    const profileUrl = `https://www.linkedin.com/in/${cleanUsername}`;
-    console.log('Generated LinkedIn profile URL:', profileUrl);
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -31,9 +21,10 @@ export async function scanLinkedInProfile(username: string, leadId: string): Pro
     }
 
     const apiKey = settings.apify_api_key;
-    console.log('Starting Apify scraping run for URL:', profileUrl);
+    const profileUrl = `https://www.linkedin.com/in/${username}/`;
+    console.log('LinkedIn profile URL:', profileUrl);
 
-    // Start Apify scraping run with correct input format
+    // Start Apify scraping run
     const runResponse = await fetch('https://api.apify.com/v2/acts/apify~linkedin-profile-scraper/runs', {
       method: 'POST',
       headers: {
@@ -46,11 +37,7 @@ export async function scanLinkedInProfile(username: string, leadId: string): Pro
     });
 
     if (!runResponse.ok) {
-      const errorText = await runResponse.text();
-      console.error('Error starting Apify run:', {
-        status: runResponse.status,
-        error: errorText
-      });
+      console.error('Error starting Apify run:', await runResponse.text());
       throw new Error(`HTTP error! status: ${runResponse.status}`);
     }
 
@@ -86,12 +73,10 @@ export async function scanLinkedInProfile(username: string, leadId: string): Pro
         const { error: updateError } = await supabase
           .from('leads')
           .update({
-            name: profileData.fullName,
-            current_company_name: profileData.currentCompany,
-            experience: profileData.experience || [],
-            linkedin_id: cleanUsername,
-            social_media_bio: profileData.summary || profileData.headline,
-            social_media_profile_image_url: profileData.profileImageUrl,
+            name: profileData.fullName || username,
+            social_media_bio: profileData.summary,
+            social_media_connections: parseInt(profileData.connectionsCount) || 0,
+            social_media_profile_image_url: profileData.profilePicture || null,
             last_social_media_scan: new Date().toISOString()
           })
           .eq('id', leadId);
@@ -102,7 +87,7 @@ export async function scanLinkedInProfile(username: string, leadId: string): Pro
         }
 
         return {
-          bio: profileData.summary || profileData.headline || null,
+          bio: profileData.summary || null,
           connections: profileData.connectionsCount || null,
           headline: profileData.headline || null,
           isPrivate: false
