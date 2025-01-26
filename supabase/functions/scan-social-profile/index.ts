@@ -58,7 +58,12 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error during social profile scan:', error);
+    console.error('Error during social profile scan:', {
+      message: error.message,
+      details: error.stack,
+      hint: error.hint || "",
+      code: error.code || ""
+    });
     return new Response(
       JSON.stringify({
         success: false,
