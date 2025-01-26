@@ -1,24 +1,24 @@
 import { DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Tables } from "@/integrations/supabase/types";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { LeadWithRelations } from "./types/lead";
 import { StatusButtons } from "./header/StatusButtons";
 import { DeleteLeadDialog } from "./header/DeleteLeadDialog";
 import { LeadName } from "./header/LeadName";
 import { Platform } from "@/config/platforms";
+import { Tables } from "@/integrations/supabase/types";
 
 export interface LeadDetailHeaderProps {
   lead: LeadWithRelations;
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
+  onDeleteLead: () => void;
 }
 
-export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) {
+export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetailHeaderProps) {
   const { settings } = useSettings();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -101,6 +101,15 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
     }
   };
 
+  const handleDelete = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    setShowDeleteDialog(false);
+    onDeleteLead();
+  };
+
   return (
     <>
       <DialogHeader className="p-6 bg-card border-b">
@@ -116,7 +125,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
                 variant="outline"
                 size="sm"
                 className="text-red-600 hover:bg-red-50"
-                onClick={() => setShowDeleteDialog(true)}
+                onClick={handleDelete}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Löschen
@@ -133,7 +142,7 @@ export function LeadDetailHeader({ lead, onUpdateLead }: LeadDetailHeaderProps) 
       <DeleteLeadDialog 
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
-        onConfirm={() => onUpdateLead({ status: 'deleted' })}
+        onConfirm={handleDeleteConfirm}
       />
     </>
   );
