@@ -48,14 +48,15 @@ serve(async (req) => {
     const { error: updateError } = await supabaseClient
       .from('leads')
       .update({
-        name: username,
         social_media_bio: profileData.bio,
         social_media_followers: profileData.followers || 0,
         social_media_following: profileData.following || 0,
         social_media_engagement_rate: 0,
         last_social_media_scan: new Date().toISOString(),
         linkedin_headline: platform === 'linkedin' ? profileData.headline : null,
-        linkedin_connections: platform === 'linkedin' ? profileData.connections : null
+        linkedin_connections: platform === 'linkedin' ? profileData.connections : null,
+        company_name: platform === 'linkedin' ? profileData.company_name : null,
+        position: platform === 'linkedin' ? profileData.position : null
       })
       .eq('id', leadId);
 
