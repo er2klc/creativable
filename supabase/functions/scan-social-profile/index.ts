@@ -5,12 +5,18 @@ import { scanLinkedInProfile } from "./platforms/linkedin.ts";
 import { corsHeaders } from "./_shared/social-media-utils.ts";
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { platform, username, leadId } = await req.json();
+    
+    if (!platform || !username || !leadId) {
+      console.error('Missing required parameters:', { platform, username, leadId });
+      throw new Error('Missing required parameters: platform, username, and leadId are required');
+    }
     
     console.log('Starting scan for profile:', {
       platform,
@@ -40,19 +46,21 @@ serve(async (req) => {
       throw new Error('No profile data returned');
     }
 
+    console.log('Profile data retrieved:', profileData);
+
     // Update lead with profile data
     const { error: updateError } = await supabaseClient
       .from('leads')
       .update({
         social_media_bio: profileData.bio,
-        social_media_followers: profileData.followers || 0,
-        social_media_following: profileData.following || 0,
+        social_media_followers: profileData.followers || null,
+        social_media_following: profileData.following || null,
         social_media_engagement_rate: 0,
         last_social_media_scan: new Date().toISOString(),
-        linkedin_headline: platform === 'linkedin' ? profileData.headline : null,
-        linkedin_connections: platform === 'linkedin' ? profileData.connections : null,
-        company_name: platform === 'linkedin' ? profileData.company_name : null,
-        position: platform === 'linkedin' ? profileData.position : null
+        linkedin_headline: platform.toLowerCase() === 'linkedin' ? profileData.headline : null,
+        linkedin_connections: platform.toLowerCase() === 'linkedin' ? profileData.connections : null,
+        company_name: platform.toLowerCase() === 'linkedin' ? profileData.company_name : null,
+        position: platform.toLowerCase() === 'linkedin' ? profileData.position : null
       })
       .eq('id', leadId);
 
@@ -62,8 +70,16 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, data: profileData }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        success: true, 
+        data: profileData 
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     );
   } catch (error) {
     console.error('Error during scan:', error);
@@ -73,7 +89,10 @@ serve(async (req) => {
         error: error instanceof Error ? error.message : 'Unknown error during scanning'
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        },
         status: 400
       }
     );
