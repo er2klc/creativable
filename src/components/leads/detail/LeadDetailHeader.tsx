@@ -11,6 +11,7 @@ import { LeadWithRelations } from "./types/lead";
 import { StatusButtons } from "./header/StatusButtons";
 import { DeleteLeadDialog } from "./header/DeleteLeadDialog";
 import { LeadName } from "./header/LeadName";
+import { Platform } from "@/config/platforms";
 
 export interface LeadDetailHeaderProps {
   lead: LeadWithRelations;
