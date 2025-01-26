@@ -41,8 +41,8 @@ serve(async (req) => {
 
     console.log('Starting Apify scraping run for LinkedIn');
 
-    // Use the LinkedIn-specific actor
-    const runResponse = await fetch(`${BASE_URL}/acts/apify~linkedin-profile-scraper/runs`, {
+    // Use the correct LinkedIn-specific actor
+    const runResponse = await fetch(`${BASE_URL}/acts/scrap3r~linkedin-people-profiles-by-url/runs`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -52,8 +52,11 @@ serve(async (req) => {
         startUrls: [{
           url: `https://www.linkedin.com/in/${username}`
         }],
-        linkedInProfilesUrls: [`https://www.linkedin.com/in/${username}`],
-        useChrome: true
+        maxConcurrency: 1,
+        maxPagesPerCrawl: 1,
+        proxyConfiguration: {
+          useApifyProxy: true
+        }
       })
     });
 
