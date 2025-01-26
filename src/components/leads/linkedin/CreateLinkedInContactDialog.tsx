@@ -117,8 +117,7 @@ export function CreateLinkedInContactDialog({
       // Then trigger the scan profile function
       const { data, error } = await supabase.functions.invoke('scan-social-profile', {
         body: {
-          platform: 'LinkedIn',
-          username: username, // Make sure username is passed correctly
+          platform: 'linkedin',
           profileUrl: `https://www.linkedin.com/in/${username}`,
           leadId: lead.id
         }

@@ -24,19 +24,16 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     const apiKey = secrets.value;
     console.log('Starting Apify scraping run for LinkedIn profile');
 
-    // Start the Apify actor for LinkedIn scraping using the correct actor
-    const runResponse = await fetch('https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs', {
+    // Start the Apify actor for LinkedIn scraping
+    const runResponse = await fetch('https://api.apify.com/v2/acts/doda~linkedin-profile-scraper/runs', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        "startUrls": [{
-          "url": `https://www.linkedin.com/in/${username}`
-        }],
-        "maxItems": 1,
-        "scrapeConnectionsDegree": false
+        usernames: [username],
+        profilesLimit: 1
       })
     });
 
@@ -76,7 +73,7 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
         // Extract relevant information
         return {
           bio: profileData.summary || profileData.description || null,
-          connections: profileData.connectionsCount || null,
+          connections: profileData.connections || null,
           headline: profileData.headline || null,
           isPrivate: false // LinkedIn API doesn't provide this information
         };
