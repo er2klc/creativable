@@ -28,7 +28,7 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     const linkedInUrl = `https://www.linkedin.com/in/${username}`;
     console.log('Starting Apify scraping run for LinkedIn URL:', linkedInUrl);
 
-    // Start the scraping run
+    // Start the scraping run with the correct input format
     const runResponse = await fetch(`${BASE_URL}/acts/scrap3r~linkedin-people-profiles-by-url/runs`, {
       method: 'POST',
       headers: {
@@ -36,9 +36,7 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        startUrls: [{
-          url: linkedInUrl
-        }],
+        url: linkedInUrl,
         maxConcurrency: 1,
         maxPagesPerCrawl: 1,
         proxyConfiguration: {
