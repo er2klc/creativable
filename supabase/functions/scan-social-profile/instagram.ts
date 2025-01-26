@@ -1,28 +1,25 @@
-import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { SocialMediaStats } from "../_shared/social-media-utils.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
-export async function scanInstagramProfile(
-  username: string, 
-  userId: string,
-  supabase: SupabaseClient
-) {
+export async function scanInstagramProfile(username: string): Promise<SocialMediaStats> {
+  console.log('Scanning Instagram profile for:', username);
+  
   try {
-    console.log('Starting Instagram profile scan for:', { username, userId });
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get Instagram access token from platform_auth_status
     const { data: authStatus, error: authError } = await supabase
       .from('platform_auth_status')
       .select('access_token')
       .eq('platform', 'instagram')
-      .eq('user_id', userId)
-      .eq('is_connected', true)
       .single();
 
     if (authError || !authStatus?.access_token) {
-      console.error('Error retrieving Instagram auth status:', authError);
       throw new Error('No valid Instagram access token found');
     }
-
-    console.log('Successfully retrieved Instagram access token');
 
     // First, we need to search for the user's Instagram Business Account ID
     const businessAccountResponse = await fetch(
@@ -30,8 +27,7 @@ export async function scanInstagramProfile(
     );
 
     if (!businessAccountResponse.ok) {
-      const errorText = await businessAccountResponse.text();
-      console.error('Error getting Instagram business account:', errorText);
+      console.error('Error getting Instagram business account:', await businessAccountResponse.text());
       throw new Error('Could not find Instagram business account');
     }
 
@@ -44,30 +40,22 @@ export async function scanInstagramProfile(
     );
 
     if (!profileResponse.ok) {
-      const errorText = await profileResponse.text();
-      console.error('Error getting Instagram profile data:', errorText);
+      console.error('Error getting Instagram profile data:', await profileResponse.text());
       throw new Error('Could not get Instagram profile data');
     }
 
     const data = await profileResponse.json();
-    console.log('Successfully retrieved Instagram profile data:', data);
+    console.log('Instagram API response:', data);
 
     return {
       bio: data.biography,
       followers: data.followers_count,
       following: data.follows_count,
       posts: data.media_count,
-      engagement_rate: calculateEngagementRate(data.followers_count, data.media_count),
-      isPrivate: false
+      isPrivate: false // Instagram Business accounts are always public
     };
   } catch (error) {
     console.error('Error scanning Instagram profile:', error);
-    throw error;
+    return {};
   }
-}
-
-function calculateEngagementRate(followers: number, posts: number): number {
-  if (!followers || !posts || posts === 0) return 0;
-  // Simple engagement rate calculation
-  return Number((followers / (posts * 100)).toFixed(2));
 }

@@ -22,7 +22,7 @@ export function CreateLinkedInContactDialog({
   defaultPhase
 }: CreateLinkedInContactDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [username, setUsername] = useState("");
+  const [profileUrl, setProfileUrl] = useState("");
   const { settings } = useSettings();
 
   // Fetch default pipeline if none provided
@@ -64,15 +64,16 @@ export function CreateLinkedInContactDialog({
     enabled: !!(pipelineId || defaultPipeline?.id)
   });
 
-  const validateLinkedInUsername = (username: string) => {
-    return /^[a-zA-Z0-9-]+$/.test(username);
+  const validateLinkedInUrl = (url: string) => {
+    const linkedInUrlPattern = /^https:\/\/(www\.)?linkedin\.com\/in\/[\w\-]+\/?$/;
+    return linkedInUrlPattern.test(url);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateLinkedInUsername(username)) {
-      toast.error("Bitte geben Sie einen gültigen LinkedIn Benutzernamen ein");
+    if (!validateLinkedInUrl(profileUrl)) {
+      toast.error("Bitte geben Sie eine gültige LinkedIn-Profil-URL ein");
       return;
     }
 
@@ -99,9 +100,9 @@ export function CreateLinkedInContactDialog({
         .from("leads")
         .insert({
           user_id: user.id,
-          name: username,
+          name: profileUrl.split('/in/')[1].replace('/', ''), // Temporary name from URL
           platform: "LinkedIn",
-          social_media_username: username,
+          social_media_username: profileUrl.split('/in/')[1].replace('/', ''),
           pipeline_id: targetPipelineId,
           phase_id: targetPhaseId,
           industry: "Not Specified"
@@ -115,7 +116,7 @@ export function CreateLinkedInContactDialog({
       const { data, error } = await supabase.functions.invoke('scan-social-profile', {
         body: {
           platform: 'linkedin',
-          username: username,
+          profileUrl: profileUrl,
           leadId: lead.id
         }
       });
@@ -126,7 +127,7 @@ export function CreateLinkedInContactDialog({
 
       toast.success("LinkedIn-Kontakt erfolgreich hinzugefügt");
       onOpenChange(false);
-      setUsername("");
+      setProfileUrl("");
     } catch (error) {
       console.error("Error adding LinkedIn contact:", error);
       toast.error("Fehler beim Hinzufügen des LinkedIn-Kontakts");
@@ -143,12 +144,12 @@ export function CreateLinkedInContactDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">LinkedIn Benutzername</Label>
+            <Label htmlFor="profileUrl">LinkedIn Profil URL</Label>
             <Input
-              id="username"
-              placeholder="max-mustermann"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              id="profileUrl"
+              placeholder="https://www.linkedin.com/in/username"
+              value={profileUrl}
+              onChange={(e) => setProfileUrl(e.target.value)}
               disabled={isLoading}
             />
           </div>
@@ -161,7 +162,7 @@ export function CreateLinkedInContactDialog({
             >
               Abbrechen
             </Button>
-            <Button type="submit" disabled={!username.trim() || isLoading}>
+            <Button type="submit" disabled={isLoading}>
               {isLoading ? "Lädt..." : "Kontakt hinzufügen"}
             </Button>
           </div>
