@@ -141,7 +141,7 @@ serve(async (req) => {
           }
 
           return {
-            id: post.id, // Using Instagram's post ID directly
+            id: post.id,
             lead_id: leadId,
             platform: 'Instagram',
             post_type: normalizePostType(post.type),
