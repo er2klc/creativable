@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadDetailHeader } from "@/components/leads/detail/LeadDetailHeader";
-import { useLeadSubscription } from "@/components/leads/detail/hooks/useLeadSubscription";
-import { LeadWithRelations } from "@/components/leads/detail/types/lead";
-import { LeadDetailContent } from "@/components/leads/detail/LeadDetailContent";
-import { useLeadMutations } from "@/components/leads/detail/hooks/useLeadMutations";
+import { LeadDetailHeader } from "./detail/LeadDetailHeader";
+import { useLeadSubscription } from "./detail/hooks/useLeadSubscription";
+import { LeadWithRelations } from "./detail/types/lead";
+import { LeadDetailContent } from "./detail/components/LeadDetailContent";
+import { useLeadMutations } from "./detail/hooks/useLeadMutations";
 
 interface LeadDetailViewProps {
   leadId: string;
@@ -72,7 +72,11 @@ export function LeadDetailView({ leadId, onClose }: LeadDetailViewProps) {
         onUpdateLead={updateLeadMutation.mutate}
         onDeleteLead={() => deleteLeadMutation.mutate()}
       />
-      <LeadDetailContent lead={lead} />
+      <LeadDetailContent 
+        lead={lead}
+        onUpdateLead={updateLeadMutation.mutate}
+        isLoading={isLoading}
+      />
     </>
   );
 }

@@ -97,7 +97,7 @@ export default function LeadDetail() {
         'contact_group_states',
         'instagram_scan_history',
         'lead_subscriptions'
-      ];
+      ] as const;
 
       for (const table of relatedTables) {
         const { error } = await supabase
