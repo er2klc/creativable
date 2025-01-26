@@ -1,5 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { SocialMediaStats } from "../_shared/social-media-utils.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 export async function scanLinkedInProfile(username: string): Promise<SocialMediaStats> {
   console.log('Scanning LinkedIn profile for:', username);
@@ -24,7 +24,10 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     const apiKey = secrets.value;
     const BASE_URL = 'https://api.apify.com/v2';
 
-    console.log('Starting Apify scraping run for LinkedIn');
+    // Construct LinkedIn URL from username
+    const linkedInUrl = `https://www.linkedin.com/in/${username}`;
+    console.log('Starting Apify scraping run for LinkedIn URL:', linkedInUrl);
+
     const runResponse = await fetch(`${BASE_URL}/acts/scrap3r~linkedin-people-profiles-by-url/runs`, {
       method: 'POST',
       headers: {
@@ -33,7 +36,7 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
       },
       body: JSON.stringify({
         startUrls: [{
-          url: `https://www.linkedin.com/in/${username}`
+          url: linkedInUrl
         }],
         maxConcurrency: 1,
         maxPagesPerCrawl: 1,
@@ -80,7 +83,10 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
           bio: profileData.summary || profileData.description,
           connections: profileData.connections,
           headline: profileData.headline,
-          isPrivate: false
+          isPrivate: false,
+          name: profileData.name,
+          company_name: profileData.currentCompany,
+          position: profileData.currentPosition
         };
       }
 
