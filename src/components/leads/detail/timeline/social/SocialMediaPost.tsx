@@ -120,43 +120,48 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           </div>
         </div>
         
-        {/* Connecting Line to Card */}
-        <div className="absolute left-8 top-4 w-4 h-0.5 bg-gray-200" />
+        {/* Vertical Timeline Line */}
+        <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-200" style={{ height: '100%' }} />
         
-        <div className="flex flex-1 gap-4">
-          {mediaUrls.length > 0 && (
-            <div className="w-1/3 min-w-[200px]">
-              <MediaDisplay 
-                mediaUrls={mediaUrls} 
-                hasVideo={hasVideo} 
-                isSidecar={isSidecar} 
+        {/* Connecting Line to Card */}
+        <div className="absolute left-8 top-4 w-4 h-[2px] bg-gray-200" />
+        
+        <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>
+          <div className="flex gap-4">
+            {mediaUrls.length > 0 && (
+              <div className="w-1/3 min-w-[200px]">
+                <MediaDisplay 
+                  mediaUrls={mediaUrls} 
+                  hasVideo={hasVideo} 
+                  isSidecar={isSidecar} 
+                />
+              </div>
+            )}
+
+            <div className="flex-1 min-w-0">
+              <PostHeader 
+                timestamp={post.timestamp || post.posted_at || ''} 
+                type={post.type || post.post_type || ''} 
+                postTypeColor={postTypeColor}
               />
+
+              <PostContent 
+                content={post.content} 
+                caption={post.caption}
+                hashtags={post.hashtags}
+              />
+
+              <PostMetadata 
+                likesCount={post.likesCount} 
+                commentsCount={post.commentsCount}
+                location={post.location}
+                locationName={post.locationName}
+              />
+
+              <PostActions url={post.url} />
             </div>
-          )}
-
-          <Card className={cn("flex-1 p-4 text-sm", postTypeColor)}>
-            <PostHeader 
-              timestamp={post.timestamp || post.posted_at || ''} 
-              type={post.type || post.post_type || ''} 
-              postTypeColor={postTypeColor}
-            />
-
-            <PostContent 
-              content={post.content} 
-              caption={post.caption}
-              hashtags={post.hashtags}
-            />
-
-            <PostMetadata 
-              likesCount={post.likesCount} 
-              commentsCount={post.commentsCount}
-              location={post.location}
-              locationName={post.locationName}
-            />
-
-            <PostActions url={post.url} />
-          </Card>
-        </div>
+          </div>
+        </Card>
       </div>
     </motion.div>
   );
