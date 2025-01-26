@@ -1,10 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-export async function scanInstagramProfile(username: string, userId: string) {
+export async function scanInstagramProfile(
+  username: string, 
+  userId: string,
+  supabase: SupabaseClient
+) {
   try {
     console.log('Starting Instagram profile scan for:', { username, userId });
 
@@ -17,14 +17,9 @@ export async function scanInstagramProfile(username: string, userId: string) {
       .eq('is_connected', true)
       .single();
 
-    if (authError) {
+    if (authError || !authStatus?.access_token) {
       console.error('Error retrieving Instagram auth status:', authError);
-      throw new Error('Failed to retrieve Instagram authentication status');
-    }
-
-    if (!authStatus?.access_token) {
-      console.error('No Instagram access token found for user:', userId);
-      throw new Error('No valid Instagram access token found. Please reconnect your Instagram account.');
+      throw new Error('No valid Instagram access token found');
     }
 
     console.log('Successfully retrieved Instagram access token');
@@ -62,10 +57,17 @@ export async function scanInstagramProfile(username: string, userId: string) {
       followers: data.followers_count,
       following: data.follows_count,
       posts: data.media_count,
+      engagement_rate: calculateEngagementRate(data.followers_count, data.media_count),
       isPrivate: false
     };
   } catch (error) {
     console.error('Error scanning Instagram profile:', error);
     throw error;
   }
+}
+
+function calculateEngagementRate(followers: number, posts: number): number {
+  if (!followers || !posts || posts === 0) return 0;
+  // Simple engagement rate calculation
+  return Number((followers / (posts * 100)).toFixed(2));
 }

@@ -1,14 +1,9 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import { SocialMediaStats } from "../_shared/social-media-utils.ts";
+import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
-export async function scanLinkedInProfile(username: string): Promise<SocialMediaStats> {
+export async function scanLinkedInProfile(username: string, supabase: SupabaseClient) {
   console.log('Scanning LinkedIn profile for:', username);
   
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Get Apify API key from secrets
     const { data: secrets, error: secretError } = await supabase
       .from('secrets')
@@ -99,7 +94,8 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
           name: profileData.name || null,
           company_name: profileData.currentCompany || null,
           position: profileData.currentPosition || null,
-          isPrivate: false
+          isPrivate: false,
+          engagement_rate: 0
         };
       }
 

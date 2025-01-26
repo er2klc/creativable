@@ -1,19 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { scanInstagramProfile } from "./platforms/instagram.ts";
 import { scanLinkedInProfile } from "./platforms/linkedin.ts";
-import { createClient } from '@supabase/supabase-js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -25,6 +20,11 @@ serve(async (req) => {
     if (!platform || !username || !leadId) {
       throw new Error('Missing required parameters: platform, username, and leadId are required');
     }
+
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get the user_id for the lead
     const { data: lead, error: leadError } = await supabase
@@ -41,10 +41,10 @@ serve(async (req) => {
     let profileData;
     switch (platform.toLowerCase()) {
       case 'instagram':
-        profileData = await scanInstagramProfile(username, lead.user_id);
+        profileData = await scanInstagramProfile(username, lead.user_id, supabase);
         break;
       case 'linkedin':
-        profileData = await scanLinkedInProfile(username);
+        profileData = await scanLinkedInProfile(username, supabase);
         break;
       default:
         throw new Error(`Unsupported platform: ${platform}`);
@@ -61,7 +61,7 @@ serve(async (req) => {
         social_media_bio: profileData.bio,
         social_media_followers: profileData.followers,
         social_media_following: profileData.following,
-        social_media_engagement_rate: 0,
+        social_media_engagement_rate: profileData.engagement_rate || 0,
         last_social_media_scan: new Date().toISOString(),
         current_company_name: platform.toLowerCase() === 'linkedin' ? profileData.company_name : null,
         position: platform.toLowerCase() === 'linkedin' ? profileData.position : null
