@@ -15,7 +15,7 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
 
   if (isSidecar) {
     return (
-      <div className="relative">
+      <div className="relative rounded-lg overflow-hidden aspect-[4/3]">
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex">
             {mediaUrls.map((url, index) => (
@@ -23,7 +23,7 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
                 <img
                   src={url}
                   alt={`Media ${index + 1}`}
-                  className="w-full aspect-square object-cover"
+                  className="w-full h-full object-cover"
                 />
               </div>
             ))}
@@ -54,18 +54,18 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
   }
 
   return (
-    <div className="relative">
+    <div className="relative rounded-lg overflow-hidden aspect-[4/3]">
       {hasVideo ? (
         <video
           controls
-          className="w-full aspect-square object-cover"
+          className="w-full h-full object-cover"
           src={mediaUrls[0]}
         />
       ) : (
         <img
           src={mediaUrls[0]}
           alt="Post media"
-          className="w-full aspect-square object-cover"
+          className="w-full h-full object-cover"
         />
       )}
     </div>

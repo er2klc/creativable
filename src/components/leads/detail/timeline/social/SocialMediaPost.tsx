@@ -55,37 +55,23 @@ const getPostTypeColor = (type: string) => {
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const getMediaUrls = () => {
-    console.log("Processing post:", post.id, {
-      local_media_paths: post.local_media_paths,
-      media_urls: post.media_urls,
-      metadata_media_urls: post.metadata?.media_urls,
-      video_url: post.video_url,
-      videoUrl: post.videoUrl,
-      metadata_videoUrl: post.metadata?.videoUrl
-    });
-
     if (post.local_media_paths && post.local_media_paths.length > 0) {
-      console.log("Using local_media_paths for post", post.id, ":", post.local_media_paths);
       return post.local_media_paths;
     }
 
     if (post.media_urls && post.media_urls.length > 0) {
-      console.log("Using media_urls for post", post.id, ":", post.media_urls);
       return post.media_urls;
     }
 
     if (post.metadata?.media_urls && post.metadata.media_urls.length > 0) {
-      console.log("Using metadata.media_urls for post", post.id, ":", post.metadata.media_urls);
       return post.metadata.media_urls;
     }
 
     const videoUrl = post.video_url || post.videoUrl || post.metadata?.videoUrl;
     if (videoUrl) {
-      console.log("Using video_url for post", post.id, ":", videoUrl);
       return [videoUrl];
     }
 
-    console.log("No media found for post", post.id);
     return [];
   };
 
@@ -95,29 +81,23 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const hasVideo = post.video_url !== null;
   const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
-  console.log("Final media setup for post", post.id, {
-    mediaUrls,
-    postType,
-    isSidecar,
-    hasVideo,
-    postTypeColor
-  });
-
   return (
     <div className="flex gap-4 items-start ml-4 relative">
       <div className="absolute left-4 top-8 bottom-0 w-[2px] bg-gray-200" />
       <div className="absolute left-8 top-4 w-4 h-0.5 bg-gray-400" />
 
-      <Card className={cn("flex-1 overflow-hidden border", postTypeColor)}>
+      <div className="flex flex-1 gap-4">
         {mediaUrls.length > 0 && (
-          <MediaDisplay 
-            mediaUrls={mediaUrls} 
-            hasVideo={hasVideo} 
-            isSidecar={isSidecar} 
-          />
+          <div className="w-1/3 min-w-[200px]">
+            <MediaDisplay 
+              mediaUrls={mediaUrls} 
+              hasVideo={hasVideo} 
+              isSidecar={isSidecar} 
+            />
+          </div>
         )}
 
-        <div className="p-4 space-y-4">
+        <Card className={cn("flex-1 overflow-hidden border p-4", postTypeColor)}>
           <PostHeader 
             timestamp={post.timestamp || post.posted_at || ''} 
             type={post.type || post.post_type || ''} 
@@ -138,8 +118,8 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           />
 
           <PostActions url={post.url} />
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };
