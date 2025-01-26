@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { scanLinkedInProfile } from './linkedin.ts';
+import { scanInstagramProfile } from './instagram.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -51,97 +52,95 @@ serve(async (req) => {
           throw updateError;
         }
       }
-    } else {
+    } else if (platform === 'Instagram') {
       // Check if platform is Instagram
-      if (platform === 'Instagram') {
-        const { data: { secrets }, error: secretError } = await supabaseClient
-          .from('secrets')
-          .select('value')
-          .eq('name', 'APIFY_API_TOKEN')
-          .single();
+      const { data: { secrets }, error: secretError } = await supabaseClient
+        .from('secrets')
+        .select('value')
+        .eq('name', 'APIFY_API_TOKEN')
+        .single();
 
-        if (secretError || !secrets?.value) {
-          console.error('Error fetching Apify API key:', secretError);
-          throw new Error('Could not retrieve Apify API key');
-        }
+      if (secretError || !secrets?.value) {
+        console.error('Error fetching Apify API key:', secretError);
+        throw new Error('Could not retrieve Apify API key');
+      }
 
-        const apiKey = secrets.value;
-        console.log('Starting Apify scraping run for Instagram profile');
+      const apiKey = secrets.value;
+      console.log('Starting Apify scraping run for Instagram profile');
 
-        // Start the Apify actor for Instagram scraping
-        const runResponse = await fetch('https://api.apify.com/v2/acts/apify~instagram-profile-scraper/runs', {
-          method: 'POST',
+      // Start the Apify actor for Instagram scraping
+      const runResponse = await fetch('https://api.apify.com/v2/acts/apify~instagram-profile-scraper/runs', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          usernames: [username]
+        })
+      });
+
+      if (!runResponse.ok) {
+        console.error('Error starting Apify run:', await runResponse.text());
+        throw new Error(`HTTP error! status: ${runResponse.status}`);
+      }
+
+      const runData = await runResponse.json();
+      const runId = runData.data.id;
+      console.log('Apify run started:', { runId });
+
+      // Poll for results
+      let attempts = 0;
+      const maxAttempts = 30;
+      
+      while (attempts < maxAttempts) {
+        console.log(`Polling for results (attempt ${attempts + 1}/${maxAttempts})`);
+        
+        const datasetResponse = await fetch(`https://api.apify.com/v2/actor-runs/${runId}/dataset/items`, {
           headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            usernames: [username]
-          })
+            'Authorization': `Bearer ${apiKey}`
+          }
         });
 
-        if (!runResponse.ok) {
-          console.error('Error starting Apify run:', await runResponse.text());
-          throw new Error(`HTTP error! status: ${runResponse.status}`);
+        if (!datasetResponse.ok) {
+          console.error('Error fetching dataset:', await datasetResponse.text());
+          throw new Error(`HTTP error! status: ${datasetResponse.status}`);
         }
 
-        const runData = await runResponse.json();
-        const runId = runData.data.id;
-        console.log('Apify run started:', { runId });
-
-        // Poll for results
-        let attempts = 0;
-        const maxAttempts = 30;
+        const items = await datasetResponse.json();
         
-        while (attempts < maxAttempts) {
-          console.log(`Polling for results (attempt ${attempts + 1}/${maxAttempts})`);
-          
-          const datasetResponse = await fetch(`https://api.apify.com/v2/actor-runs/${runId}/dataset/items`, {
-            headers: {
-              'Authorization': `Bearer ${apiKey}`
-            }
-          });
+        if (items.length > 0) {
+          const profileData = items[0];
+          console.log('Instagram profile data received:', profileData);
 
-          if (!datasetResponse.ok) {
-            console.error('Error fetching dataset:', await datasetResponse.text());
-            throw new Error(`HTTP error! status: ${datasetResponse.status}`);
+          // Extract relevant information
+          const { error: updateError } = await supabaseClient
+            .from('leads')
+            .update({
+              name: profileData.username,
+              social_media_bio: profileData.bio,
+              social_media_followers: parseInt(profileData.followersCount) || 0,
+              social_media_following: parseInt(profileData.followingCount) || 0,
+              last_social_media_scan: new Date().toISOString()
+            })
+            .eq('id', leadId);
+
+          if (updateError) {
+            console.error('Error updating lead:', updateError);
+            throw updateError;
           }
 
-          const items = await datasetResponse.json();
-          
-          if (items.length > 0) {
-            const profileData = items[0];
-            console.log('Instagram profile data received:', profileData);
-
-            // Extract relevant information
-            const { error: updateError } = await supabaseClient
-              .from('leads')
-              .update({
-                name: profileData.username,
-                social_media_bio: profileData.bio,
-                social_media_followers: parseInt(profileData.followersCount) || 0,
-                social_media_following: parseInt(profileData.followingCount) || 0,
-                last_social_media_scan: new Date().toISOString()
-              })
-              .eq('id', leadId);
-
-            if (updateError) {
-              console.error('Error updating lead:', updateError);
-              throw updateError;
-            }
-
-            return new Response(
-              JSON.stringify({ success: true, data: profileData }),
-              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          attempts++;
+          return new Response(
+            JSON.stringify({ success: true, data: profileData }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
 
-        throw new Error('Timeout waiting for Instagram profile data');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        attempts++;
       }
+
+      throw new Error('Timeout waiting for Instagram profile data');
     }
 
     return new Response(
