@@ -48,20 +48,22 @@ serve(async (req) => {
 
     console.log('Profile data retrieved:', profileData);
 
-    // Update lead with profile data
+    // Update lead with profile data, handling null values
+    const updateData = {
+      social_media_bio: profileData.bio,
+      social_media_followers: profileData.followers,
+      social_media_following: profileData.following,
+      social_media_engagement_rate: 0,
+      last_social_media_scan: new Date().toISOString(),
+      linkedin_headline: platform.toLowerCase() === 'linkedin' ? profileData.headline : null,
+      linkedin_connections: platform.toLowerCase() === 'linkedin' ? profileData.connections : null,
+      company_name: platform.toLowerCase() === 'linkedin' ? profileData.company_name : null,
+      position: platform.toLowerCase() === 'linkedin' ? profileData.position : null
+    };
+
     const { error: updateError } = await supabaseClient
       .from('leads')
-      .update({
-        social_media_bio: profileData.bio,
-        social_media_followers: profileData.followers || null,
-        social_media_following: profileData.following || null,
-        social_media_engagement_rate: 0,
-        last_social_media_scan: new Date().toISOString(),
-        linkedin_headline: platform.toLowerCase() === 'linkedin' ? profileData.headline : null,
-        linkedin_connections: platform.toLowerCase() === 'linkedin' ? profileData.connections : null,
-        company_name: platform.toLowerCase() === 'linkedin' ? profileData.company_name : null,
-        position: platform.toLowerCase() === 'linkedin' ? profileData.position : null
-      })
+      .update(updateData)
       .eq('id', leadId);
 
     if (updateError) {

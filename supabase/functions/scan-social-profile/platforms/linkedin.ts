@@ -28,7 +28,7 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     const linkedInUrl = `https://www.linkedin.com/in/${username}`;
     console.log('Starting Apify scraping run for LinkedIn URL:', linkedInUrl);
 
-    // Start the scraping run with the correct input format
+    // Start the scraping run with proper error handling
     const runResponse = await fetch(`${BASE_URL}/acts/scrap3r~linkedin-people-profiles-by-url/runs`, {
       method: 'POST',
       headers: {
@@ -59,7 +59,7 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
     const runId = runData.data.id;
     console.log('Apify run started:', { runId });
 
-    // Poll for results
+    // Poll for results with improved error handling
     let attempts = 0;
     const maxAttempts = 30;
     
@@ -86,9 +86,10 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
         const profileData = items[0];
         console.log('LinkedIn profile data retrieved:', profileData);
 
+        // Validate and transform the data
         return {
           bio: profileData.summary || profileData.description || null,
-          connections: profileData.connections || null,
+          connections: typeof profileData.connections === 'number' ? profileData.connections : null,
           headline: profileData.headline || null,
           name: profileData.name || null,
           company_name: profileData.currentCompany || null,
