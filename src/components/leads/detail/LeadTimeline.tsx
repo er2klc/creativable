@@ -4,37 +4,11 @@ import { TimelineItem } from "./timeline/TimelineItem";
 import { SocialMediaTimeline } from "./timeline/SocialMediaTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "./types/lead";
-import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
+import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
   onDeletePhaseChange?: (noteId: string) => void;
-}
-
-interface SocialMediaPostRaw {
-  id: string;
-  platform: string;
-  type: string;
-  post_type: string;
-  content: string | null;
-  caption: string | null;
-  likesCount: number | null;
-  commentsCount: number | null;
-  url: string | null;
-  location: string | null;
-  locationName?: string | null;
-  mentioned_profiles: string[] | null;
-  tagged_profiles: string[] | null;
-  posted_at: string | null;
-  timestamp: string | null;
-  media_urls: string[] | null;
-  media_type: string | null;
-  local_video_path: string | null;
-  local_media_paths: string[] | null;
-  video_url: string | null;
-  videoUrl?: string | null;
-  images?: string[] | null;
-  hashtags?: string[] | null;
 }
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
@@ -53,6 +27,47 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     status: note.status
   });
 
+  const mapTaskToTimelineItem = (task: any): TimelineItemType => ({
+    id: task.id,
+    type: 'task',
+    content: task.title,
+    created_at: task.created_at,
+    timestamp: task.created_at,
+    metadata: {
+      dueDate: task.due_date,
+      status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : undefined,
+      completedAt: task.completed ? task.updated_at : undefined,
+      color: task.color,
+      meetingType: task.meeting_type
+    }
+  });
+
+  const mapMessageToTimelineItem = (message: any): TimelineItemType => ({
+    id: message.id,
+    type: 'message',
+    content: message.content,
+    created_at: message.created_at,
+    timestamp: message.sent_at || message.created_at,
+    platform: message.platform,
+    metadata: {
+      type: message.platform
+    }
+  });
+
+  const mapFileToTimelineItem = (file: any): TimelineItemType => ({
+    id: file.id,
+    type: 'file_upload',
+    content: file.file_name,
+    created_at: file.created_at,
+    timestamp: file.created_at,
+    metadata: {
+      fileName: file.file_name,
+      filePath: file.file_path,
+      fileType: file.file_type,
+      fileSize: file.file_size
+    }
+  });
+
   // Create contact creation timeline item
   const contactCreationItem: TimelineItemType = {
     id: 'contact-creation',
@@ -65,16 +80,22 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     }
   };
 
-  // Sort notes in reverse chronological order (newest first)
-  const sortedNotes = (lead.notes || [])
-    .map(mapNoteToTimelineItem)
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  // Combine all activities
+  const allActivities = [
+    ...(lead.notes || []).map(mapNoteToTimelineItem),
+    ...(lead.tasks || []).map(mapTaskToTimelineItem),
+    ...(lead.messages || []).map(mapMessageToTimelineItem),
+    ...(lead.lead_files || []).map(mapFileToTimelineItem),
+    contactCreationItem
+  ];
 
-  // Add contact creation item at the end (it will appear at the bottom)
-  const timelineItems = [...sortedNotes, contactCreationItem];
+  // Sort all activities by timestamp in reverse chronological order
+  const timelineItems = allActivities.sort((a, b) => 
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
 
   // Transform social media posts to include required fields
-  const transformedPosts: SocialMediaPostRaw[] = Array.isArray(lead.social_media_posts) 
+  const transformedPosts = Array.isArray(lead.social_media_posts) 
     ? (lead.social_media_posts as any[]).map(post => ({
         ...post,
         type: post.type || 'post',
