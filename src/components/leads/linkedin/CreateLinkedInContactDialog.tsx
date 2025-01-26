@@ -80,6 +80,7 @@ export function CreateLinkedInContactDialog({
 
     try {
       setIsLoading(true);
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
@@ -101,7 +102,7 @@ export function CreateLinkedInContactDialog({
         .from("leads")
         .insert({
           user_id: user.id,
-          name: username, // Temporary name from username
+          name: username,
           platform: "LinkedIn",
           social_media_username: username,
           pipeline_id: targetPipelineId,
