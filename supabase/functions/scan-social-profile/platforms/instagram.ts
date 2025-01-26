@@ -1,25 +1,30 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import { SocialMediaStats } from "../_shared/social-media-utils.ts";
+import { createClient } from '@supabase/supabase-js';
 
-export async function scanInstagramProfile(username: string): Promise<SocialMediaStats> {
-  console.log('Scanning Instagram profile for:', username);
-  
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+export async function scanInstagramProfile(username: string, userId: string) {
   try {
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('Starting Instagram profile scan for:', { username, userId });
 
     // Get Instagram access token from platform_auth_status
     const { data: authStatus, error: authError } = await supabase
       .from('platform_auth_status')
       .select('access_token')
       .eq('platform', 'instagram')
+      .eq('user_id', userId)
+      .eq('is_connected', true)
       .single();
 
-    if (authError || !authStatus?.access_token) {
-      console.error('Error getting Instagram access token:', authError);
-      throw new Error('No valid Instagram access token found');
+    if (authError) {
+      console.error('Error retrieving Instagram auth status:', authError);
+      throw new Error('Failed to retrieve Instagram authentication status');
+    }
+
+    if (!authStatus?.access_token) {
+      console.error('No Instagram access token found for user:', userId);
+      throw new Error('No valid Instagram access token found. Please reconnect your Instagram account.');
     }
 
     console.log('Successfully retrieved Instagram access token');
@@ -50,14 +55,14 @@ export async function scanInstagramProfile(username: string): Promise<SocialMedi
     }
 
     const data = await profileResponse.json();
-    console.log('Instagram API response:', data);
+    console.log('Successfully retrieved Instagram profile data:', data);
 
     return {
       bio: data.biography,
       followers: data.followers_count,
       following: data.follows_count,
       posts: data.media_count,
-      isPrivate: false // Instagram Business accounts are always public
+      isPrivate: false
     };
   } catch (error) {
     console.error('Error scanning Instagram profile:', error);

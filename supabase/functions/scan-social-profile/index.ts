@@ -1,8 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { scanInstagramProfile } from "./platforms/instagram.ts";
 import { scanLinkedInProfile } from "./platforms/linkedin.ts";
-import { corsHeaders } from "./_shared/social-media-utils.ts";
+import { createClient } from '@supabase/supabase-js';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -12,41 +20,28 @@ serve(async (req) => {
 
   try {
     const { platform, username, leadId } = await req.json();
-    
-    // Validate required parameters
-    if (!platform || !username || !leadId) {
-      console.error('Missing required parameters:', { platform, username, leadId });
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Missing required parameters: platform, username, and leadId are required'
-        }),
-        { 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json' 
-          },
-          status: 400
-        }
-      );
-    }
-    
-    console.log('Starting scan for profile:', {
-      platform,
-      username,
-      leadId,
-      timestamp: new Date().toISOString()
-    });
+    console.log('Starting profile scan:', { platform, username, leadId });
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    if (!platform || !username || !leadId) {
+      throw new Error('Missing required parameters: platform, username, and leadId are required');
+    }
+
+    // Get the user_id for the lead
+    const { data: lead, error: leadError } = await supabase
+      .from('leads')
+      .select('user_id')
+      .eq('id', leadId)
+      .single();
+
+    if (leadError || !lead) {
+      console.error('Error getting lead:', leadError);
+      throw new Error('Could not find lead');
+    }
 
     let profileData;
     switch (platform.toLowerCase()) {
       case 'instagram':
-        profileData = await scanInstagramProfile(username);
+        profileData = await scanInstagramProfile(username, lead.user_id);
         break;
       case 'linkedin':
         profileData = await scanLinkedInProfile(username);
@@ -59,22 +54,18 @@ serve(async (req) => {
       throw new Error('No profile data returned from platform handler');
     }
 
-    console.log('Profile data retrieved:', profileData);
-
-    // Update lead with profile data, handling null values
-    const updateData = {
-      social_media_bio: profileData.bio,
-      social_media_followers: profileData.followers,
-      social_media_following: profileData.following,
-      social_media_engagement_rate: 0,
-      last_social_media_scan: new Date().toISOString(),
-      current_company_name: platform.toLowerCase() === 'linkedin' ? profileData.company_name : null,
-      position: platform.toLowerCase() === 'linkedin' ? profileData.position : null
-    };
-
-    const { error: updateError } = await supabaseClient
+    // Update lead with profile data
+    const { error: updateError } = await supabase
       .from('leads')
-      .update(updateData)
+      .update({
+        social_media_bio: profileData.bio,
+        social_media_followers: profileData.followers,
+        social_media_following: profileData.following,
+        social_media_engagement_rate: 0,
+        last_social_media_scan: new Date().toISOString(),
+        current_company_name: platform.toLowerCase() === 'linkedin' ? profileData.company_name : null,
+        position: platform.toLowerCase() === 'linkedin' ? profileData.position : null
+      })
       .eq('id', leadId);
 
     if (updateError) {
@@ -83,30 +74,25 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        data: profileData 
+      JSON.stringify({
+        success: true,
+        data: profileData
       }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
+
   } catch (error) {
     console.error('Error during scan:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error during scanning'
+      JSON.stringify({
+        success: false,
+        error: error.message || 'Unknown error during scanning'
       }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        },
-        status: 400
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
