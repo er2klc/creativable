@@ -5,6 +5,9 @@ import { PostHeader } from "./PostHeader";
 import { PostContent } from "./PostContent";
 import { PostMetadata } from "./PostMetadata";
 import { PostActions } from "./PostActions";
+import { motion } from "framer-motion";
+import { formatDate } from "../TimelineUtils";
+import { Image, Video, MessageCircle, Heart } from "lucide-react";
 
 interface SocialMediaPost {
   id: string;
@@ -43,13 +46,26 @@ interface SocialMediaPostProps {
 const getPostTypeColor = (type: string) => {
   switch (type?.toLowerCase()) {
     case "video":
-      return "text-#4b5563 border-cyan-500";
+      return "bg-cyan-50 border-cyan-200";
     case "image":
-      return "text-#4b5563 border-purple-500";
+      return "bg-purple-50 border-purple-200";
     case "sidecar":
-      return "text-#4b5563 border-amber-500";
+      return "bg-amber-50 border-amber-200";
     default:
-      return "text-#4b5563 border-gray-500";
+      return "bg-gray-50 border-gray-200";
+  }
+};
+
+const getPostTypeIcon = (type: string) => {
+  switch (type?.toLowerCase()) {
+    case "video":
+      return <Video className="h-5 w-5 text-cyan-500" />;
+    case "image":
+      return <Image className="h-5 w-5 text-purple-500" />;
+    case "sidecar":
+      return <MessageCircle className="h-5 w-5 text-amber-500" />;
+    default:
+      return <Heart className="h-5 w-5 text-gray-500" />;
   }
 };
 
@@ -82,44 +98,66 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
   return (
-    <div className="flex gap-4 items-start ml-4 relative">
-      <div className="absolute left-4 top-8 bottom-0 w-[2px] bg-gray-200" />
-      <div className="absolute left-8 top-4 w-4 h-0.5 bg-gray-400" />
-
-      <div className="flex flex-1 gap-4">
-        {mediaUrls.length > 0 && (
-          <div className="w-1/3 min-w-[200px]">
-            <MediaDisplay 
-              mediaUrls={mediaUrls} 
-              hasVideo={hasVideo} 
-              isSidecar={isSidecar} 
-            />
-          </div>
-        )}
-
-        <Card className={cn("flex-1 overflow-hidden border p-4", postTypeColor)}>
-          <PostHeader 
-            timestamp={post.timestamp || post.posted_at || ''} 
-            type={post.type || post.post_type || ''} 
-            postTypeColor={postTypeColor}
-          />
-
-          <PostContent 
-            content={post.content} 
-            caption={post.caption}
-            hashtags={post.hashtags}
-          />
-
-          <PostMetadata 
-            likesCount={post.likesCount} 
-            commentsCount={post.commentsCount}
-            location={post.location}
-            locationName={post.locationName}
-          />
-
-          <PostActions url={post.url} />
-        </Card>
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="flex flex-col gap-1"
+    >
+      {/* Date above the card */}
+      <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
+        {formatDate(post.timestamp || post.posted_at || '')}
       </div>
-    </div>
+      
+      <div className="flex gap-4 items-start group relative">
+        {/* Circle with Icon */}
+        <div className="relative">
+          <div className={cn(
+            "w-8 h-8 rounded-full flex items-center justify-center",
+            postTypeColor.replace('bg-', 'bg-').replace('border-', 'border-')
+          )}>
+            {getPostTypeIcon(post.media_type || post.type || post.post_type)}
+          </div>
+        </div>
+        
+        {/* Connecting Line to Card */}
+        <div className="absolute left-8 top-4 w-4 h-0.5 bg-gray-200" />
+        
+        <div className="flex flex-1 gap-4">
+          {mediaUrls.length > 0 && (
+            <div className="w-1/3 min-w-[200px]">
+              <MediaDisplay 
+                mediaUrls={mediaUrls} 
+                hasVideo={hasVideo} 
+                isSidecar={isSidecar} 
+              />
+            </div>
+          )}
+
+          <Card className={cn("flex-1 p-4 text-sm", postTypeColor)}>
+            <PostHeader 
+              timestamp={post.timestamp || post.posted_at || ''} 
+              type={post.type || post.post_type || ''} 
+              postTypeColor={postTypeColor}
+            />
+
+            <PostContent 
+              content={post.content} 
+              caption={post.caption}
+              hashtags={post.hashtags}
+            />
+
+            <PostMetadata 
+              likesCount={post.likesCount} 
+              commentsCount={post.commentsCount}
+              location={post.location}
+              locationName={post.locationName}
+            />
+
+            <PostActions url={post.url} />
+          </Card>
+        </div>
+      </div>
+    </motion.div>
   );
 };

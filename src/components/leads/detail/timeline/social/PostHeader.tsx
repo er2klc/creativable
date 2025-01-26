@@ -7,12 +7,9 @@ interface PostHeaderProps {
   postTypeColor: string;
 }
 
-export const PostHeader = ({ timestamp, type, postTypeColor }: PostHeaderProps) => {
+export const PostHeader = ({ type, postTypeColor }: PostHeaderProps) => {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-sm text-muted-foreground">
-        {timestamp && format(new Date(timestamp), "PPp", { locale: de })}
-      </span>
+    <div className="flex items-center justify-between mb-2">
       <span className={`text-xs px-2 py-1 rounded-full border ${postTypeColor}`}>
         {type || "Post"}
       </span>
