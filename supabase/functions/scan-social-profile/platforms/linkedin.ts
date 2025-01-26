@@ -1,5 +1,5 @@
-import { SocialMediaStats } from "../_shared/social-media-utils.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { SocialMediaStats } from "../_shared/social-media-utils.ts";
 
 export async function scanLinkedInProfile(username: string): Promise<SocialMediaStats> {
   console.log('Scanning LinkedIn profile for:', username);

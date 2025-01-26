@@ -6,6 +6,9 @@ export interface SocialMediaStats {
   connections?: number;
   isPrivate?: boolean;
   headline?: string;
+  name?: string;
+  company_name?: string;
+  position?: string;
 }
 
 export interface SocialMediaPost {
