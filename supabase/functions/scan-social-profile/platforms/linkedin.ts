@@ -18,7 +18,7 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
 
     if (secretError || !secrets?.value) {
       console.error('Error getting Apify API key:', secretError);
-      throw new Error('Could not retrieve Apify API key. Please make sure it is configured in the secrets.');
+      throw new Error('Could not retrieve Apify API key');
     }
 
     const apiKey = secrets.value;
@@ -41,7 +41,7 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        url: linkedInUrl,
+        startUrls: [{ url: linkedInUrl }],
         maxConcurrency: 1,
         maxPagesPerCrawl: 1,
         proxyConfiguration: {
@@ -91,17 +91,14 @@ export async function scanLinkedInProfile(username: string): Promise<SocialMedia
         const profileData = items[0];
         console.log('LinkedIn profile data retrieved:', profileData);
 
-        // Validate and transform the data
         return {
           bio: profileData.summary || profileData.description || null,
-          connections: typeof profileData.connections === 'number' ? profileData.connections : null,
-          headline: profileData.headline || null,
+          followers: null, // LinkedIn API doesn't provide this
+          following: null, // LinkedIn API doesn't provide this
+          posts: null, // LinkedIn API doesn't provide this
           name: profileData.name || null,
           company_name: profileData.currentCompany || null,
           position: profileData.currentPosition || null,
-          followers: null,
-          following: null,
-          posts: null,
           isPrivate: false
         };
       }

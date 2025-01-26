@@ -18,8 +18,11 @@ export async function scanInstagramProfile(username: string): Promise<SocialMedi
       .single();
 
     if (authError || !authStatus?.access_token) {
+      console.error('Error getting Instagram access token:', authError);
       throw new Error('No valid Instagram access token found');
     }
+
+    console.log('Successfully retrieved Instagram access token');
 
     // First, we need to search for the user's Instagram Business Account ID
     const businessAccountResponse = await fetch(
@@ -27,7 +30,8 @@ export async function scanInstagramProfile(username: string): Promise<SocialMedi
     );
 
     if (!businessAccountResponse.ok) {
-      console.error('Error getting Instagram business account:', await businessAccountResponse.text());
+      const errorText = await businessAccountResponse.text();
+      console.error('Error getting Instagram business account:', errorText);
       throw new Error('Could not find Instagram business account');
     }
 
@@ -40,7 +44,8 @@ export async function scanInstagramProfile(username: string): Promise<SocialMedi
     );
 
     if (!profileResponse.ok) {
-      console.error('Error getting Instagram profile data:', await profileResponse.text());
+      const errorText = await profileResponse.text();
+      console.error('Error getting Instagram profile data:', errorText);
       throw new Error('Could not get Instagram profile data');
     }
 
@@ -56,6 +61,6 @@ export async function scanInstagramProfile(username: string): Promise<SocialMedi
     };
   } catch (error) {
     console.error('Error scanning Instagram profile:', error);
-    return {};
+    throw error;
   }
 }

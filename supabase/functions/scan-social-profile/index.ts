@@ -68,9 +68,7 @@ serve(async (req) => {
       social_media_following: profileData.following,
       social_media_engagement_rate: 0,
       last_social_media_scan: new Date().toISOString(),
-      linkedin_headline: platform.toLowerCase() === 'linkedin' ? profileData.headline : null,
-      linkedin_connections: platform.toLowerCase() === 'linkedin' ? profileData.connections : null,
-      company_name: platform.toLowerCase() === 'linkedin' ? profileData.company_name : null,
+      current_company_name: platform.toLowerCase() === 'linkedin' ? profileData.company_name : null,
       position: platform.toLowerCase() === 'linkedin' ? profileData.position : null
     };
 
