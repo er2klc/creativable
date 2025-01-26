@@ -2,10 +2,10 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadDetailHeader } from "@/components/leads/detail/header/LeadDetailHeader";
+import { LeadDetailHeader } from "@/components/leads/detail/LeadDetailHeader";
 import { useLeadSubscription } from "@/components/leads/detail/hooks/useLeadSubscription";
 import { LeadWithRelations } from "@/components/leads/detail/types/lead";
-import { LeadDetailContent } from "@/components/leads/detail/components/LeadDetailContent";
+import { LeadDetailContent } from "@/components/leads/detail/LeadDetailContent";
 import { useLeadMutations } from "@/components/leads/detail/hooks/useLeadMutations";
 
 interface LeadDetailViewProps {
@@ -30,7 +30,13 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
       const { data, error } = await supabase
         .from("leads")
-        .select("*, messages(*), tasks(*), notes(*), lead_files(*)")
+        .select(`
+          *,
+          messages (*),
+          tasks (*),
+          notes (*),
+          lead_files (*)
+        `)
         .eq("id", leadId)
         .maybeSingle();
 
@@ -46,8 +52,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
   });
 
   const { updateLeadMutation, deleteLeadMutation } = useLeadMutations(leadId, onClose);

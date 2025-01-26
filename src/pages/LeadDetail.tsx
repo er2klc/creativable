@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { LeadDetailHeader } from "@/components/leads/detail/header/LeadDetailHeader";
+import { LeadDetailHeader } from "@/components/leads/detail/LeadDetailHeader";
 import { LeadSummary } from "@/components/leads/detail/LeadSummary";
 import { LeadInfoCard } from "@/components/leads/detail/LeadInfoCard";
 import { LeadDetailTabs } from "@/components/leads/detail/LeadDetailTabs";
