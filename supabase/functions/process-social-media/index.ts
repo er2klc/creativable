@@ -12,8 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    const { mediaType, mediaUrl, leadId, platform } = await req.json();
-    console.log('Processing media:', { mediaType, platform, leadId });
+    const { mediaType, mediaUrl, leadId, platform, postId } = await req.json();
+    console.log('Processing media:', { mediaType, platform, leadId, postId });
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -22,7 +22,10 @@ serve(async (req) => {
 
     // Download media
     const response = await fetch(mediaUrl);
-    if (!response.ok) throw new Error('Failed to fetch media');
+    if (!response.ok) {
+      console.error('Failed to fetch media:', response.statusText);
+      throw new Error('Failed to fetch media');
+    }
     
     const blob = await response.arrayBuffer();
     const timestamp = new Date().getTime();
@@ -32,9 +35,15 @@ serve(async (req) => {
     let filePath = '';
 
     if (platform === 'Instagram') {
+      // Use contact-avatars bucket for profile images
       bucketName = mediaType === 'profile' ? 'contact-avatars' : 'social-media-files';
+      
+      // Generate unique file path using postId if available
       const fileExt = mediaType === 'video' ? 'mp4' : 'jpg';
-      filePath = `instagram/${leadId}/${timestamp}.${fileExt}`;
+      const fileIdentifier = postId || timestamp;
+      filePath = `instagram/${leadId}/${fileIdentifier}.${fileExt}`;
+      
+      console.log('Instagram media path:', { bucketName, filePath });
     } else if (platform === 'LinkedIn') {
       bucketName = mediaType === 'profile' ? 'contact-avatars' : 'linkedin-media';
       const fileExt = mediaType === 'video' ? 'mp4' : 'jpg';
@@ -64,6 +73,23 @@ serve(async (req) => {
       .getPublicUrl(filePath);
 
     console.log('Media processed and stored:', publicUrl);
+
+    // If this is an Instagram post image, update the social_media_posts table
+    if (platform === 'Instagram' && postId && mediaType !== 'profile') {
+      const { error: updateError } = await supabase
+        .from('social_media_posts')
+        .update({
+          local_media_paths: [filePath],
+          media_urls: [publicUrl]
+        })
+        .eq('id', postId)
+        .eq('lead_id', leadId);
+
+      if (updateError) {
+        console.error('Error updating social media post:', updateError);
+        throw updateError;
+      }
+    }
 
     return new Response(
       JSON.stringify({ 
