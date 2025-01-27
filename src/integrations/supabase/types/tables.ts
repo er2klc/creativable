@@ -76,12 +76,12 @@ export interface Tables {
       created_at?: string | null;
       id?: string;
       keyword: string;
-      user_id: string;
+      user_id?: string;
     };
     Relationships: [];
   };
 
-leads: {
+  leads: {
     Row: {
       id: string;
       user_id: string;
@@ -126,9 +126,9 @@ leads: {
       target_audience?: string | null;
       usp?: string | null;
       business_description?: string | null;
-      phone_number?: string | null;
-      email?: string | null;
-      contact_type?: string | null;
+      phone_number?: string;
+      email?: string;
+      contact_type?: string;
       social_media_posts?: Json | null;
       social_media_interests?: string[] | null;
       social_media_bio?: string | null;
@@ -153,9 +153,9 @@ leads: {
       target_audience?: string | null;
       usp?: string | null;
       business_description?: string | null;
-      phone_number?: string | null;
-      email?: string | null;
-      contact_type?: string | null;
+      phone_number?: string;
+      email?: string;
+      contact_type?: string;
       social_media_posts?: Json | null;
       social_media_interests?: string[] | null;
       social_media_bio?: string | null;
@@ -237,7 +237,7 @@ leads: {
     Update: {
       id?: string;
       pipeline_id: string;
-      name: string;
+      name?: string;
       order_index?: number;
       created_at?: string | null;
       updated_at?: string | null;
@@ -252,5 +252,64 @@ leads: {
       }
     ];
   };
-}
 
+  social_media_scan_history: {
+    Row: {
+      id: string;
+      lead_id: string | null;
+      platform: string;
+      scanned_at: string | null;
+      followers_count: number | null;
+      following_count: number | null;
+      posts_count: number | null;
+      engagement_rate: number | null;
+      success: boolean | null;
+      error_message: string | null;
+      profile_data: Json | null;
+      experience: Json | null;
+      education: Json | null;
+      skills: Json | null;
+      certifications: Json | null;
+      languages: Json | null;
+      recommendations: Json | null;
+    };
+    Insert: {
+      id?: string;
+      lead_id?: string | null;
+      platform: string;
+      scanned_at?: string | null;
+      followers_count?: number | null;
+      following_count?: number | null;
+      posts_count?: number | null;
+      engagement_rate?: number | null;
+      success?: boolean | null;
+      error_message?: string | null;
+      profile_data?: Json | null;
+      experience?: Json | null;
+      education?: Json | null;
+      skills?: Json | null;
+      certifications?: Json | null;
+      languages?: Json | null;
+      recommendations?: Json | null;
+    };
+    Update: {
+      id?: string;
+      lead_id?: string | null;
+      platform?: string;
+      scanned_at?: string | null;
+      followers_count?: number | null;
+      following_count?: number | null;
+      posts_count?: number | null;
+      engagement_rate?: number | null;
+      success?: boolean | null;
+      error_message?: string | null;
+      profile_data?: Json | null;
+      experience?: Json | null;
+      education?: Json | null;
+      skills?: Json | null;
+      certifications?: Json | null;
+      languages?: Json | null;
+      recommendations?: Json | null;
+    };
+  };
+}

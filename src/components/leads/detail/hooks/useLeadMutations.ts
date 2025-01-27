@@ -50,12 +50,12 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
 
       const relatedTables = [
         'contact_group_states',
-        'instagram_scan_history',
         'lead_files',
         'lead_subscriptions',
         'messages',
         'notes',
-        'tasks'
+        'tasks',
+        'social_media_scan_history'
       ] as const;
 
       // Delete related records first
@@ -79,10 +79,7 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         .delete()
         .eq('id', leadId);
 
-      if (error) {
-        console.error("Error deleting lead:", error);
-        throw error;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success(

@@ -42,7 +42,9 @@ serve(async (req) => {
 
     console.log('Starting Apify scraping run');
 
-    const runResponse = await fetch(`${BASE_URL}/acts/apify~instagram-profile-scraper/runs`, {
+    // Log the full request being sent to Apify
+    const apifyRequest = {
+      url: `${BASE_URL}/acts/apify~instagram-profile-scraper/runs`,
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -51,11 +53,23 @@ serve(async (req) => {
       body: JSON.stringify({
         usernames: [username]
       })
+    };
+    console.log('Apify request:', JSON.stringify(apifyRequest, null, 2));
+
+    const runResponse = await fetch(apifyRequest.url, {
+      method: apifyRequest.method,
+      headers: apifyRequest.headers,
+      body: apifyRequest.body
     })
 
     if (!runResponse.ok) {
-      console.error('Error starting Apify run:', await runResponse.text());
-      throw new Error(`HTTP error! status: ${runResponse.status}`)
+      const errorText = await runResponse.text();
+      console.error('Error starting Apify run:', {
+        status: runResponse.status,
+        statusText: runResponse.statusText,
+        body: errorText
+      });
+      throw new Error(`HTTP error! status: ${runResponse.status}, body: ${errorText}`)
     }
 
     const runData = await runResponse.json()
@@ -76,8 +90,13 @@ serve(async (req) => {
       })
 
       if (!datasetResponse.ok) {
-        console.error('Error fetching dataset:', await datasetResponse.text());
-        throw new Error(`HTTP error! status: ${datasetResponse.status}`)
+        const errorText = await datasetResponse.text();
+        console.error('Error fetching dataset:', {
+          status: datasetResponse.status,
+          statusText: datasetResponse.statusText,
+          body: errorText
+        });
+        throw new Error(`HTTP error! status: ${datasetResponse.status}, body: ${errorText}`)
       }
 
       const items = await datasetResponse.json()
@@ -204,19 +223,21 @@ serve(async (req) => {
           }
         }
 
-        const { error: historyError } = await supabaseClient
-          .from('instagram_scan_history')
+        const { error: scanHistoryError } = await supabaseClient
+          .from('social_media_scan_history')
           .insert({
             lead_id: leadId,
+            platform: platform,
             followers_count: parseInt(profileData.followersCount) || 0,
             following_count: parseInt(profileData.followsCount) || 0,
             posts_count: profileData.latestPosts?.length || 0,
             engagement_rate: engagementRate,
-            success: true
+            success: true,
+            profile_data: profileData
           })
 
-        if (historyError) {
-          console.error('Error storing scan history:', historyError);
+        if (scanHistoryError) {
+          console.error('Error storing scan history:', scanHistoryError);
         }
 
         return new Response(
