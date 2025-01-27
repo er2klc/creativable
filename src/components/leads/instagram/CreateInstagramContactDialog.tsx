@@ -86,12 +86,15 @@ export function CreateInstagramContactDialog({
     console.log('Starting progress polling for lead:', leadId);
     let lastProgress = 0;
     let mediaStarted = false;
+    let totalMediaFiles = 0;
+    let processedMediaFiles = 0;
     
     const interval = setInterval(async () => {
       try {
+        // Get latest progress and media info
         const { data: posts, error } = await supabase
           .from('social_media_posts')
-          .select('processing_progress, bucket_path')
+          .select('processing_progress, bucket_path, media_urls')
           .eq('lead_id', leadId)
           .order('processing_progress', { ascending: false })
           .limit(1)
@@ -105,28 +108,36 @@ export function CreateInstagramContactDialog({
         const currentProgress = posts?.processing_progress ?? lastProgress;
         console.log('Current progress:', currentProgress);
         
-        // Update scan progress
+        // Phase 1: Profile Scanning
         if (currentProgress < 100) {
           setScanProgress(currentProgress);
           lastProgress = currentProgress;
         } else {
           setScanProgress(100);
           
-          // Start media phase if not already started
-          if (!mediaStarted) {
+          // Transition to Phase 2: Media Saving
+          if (!mediaStarted && posts?.media_urls) {
             mediaStarted = true;
-            setMediaProgress(0); // Reset media progress when starting
+            totalMediaFiles = posts.media_urls.length;
+            setMediaProgress(0);
+            console.log(`Starting media phase, total files: ${totalMediaFiles}`);
           }
           
-          // Update media progress and file info
+          // Update media progress based on saved files
           if (posts?.bucket_path) {
+            processedMediaFiles++;
             setCurrentFile(posts.bucket_path);
-            setMediaProgress((prev) => Math.min(prev + 10, 100));
+            const mediaProgressPercent = Math.min(
+              Math.round((processedMediaFiles / totalMediaFiles) * 100),
+              100
+            );
+            setMediaProgress(mediaProgressPercent);
+            console.log(`Media progress: ${mediaProgressPercent}%, File: ${posts.bucket_path}`);
           }
         }
         
-        // Clear interval when both phases are complete
-        if (currentProgress >= 100 && mediaProgress >= 100) {
+        // Complete when both phases are done
+        if (currentProgress >= 100 && (mediaProgress >= 100 || totalMediaFiles === 0)) {
           console.log('Processing completed');
           clearInterval(interval);
         }
