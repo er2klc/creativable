@@ -88,6 +88,7 @@ export function CreateInstagramContactDialog({
     let mediaStarted = false;
     let totalMediaFiles = 0;
     let processedMediaFiles = 0;
+    let simulationInterval: NodeJS.Timeout | null = null;
     
     const interval = setInterval(async () => {
       try {
@@ -110,7 +111,21 @@ export function CreateInstagramContactDialog({
         
         // Phase 1: Profile Scanning
         if (currentProgress < 100) {
-          setScanProgress(currentProgress);
+          if (currentProgress >= 27 && currentProgress < 100 && !simulationInterval) {
+            // Start simulating progress from 27% to 100%
+            let simulatedProgress = currentProgress;
+            simulationInterval = setInterval(() => {
+              simulatedProgress = Math.min(simulatedProgress + 2, 100);
+              setScanProgress(simulatedProgress);
+              
+              if (simulatedProgress >= 100) {
+                clearInterval(simulationInterval!);
+                simulationInterval = null;
+              }
+            }, 100);
+          } else if (currentProgress < 27) {
+            setScanProgress(currentProgress);
+          }
           lastProgress = currentProgress;
         } else {
           setScanProgress(100);
@@ -140,6 +155,9 @@ export function CreateInstagramContactDialog({
         if (currentProgress >= 100 && (mediaProgress >= 100 || totalMediaFiles === 0)) {
           console.log('Processing completed');
           clearInterval(interval);
+          if (simulationInterval) {
+            clearInterval(simulationInterval);
+          }
         }
       } catch (err) {
         console.error('Error in progress polling:', err);
@@ -149,6 +167,9 @@ export function CreateInstagramContactDialog({
     return () => {
       console.log('Cleaning up progress polling');
       clearInterval(interval);
+      if (simulationInterval) {
+        clearInterval(simulationInterval);
+      }
     };
   };
 
