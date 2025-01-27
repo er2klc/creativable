@@ -51,7 +51,7 @@ export default function LeadDetail() {
   });
 
   const updateLeadMutation = useMutation({
-    mutationFn: async (updates: Partial<Tables<"leads">>) => {
+    mutationFn: async (updates: Partial<Tables["leads"]["Row"]>) => {
       if (!leadId) {
         throw new Error("No lead ID provided");
       }
@@ -95,7 +95,7 @@ export default function LeadDetail() {
         'notes',
         'lead_files',
         'contact_group_states',
-        'instagram_scan_history',
+        'social_media_scan_history',
         'lead_subscriptions'
       ] as const;
 

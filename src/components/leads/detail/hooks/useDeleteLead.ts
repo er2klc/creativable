@@ -16,7 +16,7 @@ export const useDeleteLead = (leadId: string | null, onClose: () => void) => {
 
       const relatedTables = [
         'contact_group_states',
-        'instagram_scan_history',
+        'social_media_scan_history',
         'lead_files',
         'lead_subscriptions',
         'messages',
