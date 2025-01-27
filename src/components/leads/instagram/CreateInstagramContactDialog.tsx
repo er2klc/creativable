@@ -91,114 +91,116 @@ export function CreateInstagramContactDialog({
   });
 
   // Progress polling function with improved phase management
-  const pollProgress = async (leadId: string) => {
-    console.log('Starting progress polling for lead:', leadId);
-    let lastProgress = 0;
-    let mediaStarted = false;
-    let totalMediaFiles = 0;
-    let processedMediaFiles = 0;
-    let simulationInterval: NodeJS.Timeout | null = null;
-    let isPollingActive = true;
-    let isPhaseOneComplete = false;
-    
-    const interval = setInterval(async () => {
-      if (!isPollingActive) {
-        clearInterval(interval);
-        if (simulationInterval) clearInterval(simulationInterval);
+
+const pollProgress = async (leadId: string) => {
+  console.log('Starting progress polling for lead:', leadId);
+  let lastProgress = 0;
+  let mediaStarted = false;
+  let totalMediaFiles = 0;
+  let processedMediaFiles = 0;
+  let simulationInterval: NodeJS.Timeout | null = null;
+  let isPollingActive = true;
+  let isPhaseOneComplete = false;
+  
+  const interval = setInterval(async () => {
+    if (!isPollingActive) {
+      clearInterval(interval);
+      if (simulationInterval) clearInterval(simulationInterval);
+      return;
+    }
+
+    try {
+      // Get latest progress and media info
+      const { data: posts, error } = await supabase
+        .from('social_media_posts')
+        .select('processing_progress, bucket_path, media_urls')
+        .eq('lead_id', leadId)
+        .order('processing_progress', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error polling progress:', error);
         return;
       }
 
-      try {
-        // Get latest progress and media info
-        const { data: posts, error } = await supabase
-          .from('social_media_posts')
-          .select('processing_progress, bucket_path, media_urls')
-          .eq('lead_id', leadId)
-          .order('processing_progress', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error polling progress:', error);
-          return;
-        }
-
-        const currentProgress = posts?.processing_progress ?? lastProgress;
-        console.log('Current progress:', currentProgress, 'Current Phase:', currentPhase, 'Phase One Complete:', isPhaseOneComplete);
-        
-        // Phase 1: Profile Scanning
-        if (currentPhase === 1 && !isPhaseOneComplete) {
-          if (currentProgress >= 27 && currentProgress < 100 && !simulationInterval) {
-            // Start simulating progress from 27% to 100%
-            let simulatedProgress = currentProgress;
-            simulationInterval = setInterval(() => {
-              simulatedProgress = Math.min(simulatedProgress + 2, 100);
-              setScanProgress(simulatedProgress);
-              
-              if (simulatedProgress >= 100) {
-                clearInterval(simulationInterval!);
-                simulationInterval = null;
-                isPhaseOneComplete = true;
-                setCurrentPhase(2); // Switch to Phase 2
-                console.log('Phase 1 completed, transitioning to Phase 2');
-              }
-            }, 100);
-          } else if (currentProgress < 27) {
-            setScanProgress(currentProgress);
-          }
-          lastProgress = currentProgress;
-        }
-        
-        // Phase 2: Media Saving
-        if (currentPhase === 2 || isPhaseOneComplete) {
-          if (!mediaStarted && posts?.media_urls) {
-            mediaStarted = true;
-            totalMediaFiles = posts.media_urls.length;
-            setMediaProgress(0);
-            console.log(`Starting media phase, total files: ${totalMediaFiles}`);
+      const currentProgress = posts?.processing_progress ?? lastProgress;
+      console.log('Current progress:', currentProgress, 'Current Phase:', currentPhase, 'Phase One Complete:', isPhaseOneComplete);
+      
+      // Phase 1: Profile Scanning
+      if (currentPhase === 1 && !isPhaseOneComplete) {
+        if (currentProgress >= 27 && currentProgress < 100 && !simulationInterval) {
+          // Start simulating progress from 27% to 100%
+          let simulatedProgress = currentProgress;
+          simulationInterval = setInterval(() => {
+            simulatedProgress = Math.min(simulatedProgress + 2, 100);
+            setScanProgress(simulatedProgress);
             
-            if (totalMediaFiles === 0) {
-              setCurrentFile("No media files to process");
-              setMediaProgress(100);
-              isPollingActive = false;
-              clearInterval(interval);
-              return;
+            if (simulatedProgress >= 100) {
+              clearInterval(simulationInterval!);
+              simulationInterval = null;
+              isPhaseOneComplete = true;
+              setCurrentPhase(2); // Switch to Phase 2
+              console.log('Phase 1 completed, transitioning to Phase 2');
             }
-          }
+          }, 100);
+        } else if (currentProgress < 27) {
+          setScanProgress(currentProgress);
+        }
+        lastProgress = currentProgress;
+      }
+      
+      // Phase 2: Media Saving
+      if (currentPhase === 2 || isPhaseOneComplete) {
+        if (!mediaStarted && posts?.media_urls) {
+          mediaStarted = true;
+          totalMediaFiles = posts.media_urls.length;
+          processedMediaFiles = 0;
+          setMediaProgress(0);
+          console.log(`Starting media phase, total files: ${totalMediaFiles}`);
           
-          // Update media progress based on saved files
-          if (posts?.bucket_path) {
-            processedMediaFiles++;
-            setCurrentFile(posts.bucket_path);
-            const mediaProgressPercent = Math.min(
-              Math.round((processedMediaFiles / (totalMediaFiles || 1)) * 100),
-              100
-            );
-            setMediaProgress(mediaProgressPercent);
-            console.log(`Media progress: ${mediaProgressPercent}%, File: ${posts.bucket_path}`);
-
-            // If all files processed, complete Phase 2
-            if (mediaProgressPercent >= 100) {
-              console.log('Media processing completed');
-              isPollingActive = false;
-              clearInterval(interval);
-            }
+          if (totalMediaFiles === 0) {
+            setCurrentFile("No media files to process");
+            setMediaProgress(100);
+            isPollingActive = false;
+            clearInterval(interval);
+            return;
           }
         }
-      } catch (err) {
-        console.error('Error in progress polling:', err);
-      }
-    }, 1000);
+        
+        // Update media progress based on saved files
+        if (posts?.bucket_path) {
+          processedMediaFiles++;
+          setCurrentFile(posts.bucket_path);
+          const mediaProgressPercent = Math.min(
+            Math.round((processedMediaFiles / (totalMediaFiles || 1)) * 100),
+            100
+          );
+          setMediaProgress(mediaProgressPercent);
+          console.log(`Media progress: ${mediaProgressPercent}%, File: ${posts.bucket_path}`);
 
-    return () => {
-      console.log('Cleaning up progress polling');
-      isPollingActive = false;
-      clearInterval(interval);
-      if (simulationInterval) {
-        clearInterval(simulationInterval);
+          // If all files processed, complete Phase 2
+          if (mediaProgressPercent >= 100) {
+            console.log('Media processing completed');
+            isPollingActive = false;
+            clearInterval(interval);
+          }
+        }
       }
-    };
+    } catch (err) {
+      console.error('Error in progress polling:', err);
+    }
+  }, 1000);
+
+  return () => {
+    console.log('Cleaning up progress polling');
+    isPollingActive = false;
+    clearInterval(interval);
+    if (simulationInterval) {
+      clearInterval(simulationInterval);
+    }
   };
+};
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
