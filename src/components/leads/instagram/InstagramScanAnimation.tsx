@@ -11,8 +11,10 @@ export const InstagramScanAnimation = ({ progress }: InstagramScanAnimationProps
   const controls = useAnimation();
 
   useEffect(() => {
+    let isActive = true;
+
     const animate = async () => {
-      while (true) {
+      while (isActive) {
         // Generate random angle and radius for circular motion around Instagram logo
         const angle = Math.random() * 2 * Math.PI;
         const radius = 40 + Math.random() * 20; // Random radius between 40-60px
@@ -32,10 +34,12 @@ export const InstagramScanAnimation = ({ progress }: InstagramScanAnimationProps
       }
     };
     
+    // Start animation after component is mounted
     animate();
 
     // Cleanup animation on unmount
     return () => {
+      isActive = false;
       controls.stop();
     };
   }, [controls]);
@@ -57,7 +61,7 @@ export const InstagramScanAnimation = ({ progress }: InstagramScanAnimationProps
           initial={{ x: 0, y: 0 }}
           style={{ left: '50%', top: '50%' }}
         >
-          <Search className="w-10 h-10 text-blue-500" /> {/* Increased size */}
+          <Search className="w-10 h-10 text-blue-500" />
         </motion.div>
 
         {/* Progress Bar */}

@@ -79,22 +79,33 @@ export function CreateInstagramContactDialog({
     },
   });
 
-  // Progress polling function with improved error handling
+  // Progress polling function with improved error handling and debugging
   const pollProgress = async (leadId: string) => {
     const interval = setInterval(async () => {
-      const { data: posts, error } = await supabase
-        .from('social_media_posts')
-        .select('processing_progress')
-        .eq('lead_id', leadId)
-        .order('processing_progress', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      try {
+        const { data: posts, error } = await supabase
+          .from('social_media_posts')
+          .select('processing_progress')
+          .eq('lead_id', leadId)
+          .order('processing_progress', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      if (!error) {
-        setScanProgress(posts?.processing_progress || 0);
-        if (posts?.processing_progress >= 100) {
-          clearInterval(interval);
+        console.log('Progress poll response:', { posts, error }); // Debug log
+
+        if (!error) {
+          const currentProgress = posts?.processing_progress ?? 0;
+          console.log('Current progress:', currentProgress); // Debug log
+          setScanProgress(currentProgress);
+          
+          if (currentProgress >= 100) {
+            clearInterval(interval);
+          }
+        } else {
+          console.error('Error polling progress:', error);
         }
+      } catch (err) {
+        console.error('Error in progress polling:', err);
       }
     }, 1000);
 
