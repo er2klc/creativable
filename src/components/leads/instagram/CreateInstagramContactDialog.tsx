@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { useQuery } from "@tanstack/react-query";
 import { InstagramScanAnimation } from "./InstagramScanAnimation";
-import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle } from "lucide-react";
 
@@ -95,7 +94,6 @@ export function CreateInstagramContactDialog({
           .select('processing_progress, bucket_path, media_urls, current_file, media_processing_status')
           .eq('lead_id', leadId)
           .order('processing_progress', { ascending: false })
-          .limit(1)
           .single();
 
         if (error) {

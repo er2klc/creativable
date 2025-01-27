@@ -1436,6 +1436,7 @@ export type Database = {
           comments_count: number | null
           content: string | null
           created_at: string | null
+          current_file: string | null
           engagement_count: number | null
           error_message: string | null
           first_comment: string | null
@@ -1465,6 +1466,7 @@ export type Database = {
           comments_count?: number | null
           content?: string | null
           created_at?: string | null
+          current_file?: string | null
           engagement_count?: number | null
           error_message?: string | null
           first_comment?: string | null
@@ -1494,6 +1496,7 @@ export type Database = {
           comments_count?: number | null
           content?: string | null
           created_at?: string | null
+          current_file?: string | null
           engagement_count?: number | null
           error_message?: string | null
           first_comment?: string | null
