@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,10 +6,10 @@ import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
-import { useQuery } from "@tanstack/react-query";
-import { InstagramScanAnimation } from "./InstagramScanAnimation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { InstagramScanAnimation } from "./InstagramScanAnimation";
 
 interface CreateInstagramContactDialogProps {
   open: boolean;
@@ -29,12 +29,13 @@ export function CreateInstagramContactDialog({
   const [mediaProgress, setMediaProgress] = useState(0);
   const [currentFile, setCurrentFile] = useState<string>();
   const [currentPhase, setCurrentPhase] = useState<1 | 2>(1);
-  const [isSuccess, setIsSuccess] = useState(false);
   const [isPhaseOneComplete, setIsPhaseOneComplete] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [isMediaProcessingActive, setIsMediaProcessingActive] = useState(false);
   const [username, setUsername] = useState("");
   const { settings } = useSettings();
   const phaseOneCompletedRef = useRef(false);
+  const lastProgressRef = useRef(0);
 
   const { data: defaultPipeline } = useQuery({
     queryKey: ["default-pipeline"],
@@ -104,8 +105,15 @@ export function CreateInstagramContactDialog({
         if (!latestPost) return;
 
         const currentProgress = latestPost.processing_progress ?? lastProgress;
-        console.log('Current progress:', currentProgress, 'Current Phase:', currentPhase, 'Phase One Complete:', isPhaseOneComplete);
+        console.log('Current progress:', currentProgress, 'Current Phase:', currentPhase, 'Phase One Complete:', isPhaseOneComplete, 'Ref Complete:', phaseOneCompletedRef.current);
         
+        // Prevent progress from going backwards
+        if (currentProgress < lastProgressRef.current && !phaseOneCompletedRef.current) {
+          console.log('Preventing progress regression:', currentProgress, 'using last progress:', lastProgressRef.current);
+          return;
+        }
+        lastProgressRef.current = currentProgress;
+
         // Phase 1: Profile Scanning - Only if not completed yet
         if (currentPhase === 1 && !phaseOneCompletedRef.current) {
           if (currentProgress >= 27 && currentProgress < 100 && !simulationInterval) {
