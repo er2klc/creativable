@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
@@ -13,7 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { InstagramScanAnimation } from "./InstagramScanAnimation";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle } from "lucide-react";
 
 const formSchema = z.object({
   username: z.string().min(1, "Username ist erforderlich"),
@@ -37,6 +37,7 @@ export function CreateInstagramContactDialog({
   const [mediaProgress, setMediaProgress] = useState(0);
   const [currentFile, setCurrentFile] = useState<string>();
   const [currentPhase, setCurrentPhase] = useState<1 | 2>(1);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [duplicateError, setDuplicateError] = useState<{
     phaseName: string;
     createdAt: string;
@@ -44,7 +45,6 @@ export function CreateInstagramContactDialog({
   } | null>(null);
   const { settings } = useSettings();
 
-  // Fetch default pipeline if none provided
   const { data: defaultPipeline } = useQuery({
     queryKey: ["default-pipeline"],
     queryFn: async () => {
@@ -90,123 +90,127 @@ export function CreateInstagramContactDialog({
     },
   });
 
-  // Progress polling function with improved phase management
-
-const pollProgress = async (leadId: string) => {
-  console.log('Starting progress polling for lead:', leadId);
-  let lastProgress = 0;
-  let mediaStarted = false;
-  let totalMediaFiles = 0;
-  let processedMediaFiles = 0;
-  let simulationInterval: NodeJS.Timeout | null = null;
-  let isPollingActive = true;
-  let isPhaseOneComplete = false;
-  
-  const interval = setInterval(async () => {
-    if (!isPollingActive) {
-      clearInterval(interval);
-      if (simulationInterval) clearInterval(simulationInterval);
-      return;
-    }
-
-    try {
-      // Get latest progress and media info
-      const { data: posts, error } = await supabase
-        .from('social_media_posts')
-        .select('processing_progress, bucket_path, media_urls')
-        .eq('lead_id', leadId)
-        .order('processing_progress', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error polling progress:', error);
+  const pollProgress = async (leadId: string) => {
+    console.log('Starting progress polling for lead:', leadId);
+    let lastProgress = 0;
+    let mediaStarted = false;
+    let totalMediaFiles = 0;
+    let processedMediaFiles = 0;
+    let simulationInterval: NodeJS.Timeout | null = null;
+    let isPollingActive = true;
+    let isPhaseOneComplete = false;
+    
+    const interval = setInterval(async () => {
+      if (!isPollingActive) {
+        clearInterval(interval);
+        if (simulationInterval) clearInterval(simulationInterval);
         return;
       }
 
-      const currentProgress = posts?.processing_progress ?? lastProgress;
-      console.log('Current progress:', currentProgress, 'Current Phase:', currentPhase, 'Phase One Complete:', isPhaseOneComplete);
-      
-      // Phase 1: Profile Scanning
-      if (currentPhase === 1 && !isPhaseOneComplete) {
-        if (currentProgress >= 27 && currentProgress < 100 && !simulationInterval) {
-          // Start simulating progress from 27% to 100%
-          let simulatedProgress = currentProgress;
-          simulationInterval = setInterval(() => {
-            simulatedProgress = Math.min(simulatedProgress + 2, 100);
-            setScanProgress(simulatedProgress);
-            
-            if (simulatedProgress >= 100) {
-              clearInterval(simulationInterval!);
-              simulationInterval = null;
-              isPhaseOneComplete = true;
-              setCurrentPhase(2); // Switch to Phase 2
-              console.log('Phase 1 completed, transitioning to Phase 2');
-            }
-          }, 100);
-        } else if (currentProgress < 27) {
-          setScanProgress(currentProgress);
+      try {
+        const { data: posts, error } = await supabase
+          .from('social_media_posts')
+          .select('processing_progress, bucket_path, media_urls')
+          .eq('lead_id', leadId)
+          .order('processing_progress', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error polling progress:', error);
+          return;
         }
-        lastProgress = currentProgress;
-      }
-      
-      // Phase 2: Media Saving
-      if (currentPhase === 2 || isPhaseOneComplete) {
-        if (!mediaStarted && posts?.media_urls) {
-          mediaStarted = true;
-          totalMediaFiles = posts.media_urls.length;
-          processedMediaFiles = 0;
-          setMediaProgress(0);
-          console.log(`Starting media phase, total files: ${totalMediaFiles}`);
-          
-          if (totalMediaFiles === 0) {
-            setCurrentFile("No media files to process");
-            setMediaProgress(100);
-            isPollingActive = false;
-            clearInterval(interval);
-            return;
+
+        const currentProgress = posts?.processing_progress ?? lastProgress;
+        console.log('Current progress:', currentProgress, 'Current Phase:', currentPhase, 'Phase One Complete:', isPhaseOneComplete);
+        
+        // Phase 1: Profile Scanning
+        if (currentPhase === 1 && !isPhaseOneComplete) {
+          if (currentProgress >= 27 && currentProgress < 100 && !simulationInterval) {
+            let simulatedProgress = currentProgress;
+            simulationInterval = setInterval(() => {
+              simulatedProgress = Math.min(simulatedProgress + 2, 100);
+              setScanProgress(simulatedProgress);
+              
+              if (simulatedProgress >= 100) {
+                clearInterval(simulationInterval!);
+                simulationInterval = null;
+                isPhaseOneComplete = true;
+                setCurrentPhase(2);
+                console.log('Phase 1 completed, transitioning to Phase 2');
+              }
+            }, 100);
+          } else if (currentProgress < 27) {
+            setScanProgress(currentProgress);
           }
+          lastProgress = currentProgress;
         }
         
-        // Update media progress based on saved files
-        if (posts?.bucket_path) {
-          processedMediaFiles++;
-          setCurrentFile(posts.bucket_path);
-          const mediaProgressPercent = Math.min(
-            Math.round((processedMediaFiles / (totalMediaFiles || 1)) * 100),
-            100
-          );
-          setMediaProgress(mediaProgressPercent);
-          console.log(`Media progress: ${mediaProgressPercent}%, File: ${posts.bucket_path}`);
+        // Phase 2: Media Saving
+        if (currentPhase === 2 || isPhaseOneComplete) {
+          if (!mediaStarted && posts?.media_urls) {
+            mediaStarted = true;
+            totalMediaFiles = posts.media_urls.length;
+            processedMediaFiles = 0;
+            setMediaProgress(0);
+            console.log(`Starting media phase, total files: ${totalMediaFiles}`);
+            
+            if (totalMediaFiles === 0) {
+              setCurrentFile("No media files to process");
+              setMediaProgress(100);
+              setIsSuccess(true);
+              isPollingActive = false;
+              clearInterval(interval);
+              toast.success("Kontakt erfolgreich angelegt", {
+                icon: <CheckCircle className="h-5 w-5 text-green-500" />
+              });
+              return;
+            }
+          }
+          
+          // Update media progress based on saved files
+          if (posts?.bucket_path) {
+            processedMediaFiles++;
+            setCurrentFile(posts.bucket_path);
+            const mediaProgressPercent = Math.min(
+              Math.round((processedMediaFiles / (totalMediaFiles || 1)) * 100),
+              100
+            );
+            setMediaProgress(mediaProgressPercent);
+            console.log(`Media progress: ${mediaProgressPercent}%, File: ${posts.bucket_path}`);
 
-          // If all files processed, complete Phase 2
-          if (mediaProgressPercent >= 100) {
-            console.log('Media processing completed');
-            isPollingActive = false;
-            clearInterval(interval);
+            // If all files processed, complete Phase 2
+            if (mediaProgressPercent >= 100) {
+              console.log('Media processing completed');
+              setIsSuccess(true);
+              isPollingActive = false;
+              clearInterval(interval);
+              toast.success("Kontakt erfolgreich angelegt", {
+                icon: <CheckCircle className="h-5 w-5 text-green-500" />
+              });
+            }
           }
         }
+      } catch (err) {
+        console.error('Error in progress polling:', err);
       }
-    } catch (err) {
-      console.error('Error in progress polling:', err);
-    }
-  }, 1000);
+    }, 1000);
 
-  return () => {
-    console.log('Cleaning up progress polling');
-    isPollingActive = false;
-    clearInterval(interval);
-    if (simulationInterval) {
-      clearInterval(simulationInterval);
-    }
+    return () => {
+      console.log('Cleaning up progress polling');
+      isPollingActive = false;
+      clearInterval(interval);
+      if (simulationInterval) {
+        clearInterval(simulationInterval);
+      }
+    };
   };
-};
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setDuplicateError(null);
+      setIsSuccess(false);
       
-      // Check for duplicate contact with maybeSingle()
       const { data: existingLead, error: checkError } = await supabase
         .from("leads")
         .select(`
@@ -291,13 +295,9 @@ const pollProgress = async (leadId: string) => {
 
       if (error) throw error;
 
-      toast.success("Instagram-Kontakt erfolgreich hinzugefügt");
-      onOpenChange(false);
-      form.reset();
     } catch (error) {
       console.error("Error adding Instagram contact:", error);
       toast.error("Fehler beim Hinzufügen des Instagram-Kontakts");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -346,6 +346,15 @@ const pollProgress = async (leadId: string) => {
                       <li>Hinzugefügt am: {duplicateError.createdAt}</li>
                       <li>Status: {duplicateError.status}</li>
                     </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {isSuccess && (
+                <Alert className="bg-green-50 border-green-200">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <AlertDescription className="mt-2 text-green-700">
+                    Kontakt wurde erfolgreich angelegt!
                   </AlertDescription>
                 </Alert>
               )}
