@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { Image } from "https://deno.land/x/imagescript@1.2.15/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,11 +14,27 @@ serve(async (req) => {
 
   try {
     const { mediaUrl, leadId, platform, postId, mediaType } = await req.json();
-    console.log('Processing media:', { mediaUrl, platform, leadId, postId });
+    console.log('Processing media:', { mediaUrl, platform, leadId, postId, mediaType });
 
     if (!mediaUrl) {
       console.error('Missing mediaUrl parameter:', { leadId, platform, postId });
       throw new Error('Missing mediaUrl parameter');
+    }
+
+    // Skip video processing
+    if (mediaType?.toLowerCase() === 'video') {
+      console.log('Skipping video processing:', { mediaUrl, postId });
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          message: 'Video processing skipped',
+          mediaUrl 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        }
+      );
     }
 
     const supabase = createClient(
@@ -25,92 +42,62 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Download media
-    const response = await fetch(mediaUrl);
-    if (!response.ok) {
-      console.error('Failed to fetch media:', response.statusText);
-      
-      // Update status to error in social_media_posts
-      if (platform === 'Instagram' && postId) {
-        const { error: updateError } = await supabase
-          .from('social_media_posts')
-          .update({
-            media_processing_status: 'error'
-          })
-          .eq('id', postId)
-          .eq('lead_id', leadId);
+    // Download image
+    console.log('Downloading image from:', mediaUrl);
+    const imageResponse = await fetch(mediaUrl);
+    if (!imageResponse.ok) {
+      throw new Error('Failed to fetch image');
+    }
 
-        if (updateError) {
-          console.error('Error updating social media post status:', updateError);
-        }
+    // Get image buffer
+    const imageBuffer = await imageResponse.arrayBuffer();
+
+    // Process and compress image using ImageScript
+    const image = await Image.decode(new Uint8Array(imageBuffer));
+    
+    // Calculate new dimensions while maintaining aspect ratio
+    const MAX_SIZE = 800;
+    let width = image.width;
+    let height = image.height;
+    
+    if (width > MAX_SIZE || height > MAX_SIZE) {
+      if (width > height) {
+        height = Math.round((height * MAX_SIZE) / width);
+        width = MAX_SIZE;
+      } else {
+        width = Math.round((width * MAX_SIZE) / height);
+        height = MAX_SIZE;
       }
-      
-      throw new Error('Failed to fetch media');
+      image.resize(width, height);
     }
-    
-    const blob = await response.arrayBuffer();
+
+    // Encode with quality reduction (JPEG compression)
+    const compressedImageBuffer = await image.encodeJPEG(70);
+
+    // Generate file path
     const timestamp = new Date().getTime();
+    const filePath = `instagram/${leadId}/${postId}_${timestamp}.jpg`;
     
-    // Determine storage bucket and path based on platform and type
-    let bucketName = 'social-media-files';
-    let filePath = '';
-    let finalBucketPath = '';
+    console.log('Uploading compressed image to bucket:', filePath);
 
-    if (platform === 'Instagram') {
-      // Use contact-avatars bucket for profile images
-      bucketName = mediaType === 'profile' ? 'contact-avatars' : 'social-media-files';
-      
-      // Generate unique file path using postId if available
-      const fileExt = mediaType === 'video' ? 'mp4' : 'jpg';
-      const fileIdentifier = postId || timestamp;
-      filePath = `instagram/${leadId}/${fileIdentifier}.${fileExt}`;
-      finalBucketPath = filePath;
-      
-      console.log('Instagram media path:', { bucketName, filePath });
-    } else if (platform === 'LinkedIn') {
-      bucketName = mediaType === 'profile' ? 'contact-avatars' : 'linkedin-media';
-      const fileExt = mediaType === 'video' ? 'mp4' : 'jpg';
-      filePath = `linkedin/${leadId}/${timestamp}.${fileExt}`;
-      finalBucketPath = filePath;
-    }
-
-    console.log('Storing media in:', { bucketName, filePath });
-
-    // Upload to appropriate bucket
+    // Upload to storage
     const { data: uploadData, error: uploadError } = await supabase
       .storage
-      .from(bucketName)
-      .upload(filePath, blob, {
-        contentType: mediaType === 'video' ? 'video/mp4' : 'image/jpeg',
+      .from('social-media-files')
+      .upload(filePath, compressedImageBuffer, {
+        contentType: 'image/jpeg',
         upsert: true
       });
 
     if (uploadError) {
       console.error('Upload error:', uploadError);
-      
-      // Update status to error in social_media_posts
-      if (platform === 'Instagram' && postId) {
-        const { error: updateError } = await supabase
-          .from('social_media_posts')
-          .update({
-            media_processing_status: 'error',
-            bucket_path: null
-          })
-          .eq('id', postId)
-          .eq('lead_id', leadId);
-
-        if (updateError) {
-          console.error('Error updating social media post status:', updateError);
-        }
-      }
-      
       throw uploadError;
     }
 
     // Get public URL
     const { data: { publicUrl }, error: publicUrlError } = supabase
       .storage
-      .from(bucketName)
+      .from('social-media-files')
       .getPublicUrl(filePath);
 
     if (publicUrlError) {
@@ -118,38 +105,38 @@ serve(async (req) => {
       throw publicUrlError;
     }
 
-    console.log('Media processed and stored:', publicUrl);
+    // Update social_media_posts table
+    const { error: updateError } = await supabase
+      .from('social_media_posts')
+      .update({
+        bucket_path: filePath,
+        media_urls: [publicUrl],
+        media_processing_status: 'processed'
+      })
+      .eq('id', postId)
+      .eq('lead_id', leadId);
 
-    // If this is an Instagram post image, update the social_media_posts table
-    if (platform === 'Instagram' && postId && mediaType !== 'profile') {
-      const { error: updateError } = await supabase
-        .from('social_media_posts')
-        .update({
-          local_media_paths: [filePath],
-          media_urls: [publicUrl],
-          bucket_path: finalBucketPath,
-          media_processing_status: 'processed'
-        })
-        .eq('id', postId)
-        .eq('lead_id', leadId);
-
-      if (updateError) {
-        console.error('Error updating social media post:', updateError);
-        throw updateError;
-      }
-      
-      console.log('Successfully updated social media post:', { postId, filePath, publicUrl });
+    if (updateError) {
+      console.error('Error updating social media post:', updateError);
+      throw updateError;
     }
+
+    console.log('Successfully processed image:', {
+      postId,
+      bucketPath: filePath,
+      publicUrl
+    });
 
     return new Response(
       JSON.stringify({ 
-        success: true, 
+        success: true,
         filePath,
         publicUrl,
-        bucketPath: finalBucketPath
+        message: 'Image processed and stored successfully'
       }),
-      {
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200 
       }
     );
 
@@ -157,9 +144,9 @@ serve(async (req) => {
     console.error('Error processing media:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        status: 500,
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500 
       }
     );
   }
