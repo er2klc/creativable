@@ -3,7 +3,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { InfoRow } from "./InfoRow";
 import { ContactInfoGroup } from "./ContactInfoGroup";
-import { User, AtSign, Phone, Globe, Calendar, Building2, MapPin, Hash } from "lucide-react";
+import { User, AtSign, Phone, Globe, Calendar, Building2, MapPin, Hash, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,9 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
     lead.social_media_posts.forEach((post: any) => {
       if (post.hashtags) {
         post.hashtags.forEach((tag: string) => {
-          hashtags.add(tag);
+          // Add hashtag if it doesn't have one
+          const tagWithHash = tag.startsWith('#') ? tag : `#${tag}`;
+          hashtags.add(tagWithHash);
         });
       }
     });
@@ -107,6 +109,16 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
         leadId={lead.id}
         showEmptyFields={true}
         groupName="interests_goals"
+        rightIcon={
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowTagDialog(true)}
+            className="p-0 hover:bg-transparent"
+          >
+            <Plus className="h-4 w-4 text-gray-500" />
+          </Button>
+        }
       >
         <div className="flex flex-wrap gap-2">
           {getAllUniqueTags().map((tag, index) => (
