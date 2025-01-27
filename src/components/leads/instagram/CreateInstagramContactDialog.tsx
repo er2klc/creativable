@@ -45,7 +45,7 @@ export function CreateInstagramContactDialog({
         .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
         .order("order_index")
         .limit(1)
-        .single();
+        .maybeSingle();
       
       return pipeline;
     },
@@ -65,7 +65,7 @@ export function CreateInstagramContactDialog({
         .eq("pipeline_id", targetPipelineId)
         .order("order_index")
         .limit(1)
-        .single();
+        .maybeSingle();
       
       return phase;
     },
@@ -79,26 +79,25 @@ export function CreateInstagramContactDialog({
     },
   });
 
-  // Progress polling function
+  // Progress polling function with improved error handling
   const pollProgress = async (leadId: string) => {
     const interval = setInterval(async () => {
-      const { data: posts } = await supabase
+      const { data: posts, error } = await supabase
         .from('social_media_posts')
         .select('processing_progress')
         .eq('lead_id', leadId)
         .order('processing_progress', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (posts?.processing_progress) {
-        setScanProgress(posts.processing_progress);
-        if (posts.processing_progress >= 100) {
+      if (!error) {
+        setScanProgress(posts?.processing_progress || 0);
+        if (posts?.processing_progress >= 100) {
           clearInterval(interval);
         }
       }
     }, 1000);
 
-    // Cleanup
     return () => clearInterval(interval);
   };
 
@@ -144,7 +143,7 @@ export function CreateInstagramContactDialog({
       pollProgress(lead.id);
 
       // Then trigger the scan profile function
-      const { data, error } = await supabase.functions.invoke('scan-social-profile', {
+      const { error } = await supabase.functions.invoke('scan-social-profile', {
         body: {
           platform: 'instagram',
           username: values.username,
@@ -152,9 +151,7 @@ export function CreateInstagramContactDialog({
         }
       });
 
-      if (error) {
-        throw new Error('Failed to scan Instagram profile');
-      }
+      if (error) throw error;
 
       toast.success("Instagram-Kontakt erfolgreich hinzugefügt");
       onOpenChange(false);
