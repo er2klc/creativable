@@ -23,40 +23,44 @@ export const linkedInApi = {
     return await response.json();
   },
 
-  validateProfileUrl(url: string): string {
-    console.log('Validating LinkedIn URL:', url);
+  validateProfileUrl(input: string): string {
+    console.log('Validating LinkedIn input:', input);
     
-    if (!url) {
-      throw new Error('LinkedIn profile URL is required');
+    if (!input) {
+      throw new Error('LinkedIn profile input is required');
     }
 
-    // Handle different URL formats
-    let profileId = '';
+    // Handle different input formats
+    let username = '';
     
     try {
-      // Format: linkedin.com/in/username
-      if (url.includes('linkedin.com/in/')) {
-        profileId = url.split('linkedin.com/in/')[1].split('/')[0].split('?')[0];
+      // Case 1: Full URL format
+      if (input.includes('linkedin.com/in/')) {
+        username = input.split('linkedin.com/in/')[1].split('/')[0].split('?')[0];
       } 
-      // Format: Just the username
-      else if (!url.includes('http') && !url.includes('/')) {
-        profileId = url;
+      // Case 2: Just the username
+      else if (!input.includes('http') && !input.includes('/')) {
+        username = input;
       }
-      // Format: Full URL with https
-      else if (url.match(/https?:\/\/(www\.)?linkedin\.com\/in\/([^\/\?]+)/)) {
-        profileId = url.match(/https?:\/\/(www\.)?linkedin\.com\/in\/([^\/\?]+)/)[2];
-      }
-
-      if (!profileId) {
-        console.error('Could not extract profile ID from URL:', url);
-        throw new Error('Invalid LinkedIn profile URL format');
+      // Case 3: Other URL format
+      else if (input.match(/https?:\/\/(www\.)?linkedin\.com\/in\/([^\/\?]+)/)) {
+        username = input.match(/https?:\/\/(www\.)?linkedin\.com\/in\/([^\/\?]+)/)[2];
       }
 
-      console.log('Extracted LinkedIn profile ID:', profileId);
-      return profileId.trim();
+      if (!username) {
+        console.error('Could not extract username from input:', input);
+        throw new Error('Invalid LinkedIn profile format');
+      }
+
+      // Clean up username and construct full URL
+      username = username.trim();
+      const fullUrl = `https://www.linkedin.com/in/${username}/`;
+      
+      console.log('Processed LinkedIn URL:', fullUrl);
+      return fullUrl;
     } catch (error) {
-      console.error('Error parsing LinkedIn URL:', error);
-      throw new Error('Could not parse LinkedIn profile URL');
+      console.error('Error processing LinkedIn input:', error);
+      throw new Error('Could not process LinkedIn profile input');
     }
   },
 

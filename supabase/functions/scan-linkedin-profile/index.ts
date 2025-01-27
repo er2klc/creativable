@@ -8,24 +8,21 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const { profileUrl, leadId } = await req.json()
+    const { username, leadId } = await req.json()
 
     // Validate input
-    if (!profileUrl || !leadId) {
-      throw new Error('Profile URL and Lead ID are required')
+    if (!username || !leadId) {
+      throw new Error('Username and Lead ID are required')
     }
 
-    // Validate LinkedIn URL format
-    const profileId = linkedInApi.validateProfileUrl(profileUrl)
-    if (!profileId) {
-      throw new Error('Invalid LinkedIn profile URL')
-    }
+    // Get full LinkedIn URL from username
+    const profileUrl = linkedInApi.validateProfileUrl(username)
+    console.log('Validated LinkedIn URL:', profileUrl)
 
     // Initialize Supabase client
     const supabaseClient = createClient(

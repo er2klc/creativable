@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
@@ -21,27 +20,47 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Download and store media
+    // Download media
     const response = await fetch(mediaUrl);
-    const blob = await response.blob();
+    if (!response.ok) throw new Error('Failed to fetch media');
     
+    const blob = await response.arrayBuffer();
     const timestamp = new Date().getTime();
-    const fileName = `${platform}-${leadId}-${timestamp}`;
-    const filePath = `${platform}/${leadId}/${fileName}`;
     
+    // Determine storage bucket and path based on platform and type
+    let bucketName = 'social-media-files';
+    let filePath = '';
+
+    if (platform === 'Instagram') {
+      bucketName = mediaType === 'profile' ? 'contact-avatars' : 'social-media-files';
+      const fileExt = mediaType === 'video' ? 'mp4' : 'jpg';
+      filePath = `instagram/${leadId}/${timestamp}.${fileExt}`;
+    } else if (platform === 'LinkedIn') {
+      bucketName = mediaType === 'profile' ? 'contact-avatars' : 'linkedin-media';
+      const fileExt = mediaType === 'video' ? 'mp4' : 'jpg';
+      filePath = `linkedin/${leadId}/${timestamp}.${fileExt}`;
+    }
+
+    console.log('Storing media in:', { bucketName, filePath });
+
+    // Upload to appropriate bucket
     const { data: uploadData, error: uploadError } = await supabase
       .storage
-      .from('social-media-files')
+      .from(bucketName)
       .upload(filePath, blob, {
-        contentType: mediaType,
+        contentType: mediaType === 'video' ? 'video/mp4' : 'image/jpeg',
         upsert: true
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw uploadError;
+    }
 
+    // Get public URL
     const { data: { publicUrl } } = supabase
       .storage
-      .from('social-media-files')
+      .from(bucketName)
       .getPublicUrl(filePath);
 
     console.log('Media processed and stored:', publicUrl);
