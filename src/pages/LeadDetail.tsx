@@ -1,20 +1,20 @@
-import { useQuery } from "@tanstack/react-query";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadDetailHeader } from "./LeadDetailHeader";
-import { useLeadSubscription } from "./hooks/useLeadSubscription";
-import { LeadWithRelations } from "./types/lead";
-import { LeadDetailContent } from "./components/LeadDetailContent";
-import { useLeadMutations } from "./hooks/useLeadMutations";
+import { LeadDetailHeader } from "@/components/leads/detail/LeadDetailHeader";
+import { useLeadSubscription } from "@/components/leads/detail/hooks/useLeadSubscription";
+import { LeadWithRelations } from "@/components/leads/detail/types/lead";
+import { LeadDetailContent } from "@/components/leads/detail/components/LeadDetailContent";
+import { useLeadMutations } from "@/components/leads/detail/hooks/useLeadMutations";
 import { Database } from "@/integrations/supabase/types";
+import { toast } from "sonner";
 
-interface LeadDetailViewProps {
-  leadId: string;
-  onClose: () => void;
-}
-
-export function LeadDetailView({ leadId, onClose }: LeadDetailViewProps) {
+export default function LeadDetail() {
+  const { leadId } = useParams<{ leadId: string }>();
+  const queryClient = useQueryClient();
   const { settings } = useSettings();
+  const navigate = useNavigate();
 
   const isValidUUID = (uuid: string) => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -141,6 +141,8 @@ export function LeadDetailView({ leadId, onClose }: LeadDetailViewProps) {
     },
   });
 
+  useLeadSubscription(leadId);
+
   if (isLoading || !lead) {
     return (
       <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
@@ -148,9 +150,9 @@ export function LeadDetailView({ leadId, onClose }: LeadDetailViewProps) {
   }
 
   return (
-    <>
-      <LeadDetailHeader 
-        lead={lead} 
+    <div className="mx-auto py-6">
+      <LeadDetailHeader
+        lead={lead}
         onUpdateLead={updateLeadMutation.mutate}
         onDeleteLead={() => deleteLeadMutation.mutate()}
       />
@@ -159,6 +161,6 @@ export function LeadDetailView({ leadId, onClose }: LeadDetailViewProps) {
         onUpdateLead={updateLeadMutation.mutate}
         isLoading={isLoading}
       />
-    </>
+    </div>
   );
 }
