@@ -1042,6 +1042,130 @@ export type Database = {
           },
         ]
       }
+      linkedin_posts: {
+        Row: {
+          comments_count: number | null
+          content: string | null
+          created_at: string | null
+          id: string
+          lead_id: string | null
+          likes_count: number | null
+          local_media_paths: string[] | null
+          media_type: string | null
+          media_urls: string[] | null
+          metadata: Json | null
+          post_type: string | null
+          posted_at: string | null
+          reactions: Json | null
+          shares_count: number | null
+          url: string | null
+        }
+        Insert: {
+          comments_count?: number | null
+          content?: string | null
+          created_at?: string | null
+          id: string
+          lead_id?: string | null
+          likes_count?: number | null
+          local_media_paths?: string[] | null
+          media_type?: string | null
+          media_urls?: string[] | null
+          metadata?: Json | null
+          post_type?: string | null
+          posted_at?: string | null
+          reactions?: Json | null
+          shares_count?: number | null
+          url?: string | null
+        }
+        Update: {
+          comments_count?: number | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          likes_count?: number | null
+          local_media_paths?: string[] | null
+          media_type?: string | null
+          media_urls?: string[] | null
+          metadata?: Json | null
+          post_type?: string | null
+          posted_at?: string | null
+          reactions?: Json | null
+          shares_count?: number | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linkedin_posts_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      linkedin_scan_history: {
+        Row: {
+          certifications: Json | null
+          connections_count: number | null
+          education: Json | null
+          error_message: string | null
+          experience: Json | null
+          followers_count: number | null
+          id: string
+          languages: Json | null
+          lead_id: string | null
+          posts_count: number | null
+          profile_data: Json | null
+          recommendations: Json | null
+          scanned_at: string | null
+          skills: Json | null
+          success: boolean | null
+        }
+        Insert: {
+          certifications?: Json | null
+          connections_count?: number | null
+          education?: Json | null
+          error_message?: string | null
+          experience?: Json | null
+          followers_count?: number | null
+          id?: string
+          languages?: Json | null
+          lead_id?: string | null
+          posts_count?: number | null
+          profile_data?: Json | null
+          recommendations?: Json | null
+          scanned_at?: string | null
+          skills?: Json | null
+          success?: boolean | null
+        }
+        Update: {
+          certifications?: Json | null
+          connections_count?: number | null
+          education?: Json | null
+          error_message?: string | null
+          experience?: Json | null
+          followers_count?: number | null
+          id?: string
+          languages?: Json | null
+          lead_id?: string | null
+          posts_count?: number | null
+          profile_data?: Json | null
+          recommendations?: Json | null
+          scanned_at?: string | null
+          skills?: Json | null
+          success?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linkedin_scan_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_templates: {
         Row: {
           content: string
