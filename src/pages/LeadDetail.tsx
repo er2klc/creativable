@@ -5,8 +5,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { LeadDetailHeader } from "@/components/leads/detail/LeadDetailHeader";
 import { useLeadSubscription } from "@/components/leads/detail/hooks/useLeadSubscription";
 import { LeadWithRelations } from "@/components/leads/detail/types/lead";
-import { LeadDetailContent } from "@/components/leads/detail/components/LeadDetailContent";
-import { useLeadMutations } from "@/components/leads/detail/hooks/useLeadMutations";
+import { LeadDetailContent } from "@/components/leads/detail/LeadDetailContent";
 import { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
@@ -160,6 +159,7 @@ export default function LeadDetail() {
         lead={lead}
         onUpdateLead={updateLeadMutation.mutate}
         isLoading={isLoading}
+        onDeleteClick={() => deleteLeadMutation.mutate()}
       />
     </div>
   );
