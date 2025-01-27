@@ -26,7 +26,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Update initial progress to 0%
+    // Create initial progress record
     const { error: initialProgressError } = await supabaseClient
       .from('social_media_posts')
       .upsert({
@@ -58,10 +58,14 @@ serve(async (req) => {
     console.log('Starting Apify scraping run');
 
     // Update progress to 10% - Starting Apify run
-    await supabaseClient
+    const { error: progress10Error } = await supabaseClient
       .from('social_media_posts')
       .update({ processing_progress: 10 })
       .eq('id', `temp-${leadId}`)
+
+    if (progress10Error) {
+      console.error('Error updating progress to 10%:', progress10Error);
+    }
 
     const apifyRequest = {
       url: `${BASE_URL}/acts/apify~instagram-profile-scraper/runs`,
@@ -98,13 +102,19 @@ serve(async (req) => {
     console.log('Apify run started:', { runId });
 
     // Update progress to 20% - Apify run started
-    await supabaseClient
+    const { error: progress20Error } = await supabaseClient
       .from('social_media_posts')
       .update({ processing_progress: 20 })
       .eq('id', `temp-${leadId}`)
 
+    if (progress20Error) {
+      console.error('Error updating progress to 20%:', progress20Error);
+    }
+
     let attempts = 0
     const maxAttempts = 30
+    let lastProgressUpdate = Date.now()
+    const progressTimeout = 30000 // 30 seconds timeout
     
     while (attempts < maxAttempts) {
       console.log(`Polling for results (attempt ${attempts + 1}/${maxAttempts})`);
@@ -114,10 +124,17 @@ serve(async (req) => {
       const currentProgress = Math.min(90, 20 + Math.floor((attempts / maxAttempts) * progressRange));
       
       console.log(`Updating processing progress to ${currentProgress}%`);
-      await supabaseClient
+      const { error: progressError } = await supabaseClient
         .from('social_media_posts')
-        .update({ processing_progress: currentProgress })
+        .update({ 
+          processing_progress: currentProgress,
+          error_message: null // Clear any previous error messages
+        })
         .eq('id', `temp-${leadId}`);
+
+      if (progressError) {
+        console.error(`Error updating progress to ${currentProgress}%:`, progressError);
+      }
 
       const datasetResponse = await fetch(`${BASE_URL}/actor-runs/${runId}/dataset/items`, {
         headers: {
@@ -132,6 +149,24 @@ serve(async (req) => {
           statusText: datasetResponse.statusText,
           body: errorText
         });
+
+        // Check for timeout
+        if (Date.now() - lastProgressUpdate > progressTimeout) {
+          const timeoutError = 'Progress update timeout - no response from Apify';
+          console.error(timeoutError);
+          
+          // Update database with error message
+          await supabaseClient
+            .from('social_media_posts')
+            .update({ 
+              error_message: timeoutError,
+              processing_progress: currentProgress // Keep last progress
+            })
+            .eq('id', `temp-${leadId}`);
+            
+          throw new Error(timeoutError);
+        }
+
         throw new Error(`HTTP error! status: ${datasetResponse.status}, body: ${errorText}`)
       }
 
@@ -140,6 +175,7 @@ serve(async (req) => {
       if (items.length > 0) {
         const profileData = items[0]
         console.log('Profile data received:', profileData);
+        lastProgressUpdate = Date.now() // Reset timeout counter
 
         // Process profile image first
         const newProfileImageUrl = await downloadAndUploadImage(
@@ -304,10 +340,17 @@ serve(async (req) => {
         }
 
         // Final progress update to 100%
-        await supabaseClient
+        const { error: finalProgressError } = await supabaseClient
           .from('social_media_posts')
-          .update({ processing_progress: 100 })
+          .update({ 
+            processing_progress: 100,
+            error_message: null
+          })
           .eq('id', `temp-${leadId}`);
+
+        if (finalProgressError) {
+          console.error('Error updating final progress:', finalProgressError);
+        }
 
         return new Response(
           JSON.stringify({ success: true, data: profileData }),
@@ -317,9 +360,22 @@ serve(async (req) => {
 
       await new Promise(resolve => setTimeout(resolve, 2000))
       attempts++
+      lastProgressUpdate = Date.now() // Reset timeout counter
     }
 
-    throw new Error('Timeout waiting for results')
+    const timeoutError = 'Maximum polling attempts reached';
+    console.error(timeoutError);
+    
+    // Update database with timeout error
+    await supabaseClient
+      .from('social_media_posts')
+      .update({ 
+        error_message: timeoutError,
+        processing_progress: 90 // Keep at 90% to indicate incomplete
+      })
+      .eq('id', `temp-${leadId}`);
+
+    throw new Error(timeoutError)
   } catch (error) {
     console.error('Error during scan:', error);
     return new Response(
