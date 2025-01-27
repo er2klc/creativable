@@ -116,11 +116,13 @@ export function CreateInstagramContactDialog({
               setScanProgress(simulatedProgress);
               
               if (simulatedProgress >= 100) {
-                clearInterval(simulationInterval!);
-                simulationInterval = null;
+                console.log('Phase 1 completed, setting isPhaseOneComplete to true');
                 setIsPhaseOneComplete(true);
                 setCurrentPhase(2);
-                console.log('Phase 1 completed, transitioning to Phase 2');
+                if (simulationInterval) {
+                  clearInterval(simulationInterval);
+                  simulationInterval = null;
+                }
               }
             }, 100);
           } else if (currentProgress < 27) {
@@ -129,8 +131,9 @@ export function CreateInstagramContactDialog({
           lastProgress = currentProgress;
         }
         
-        // Phase 2: Media Saving
+        // Phase 2: Media Saving - Only start if Phase 1 is complete
         if ((currentPhase === 2 || isPhaseOneComplete) && !isMediaProcessingActive && latestPost.media_urls) {
+          console.log('Starting Phase 2: Media Processing');
           setIsMediaProcessingActive(true);
           totalMediaFiles = latestPost.media_urls.length;
           processedMediaFiles = 0;
@@ -138,6 +141,7 @@ export function CreateInstagramContactDialog({
           console.log(`Starting media phase, total files: ${totalMediaFiles}`);
           
           if (totalMediaFiles === 0) {
+            console.log('No media files to process, completing Phase 2');
             setCurrentFile("No media files to process");
             setMediaProgress(100);
             setIsSuccess(true);
@@ -150,7 +154,7 @@ export function CreateInstagramContactDialog({
           }
         }
         
-        // Update media progress based on saved files
+        // Update media progress based on saved files - Only if Phase 2 is active
         if (isMediaProcessingActive && latestPost.bucket_path) {
           processedMediaFiles++;
           if (latestPost.current_file) {
