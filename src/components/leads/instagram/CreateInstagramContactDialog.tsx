@@ -207,7 +207,7 @@ export function CreateInstagramContactDialog({
     try {
       setDuplicateError(null);
       
-      // Check for duplicate contact
+      // Check for duplicate contact with maybeSingle()
       const { data: existingLead, error: checkError } = await supabase
         .from("leads")
         .select(`
@@ -222,9 +222,9 @@ export function CreateInstagramContactDialog({
         .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
         .eq("platform", "Instagram")
         .eq("social_media_username", values.username)
-        .single();
+        .maybeSingle();
 
-      if (checkError && checkError.code !== 'PGRST116') {
+      if (checkError) {
         console.error("Error checking for duplicate:", checkError);
         toast.error("Fehler beim Überprüfen des Benutzers");
         return;
