@@ -1,21 +1,25 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { LeadDetailHeader } from "@/components/leads/detail/LeadDetailHeader";
-import { LeadSummary } from "@/components/leads/detail/LeadSummary";
-import { LeadInfoCard } from "@/components/leads/detail/LeadInfoCard";
-import { LeadDetailTabs } from "@/components/leads/detail/LeadDetailTabs";
-import { LeadTimeline } from "@/components/leads/detail/LeadTimeline";
-import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
-import { Tables } from "@/integrations/supabase/types";
-import { LeadWithRelations } from "@/components/leads/detail/types/lead";
+import { LeadDetailHeader } from "./LeadDetailHeader";
+import { useLeadSubscription } from "./hooks/useLeadSubscription";
+import { LeadWithRelations } from "./types/lead";
+import { LeadDetailContent } from "./components/LeadDetailContent";
+import { useLeadMutations } from "./hooks/useLeadMutations";
+import { Database } from "@/integrations/supabase/types";
 
-export default function LeadDetail() {
-  const { leadId } = useParams<{ leadId: string }>();
-  const queryClient = useQueryClient();
+interface LeadDetailViewProps {
+  leadId: string;
+  onClose: () => void;
+}
+
+export function LeadDetailView({ leadId, onClose }: LeadDetailViewProps) {
   const { settings } = useSettings();
-  const navigate = useNavigate();
+
+  const isValidUUID = (uuid: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  };
 
   const { data: lead, isLoading } = useQuery({
     queryKey: ["lead", leadId],
@@ -47,11 +51,11 @@ export default function LeadDetail() {
 
       return data as LeadWithRelations;
     },
-    enabled: !!leadId,
+    enabled: !!leadId && isValidUUID(leadId),
   });
 
   const updateLeadMutation = useMutation({
-    mutationFn: async (updates: Partial<Tables<"leads">["Row"]>) => {
+    mutationFn: async (updates: Partial<Database['public']['Tables']['leads']['Row']>) => {
       if (!leadId) {
         throw new Error("No lead ID provided");
       }
@@ -138,31 +142,23 @@ export default function LeadDetail() {
   });
 
   if (isLoading || !lead) {
-    return <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>;
+    return (
+      <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>
+    );
   }
 
   return (
-    <div className="mx-auto py-6">
+    <>
       <LeadDetailHeader 
         lead={lead} 
         onUpdateLead={updateLeadMutation.mutate}
         onDeleteLead={() => deleteLeadMutation.mutate()}
       />
-      
-      <div className="grid grid-cols-12 gap-6 mt-6">
-        <div className="col-span-12 lg:col-span-4 space-y-6">
-          <LeadSummary lead={lead} />
-          <LeadInfoCard 
-            lead={lead} 
-            onUpdate={updateLeadMutation.mutate}
-          />
-        </div>
-        
-        <div className="col-span-12 lg:col-span-8 space-y-6">
-          <LeadDetailTabs lead={lead} />
-          <LeadTimeline lead={lead} />
-        </div>
-      </div>
-    </div>
+      <LeadDetailContent 
+        lead={lead}
+        onUpdateLead={updateLeadMutation.mutate}
+        isLoading={isLoading}
+      />
+    </>
   );
 }
