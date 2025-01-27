@@ -121,25 +121,26 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
       >
         <div className="flex flex-wrap gap-2">
           {getAllUniqueTags().map((tag, index) => (
-            <Badge
-              key={index}
-              variant="secondary"
-              className={cn(
-                "flex items-center gap-1 px-1.5 py-0.5 text-xs",
-                tag.startsWith('#') ? "bg-blue-100 text-blue-800 hover:bg-blue-200" : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-              )}
-            >
-              {tag.startsWith('#') && <Hash className="h-2.5 w-2.5" />}
-              {tag}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-3 w-3 p-0 hover:bg-transparent text-current"
-                onClick={() => handleRemoveTag(tag)}
-              >
-                ×
-              </Button>
-            </Badge>
+           <Badge
+  key={index}
+  variant="secondary"
+  className={cn(
+    "flex items-center gap-1 px-1.5 py-0.5 text-xs",
+    tag.startsWith('#') ? "bg-blue-100 text-blue-800 hover:bg-blue-200" : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+  )}
+>
+  <Hash className="h-2.5 w-2.5" />
+  {tag.replace(/^#+/, '')} {/* Entfernt führende # aus dem Text */}
+  <Button
+    variant="ghost"
+    size="sm"
+    className="h-3 w-3 p-0 hover:bg-transparent text-current"
+    onClick={() => handleRemoveTag(tag)}
+  >
+    ×
+  </Button>
+</Badge>
+
           ))}
         </div>
       </ContactInfoGroup>
