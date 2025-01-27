@@ -42,7 +42,6 @@ serve(async (req) => {
 
     console.log('Starting Apify scraping run');
 
-    // Log the full request being sent to Apify
     const apifyRequest = {
       url: `${BASE_URL}/acts/apify~instagram-profile-scraper/runs`,
       method: 'POST',
@@ -105,6 +104,7 @@ serve(async (req) => {
         const profileData = items[0]
         console.log('Profile data received:', profileData);
 
+        // Process profile image first
         const newProfileImageUrl = await downloadAndUploadImage(
           profileData.profilePicUrlHD || profileData.profilePicUrl,
           supabaseClient,
@@ -159,6 +159,14 @@ serve(async (req) => {
             mediaUrls = [post.displayUrl || (post.images && post.images[0])].filter(Boolean);
           }
 
+          // Log media URLs for debugging
+          console.log('Processing post media:', {
+            postId: post.id,
+            mediaUrls,
+            videoUrl,
+            type: post.type
+          });
+
           return {
             id: post.id,
             lead_id: leadId,
@@ -204,20 +212,38 @@ serve(async (req) => {
 
             // Process media files after storing posts
             for (const post of savedPosts) {
-              if (!post.media_urls || post.media_urls.length === 0) continue;
+              if (!post.media_urls || post.media_urls.length === 0) {
+                console.log('No media URLs to process for post:', post.id);
+                continue;
+              }
 
-              try {
-                const response = await supabaseClient.functions.invoke('process-social-media', {
-                  body: {
-                    mediaUrls: post.media_urls,
+              for (const mediaUrl of post.media_urls) {
+                try {
+                  console.log('Processing media:', {
+                    mediaUrl,
                     leadId: post.lead_id,
-                    mediaType: post.media_type,
-                    postId: post.id
-                  }
-                });
-                console.log('Media processing response:', response);
-              } catch (error) {
-                console.error('Error processing media for post:', error);
+                    postId: post.id,
+                    mediaType: post.media_type
+                  });
+
+                  const response = await supabaseClient.functions.invoke('process-social-media', {
+                    body: {
+                      mediaUrl,
+                      leadId: post.lead_id,
+                      mediaType: post.media_type,
+                      postId: post.id,
+                      platform: 'Instagram'
+                    }
+                  });
+
+                  console.log('Media processing response:', response);
+                } catch (error) {
+                  console.error('Error processing media for post:', {
+                    postId: post.id,
+                    mediaUrl,
+                    error
+                  });
+                }
               }
             }
           }

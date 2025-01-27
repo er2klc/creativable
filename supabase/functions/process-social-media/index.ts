@@ -12,11 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const { mediaType, mediaUrl, leadId, platform, postId } = await req.json();
-    console.log('Processing media:', { mediaType, platform, leadId, postId });
+    const { mediaUrl, leadId, platform, postId, mediaType } = await req.json();
+    console.log('Processing media:', { mediaUrl, platform, leadId, postId });
 
     if (!mediaUrl) {
-      console.error('Missing mediaUrl parameter');
+      console.error('Missing mediaUrl parameter:', { leadId, platform, postId });
       throw new Error('Missing mediaUrl parameter');
     }
 
