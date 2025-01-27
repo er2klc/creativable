@@ -1,18 +1,18 @@
 import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadInfoCard } from "../LeadInfoCard";
-import { TaskList } from "../TaskList";
-import { NoteList } from "../NoteList";
-import { LeadSummary } from "../LeadSummary";
-import { LeadMessages } from "../LeadMessages";
-import { CompactPhaseSelector } from "../CompactPhaseSelector";
-import { LeadTimeline } from "../LeadTimeline";
-import { ContactFieldManager } from "../contact-info/ContactFieldManager";
+import { LeadInfoCard } from "@/components/leads/detail/LeadInfoCard";
+import { TaskList } from "@/components/leads/detail/TaskList";
+import { NoteList } from "@/components/leads/detail/NoteList";
+import { LeadSummary } from "@/components/leads/detail/LeadSummary";
+import { LeadMessages } from "@/components/leads/detail/LeadMessages";
+import { CompactPhaseSelector } from "@/components/leads/detail/CompactPhaseSelector";
+import { LeadTimeline } from "@/components/leads/detail/LeadTimeline";
+import { ContactFieldManager } from "@/components/leads/detail/contact-info/ContactFieldManager";
 import { LeadFileUpload } from "./files/LeadFileUpload";
 import { LeadFileList } from "./files/LeadFileList";
 import { AddAppointmentDialog } from "./appointments/AddAppointmentDialog";
-import { LeadWithRelations } from "../types/lead";
+import { LeadWithRelations } from "@/components/leads/detail/types/lead";
 
 interface LeadDetailContentProps {
   lead: LeadWithRelations;
