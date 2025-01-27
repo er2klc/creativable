@@ -1,30 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-async function fetchWithInstagramHeaders(url: string) {
-  console.log('Fetching media from:', url);
-  
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-      'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Referer': 'https://www.instagram.com/',
-    }
-  });
-
-  if (!response.ok) {
-    console.error('Failed to fetch media:', response.status, response.statusText);
-    throw new Error(`Failed to fetch media: ${response.status} ${response.statusText}`);
-  }
-
-  return response;
-}
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -32,123 +13,57 @@ serve(async (req) => {
   }
 
   try {
-    const { mediaUrls, leadId, mediaType, postId } = await req.json();
-
-    if (!Array.isArray(mediaUrls) || !leadId || !postId) {
-      throw new Error('Invalid request body - missing required fields');
-    }
-
-    console.log('Processing media for lead:', leadId);
-    console.log('Media URLs:', mediaUrls);
-    console.log('Media Type:', mediaType);
-    console.log('Post ID:', postId);
+    const { mediaType, mediaUrl, leadId, platform } = await req.json();
+    console.log('Processing media:', { mediaType, platform, leadId });
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Skip video processing since we're using direct Instagram URLs
-    if (mediaType === 'video') {
-      console.log('Skipping video processing, using direct Instagram URL');
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'Using direct video URL'
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
+    // Download and store media
+    const response = await fetch(mediaUrl);
+    const blob = await response.blob();
+    
+    const timestamp = new Date().getTime();
+    const fileName = `${platform}-${leadId}-${timestamp}`;
+    const filePath = `${platform}/${leadId}/${fileName}`;
+    
+    const { data: uploadData, error: uploadError } = await supabase
+      .storage
+      .from('social-media-files')
+      .upload(filePath, blob, {
+        contentType: mediaType,
+        upsert: true
+      });
 
-    const processedUrls = await Promise.all(
-      mediaUrls.map(async (url, index) => {
-        try {
-          console.log('Downloading media from:', url);
-          const response = await fetchWithInstagramHeaders(url);
-          const buffer = await response.arrayBuffer();
+    if (uploadError) throw uploadError;
 
-          // Get file extension from URL or content type
-          let fileExt = 'jpg'; // default
-          if (url.includes('.png')) {
-            fileExt = 'png';
-          }
+    const { data: { publicUrl } } = supabase
+      .storage
+      .from('social-media-files')
+      .getPublicUrl(filePath);
 
-          // Create unique path using postId and index
-          const bucketPath = `${leadId}/${postId}_${index}.${fileExt}`;
-
-          console.log('Uploading to storage:', bucketPath);
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('social-media-files')
-            .upload(bucketPath, buffer, {
-              contentType: `image/${fileExt}`,
-              upsert: true,
-              cacheControl: '3600'
-            });
-
-          if (uploadError) {
-            console.error('Upload error:', uploadError);
-            throw uploadError;
-          }
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('social-media-files')
-            .getPublicUrl(bucketPath);
-
-          console.log('Media stored at:', publicUrl);
-          return publicUrl;
-        } catch (error) {
-          console.error('Error processing media:', error);
-          return null;
-        }
-      })
-    );
-
-    const successfulUrls = processedUrls.filter((url): url is string => url !== null);
-
-    // Update the social media post with the new URLs
-    if (successfulUrls.length > 0) {
-      const { error: updateError } = await supabase
-        .from('social_media_posts')
-        .update({ 
-          local_media_paths: successfulUrls,
-          media_urls: mediaUrls // Keep original URLs as reference
-        })
-        .eq('id', postId);
-
-      if (updateError) {
-        console.error('Error updating social media posts:', updateError);
-      }
-    }
+    console.log('Media processed and stored:', publicUrl);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        urls: successfulUrls,
-        message: `Successfully processed ${successfulUrls.length} of ${mediaUrls.length} media files`
+        filePath,
+        publicUrl
       }),
       {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error processing media:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message 
-      }),
+      JSON.stringify({ error: error.message }),
       {
-        status: 400,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   }
