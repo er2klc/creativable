@@ -33,6 +33,7 @@ export function CreateInstagramContactDialog({
   const [scanProgress, setScanProgress] = useState(0);
   const [mediaProgress, setMediaProgress] = useState(0);
   const [currentFile, setCurrentFile] = useState<string>();
+  const [isPhaseOneComplete, setIsPhaseOneComplete] = useState(false);
   const { settings } = useSettings();
 
   // Fetch default pipeline if none provided
@@ -81,7 +82,7 @@ export function CreateInstagramContactDialog({
     },
   });
 
-  // Progress polling function with improved error handling and debugging
+  // Progress polling function with improved phase transition handling
   const pollProgress = async (leadId: string) => {
     console.log('Starting progress polling for lead:', leadId);
     let lastProgress = 0;
@@ -89,8 +90,15 @@ export function CreateInstagramContactDialog({
     let totalMediaFiles = 0;
     let processedMediaFiles = 0;
     let simulationInterval: NodeJS.Timeout | null = null;
+    let isPollingActive = true;
     
     const interval = setInterval(async () => {
+      if (!isPollingActive) {
+        clearInterval(interval);
+        if (simulationInterval) clearInterval(simulationInterval);
+        return;
+      }
+
       try {
         // Get latest progress and media info
         const { data: posts, error } = await supabase
@@ -107,10 +115,10 @@ export function CreateInstagramContactDialog({
         }
 
         const currentProgress = posts?.processing_progress ?? lastProgress;
-        console.log('Current progress:', currentProgress);
+        console.log('Current progress:', currentProgress, 'Phase One Complete:', isPhaseOneComplete);
         
         // Phase 1: Profile Scanning
-        if (currentProgress < 100) {
+        if (!isPhaseOneComplete) {
           if (currentProgress >= 27 && currentProgress < 100 && !simulationInterval) {
             // Start simulating progress from 27% to 100%
             let simulatedProgress = currentProgress;
@@ -121,16 +129,18 @@ export function CreateInstagramContactDialog({
               if (simulatedProgress >= 100) {
                 clearInterval(simulationInterval!);
                 simulationInterval = null;
+                setIsPhaseOneComplete(true);
+                console.log('Phase 1 completed, transitioning to Phase 2');
               }
             }, 100);
           } else if (currentProgress < 27) {
             setScanProgress(currentProgress);
           }
           lastProgress = currentProgress;
-        } else {
-          setScanProgress(100);
-          
-          // Transition to Phase 2: Media Saving
+        }
+        
+        // Phase 2: Media Saving
+        if (isPhaseOneComplete) {
           if (!mediaStarted && posts?.media_urls) {
             mediaStarted = true;
             totalMediaFiles = posts.media_urls.length;
@@ -143,20 +153,29 @@ export function CreateInstagramContactDialog({
             processedMediaFiles++;
             setCurrentFile(posts.bucket_path);
             const mediaProgressPercent = Math.min(
-              Math.round((processedMediaFiles / totalMediaFiles) * 100),
+              Math.round((processedMediaFiles / (totalMediaFiles || 1)) * 100),
               100
             );
             setMediaProgress(mediaProgressPercent);
             console.log(`Media progress: ${mediaProgressPercent}%, File: ${posts.bucket_path}`);
-          }
-        }
-        
-        // Complete when both phases are done
-        if (currentProgress >= 100 && (mediaProgress >= 100 || totalMediaFiles === 0)) {
-          console.log('Processing completed');
-          clearInterval(interval);
-          if (simulationInterval) {
-            clearInterval(simulationInterval);
+
+            // If no media files or all files processed, complete Phase 2
+            if (mediaProgressPercent >= 100 || totalMediaFiles === 0) {
+              console.log('Media processing completed');
+              isPollingActive = false;
+              clearInterval(interval);
+              if (simulationInterval) {
+                clearInterval(simulationInterval);
+              }
+            }
+          } else if (totalMediaFiles === 0) {
+            // If no media files, complete Phase 2 immediately
+            setMediaProgress(100);
+            isPollingActive = false;
+            clearInterval(interval);
+            if (simulationInterval) {
+              clearInterval(simulationInterval);
+            }
           }
         }
       } catch (err) {
@@ -166,6 +185,7 @@ export function CreateInstagramContactDialog({
 
     return () => {
       console.log('Cleaning up progress polling');
+      isPollingActive = false;
       clearInterval(interval);
       if (simulationInterval) {
         clearInterval(simulationInterval);
@@ -179,6 +199,7 @@ export function CreateInstagramContactDialog({
       setScanProgress(0);
       setMediaProgress(0);
       setCurrentFile(undefined);
+      setIsPhaseOneComplete(false);
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
