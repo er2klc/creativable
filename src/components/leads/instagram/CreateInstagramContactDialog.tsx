@@ -92,11 +92,11 @@ export function CreateInstagramContactDialog({
       try {
         const { data: posts, error } = await supabase
           .from('social_media_posts')
-          .select('processing_progress, bucket_path, media_urls, current_file')
+          .select('processing_progress, bucket_path, media_urls, current_file, media_processing_status')
           .eq('lead_id', leadId)
           .order('processing_progress', { ascending: false })
           .limit(1)
-          .maybeSingle();
+          .single();
 
         if (error) {
           console.error('Error polling progress:', error);
@@ -162,7 +162,7 @@ export function CreateInstagramContactDialog({
           setMediaProgress(mediaProgressPercent);
           console.log(`Media progress: ${mediaProgressPercent}%, File: ${posts.bucket_path}`);
 
-          if (mediaProgressPercent >= 100) {
+          if (mediaProgressPercent >= 100 || posts.media_processing_status === 'completed') {
             console.log('Media processing completed');
             setIsSuccess(true);
             isPollingActive = false;
@@ -175,7 +175,7 @@ export function CreateInstagramContactDialog({
       } catch (err) {
         console.error('Error in progress polling:', err);
       }
-    }, 500); // Reduced polling interval for better real-time updates
+    }, 500);
 
     return () => {
       console.log('Cleaning up progress polling');
