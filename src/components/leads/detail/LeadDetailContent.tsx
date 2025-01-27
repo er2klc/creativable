@@ -1,13 +1,13 @@
 import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadInfoCard } from "@/components/leads/detail/LeadInfoCard";
-import { LeadSummary } from "@/components/leads/detail/LeadSummary";
-import { CompactPhaseSelector } from "@/components/leads/detail/CompactPhaseSelector";
-import { LeadTimeline } from "@/components/leads/detail/LeadTimeline";
-import { ContactFieldManager } from "@/components/leads/detail/contact-info/ContactFieldManager";
-import { LeadDetailTabs } from "@/components/leads/detail/LeadDetailTabs";
-import { LeadWithRelations } from "@/components/leads/detail/types/lead";
+import { LeadInfoCard } from "./LeadInfoCard";
+import { LeadSummary } from "./LeadSummary";
+import { CompactPhaseSelector } from "./CompactPhaseSelector";
+import { LeadTimeline } from "./LeadTimeline";
+import { ContactFieldManager } from "./contact-info/ContactFieldManager";
+import { LeadDetailTabs } from "./LeadDetailTabs";
+import { LeadWithRelations } from "./types/lead";
 
 interface LeadDetailContentProps {
   lead: LeadWithRelations;
@@ -24,24 +24,12 @@ export const LeadDetailContent = ({
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
 
-  // Only show phase selector if lead has no status or status is 'lead'
-  const showPhaseSelector = !lead.status || lead.status === 'lead';
-
   if (isLoading) {
     return <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>;
   }
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
-      {showPhaseSelector && (
-        <div className="mb-6">
-          <CompactPhaseSelector
-            lead={lead}
-            onUpdateLead={onUpdateLead}
-          />
-        </div>
-      )}
-      
       <div className="grid grid-cols-12 gap-6">
         {/* Left Column - 4 columns */}
         <div className="col-span-4 space-y-6">
