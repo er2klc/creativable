@@ -3,7 +3,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { InfoRow } from "./InfoRow";
 import { ContactInfoGroup } from "./ContactInfoGroup";
-import { User, AtSign, Phone, Globe, Calendar, Building2, MapPin, Plus, Hash } from "lucide-react";
+import { User, AtSign, Phone, Globe, Calendar, Building2, MapPin, Hash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,21 +21,11 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
   const [newTag, setNewTag] = useState("");
   const [showTagDialog, setShowTagDialog] = useState(false);
 
-  const fields = [
-    { icon: User, label: settings?.language === "en" ? "Username" : "Benutzername", field: "social_media_username", value: lead.social_media_username },
-    { icon: User, label: settings?.language === "en" ? "Name" : "Name", field: "name", value: lead.name },
-    { icon: AtSign, label: "E-Mail", field: "email", value: lead.email },
-    { icon: Phone, label: settings?.language === "en" ? "Phone" : "Telefon", field: "phone_number", value: lead.phone_number },
-    { icon: Globe, label: settings?.language === "en" ? "Website" : "Webseite", field: "website", value: lead.website },
-    { icon: Calendar, label: settings?.language === "en" ? "Birth Date" : "Geburtsdatum", field: "birth_date", value: lead.birth_date },
-    { icon: Building2, label: settings?.language === "en" ? "Company" : "Firma", field: "company_name", value: lead.company_name },
-    { icon: MapPin, label: settings?.language === "en" ? "City" : "Stadt", field: "city", value: lead.city },
-  ];
-
   const handleAddTag = (tag: string) => {
     if (!tag.trim()) return;
     
     const allTags = lead.interests || [];
+    // Only add # if it's not already present
     const newTag = tag.startsWith('#') ? tag : `#${tag}`;
     
     if (!allTags.includes(newTag)) {
@@ -62,7 +52,8 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
     lead.social_media_posts.forEach((post: any) => {
       if (post.hashtags) {
         post.hashtags.forEach((tag: string) => {
-          hashtags.add(tag.startsWith('#') ? tag : `#${tag}`);
+          // Don't add extra # if it already exists
+          hashtags.add(tag);
         });
       }
     });
@@ -107,8 +98,6 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
         leadId={lead.id}
         showEmptyFields={true}
         groupName="interests_goals"
-        actionIcon={<Plus className="h-4 w-4" />}
-        onActionClick={() => setShowTagDialog(true)}
       >
         <div className="flex flex-wrap gap-2">
           {getAllUniqueTags().map((tag, index) => (
@@ -116,7 +105,7 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
               key={index}
               variant="secondary"
               className={cn(
-                "flex items-center gap-1 px-3 py-1",
+                "flex items-center gap-1 px-2 py-0.5 text-xs",
                 tag.startsWith('#') ? "bg-blue-100 text-blue-800 hover:bg-blue-200" : "bg-gray-100 text-gray-800 hover:bg-gray-200"
               )}
             >
@@ -125,7 +114,7 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-4 w-4 p-0 hover:bg-transparent text-current"
+                className="h-3 w-3 p-0 hover:bg-transparent text-current"
                 onClick={() => handleRemoveTag(tag)}
               >
                 ×
