@@ -30,38 +30,23 @@ export const linkedInApi = {
       throw new Error('LinkedIn profile input is required');
     }
 
-    // Handle different input formats
-    let username = '';
-    
-    try {
-      // Case 1: Full URL format
-      if (input.includes('linkedin.com/in/')) {
-        username = input.split('linkedin.com/in/')[1].split('/')[0].split('?')[0];
-      } 
-      // Case 2: Just the username
-      else if (!input.includes('http') && !input.includes('/')) {
-        username = input;
-      }
-      // Case 3: Other URL format
-      else if (input.match(/https?:\/\/(www\.)?linkedin\.com\/in\/([^\/\?]+)/)) {
-        username = input.match(/https?:\/\/(www\.)?linkedin\.com\/in\/([^\/\?]+)/)[2];
-      }
-
-      if (!username) {
-        console.error('Could not extract username from input:', input);
-        throw new Error('Invalid LinkedIn profile format');
-      }
-
-      // Clean up username and construct full URL
-      username = username.trim();
-      const fullUrl = `https://www.linkedin.com/in/${username}/`;
-      
-      console.log('Processed LinkedIn URL:', fullUrl);
-      return fullUrl;
-    } catch (error) {
-      console.error('Error processing LinkedIn input:', error);
-      throw new Error('Could not process LinkedIn profile input');
+    // Check if input contains URL parts - if so, throw error
+    if (input.includes('http') || input.includes('linkedin.com') || input.includes('/')) {
+      throw new Error('Bitte geben Sie nur den LinkedIn-Benutzernamen ein, nicht die vollständige URL.');
     }
+
+    // Validate username format
+    const usernameRegex = /^[a-zA-Z0-9\-_]+$/;
+    if (!usernameRegex.test(input)) {
+      throw new Error('Ungültiger LinkedIn-Benutzername. Bitte geben Sie einen gültigen Benutzernamen ein.');
+    }
+
+    // Clean up username and construct full URL
+    const username = input.trim();
+    const fullUrl = `https://www.linkedin.com/in/${username}/`;
+    
+    console.log('Processed LinkedIn URL:', fullUrl);
+    return fullUrl;
   },
 
   async validateToken(accessToken: string) {
