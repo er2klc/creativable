@@ -26,6 +26,21 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Update initial progress to 0%
+    const { error: initialProgressError } = await supabaseClient
+      .from('social_media_posts')
+      .upsert({
+        id: `temp-${leadId}`,
+        lead_id: leadId,
+        platform: platform,
+        post_type: 'post',
+        processing_progress: 0
+      })
+
+    if (initialProgressError) {
+      console.error('Error setting initial progress:', initialProgressError)
+    }
+
     const { data: secrets, error: secretError } = await supabaseClient
       .from('secrets')
       .select('value')
@@ -41,6 +56,12 @@ serve(async (req) => {
     const BASE_URL = 'https://api.apify.com/v2'
 
     console.log('Starting Apify scraping run');
+
+    // Update progress to 10% - Starting Apify run
+    await supabaseClient
+      .from('social_media_posts')
+      .update({ processing_progress: 10 })
+      .eq('id', `temp-${leadId}`)
 
     const apifyRequest = {
       url: `${BASE_URL}/acts/apify~instagram-profile-scraper/runs`,
@@ -76,18 +97,27 @@ serve(async (req) => {
 
     console.log('Apify run started:', { runId });
 
+    // Update progress to 20% - Apify run started
+    await supabaseClient
+      .from('social_media_posts')
+      .update({ processing_progress: 20 })
+      .eq('id', `temp-${leadId}`)
+
     let attempts = 0
     const maxAttempts = 30
     
     while (attempts < maxAttempts) {
       console.log(`Polling for results (attempt ${attempts + 1}/${maxAttempts})`);
 
-      // Update progress based on attempts
-      const currentProgress = Math.min(90, Math.floor((attempts / maxAttempts) * 100));
+      // Calculate and update progress based on attempts (20% to 90%)
+      const progressRange = 70; // from 20% to 90%
+      const currentProgress = Math.min(90, 20 + Math.floor((attempts / maxAttempts) * progressRange));
+      
+      console.log(`Updating processing progress to ${currentProgress}%`);
       await supabaseClient
         .from('social_media_posts')
         .update({ processing_progress: currentProgress })
-        .eq('lead_id', leadId);
+        .eq('id', `temp-${leadId}`);
 
       const datasetResponse = await fetch(`${BASE_URL}/actor-runs/${runId}/dataset/items`, {
         headers: {
@@ -273,11 +303,11 @@ serve(async (req) => {
           console.error('Error storing scan history:', scanHistoryError);
         }
 
-        // Final progress update
+        // Final progress update to 100%
         await supabaseClient
           .from('social_media_posts')
           .update({ processing_progress: 100 })
-          .eq('lead_id', leadId);
+          .eq('id', `temp-${leadId}`);
 
         return new Response(
           JSON.stringify({ success: true, data: profileData }),

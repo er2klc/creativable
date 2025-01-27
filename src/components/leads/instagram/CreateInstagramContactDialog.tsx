@@ -81,6 +81,8 @@ export function CreateInstagramContactDialog({
 
   // Progress polling function with improved error handling and debugging
   const pollProgress = async (leadId: string) => {
+    console.log('Starting progress polling for lead:', leadId);
+    
     const interval = setInterval(async () => {
       try {
         const { data: posts, error } = await supabase
@@ -99,6 +101,7 @@ export function CreateInstagramContactDialog({
           setScanProgress(currentProgress);
           
           if (currentProgress >= 100) {
+            console.log('Processing completed');
             clearInterval(interval);
           }
         } else {
@@ -109,7 +112,10 @@ export function CreateInstagramContactDialog({
       }
     }, 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      console.log('Cleaning up progress polling');
+      clearInterval(interval);
+    };
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {

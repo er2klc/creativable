@@ -23,11 +23,14 @@ export const InstagramScanAnimation = ({ progress }: InstagramScanAnimationProps
         const x = Math.cos(angle) * radius;
         const y = Math.sin(angle) * radius;
         
+        // Animation speed increases with progress
+        const duration = Math.max(0.5, 2 - (progress / 100)); // Speeds up as progress increases
+        
         await controls.start({
           x,
           y,
           transition: {
-            duration: 2,
+            duration,
             ease: "easeInOut"
           }
         });
@@ -42,7 +45,7 @@ export const InstagramScanAnimation = ({ progress }: InstagramScanAnimationProps
       isActive = false;
       controls.stop();
     };
-  }, [controls]);
+  }, [controls, progress]);
 
   // Ensure progress is a valid number between 0-100
   const safeProgress = typeof progress === 'number' && !isNaN(progress) ? 
@@ -61,7 +64,7 @@ export const InstagramScanAnimation = ({ progress }: InstagramScanAnimationProps
           initial={{ x: 0, y: 0 }}
           style={{ left: '50%', top: '50%' }}
         >
-          <Search className="w-10 h-10 text-blue-500" />
+          <Search className="w-12 h-12 text-blue-500" />
         </motion.div>
 
         {/* Progress Bar */}
