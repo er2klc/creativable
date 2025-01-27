@@ -99,6 +99,7 @@ export function CreateInstagramContactDialog({
     let processedMediaFiles = 0;
     let simulationInterval: NodeJS.Timeout | null = null;
     let isPollingActive = true;
+    let isPhaseOneComplete = false;
     
     const interval = setInterval(async () => {
       if (!isPollingActive) {
@@ -123,10 +124,10 @@ export function CreateInstagramContactDialog({
         }
 
         const currentProgress = posts?.processing_progress ?? lastProgress;
-        console.log('Current progress:', currentProgress, 'Current Phase:', currentPhase);
+        console.log('Current progress:', currentProgress, 'Current Phase:', currentPhase, 'Phase One Complete:', isPhaseOneComplete);
         
         // Phase 1: Profile Scanning
-        if (currentPhase === 1) {
+        if (currentPhase === 1 && !isPhaseOneComplete) {
           if (currentProgress >= 27 && currentProgress < 100 && !simulationInterval) {
             // Start simulating progress from 27% to 100%
             let simulatedProgress = currentProgress;
@@ -137,6 +138,7 @@ export function CreateInstagramContactDialog({
               if (simulatedProgress >= 100) {
                 clearInterval(simulationInterval!);
                 simulationInterval = null;
+                isPhaseOneComplete = true;
                 setCurrentPhase(2); // Switch to Phase 2
                 console.log('Phase 1 completed, transitioning to Phase 2');
               }
@@ -148,7 +150,7 @@ export function CreateInstagramContactDialog({
         }
         
         // Phase 2: Media Saving
-        if (currentPhase === 2) {
+        if (currentPhase === 2 || isPhaseOneComplete) {
           if (!mediaStarted && posts?.media_urls) {
             mediaStarted = true;
             totalMediaFiles = posts.media_urls.length;
