@@ -84,6 +84,8 @@ export function CreateInstagramContactDialog({
   // Progress polling function with improved error handling and debugging
   const pollProgress = async (leadId: string) => {
     console.log('Starting progress polling for lead:', leadId);
+    let lastProgress = 0;
+    let mediaStarted = false;
     
     const interval = setInterval(async () => {
       try {
@@ -95,27 +97,38 @@ export function CreateInstagramContactDialog({
           .limit(1)
           .maybeSingle();
 
-        if (!error) {
-          const currentProgress = posts?.processing_progress ?? 0;
-          console.log('Current progress:', currentProgress);
-          
-          if (currentProgress < 100) {
-            setScanProgress(currentProgress);
-          } else {
-            setScanProgress(100);
-            // Start tracking media progress
-            if (posts?.bucket_path) {
-              setCurrentFile(posts.bucket_path);
-              setMediaProgress((prev) => Math.min(prev + 10, 100));
-            }
-          }
-          
-          if (currentProgress >= 100 && mediaProgress >= 100) {
-            console.log('Processing completed');
-            clearInterval(interval);
-          }
-        } else {
+        if (error) {
           console.error('Error polling progress:', error);
+          return;
+        }
+
+        const currentProgress = posts?.processing_progress ?? lastProgress;
+        console.log('Current progress:', currentProgress);
+        
+        // Update scan progress
+        if (currentProgress < 100) {
+          setScanProgress(currentProgress);
+          lastProgress = currentProgress;
+        } else {
+          setScanProgress(100);
+          
+          // Start media phase if not already started
+          if (!mediaStarted) {
+            mediaStarted = true;
+            setMediaProgress(0); // Reset media progress when starting
+          }
+          
+          // Update media progress and file info
+          if (posts?.bucket_path) {
+            setCurrentFile(posts.bucket_path);
+            setMediaProgress((prev) => Math.min(prev + 10, 100));
+          }
+        }
+        
+        // Clear interval when both phases are complete
+        if (currentProgress >= 100 && mediaProgress >= 100) {
+          console.log('Processing completed');
+          clearInterval(interval);
         }
       } catch (err) {
         console.error('Error in progress polling:', err);
