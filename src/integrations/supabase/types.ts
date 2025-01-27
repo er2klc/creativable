@@ -623,57 +623,6 @@ export type Database = {
           },
         ]
       }
-      instagram_scan_history: {
-        Row: {
-          engagement_rate: number | null
-          error_message: string | null
-          followers_count: number | null
-          following_count: number | null
-          id: string
-          lead_id: string | null
-          posts_count: number | null
-          scanned_at: string | null
-          success: boolean | null
-        }
-        Insert: {
-          engagement_rate?: number | null
-          error_message?: string | null
-          followers_count?: number | null
-          following_count?: number | null
-          id?: string
-          lead_id?: string | null
-          posts_count?: number | null
-          scanned_at?: string | null
-          success?: boolean | null
-        }
-        Update: {
-          engagement_rate?: number | null
-          error_message?: string | null
-          followers_count?: number | null
-          following_count?: number | null
-          id?: string
-          lead_id?: string | null
-          posts_count?: number | null
-          scanned_at?: string | null
-          success?: boolean | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_lead"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "instagram_scan_history_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       keywords: {
         Row: {
           created_at: string | null
@@ -1104,68 +1053,6 @@ export type Database = {
           },
         ]
       }
-      linkedin_scan_history: {
-        Row: {
-          certifications: Json | null
-          connections_count: number | null
-          education: Json | null
-          error_message: string | null
-          experience: Json | null
-          followers_count: number | null
-          id: string
-          languages: Json | null
-          lead_id: string | null
-          posts_count: number | null
-          profile_data: Json | null
-          recommendations: Json | null
-          scanned_at: string | null
-          skills: Json | null
-          success: boolean | null
-        }
-        Insert: {
-          certifications?: Json | null
-          connections_count?: number | null
-          education?: Json | null
-          error_message?: string | null
-          experience?: Json | null
-          followers_count?: number | null
-          id?: string
-          languages?: Json | null
-          lead_id?: string | null
-          posts_count?: number | null
-          profile_data?: Json | null
-          recommendations?: Json | null
-          scanned_at?: string | null
-          skills?: Json | null
-          success?: boolean | null
-        }
-        Update: {
-          certifications?: Json | null
-          connections_count?: number | null
-          education?: Json | null
-          error_message?: string | null
-          experience?: Json | null
-          followers_count?: number | null
-          id?: string
-          languages?: Json | null
-          lead_id?: string | null
-          posts_count?: number | null
-          profile_data?: Json | null
-          recommendations?: Json | null
-          scanned_at?: string | null
-          skills?: Json | null
-          success?: boolean | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "linkedin_scan_history_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       message_templates: {
         Row: {
           content: string
@@ -1545,6 +1432,7 @@ export type Database = {
       }
       social_media_posts: {
         Row: {
+          bucket_path: string | null
           comments_count: number | null
           content: string | null
           created_at: string | null
@@ -1557,6 +1445,7 @@ export type Database = {
           local_media_paths: string[] | null
           local_video_path: string | null
           location: string | null
+          media_processing_status: string | null
           media_type: string | null
           media_urls: string[] | null
           mentioned_profiles: string[] | null
@@ -1570,6 +1459,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          bucket_path?: string | null
           comments_count?: number | null
           content?: string | null
           created_at?: string | null
@@ -1582,6 +1472,7 @@ export type Database = {
           local_media_paths?: string[] | null
           local_video_path?: string | null
           location?: string | null
+          media_processing_status?: string | null
           media_type?: string | null
           media_urls?: string[] | null
           mentioned_profiles?: string[] | null
@@ -1595,6 +1486,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          bucket_path?: string | null
           comments_count?: number | null
           content?: string | null
           created_at?: string | null
@@ -1607,6 +1499,7 @@ export type Database = {
           local_media_paths?: string[] | null
           local_video_path?: string | null
           location?: string | null
+          media_processing_status?: string | null
           media_type?: string | null
           media_urls?: string[] | null
           mentioned_profiles?: string[] | null
@@ -1622,6 +1515,74 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "social_media_posts_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_media_scan_history: {
+        Row: {
+          certifications: Json | null
+          education: Json | null
+          engagement_rate: number | null
+          error_message: string | null
+          experience: Json | null
+          followers_count: number | null
+          following_count: number | null
+          id: string
+          languages: Json | null
+          lead_id: string | null
+          platform: string
+          posts_count: number | null
+          profile_data: Json | null
+          recommendations: Json | null
+          scanned_at: string | null
+          skills: Json | null
+          success: boolean | null
+        }
+        Insert: {
+          certifications?: Json | null
+          education?: Json | null
+          engagement_rate?: number | null
+          error_message?: string | null
+          experience?: Json | null
+          followers_count?: number | null
+          following_count?: number | null
+          id?: string
+          languages?: Json | null
+          lead_id?: string | null
+          platform: string
+          posts_count?: number | null
+          profile_data?: Json | null
+          recommendations?: Json | null
+          scanned_at?: string | null
+          skills?: Json | null
+          success?: boolean | null
+        }
+        Update: {
+          certifications?: Json | null
+          education?: Json | null
+          engagement_rate?: number | null
+          error_message?: string | null
+          experience?: Json | null
+          followers_count?: number | null
+          following_count?: number | null
+          id?: string
+          languages?: Json | null
+          lead_id?: string | null
+          platform?: string
+          posts_count?: number | null
+          profile_data?: Json | null
+          recommendations?: Json | null
+          scanned_at?: string | null
+          skills?: Json | null
+          success?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_media_scan_history_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
