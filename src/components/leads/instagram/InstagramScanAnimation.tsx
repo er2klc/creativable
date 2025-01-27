@@ -13,9 +13,13 @@ export const InstagramScanAnimation = ({ progress }: InstagramScanAnimationProps
   useEffect(() => {
     const animate = async () => {
       while (true) {
-        // Generate random positions within bounds
-        const x = Math.random() * 260 - 20; // -20 to 240
-        const y = Math.random() * 80; // 0 to 80
+        // Generate random angle and radius for circular motion around Instagram logo
+        const angle = Math.random() * 2 * Math.PI;
+        const radius = 40 + Math.random() * 20; // Random radius between 40-60px
+        
+        // Calculate x and y based on polar coordinates
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
         
         await controls.start({
           x,
@@ -29,7 +33,16 @@ export const InstagramScanAnimation = ({ progress }: InstagramScanAnimationProps
     };
     
     animate();
+
+    // Cleanup animation on unmount
+    return () => {
+      controls.stop();
+    };
   }, [controls]);
+
+  // Ensure progress is a valid number between 0-100
+  const safeProgress = typeof progress === 'number' && !isNaN(progress) ? 
+    Math.max(0, Math.min(100, progress)) : 0;
 
   return (
     <div className="relative w-full max-w-[300px] mx-auto py-8">
@@ -41,16 +54,17 @@ export const InstagramScanAnimation = ({ progress }: InstagramScanAnimationProps
         <motion.div
           className="absolute"
           animate={controls}
-          initial={{ x: -20, y: 0 }}
+          initial={{ x: 0, y: 0 }}
+          style={{ left: '50%', top: '50%' }}
         >
-          <Search className="w-8 h-8 text-blue-500" /> {/* Increased size */}
+          <Search className="w-10 h-10 text-blue-500" /> {/* Increased size */}
         </motion.div>
 
         {/* Progress Bar */}
         <div className="mt-8">
-          <Progress value={progress || 0} className="w-full h-2" />
+          <Progress value={safeProgress} className="w-full h-2" />
           <p className="text-sm text-center mt-2 text-gray-600">
-            {progress || 0}% Scanning Profile...
+            {safeProgress}% Scanning Profile...
           </p>
         </div>
       </div>
