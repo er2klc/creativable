@@ -52,7 +52,6 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
     lead.social_media_posts.forEach((post: any) => {
       if (post.hashtags) {
         post.hashtags.forEach((tag: string) => {
-          // Don't add extra # if it already exists
           hashtags.add(tag);
         });
       }
@@ -67,6 +66,16 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
     const allTags = new Set([...manualTags, ...socialHashtags]);
     return Array.from(allTags);
   };
+
+  const fields = [
+    { icon: User, label: settings?.language === "en" ? "Name" : "Name", field: "name", value: lead.name },
+    { icon: AtSign, label: "Email", field: "email", value: lead.email },
+    { icon: Phone, label: settings?.language === "en" ? "Phone" : "Telefon", field: "phone_number", value: lead.phone_number },
+    { icon: Globe, label: settings?.language === "en" ? "Website" : "Webseite", field: "website", value: lead.website },
+    { icon: Calendar, label: settings?.language === "en" ? "Birth Date" : "Geburtsdatum", field: "birth_date", value: lead.birth_date },
+    { icon: Building2, label: settings?.language === "en" ? "Company" : "Firma", field: "company_name", value: lead.company_name },
+    { icon: MapPin, label: settings?.language === "en" ? "Address" : "Adresse", field: "address", value: lead.address }
+  ];
 
   const visibleFields = showEmptyFields 
     ? fields 
@@ -105,11 +114,11 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
               key={index}
               variant="secondary"
               className={cn(
-                "flex items-center gap-1 px-2 py-0.5 text-xs",
+                "flex items-center gap-1 px-1.5 py-0.5 text-xs",
                 tag.startsWith('#') ? "bg-blue-100 text-blue-800 hover:bg-blue-200" : "bg-gray-100 text-gray-800 hover:bg-gray-200"
               )}
             >
-              {tag.startsWith('#') && <Hash className="h-3 w-3" />}
+              {tag.startsWith('#') && <Hash className="h-2.5 w-2.5" />}
               {tag}
               <Button
                 variant="ghost"
