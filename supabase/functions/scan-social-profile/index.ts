@@ -112,9 +112,10 @@ serve(async (req) => {
     }
 
     let attempts = 0
-    const maxAttempts = 30
+    const maxAttempts = 60 // Increased from 30 to 60 for longer processing time
     let lastProgressUpdate = Date.now()
-    const progressTimeout = 30000 // 30 seconds timeout
+    const progressTimeout = 60000 // Increased from 30s to 60s timeout
+    let mediaProcessingStarted = false
     
     while (attempts < maxAttempts) {
       console.log(`Polling for results (attempt ${attempts + 1}/${maxAttempts})`);
@@ -160,11 +161,22 @@ serve(async (req) => {
             .from('social_media_posts')
             .update({ 
               error_message: timeoutError,
-              processing_progress: currentProgress // Keep last progress
+              processing_progress: currentProgress
             })
             .eq('id', `temp-${leadId}`);
             
-          throw new Error(timeoutError);
+          // Don't throw error, continue to Phase 2
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: timeoutError,
+              shouldContinue: true // Signal to continue to Phase 2
+            }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200 // Return 200 to allow continuation
+            }
+          );
         }
 
         throw new Error(`HTTP error! status: ${datasetResponse.status}, body: ${errorText}`)
@@ -175,7 +187,7 @@ serve(async (req) => {
       if (items.length > 0) {
         const profileData = items[0]
         console.log('Profile data received:', profileData);
-        lastProgressUpdate = Date.now() // Reset timeout counter
+        lastProgressUpdate = Date.now()
 
         // Process profile image first
         const newProfileImageUrl = await downloadAndUploadImage(
@@ -219,7 +231,6 @@ serve(async (req) => {
         }
 
         const posts = profileData.latestPosts?.map((post: any) => {
-          // Determine media URLs based on post type
           let mediaUrls = [];
           let videoUrl = null;
           
@@ -232,7 +243,6 @@ serve(async (req) => {
             mediaUrls = [post.displayUrl || (post.images && post.images[0])].filter(Boolean);
           }
 
-          // Log media URLs for debugging
           console.log('Processing post media:', {
             postId: post.id,
             mediaUrls,
@@ -282,8 +292,24 @@ serve(async (req) => {
             console.error('Error storing posts:', postsError);
           } else {
             console.log(`Successfully stored ${posts.length} posts`);
+            mediaProcessingStarted = true;
 
-            // Process media files after storing posts
+            // Start Phase 2 - Media Processing
+            let processedFiles = 0;
+            const totalFiles = savedPosts.reduce((sum, post) => 
+              sum + (post.media_urls?.length || 0), 0);
+
+            // Update progress for Phase 2 start
+            await supabaseClient
+              .from('social_media_posts')
+              .update({ 
+                processing_progress: 0,
+                media_processing_status: 'processing',
+                error_message: null
+              })
+              .eq('id', `temp-${leadId}`);
+
+            // Process media files
             for (const post of savedPosts) {
               if (!post.media_urls || post.media_urls.length === 0) {
                 console.log('No media URLs to process for post:', post.id);
@@ -309,6 +335,19 @@ serve(async (req) => {
                     }
                   });
 
+                  processedFiles++;
+                  const mediaProgress = Math.round((processedFiles / totalFiles) * 100);
+                  
+                  // Update progress for Phase 2
+                  await supabaseClient
+                    .from('social_media_posts')
+                    .update({ 
+                      processing_progress: mediaProgress,
+                      current_file: mediaUrl,
+                      error_message: null
+                    })
+                    .eq('id', `temp-${leadId}`);
+
                   console.log('Media processing response:', response);
                 } catch (error) {
                   console.error('Error processing media for post:', {
@@ -319,7 +358,27 @@ serve(async (req) => {
                 }
               }
             }
+
+            // Final update for Phase 2
+            await supabaseClient
+              .from('social_media_posts')
+              .update({ 
+                processing_progress: 100,
+                media_processing_status: 'completed',
+                error_message: null
+              })
+              .eq('id', `temp-${leadId}`);
           }
+        } else {
+          // No posts to process, complete Phase 2 immediately
+          await supabaseClient
+            .from('social_media_posts')
+            .update({ 
+              processing_progress: 100,
+              media_processing_status: 'completed',
+              error_message: 'No media files found'
+            })
+            .eq('id', `temp-${leadId}`);
         }
 
         const { error: scanHistoryError } = await supabaseClient
@@ -339,34 +398,26 @@ serve(async (req) => {
           console.error('Error storing scan history:', scanHistoryError);
         }
 
-        // Final progress update to 100%
-        const { error: finalProgressError } = await supabaseClient
-          .from('social_media_posts')
-          .update({ 
-            processing_progress: 100,
-            error_message: null
-          })
-          .eq('id', `temp-${leadId}`);
-
-        if (finalProgressError) {
-          console.error('Error updating final progress:', finalProgressError);
-        }
-
         return new Response(
-          JSON.stringify({ success: true, data: profileData }),
+          JSON.stringify({ 
+            success: true, 
+            data: profileData,
+            mediaProcessingStarted,
+            totalFiles: posts.reduce((sum, post) => sum + (post.media_urls?.length || 0), 0)
+          }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
 
       await new Promise(resolve => setTimeout(resolve, 2000))
       attempts++
-      lastProgressUpdate = Date.now() // Reset timeout counter
+      lastProgressUpdate = Date.now()
     }
 
     const timeoutError = 'Maximum polling attempts reached';
     console.error(timeoutError);
     
-    // Update database with timeout error
+    // Update database with timeout error but allow continuation
     await supabaseClient
       .from('social_media_posts')
       .update({ 
@@ -375,17 +426,29 @@ serve(async (req) => {
       })
       .eq('id', `temp-${leadId}`);
 
-    throw new Error(timeoutError)
+    // Return 200 to allow continuation to Phase 2
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: timeoutError,
+        shouldContinue: true // Signal to continue to Phase 2
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      }
+    )
   } catch (error) {
     console.error('Error during scan:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error during scanning'
+        error: error instanceof Error ? error.message : 'Unknown error during scanning',
+        shouldContinue: true // Allow continuation to Phase 2 even on error
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
+        status: 200 // Return 200 to allow continuation
       }
     )
   }
