@@ -93,15 +93,18 @@ export function CreateInstagramContactDialog({
           .from('social_media_posts')
           .select('processing_progress, bucket_path, media_urls, current_file, media_processing_status')
           .eq('lead_id', leadId)
-          .order('processing_progress', { ascending: false })
-          .single();
+          .order('processing_progress', { ascending: false });
 
         if (error) {
           console.error('Error polling progress:', error);
           return;
         }
 
-        const currentProgress = posts?.processing_progress ?? lastProgress;
+        // Get the post with the highest progress
+        const latestPost = posts && posts.length > 0 ? posts[0] : null;
+        if (!latestPost) return;
+
+        const currentProgress = latestPost.processing_progress ?? lastProgress;
         console.log('Current progress:', currentProgress, 'Current Phase:', currentPhase, 'Phase One Complete:', isPhaseOneComplete);
         
         // Phase 1: Profile Scanning
@@ -127,9 +130,9 @@ export function CreateInstagramContactDialog({
         }
         
         // Phase 2: Media Saving
-        if ((currentPhase === 2 || isPhaseOneComplete) && !isMediaProcessingActive && posts?.media_urls) {
+        if ((currentPhase === 2 || isPhaseOneComplete) && !isMediaProcessingActive && latestPost.media_urls) {
           setIsMediaProcessingActive(true);
-          totalMediaFiles = posts.media_urls.length;
+          totalMediaFiles = latestPost.media_urls.length;
           processedMediaFiles = 0;
           setMediaProgress(0);
           console.log(`Starting media phase, total files: ${totalMediaFiles}`);
@@ -148,19 +151,19 @@ export function CreateInstagramContactDialog({
         }
         
         // Update media progress based on saved files
-        if (isMediaProcessingActive && posts?.bucket_path) {
+        if (isMediaProcessingActive && latestPost.bucket_path) {
           processedMediaFiles++;
-          if (posts.current_file) {
-            setCurrentFile(posts.current_file);
+          if (latestPost.current_file) {
+            setCurrentFile(latestPost.current_file);
           }
           const mediaProgressPercent = Math.min(
             Math.round((processedMediaFiles / (totalMediaFiles || 1)) * 100),
             100
           );
           setMediaProgress(mediaProgressPercent);
-          console.log(`Media progress: ${mediaProgressPercent}%, File: ${posts.bucket_path}`);
+          console.log(`Media progress: ${mediaProgressPercent}%, File: ${latestPost.bucket_path}`);
 
-          if (mediaProgressPercent >= 100 || posts.media_processing_status === 'completed') {
+          if (mediaProgressPercent >= 100 || latestPost.media_processing_status === 'completed') {
             console.log('Media processing completed');
             setIsSuccess(true);
             isPollingActive = false;
