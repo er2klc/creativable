@@ -156,6 +156,14 @@ export function CreateInstagramContactDialog({
             totalMediaFiles = posts.media_urls.length;
             setMediaProgress(0);
             console.log(`Starting media phase, total files: ${totalMediaFiles}`);
+            
+            if (totalMediaFiles === 0) {
+              setCurrentFile("No media files to process");
+              setMediaProgress(100);
+              isPollingActive = false;
+              clearInterval(interval);
+              return;
+            }
           }
           
           // Update media progress based on saved files
@@ -169,22 +177,11 @@ export function CreateInstagramContactDialog({
             setMediaProgress(mediaProgressPercent);
             console.log(`Media progress: ${mediaProgressPercent}%, File: ${posts.bucket_path}`);
 
-            // If no media files or all files processed, complete Phase 2
-            if (mediaProgressPercent >= 100 || totalMediaFiles === 0) {
+            // If all files processed, complete Phase 2
+            if (mediaProgressPercent >= 100) {
               console.log('Media processing completed');
               isPollingActive = false;
               clearInterval(interval);
-              if (simulationInterval) {
-                clearInterval(simulationInterval);
-              }
-            }
-          } else if (totalMediaFiles === 0) {
-            // If no media files, complete Phase 2 immediately
-            setMediaProgress(100);
-            isPollingActive = false;
-            clearInterval(interval);
-            if (simulationInterval) {
-              clearInterval(simulationInterval);
             }
           }
         }
