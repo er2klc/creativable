@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
+import { linkedInApi } from "../_shared/linkedin.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,8 +22,8 @@ serve(async (req) => {
     }
 
     // Validate LinkedIn URL format
-    const linkedInUrlPattern = /^https:\/\/(www\.)?linkedin\.com\/in\/[\w\-]+\/?$/
-    if (!linkedInUrlPattern.test(profileUrl)) {
+    const profileId = linkedInApi.validateProfileUrl(profileUrl)
+    if (!profileId) {
       throw new Error('Invalid LinkedIn profile URL')
     }
 
@@ -60,18 +61,26 @@ serve(async (req) => {
     console.log('Starting Apify scan for LinkedIn profile:', profileUrl)
 
     // Start Apify actor
-    const startResponse = await fetch('https://api.apify.com/v2/actor-tasks/your_task_id/runs?token=' + settings.apify_api_key, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        startUrls: [{ url: profileUrl }],
-      }),
-    })
+    const startResponse = await fetch(
+      `https://api.apify.com/v2/actor-tasks/creativable~linkedin-people-profiles/runs?token=${settings.apify_api_key}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          startUrls: [{ url: profileUrl }],
+          maxRequestRetries: 3,
+          maxConcurrency: 1,
+          maxItems: 1,
+        }),
+      }
+    )
 
     if (!startResponse.ok) {
-      throw new Error('Failed to start Apify actor')
+      const errorText = await startResponse.text()
+      console.error('Failed to start Apify actor:', errorText)
+      throw new Error('Failed to start LinkedIn profile scan')
     }
 
     const runData = await startResponse.json()
@@ -90,7 +99,8 @@ serve(async (req) => {
       )
 
       if (!datasetResponse.ok) {
-        throw new Error('Failed to fetch dataset')
+        console.error('Failed to fetch dataset:', await datasetResponse.text())
+        throw new Error('Failed to fetch scan results')
       }
 
       const items = await datasetResponse.json()
@@ -107,6 +117,8 @@ serve(async (req) => {
     if (!profileData) {
       throw new Error('Timeout waiting for profile data')
     }
+
+    console.log('Successfully retrieved LinkedIn profile data')
 
     // Process and store profile data
     const { error: scanError } = await supabaseClient
@@ -127,10 +139,12 @@ serve(async (req) => {
         skills: profileData.skills || [],
         certifications: profileData.certifications || [],
         languages: profileData.languages || [],
-        recommendations: profileData.recommendations || []
+        recommendations: profileData.recommendations || [],
+        success: true
       })
 
     if (scanError) {
+      console.error('Error storing scan history:', scanError)
       throw scanError
     }
 
@@ -182,6 +196,7 @@ serve(async (req) => {
       .eq('id', leadId)
 
     if (leadUpdateError) {
+      console.error('Error updating lead:', leadUpdateError)
       throw leadUpdateError
     }
 
