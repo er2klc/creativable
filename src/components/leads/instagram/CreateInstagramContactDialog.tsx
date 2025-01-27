@@ -36,7 +36,7 @@ export function CreateInstagramContactDialog({
   const [scanProgress, setScanProgress] = useState(0);
   const [mediaProgress, setMediaProgress] = useState(0);
   const [currentFile, setCurrentFile] = useState<string>();
-  const [isPhaseOneComplete, setIsPhaseOneComplete] = useState(false);
+  const [currentPhase, setCurrentPhase] = useState<1 | 2>(1);
   const [duplicateError, setDuplicateError] = useState<{
     phaseName: string;
     createdAt: string;
@@ -90,7 +90,7 @@ export function CreateInstagramContactDialog({
     },
   });
 
-  // Progress polling function
+  // Progress polling function with improved phase management
   const pollProgress = async (leadId: string) => {
     console.log('Starting progress polling for lead:', leadId);
     let lastProgress = 0;
@@ -123,10 +123,10 @@ export function CreateInstagramContactDialog({
         }
 
         const currentProgress = posts?.processing_progress ?? lastProgress;
-        console.log('Current progress:', currentProgress, 'Phase One Complete:', isPhaseOneComplete);
+        console.log('Current progress:', currentProgress, 'Current Phase:', currentPhase);
         
         // Phase 1: Profile Scanning
-        if (!isPhaseOneComplete) {
+        if (currentPhase === 1) {
           if (currentProgress >= 27 && currentProgress < 100 && !simulationInterval) {
             // Start simulating progress from 27% to 100%
             let simulatedProgress = currentProgress;
@@ -137,7 +137,7 @@ export function CreateInstagramContactDialog({
               if (simulatedProgress >= 100) {
                 clearInterval(simulationInterval!);
                 simulationInterval = null;
-                setIsPhaseOneComplete(true);
+                setCurrentPhase(2); // Switch to Phase 2
                 console.log('Phase 1 completed, transitioning to Phase 2');
               }
             }, 100);
@@ -148,7 +148,7 @@ export function CreateInstagramContactDialog({
         }
         
         // Phase 2: Media Saving
-        if (isPhaseOneComplete) {
+        if (currentPhase === 2) {
           if (!mediaStarted && posts?.media_urls) {
             mediaStarted = true;
             totalMediaFiles = posts.media_urls.length;
@@ -241,7 +241,7 @@ export function CreateInstagramContactDialog({
       setScanProgress(0);
       setMediaProgress(0);
       setCurrentFile(undefined);
-      setIsPhaseOneComplete(false);
+      setCurrentPhase(1);
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
@@ -312,6 +312,7 @@ export function CreateInstagramContactDialog({
             scanProgress={scanProgress} 
             mediaProgress={mediaProgress}
             currentFile={currentFile}
+            currentPhase={currentPhase}
           />
         ) : (
           <Form {...form}>

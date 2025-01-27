@@ -7,15 +7,16 @@ interface InstagramScanAnimationProps {
   scanProgress: number;
   mediaProgress: number;
   currentFile?: string;
+  currentPhase: 1 | 2;
 }
 
 export const InstagramScanAnimation = ({ 
   scanProgress, 
   mediaProgress,
-  currentFile 
+  currentFile,
+  currentPhase
 }: InstagramScanAnimationProps) => {
   const controls = useAnimation();
-  const isMediaPhase = scanProgress >= 100;
 
   useEffect(() => {
     let isActive = true;
@@ -29,7 +30,7 @@ export const InstagramScanAnimation = ({
         const y = Math.sin(angle) * radius;
         
         // Slower animation when progress is higher
-        const duration = Math.max(0.5, 2 - (isMediaPhase ? mediaProgress : scanProgress) / 100);
+        const duration = Math.max(0.5, 2 - (currentPhase === 2 ? mediaProgress : scanProgress) / 100);
         
         await controls.start({
           x,
@@ -47,10 +48,10 @@ export const InstagramScanAnimation = ({
       isActive = false;
       controls.stop();
     };
-  }, [controls, scanProgress, mediaProgress, isMediaPhase]);
+  }, [controls, scanProgress, mediaProgress, currentPhase]);
 
   const getStatusText = () => {
-    if (!isMediaPhase) {
+    if (currentPhase === 1) {
       return "Scanning Profile...";
     }
     if (mediaProgress < 100) {
@@ -75,7 +76,7 @@ export const InstagramScanAnimation = ({
             initial={{ x: 0, y: 0 }}
             style={{ left: '50%', top: '50%' }}
           >
-            {isMediaPhase ? (
+            {currentPhase === 2 ? (
               <Image className="w-12 h-12 text-blue-500" />
             ) : (
               <Search className="w-12 h-12 text-blue-500" />
@@ -86,16 +87,18 @@ export const InstagramScanAnimation = ({
         {/* Progress Section */}
         <div className="space-y-4">
           {/* Scan Progress */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Profile Scan (1/2)</span>
-              <span>{scanProgress}%</span>
+          {currentPhase === 1 && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Profile Scan (1/2)</span>
+                <span>{scanProgress}%</span>
+              </div>
+              <Progress value={scanProgress} className="w-full h-2" />
             </div>
-            <Progress value={scanProgress} className="w-full h-2" />
-          </div>
+          )}
 
           {/* Media Progress */}
-          {isMediaPhase && (
+          {currentPhase === 2 && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Media Save (2/2)</span>
