@@ -22,20 +22,19 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
   const [showTagDialog, setShowTagDialog] = useState(false);
 
   const handleAddTag = (tag: string) => {
-    if (!tag.trim()) return;
-    
-    const allTags = lead.interests || [];
-    // Only add # if it's not already present
-    const newTag = tag.startsWith('#') ? tag : `#${tag}`;
-    
-    if (!allTags.includes(newTag)) {
-      onUpdate({
-        interests: [...allTags, newTag]
-      });
-    }
-    setNewTag("");
-    setShowTagDialog(false);
-  };
+  if (!tag.trim()) return;
+
+  const allTags = lead.interests || [];
+  const newTag = tag.trim().startsWith('#') ? tag.trim() : `#${tag.trim()}`;
+
+  if (!allTags.includes(newTag)) {
+    onUpdate({
+      interests: [...allTags, newTag],
+    });
+  }
+  setNewTag('');
+  setShowTagDialog(false);
+};
 
   const handleRemoveTag = (tagToRemove: string) => {
     const currentTags = lead.interests || [];
@@ -46,20 +45,20 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
 
   // Get unique hashtags from social media posts
   const getUniqueHashtagsFromPosts = () => {
-    if (!Array.isArray(lead.social_media_posts)) return [];
-    
-    const hashtags = new Set<string>();
-    lead.social_media_posts.forEach((post: any) => {
-      if (post.hashtags) {
-        post.hashtags.forEach((tag: string) => {
-          // Ensure we have exactly one # at the start
-          const cleanTag = tag.replace(/^#+/, ''); // Remove any leading #
-          hashtags.add(`#${cleanTag}`);
-        });
-      }
-    });
-    return Array.from(hashtags);
-  };
+  if (!Array.isArray(lead.social_media_posts)) return [];
+
+  const hashtags = new Set<string>();
+  lead.social_media_posts.forEach((post: any) => {
+    if (post.hashtags) {
+      post.hashtags.forEach((tag: string) => {
+        const cleanTag = tag.replace(/^#+/, '').trim(); // Entfernt führende #
+        hashtags.add(`#${cleanTag}`);
+      });
+    }
+  });
+  return Array.from(hashtags);
+};
+
 
   // Combine manual tags and social media hashtags, removing duplicates
   const getAllUniqueTags = () => {
