@@ -24,7 +24,7 @@ export const LeadDetailContent = ({
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
 
-  // Only hide phase selector if lead has a status other than 'lead'
+  // Only show phase selector if lead has no status or status is 'lead'
   const showPhaseSelector = !lead.status || lead.status === 'lead';
 
   if (isLoading) {
@@ -33,9 +33,18 @@ export const LeadDetailContent = ({
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left Column */}
-        <div className="space-y-6">
+      {showPhaseSelector && (
+        <div className="mb-6">
+          <CompactPhaseSelector
+            lead={lead}
+            onUpdateLead={onUpdateLead}
+          />
+        </div>
+      )}
+      
+      <div className="grid grid-cols-12 gap-6">
+        {/* Left Column - 4 columns */}
+        <div className="col-span-4 space-y-6">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5" />
@@ -54,17 +63,9 @@ export const LeadDetailContent = ({
           <ContactFieldManager />
         </div>
 
-        {/* Right Column */}
-        <div className="space-y-6">
-          {showPhaseSelector && (
-            <CompactPhaseSelector
-              lead={lead}
-              onUpdateLead={onUpdateLead}
-            />
-          )}
-
+        {/* Right Column - 8 columns */}
+        <div className="col-span-8 space-y-6">
           <LeadDetailTabs lead={lead} />
-          
           <LeadTimeline lead={lead} />
         </div>
       </div>
