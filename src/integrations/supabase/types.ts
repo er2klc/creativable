@@ -1453,6 +1453,7 @@ export type Database = {
           platform: string
           post_type: Database["public"]["Enums"]["post_type"]
           posted_at: string | null
+          processing_progress: number | null
           tagged_profiles: string[] | null
           tagged_users: Json | null
           url: string | null
@@ -1480,6 +1481,7 @@ export type Database = {
           platform: string
           post_type: Database["public"]["Enums"]["post_type"]
           posted_at?: string | null
+          processing_progress?: number | null
           tagged_profiles?: string[] | null
           tagged_users?: Json | null
           url?: string | null
@@ -1507,6 +1509,7 @@ export type Database = {
           platform?: string
           post_type?: Database["public"]["Enums"]["post_type"]
           posted_at?: string | null
+          processing_progress?: number | null
           tagged_profiles?: string[] | null
           tagged_users?: Json | null
           url?: string | null

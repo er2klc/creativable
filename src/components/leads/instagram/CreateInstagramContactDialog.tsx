@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { useQuery } from "@tanstack/react-query";
+import { InstagramScanAnimation } from "./InstagramScanAnimation";
 
 const formSchema = z.object({
   username: z.string().min(1, "Username ist erforderlich"),
@@ -29,6 +30,7 @@ export function CreateInstagramContactDialog({
   defaultPhase 
 }: CreateInstagramContactDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
   const { settings } = useSettings();
 
   // Fetch default pipeline if none provided
@@ -77,9 +79,34 @@ export function CreateInstagramContactDialog({
     },
   });
 
+  // Progress polling function
+  const pollProgress = async (leadId: string) => {
+    const interval = setInterval(async () => {
+      const { data: posts } = await supabase
+        .from('social_media_posts')
+        .select('processing_progress')
+        .eq('lead_id', leadId)
+        .order('processing_progress', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (posts?.processing_progress) {
+        setScanProgress(posts.processing_progress);
+        if (posts.processing_progress >= 100) {
+          clearInterval(interval);
+        }
+      }
+    }, 1000);
+
+    // Cleanup
+    return () => clearInterval(interval);
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);
+      setScanProgress(0);
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
@@ -113,7 +140,10 @@ export function CreateInstagramContactDialog({
 
       if (leadError) throw leadError;
 
-      // Then trigger the scan profile function using Supabase Edge Function invocation
+      // Start polling for progress
+      pollProgress(lead.id);
+
+      // Then trigger the scan profile function
       const { data, error } = await supabase.functions.invoke('scan-social-profile', {
         body: {
           platform: 'instagram',
@@ -143,40 +173,44 @@ export function CreateInstagramContactDialog({
         <DialogHeader>
           <DialogTitle>Instagram-Kontakt hinzufügen</DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Instagram Username</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Instagram-Username eingeben" 
-                      {...field} 
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
-              >
-                Abbrechen
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Lädt..." : "Kontakt hinzufügen"}
-              </Button>
-            </div>
-          </form>
-        </Form>
+        {isLoading ? (
+          <InstagramScanAnimation progress={scanProgress} />
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Instagram Username</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Instagram-Username eingeben" 
+                        {...field} 
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={isLoading}
+                >
+                  Abbrechen
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "Lädt..." : "Kontakt hinzufügen"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
       </DialogContent>
     </Dialog>
   );

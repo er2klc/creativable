@@ -82,6 +82,13 @@ serve(async (req) => {
     while (attempts < maxAttempts) {
       console.log(`Polling for results (attempt ${attempts + 1}/${maxAttempts})`);
 
+      // Update progress based on attempts
+      const currentProgress = Math.min(90, Math.floor((attempts / maxAttempts) * 100));
+      await supabaseClient
+        .from('social_media_posts')
+        .update({ processing_progress: currentProgress })
+        .eq('lead_id', leadId);
+
       const datasetResponse = await fetch(`${BASE_URL}/actor-runs/${runId}/dataset/items`, {
         headers: {
           'Authorization': `Bearer ${apiKey}`
@@ -265,6 +272,12 @@ serve(async (req) => {
         if (scanHistoryError) {
           console.error('Error storing scan history:', scanHistoryError);
         }
+
+        // Final progress update
+        await supabaseClient
+          .from('social_media_posts')
+          .update({ processing_progress: 100 })
+          .eq('lead_id', leadId);
 
         return new Response(
           JSON.stringify({ success: true, data: profileData }),
