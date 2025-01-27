@@ -31,6 +31,8 @@ export function CreateInstagramContactDialog({
 }: CreateInstagramContactDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
+  const [mediaProgress, setMediaProgress] = useState(0);
+  const [currentFile, setCurrentFile] = useState<string>();
   const { settings } = useSettings();
 
   // Fetch default pipeline if none provided
@@ -71,7 +73,7 @@ export function CreateInstagramContactDialog({
     },
     enabled: !!(pipelineId || defaultPipeline?.id)
   });
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -87,20 +89,28 @@ export function CreateInstagramContactDialog({
       try {
         const { data: posts, error } = await supabase
           .from('social_media_posts')
-          .select('processing_progress')
+          .select('processing_progress, bucket_path')
           .eq('lead_id', leadId)
           .order('processing_progress', { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        console.log('Progress poll response:', { posts, error }); // Debug log
-
         if (!error) {
           const currentProgress = posts?.processing_progress ?? 0;
-          console.log('Current progress:', currentProgress); // Debug log
-          setScanProgress(currentProgress);
+          console.log('Current progress:', currentProgress);
           
-          if (currentProgress >= 100) {
+          if (currentProgress < 100) {
+            setScanProgress(currentProgress);
+          } else {
+            setScanProgress(100);
+            // Start tracking media progress
+            if (posts?.bucket_path) {
+              setCurrentFile(posts.bucket_path);
+              setMediaProgress((prev) => Math.min(prev + 10, 100));
+            }
+          }
+          
+          if (currentProgress >= 100 && mediaProgress >= 100) {
             console.log('Processing completed');
             clearInterval(interval);
           }
@@ -122,6 +132,8 @@ export function CreateInstagramContactDialog({
     try {
       setIsLoading(true);
       setScanProgress(0);
+      setMediaProgress(0);
+      setCurrentFile(undefined);
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
@@ -188,7 +200,11 @@ export function CreateInstagramContactDialog({
           <DialogTitle>Instagram-Kontakt hinzufügen</DialogTitle>
         </DialogHeader>
         {isLoading ? (
-          <InstagramScanAnimation progress={scanProgress} />
+          <InstagramScanAnimation 
+            scanProgress={scanProgress} 
+            mediaProgress={mediaProgress}
+            currentFile={currentFile}
+          />
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
