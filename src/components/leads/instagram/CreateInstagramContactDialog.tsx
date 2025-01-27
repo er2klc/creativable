@@ -53,7 +53,6 @@ export function CreateInstagramContactDialog({
     enabled: !pipelineId
   });
 
-  // Fetch first phase of pipeline
   const { data: firstPhase } = useQuery({
     queryKey: ["first-phase", pipelineId || defaultPipeline?.id],
     queryFn: async () => {
@@ -100,14 +99,13 @@ export function CreateInstagramContactDialog({
           return;
         }
 
-        // Get the post with the highest progress
         const latestPost = posts && posts.length > 0 ? posts[0] : null;
         if (!latestPost) return;
 
         const currentProgress = latestPost.processing_progress ?? lastProgress;
         console.log('Current progress:', currentProgress, 'Current Phase:', currentPhase, 'Phase One Complete:', isPhaseOneComplete);
         
-        // Phase 1: Profile Scanning
+        // Phase 1: Profile Scanning - Only if not completed yet
         if (currentPhase === 1 && !isPhaseOneComplete) {
           if (currentProgress >= 27 && currentProgress < 100 && !simulationInterval) {
             let simulatedProgress = currentProgress;
@@ -115,8 +113,8 @@ export function CreateInstagramContactDialog({
               simulatedProgress = Math.min(simulatedProgress + 2, 100);
               setScanProgress(simulatedProgress);
               
-              if (simulatedProgress >= 100) {
-                console.log('Phase 1 completed, setting isPhaseOneComplete to true');
+              if (simulatedProgress >= 100 && !isPhaseOneComplete) {
+                console.log('Phase 1 reaching 100%, transitioning to Phase 2');
                 setIsPhaseOneComplete(true);
                 setCurrentPhase(2);
                 if (simulationInterval) {
@@ -131,9 +129,9 @@ export function CreateInstagramContactDialog({
           lastProgress = currentProgress;
         }
         
-        // Phase 2: Media Saving - Only start if Phase 1 is complete
-        if ((currentPhase === 2 || isPhaseOneComplete) && !isMediaProcessingActive && latestPost.media_urls) {
-          console.log('Starting Phase 2: Media Processing');
+        // Phase 2: Media Saving - Only if Phase 1 is complete
+        if (isPhaseOneComplete && !isMediaProcessingActive && latestPost.media_urls) {
+          console.log('Initializing Phase 2: Media Processing');
           setIsMediaProcessingActive(true);
           totalMediaFiles = latestPost.media_urls.length;
           processedMediaFiles = 0;
@@ -154,7 +152,7 @@ export function CreateInstagramContactDialog({
           }
         }
         
-        // Update media progress based on saved files - Only if Phase 2 is active
+        // Update media progress - Only if Phase 2 is active
         if (isMediaProcessingActive && latestPost.bucket_path) {
           processedMediaFiles++;
           if (latestPost.current_file) {
