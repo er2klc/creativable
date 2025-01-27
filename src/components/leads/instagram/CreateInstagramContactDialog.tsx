@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
@@ -34,6 +34,7 @@ export function CreateInstagramContactDialog({
   const [isMediaProcessingActive, setIsMediaProcessingActive] = useState(false);
   const [username, setUsername] = useState("");
   const { settings } = useSettings();
+  const phaseOneCompletedRef = useRef(false);
 
   const { data: defaultPipeline } = useQuery({
     queryKey: ["default-pipeline"],
@@ -106,15 +107,16 @@ export function CreateInstagramContactDialog({
         console.log('Current progress:', currentProgress, 'Current Phase:', currentPhase, 'Phase One Complete:', isPhaseOneComplete);
         
         // Phase 1: Profile Scanning - Only if not completed yet
-        if (currentPhase === 1 && !isPhaseOneComplete) {
+        if (currentPhase === 1 && !phaseOneCompletedRef.current) {
           if (currentProgress >= 27 && currentProgress < 100 && !simulationInterval) {
             let simulatedProgress = currentProgress;
             simulationInterval = setInterval(() => {
               simulatedProgress = Math.min(simulatedProgress + 2, 100);
               setScanProgress(simulatedProgress);
               
-              if (simulatedProgress >= 100 && !isPhaseOneComplete) {
-                console.log('Phase 1 reaching 100%, transitioning to Phase 2');
+              if (simulatedProgress >= 100 && !phaseOneCompletedRef.current) {
+                console.log('Phase 1 completed, transitioning to Phase 2');
+                phaseOneCompletedRef.current = true;
                 setIsPhaseOneComplete(true);
                 setCurrentPhase(2);
                 if (simulationInterval) {
@@ -130,7 +132,7 @@ export function CreateInstagramContactDialog({
         }
         
         // Phase 2: Media Saving - Only if Phase 1 is complete
-        if (isPhaseOneComplete && !isMediaProcessingActive && latestPost.media_urls) {
+        if (phaseOneCompletedRef.current && !isMediaProcessingActive && latestPost.media_urls) {
           console.log('Initializing Phase 2: Media Processing');
           setIsMediaProcessingActive(true);
           totalMediaFiles = latestPost.media_urls.length;
@@ -205,6 +207,7 @@ export function CreateInstagramContactDialog({
       setIsPhaseOneComplete(false);
       setIsMediaProcessingActive(false);
       setIsSuccess(false);
+      phaseOneCompletedRef.current = false;
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
