@@ -52,9 +52,9 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
     lead.social_media_posts.forEach((post: any) => {
       if (post.hashtags) {
         post.hashtags.forEach((tag: string) => {
-          // Add hashtag if it doesn't have one
-          const tagWithHash = tag.startsWith('#') ? tag : `#${tag}`;
-          hashtags.add(tagWithHash);
+          // Ensure we have exactly one # at the start
+          const cleanTag = tag.replace(/^#+/, ''); // Remove any leading #
+          hashtags.add(`#${cleanTag}`);
         });
       }
     });
