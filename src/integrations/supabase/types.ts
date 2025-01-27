@@ -1437,6 +1437,7 @@ export type Database = {
           content: string | null
           created_at: string | null
           engagement_count: number | null
+          error_message: string | null
           first_comment: string | null
           hashtags: string[] | null
           id: string
@@ -1465,6 +1466,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           engagement_count?: number | null
+          error_message?: string | null
           first_comment?: string | null
           hashtags?: string[] | null
           id?: string
@@ -1493,6 +1495,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           engagement_count?: number | null
+          error_message?: string | null
           first_comment?: string | null
           hashtags?: string[] | null
           id?: string
