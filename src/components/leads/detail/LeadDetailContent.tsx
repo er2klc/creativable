@@ -2,16 +2,11 @@ import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadInfoCard } from "@/components/leads/detail/LeadInfoCard";
-import { TaskList } from "@/components/leads/detail/TaskList";
-import { NoteList } from "@/components/leads/detail/NoteList";
 import { LeadSummary } from "@/components/leads/detail/LeadSummary";
-import { LeadMessages } from "@/components/leads/detail/LeadMessages";
 import { CompactPhaseSelector } from "@/components/leads/detail/CompactPhaseSelector";
 import { LeadTimeline } from "@/components/leads/detail/LeadTimeline";
 import { ContactFieldManager } from "@/components/leads/detail/contact-info/ContactFieldManager";
-import { LeadFileUpload } from "./files/LeadFileUpload";
-import { LeadFileList } from "./files/LeadFileList";
-import { AddAppointmentDialog } from "./appointments/AddAppointmentDialog";
+import { LeadDetailTabs } from "@/components/leads/detail/LeadDetailTabs";
 import { LeadWithRelations } from "@/components/leads/detail/types/lead";
 
 interface LeadDetailContentProps {
@@ -68,17 +63,9 @@ export const LeadDetailContent = ({
             />
           )}
 
-          {/* Quick Actions */}
-          <div className="flex flex-wrap gap-4">
-            <AddAppointmentDialog leadId={lead.id} leadName={lead.name} />
-            <LeadFileUpload leadId={lead.id} />
-          </div>
-
-          <LeadFileList leadId={lead.id} />
+          <LeadDetailTabs lead={lead} />
+          
           <LeadTimeline lead={lead} />
-          <TaskList leadId={lead.id} />
-          <NoteList leadId={lead.id} />
-          <LeadMessages leadId={lead.id} messages={lead.messages} />
         </div>
       </div>
     </div>
