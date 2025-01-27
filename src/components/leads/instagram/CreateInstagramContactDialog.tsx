@@ -11,6 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { useQuery } from "@tanstack/react-query";
 import { InstagramScanAnimation } from "./InstagramScanAnimation";
+import { format } from "date-fns";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const formSchema = z.object({
   username: z.string().min(1, "Username ist erforderlich"),
@@ -34,6 +37,11 @@ export function CreateInstagramContactDialog({
   const [mediaProgress, setMediaProgress] = useState(0);
   const [currentFile, setCurrentFile] = useState<string>();
   const [isPhaseOneComplete, setIsPhaseOneComplete] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<{
+    phaseName: string;
+    createdAt: string;
+    status: string;
+  } | null>(null);
   const { settings } = useSettings();
 
   // Fetch default pipeline if none provided
@@ -82,7 +90,7 @@ export function CreateInstagramContactDialog({
     },
   });
 
-  // Progress polling function with improved phase transition handling
+  // Progress polling function
   const pollProgress = async (leadId: string) => {
     console.log('Starting progress polling for lead:', leadId);
     let lastProgress = 0;
@@ -195,6 +203,40 @@ export function CreateInstagramContactDialog({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      setDuplicateError(null);
+      
+      // Check for duplicate contact
+      const { data: existingLead, error: checkError } = await supabase
+        .from("leads")
+        .select(`
+          id,
+          created_at,
+          status,
+          phase_id,
+          pipeline_phases (
+            name
+          )
+        `)
+        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+        .eq("platform", "Instagram")
+        .eq("social_media_username", values.username)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error("Error checking for duplicate:", checkError);
+        toast.error("Fehler beim Überprüfen des Benutzers");
+        return;
+      }
+
+      if (existingLead) {
+        setDuplicateError({
+          phaseName: existingLead.pipeline_phases?.name || "Unbekannt",
+          createdAt: format(new Date(existingLead.created_at), "dd.MM.yyyy"),
+          status: existingLead.status || "active"
+        });
+        return;
+      }
+
       setIsLoading(true);
       setScanProgress(0);
       setMediaProgress(0);
@@ -217,7 +259,7 @@ export function CreateInstagramContactDialog({
         return;
       }
 
-      // First create the lead with basic info
+      // Create the lead with basic info
       const { data: lead, error: leadError } = await supabase
         .from("leads")
         .insert({
@@ -237,7 +279,7 @@ export function CreateInstagramContactDialog({
       // Start polling for progress
       pollProgress(lead.id);
 
-      // Then trigger the scan profile function
+      // Trigger the scan profile function
       const { error } = await supabase.functions.invoke('scan-social-profile', {
         body: {
           platform: 'instagram',
@@ -291,6 +333,21 @@ export function CreateInstagramContactDialog({
                   </FormItem>
                 )}
               />
+              
+              {duplicateError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="mt-2">
+                    <p>Der Benutzername "{form.getValues().username}" auf der Plattform "Instagram" wurde bereits hinzugefügt.</p>
+                    <ul className="mt-2 list-disc list-inside">
+                      <li>Phase: {duplicateError.phaseName}</li>
+                      <li>Hinzugefügt am: {duplicateError.createdAt}</li>
+                      <li>Status: {duplicateError.status}</li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="flex justify-end space-x-2 pt-4">
                 <Button
                   type="button"
