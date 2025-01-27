@@ -1,11 +1,8 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
@@ -14,10 +11,6 @@ import { InstagramScanAnimation } from "./InstagramScanAnimation";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle } from "lucide-react";
-
-const formSchema = z.object({
-  username: z.string().min(1, "Username ist erforderlich"),
-});
 
 interface CreateInstagramContactDialogProps {
   open: boolean;
@@ -38,11 +31,9 @@ export function CreateInstagramContactDialog({
   const [currentFile, setCurrentFile] = useState<string>();
   const [currentPhase, setCurrentPhase] = useState<1 | 2>(1);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [duplicateError, setDuplicateError] = useState<{
-    phaseName: string;
-    createdAt: string;
-    status: string;
-  } | null>(null);
+  const [isPhaseOneComplete, setIsPhaseOneComplete] = useState(false);
+  const [isMediaProcessingActive, setIsMediaProcessingActive] = useState(false);
+  const [username, setUsername] = useState("");
   const { settings } = useSettings();
 
   const { data: defaultPipeline } = useQuery({
@@ -83,34 +74,25 @@ export function CreateInstagramContactDialog({
     enabled: !!(pipelineId || defaultPipeline?.id)
   });
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      username: "",
-    },
-  });
-
   const pollProgress = async (leadId: string) => {
     console.log('Starting progress polling for lead:', leadId);
     let lastProgress = 0;
-    let mediaStarted = false;
     let totalMediaFiles = 0;
     let processedMediaFiles = 0;
     let simulationInterval: NodeJS.Timeout | null = null;
     let isPollingActive = true;
-    let isPhaseOneComplete = false;
     
     const interval = setInterval(async () => {
       if (!isPollingActive) {
-        clearInterval(interval);
         if (simulationInterval) clearInterval(simulationInterval);
+        clearInterval(interval);
         return;
       }
 
       try {
         const { data: posts, error } = await supabase
           .from('social_media_posts')
-          .select('processing_progress, bucket_path, media_urls')
+          .select('processing_progress, bucket_path, media_urls, current_file')
           .eq('lead_id', leadId)
           .order('processing_progress', { ascending: false })
           .limit(1)
@@ -135,7 +117,7 @@ export function CreateInstagramContactDialog({
               if (simulatedProgress >= 100) {
                 clearInterval(simulationInterval!);
                 simulationInterval = null;
-                isPhaseOneComplete = true;
+                setIsPhaseOneComplete(true);
                 setCurrentPhase(2);
                 console.log('Phase 1 completed, transitioning to Phase 2');
               }
@@ -147,54 +129,53 @@ export function CreateInstagramContactDialog({
         }
         
         // Phase 2: Media Saving
-        if (currentPhase === 2 || isPhaseOneComplete) {
-          if (!mediaStarted && posts?.media_urls) {
-            mediaStarted = true;
-            totalMediaFiles = posts.media_urls.length;
-            processedMediaFiles = 0;
-            setMediaProgress(0);
-            console.log(`Starting media phase, total files: ${totalMediaFiles}`);
-            
-            if (totalMediaFiles === 0) {
-              setCurrentFile("No media files to process");
-              setMediaProgress(100);
-              setIsSuccess(true);
-              isPollingActive = false;
-              clearInterval(interval);
-              toast.success("Kontakt erfolgreich angelegt", {
-                icon: <CheckCircle className="h-5 w-5 text-green-500" />
-              });
-              return;
-            }
-          }
+        if ((currentPhase === 2 || isPhaseOneComplete) && !isMediaProcessingActive && posts?.media_urls) {
+          setIsMediaProcessingActive(true);
+          totalMediaFiles = posts.media_urls.length;
+          processedMediaFiles = 0;
+          setMediaProgress(0);
+          console.log(`Starting media phase, total files: ${totalMediaFiles}`);
           
-          // Update media progress based on saved files
-          if (posts?.bucket_path) {
-            processedMediaFiles++;
-            setCurrentFile(posts.bucket_path);
-            const mediaProgressPercent = Math.min(
-              Math.round((processedMediaFiles / (totalMediaFiles || 1)) * 100),
-              100
-            );
-            setMediaProgress(mediaProgressPercent);
-            console.log(`Media progress: ${mediaProgressPercent}%, File: ${posts.bucket_path}`);
+          if (totalMediaFiles === 0) {
+            setCurrentFile("No media files to process");
+            setMediaProgress(100);
+            setIsSuccess(true);
+            isPollingActive = false;
+            clearInterval(interval);
+            toast.success("Contact successfully created", {
+              icon: <CheckCircle className="h-5 w-5 text-green-500" />
+            });
+            return;
+          }
+        }
+        
+        // Update media progress based on saved files
+        if (isMediaProcessingActive && posts?.bucket_path) {
+          processedMediaFiles++;
+          if (posts.current_file) {
+            setCurrentFile(posts.current_file);
+          }
+          const mediaProgressPercent = Math.min(
+            Math.round((processedMediaFiles / (totalMediaFiles || 1)) * 100),
+            100
+          );
+          setMediaProgress(mediaProgressPercent);
+          console.log(`Media progress: ${mediaProgressPercent}%, File: ${posts.bucket_path}`);
 
-            // If all files processed, complete Phase 2
-            if (mediaProgressPercent >= 100) {
-              console.log('Media processing completed');
-              setIsSuccess(true);
-              isPollingActive = false;
-              clearInterval(interval);
-              toast.success("Kontakt erfolgreich angelegt", {
-                icon: <CheckCircle className="h-5 w-5 text-green-500" />
-              });
-            }
+          if (mediaProgressPercent >= 100) {
+            console.log('Media processing completed');
+            setIsSuccess(true);
+            isPollingActive = false;
+            clearInterval(interval);
+            toast.success("Contact successfully created", {
+              icon: <CheckCircle className="h-5 w-5 text-green-500" />
+            });
           }
         }
       } catch (err) {
         console.error('Error in progress polling:', err);
       }
-    }, 1000);
+    }, 500); // Reduced polling interval for better real-time updates
 
     return () => {
       console.log('Cleaning up progress polling');
@@ -206,53 +187,27 @@ export function CreateInstagramContactDialog({
     };
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const handleSubmit = async () => {
+    if (!username) {
+      toast.error("Please enter an Instagram username");
+      return;
+    }
+
     try {
-      setDuplicateError(null);
-      setIsSuccess(false);
-      
-      const { data: existingLead, error: checkError } = await supabase
-        .from("leads")
-        .select(`
-          id,
-          created_at,
-          status,
-          phase_id,
-          pipeline_phases (
-            name
-          )
-        `)
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
-        .eq("platform", "Instagram")
-        .eq("social_media_username", values.username)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error("Error checking for duplicate:", checkError);
-        toast.error("Fehler beim Überprüfen des Benutzers");
-        return;
-      }
-
-      if (existingLead) {
-        setDuplicateError({
-          phaseName: existingLead.pipeline_phases?.name || "Unbekannt",
-          createdAt: format(new Date(existingLead.created_at), "dd.MM.yyyy"),
-          status: existingLead.status || "active"
-        });
-        return;
-      }
-
       setIsLoading(true);
       setScanProgress(0);
       setMediaProgress(0);
       setCurrentFile(undefined);
       setCurrentPhase(1);
+      setIsPhaseOneComplete(false);
+      setIsMediaProcessingActive(false);
+      setIsSuccess(false);
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
       if (!settings?.apify_api_key) {
-        toast.error("Bitte fügen Sie zuerst einen Apify API Key in den Einstellungen hinzu");
+        toast.error("Please add an Apify API key in settings first");
         return;
       }
 
@@ -260,7 +215,7 @@ export function CreateInstagramContactDialog({
       const targetPhaseId = defaultPhase || firstPhase?.id;
 
       if (!targetPipelineId || !targetPhaseId) {
-        toast.error("Keine Pipeline oder Phase gefunden");
+        toast.error("No pipeline or phase found");
         return;
       }
 
@@ -269,9 +224,9 @@ export function CreateInstagramContactDialog({
         .from("leads")
         .insert({
           user_id: user.id,
-          name: values.username,
+          name: username,
           platform: "Instagram",
-          social_media_username: values.username,
+          social_media_username: username,
           pipeline_id: targetPipelineId,
           phase_id: targetPhaseId,
           industry: "Not Specified"
@@ -288,7 +243,7 @@ export function CreateInstagramContactDialog({
       const { error } = await supabase.functions.invoke('scan-social-profile', {
         body: {
           platform: 'instagram',
-          username: values.username,
+          username: username,
           leadId: lead.id
         }
       });
@@ -297,7 +252,7 @@ export function CreateInstagramContactDialog({
 
     } catch (error) {
       console.error("Error adding Instagram contact:", error);
-      toast.error("Fehler beim Hinzufügen des Instagram-Kontakts");
+      toast.error("Error adding Instagram contact");
       setIsLoading(false);
     }
   };
@@ -306,7 +261,7 @@ export function CreateInstagramContactDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Instagram-Kontakt hinzufügen</DialogTitle>
+          <DialogTitle>Add Instagram Contact</DialogTitle>
         </DialogHeader>
         {isLoading ? (
           <InstagramScanAnimation 
@@ -316,64 +271,41 @@ export function CreateInstagramContactDialog({
             currentPhase={currentPhase}
           />
         ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Instagram Username</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Instagram-Username eingeben" 
-                        {...field} 
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Instagram Username</Label>
+              <Input
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.trim())}
+                placeholder="Enter Instagram username"
+                disabled={isLoading}
               />
-              
-              {duplicateError && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="mt-2">
-                    <p>Der Benutzername "{form.getValues().username}" auf der Plattform "Instagram" wurde bereits hinzugefügt.</p>
-                    <ul className="mt-2 list-disc list-inside">
-                      <li>Phase: {duplicateError.phaseName}</li>
-                      <li>Hinzugefügt am: {duplicateError.createdAt}</li>
-                      <li>Status: {duplicateError.status}</li>
-                    </ul>
-                  </AlertDescription>
-                </Alert>
-              )}
+            </div>
+            
+            {isSuccess && (
+              <Alert className="bg-green-50 border-green-200">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <AlertDescription className="mt-2 text-green-700">
+                  Contact successfully created!
+                </AlertDescription>
+              </Alert>
+            )}
 
-              {isSuccess && (
-                <Alert className="bg-green-50 border-green-200">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <AlertDescription className="mt-2 text-green-700">
-                    Kontakt wurde erfolgreich angelegt!
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  disabled={isLoading}
-                >
-                  Abbrechen
-                </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Lädt..." : "Kontakt hinzufügen"}
-                </Button>
-              </div>
-            </form>
-          </Form>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Loading..." : "Add Contact"}
+              </Button>
+            </div>
+          </form>
         )}
       </DialogContent>
     </Dialog>
