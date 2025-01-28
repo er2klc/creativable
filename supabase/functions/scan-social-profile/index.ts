@@ -26,7 +26,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Create initial progress record
+    // Create initial progress record with 0%
     const { error: initialProgressError } = await supabaseClient
       .from('social_media_posts')
       .upsert({
@@ -34,7 +34,8 @@ serve(async (req) => {
         lead_id: leadId,
         platform: platform,
         post_type: 'post',
-        processing_progress: 0
+        processing_progress: 0,
+        media_processing_status: 'processing'
       })
 
     if (initialProgressError) {
@@ -291,7 +292,7 @@ serve(async (req) => {
           if (postsError) {
             console.error('Error storing posts:', postsError);
           } else {
-            console.log(`Successfully stored ${posts.length} posts`);
+            console.log(`Successfully stored ${posts.length} posts, starting media processing`);
             mediaProcessingStarted = true;
 
             // Start Phase 2 - Media Processing
@@ -299,31 +300,34 @@ serve(async (req) => {
             const totalFiles = savedPosts.reduce((sum, post) => 
               sum + (post.media_urls?.length || 0), 0);
 
-            // Update progress for Phase 2 start
+            console.log(`Total files to process: ${totalFiles}`);
+
+            // Reset progress for Phase 2
             await supabaseClient
               .from('social_media_posts')
               .update({ 
                 processing_progress: 0,
                 media_processing_status: 'processing',
-                error_message: null
+                error_message: null,
+                current_file: 'Starting media processing...'
               })
               .eq('id', `temp-${leadId}`);
 
             // Process media files
             for (const post of savedPosts) {
-              if (!post.media_urls || post.media_urls.length === 0) {
-                console.log('No media URLs to process for post:', post.id);
-                continue;
-              }
+              if (!post.media_urls || post.media_urls.length === 0) continue;
 
               for (const mediaUrl of post.media_urls) {
                 try {
-                  console.log('Processing media:', {
-                    mediaUrl,
-                    leadId: post.lead_id,
-                    postId: post.id,
-                    mediaType: post.media_type
-                  });
+                  console.log(`Processing media ${processedFiles + 1}/${totalFiles}: ${mediaUrl}`);
+
+                  // Update current file being processed
+                  await supabaseClient
+                    .from('social_media_posts')
+                    .update({ 
+                      current_file: `Processing ${processedFiles + 1}/${totalFiles}: ${mediaUrl.split('/').pop()}`
+                    })
+                    .eq('id', `temp-${leadId}`);
 
                   const response = await supabaseClient.functions.invoke('process-social-media', {
                     body: {
@@ -343,18 +347,14 @@ serve(async (req) => {
                     .from('social_media_posts')
                     .update({ 
                       processing_progress: mediaProgress,
-                      current_file: mediaUrl,
+                      current_file: `Processed ${processedFiles}/${totalFiles} files`,
                       error_message: null
                     })
                     .eq('id', `temp-${leadId}`);
 
-                  console.log('Media processing response:', response);
+                  console.log(`Media processing progress: ${mediaProgress}%`);
                 } catch (error) {
-                  console.error('Error processing media for post:', {
-                    postId: post.id,
-                    mediaUrl,
-                    error
-                  });
+                  console.error('Error processing media:', error);
                 }
               }
             }
@@ -365,9 +365,12 @@ serve(async (req) => {
               .update({ 
                 processing_progress: 100,
                 media_processing_status: 'completed',
+                current_file: 'All media processed successfully',
                 error_message: null
               })
               .eq('id', `temp-${leadId}`);
+
+            console.log('Media processing completed successfully');
           }
         } else {
           // No posts to process, complete Phase 2 immediately
@@ -376,7 +379,8 @@ serve(async (req) => {
             .update({ 
               processing_progress: 100,
               media_processing_status: 'completed',
-              error_message: 'No media files found'
+              current_file: 'No media files to process',
+              error_message: null
             })
             .eq('id', `temp-${leadId}`);
         }
@@ -403,7 +407,7 @@ serve(async (req) => {
             success: true, 
             data: profileData,
             mediaProcessingStarted,
-            totalFiles: posts.reduce((sum, post) => sum + (post.media_urls?.length || 0), 0)
+            message: 'Profile scan completed successfully'
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
