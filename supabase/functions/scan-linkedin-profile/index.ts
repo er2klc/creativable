@@ -68,7 +68,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           // Make sure we only scan the requested profile
-          url: [`https://www.linkedin.com/in/${username}/`]
+          url: [`https://www.linkedin.com/in/${username}`]
         })
       }
     );
