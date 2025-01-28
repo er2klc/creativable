@@ -57,7 +57,7 @@ serve(async (req) => {
     if (scanHistoryError) throw scanHistoryError;
 
     // Start the Apify run
-    console.log('Starting Apify actor run...');
+    console.log('Starting Apify actor run for profile:', username);
     const runResponse = await fetch(
       'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs',
       {
@@ -67,7 +67,8 @@ serve(async (req) => {
           'Authorization': `Bearer ${settings.apify_api_key}`,
         },
         body: JSON.stringify({
-          url: [`https://www.linkedin.com/in/${username}`]
+          // Make sure we only scan the requested profile
+          url: [`https://www.linkedin.com/in/${username}/`]
         })
       }
     );
@@ -164,7 +165,7 @@ serve(async (req) => {
       throw new Error('No profile data returned after maximum polling attempts');
     }
 
-    console.log('Successfully retrieved profile data');
+    console.log('Successfully retrieved profile data:', profileData);
 
     // Process the data
     const { scanHistory, leadData } = processLinkedInData(profileData);
