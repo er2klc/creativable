@@ -75,21 +75,16 @@ serve(async (req) => {
     });
 
     // Prepare the input for Apify actor
-    const actorId = 'dSuQBqyNnhPxkQZwH';
+    const actorId = 'scrap3r~LinkedIn-people-profiles-by-url';
     const input = {
-      linkedInProfileUrls: [`https://www.linkedin.com/in/${username}/`],
-      headless: true,
-      sessionPoolName: "LINKEDIN_POOL",
-      maxRequestRetries: 5,
-      maxConcurrency: 1,
-      maxItems: 1
+      url: [`https://www.linkedin.com/in/${username}/`]
     };
 
     console.log('Apify actor input:', JSON.stringify(input, null, 2));
 
     // Start Apify actor
     const startResponse = await fetch(
-      `https://api.apify.com/v2/acts/${actorId}/runs?token=${settings.apify_api_key}`,
+      `https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items?token=${settings.apify_api_key}`,
       {
         method: 'POST',
         headers: {
@@ -117,84 +112,25 @@ serve(async (req) => {
       throw new Error('Failed to start LinkedIn profile scan');
     }
 
-    const runData = await startResponse.json();
-    const runId = runData.data.id;
-    console.log('Apify run started with ID:', runId);
+    const profileData = await startResponse.json();
+    console.log('Successfully retrieved profile data:', profileData);
 
-    // Update progress to 40%
-    await supabaseClient
-      .from('social_media_scan_history')
-      .update({
-        processing_progress: 40,
-        current_file: 'Scanning LinkedIn profile...'
-      })
-      .eq('lead_id', leadId);
-
-    // Poll for results
-    let attempts = 0;
-    const maxAttempts = 30;
-    const delayBetweenAttempts = 2000;
-    let profileData = null;
-
-    while (attempts < maxAttempts) {
-      console.log(`Polling for results (attempt ${attempts + 1}/${maxAttempts})`);
-
-      const datasetResponse = await fetch(
-        `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${settings.apify_api_key}`
-      );
-
-      if (!datasetResponse.ok) {
-        console.error('Failed to fetch dataset:', await datasetResponse.text());
-        throw new Error('Failed to fetch scan results');
-      }
-
-      const items = await datasetResponse.json();
-      
-      if (items && items.length > 0) {
-        profileData = items[0];
-        console.log('Successfully retrieved profile data');
-        break;
-      }
-
-      // Update progress (40-70%)
-      const progressIncrement = 30 / maxAttempts;
-      const currentProgress = 40 + (attempts * progressIncrement);
-      
-      await supabaseClient
-        .from('social_media_scan_history')
-        .update({
-          processing_progress: Math.round(currentProgress),
-          current_file: `Scanning LinkedIn profile (attempt ${attempts + 1})...`
-        })
-        .eq('lead_id', leadId);
-
-      await new Promise(resolve => setTimeout(resolve, delayBetweenAttempts));
-      attempts++;
+    if (!profileData || !Array.isArray(profileData) || profileData.length === 0) {
+      throw new Error('No profile data returned from Apify');
     }
 
-    if (!profileData) {
-      throw new Error('Timeout waiting for profile data');
-    }
-
-    // Update progress to 80%
-    await supabaseClient
-      .from('social_media_scan_history')
-      .update({
-        processing_progress: 80,
-        current_file: 'Processing profile data...'
-      })
-      .eq('lead_id', leadId);
+    const profile = profileData[0];
 
     // Update lead data
     const leadData = {
-      social_media_bio: profileData.summary || '',
-      social_media_profile_image_url: profileData.profileImageUrl || null,
-      social_media_followers: profileData.followers || 0,
-      social_media_following: profileData.connections || 0,
-      social_media_engagement_rate: profileData.engagementRate || null,
-      experience: profileData.experience || [],
-      current_company_name: profileData.experience?.[0]?.company || null,
-      linkedin_id: profileData.profileId || null,
+      social_media_bio: profile.summary || '',
+      social_media_profile_image_url: profile.profileImageUrl || null,
+      social_media_followers: profile.followers || 0,
+      social_media_following: profile.connections || 0,
+      social_media_engagement_rate: profile.engagementRate || null,
+      experience: profile.experience || [],
+      current_company_name: profile.experience?.[0]?.company || null,
+      linkedin_id: profile.profileId || null,
       last_social_media_scan: new Date().toISOString()
     };
 
@@ -213,25 +149,25 @@ serve(async (req) => {
       lead_id: leadId,
       platform: 'LinkedIn',
       scanned_at: new Date().toISOString(),
-      followers_count: profileData.followers || 0,
-      following_count: profileData.connections || 0,
-      posts_count: profileData.activity?.length || 0,
-      engagement_rate: profileData.engagementRate || null,
+      followers_count: profile.followers || 0,
+      following_count: profile.connections || 0,
+      posts_count: profile.activity?.length || 0,
+      engagement_rate: profile.engagementRate || null,
       success: true,
       processing_progress: 100,
       current_file: 'Scan completed successfully',
       profile_data: {
-        headline: profileData.headline || '',
-        summary: profileData.summary || '',
-        location: profileData.location || '',
-        industry: profileData.industry || '',
+        headline: profile.headline || '',
+        summary: profile.summary || '',
+        location: profile.location || '',
+        industry: profile.industry || '',
       },
-      experience: profileData.experience || [],
-      education: profileData.education || [],
-      skills: profileData.skills || [],
-      certifications: profileData.certifications || [],
-      languages: profileData.languages || [],
-      recommendations: profileData.recommendations || []
+      experience: profile.experience || [],
+      education: profile.education || [],
+      skills: profile.skills || [],
+      certifications: profile.certifications || [],
+      languages: profile.languages || [],
+      recommendations: profile.recommendations || []
     };
 
     const { error: scanHistoryError } = await supabaseClient
