@@ -16,22 +16,18 @@ serve(async (req) => {
     const { username, leadId } = await req.json()
     console.log('Starting LinkedIn scan for:', username, 'Lead ID:', leadId)
 
-    // Validate input
     if (!username || !leadId) {
       throw new Error('Username and Lead ID are required')
     }
 
-    // Get full LinkedIn URL from username
     const profileUrl = linkedInApi.validateProfileUrl(username)
     console.log('Validated LinkedIn URL:', profileUrl)
 
-    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Get user's auth
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       throw new Error('No authorization header')
@@ -45,7 +41,6 @@ serve(async (req) => {
       throw new Error('Invalid authorization')
     }
 
-    // Get user's Apify API key from settings
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
       .select('apify_api_key')
@@ -58,7 +53,6 @@ serve(async (req) => {
 
     console.log('Starting Apify scan for LinkedIn profile:', profileUrl)
 
-    // Start Apify actor
     const startResponse = await fetch(
       `https://api.apify.com/v2/actor-tasks/creativable~linkedin-people-profiles/runs?token=${settings.apify_api_key}`,
       {
@@ -84,7 +78,6 @@ serve(async (req) => {
     const runData = await startResponse.json()
     const runId = runData.data.id
 
-    // Poll for results
     let attempts = 0
     const maxAttempts = 30
     let profileData = null
@@ -152,7 +145,37 @@ serve(async (req) => {
       throw scanError
     }
 
-    console.log('Successfully stored scan history')
+    // Store LinkedIn posts
+    if (profileData.activity && profileData.activity.length > 0) {
+      const postsToInsert = profileData.activity.map((post: any) => ({
+        id: post.id,
+        lead_id: leadId,
+        content: post.title || post.content,
+        post_type: 'post',
+        likes_count: 0, // LinkedIn API doesn't provide this
+        comments_count: 0, // LinkedIn API doesn't provide this
+        url: post.link,
+        posted_at: new Date().toISOString(), // Use current date as fallback
+        media_urls: post.img ? [post.img] : [],
+        media_type: post.img ? 'image' : 'text',
+        reactions: {},
+        metadata: {
+          interaction: post.interaction || ''
+        }
+      }))
+
+      console.log('Storing LinkedIn posts:', JSON.stringify(postsToInsert, null, 2))
+
+      const { error: postsError } = await supabaseClient
+        .from('linkedin_posts')
+        .upsert(postsToInsert, {
+          onConflict: 'id'
+        })
+
+      if (postsError) {
+        console.error('Error storing LinkedIn posts:', postsError)
+      }
+    }
 
     // Update lead with LinkedIn data
     const leadUpdateData = {
@@ -161,6 +184,7 @@ serve(async (req) => {
       experience: profileData.experience || [],
       social_media_followers: profileData.followers || 0,
       social_media_bio: profileData.about,
+      social_media_profile_image_url: profileData.avatar,
       last_social_media_scan: new Date().toISOString()
     }
 
