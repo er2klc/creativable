@@ -30,7 +30,6 @@ serve(async (req) => {
 
     const progress = new ProgressTracker(supabaseClient, leadId);
 
-    // Initialize scan - 5%
     await progress.updateProgress(5, "Initializing LinkedIn scan...");
 
     const authHeader = req.headers.get('Authorization');
@@ -46,7 +45,6 @@ serve(async (req) => {
       throw new Error('Invalid authorization');
     }
 
-    // Fetch API key - 15%
     await progress.updateProgress(15, "Fetching API credentials...");
 
     const { data: settings, error: settingsError } = await supabaseClient
@@ -59,10 +57,7 @@ serve(async (req) => {
       throw new Error('Apify API key not found in settings');
     }
 
-    // Start scan - 25%
     await progress.updateProgress(25, "Connecting to LinkedIn profile...");
-
-    // Scan profile - 35%
     await progress.updateProgress(35, "Scanning LinkedIn profile...");
     
     const profileData = await scanLinkedInProfile({
@@ -71,13 +66,11 @@ serve(async (req) => {
       apifyApiKey: settings.apify_api_key
     });
 
-    // Process data - 80%
     await progress.updateProgress(80, "Processing profile information...");
     
     const { scanHistory, leadData } = processLinkedInData(profileData);
     scanHistory.lead_id = leadId;
 
-    // Save data - 90%
     await progress.updateProgress(90, "Saving profile data...");
     
     await saveLinkedInData(
@@ -88,7 +81,6 @@ serve(async (req) => {
       profileData.activity || []
     );
 
-    // Complete - 100%
     await progress.updateProgress(100, "Profile scan completed!");
 
     return new Response(

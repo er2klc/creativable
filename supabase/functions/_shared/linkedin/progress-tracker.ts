@@ -10,18 +10,26 @@ export class ProgressTracker {
   }
 
   async updateProgress(progress: number, message: string) {
-    console.log(`Updating scan progress: ${progress}% - ${message}`);
+    console.log(`Updating scan progress for lead ${this.leadId}: ${progress}% - ${message}`);
     
-    await this.supabaseClient
-      .from('social_media_posts')
-      .upsert({ 
-        id: `temp-${this.leadId}`,
-        lead_id: this.leadId,
-        platform: 'LinkedIn',
-        post_type: 'post',
-        processing_progress: progress,
-        current_file: message,
-        media_processing_status: progress === 100 ? 'completed' : 'processing'
-      });
+    try {
+      const { error } = await this.supabaseClient
+        .from('social_media_posts')
+        .upsert({
+          id: `temp-${this.leadId}`,
+          lead_id: this.leadId,
+          platform: 'LinkedIn',
+          post_type: 'post',
+          processing_progress: progress,
+          current_file: message,
+          media_processing_status: progress === 100 ? 'completed' : 'processing'
+        });
+
+      if (error) {
+        console.error('Error updating progress:', error);
+      }
+    } catch (err) {
+      console.error('Failed to update progress:', err);
+    }
   }
 }

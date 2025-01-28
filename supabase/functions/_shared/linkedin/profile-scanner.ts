@@ -18,7 +18,7 @@ export async function scanLinkedInProfile({
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        startUrls: [{ url: profileUrl }],
+        url: [profileUrl],
         maxRequestRetries: 3,
         maxConcurrency: 1,
         maxItems: 1,
