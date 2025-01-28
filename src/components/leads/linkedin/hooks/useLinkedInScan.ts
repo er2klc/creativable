@@ -49,8 +49,7 @@ export function useLinkedInScan() {
           .eq('lead_id', leadId)
           .eq('platform', 'LinkedIn')
           .order('scanned_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(); // Changed from .single() to .maybeSingle()
+          .maybeSingle();
 
         if (error) {
           console.error('Error polling progress:', error);
@@ -58,7 +57,7 @@ export function useLinkedInScan() {
         }
 
         if (scanHistory) {
-          const progress = scanHistory.success ? 100 : 50;
+          const progress = scanHistory.processing_progress || 0;
           
           if (progress < lastProgressRef.current) {
             return;
@@ -67,13 +66,21 @@ export function useLinkedInScan() {
 
           updateState({ 
             scanProgress: progress,
-            currentFile: 'Scanning LinkedIn profile...'
+            currentFile: scanHistory.current_file || 'Scanning LinkedIn profile...'
           });
 
-          if (progress >= 100) {
+          if (progress >= 100 || scanHistory.success) {
             updateState({ isSuccess: true });
             pollingState.isActive = false;
             clearInterval(interval);
+          }
+
+          // If there's an error message, show it and stop polling
+          if (scanHistory.error_message) {
+            toast.error(scanHistory.error_message);
+            pollingState.isActive = false;
+            clearInterval(interval);
+            updateState({ isLoading: false });
           }
         }
 

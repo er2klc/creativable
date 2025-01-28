@@ -1,7 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { scanLinkedInProfile } from "../_shared/linkedin/profile-scanner.ts";
-import { ProgressTracker } from "../_shared/linkedin/progress-tracker.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,8 +24,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const progress = new ProgressTracker(supabaseClient, leadId);
-
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
@@ -41,8 +37,18 @@ serve(async (req) => {
       throw new Error('Invalid authorization');
     }
 
-    await progress.updateProgress(0, "Starting LinkedIn scan...");
+    // Update scan history to show start
+    await supabaseClient
+      .from('social_media_scan_history')
+      .insert({
+        lead_id: leadId,
+        platform: 'LinkedIn',
+        processing_progress: 0,
+        current_file: 'Starting LinkedIn scan...',
+        success: false
+      });
 
+    // Get Apify API key from settings
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
       .select('apify_api_key')
@@ -53,15 +59,105 @@ serve(async (req) => {
       throw new Error('Apify API key not found in settings');
     }
 
-    await progress.updateProgress(20, "Connecting to LinkedIn profile...");
-    
-    const profileData = await scanLinkedInProfile({
-      username,
-      leadId,
-      apifyApiKey: settings.apify_api_key
-    });
+    // Update progress to 20%
+    await supabaseClient
+      .from('social_media_scan_history')
+      .update({
+        processing_progress: 20,
+        current_file: 'Connecting to LinkedIn profile...'
+      })
+      .eq('lead_id', leadId);
 
-    await progress.updateProgress(60, "Processing profile information...");
+    // Start Apify task
+    const startResponse = await fetch(
+      `https://api.apify.com/v2/actor-tasks/creativable~linkedin-people-profiles/runs?token=${settings.apify_api_key}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: [`https://www.linkedin.com/in/${username}/`],
+          maxRequestRetries: 5,
+          maxConcurrency: 1,
+          maxItems: 1,
+        }),
+      }
+    );
+
+    if (!startResponse.ok) {
+      const errorText = await startResponse.text();
+      console.error('Failed to start Apify actor:', errorText);
+      throw new Error('Failed to start LinkedIn profile scan');
+    }
+
+    const runData = await startResponse.json();
+    const runId = runData.data.id;
+    console.log('Apify run started with ID:', runId);
+
+    // Update progress to 40%
+    await supabaseClient
+      .from('social_media_scan_history')
+      .update({
+        processing_progress: 40,
+        current_file: 'Scanning LinkedIn profile...'
+      })
+      .eq('lead_id', leadId);
+
+    // Poll for results
+    let attempts = 0;
+    const maxAttempts = 30;
+    const delayBetweenAttempts = 2000;
+    let profileData = null;
+
+    while (attempts < maxAttempts) {
+      console.log(`Polling for results (attempt ${attempts + 1}/${maxAttempts})`);
+
+      const datasetResponse = await fetch(
+        `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${settings.apify_api_key}`
+      );
+
+      if (!datasetResponse.ok) {
+        console.error('Failed to fetch dataset:', await datasetResponse.text());
+        throw new Error('Failed to fetch scan results');
+      }
+
+      const items = await datasetResponse.json();
+      
+      if (items && items.length > 0) {
+        profileData = items[0];
+        console.log('Successfully retrieved profile data');
+        break;
+      }
+
+      // Update progress (40-70%)
+      const progressIncrement = 30 / maxAttempts;
+      const currentProgress = 40 + (attempts * progressIncrement);
+      
+      await supabaseClient
+        .from('social_media_scan_history')
+        .update({
+          processing_progress: Math.round(currentProgress),
+          current_file: `Scanning LinkedIn profile (attempt ${attempts + 1})...`
+        })
+        .eq('lead_id', leadId);
+
+      await new Promise(resolve => setTimeout(resolve, delayBetweenAttempts));
+      attempts++;
+    }
+
+    if (!profileData) {
+      throw new Error('Timeout waiting for profile data');
+    }
+
+    // Update progress to 80%
+    await supabaseClient
+      .from('social_media_scan_history')
+      .update({
+        processing_progress: 80,
+        current_file: 'Processing profile data...'
+      })
+      .eq('lead_id', leadId);
 
     // Update lead data
     const leadData = {
@@ -86,7 +182,14 @@ serve(async (req) => {
       throw new Error('Failed to update lead data');
     }
 
-    await progress.updateProgress(80, "Processing LinkedIn posts...");
+    // Update progress to 90%
+    await supabaseClient
+      .from('social_media_scan_history')
+      .update({
+        processing_progress: 90,
+        current_file: 'Processing LinkedIn posts...'
+      })
+      .eq('lead_id', leadId);
 
     // Process and store LinkedIn posts
     if (profileData.activity && Array.isArray(profileData.activity)) {
@@ -118,7 +221,7 @@ serve(async (req) => {
       }
     }
 
-    // Store scan history
+    // Store final scan history
     const scanHistory = {
       lead_id: leadId,
       platform: 'LinkedIn',
@@ -128,6 +231,8 @@ serve(async (req) => {
       posts_count: profileData.activity?.length || 0,
       engagement_rate: profileData.engagementRate || null,
       success: true,
+      processing_progress: 100,
+      current_file: 'Scan completed successfully',
       profile_data: {
         headline: profileData.headline || '',
         summary: profileData.summary || '',
@@ -144,14 +249,14 @@ serve(async (req) => {
 
     const { error: scanHistoryError } = await supabaseClient
       .from('social_media_scan_history')
-      .insert(scanHistory);
+      .upsert(scanHistory, {
+        onConflict: 'lead_id,platform,scanned_at'
+      });
 
     if (scanHistoryError) {
       console.error('Error storing scan history:', scanHistoryError);
       throw new Error('Failed to store scan history');
     }
-
-    await progress.updateProgress(100, "Profile scan completed!");
 
     return new Response(
       JSON.stringify({ 
@@ -164,6 +269,28 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error scanning LinkedIn profile:', error);
+    
+    // Update scan history with error
+    try {
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      await supabaseClient
+        .from('social_media_scan_history')
+        .update({
+          success: false,
+          error_message: error.message,
+          current_file: 'Error during scan',
+          processing_progress: 0
+        })
+        .eq('lead_id', leadId)
+        .eq('platform', 'LinkedIn');
+    } catch (updateError) {
+      console.error('Error updating scan history with error:', updateError);
+    }
+
     return new Response(
       JSON.stringify({ 
         success: false, 
