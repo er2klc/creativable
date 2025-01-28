@@ -2,7 +2,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { scanLinkedInProfile } from "../_shared/linkedin/profile-scanner.ts";
 import { ProgressTracker } from "../_shared/linkedin/progress-tracker.ts";
-import { processLinkedInData } from "../_shared/linkedin/data-processor.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -63,21 +62,19 @@ serve(async (req) => {
     });
 
     await progress.updateProgress(60, "Processing profile information...");
-    
-    const { scanHistory, leadData } = processLinkedInData(profileData);
-    scanHistory.lead_id = leadId;
-    scanHistory.platform = 'LinkedIn';
 
-    await progress.updateProgress(80, "Saving profile data...");
-
-    const { error: scanHistoryError } = await supabaseClient
-      .from('social_media_scan_history')
-      .insert(scanHistory);
-
-    if (scanHistoryError) {
-      console.error('Error storing scan history:', scanHistoryError);
-      throw new Error('Failed to store scan history');
-    }
+    // Update lead data
+    const leadData = {
+      social_media_bio: profileData.summary || '',
+      social_media_profile_image_url: profileData.profileImageUrl || null,
+      social_media_followers: profileData.followers || 0,
+      social_media_following: profileData.connections || 0,
+      social_media_engagement_rate: profileData.engagementRate || null,
+      experience: profileData.experience || [],
+      current_company_name: profileData.experience?.[0]?.company || null,
+      linkedin_id: profileData.profileId || null,
+      last_social_media_scan: new Date().toISOString()
+    };
 
     const { error: leadUpdateError } = await supabaseClient
       .from('leads')
@@ -87,6 +84,71 @@ serve(async (req) => {
     if (leadUpdateError) {
       console.error('Error updating lead:', leadUpdateError);
       throw new Error('Failed to update lead data');
+    }
+
+    await progress.updateProgress(80, "Processing LinkedIn posts...");
+
+    // Process and store LinkedIn posts
+    if (profileData.activity && Array.isArray(profileData.activity)) {
+      const posts = profileData.activity.map((post: any) => ({
+        id: post.postId || `${leadId}-${Math.random().toString(36).substr(2, 9)}`,
+        lead_id: leadId,
+        content: post.text || '',
+        url: post.postUrl || null,
+        media_urls: post.images || [],
+        post_type: post.type || 'post',
+        likes_count: post.likes || 0,
+        comments_count: post.comments || 0,
+        shares_count: post.shares || 0,
+        posted_at: post.date ? new Date(post.date).toISOString() : new Date().toISOString(),
+        reactions: post.reactions || {},
+        metadata: post
+      }));
+
+      if (posts.length > 0) {
+        const { error: postsError } = await supabaseClient
+          .from('linkedin_posts')
+          .upsert(posts, {
+            onConflict: 'id'
+          });
+
+        if (postsError) {
+          console.error('Error storing LinkedIn posts:', postsError);
+        }
+      }
+    }
+
+    // Store scan history
+    const scanHistory = {
+      lead_id: leadId,
+      platform: 'LinkedIn',
+      scanned_at: new Date().toISOString(),
+      followers_count: profileData.followers || 0,
+      following_count: profileData.connections || 0,
+      posts_count: profileData.activity?.length || 0,
+      engagement_rate: profileData.engagementRate || null,
+      success: true,
+      profile_data: {
+        headline: profileData.headline || '',
+        summary: profileData.summary || '',
+        location: profileData.location || '',
+        industry: profileData.industry || '',
+      },
+      experience: profileData.experience || [],
+      education: profileData.education || [],
+      skills: profileData.skills || [],
+      certifications: profileData.certifications || [],
+      languages: profileData.languages || [],
+      recommendations: profileData.recommendations || []
+    };
+
+    const { error: scanHistoryError } = await supabaseClient
+      .from('social_media_scan_history')
+      .insert(scanHistory);
+
+    if (scanHistoryError) {
+      console.error('Error storing scan history:', scanHistoryError);
+      throw new Error('Failed to store scan history');
     }
 
     await progress.updateProgress(100, "Profile scan completed!");

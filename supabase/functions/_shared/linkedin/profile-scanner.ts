@@ -38,8 +38,8 @@ export async function scanLinkedInProfile({
     console.log('Apify run started with ID:', runId);
 
     let attempts = 0;
-    const maxAttempts = 90; // Increased from 60 to 90
-    const delayBetweenAttempts = 3000; // Increased from 2000 to 3000ms
+    const maxAttempts = 90;
+    const delayBetweenAttempts = 3000;
     let profileData = null;
 
     while (attempts < maxAttempts) {
