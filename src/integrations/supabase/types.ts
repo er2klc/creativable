@@ -1534,6 +1534,7 @@ export type Database = {
       social_media_scan_history: {
         Row: {
           certifications: Json | null
+          current_file: string | null
           education: Json | null
           engagement_rate: number | null
           error_message: string | null
@@ -1545,6 +1546,7 @@ export type Database = {
           lead_id: string | null
           platform: string
           posts_count: number | null
+          processing_progress: number | null
           profile_data: Json | null
           recommendations: Json | null
           scanned_at: string | null
@@ -1553,6 +1555,7 @@ export type Database = {
         }
         Insert: {
           certifications?: Json | null
+          current_file?: string | null
           education?: Json | null
           engagement_rate?: number | null
           error_message?: string | null
@@ -1564,6 +1567,7 @@ export type Database = {
           lead_id?: string | null
           platform: string
           posts_count?: number | null
+          processing_progress?: number | null
           profile_data?: Json | null
           recommendations?: Json | null
           scanned_at?: string | null
@@ -1572,6 +1576,7 @@ export type Database = {
         }
         Update: {
           certifications?: Json | null
+          current_file?: string | null
           education?: Json | null
           engagement_rate?: number | null
           error_message?: string | null
@@ -1583,6 +1588,7 @@ export type Database = {
           lead_id?: string | null
           platform?: string
           posts_count?: number | null
+          processing_progress?: number | null
           profile_data?: Json | null
           recommendations?: Json | null
           scanned_at?: string | null
