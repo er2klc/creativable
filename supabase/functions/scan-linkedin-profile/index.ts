@@ -28,6 +28,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Update progress to 10% - Starting scan
+    await updateScanProgress(supabaseClient, leadId, 10, "Starting LinkedIn profile scan...")
+
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       throw new Error('No authorization header')
@@ -41,6 +44,9 @@ serve(async (req) => {
       throw new Error('Invalid authorization')
     }
 
+    // Update progress to 20% - Fetching API key
+    await updateScanProgress(supabaseClient, leadId, 20, "Fetching API credentials...")
+
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
       .select('apify_api_key')
@@ -50,6 +56,9 @@ serve(async (req) => {
     if (settingsError || !settings?.apify_api_key) {
       throw new Error('Apify API key not found in settings')
     }
+
+    // Update progress to 30% - Starting Apify scan
+    await updateScanProgress(supabaseClient, leadId, 30, "Connecting to LinkedIn profile...")
 
     console.log('Starting Apify scan for LinkedIn profile:', profileUrl)
 
@@ -78,12 +87,19 @@ serve(async (req) => {
     const runData = await startResponse.json()
     const runId = runData.data.id
 
+    // Update progress to 40% - Waiting for results
+    await updateScanProgress(supabaseClient, leadId, 40, "Scanning LinkedIn profile...")
+
     let attempts = 0
     const maxAttempts = 30
     let profileData = null
 
     while (attempts < maxAttempts) {
       console.log(`Polling for results (attempt ${attempts + 1}/${maxAttempts})`)
+
+      // Update progress based on polling attempts (40-80%)
+      const pollProgress = 40 + Math.floor((attempts / maxAttempts) * 40)
+      await updateScanProgress(supabaseClient, leadId, pollProgress, "Retrieving profile data...")
 
       const datasetResponse = await fetch(
         `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${settings.apify_api_key}`
@@ -108,6 +124,9 @@ serve(async (req) => {
     if (!profileData) {
       throw new Error('Timeout waiting for profile data')
     }
+
+    // Update progress to 85% - Processing data
+    await updateScanProgress(supabaseClient, leadId, 85, "Processing profile information...")
 
     console.log('Raw LinkedIn profile data:', JSON.stringify(profileData, null, 2))
 
@@ -134,6 +153,9 @@ serve(async (req) => {
       scanned_at: new Date().toISOString()
     }
 
+    // Update progress to 90% - Saving scan history
+    await updateScanProgress(supabaseClient, leadId, 90, "Saving scan history...")
+
     const { error: scanError } = await supabaseClient
       .from('social_media_scan_history')
       .insert(scanHistoryData)
@@ -142,6 +164,9 @@ serve(async (req) => {
       console.error('Error storing scan history:', scanError)
       throw scanError
     }
+
+    // Update progress to 95% - Saving LinkedIn posts
+    await updateScanProgress(supabaseClient, leadId, 95, "Saving LinkedIn posts...")
 
     // Store LinkedIn posts
     if (profileData.activity && profileData.activity.length > 0) {
@@ -173,13 +198,14 @@ serve(async (req) => {
     // Update lead with LinkedIn data
     const leadUpdateData = {
       linkedin_id: profileData.linkedin_id,
-      social_media_username: profileData.name,
+      name: profileData.name, // Use actual name from LinkedIn
+      social_media_username: username, // Keep the original username
       platform: 'LinkedIn',
-      social_media_bio: profileData.about, // Make sure bio is stored here
+      social_media_bio: profileData.about,
       social_media_profile_image_url: profileData.avatar,
-      current_company_name: profileData.current_company_name,
+      current_company_name: profileData.current_company?.name,
       position: profileData.current_company?.title,
-      city: profileData.city,
+      city: profileData.location,
       social_media_followers: profileData.followers || 0,
       social_media_verified: false,
       experience: profileData.experience || [],
@@ -197,6 +223,9 @@ serve(async (req) => {
       console.error('Error updating lead:', leadUpdateError)
       throw leadUpdateError
     }
+
+    // Update progress to 100% - Completed
+    await updateScanProgress(supabaseClient, leadId, 100, "Profile scan completed!")
 
     console.log('Successfully updated lead')
 
@@ -223,3 +252,24 @@ serve(async (req) => {
     )
   }
 })
+
+async function updateScanProgress(
+  supabaseClient: any,
+  leadId: string,
+  progress: number,
+  message: string
+) {
+  console.log(`Updating scan progress: ${progress}% - ${message}`);
+  
+  await supabaseClient
+    .from('social_media_posts')
+    .upsert({ 
+      id: `temp-${leadId}`,
+      lead_id: leadId,
+      platform: 'LinkedIn',
+      post_type: 'post',
+      processing_progress: progress,
+      current_file: message,
+      media_processing_status: progress === 100 ? 'completed' : 'processing'
+    });
+}
