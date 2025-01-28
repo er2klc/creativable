@@ -68,9 +68,12 @@ serve(async (req) => {
     const profileUrl = `https://www.linkedin.com/in/${username}/`;
     console.log('Starting Apify actor run for profile:', profileUrl);
 
-    // Make the API call to start the actor run
+    // Using the correct actor ID for LinkedIn profile scraping
+    const actorId = 'apify~linkedin-profile-scraper';
+    
+    // Make the API call to start the actor run with proper configuration
     const apifyResponse = await fetch(
-      'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs',
+      `https://api.apify.com/v2/acts/${actorId}/runs`,
       {
         method: 'POST',
         headers: {
@@ -78,10 +81,14 @@ serve(async (req) => {
           'Authorization': `Bearer ${settings.apify_api_key}`
         },
         body: JSON.stringify({
-          url: [profileUrl],
+          startUrls: [{ url: profileUrl }],
+          linkedInProfilesUrls: [profileUrl],
           maxRequestRetries: 5,
           maxConcurrency: 1,
-          maxItems: 1
+          maxItems: 1,
+          proxyConfiguration: {
+            useApifyProxy: true
+          }
         })
       }
     );
@@ -113,7 +120,7 @@ serve(async (req) => {
       console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
       
       const runStatusResponse = await fetch(
-        `https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs/${runData.data.id}?token=${settings.apify_api_key}`
+        `https://api.apify.com/v2/acts/${actorId}/runs/${runData.data.id}?token=${settings.apify_api_key}`
       );
 
       if (!runStatusResponse.ok) {
@@ -127,12 +134,14 @@ serve(async (req) => {
       if (runStatus.data?.status === 'SUCCEEDED') {
         // Get the dataset items
         const datasetResponse = await fetch(
-          `https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs/${runData.data.id}/dataset/items?token=${settings.apify_api_key}`
+          `https://api.apify.com/v2/acts/${actorId}/runs/${runData.data.id}/dataset/items?token=${settings.apify_api_key}`
         );
 
         if (datasetResponse.ok) {
           profileData = await datasetResponse.json();
-          break;
+          if (profileData && profileData.length > 0) {
+            break;
+          }
         }
       } else if (runStatus.data?.status === 'FAILED') {
         throw new Error(`Actor run failed: ${runStatus.data?.errorMessage || 'Unknown error'}`);
