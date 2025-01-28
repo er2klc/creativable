@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +22,16 @@ export function CreateInstagramContactDialog({
 }: CreateInstagramContactDialogProps) {
   const [username, setUsername] = useState("");
   const scanState = useInstagramScan();
+
+  // Close dialog when scan reaches 100%
+  useEffect(() => {
+    if (scanState.scanProgress === 100) {
+      setTimeout(() => {
+        onOpenChange(false);
+        toast.success("Contact successfully created");
+      }, 500); // Small delay to show 100%
+    }
+  }, [scanState.scanProgress, onOpenChange]);
 
   const { data: defaultPipeline } = useQuery({
     queryKey: ["default-pipeline"],
@@ -69,13 +79,8 @@ export function CreateInstagramContactDialog({
     try {
       scanState.setIsLoading(true);
       scanState.setScanProgress(0);
-      scanState.setMediaProgress(0);
       scanState.setCurrentFile(undefined);
-      scanState.setCurrentPhase(1);
-      scanState.setIsPhaseOneComplete(false);
-      scanState.setIsMediaProcessingActive(false);
       scanState.setIsSuccess(false);
-      scanState.phaseOneCompletedRef.current = false;
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
@@ -137,9 +142,7 @@ export function CreateInstagramContactDialog({
         {scanState.isLoading ? (
           <InstagramScanAnimation 
             scanProgress={scanState.scanProgress} 
-            mediaProgress={scanState.mediaProgress}
             currentFile={scanState.currentFile}
-            currentPhase={scanState.currentPhase}
           />
         ) : (
           <InstagramScanForm
