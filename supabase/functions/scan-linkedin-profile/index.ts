@@ -83,7 +83,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          "urls": [`https://www.linkedin.com/in/${username}/`]
+          "url": [`https://www.linkedin.com/in/${username}/`]
         }),
       }
     );
