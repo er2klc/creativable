@@ -71,11 +71,7 @@ serve(async (req) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          "url": [profileUrl],
-          "maxItems": 1,
-          "proxyConfiguration": {
-            "useApifyProxy": true
-          }
+          "url": [profileUrl]
         })
       }
     );
@@ -89,11 +85,15 @@ serve(async (req) => {
     const runData = await apifyResponse.json();
     console.log('Apify actor run started:', runData);
 
+    if (!runData.data?.id) {
+      throw new Error('No run ID returned from Apify');
+    }
+
     await supabaseClient
       .from('social_media_scan_history')
       .update({
         processing_progress: 20,
-        current_file: `Actor run started: ${runData.data?.id}`,
+        current_file: `Actor run started: ${runData.data.id}`,
       })
       .eq('lead_id', leadId);
 
@@ -121,35 +121,39 @@ serve(async (req) => {
           `https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs/${runData.data.id}/dataset/items?token=${settings.apify_api_key}`
         );
 
-        if (datasetResponse.ok) {
-          profileData = await datasetResponse.json();
-          if (profileData && profileData.length > 0) {
-            break;
-          }
+        if (!datasetResponse.ok) {
+          throw new Error(`Failed to fetch dataset: ${await datasetResponse.text()}`);
         }
-      } else if (runStatus.data?.status === 'FAILED') {
-        throw new Error(`Actor run failed: ${runStatus.data?.errorMessage || 'Unknown error'}`);
+
+        const items = await datasetResponse.json();
+        if (items && items.length > 0) {
+          profileData = items[0];
+          break;
+        }
+      } else if (runStatus.data?.status === 'FAILED' || runStatus.data?.status === 'ABORTED') {
+        const errorMessage = runStatus.data?.errorMessage || 'Unknown error';
+        console.error('Actor run failed:', errorMessage);
+        throw new Error(`Actor run failed: ${errorMessage}`);
       }
 
       await new Promise(resolve => setTimeout(resolve, 5000));
       attempts++;
     }
 
-    if (!profileData || !Array.isArray(profileData) || profileData.length === 0) {
-      throw new Error('No profile data returned from Apify');
+    if (!profileData) {
+      throw new Error('No profile data returned from Apify after maximum attempts');
     }
 
-    const profile = profileData[0];
-    console.log('Retrieved profile data:', profile);
+    console.log('Retrieved profile data:', profileData);
 
     const leadData = {
-      social_media_bio: profile.about || '',
-      social_media_profile_image_url: profile.avatar || null,
-      social_media_followers: profile.followers || 0,
-      social_media_following: profile.connections || 0,
-      experience: profile.experience || [],
-      current_company_name: profile.current_company?.name || null,
-      linkedin_id: profile.linkedin_id || null,
+      social_media_bio: profileData.about || '',
+      social_media_profile_image_url: profileData.avatar || null,
+      social_media_followers: profileData.followers || 0,
+      social_media_following: profileData.connections || 0,
+      experience: profileData.experience || [],
+      current_company_name: profileData.current_company?.name || null,
+      linkedin_id: profileData.linkedin_id || null,
       last_social_media_scan: new Date().toISOString()
     };
 
@@ -167,24 +171,24 @@ serve(async (req) => {
       lead_id: leadId,
       platform: 'LinkedIn',
       scanned_at: new Date().toISOString(),
-      followers_count: profile.followers || 0,
-      following_count: profile.connections || 0,
+      followers_count: profileData.followers || 0,
+      following_count: profileData.connections || 0,
       engagement_rate: null,
       success: true,
       processing_progress: 100,
       current_file: 'Scan completed successfully',
       profile_data: {
-        headline: profile.about || '',
-        summary: profile.about || '',
-        location: profile.city || '',
+        headline: profileData.about || '',
+        summary: profileData.about || '',
+        location: profileData.city || '',
         industry: '',
       },
-      experience: profile.experience || [],
-      education: profile.education || [],
+      experience: profileData.experience || [],
+      education: profileData.education || [],
       skills: [],
       certifications: [],
       languages: [],
-      recommendations: profile.recommendations || []
+      recommendations: profileData.recommendations || []
     };
 
     const { error: scanHistoryError } = await supabaseClient
