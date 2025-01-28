@@ -116,32 +116,32 @@ serve(async (req) => {
       throw new Error('Timeout waiting for profile data')
     }
 
-    console.log('Successfully retrieved LinkedIn profile data:', JSON.stringify(profileData, null, 2))
+    console.log('Raw LinkedIn profile data:', JSON.stringify(profileData, null, 2))
 
     // Process and store profile data
     const scanHistoryData = {
       lead_id: leadId,
       platform: 'LinkedIn',
-      followers_count: profileData.followersCount || 0,
-      following_count: profileData.connectionsCount || 0, // Changed from connections_count
-      posts_count: profileData.postsCount || 0,
+      followers_count: profileData.followers || 0,
+      following_count: profileData.connections || 0,
+      posts_count: profileData.activity?.length || 0,
       profile_data: {
-        headline: profileData.headline,
-        summary: profileData.summary,
+        headline: profileData.position,
+        summary: profileData.about,
         location: profileData.location,
-        industry: profileData.industry,
+        industry: profileData.current_company?.name || '',
       },
       experience: profileData.experience || [],
       education: profileData.education || [],
-      skills: profileData.skills || [],
-      certifications: profileData.certifications || [],
-      languages: profileData.languages || [],
-      recommendations: profileData.recommendations || [],
+      skills: [],
+      certifications: [],
+      languages: [],
+      recommendations: [],
       success: true,
       scanned_at: new Date().toISOString()
     }
 
-    console.log('Attempting to store scan history:', JSON.stringify(scanHistoryData, null, 2))
+    console.log('Processed scan history data:', JSON.stringify(scanHistoryData, null, 2))
 
     const { error: scanError } = await supabaseClient
       .from('social_media_scan_history')
@@ -154,55 +154,17 @@ serve(async (req) => {
 
     console.log('Successfully stored scan history')
 
-    // Process and store posts if available
-    if (profileData.posts && profileData.posts.length > 0) {
-      const postsToInsert = profileData.posts.map((post: any) => ({
-        id: post.id,
-        lead_id: leadId,
-        content: post.text,
-        post_type: post.type || 'post',
-        likes_count: post.likeCount || 0,
-        comments_count: post.commentCount || 0,
-        shares_count: post.shareCount || 0,
-        url: post.url,
-        posted_at: post.postedAt,
-        media_urls: post.mediaUrls || [],
-        media_type: post.mediaType,
-        reactions: post.reactions || {},
-        metadata: {
-          hashtags: post.hashtags || [],
-          mentions: post.mentions || [],
-          originalLanguage: post.language,
-        }
-      }))
-
-      console.log('Attempting to store posts:', JSON.stringify(postsToInsert, null, 2))
-
-      const { error: postsError } = await supabaseClient
-        .from('linkedin_posts')
-        .upsert(postsToInsert, {
-          onConflict: 'id',
-          ignoreDuplicates: false
-        })
-
-      if (postsError) {
-        console.error('Error storing posts:', postsError)
-      } else {
-        console.log('Successfully stored posts')
-      }
-    }
-
     // Update lead with LinkedIn data
     const leadUpdateData = {
-      linkedin_id: profileData.profileId,
-      current_company_name: profileData.currentCompany,
+      linkedin_id: profileData.linkedin_id,
+      current_company_name: profileData.current_company?.name,
       experience: profileData.experience || [],
-      social_media_followers: profileData.followersCount || 0,
-      social_media_bio: profileData.summary,
+      social_media_followers: profileData.followers || 0,
+      social_media_bio: profileData.about,
       last_social_media_scan: new Date().toISOString()
     }
 
-    console.log('Attempting to update lead:', JSON.stringify(leadUpdateData, null, 2))
+    console.log('Updating lead with data:', JSON.stringify(leadUpdateData, null, 2))
 
     const { error: leadUpdateError } = await supabaseClient
       .from('leads')

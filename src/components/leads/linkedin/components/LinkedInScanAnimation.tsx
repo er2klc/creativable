@@ -70,7 +70,7 @@ export function LinkedInScanAnimation({
           </div>
 
           <div className="mt-4 text-sm text-gray-600 text-center">
-            <p className="font-medium">{currentFile}</p>
+            <p className="font-medium">{currentFile || "Scanning LinkedIn profile..."}</p>
           </div>
         </div>
       </div>
