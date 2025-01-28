@@ -175,7 +175,7 @@ serve(async (req) => {
       linkedin_id: profileData.linkedin_id,
       social_media_username: profileData.name,
       platform: 'LinkedIn',
-      bio: profileData.about,
+      social_media_bio: profileData.about, // Make sure bio is stored here
       social_media_profile_image_url: profileData.avatar,
       current_company_name: profileData.current_company_name,
       position: profileData.current_company?.title,
