@@ -1,7 +1,7 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 export async function saveLinkedInData(
-  supabaseClient: SupabaseClient,
+  supabaseClient: any,
   leadId: string,
   scanHistory: any,
   leadData: any,

@@ -1,10 +1,10 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 export class ProgressTracker {
-  private supabaseClient: SupabaseClient;
+  private supabaseClient: any;
   private leadId: string;
 
-  constructor(supabaseClient: SupabaseClient, leadId: string) {
+  constructor(supabaseClient: any, leadId: string) {
     this.supabaseClient = supabaseClient;
     this.leadId = leadId;
   }
