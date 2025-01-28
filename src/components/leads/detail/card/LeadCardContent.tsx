@@ -20,6 +20,9 @@ export const LeadCardContent = ({ lead }: LeadCardContentProps) => {
   // Prioritize username over name
   const displayName = lead.social_media_username?.split('/')?.pop() || lead.name;
 
+  // Parse experience JSON if it exists and is an array
+  const experienceArray = Array.isArray(lead.experience) ? lead.experience : [];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -59,11 +62,11 @@ export const LeadCardContent = ({ lead }: LeadCardContentProps) => {
         </div>
       )}
 
-      {lead.experience && lead.experience.length > 0 && (
+      {experienceArray.length > 0 && (
         <div className="border-t pt-4">
           <h3 className="text-sm font-medium mb-2">Experience</h3>
           <div className="space-y-2">
-            {(lead.experience as any[]).map((exp, index) => (
+            {experienceArray.map((exp: any, index: number) => (
               <div key={index} className="text-sm text-gray-600">
                 <div className="font-medium">{exp.title}</div>
                 <div>{exp.company}</div>
