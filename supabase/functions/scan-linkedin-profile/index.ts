@@ -218,17 +218,8 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      // Get leadId from the request body
-      let leadId;
-      try {
-        const body = await req.clone().json();
-        leadId = body.leadId;
-      } catch (e) {
-        console.error('Error parsing request body:', e);
-      }
-
-      // Update scan history with error if we have a leadId
-      if (leadId) {
+      // Use leadId from the stored requestData
+      if (requestData?.leadId) {
         await supabaseClient
           .from('social_media_scan_history')
           .update({
@@ -237,7 +228,7 @@ serve(async (req) => {
             current_file: 'Error during scan',
             processing_progress: 0
           })
-          .eq('lead_id', leadId)
+          .eq('lead_id', requestData.leadId)
           .eq('platform', 'LinkedIn');
       }
     } catch (updateError) {
