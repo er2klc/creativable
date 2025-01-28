@@ -5,6 +5,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const APIFY_TOKEN = 'apify_api_f1kz2Rx2gh5v3b2daml7qOhejAOsZG3aSUMg';
+const MAX_POLLING_ATTEMPTS = 30;
+const POLLING_INTERVAL = 5000; // 5 seconds
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -13,67 +17,71 @@ serve(async (req) => {
 
   try {
     const { username } = await req.json();
-    
+    console.log('Starting LinkedIn profile scan for username:', username);
+
     if (!username) {
       throw new Error('Username is required');
     }
 
-    console.log('Starting LinkedIn scan for username:', username);
-    
-    const profileUrl = `https://www.linkedin.com/in/${username}`;
-    console.log('Profile URL:', profileUrl);
-
-    // Make the API call to Apify
-    const apifyResponse = await fetch(
+    // Step 1: Start the Apify run
+    console.log('Starting Apify actor run...');
+    const runResponse = await fetch(
       'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer apify_api_f1kz2Rx2gh5v3b2daml7qOhejAOsZG3aSUMg`
+          'Authorization': `Bearer ${APIFY_TOKEN}`,
         },
         body: JSON.stringify({
-          "url": [profileUrl]
+          url: [`https://www.linkedin.com/in/${username}`]
         })
       }
     );
 
-    if (!apifyResponse.ok) {
-      const errorText = await apifyResponse.text();
+    if (!runResponse.ok) {
+      const errorText = await runResponse.text();
       console.error('Failed to start Apify actor:', errorText);
       throw new Error(`Failed to start Apify actor: ${errorText}`);
     }
 
-    const runData = await apifyResponse.json();
-    console.log('Apify actor run started:', runData);
-
-    if (!runData.data?.id) {
+    const runData = await runResponse.json();
+    const runId = runData.data?.id;
+    
+    if (!runId) {
       throw new Error('No run ID returned from Apify');
     }
+    console.log('Apify run started with ID:', runId);
 
-    // Wait for the run to complete
-    const maxAttempts = 30;
+    // Step 2: Poll for completion
     let attempts = 0;
     let profileData = null;
 
-    while (attempts < maxAttempts) {
-      console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
+    while (attempts < MAX_POLLING_ATTEMPTS) {
+      console.log(`Polling attempt ${attempts + 1}/${MAX_POLLING_ATTEMPTS}`);
       
-      const runStatusResponse = await fetch(
-        `https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs/${runData.data.id}?token=apify_api_f1kz2Rx2gh5v3b2daml7qOhejAOsZG3aSUMg`
+      const statusResponse = await fetch(
+        `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_TOKEN}`
       );
 
-      if (!runStatusResponse.ok) {
-        console.error('Failed to check run status:', await runStatusResponse.text());
+      if (!statusResponse.ok) {
+        console.error('Failed to check run status:', await statusResponse.text());
         continue;
       }
 
-      const runStatus = await runStatusResponse.json();
-      console.log('Run status:', runStatus.data?.status);
+      const status = await statusResponse.json();
+      console.log('Run status:', status.data?.status);
 
-      if (runStatus.data?.status === 'SUCCEEDED') {
+      if (status.data?.status === 'SUCCEEDED') {
+        // Get the dataset ID
+        const datasetId = status.data?.defaultDatasetId;
+        if (!datasetId) {
+          throw new Error('No dataset ID found in successful run');
+        }
+
+        // Fetch the results
         const datasetResponse = await fetch(
-          `https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs/${runData.data.id}/dataset/items?token=apify_api_f1kz2Rx2gh5v3b2daml7qOhejAOsZG3aSUMg`
+          `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`
         );
 
         if (!datasetResponse.ok) {
@@ -85,13 +93,14 @@ serve(async (req) => {
           profileData = items[0];
           break;
         }
-      } else if (runStatus.data?.status === 'FAILED' || runStatus.data?.status === 'ABORTED') {
-        const errorMessage = runStatus.data?.errorMessage || 'Unknown error';
+      } else if (status.data?.status === 'FAILED' || status.data?.status === 'ABORTED') {
+        const errorMessage = status.data?.errorMessage || 'Unknown error';
         console.error('Actor run failed:', errorMessage);
         throw new Error(`Actor run failed: ${errorMessage}`);
       }
 
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // Wait before next polling attempt
+      await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
       attempts++;
     }
 
@@ -99,7 +108,7 @@ serve(async (req) => {
       throw new Error('No profile data returned from Apify after maximum attempts');
     }
 
-    console.log('Successfully retrieved profile data:', profileData);
+    console.log('Successfully retrieved profile data');
 
     return new Response(
       JSON.stringify({ 
