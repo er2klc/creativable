@@ -135,10 +135,16 @@ export function CreateInstagramContactDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent 
+        className="sm:max-w-[425px]"
+        aria-describedby="instagram-scan-description"
+      >
         <DialogHeader>
           <DialogTitle>Add Instagram Contact</DialogTitle>
         </DialogHeader>
+        <div id="instagram-scan-description" className="sr-only">
+          Dialog for adding a new Instagram contact. Enter the username to scan their profile.
+        </div>
         {scanState.isLoading ? (
           <InstagramScanAnimation 
             scanProgress={scanState.scanProgress} 
