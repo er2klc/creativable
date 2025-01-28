@@ -1,17 +1,12 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { ProgressTracker } from './progress-tracker.ts';
-
-interface ScanProfileParams {
-  username: string;
-  leadId: string;
-  apifyApiKey: string;
-}
-
 export async function scanLinkedInProfile({ 
   username, 
   leadId, 
   apifyApiKey 
-}: ScanProfileParams) {
+}: {
+  username: string;
+  leadId: string;
+  apifyApiKey: string;
+}) {
   const profileUrl = `https://www.linkedin.com/in/${username}/`;
   console.log('Starting Apify scan for LinkedIn profile:', profileUrl);
 
