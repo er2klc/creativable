@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,9 @@ import { useSettings } from "@/hooks/use-settings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { useLinkedInScan } from "./hooks/useLinkedInScan";
+import { LinkedInScanAnimation } from "./components/LinkedInScanAnimation";
+import { LinkedInScanForm } from "./components/LinkedInScanForm";
 
 interface CreateLinkedInContactDialogProps {
   open: boolean;
@@ -21,9 +24,19 @@ export function CreateLinkedInContactDialog({
   pipelineId,
   defaultPhase
 }: CreateLinkedInContactDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const [username, setUsername] = useState("");
+  const scanState = useLinkedInScan();
   const { settings } = useSettings();
+
+  // Close dialog when scan reaches 100%
+  useEffect(() => {
+    if (scanState.scanProgress === 100) {
+      setTimeout(() => {
+        onOpenChange(false);
+        toast.success("Contact successfully created");
+      }, 500); // Small delay to show 100%
+    }
+  }, [scanState.scanProgress, onOpenChange]);
 
   // Fetch default pipeline if none provided
   const { data: defaultPipeline } = useQuery({
@@ -64,31 +77,23 @@ export function CreateLinkedInContactDialog({
     enabled: !!(pipelineId || defaultPipeline?.id)
   });
 
-  const validateLinkedInUsername = (username: string) => {
-    const usernameRegex = /^[a-zA-Z0-9\-_]+$/;
-    return usernameRegex.test(username);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     if (!username) {
-      toast.error("Bitte geben Sie einen LinkedIn-Benutzernamen ein");
-      return;
-    }
-
-    if (!validateLinkedInUsername(username)) {
-      toast.error("Ungültiger LinkedIn-Benutzername. Bitte geben Sie einen gültigen Benutzernamen ein.");
+      toast.error("Please enter a LinkedIn username");
       return;
     }
 
     try {
-      setIsLoading(true);
+      scanState.setIsLoading(true);
+      scanState.setScanProgress(0);
+      scanState.setCurrentFile(undefined);
+      scanState.setIsSuccess(false);
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
       if (!settings?.apify_api_key) {
-        toast.error("Bitte fügen Sie zuerst einen Apify API Key in den Einstellungen hinzu");
+        toast.error("Please add an Apify API key in settings first");
         return;
       }
 
@@ -96,11 +101,10 @@ export function CreateLinkedInContactDialog({
       const targetPhaseId = defaultPhase || firstPhase?.id;
 
       if (!targetPipelineId || !targetPhaseId) {
-        toast.error("Keine Pipeline oder Phase gefunden");
+        toast.error("No pipeline or phase found");
         return;
       }
 
-      // First create the lead with basic info
       const { data: lead, error: leadError } = await supabase
         .from("leads")
         .insert({
@@ -117,60 +121,51 @@ export function CreateLinkedInContactDialog({
 
       if (leadError) throw leadError;
 
-      // Then trigger the scan profile function
-      const { data, error } = await supabase.functions.invoke('scan-linkedin-profile', {
+      scanState.pollProgress(lead.id);
+
+      const { error } = await supabase.functions.invoke('scan-linkedin-profile', {
         body: {
           username: username,
           leadId: lead.id
         }
       });
 
-      if (error) {
-        throw new Error('Failed to scan LinkedIn profile');
-      }
+      if (error) throw error;
 
-      toast.success("LinkedIn-Kontakt erfolgreich hinzugefügt");
-      onOpenChange(false);
-      setUsername("");
     } catch (error) {
       console.error("Error adding LinkedIn contact:", error);
-      toast.error("Fehler beim Hinzufügen des LinkedIn-Kontakts");
-    } finally {
-      setIsLoading(false);
+      toast.error("Error adding LinkedIn contact");
+      scanState.setIsLoading(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent 
+        className="sm:max-w-[425px]"
+        aria-describedby="linkedin-scan-description"
+      >
         <DialogHeader>
-          <DialogTitle>LinkedIn-Kontakt hinzufügen</DialogTitle>
+          <DialogTitle>Add LinkedIn Contact</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="username">LinkedIn Benutzername</Label>
-            <Input
-              id="username"
-              placeholder="username (ohne URL)"
-              value={username}
-              onChange={(e) => setUsername(e.target.value.trim())}
-              disabled={isLoading}
-            />
-          </div>
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-            >
-              Abbrechen
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Lädt..." : "Kontakt hinzufügen"}
-            </Button>
-          </div>
-        </form>
+        <div id="linkedin-scan-description" className="sr-only">
+          Dialog for adding a new LinkedIn contact. Enter the username to scan their profile.
+        </div>
+        {scanState.isLoading ? (
+          <LinkedInScanAnimation 
+            scanProgress={scanState.scanProgress} 
+            currentFile={scanState.currentFile}
+          />
+        ) : (
+          <LinkedInScanForm
+            username={username}
+            setUsername={setUsername}
+            isLoading={scanState.isLoading}
+            isSuccess={scanState.isSuccess}
+            onSubmit={handleSubmit}
+            onCancel={() => onOpenChange(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
