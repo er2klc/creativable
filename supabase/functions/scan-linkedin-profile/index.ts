@@ -12,7 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    const { username, leadId } = await req.json();
+    // Parse request body once and store it
+    const requestData = await req.json();
+    const { username, leadId } = requestData;
+    
     console.log('Starting LinkedIn scan for:', username, 'Lead ID:', leadId);
 
     if (!username || !leadId) {
@@ -37,6 +40,17 @@ serve(async (req) => {
       throw new Error('Invalid authorization');
     }
 
+    // Get Apify API key from settings
+    const { data: settings, error: settingsError } = await supabaseClient
+      .from('settings')
+      .select('apify_api_key')
+      .eq('user_id', user.id)
+      .single();
+
+    if (settingsError || !settings?.apify_api_key) {
+      throw new Error('Apify API key not found in settings');
+    }
+
     // Update scan history to show start
     await supabaseClient
       .from('social_media_scan_history')
@@ -49,42 +63,20 @@ serve(async (req) => {
         success: false
       });
 
-    // Get Apify API key from settings
-    const { data: settings, error: settingsError } = await supabaseClient
-      .from('settings')
-      .select('apify_api_key')
-      .eq('user_id', user.id)
-      .single();
+    // Prepare the LinkedIn profile URL
+    const profileUrl = `https://www.linkedin.com/in/${username}/`;
+    console.log('Starting Apify scan for LinkedIn profile:', profileUrl);
 
-    if (settingsError || !settings?.apify_api_key) {
-      throw new Error('Apify API key not found in settings');
-    }
-
-    // Update progress to 20%
-    await supabaseClient
-      .from('social_media_scan_history')
-      .update({
-        processing_progress: 20,
-        current_file: 'Connecting to LinkedIn profile...'
-      })
-      .eq('lead_id', leadId);
-
-    console.log('Starting Apify actor with settings:', {
-      username,
-      apiKey: '***' // masked for security
-    });
-
-    // Prepare the input for Apify actor
-    const actorId = 'scrap3r~LinkedIn-people-profiles-by-url';
+    // Configure Apify API call
+    const actorUrl = 'https://api.apify.com/v2/acts/scrap3r~LinkedIn-people-profiles-by-url/run-sync-get-dataset-items';
     const input = {
-      url: [`https://www.linkedin.com/in/${username}/`]
+      url: [profileUrl]
     };
 
-    console.log('Apify actor input:', JSON.stringify(input, null, 2));
+    console.log('Calling Apify with input:', JSON.stringify(input));
 
-    // Start Apify actor
-    const startResponse = await fetch(
-      `https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items?token=${settings.apify_api_key}`,
+    const apifyResponse = await fetch(
+      `${actorUrl}?token=${settings.apify_api_key}`,
       {
         method: 'POST',
         headers: {
@@ -94,25 +86,13 @@ serve(async (req) => {
       }
     );
 
-    if (!startResponse.ok) {
-      const errorText = await startResponse.text();
+    if (!apifyResponse.ok) {
+      const errorText = await apifyResponse.text();
       console.error('Failed to start Apify actor:', errorText);
-      
-      // Update scan history with error
-      await supabaseClient
-        .from('social_media_scan_history')
-        .update({
-          success: false,
-          error_message: `Failed to start Apify actor: ${errorText}`,
-          current_file: 'Error during scan',
-          processing_progress: 0
-        })
-        .eq('lead_id', leadId);
-        
       throw new Error('Failed to start LinkedIn profile scan');
     }
 
-    const profileData = await startResponse.json();
+    const profileData = await apifyResponse.json();
     console.log('Successfully retrieved profile data:', profileData);
 
     if (!profileData || !Array.isArray(profileData) || profileData.length === 0) {
@@ -199,7 +179,7 @@ serve(async (req) => {
       // Get leadId from the request body
       let leadId;
       try {
-        const body = await req.json();
+        const body = await req.clone().json();
         leadId = body.leadId;
       } catch (e) {
         console.error('Error parsing request body:', e);
