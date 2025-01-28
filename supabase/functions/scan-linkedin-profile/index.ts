@@ -115,35 +115,42 @@ serve(async (req) => {
       throw new Error('Timeout waiting for profile data')
     }
 
-    console.log('Successfully retrieved LinkedIn profile data')
+    console.log('Successfully retrieved LinkedIn profile data:', JSON.stringify(profileData, null, 2))
 
     // Process and store profile data
+    const scanHistoryData = {
+      lead_id: leadId,
+      platform: 'LinkedIn',
+      followers_count: profileData.followersCount || 0,
+      connections_count: profileData.connectionsCount || 0,
+      posts_count: profileData.postsCount || 0,
+      profile_data: {
+        headline: profileData.headline,
+        summary: profileData.summary,
+        location: profileData.location,
+        industry: profileData.industry,
+      },
+      experience: profileData.experience || [],
+      education: profileData.education || [],
+      skills: profileData.skills || [],
+      certifications: profileData.certifications || [],
+      languages: profileData.languages || [],
+      recommendations: profileData.recommendations || [],
+      success: true
+    }
+
+    console.log('Attempting to store scan history:', JSON.stringify(scanHistoryData, null, 2))
+
     const { error: scanError } = await supabaseClient
-      .from('linkedin_scan_history')
-      .insert({
-        lead_id: leadId,
-        followers_count: profileData.followersCount || 0,
-        connections_count: profileData.connectionsCount || 0,
-        posts_count: profileData.postsCount || 0,
-        profile_data: {
-          headline: profileData.headline,
-          summary: profileData.summary,
-          location: profileData.location,
-          industry: profileData.industry,
-        },
-        experience: profileData.experience || [],
-        education: profileData.education || [],
-        skills: profileData.skills || [],
-        certifications: profileData.certifications || [],
-        languages: profileData.languages || [],
-        recommendations: profileData.recommendations || [],
-        success: true
-      })
+      .from('social_media_scan_history')
+      .insert(scanHistoryData)
 
     if (scanError) {
       console.error('Error storing scan history:', scanError)
       throw scanError
     }
+
+    console.log('Successfully stored scan history')
 
     // Process and store posts if available
     if (profileData.posts && profileData.posts.length > 0) {
@@ -167,6 +174,8 @@ serve(async (req) => {
         }
       }))
 
+      console.log('Attempting to store posts:', JSON.stringify(postsToInsert, null, 2))
+
       const { error: postsError } = await supabaseClient
         .from('linkedin_posts')
         .upsert(postsToInsert, {
@@ -176,26 +185,34 @@ serve(async (req) => {
 
       if (postsError) {
         console.error('Error storing posts:', postsError)
+      } else {
+        console.log('Successfully stored posts')
       }
     }
 
     // Update lead with LinkedIn data
+    const leadUpdateData = {
+      linkedin_id: profileData.profileId,
+      current_company_name: profileData.currentCompany,
+      experience: profileData.experience || [],
+      social_media_followers: profileData.followersCount || 0,
+      social_media_bio: profileData.summary,
+      last_social_media_scan: new Date().toISOString()
+    }
+
+    console.log('Attempting to update lead:', JSON.stringify(leadUpdateData, null, 2))
+
     const { error: leadUpdateError } = await supabaseClient
       .from('leads')
-      .update({
-        linkedin_id: profileData.profileId,
-        current_company_name: profileData.currentCompany,
-        experience: profileData.experience || [],
-        social_media_followers: profileData.followersCount || 0,
-        social_media_bio: profileData.summary,
-        last_social_media_scan: new Date().toISOString()
-      })
+      .update(leadUpdateData)
       .eq('id', leadId)
 
     if (leadUpdateError) {
       console.error('Error updating lead:', leadUpdateError)
       throw leadUpdateError
     }
+
+    console.log('Successfully updated lead')
 
     return new Response(
       JSON.stringify({ 
