@@ -74,17 +74,19 @@ serve(async (req) => {
       apiKey: '***' // masked for security
     });
 
-    // Use the correct actor task ID for LinkedIn profile scraping
-    const actorTaskId = 'creativable~linkedin-people-profiles';
+    // Prepare the input for Apify actor
+    const actorId = 'dSuQBqyNnhPxkQZwH';  // Direct actor ID instead of task
     const input = {
-      url: [`https://www.linkedin.com/in/${username}/`]
+      linkedInProfileUrls: [`https://www.linkedin.com/in/${username}/`],
+      headless: true,
+      sessionPoolName: "LINKEDIN_POOL"
     };
 
     console.log('Apify actor input:', JSON.stringify(input, null, 2));
 
     // Start Apify actor with the correct format
     const startResponse = await fetch(
-      `https://api.apify.com/v2/actor-tasks/${actorTaskId}/runs?token=${settings.apify_api_key}`,
+      `https://api.apify.com/v2/acts/${actorId}/runs?token=${settings.apify_api_key}`,
       {
         method: 'POST',
         headers: {
