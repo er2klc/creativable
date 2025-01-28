@@ -6,11 +6,15 @@ import { useEffect } from "react";
 interface InstagramScanAnimationProps {
   scanProgress: number;
   currentFile?: string;
+  mediaProgress?: number;
+  currentPhase?: 1 | 2;
 }
 
 export const InstagramScanAnimation = ({ 
   scanProgress,
-  currentFile
+  currentFile,
+  mediaProgress,
+  currentPhase
 }: InstagramScanAnimationProps) => {
   const controls = useAnimation();
 
@@ -68,6 +72,16 @@ export const InstagramScanAnimation = ({
             </div>
             <Progress value={scanProgress} className="w-full h-2" />
           </div>
+
+          {mediaProgress !== undefined && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Media Processing</span>
+                <span>{mediaProgress}%</span>
+              </div>
+              <Progress value={mediaProgress} className="w-full h-2" />
+            </div>
+          )}
 
           <div className="mt-4 text-sm text-gray-600 text-center">
             <p className="font-medium">{currentFile}</p>
