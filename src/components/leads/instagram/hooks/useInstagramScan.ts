@@ -3,18 +3,105 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 
+interface ScanState {
+  isLoading: boolean;
+  scanProgress: number;
+  mediaProgress: number;
+  currentFile?: string;
+  currentPhase: 1 | 2;
+  isPhaseOneComplete: boolean;
+  isSuccess: boolean;
+  isMediaProcessingActive: boolean;
+}
+
+interface PostData {
+  processing_progress: number;
+  bucket_path: string | null;
+  media_urls: string[];
+  current_file: string | null;
+  media_processing_status: string;
+}
+
+const handlePhaseOne = (
+  currentProgress: number,
+  simulationInterval: NodeJS.Timeout | null,
+  phaseOneCompletedRef: React.RefObject<boolean>,
+  setScanProgress: (progress: number) => void,
+  setIsPhaseOneComplete: (complete: boolean) => void,
+  setCurrentPhase: (phase: 1 | 2) => void
+) => {
+  if (currentProgress >= 27 && currentProgress < 100 && !simulationInterval) {
+    let simulatedProgress = currentProgress;
+    const interval = setInterval(() => {
+      simulatedProgress = Math.min(simulatedProgress + 2, 100);
+      setScanProgress(simulatedProgress);
+      
+      if (simulatedProgress >= 100 && !phaseOneCompletedRef.current) {
+        console.log('Phase 1 completed, transitioning to Phase 2');
+        phaseOneCompletedRef.current = true;
+        setIsPhaseOneComplete(true);
+        setCurrentPhase(2);
+        clearInterval(interval);
+      }
+    }, 100);
+    return interval;
+  } else if (currentProgress < 27) {
+    setScanProgress(currentProgress);
+  }
+  return null;
+};
+
+const handlePhaseTwo = (
+  post: PostData,
+  processedMediaFiles: number,
+  totalMediaFiles: number,
+  setCurrentFile: (file: string) => void,
+  setMediaProgress: (progress: number) => void
+) => {
+  if (post.current_file) {
+    setCurrentFile(post.current_file);
+  }
+  const mediaProgressPercent = Math.min(
+    Math.round((processedMediaFiles / (totalMediaFiles || 1)) * 100),
+    100
+  );
+  setMediaProgress(mediaProgressPercent);
+  console.log(`Media progress: ${mediaProgressPercent}%, File: ${post.bucket_path}`);
+  return mediaProgressPercent;
+};
+
+const handleNoMediaFiles = (
+  setCurrentFile: (file: string) => void,
+  setMediaProgress: (progress: number) => void,
+  setIsSuccess: (success: boolean) => void
+) => {
+  console.log('No media files to process, completing Phase 2');
+  setCurrentFile("No media files to process");
+  setMediaProgress(100);
+  setIsSuccess(true);
+  toast.success("Contact successfully created");
+  return true;
+};
+
 export function useInstagramScan() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [scanProgress, setScanProgress] = useState(0);
-  const [mediaProgress, setMediaProgress] = useState(0);
-  const [currentFile, setCurrentFile] = useState<string>();
-  const [currentPhase, setCurrentPhase] = useState<1 | 2>(1);
-  const [isPhaseOneComplete, setIsPhaseOneComplete] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [isMediaProcessingActive, setIsMediaProcessingActive] = useState(false);
+  const [state, setState] = useState<ScanState>({
+    isLoading: false,
+    scanProgress: 0,
+    mediaProgress: 0,
+    currentFile: undefined,
+    currentPhase: 1,
+    isPhaseOneComplete: false,
+    isSuccess: false,
+    isMediaProcessingActive: false
+  });
+
   const phaseOneCompletedRef = useRef(false);
   const lastProgressRef = useRef(0);
   const { settings } = useSettings();
+
+  const updateState = (updates: Partial<ScanState>) => {
+    setState(prev => ({ ...prev, ...updates }));
+  };
 
   const pollProgress = async (leadId: string) => {
     console.log('Starting progress polling for lead:', leadId);
@@ -47,73 +134,55 @@ export function useInstagramScan() {
         if (!latestPost) return;
 
         const currentProgress = latestPost.processing_progress ?? lastProgress;
-        console.log('Current progress:', currentProgress, 'Current Phase:', currentPhase, 'Phase One Complete:', isPhaseOneComplete, 'Ref Complete:', phaseOneCompletedRef.current);
         
         if (currentProgress < lastProgressRef.current && !phaseOneCompletedRef.current) {
-          console.log('Preventing progress regression:', currentProgress, 'using last progress:', lastProgressRef.current);
           return;
         }
         lastProgressRef.current = currentProgress;
 
-        if (currentPhase === 1 && !phaseOneCompletedRef.current) {
-          if (currentProgress >= 27 && currentProgress < 100 && !simulationInterval) {
-            let simulatedProgress = currentProgress;
-            simulationInterval = setInterval(() => {
-              simulatedProgress = Math.min(simulatedProgress + 2, 100);
-              setScanProgress(simulatedProgress);
-              
-              if (simulatedProgress >= 100 && !phaseOneCompletedRef.current) {
-                console.log('Phase 1 completed, transitioning to Phase 2');
-                phaseOneCompletedRef.current = true;
-                setIsPhaseOneComplete(true);
-                setCurrentPhase(2);
-                if (simulationInterval) {
-                  clearInterval(simulationInterval);
-                  simulationInterval = null;
-                }
-              }
-            }, 100);
-          } else if (currentProgress < 27) {
-            setScanProgress(currentProgress);
-          }
+        if (state.currentPhase === 1 && !phaseOneCompletedRef.current) {
+          simulationInterval = handlePhaseOne(
+            currentProgress,
+            simulationInterval,
+            phaseOneCompletedRef,
+            progress => updateState({ scanProgress: progress }),
+            complete => updateState({ isPhaseOneComplete: complete }),
+            phase => updateState({ currentPhase: phase })
+          );
           lastProgress = currentProgress;
         }
         
-        if (phaseOneCompletedRef.current && !isMediaProcessingActive && latestPost.media_urls) {
-          console.log('Initializing Phase 2: Media Processing');
-          setIsMediaProcessingActive(true);
+        if (phaseOneCompletedRef.current && !state.isMediaProcessingActive && latestPost.media_urls) {
+          updateState({ isMediaProcessingActive: true });
           totalMediaFiles = latestPost.media_urls.length;
           processedMediaFiles = 0;
-          setMediaProgress(0);
-          console.log(`Starting media phase, total files: ${totalMediaFiles}`);
+          updateState({ mediaProgress: 0 });
           
           if (totalMediaFiles === 0) {
-            console.log('No media files to process, completing Phase 2');
-            setCurrentFile("No media files to process");
-            setMediaProgress(100);
-            setIsSuccess(true);
-            isPollingActive = false;
-            clearInterval(interval);
-            toast.success("Contact successfully created");
-            return;
+            if (handleNoMediaFiles(
+              file => updateState({ currentFile: file }),
+              progress => updateState({ mediaProgress: progress }),
+              success => updateState({ isSuccess: success })
+            )) {
+              isPollingActive = false;
+              clearInterval(interval);
+              return;
+            }
           }
         }
         
-        if (isMediaProcessingActive && latestPost.bucket_path) {
+        if (state.isMediaProcessingActive && latestPost.bucket_path) {
           processedMediaFiles++;
-          if (latestPost.current_file) {
-            setCurrentFile(latestPost.current_file);
-          }
-          const mediaProgressPercent = Math.min(
-            Math.round((processedMediaFiles / (totalMediaFiles || 1)) * 100),
-            100
+          const mediaProgressPercent = handlePhaseTwo(
+            latestPost,
+            processedMediaFiles,
+            totalMediaFiles,
+            file => updateState({ currentFile: file }),
+            progress => updateState({ mediaProgress: progress })
           );
-          setMediaProgress(mediaProgressPercent);
-          console.log(`Media progress: ${mediaProgressPercent}%, File: ${latestPost.bucket_path}`);
 
           if (mediaProgressPercent >= 100 || latestPost.media_processing_status === 'completed') {
-            console.log('Media processing completed');
-            setIsSuccess(true);
+            updateState({ isSuccess: true });
             isPollingActive = false;
             clearInterval(interval);
             toast.success("Contact successfully created");
@@ -135,22 +204,15 @@ export function useInstagramScan() {
   };
 
   return {
-    isLoading,
-    setIsLoading,
-    scanProgress,
-    setScanProgress,
-    mediaProgress,
-    setMediaProgress,
-    currentFile,
-    setCurrentFile,
-    currentPhase,
-    setCurrentPhase,
-    isPhaseOneComplete,
-    setIsPhaseOneComplete,
-    isSuccess,
-    setIsSuccess,
-    isMediaProcessingActive,
-    setIsMediaProcessingActive,
+    ...state,
+    setIsLoading: (isLoading: boolean) => updateState({ isLoading }),
+    setScanProgress: (scanProgress: number) => updateState({ scanProgress }),
+    setMediaProgress: (mediaProgress: number) => updateState({ mediaProgress }),
+    setCurrentFile: (currentFile?: string) => updateState({ currentFile }),
+    setCurrentPhase: (currentPhase: 1 | 2) => updateState({ currentPhase }),
+    setIsPhaseOneComplete: (isPhaseOneComplete: boolean) => updateState({ isPhaseOneComplete }),
+    setIsSuccess: (isSuccess: boolean) => updateState({ isSuccess }),
+    setIsMediaProcessingActive: (isMediaProcessingActive: boolean) => updateState({ isMediaProcessingActive }),
     phaseOneCompletedRef,
     lastProgressRef,
     settings,
