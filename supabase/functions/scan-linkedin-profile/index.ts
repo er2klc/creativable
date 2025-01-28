@@ -98,17 +98,27 @@ serve(async (req) => {
     let attempts = 0;
     let profileData = null;
 
-    while (attempts < MAX_POLLING_ATTEMPTS) {
-      console.log(`Polling attempt ${attempts + 1}/${MAX_POLLING_ATTEMPTS}`);
-      
-      const statusResponse = await fetch(
-        `https://api.apify.com/v2/actor-runs/${runId}?token=${settings.apify_api_key}`
-      );
+   while (attempts < MAX_POLLING_ATTEMPTS) {
+  console.log(`Polling attempt ${attempts + 1}/${MAX_POLLING_ATTEMPTS}`);
+  
+  const statusResponse = await fetch(
+    `https://api.apify.com/v2/actor-runs/${runId}?token=${settings.apify_api_key}`
+  );
 
-      if (!statusResponse.ok) {
-        console.error('Failed to check run status:', await statusResponse.text());
-        continue;
-      }
+  console.log('Raw status response:', statusResponse.status, await statusResponse.text());
+
+  if (!statusResponse.ok) {
+    console.error('Failed to check run status:', await statusResponse.text());
+    throw new Error('Failed to check run status');
+  }
+
+  const status = await statusResponse.json();
+  console.log('Parsed status response:', JSON.stringify(status, null, 2));
+
+  if (status.data?.status === 'FAILED' || status.data?.status === 'ABORTED') {
+    throw new Error(`Actor run failed: ${status.data?.errorMessage || 'Unknown error'}`);
+  }
+
 
       const status = await statusResponse.json();
       console.log('Run status:', status.data?.status);
