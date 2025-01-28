@@ -20,7 +20,7 @@ export async function scanLinkedInProfile({
         },
         body: JSON.stringify({
           url: [profileUrl],
-          maxRequestRetries: 3,
+          maxRequestRetries: 5,
           maxConcurrency: 1,
           maxItems: 1,
         }),
@@ -35,10 +35,11 @@ export async function scanLinkedInProfile({
 
     const runData = await startResponse.json();
     const runId = runData.data.id;
+    console.log('Apify run started with ID:', runId);
 
     let attempts = 0;
-    const maxAttempts = 60; // Increased from 30 to 60
-    const delayBetweenAttempts = 2000; // 2 seconds
+    const maxAttempts = 90; // Increased from 60 to 90
+    const delayBetweenAttempts = 3000; // Increased from 2000 to 3000ms
     let profileData = null;
 
     while (attempts < maxAttempts) {
@@ -55,8 +56,9 @@ export async function scanLinkedInProfile({
 
       const items = await datasetResponse.json();
       
-      if (items.length > 0) {
+      if (items && items.length > 0) {
         profileData = items[0];
+        console.log('Successfully retrieved profile data');
         break;
       }
 
@@ -65,6 +67,7 @@ export async function scanLinkedInProfile({
     }
 
     if (!profileData) {
+      console.error('Timeout reached without receiving profile data');
       throw new Error('Timeout waiting for profile data - Please try again');
     }
 

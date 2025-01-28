@@ -9,7 +9,7 @@ export class ProgressTracker {
     this.leadId = leadId;
   }
 
-  async updateProgress(progress: number, message: string) {
+  async updateProgress(progress: number, message: string, success: boolean = true) {
     console.log(`Updating scan progress for lead ${this.leadId}: ${progress}% - ${message}`);
     
     try {
@@ -22,7 +22,7 @@ export class ProgressTracker {
           scanned_at: new Date().toISOString(),
           processing_progress: progress,
           current_file: message,
-          success: progress === 100
+          success: success
         });
 
       if (error) {
@@ -31,5 +31,9 @@ export class ProgressTracker {
     } catch (err) {
       console.error('Failed to update progress:', err);
     }
+  }
+
+  async markAsFailed(errorMessage: string) {
+    await this.updateProgress(0, errorMessage, false);
   }
 }
