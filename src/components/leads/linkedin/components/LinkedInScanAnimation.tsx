@@ -1,4 +1,5 @@
 import { Progress } from "@/components/ui/progress";
+import { Search } from "lucide-react";
 
 interface LinkedInScanAnimationProps {
   scanProgress: number;
@@ -9,7 +10,12 @@ export function LinkedInScanAnimation({ scanProgress, currentFile }: LinkedInSca
   return (
     <div className="space-y-4 py-4">
       <div className="flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Search className="w-6 h-6 text-blue-600 animate-pulse" />
+          </div>
+          <div className="w-12 h-12 rounded-full border-2 border-blue-600 animate-spin" />
+        </div>
       </div>
       <div className="text-center space-y-2">
         <h3 className="font-medium">Scanning LinkedIn Profile</h3>

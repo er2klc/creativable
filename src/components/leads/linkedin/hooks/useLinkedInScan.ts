@@ -50,7 +50,7 @@ export function useLinkedInScan() {
           .eq('platform', 'LinkedIn')
           .order('scanned_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle(); // Changed from .single() to .maybeSingle()
 
         if (error) {
           console.error('Error polling progress:', error);
