@@ -69,7 +69,7 @@ serve(async (req) => {
     console.log('Starting Apify actor run for profile:', profileUrl);
 
     // Using the correct actor ID for LinkedIn profile scraping
-    const actorId = 'apify~linkedin-profile-scraper';
+    const actorId = 'apify/linkedin-profile-scraper';
     
     // Make the API call to start the actor run with proper configuration
     const apifyResponse = await fetch(
