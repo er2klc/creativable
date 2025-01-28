@@ -28,7 +28,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Initialize scan progress
+    // Initialize scan progress - 5%
     await updateScanProgress(supabaseClient, leadId, 5, "Initializing LinkedIn scan...")
 
     const authHeader = req.headers.get('Authorization')
@@ -44,7 +44,7 @@ serve(async (req) => {
       throw new Error('Invalid authorization')
     }
 
-    // Update progress - Fetching API key
+    // Update progress - 15%
     await updateScanProgress(supabaseClient, leadId, 15, "Fetching API credentials...")
 
     const { data: settings, error: settingsError } = await supabaseClient
@@ -57,7 +57,7 @@ serve(async (req) => {
       throw new Error('Apify API key not found in settings')
     }
 
-    // Update progress - Starting Apify scan
+    // Update progress - 25%
     await updateScanProgress(supabaseClient, leadId, 25, "Connecting to LinkedIn profile...")
 
     console.log('Starting Apify scan for LinkedIn profile:', profileUrl)
@@ -87,7 +87,7 @@ serve(async (req) => {
     const runData = await startResponse.json()
     const runId = runData.data.id
 
-    // Update progress - Scanning profile
+    // Update progress - 35%
     await updateScanProgress(supabaseClient, leadId, 35, "Scanning LinkedIn profile...")
 
     let attempts = 0
@@ -125,7 +125,7 @@ serve(async (req) => {
       throw new Error('Timeout waiting for profile data')
     }
 
-    // Update progress - Processing data
+    // Update progress - 80%
     await updateScanProgress(supabaseClient, leadId, 80, "Processing profile information...")
 
     console.log('Raw LinkedIn profile data:', JSON.stringify(profileData, null, 2))
@@ -153,7 +153,7 @@ serve(async (req) => {
       scanned_at: new Date().toISOString()
     }
 
-    // Update progress - Saving scan history
+    // Update progress - 85%
     await updateScanProgress(supabaseClient, leadId, 85, "Saving scan history...")
 
     const { error: scanError } = await supabaseClient
@@ -165,10 +165,10 @@ serve(async (req) => {
       throw scanError
     }
 
-    // Update progress - Processing posts
+    // Update progress - 90%
     await updateScanProgress(supabaseClient, leadId, 90, "Processing LinkedIn posts...")
 
-    // Store LinkedIn posts
+    // Store LinkedIn posts if available
     if (profileData.activity && profileData.activity.length > 0) {
       const postsToInsert = profileData.activity.map((post: any) => ({
         id: post.id || `${leadId}-${Math.random().toString(36).substr(2, 9)}`,
@@ -193,7 +193,7 @@ serve(async (req) => {
       }
     }
 
-    // Update progress - Saving lead data
+    // Update progress - 95%
     await updateScanProgress(supabaseClient, leadId, 95, "Updating contact information...")
 
     // Update lead with LinkedIn data
@@ -226,7 +226,7 @@ serve(async (req) => {
       throw leadUpdateError
     }
 
-    // Update progress - Completed
+    // Update progress - 100%
     await updateScanProgress(supabaseClient, leadId, 100, "Profile scan completed!")
 
     console.log('Successfully updated lead')
