@@ -1,8 +1,8 @@
-import { useState, useRef, MutableRefObject } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
-import { ScanState, MediaProcessingState, PollingState } from "./types";
+import { ScanState, MediaProcessingState, PollingState } from "./types/scanState";
 import { handlePhaseOneProgress, handleMediaProcessing } from "./useProgressPolling";
 
 const initialState: ScanState = {
@@ -18,8 +18,8 @@ const initialState: ScanState = {
 
 export function useInstagramScan() {
   const [state, setState] = useState<ScanState>(initialState);
-  const phaseOneCompletedRef: MutableRefObject<boolean> = useRef(false);
-  const lastProgressRef: MutableRefObject<number> = useRef(0);
+  const phaseOneCompletedRef = useRef<boolean>(false);
+  const lastProgressRef = useRef<number>(0);
   const { settings } = useSettings();
 
   const updateState = (updates: Partial<ScanState>) => {
@@ -103,7 +103,7 @@ export function useInstagramScan() {
         }
         
         if (mediaState.isActive && latestPost.bucket_path) {
-          handleMediaProcessing(
+          await handleMediaProcessing(
             mediaState,
             latestPost,
             file => updateState({ currentFile: file }),

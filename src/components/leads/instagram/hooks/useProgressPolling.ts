@@ -1,7 +1,6 @@
-import { MutableRefObject } from "react";
+import { MutableRefObject } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { MediaProcessingState, PollingState } from "./types";
+import { MediaProcessingState, PollingState } from './types/scanState';
 
 export const handlePhaseOneProgress = (
   currentProgress: number,
@@ -30,7 +29,7 @@ export const handlePhaseOneProgress = (
   return null;
 };
 
-export const handleMediaProcessing = (
+export const handleMediaProcessing = async (
   mediaState: MediaProcessingState,
   latestPost: any,
   setCurrentFile: (file: string) => void,
@@ -57,7 +56,6 @@ export const handleMediaProcessing = (
     setIsSuccess(true);
     pollingState.isActive = false;
     clearInterval(interval);
-    toast.success("Contact successfully created");
     return true;
   }
   return false;
