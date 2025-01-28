@@ -56,24 +56,22 @@ serve(async (req) => {
 
     if (scanHistoryError) throw scanHistoryError;
 
-    // Start the Apify run
-// Start the Apify run
-console.log('Starting Apify actor run for profile:', username);
+    // Start the Apify run with the new actor
+    console.log('Starting Apify actor run for profile:', username);
 
-const runResponse = await fetch(
-  'https://api.apify.com/v2/acts/apimaestro~linkedin-profile-detail/runs',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${settings.apify_api_key}`,
-    },
-    body: JSON.stringify({
-      username: username  // ✅ Korrekte Struktur für den neuen Endpoint
-    })
-  }
-);
-
+    const runResponse = await fetch(
+      'https://api.apify.com/v2/acts/apimaestro~linkedin-profile-detail/runs',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${settings.apify_api_key}`,
+        },
+        body: JSON.stringify({
+          username: username  // Just send the username
+        })
+      }
+    );
 
     if (!runResponse.ok) {
       const errorText = await runResponse.text();
