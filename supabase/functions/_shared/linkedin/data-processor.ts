@@ -23,7 +23,7 @@ export function processLinkedInData(profileData: LinkedInProfile) {
 
   return {
     scanHistory: {
-      platform: 'linkedin', // Added missing platform field
+      platform: 'linkedin',
       followers_count: profileData.followers || 0,
       following_count: profileData.connections || 0,
       posts_count: profileData.activity?.length || 0,
