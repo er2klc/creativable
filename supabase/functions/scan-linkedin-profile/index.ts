@@ -75,16 +75,19 @@ serve(async (req) => {
     });
 
     // Prepare the input for Apify actor
-    const actorId = 'dSuQBqyNnhPxkQZwH';  // Direct actor ID instead of task
+    const actorId = 'dSuQBqyNnhPxkQZwH';
     const input = {
       linkedInProfileUrls: [`https://www.linkedin.com/in/${username}/`],
       headless: true,
-      sessionPoolName: "LINKEDIN_POOL"
+      sessionPoolName: "LINKEDIN_POOL",
+      maxRequestRetries: 5,
+      maxConcurrency: 1,
+      maxItems: 1
     };
 
     console.log('Apify actor input:', JSON.stringify(input, null, 2));
 
-    // Start Apify actor with the correct format
+    // Start Apify actor
     const startResponse = await fetch(
       `https://api.apify.com/v2/acts/${actorId}/runs?token=${settings.apify_api_key}`,
       {
@@ -205,45 +208,6 @@ serve(async (req) => {
       throw new Error('Failed to update lead data');
     }
 
-    // Update progress to 90%
-    await supabaseClient
-      .from('social_media_scan_history')
-      .update({
-        processing_progress: 90,
-        current_file: 'Processing LinkedIn posts...'
-      })
-      .eq('lead_id', leadId);
-
-    // Process and store LinkedIn posts
-    if (profileData.activity && Array.isArray(profileData.activity)) {
-      const posts = profileData.activity.map((post: any) => ({
-        id: post.postId || `${leadId}-${Math.random().toString(36).substr(2, 9)}`,
-        lead_id: leadId,
-        content: post.text || '',
-        url: post.postUrl || null,
-        media_urls: post.images || [],
-        post_type: post.type || 'post',
-        likes_count: post.likes || 0,
-        comments_count: post.comments || 0,
-        shares_count: post.shares || 0,
-        posted_at: post.date ? new Date(post.date).toISOString() : new Date().toISOString(),
-        reactions: post.reactions || {},
-        metadata: post
-      }));
-
-      if (posts.length > 0) {
-        const { error: postsError } = await supabaseClient
-          .from('linkedin_posts')
-          .upsert(posts, {
-            onConflict: 'id'
-          });
-
-        if (postsError) {
-          console.error('Error storing LinkedIn posts:', postsError);
-        }
-      }
-    }
-
     // Store final scan history
     const scanHistory = {
       lead_id: leadId,
@@ -272,9 +236,7 @@ serve(async (req) => {
 
     const { error: scanHistoryError } = await supabaseClient
       .from('social_media_scan_history')
-      .upsert(scanHistory, {
-        onConflict: 'lead_id,platform,scanned_at'
-      });
+      .upsert(scanHistory);
 
     if (scanHistoryError) {
       console.error('Error storing scan history:', scanHistoryError);
@@ -284,7 +246,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'LinkedIn profile scan started successfully'
+        message: 'LinkedIn profile scan completed successfully'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -298,8 +260,17 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      // Update scan history with error
-      if (error.leadId) {
+      // Get leadId from the request body
+      let leadId;
+      try {
+        const body = await req.json();
+        leadId = body.leadId;
+      } catch (e) {
+        console.error('Error parsing request body:', e);
+      }
+
+      // Update scan history with error if we have a leadId
+      if (leadId) {
         await supabaseClient
           .from('social_media_scan_history')
           .update({
@@ -308,7 +279,7 @@ serve(async (req) => {
             current_file: 'Error during scan',
             processing_progress: 0
           })
-          .eq('lead_id', error.leadId)
+          .eq('lead_id', leadId)
           .eq('platform', 'LinkedIn');
       }
     } catch (updateError) {
