@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
-import { CheckCircle } from "lucide-react";
 
 export function useInstagramScan() {
   const [isLoading, setIsLoading] = useState(false);
@@ -95,9 +94,7 @@ export function useInstagramScan() {
             setIsSuccess(true);
             isPollingActive = false;
             clearInterval(interval);
-            toast.success("Contact successfully created", {
-              icon: <CheckCircle className="h-5 w-5 text-green-500" />
-            });
+            toast.success("Contact successfully created");
             return;
           }
         }
@@ -119,9 +116,7 @@ export function useInstagramScan() {
             setIsSuccess(true);
             isPollingActive = false;
             clearInterval(interval);
-            toast.success("Contact successfully created", {
-              icon: <CheckCircle className="h-5 w-5 text-green-500" />
-            });
+            toast.success("Contact successfully created");
           }
         }
       } catch (err) {
