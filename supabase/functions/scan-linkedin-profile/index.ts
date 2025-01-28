@@ -213,7 +213,9 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      if (requestData?.leadId) {
+      const { leadId } = await req.json().catch(() => ({ leadId: null }));
+
+      if (leadId) {
         await supabaseClient
           .from('social_media_scan_history')
           .update({
@@ -222,7 +224,7 @@ serve(async (req) => {
             current_file: 'Error during scan',
             processing_progress: 0
           })
-          .eq('lead_id', requestData.leadId)
+          .eq('lead_id', leadId)
           .eq('platform', 'LinkedIn');
       }
     } catch (updateError) {
