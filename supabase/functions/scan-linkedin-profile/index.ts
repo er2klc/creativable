@@ -71,7 +71,7 @@ serve(async (req) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          "startUrls": [{ "url": profileUrl }],
+          "url": [profileUrl],
           "maxItems": 1,
           "proxyConfiguration": {
             "useApifyProxy": true
@@ -143,14 +143,13 @@ serve(async (req) => {
     console.log('Retrieved profile data:', profile);
 
     const leadData = {
-      social_media_bio: profile.summary || '',
-      social_media_profile_image_url: profile.profileImageUrl || null,
+      social_media_bio: profile.about || '',
+      social_media_profile_image_url: profile.avatar || null,
       social_media_followers: profile.followers || 0,
       social_media_following: profile.connections || 0,
-      social_media_engagement_rate: profile.engagementRate || null,
       experience: profile.experience || [],
-      current_company_name: profile.experience?.[0]?.company || null,
-      linkedin_id: profile.profileId || null,
+      current_company_name: profile.current_company?.name || null,
+      linkedin_id: profile.linkedin_id || null,
       last_social_media_scan: new Date().toISOString()
     };
 
@@ -170,22 +169,21 @@ serve(async (req) => {
       scanned_at: new Date().toISOString(),
       followers_count: profile.followers || 0,
       following_count: profile.connections || 0,
-      posts_count: profile.activity?.length || 0,
-      engagement_rate: profile.engagementRate || null,
+      engagement_rate: null,
       success: true,
       processing_progress: 100,
       current_file: 'Scan completed successfully',
       profile_data: {
-        headline: profile.headline || '',
-        summary: profile.summary || '',
-        location: profile.location || '',
-        industry: profile.industry || '',
+        headline: profile.about || '',
+        summary: profile.about || '',
+        location: profile.city || '',
+        industry: '',
       },
       experience: profile.experience || [],
       education: profile.education || [],
-      skills: profile.skills || [],
-      certifications: profile.certifications || [],
-      languages: profile.languages || [],
+      skills: [],
+      certifications: [],
+      languages: [],
       recommendations: profile.recommendations || []
     };
 
