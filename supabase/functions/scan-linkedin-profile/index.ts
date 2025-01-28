@@ -3,7 +3,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { scanLinkedInProfile } from "../_shared/linkedin/profile-scanner.ts";
 import { ProgressTracker } from "../_shared/linkedin/progress-tracker.ts";
 import { processLinkedInData } from "../_shared/linkedin/data-processor.ts";
-import { saveLinkedInData } from "../_shared/linkedin/db-operations.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,8 +29,6 @@ serve(async (req) => {
 
     const progress = new ProgressTracker(supabaseClient, leadId);
 
-    await progress.updateProgress(5, "Initializing LinkedIn scan...");
-
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
@@ -45,7 +42,7 @@ serve(async (req) => {
       throw new Error('Invalid authorization');
     }
 
-    await progress.updateProgress(15, "Fetching API credentials...");
+    await progress.updateProgress(0, "Starting LinkedIn scan...");
 
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
@@ -57,8 +54,7 @@ serve(async (req) => {
       throw new Error('Apify API key not found in settings');
     }
 
-    await progress.updateProgress(25, "Connecting to LinkedIn profile...");
-    await progress.updateProgress(35, "Scanning LinkedIn profile...");
+    await progress.updateProgress(20, "Connecting to LinkedIn profile...");
     
     const profileData = await scanLinkedInProfile({
       username,
@@ -66,20 +62,32 @@ serve(async (req) => {
       apifyApiKey: settings.apify_api_key
     });
 
-    await progress.updateProgress(80, "Processing profile information...");
+    await progress.updateProgress(60, "Processing profile information...");
     
     const { scanHistory, leadData } = processLinkedInData(profileData);
     scanHistory.lead_id = leadId;
+    scanHistory.platform = 'LinkedIn';
 
-    await progress.updateProgress(90, "Saving profile data...");
-    
-    await saveLinkedInData(
-      supabaseClient,
-      leadId,
-      scanHistory,
-      leadData,
-      profileData.activity || []
-    );
+    await progress.updateProgress(80, "Saving profile data...");
+
+    const { error: scanHistoryError } = await supabaseClient
+      .from('social_media_scan_history')
+      .insert(scanHistory);
+
+    if (scanHistoryError) {
+      console.error('Error storing scan history:', scanHistoryError);
+      throw new Error('Failed to store scan history');
+    }
+
+    const { error: leadUpdateError } = await supabaseClient
+      .from('leads')
+      .update(leadData)
+      .eq('id', leadId);
+
+    if (leadUpdateError) {
+      console.error('Error updating lead:', leadUpdateError);
+      throw new Error('Failed to update lead data');
+    }
 
     await progress.updateProgress(100, "Profile scan completed!");
 

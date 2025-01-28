@@ -14,15 +14,15 @@ export class ProgressTracker {
     
     try {
       const { error } = await this.supabaseClient
-        .from('social_media_posts')
+        .from('social_media_scan_history')
         .upsert({
           id: `temp-${this.leadId}`,
           lead_id: this.leadId,
           platform: 'LinkedIn',
-          post_type: 'post',
+          scanned_at: new Date().toISOString(),
           processing_progress: progress,
           current_file: message,
-          media_processing_status: progress === 100 ? 'completed' : 'processing'
+          success: progress === 100
         });
 
       if (error) {
