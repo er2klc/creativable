@@ -47,7 +47,7 @@ export function useLinkedInScan() {
           .from('social_media_scan_history')
           .select('*')
           .eq('lead_id', leadId)
-          .eq('platform', 'LinkedIn')
+          .eq('platform', 'linkedin')
           .order('scanned_at', { ascending: false })
           .maybeSingle();
 

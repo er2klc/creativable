@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getSupabase } from "../_shared/supabase.ts";
+import { processLinkedInData } from "../_shared/linkedin/data-processor.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,33 +11,27 @@ const POLLING_INTERVAL = 5000; // 5 seconds
 const MAX_POLLING_ATTEMPTS = 30;
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { username } = await req.json();
+    const { username, leadId } = await req.json();
     console.log('Starting LinkedIn profile scan for username:', username);
 
-    if (!username) {
-      throw new Error('Username is required');
+    if (!username || !leadId) {
+      throw new Error('Username and leadId are required');
     }
 
-    // Get user's API key from settings
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
+    if (!authHeader) throw new Error('No authorization header');
 
     const supabase = getSupabase();
     const { data: { user }, error: authError } = await supabase.auth.getUser(
       authHeader.replace('Bearer ', '')
     );
 
-    if (authError || !user) {
-      throw new Error('Invalid authorization token');
-    }
+    if (authError || !user) throw new Error('Invalid authorization token');
 
     // Get user's Apify API key from settings
     const { data: settings, error: settingsError } = await supabase
@@ -49,9 +44,19 @@ serve(async (req) => {
       throw new Error('Apify API key not found in settings');
     }
 
-    const apifyApiKey = settings.apify_api_key;
+    // Create initial scan history record
+    const { error: scanHistoryError } = await supabase
+      .from('social_media_scan_history')
+      .insert({
+        lead_id: leadId,
+        platform: 'linkedin',
+        processing_progress: 0,
+        current_file: 'Initializing scan...',
+      });
 
-    // Step 1: Start the Apify run
+    if (scanHistoryError) throw scanHistoryError;
+
+    // Start the Apify run
     console.log('Starting Apify actor run...');
     const runResponse = await fetch(
       'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs',
@@ -59,7 +64,7 @@ serve(async (req) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apifyApiKey}`,
+          'Authorization': `Bearer ${settings.apify_api_key}`,
         },
         body: JSON.stringify({
           url: [`https://www.linkedin.com/in/${username}`]
@@ -76,12 +81,19 @@ serve(async (req) => {
     const runData = await runResponse.json();
     const runId = runData.data?.id;
     
-    if (!runId) {
-      throw new Error('No run ID returned from Apify');
-    }
+    if (!runId) throw new Error('No run ID returned from Apify');
     console.log('Apify run started with ID:', runId);
 
-    // Step 2: Poll for completion
+    // Update progress to 10% after successful start
+    await supabase
+      .from('social_media_scan_history')
+      .update({
+        processing_progress: 10,
+        current_file: 'Scanning LinkedIn profile...'
+      })
+      .eq('lead_id', leadId)
+      .eq('platform', 'linkedin');
+
     let attempts = 0;
     let profileData = null;
 
@@ -89,7 +101,7 @@ serve(async (req) => {
       console.log(`Polling attempt ${attempts + 1}/${MAX_POLLING_ATTEMPTS}`);
       
       const statusResponse = await fetch(
-        `https://api.apify.com/v2/actor-runs/${runId}?token=${apifyApiKey}`
+        `https://api.apify.com/v2/actor-runs/${runId}?token=${settings.apify_api_key}`
       );
 
       if (!statusResponse.ok) {
@@ -100,16 +112,23 @@ serve(async (req) => {
       const status = await statusResponse.json();
       console.log('Run status:', status.data?.status);
 
-      if (status.data?.status === 'SUCCEEDED') {
-        // Get the dataset ID
-        const datasetId = status.data?.defaultDatasetId;
-        if (!datasetId) {
-          throw new Error('No dataset ID found in successful run');
-        }
+      // Update progress based on status
+      const progress = Math.min(90, 10 + (attempts * (80 / MAX_POLLING_ATTEMPTS)));
+      await supabase
+        .from('social_media_scan_history')
+        .update({
+          processing_progress: progress,
+          current_file: `Scanning profile (${status.data?.status})`
+        })
+        .eq('lead_id', leadId)
+        .eq('platform', 'linkedin');
 
-        // Fetch the results
+      if (status.data?.status === 'SUCCEEDED') {
+        const datasetId = status.data?.defaultDatasetId;
+        if (!datasetId) throw new Error('No dataset ID found in successful run');
+
         const datasetResponse = await fetch(
-          `https://api.apify.com/v2/datasets/${datasetId}/items?token=${apifyApiKey}`
+          `https://api.apify.com/v2/datasets/${datasetId}/items?token=${settings.apify_api_key}`
         );
 
         if (!datasetResponse.ok) {
@@ -124,10 +143,19 @@ serve(async (req) => {
       } else if (status.data?.status === 'FAILED' || status.data?.status === 'ABORTED') {
         const errorMessage = status.data?.errorMessage || 'Unknown error';
         console.error('Actor run failed:', errorMessage);
+        
+        await supabase
+          .from('social_media_scan_history')
+          .update({
+            error_message: errorMessage,
+            success: false
+          })
+          .eq('lead_id', leadId)
+          .eq('platform', 'linkedin');
+          
         throw new Error(`Actor run failed: ${errorMessage}`);
       }
 
-      // Wait before next polling attempt
       await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
       attempts++;
     }
@@ -137,6 +165,27 @@ serve(async (req) => {
     }
 
     console.log('Successfully retrieved profile data');
+
+    // Process the data
+    const { scanHistory, leadData } = processLinkedInData(profileData);
+
+    // Update scan history with final data
+    await supabase
+      .from('social_media_scan_history')
+      .update({
+        ...scanHistory,
+        processing_progress: 100,
+        current_file: 'Completed',
+        success: true
+      })
+      .eq('lead_id', leadId)
+      .eq('platform', 'linkedin');
+
+    // Update lead with profile data
+    await supabase
+      .from('leads')
+      .update(leadData)
+      .eq('id', leadId);
 
     return new Response(
       JSON.stringify({ 
