@@ -28,6 +28,9 @@ export interface InstagramPost {
   locationName?: string;
   musicInfo?: any;
   alt?: string;
+  lead_id?: string;
+  media_urls?: string[];
+  media_type?: string;
 }
 
 export interface ProcessingState {

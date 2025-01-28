@@ -1,6 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
-import { InstagramProfile, ProcessingState } from '../types/instagram';
-import { downloadAndUploadImage } from './media-processor';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { InstagramProfile, ProcessingState } from '../types/instagram.ts';
+import { downloadAndUploadImage } from './media-processor.ts';
 
 export async function processInstagramProfile(
   profile: InstagramProfile,

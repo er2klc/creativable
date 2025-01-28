@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import { InstagramPost, ProcessingState } from '../types/instagram';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { InstagramPost, ProcessingState } from '../types/instagram.ts';
 
 export async function downloadAndUploadImage(
   imageUrl: string | undefined,
