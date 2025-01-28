@@ -14,6 +14,7 @@ serve(async (req) => {
 
   try {
     const { username, leadId } = await req.json()
+    console.log('Starting LinkedIn scan for:', username, 'Lead ID:', leadId)
 
     // Validate input
     if (!username || !leadId) {
@@ -122,7 +123,7 @@ serve(async (req) => {
       lead_id: leadId,
       platform: 'LinkedIn',
       followers_count: profileData.followersCount || 0,
-      connections_count: profileData.connectionsCount || 0,
+      following_count: profileData.connectionsCount || 0, // Changed from connections_count
       posts_count: profileData.postsCount || 0,
       profile_data: {
         headline: profileData.headline,
@@ -136,7 +137,8 @@ serve(async (req) => {
       certifications: profileData.certifications || [],
       languages: profileData.languages || [],
       recommendations: profileData.recommendations || [],
-      success: true
+      success: true,
+      scanned_at: new Date().toISOString()
     }
 
     console.log('Attempting to store scan history:', JSON.stringify(scanHistoryData, null, 2))
