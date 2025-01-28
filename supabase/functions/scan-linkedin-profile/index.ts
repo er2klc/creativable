@@ -7,13 +7,11 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Parse request body once and store it
     const requestData = await req.json();
     const { username, leadId } = requestData;
     
@@ -41,7 +39,6 @@ serve(async (req) => {
       throw new Error('Invalid authorization');
     }
 
-    // Get Apify API key from settings
     const { data: settings, error: settingsError } = await supabaseClient
       .from('settings')
       .select('apify_api_key')
@@ -52,7 +49,6 @@ serve(async (req) => {
       throw new Error('Apify API key not found in settings');
     }
 
-    // Initialize scan history
     await supabaseClient
       .from('social_media_scan_history')
       .upsert({
@@ -64,30 +60,21 @@ serve(async (req) => {
         success: false
       });
 
-    // Prepare the LinkedIn profile URL and request body
     const profileUrl = `https://www.linkedin.com/in/${username}/`;
     console.log('Starting Apify actor run for profile:', profileUrl);
 
-    // Using the correct actor ID for LinkedIn profile scraping
-    const actorId = 'apify/linkedin-profile-scraper';
-    
-    // Make the API call to start the actor run with proper configuration
     const apifyResponse = await fetch(
-      `https://api.apify.com/v2/acts/${actorId}/runs`,
+      `https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs?token=${settings.apify_api_key}`,
       {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${settings.apify_api_key}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          startUrls: [{ url: profileUrl }],
-          linkedInProfilesUrls: [profileUrl],
-          maxRequestRetries: 5,
-          maxConcurrency: 1,
-          maxItems: 1,
-          proxyConfiguration: {
-            useApifyProxy: true
+          "startUrls": [{ "url": profileUrl }],
+          "maxItems": 1,
+          "proxyConfiguration": {
+            "useApifyProxy": true
           }
         })
       }
@@ -102,7 +89,6 @@ serve(async (req) => {
     const runData = await apifyResponse.json();
     console.log('Apify actor run started:', runData);
 
-    // Update scan history with run status
     await supabaseClient
       .from('social_media_scan_history')
       .update({
@@ -111,7 +97,6 @@ serve(async (req) => {
       })
       .eq('lead_id', leadId);
 
-    // Poll for run completion and get results
     const maxAttempts = 30;
     let attempts = 0;
     let profileData = null;
@@ -120,7 +105,7 @@ serve(async (req) => {
       console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
       
       const runStatusResponse = await fetch(
-        `https://api.apify.com/v2/acts/${actorId}/runs/${runData.data.id}?token=${settings.apify_api_key}`
+        `https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs/${runData.data.id}?token=${settings.apify_api_key}`
       );
 
       if (!runStatusResponse.ok) {
@@ -132,9 +117,8 @@ serve(async (req) => {
       console.log('Run status:', runStatus.data?.status);
 
       if (runStatus.data?.status === 'SUCCEEDED') {
-        // Get the dataset items
         const datasetResponse = await fetch(
-          `https://api.apify.com/v2/acts/${actorId}/runs/${runData.data.id}/dataset/items?token=${settings.apify_api_key}`
+          `https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs/${runData.data.id}/dataset/items?token=${settings.apify_api_key}`
         );
 
         if (datasetResponse.ok) {
@@ -147,7 +131,7 @@ serve(async (req) => {
         throw new Error(`Actor run failed: ${runStatus.data?.errorMessage || 'Unknown error'}`);
       }
 
-      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds between checks
+      await new Promise(resolve => setTimeout(resolve, 5000));
       attempts++;
     }
 
@@ -158,7 +142,6 @@ serve(async (req) => {
     const profile = profileData[0];
     console.log('Retrieved profile data:', profile);
 
-    // Update lead data
     const leadData = {
       social_media_bio: profile.summary || '',
       social_media_profile_image_url: profile.profileImageUrl || null,
@@ -181,7 +164,6 @@ serve(async (req) => {
       throw new Error('Failed to update lead data');
     }
 
-    // Store final scan history
     const scanHistory = {
       lead_id: leadId,
       platform: 'LinkedIn',
@@ -233,7 +215,6 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      // Update scan history with error
       if (requestData?.leadId) {
         await supabaseClient
           .from('social_media_scan_history')
