@@ -83,10 +83,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          "urls": [`https://www.linkedin.com/in/${username}/`],
-          "maxRequestRetries": 5,
-          "maxConcurrency": 1,
-          "maxItems": 1
+          "urls": [`https://www.linkedin.com/in/${username}/`]
         }),
       }
     );
