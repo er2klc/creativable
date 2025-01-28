@@ -111,7 +111,7 @@ serve(async (req) => {
 
     console.log('Raw LinkedIn profile data:', JSON.stringify(profileData, null, 2))
 
-    // Process and store profile data
+    // Store scan history
     const scanHistoryData = {
       lead_id: leadId,
       platform: 'LinkedIn',
@@ -134,8 +134,6 @@ serve(async (req) => {
       scanned_at: new Date().toISOString()
     }
 
-    console.log('Processed scan history data:', JSON.stringify(scanHistoryData, null, 2))
-
     const { error: scanError } = await supabaseClient
       .from('social_media_scan_history')
       .insert(scanHistoryData)
@@ -150,18 +148,13 @@ serve(async (req) => {
       const postsToInsert = profileData.activity.map((post: any) => ({
         id: post.id,
         lead_id: leadId,
-        content: post.title || post.content,
-        post_type: 'post',
-        likes_count: 0, // LinkedIn API doesn't provide this
-        comments_count: 0, // LinkedIn API doesn't provide this
-        url: post.link,
-        posted_at: new Date().toISOString(), // Use current date as fallback
+        content: post.title || '',
+        url: post.link || null,
         media_urls: post.img ? [post.img] : [],
-        media_type: post.img ? 'image' : 'text',
-        reactions: {},
-        metadata: {
-          interaction: post.interaction || ''
-        }
+        post_type: 'activity',
+        reactions: { interaction: post.interaction || null },
+        metadata: post,
+        posted_at: new Date().toISOString()
       }))
 
       console.log('Storing LinkedIn posts:', JSON.stringify(postsToInsert, null, 2))
@@ -180,11 +173,16 @@ serve(async (req) => {
     // Update lead with LinkedIn data
     const leadUpdateData = {
       linkedin_id: profileData.linkedin_id,
-      current_company_name: profileData.current_company?.name,
-      experience: profileData.experience || [],
-      social_media_followers: profileData.followers || 0,
-      social_media_bio: profileData.about,
+      social_media_username: profileData.name,
+      platform: 'LinkedIn',
+      bio: profileData.about,
       social_media_profile_image_url: profileData.avatar,
+      current_company_name: profileData.current_company_name,
+      position: profileData.current_company?.title,
+      city: profileData.city,
+      social_media_followers: profileData.followers || 0,
+      social_media_verified: false,
+      experience: profileData.experience || [],
       last_social_media_scan: new Date().toISOString()
     }
 
