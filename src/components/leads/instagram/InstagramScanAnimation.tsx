@@ -5,16 +5,12 @@ import { useEffect } from "react";
 
 interface InstagramScanAnimationProps {
   scanProgress: number;
-  mediaProgress: number;
   currentFile?: string;
-  currentPhase: 1 | 2;
 }
 
 export const InstagramScanAnimation = ({ 
-  scanProgress, 
-  mediaProgress,
-  currentFile,
-  currentPhase
+  scanProgress,
+  currentFile
 }: InstagramScanAnimationProps) => {
   const controls = useAnimation();
 
@@ -23,14 +19,12 @@ export const InstagramScanAnimation = ({
 
     const animate = async () => {
       while (isActive) {
-        // Generate random circular movement
         const angle = Math.random() * 2 * Math.PI;
-        const radius = 40; // Fixed radius for circular movement
+        const radius = 40;
         const x = Math.cos(angle) * radius;
         const y = Math.sin(angle) * radius;
         
-        // Slower animation when progress is higher
-        const duration = Math.max(0.5, 2 - (currentPhase === 2 ? mediaProgress : scanProgress) / 100);
+        const duration = Math.max(0.5, 2 - (scanProgress / 100));
         
         await controls.start({
           x,
@@ -48,74 +42,35 @@ export const InstagramScanAnimation = ({
       isActive = false;
       controls.stop();
     };
-  }, [controls, scanProgress, mediaProgress, currentPhase]);
-
-  const getStatusText = () => {
-    if (currentPhase === 1) {
-      return "Scanning Profile...";
-    }
-    if (mediaProgress < 100) {
-      return currentFile ? `Saving: ${currentFile}` : "Saving Media...";
-    }
-    return "Media successfully saved!";
-  };
+  }, [controls, scanProgress]);
 
   return (
     <div className="relative w-full max-w-[300px] mx-auto py-8 space-y-6">
-      {/* Frame */}
       <div className="relative border-2 border-gray-200 rounded-lg p-4 bg-white shadow-lg">
-        {/* Icons Container */}
         <div className="relative flex justify-center mb-8 h-24">
-          {/* Fixed Instagram Icon */}
           <Instagram className="w-12 h-12 text-pink-500" />
           
-          {/* Animated Search/Image Icon */}
           <motion.div
             className="absolute"
             animate={controls}
             initial={{ x: 0, y: 0 }}
             style={{ left: '50%', top: '50%' }}
           >
-            {currentPhase === 2 ? (
-              <Image className="w-12 h-12 text-blue-500" />
-            ) : (
-              <Search className="w-12 h-12 text-blue-500" />
-            )}
+            <Search className="w-12 h-12 text-blue-500" />
           </motion.div>
         </div>
 
-        {/* Progress Section */}
         <div className="space-y-4">
-          {/* Scan Progress */}
-          {currentPhase === 1 && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm text-gray-600">
-                <span>Profile Scan (1/2)</span>
-                <span>{scanProgress}%</span>
-              </div>
-              <Progress value={scanProgress} className="w-full h-2" />
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Instagram Scan</span>
+              <span>{scanProgress}%</span>
             </div>
-          )}
+            <Progress value={scanProgress} className="w-full h-2" />
+          </div>
 
-          {/* Media Progress */}
-          {currentPhase === 2 && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm text-gray-600">
-                <span>Media Save (2/2)</span>
-                <span>{mediaProgress}%</span>
-              </div>
-              <Progress value={mediaProgress} className="w-full h-2" />
-            </div>
-          )}
-
-          {/* Status Text */}
           <div className="mt-4 text-sm text-gray-600 text-center">
-            <p className="font-medium">{getStatusText()}</p>
-            {currentFile && mediaProgress < 100 && (
-              <p className="text-xs mt-1 break-all text-gray-500">
-                {currentFile}
-              </p>
-            )}
+            <p className="font-medium">{currentFile}</p>
           </div>
         </div>
       </div>

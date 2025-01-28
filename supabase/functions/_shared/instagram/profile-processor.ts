@@ -1,14 +1,14 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { InstagramProfile, ProcessingState } from '../types/instagram.ts';
-import { downloadAndUploadImage } from './media-processor.ts';
+import { InstagramProfile } from '../types/instagram.ts';
 
 export async function processInstagramProfile(
   profile: InstagramProfile,
   leadId: string,
   supabaseClient: ReturnType<typeof createClient>
 ): Promise<void> {
-  console.log('Processing profile data:', profile);
+  console.log('Processing profile data:', { leadId, username: profile.username });
 
+  // Calculate engagement metrics
   const allHashtags = new Set<string>();
   profile.latestPosts?.forEach((post) => {
     post.hashtags?.forEach((tag) => allHashtags.add(tag));
@@ -20,12 +20,41 @@ export async function processInstagramProfile(
       (profile.latestPosts?.length || 1)) / parseInt(profile.followersCount as string))
     : 0;
 
-  const newProfileImageUrl = await downloadAndUploadImage(
-    profile.profilePicUrlHD || profile.profilePicUrl,
-    supabaseClient,
-    leadId
-  );
+  // Download and process profile image
+  let newProfileImageUrl = null;
+  if (profile.profilePicUrlHD || profile.profilePicUrl) {
+    try {
+      const response = await fetch(profile.profilePicUrlHD || profile.profilePicUrl);
+      if (!response.ok) throw new Error('Failed to fetch profile image');
+      
+      const imageBuffer = await response.arrayBuffer();
+      const fileExt = 'jpg';
+      const fileName = `${leadId}-profile.${fileExt}`;
 
+      const { error: uploadError } = await supabaseClient
+        .storage
+        .from('contact-avatars')
+        .upload(fileName, imageBuffer, {
+          contentType: 'image/jpeg',
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error('Error uploading profile image:', uploadError);
+      } else {
+        const { data: { publicUrl } } = supabaseClient
+          .storage
+          .from('contact-avatars')
+          .getPublicUrl(fileName);
+        
+        newProfileImageUrl = publicUrl;
+      }
+    } catch (error) {
+      console.error('Error processing profile image:', error);
+    }
+  }
+
+  // Update lead with profile data
   await supabaseClient
     .from('leads')
     .update({
@@ -42,4 +71,7 @@ export async function processInstagramProfile(
       last_social_media_scan: new Date().toISOString()
     })
     .eq('id', leadId);
+
+  // Log completion
+  console.log('Profile processing completed successfully:', { leadId, username: profile.username });
 }
