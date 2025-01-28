@@ -17,8 +17,9 @@ export const LeadCardContent = ({ lead }: LeadCardContentProps) => {
   const user = useUser();
   const isTeamOwner = user?.id === lead.user_id;
 
-  // Prioritize username over name
-  const displayName = lead.social_media_username?.split('/')?.pop() || lead.name;
+  // Keep both username and display name
+  const socialUsername = lead.social_media_username?.split('/')?.pop();
+  const displayName = lead.name;
 
   // Parse experience JSON if it exists and is an array
   const experienceArray = Array.isArray(lead.experience) ? lead.experience : [];
@@ -33,6 +34,9 @@ export const LeadCardContent = ({ lead }: LeadCardContentProps) => {
         />
         <div className="flex-1">
           <div className="font-medium text-lg">{displayName}</div>
+          {socialUsername && (
+            <div className="text-sm text-gray-500">@{socialUsername}</div>
+          )}
           {lead.position && lead.current_company_name && (
             <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
               <Briefcase className="h-4 w-4" />
