@@ -74,17 +74,23 @@ serve(async (req) => {
       apiKey: '***' // masked for security
     });
 
+    // Use the correct actor task ID for LinkedIn profile scraping
+    const actorTaskId = 'creativable~linkedin-people-profiles';
+    const input = {
+      url: [`https://www.linkedin.com/in/${username}/`]
+    };
+
+    console.log('Apify actor input:', JSON.stringify(input, null, 2));
+
     // Start Apify actor with the correct format
     const startResponse = await fetch(
-      `https://api.apify.com/v2/acts/scrap3r~LinkedIn-people-profiles-by-url/runs?token=${settings.apify_api_key}`,
+      `https://api.apify.com/v2/actor-tasks/${actorTaskId}/runs?token=${settings.apify_api_key}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          "url": [`https://www.linkedin.com/in/${username}/`]
-        }),
+        body: JSON.stringify(input),
       }
     );
 
@@ -101,7 +107,7 @@ serve(async (req) => {
           current_file: 'Error during scan',
           processing_progress: 0
         })
-        .eq('id', `temp-${leadId}`);
+        .eq('lead_id', leadId);
         
       throw new Error('Failed to start LinkedIn profile scan');
     }
