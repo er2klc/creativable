@@ -69,6 +69,11 @@ serve(async (req) => {
       })
       .eq('lead_id', leadId);
 
+    console.log('Starting Apify actor with settings:', {
+      username,
+      apiKey: '***' // masked for security
+    });
+
     // Start Apify actor with the correct format
     const startResponse = await fetch(
       `https://api.apify.com/v2/acts/scrap3r~LinkedIn-people-profiles-by-url/runs?token=${settings.apify_api_key}`,
@@ -89,6 +94,18 @@ serve(async (req) => {
     if (!startResponse.ok) {
       const errorText = await startResponse.text();
       console.error('Failed to start Apify actor:', errorText);
+      
+      // Update scan history with error
+      await supabaseClient
+        .from('social_media_scan_history')
+        .update({
+          success: false,
+          error_message: `Failed to start Apify actor: ${errorText}`,
+          current_file: 'Error during scan',
+          processing_progress: 0
+        })
+        .eq('id', `temp-${leadId}`);
+        
       throw new Error('Failed to start LinkedIn profile scan');
     }
 
@@ -262,8 +279,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'LinkedIn profile scanned successfully',
-        data: profileData 
+        message: 'LinkedIn profile scan started successfully'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -271,23 +287,25 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error scanning LinkedIn profile:', error);
     
-    // Update scan history with error
     try {
       const supabaseClient = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      await supabaseClient
-        .from('social_media_scan_history')
-        .update({
-          success: false,
-          error_message: error.message,
-          current_file: 'Error during scan',
-          processing_progress: 0
-        })
-        .eq('lead_id', leadId)
-        .eq('platform', 'LinkedIn');
+      // Update scan history with error
+      if (error.leadId) {
+        await supabaseClient
+          .from('social_media_scan_history')
+          .update({
+            success: false,
+            error_message: error.message || 'Unknown error occurred',
+            current_file: 'Error during scan',
+            processing_progress: 0
+          })
+          .eq('lead_id', error.leadId)
+          .eq('platform', 'LinkedIn');
+      }
     } catch (updateError) {
       console.error('Error updating scan history with error:', updateError);
     }
