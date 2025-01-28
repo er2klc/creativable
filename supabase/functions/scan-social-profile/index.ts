@@ -59,14 +59,13 @@ serve(async (req) => {
     console.log('Starting Apify scraping run');
 
     // Update progress to 10% - Starting Apify run
-    const { error: progress10Error } = await supabaseClient
+    await supabaseClient
       .from('social_media_posts')
-      .update({ processing_progress: 10 })
+      .update({ 
+        processing_progress: 10,
+        current_file: 'Starting profile scan...'
+      })
       .eq('id', `temp-${leadId}`)
-
-    if (progress10Error) {
-      console.error('Error updating progress to 10%:', progress10Error);
-    }
 
     const apifyRequest = {
       url: `${BASE_URL}/acts/apify~instagram-profile-scraper/runs`,
@@ -79,7 +78,6 @@ serve(async (req) => {
         usernames: [username]
       })
     };
-    console.log('Apify request:', JSON.stringify(apifyRequest, null, 2));
 
     const runResponse = await fetch(apifyRequest.url, {
       method: apifyRequest.method,
@@ -94,7 +92,7 @@ serve(async (req) => {
         statusText: runResponse.statusText,
         body: errorText
       });
-      throw new Error(`HTTP error! status: ${runResponse.status}, body: ${errorText}`)
+      throw new Error(`HTTP error! status: ${runResponse.status}`)
     }
 
     const runData = await runResponse.json()
@@ -102,41 +100,25 @@ serve(async (req) => {
 
     console.log('Apify run started:', { runId });
 
-    // Update progress to 20% - Apify run started
-    const { error: progress20Error } = await supabaseClient
-      .from('social_media_posts')
-      .update({ processing_progress: 20 })
-      .eq('id', `temp-${leadId}`)
-
-    if (progress20Error) {
-      console.error('Error updating progress to 20%:', progress20Error);
-    }
-
     let attempts = 0
-    const maxAttempts = 60 // Increased from 30 to 60 for longer processing time
+    const maxAttempts = 30
     let lastProgressUpdate = Date.now()
-    const progressTimeout = 60000 // Increased from 30s to 60s timeout
+    const progressTimeout = 30000
     let mediaProcessingStarted = false
     
     while (attempts < maxAttempts) {
       console.log(`Polling for results (attempt ${attempts + 1}/${maxAttempts})`);
 
-      // Calculate and update progress based on attempts (20% to 90%)
-      const progressRange = 70; // from 20% to 90%
-      const currentProgress = Math.min(90, 20 + Math.floor((attempts / maxAttempts) * progressRange));
+      const currentProgress = Math.min(90, 20 + Math.floor((attempts / maxAttempts) * 70));
       
-      console.log(`Updating processing progress to ${currentProgress}%`);
-      const { error: progressError } = await supabaseClient
+      await supabaseClient
         .from('social_media_posts')
         .update({ 
           processing_progress: currentProgress,
-          error_message: null // Clear any previous error messages
+          current_file: 'Scanning profile data...',
+          error_message: null
         })
         .eq('id', `temp-${leadId}`);
-
-      if (progressError) {
-        console.error(`Error updating progress to ${currentProgress}%:`, progressError);
-      }
 
       const datasetResponse = await fetch(`${BASE_URL}/actor-runs/${runId}/dataset/items`, {
         headers: {
@@ -151,36 +133,7 @@ serve(async (req) => {
           statusText: datasetResponse.statusText,
           body: errorText
         });
-
-        // Check for timeout
-        if (Date.now() - lastProgressUpdate > progressTimeout) {
-          const timeoutError = 'Progress update timeout - no response from Apify';
-          console.error(timeoutError);
-          
-          // Update database with error message
-          await supabaseClient
-            .from('social_media_posts')
-            .update({ 
-              error_message: timeoutError,
-              processing_progress: currentProgress
-            })
-            .eq('id', `temp-${leadId}`);
-            
-          // Don't throw error, continue to Phase 2
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: timeoutError,
-              shouldContinue: true // Signal to continue to Phase 2
-            }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200 // Return 200 to allow continuation
-            }
-          );
-        }
-
-        throw new Error(`HTTP error! status: ${datasetResponse.status}, body: ${errorText}`)
+        throw new Error(`HTTP error! status: ${datasetResponse.status}`)
       }
 
       const items = await datasetResponse.json()
@@ -209,7 +162,7 @@ serve(async (req) => {
               (profileData.latestPosts?.length || 1)) / profileData.followersCount)
           : 0;
 
-        const { error: updateError } = await supabaseClient
+        await supabaseClient
           .from('leads')
           .update({
             name: profileData.fullName || profileData.username,
@@ -226,11 +179,6 @@ serve(async (req) => {
           })
           .eq('id', leadId)
 
-        if (updateError) {
-          console.error('Error updating lead:', updateError);
-          throw updateError
-        }
-
         const posts = profileData.latestPosts?.map((post: any) => {
           let mediaUrls = [];
           let videoUrl = null;
@@ -243,13 +191,6 @@ serve(async (req) => {
           } else {
             mediaUrls = [post.displayUrl || (post.images && post.images[0])].filter(Boolean);
           }
-
-          console.log('Processing post media:', {
-            postId: post.id,
-            mediaUrls,
-            videoUrl,
-            type: post.type
-          });
 
           return {
             id: post.id,
@@ -319,15 +260,20 @@ serve(async (req) => {
 
               for (const mediaUrl of post.media_urls) {
                 try {
-                  console.log(`Processing media ${processedFiles + 1}/${totalFiles}: ${mediaUrl}`);
-
-                  // Update current file being processed
+                  processedFiles++;
+                  const mediaProgress = Math.round((processedFiles / totalFiles) * 100);
+                  
+                  // Update progress before processing each file
                   await supabaseClient
                     .from('social_media_posts')
                     .update({ 
-                      current_file: `Processing ${processedFiles + 1}/${totalFiles}: ${mediaUrl.split('/').pop()}`
+                      processing_progress: mediaProgress,
+                      current_file: `Processing media ${processedFiles}/${totalFiles}: ${mediaUrl.split('/').pop()}`,
+                      error_message: null
                     })
                     .eq('id', `temp-${leadId}`);
+
+                  console.log(`Processing media ${processedFiles}/${totalFiles}: ${mediaUrl}`);
 
                   const response = await supabaseClient.functions.invoke('process-social-media', {
                     body: {
@@ -339,23 +285,13 @@ serve(async (req) => {
                     }
                   });
 
-                  processedFiles++;
-                  const mediaProgress = Math.round((processedFiles / totalFiles) * 100);
-                  
-                  // Update progress for Phase 2
-                  await supabaseClient
-                    .from('social_media_posts')
-                    .update({ 
-                      processing_progress: mediaProgress,
-                      current_file: `Processed ${processedFiles}/${totalFiles} files`,
-                      error_message: null
-                    })
-                    .eq('id', `temp-${leadId}`);
-
                   console.log(`Media processing progress: ${mediaProgress}%`);
                 } catch (error) {
                   console.error('Error processing media:', error);
                 }
+
+                // Small delay to prevent overwhelming the system
+                await new Promise(resolve => setTimeout(resolve, 100));
               }
             }
 
@@ -385,7 +321,7 @@ serve(async (req) => {
             .eq('id', `temp-${leadId}`);
         }
 
-        const { error: scanHistoryError } = await supabaseClient
+        await supabaseClient
           .from('social_media_scan_history')
           .insert({
             lead_id: leadId,
@@ -396,11 +332,7 @@ serve(async (req) => {
             engagement_rate: engagementRate,
             success: true,
             profile_data: profileData
-          })
-
-        if (scanHistoryError) {
-          console.error('Error storing scan history:', scanHistoryError);
-        }
+          });
 
         return new Response(
           JSON.stringify({ 
@@ -413,46 +345,22 @@ serve(async (req) => {
         )
       }
 
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      await new Promise(resolve => setTimeout(resolve, 1000))
       attempts++
       lastProgressUpdate = Date.now()
     }
 
-    const timeoutError = 'Maximum polling attempts reached';
-    console.error(timeoutError);
-    
-    // Update database with timeout error but allow continuation
-    await supabaseClient
-      .from('social_media_posts')
-      .update({ 
-        error_message: timeoutError,
-        processing_progress: 90 // Keep at 90% to indicate incomplete
-      })
-      .eq('id', `temp-${leadId}`);
-
-    // Return 200 to allow continuation to Phase 2
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: timeoutError,
-        shouldContinue: true // Signal to continue to Phase 2
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      }
-    )
+    throw new Error('Maximum polling attempts reached');
   } catch (error) {
     console.error('Error during scan:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error during scanning',
-        shouldContinue: true // Allow continuation to Phase 2 even on error
+        error: error instanceof Error ? error.message : 'Unknown error during scanning'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 // Return 200 to allow continuation
+        status: 500
       }
     )
   }
@@ -470,7 +378,7 @@ async function downloadAndUploadImage(imageUrl: string, supabaseClient: any, lea
     const fileName = `${leadId}-${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    const { data: uploadData, error: uploadError } = await supabaseClient
+    const { error: uploadError } = await supabaseClient
       .storage
       .from('contact-avatars')
       .upload(filePath, imageBuffer, {
