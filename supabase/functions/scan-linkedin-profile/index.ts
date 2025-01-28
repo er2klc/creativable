@@ -59,7 +59,7 @@ serve(async (req) => {
     // Start the Apify run
     console.log('Starting Apify actor run for profile:', username);
     const runResponse = await fetch(
-      'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs',
+      'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs?',
       {
         method: 'POST',
         headers: {
