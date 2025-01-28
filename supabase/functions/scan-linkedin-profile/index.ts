@@ -1,12 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 serve(async (req) => {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -51,7 +50,7 @@ serve(async (req) => {
       throw new Error('Apify API key not found in settings');
     }
 
-    // Update scan history to show start
+    // Initialize scan history
     await supabaseClient
       .from('social_media_scan_history')
       .upsert({
@@ -63,37 +62,80 @@ serve(async (req) => {
         success: false
       });
 
-    // Prepare the LinkedIn profile URL
+    // Prepare the LinkedIn profile URL and request body
     const profileUrl = `https://www.linkedin.com/in/${username}/`;
-    console.log('Starting Apify scan for LinkedIn profile:', profileUrl);
-
-    // Configure Apify API call
-    const actorUrl = 'https://api.apify.com/v2/acts/scrap3r~LinkedIn-people-profiles-by-url/run-sync-get-dataset-items';
-    const input = {
+    const requestBody = JSON.stringify({
       url: [profileUrl]
-    };
+    });
 
-    console.log('Calling Apify with input:', JSON.stringify(input));
+    console.log('Starting Apify actor run for profile:', profileUrl);
 
+    // Make the API call to start the actor run
     const apifyResponse = await fetch(
-      `${actorUrl}?token=${settings.apify_api_key}`,
+      'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${settings.apify_api_key}`
         },
-        body: JSON.stringify(input),
+        body: requestBody
       }
     );
 
     if (!apifyResponse.ok) {
       const errorText = await apifyResponse.text();
       console.error('Failed to start Apify actor:', errorText);
-      throw new Error('Failed to start LinkedIn profile scan');
+      throw new Error(`Failed to start Apify actor: ${errorText}`);
     }
 
-    const profileData = await apifyResponse.json();
-    console.log('Successfully retrieved profile data:', profileData);
+    const runData = await apifyResponse.json();
+    console.log('Apify actor run started:', runData);
+
+    // Update scan history with run status
+    await supabaseClient
+      .from('social_media_scan_history')
+      .update({
+        processing_progress: 20,
+        current_file: `Actor run started: ${runData.data?.id}`,
+      })
+      .eq('lead_id', leadId);
+
+    // Poll for run completion and get results
+    const maxAttempts = 30;
+    let attempts = 0;
+    let profileData = null;
+
+    while (attempts < maxAttempts) {
+      const runStatusResponse = await fetch(
+        `https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs/${runData.data.id}?token=${settings.apify_api_key}`
+      );
+
+      if (!runStatusResponse.ok) {
+        console.error('Failed to check run status:', await runStatusResponse.text());
+        continue;
+      }
+
+      const runStatus = await runStatusResponse.json();
+      console.log('Run status:', runStatus.data?.status);
+
+      if (runStatus.data?.status === 'SUCCEEDED') {
+        // Get the dataset items
+        const datasetResponse = await fetch(
+          `https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs/${runData.data.id}/dataset/items?token=${settings.apify_api_key}`
+        );
+
+        if (datasetResponse.ok) {
+          profileData = await datasetResponse.json();
+          break;
+        }
+      } else if (runStatus.data?.status === 'FAILED') {
+        throw new Error(`Actor run failed: ${runStatus.data?.errorMessage || 'Unknown error'}`);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds between checks
+      attempts++;
+    }
 
     if (!profileData || !Array.isArray(profileData) || profileData.length === 0) {
       throw new Error('No profile data returned from Apify');
