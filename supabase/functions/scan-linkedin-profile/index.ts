@@ -60,7 +60,7 @@ serve(async (req) => {
     console.log('Starting Apify actor run for profile:', username);
 
     const runResponse = await fetch(
-      'https://api.apify.com/v2/acts/apimaestro~linkedin-profile-detail/runs',
+      'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs',
       {
         method: 'POST',
         headers: {
@@ -68,7 +68,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${settings.apify_api_key}`,
         },
         body: JSON.stringify({
-          username: username  // Just send the username
+         url: [`https://www.linkedin.com/in/${username}`]  // ✅ Korrekte Struktur
         })
       }
     );
