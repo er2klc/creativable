@@ -1,13 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getSupabase } from "../_shared/supabase.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const APIFY_TOKEN = 'apify_api_f1kz2Rx2gh5v3b2daml7qOhejAOsZG3aSUMg';
-const MAX_POLLING_ATTEMPTS = 30;
 const POLLING_INTERVAL = 5000; // 5 seconds
+const MAX_POLLING_ATTEMPTS = 30;
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -23,6 +23,34 @@ serve(async (req) => {
       throw new Error('Username is required');
     }
 
+    // Get user's API key from settings
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    const supabase = getSupabase();
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (authError || !user) {
+      throw new Error('Invalid authorization token');
+    }
+
+    // Get user's Apify API key from settings
+    const { data: settings, error: settingsError } = await supabase
+      .from('settings')
+      .select('apify_api_key')
+      .eq('user_id', user.id)
+      .single();
+
+    if (settingsError || !settings?.apify_api_key) {
+      throw new Error('Apify API key not found in settings');
+    }
+
+    const apifyApiKey = settings.apify_api_key;
+
     // Step 1: Start the Apify run
     console.log('Starting Apify actor run...');
     const runResponse = await fetch(
@@ -31,7 +59,7 @@ serve(async (req) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${APIFY_TOKEN}`,
+          'Authorization': `Bearer ${apifyApiKey}`,
         },
         body: JSON.stringify({
           url: [`https://www.linkedin.com/in/${username}`]
@@ -61,7 +89,7 @@ serve(async (req) => {
       console.log(`Polling attempt ${attempts + 1}/${MAX_POLLING_ATTEMPTS}`);
       
       const statusResponse = await fetch(
-        `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_TOKEN}`
+        `https://api.apify.com/v2/actor-runs/${runId}?token=${apifyApiKey}`
       );
 
       if (!statusResponse.ok) {
@@ -81,7 +109,7 @@ serve(async (req) => {
 
         // Fetch the results
         const datasetResponse = await fetch(
-          `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`
+          `https://api.apify.com/v2/datasets/${datasetId}/items?token=${apifyApiKey}`
         );
 
         if (!datasetResponse.ok) {
@@ -105,7 +133,7 @@ serve(async (req) => {
     }
 
     if (!profileData) {
-      throw new Error('No profile data returned from Apify after maximum attempts');
+      throw new Error('No profile data returned after maximum polling attempts');
     }
 
     console.log('Successfully retrieved profile data');
