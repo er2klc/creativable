@@ -56,10 +56,10 @@ serve(async (req) => {
 
     if (scanHistoryError) throw scanHistoryError;
 
-    // Start the Apify run
+    // Start the Apify run with new actor
     console.log('Starting Apify actor run for profile:', username);
     const runResponse = await fetch(
-      'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs',
+      'https://api.apify.com/v2/acts/apimaestro~linkedin-profile-detail/runs',
       {
         method: 'POST',
         headers: {
@@ -67,8 +67,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${settings.apify_api_key}`,
         },
         body: JSON.stringify({
-          // Make sure we only scan the requested profile
-          url: [`https://www.linkedin.com/in/${username}/`]
+          username: username
         })
       }
     );
