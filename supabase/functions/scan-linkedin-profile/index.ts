@@ -40,7 +40,7 @@ serve(async (req) => {
     // Update scan history to show start
     await supabaseClient
       .from('social_media_scan_history')
-      .insert({
+      .upsert({
         lead_id: leadId,
         platform: 'LinkedIn',
         processing_progress: 0,
@@ -68,19 +68,16 @@ serve(async (req) => {
       })
       .eq('lead_id', leadId);
 
-    // Start Apify task
+    // Start Apify actor - using the correct actor and request format
     const startResponse = await fetch(
-      `https://api.apify.com/v2/actor-tasks/creativable~linkedin-people-profiles/runs?token=${settings.apify_api_key}`,
+      `https://api.apify.com/v2/acts/scrap3r~LinkedIn-people-profiles-by-url/runs?token=${settings.apify_api_key}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          url: [`https://www.linkedin.com/in/${username}/`],
-          maxRequestRetries: 5,
-          maxConcurrency: 1,
-          maxItems: 1,
+          url: [`https://www.linkedin.com/in/${username}/`]
         }),
       }
     );
