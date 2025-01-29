@@ -34,12 +34,6 @@ export const LeadDetailContent = ({
         {/* Left Column - 4 columns */}
         <div className="col-span-4 space-y-6">
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Bot className="h-5 w-5" />
-              <h3 className="text-lg font-semibold">
-                {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
-              </h3>
-            </div>
             <LeadSummary lead={lead} />
           </div>
           
