@@ -42,7 +42,20 @@ serve(async (req) => {
     }
 
     // Create initial scan history record
-    await updateScanProgress(supabase, leadId, 0, 'Verbindung zu LinkedIn wird hergestellt... 🔗');
+    const { error: initialScanError } = await supabase
+      .from('social_media_scan_history')
+      .insert({
+        lead_id: leadId,
+        platform: 'linkedin',
+        processing_progress: 0,
+        current_file: 'Verbindung zu LinkedIn wird hergestellt... 🔗',
+        success: false
+      });
+
+    if (initialScanError) {
+      console.error('Error creating initial scan history:', initialScanError);
+      throw initialScanError;
+    }
 
     // Start the Apify run
     console.log('Starting Apify actor run for profile:', username);
