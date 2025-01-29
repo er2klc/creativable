@@ -5,7 +5,7 @@ export function processLinkedInData(profileData: any) {
   const websiteMatch = profileData.basic_info?.summary?.match(/(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+(?:\.[a-zA-Z]{2,})+(?:\/[^\s]*)?)/);
   const website = websiteMatch ? websiteMatch[0] : null;
 
-  // Prepare lead data
+  // Prepare lead data - only include fields that exist in the leads table
   const leadData = {
     name: profileData.basic_info?.fullname || '',
     social_media_bio: profileData.basic_info?.summary || '',
@@ -13,9 +13,6 @@ export function processLinkedInData(profileData: any) {
     company_name: profileData.experience?.[0]?.company || null,
     position: profileData.experience?.[0]?.title || null,
     current_company_name: profileData.experience?.find((exp: any) => exp.is_current)?.company || null,
-    experience: profileData.experience || [],
-    education: profileData.education || [],
-    languages: profileData.languages?.map((lang: any) => lang.name) || [],
     linkedin_id: profileData.profile_id || null,
     avatar_url: profileData.profile_picture || null,
     website: website,
