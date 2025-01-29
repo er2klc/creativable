@@ -15,9 +15,9 @@ export const TimelineHeader = ({
 }: TimelineHeaderProps) => {
   const { settings } = useSettings();
 
-  const handleClick = () => {
+  const handleClick = (type: 'activities' | 'social') => {
     if (showSocialTimeline) {
-      onTimelineChange(activeTimeline === 'activities' ? 'social' : 'activities');
+      onTimelineChange(type);
     }
   };
 
@@ -25,10 +25,19 @@ export const TimelineHeader = ({
     <div className="flex items-center justify-between">
       <h3 
         className={`text-lg font-semibold ${showSocialTimeline ? 'cursor-pointer hover:text-primary' : ''}`}
-        onClick={handleClick}
+        onClick={() => handleClick('activities')}
       >
-        {title}
+        {settings?.language === "en" ? "Activities" : "Aktivitäten"}
       </h3>
+      
+      {showSocialTimeline && (
+        <h3 
+          className={`text-lg font-semibold cursor-pointer hover:text-primary`}
+          onClick={() => handleClick('social')}
+        >
+          {settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten"}
+        </h3>
+      )}
     </div>
   );
 };
