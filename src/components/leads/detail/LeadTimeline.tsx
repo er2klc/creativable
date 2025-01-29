@@ -15,7 +15,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const { settings } = useSettings();
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
   
-  const showSocialTimeline = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
+  const showSocialTimeline = (Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0) ||
+                            (Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0);
 
   const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
     id: note.id,
@@ -68,6 +69,22 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     }
   });
 
+  const mapLinkedInPostToTimelineItem = (post: any): TimelineItemType => ({
+    id: post.id,
+    type: 'linkedin_post',
+    content: post.content || '',
+    created_at: post.posted_at || post.created_at,
+    timestamp: post.posted_at || post.created_at,
+    platform: 'linkedin',
+    metadata: {
+      likes_count: post.likes_count,
+      comments_count: post.comments_count,
+      shares_count: post.shares_count,
+      media_urls: post.media_urls,
+      reactions: post.reactions
+    }
+  });
+
   // Create contact creation timeline item
   const contactCreationItem: TimelineItemType = {
     id: 'contact-creation',
@@ -86,6 +103,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     ...(lead.tasks || []).map(mapTaskToTimelineItem),
     ...(lead.messages || []).map(mapMessageToTimelineItem),
     ...(lead.lead_files || []).map(mapFileToTimelineItem),
+    ...(lead.linkedin_posts || []).map(mapLinkedInPostToTimelineItem),
     contactCreationItem
   ];
 
@@ -95,40 +113,27 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   );
 
   // Transform social media posts to include required fields
-  const transformedPosts = Array.isArray(lead.social_media_posts) 
-    ? (lead.social_media_posts as any[]).map(post => ({
-        ...post,
-        type: post.type || 'post',
-        caption: post.caption || '',
-        likesCount: post.likesCount || 0,
-        commentsCount: post.commentsCount || 0,
-        timestamp: post.timestamp || post.posted_at || new Date().toISOString(),
-        engagement_count: post.engagement_count || 0,
-        first_comment: post.first_comment || '',
-        media_type: post.media_type || 'post',
-        media_urls: post.media_urls || [],
-        tagged_users: post.tagged_users || [],
-        comments_count: post.comments_count || 0,
-        content: post.content || '',
-        created_at: post.created_at || post.posted_at || new Date().toISOString(),
-        likes_count: post.likes_count || 0,
-        location: post.location || '',
-        locationName: post.locationName || '',
-        mentioned_profiles: post.mentioned_profiles || [],
-        tagged_profiles: post.tagged_profiles || [],
-        platform: post.platform || 'unknown',
-        post_type: post.post_type || 'post',
-        url: post.url || null,
-        lead_id: post.lead_id || lead.id,
-        metadata: post.metadata || {},
-        posted_at: post.posted_at || post.created_at || new Date().toISOString(),
-        local_video_path: post.local_video_path || null,
-        local_media_paths: post.local_media_paths || null,
-        video_url: post.video_url || post.videoUrl || null,
-        images: post.images || [],
-        hashtags: post.hashtags || []
-      }))
-    : [];
+  const transformedPosts = [
+    ...(Array.isArray(lead.social_media_posts) ? lead.social_media_posts : []),
+    ...(Array.isArray(lead.linkedin_posts) ? lead.linkedin_posts.map(post => ({
+      ...post,
+      platform: 'linkedin',
+      type: post.post_type || 'post',
+      caption: post.content || '',
+      likesCount: post.likes_count || 0,
+      commentsCount: post.comments_count || 0,
+      timestamp: post.posted_at || post.created_at,
+      engagement_count: (post.likes_count || 0) + (post.comments_count || 0) + (post.shares_count || 0),
+      media_type: post.media_type || 'post',
+      media_urls: post.media_urls || [],
+      content: post.content || '',
+      url: post.url || null,
+      metadata: {
+        ...post.metadata,
+        reactions: post.reactions || {}
+      }
+    })) : [])
+  ];
 
   return (
     <div className="space-y-4">

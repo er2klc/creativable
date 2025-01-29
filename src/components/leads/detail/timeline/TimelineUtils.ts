@@ -11,7 +11,8 @@ export type TimelineItemType =
   | 'contact_created'
   | 'reminder'
   | 'upload'
-  | 'presentation';
+  | 'presentation'
+  | 'linkedin_post';
 
 export type TimelineItemStatus = 'completed' | 'cancelled' | 'outdated';
 
@@ -40,6 +41,11 @@ export interface TimelineItem {
     color?: string;
     meetingType?: string;
     type?: string;
+    likes_count?: number;
+    comments_count?: number;
+    shares_count?: number;
+    media_urls?: string[];
+    reactions?: Record<string, number>;
   };
 }
 

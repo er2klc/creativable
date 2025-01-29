@@ -1,8 +1,9 @@
-import { TimelineItem as TimelineItemType } from "./TimelineUtils";
+import { cn } from "@/lib/utils";
 import { TimelineItemIcon } from "./TimelineItemIcon";
 import { TimelineItemCard } from "./TimelineItemCard";
-import { formatDate } from "./TimelineUtils";
+import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 import { motion } from "framer-motion";
+import { formatDate } from "./TimelineUtils";
 
 interface TimelineItemProps {
   item: TimelineItemType;
@@ -59,6 +60,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
           metadata={item.metadata}
           status={item.status}
           onDelete={onDelete}
+          platform={item.platform}
         />
       </div>
     </motion.div>
