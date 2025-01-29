@@ -1,13 +1,23 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
-// Remove database types import since it's not needed in the edge function
 export async function processLinkedInData(profileData: any, leadId: string) {
   console.log('Processing LinkedIn data for lead:', leadId);
   
   // Prepare lead data update
   const leadUpdate = {
-    name: profileData.full_name || '',
-    social_media_bio: profileData.summary || '',
+    // Use fullname if available, otherwise keep existing name
+    name: profileData.basic_info?.fullname || profileData.full_name || '',
+    
+    // Store LinkedIn username
+    social_media_username: profileData.basic_info?.username || profileData.profile_url?.split('/in/')?.[1]?.replace(/\/$/, '') || '',
+    
+    // Store profile image URL
+    social_media_profile_image_url: profileData.basic_info?.avatar_url || profileData.profile_picture_url || null,
+    
+    // Store LinkedIn ID if available
+    linkedin_id: profileData.basic_info?.linkedin_id || profileData.profile_id || null,
+    
+    // Keep existing fields
     city: profileData.location?.full || '',
     position: profileData.experience?.[0]?.title || '',
     current_company_name: profileData.experience?.[0]?.company || '',
@@ -18,8 +28,6 @@ export async function processLinkedInData(profileData: any, leadId: string) {
     languages: profileData.languages?.map((lang: any) => lang.language) || [],
     social_media_followers: profileData.followers_count || 0,
     social_media_following: profileData.connections_count || 0,
-    social_media_profile_image_url: profileData.profile_picture_url || null,
-    avatar_url: profileData.profile_picture_url || null,
     last_social_media_scan: new Date().toISOString()
   };
 

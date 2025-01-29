@@ -737,37 +737,23 @@ export type Database = {
       }
       leads: {
         Row: {
-          address: string | null
           archive_reason: string | null
-          avatar_url: string | null
-          best_contact_times: string | null
-          bio: string | null
           birth_date: string | null
-          business_description: string | null
-          challenges: string[] | null
           city: string | null
           company_name: string | null
           contact_type: string | null
-          country: string | null
           created_at: string | null
           current_company_name: string | null
           education_summary: string | null
           email: string | null
-          emotional_analysis: Json | null
           experience: Json | null
-          first_name: string | null
           follow_up_date: string | null
-          gender: Database["public"]["Enums"]["gender_type"] | null
-          goals: string[] | null
           id: string
           industry: string
-          interaction_prediction: Json | null
-          interests: string[] | null
           languages: string[] | null
           last_action: string | null
           last_action_date: string | null
           last_interaction_date: string | null
-          last_name: string | null
           last_social_media_scan: string | null
           level: number | null
           linkedin_id: string | null
@@ -781,14 +767,7 @@ export type Database = {
           phone_number: string | null
           pipeline_id: string
           platform: string
-          pool_category: string | null
           position: string | null
-          postal_code: string | null
-          preferred_communication_channel:
-            | Database["public"]["Enums"]["communication_channel"]
-            | null
-          products_services: string | null
-          referred_by: string | null
           region: string | null
           slug: string | null
           social_media_bio: string | null
@@ -807,45 +786,29 @@ export type Database = {
           social_media_username: string | null
           social_media_verified: boolean | null
           status: string | null
-          street: string | null
-          target_audience: string | null
           updated_at: string | null
           user_id: string
           usp: string | null
           website: string | null
         }
         Insert: {
-          address?: string | null
           archive_reason?: string | null
-          avatar_url?: string | null
-          best_contact_times?: string | null
-          bio?: string | null
           birth_date?: string | null
-          business_description?: string | null
-          challenges?: string[] | null
           city?: string | null
           company_name?: string | null
           contact_type?: string | null
-          country?: string | null
           created_at?: string | null
           current_company_name?: string | null
           education_summary?: string | null
           email?: string | null
-          emotional_analysis?: Json | null
           experience?: Json | null
-          first_name?: string | null
           follow_up_date?: string | null
-          gender?: Database["public"]["Enums"]["gender_type"] | null
-          goals?: string[] | null
           id?: string
           industry: string
-          interaction_prediction?: Json | null
-          interests?: string[] | null
           languages?: string[] | null
           last_action?: string | null
           last_action_date?: string | null
           last_interaction_date?: string | null
-          last_name?: string | null
           last_social_media_scan?: string | null
           level?: number | null
           linkedin_id?: string | null
@@ -859,14 +822,7 @@ export type Database = {
           phone_number?: string | null
           pipeline_id: string
           platform: string
-          pool_category?: string | null
           position?: string | null
-          postal_code?: string | null
-          preferred_communication_channel?:
-            | Database["public"]["Enums"]["communication_channel"]
-            | null
-          products_services?: string | null
-          referred_by?: string | null
           region?: string | null
           slug?: string | null
           social_media_bio?: string | null
@@ -885,45 +841,29 @@ export type Database = {
           social_media_username?: string | null
           social_media_verified?: boolean | null
           status?: string | null
-          street?: string | null
-          target_audience?: string | null
           updated_at?: string | null
           user_id: string
           usp?: string | null
           website?: string | null
         }
         Update: {
-          address?: string | null
           archive_reason?: string | null
-          avatar_url?: string | null
-          best_contact_times?: string | null
-          bio?: string | null
           birth_date?: string | null
-          business_description?: string | null
-          challenges?: string[] | null
           city?: string | null
           company_name?: string | null
           contact_type?: string | null
-          country?: string | null
           created_at?: string | null
           current_company_name?: string | null
           education_summary?: string | null
           email?: string | null
-          emotional_analysis?: Json | null
           experience?: Json | null
-          first_name?: string | null
           follow_up_date?: string | null
-          gender?: Database["public"]["Enums"]["gender_type"] | null
-          goals?: string[] | null
           id?: string
           industry?: string
-          interaction_prediction?: Json | null
-          interests?: string[] | null
           languages?: string[] | null
           last_action?: string | null
           last_action_date?: string | null
           last_interaction_date?: string | null
-          last_name?: string | null
           last_social_media_scan?: string | null
           level?: number | null
           linkedin_id?: string | null
@@ -937,14 +877,7 @@ export type Database = {
           phone_number?: string | null
           pipeline_id?: string
           platform?: string
-          pool_category?: string | null
           position?: string | null
-          postal_code?: string | null
-          preferred_communication_channel?:
-            | Database["public"]["Enums"]["communication_channel"]
-            | null
-          products_services?: string | null
-          referred_by?: string | null
           region?: string | null
           slug?: string | null
           social_media_bio?: string | null
@@ -963,8 +896,6 @@ export type Database = {
           social_media_username?: string | null
           social_media_verified?: boolean | null
           status?: string | null
-          street?: string | null
-          target_audience?: string | null
           updated_at?: string | null
           user_id?: string
           usp?: string | null

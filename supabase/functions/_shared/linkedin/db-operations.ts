@@ -7,6 +7,8 @@ export async function saveLinkedInData(
   leadData: any,
   posts: any[]
 ) {
+  console.log('Starting LinkedIn data save operation for lead:', leadId);
+
   // Save scan history
   const { error: scanError } = await supabaseClient
     .from('social_media_scan_history')
@@ -52,4 +54,6 @@ export async function saveLinkedInData(
     console.error('Error updating lead:', leadUpdateError);
     throw leadUpdateError;
   }
+
+  console.log('Successfully saved LinkedIn data for lead:', leadId);
 }
