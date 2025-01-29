@@ -751,6 +751,7 @@ export type Database = {
           country: string | null
           created_at: string | null
           current_company_name: string | null
+          education_summary: string | null
           email: string | null
           emotional_analysis: Json | null
           experience: Json | null
@@ -828,6 +829,7 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           current_company_name?: string | null
+          education_summary?: string | null
           email?: string | null
           emotional_analysis?: Json | null
           experience?: Json | null
@@ -905,6 +907,7 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           current_company_name?: string | null
+          education_summary?: string | null
           email?: string | null
           emotional_analysis?: Json | null
           experience?: Json | null
@@ -994,53 +997,77 @@ export type Database = {
       linkedin_posts: {
         Row: {
           comments_count: number | null
+          company: string | null
           content: string | null
           created_at: string | null
+          degree: string | null
+          end_date: string | null
           id: string
           lead_id: string | null
           likes_count: number | null
           local_media_paths: string[] | null
+          location: string | null
           media_type: string | null
           media_urls: string[] | null
           metadata: Json | null
+          position: string | null
           post_type: string | null
           posted_at: string | null
           reactions: Json | null
+          school: string | null
+          school_linkedin_url: string | null
           shares_count: number | null
+          start_date: string | null
           url: string | null
         }
         Insert: {
           comments_count?: number | null
+          company?: string | null
           content?: string | null
           created_at?: string | null
+          degree?: string | null
+          end_date?: string | null
           id: string
           lead_id?: string | null
           likes_count?: number | null
           local_media_paths?: string[] | null
+          location?: string | null
           media_type?: string | null
           media_urls?: string[] | null
           metadata?: Json | null
+          position?: string | null
           post_type?: string | null
           posted_at?: string | null
           reactions?: Json | null
+          school?: string | null
+          school_linkedin_url?: string | null
           shares_count?: number | null
+          start_date?: string | null
           url?: string | null
         }
         Update: {
           comments_count?: number | null
+          company?: string | null
           content?: string | null
           created_at?: string | null
+          degree?: string | null
+          end_date?: string | null
           id?: string
           lead_id?: string | null
           likes_count?: number | null
           local_media_paths?: string[] | null
+          location?: string | null
           media_type?: string | null
           media_urls?: string[] | null
           metadata?: Json | null
+          position?: string | null
           post_type?: string | null
           posted_at?: string | null
           reactions?: Json | null
+          school?: string | null
+          school_linkedin_url?: string | null
           shares_count?: number | null
+          start_date?: string | null
           url?: string | null
         }
         Relationships: [

@@ -41,20 +41,22 @@ serve(async (req) => {
       throw new Error('Apify API key not found in settings');
     }
 
-    // Create initial scan history record
+    // Create initial scan history record with first status
     const { error: scanHistoryError } = await supabase
       .from('social_media_scan_history')
       .insert({
         lead_id: leadId,
         platform: 'linkedin',
         processing_progress: 0,
-        current_file: 'Initializing scan...',
+        current_file: 'Verbindung zu LinkedIn wird hergestellt... 🔗',
       });
 
     if (scanHistoryError) throw scanHistoryError;
 
-    // Start the Apify run with the new actor
+    // Start the Apify run
     console.log('Starting Apify actor run for profile:', username);
+    
+    await updateScanProgress(supabase, leadId, 10, 'Profil wird aufgerufen... 🔍');
 
     const runResponse = await fetch(
       'https://api.apify.com/v2/acts/apimaestro~linkedin-profile-detail/runs',
@@ -82,15 +84,7 @@ serve(async (req) => {
     if (!runId) throw new Error('No run ID returned from Apify');
     console.log('Apify run started with ID:', runId);
 
-    // Update progress to 10%
-    await supabase
-      .from('social_media_scan_history')
-      .update({
-        processing_progress: 10,
-        current_file: 'Scanning LinkedIn profile...'
-      })
-      .eq('lead_id', leadId)
-      .eq('platform', 'linkedin');
+    await updateScanProgress(supabase, leadId, 30, 'Daten werden analysiert... 📊');
 
     // Poll for results
     const maxAttempts = 30;
@@ -112,15 +106,21 @@ serve(async (req) => {
       const status = await statusResponse.json();
       console.log('Run status:', status.data?.status);
 
-      const progress = Math.min(90, 10 + (attempts * (80 / maxAttempts)));
-      await supabase
-        .from('social_media_scan_history')
-        .update({
-          processing_progress: progress,
-          current_file: `Scanning profile (${status.data?.status})`
-        })
-        .eq('lead_id', leadId)
-        .eq('platform', 'linkedin');
+      // Calculate progress based on status
+      let progress = 30;
+      let statusMessage = 'Daten werden analysiert... 📊';
+      
+      if (status.data?.status === 'RUNNING') {
+        progress = Math.min(70, 30 + (attempts * 2));
+        if (progress >= 50) {
+          statusMessage = 'Bildungsinformationen werden verarbeitet... 🎓';
+        }
+      } else if (status.data?.status === 'SUCCEEDED') {
+        progress = 90;
+        statusMessage = 'Daten werden gespeichert... 💾';
+      }
+
+      await updateScanProgress(supabase, leadId, progress, statusMessage);
 
       if (status.data?.status === 'SUCCEEDED') {
         const datasetId = status.data?.defaultDatasetId;
@@ -156,17 +156,35 @@ serve(async (req) => {
     // Process the LinkedIn data
     const { scanHistory, leadData } = processLinkedInData(profileData);
 
-    // Update lead data
-    const { data: existingLead, error: existingLeadError } = await supabase
-      .from('leads')
-      .select('id, linkedin_id')
-      .eq('linkedin_id', leadData.linkedin_id)
-      .maybeSingle();
+    // Process education data for timeline
+    if (profileData.education && Array.isArray(profileData.education)) {
+      const educationPosts = profileData.education.map((edu: any) => ({
+        id: `edu-${Math.random().toString(36).substr(2, 9)}`,
+        lead_id: leadId,
+        post_type: 'education',
+        school: edu.school || null,
+        degree: edu.degree || null,
+        start_date: edu.start_date ? new Date(edu.start_date) : null,
+        end_date: edu.end_date ? new Date(edu.end_date) : null,
+        school_linkedin_url: edu.school_url || null,
+        location: edu.location || null,
+        content: `${edu.degree || 'Studied'} at ${edu.school}`,
+        posted_at: edu.start_date ? new Date(edu.start_date) : new Date(),
+      }));
 
-    if (existingLeadError) throw existingLeadError;
+      // Insert education entries
+      if (educationPosts.length > 0) {
+        const { error: eduError } = await supabase
+          .from('linkedin_posts')
+          .upsert(educationPosts, {
+            onConflict: 'id'
+          });
 
-    if (existingLead && existingLead.id !== leadId) {
-      throw new Error('LinkedIn profile already exists for another lead');
+        if (eduError) {
+          console.error('Error storing education posts:', eduError);
+          throw eduError;
+        }
+      }
     }
 
     // Update the lead with LinkedIn data
@@ -182,20 +200,8 @@ serve(async (req) => {
 
     if (updateLeadError) throw updateLeadError;
 
-    // Update scan history with final data
-    const { error: finalScanError } = await supabase
-      .from('social_media_scan_history')
-      .update({
-        ...scanHistory,
-        processing_progress: 100,
-        current_file: 'Completed',
-        success: true,
-        scanned_at: new Date().toISOString()
-      })
-      .eq('lead_id', leadId)
-      .eq('platform', 'linkedin');
-
-    if (finalScanError) throw finalScanError;
+    // Update scan history with final success status
+    await updateScanProgress(supabase, leadId, 100, 'Scan erfolgreich abgeschlossen! ✅', true);
 
     return new Response(
       JSON.stringify({ 
@@ -219,7 +225,7 @@ serve(async (req) => {
           success: false,
           error_message: error.message,
           processing_progress: 100,
-          current_file: 'Error'
+          current_file: `Fehler beim Scan: ${error.message} ❌`
         })
         .eq('platform', 'linkedin');
     }
@@ -236,3 +242,26 @@ serve(async (req) => {
     );
   }
 });
+
+async function updateScanProgress(
+  supabase: any,
+  leadId: string,
+  progress: number,
+  statusMessage: string,
+  success: boolean = false
+) {
+  const { error } = await supabase
+    .from('social_media_scan_history')
+    .update({
+      processing_progress: progress,
+      current_file: statusMessage,
+      success: success,
+      scanned_at: success ? new Date().toISOString() : null
+    })
+    .eq('lead_id', leadId)
+    .eq('platform', 'linkedin');
+
+  if (error) {
+    console.error('Error updating scan progress:', error);
+  }
+}
