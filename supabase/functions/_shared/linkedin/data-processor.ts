@@ -27,6 +27,29 @@ export function processLinkedInData(profileData: any) {
     last_social_media_scan: new Date().toISOString()
   };
 
+  // Helper function to safely format dates
+  function formatDate(dateInput: any): string | null {
+    if (!dateInput) return null;
+    
+    // Handle string dates
+    if (typeof dateInput === 'string') {
+      const date = new Date(dateInput);
+      return isNaN(date.getTime()) ? null : date.toISOString();
+    }
+    
+    // Handle object dates with year/month format
+    if (typeof dateInput === 'object' && dateInput.year) {
+      const year = dateInput.year;
+      const month = dateInput.month || '01';
+      const day = '01';
+      
+      const date = new Date(`${year}-${month}-${day}`);
+      return isNaN(date.getTime()) ? null : date.toISOString();
+    }
+    
+    return null;
+  }
+
   // Prepare experience posts
   const experiencePosts = (profileData.experience || []).map((exp: any) => ({
     id: `${profileData.profile_id}-exp-${Math.random().toString(36).substr(2, 9)}`,
@@ -35,8 +58,8 @@ export function processLinkedInData(profileData: any) {
     company: exp.company || '',
     position: exp.title || '',
     location: exp.location || '',
-    start_date: exp.start_date ? new Date(exp.start_date).toISOString() : null,
-    end_date: exp.end_date ? new Date(exp.end_date).toISOString() : null,
+    start_date: formatDate(exp.start_date),
+    end_date: formatDate(exp.end_date),
     content: exp.description || '',
     metadata: {
       is_current: exp.is_current || false,
@@ -52,8 +75,8 @@ export function processLinkedInData(profileData: any) {
     post_type: 'education',
     school: edu.school || '',
     degree: edu.degree || '',
-    start_date: edu.start_date ? new Date(edu.start_date).toISOString() : null,
-    end_date: edu.end_date ? new Date(edu.end_date).toISOString() : null,
+    start_date: formatDate(edu.start_date),
+    end_date: formatDate(edu.end_date),
     school_linkedin_url: edu.school_linkedin_url || null,
     content: edu.description || '',
     metadata: {
