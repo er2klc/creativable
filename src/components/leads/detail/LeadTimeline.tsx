@@ -5,7 +5,7 @@ import { SocialMediaTimeline } from "./timeline/social/SocialMediaTimeline";
 import { LinkedInTimeline } from "./timeline/social/LinkedInTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "./types/lead";
-import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
+import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -126,7 +126,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           ))}
         </div>
       ) : (
-        lead.platform === 'LinkedIn' ? (
+        lead.platform === 'LinkedIn' && hasLinkedInPosts ? (
           <LinkedInTimeline posts={lead.linkedin_posts || []} />
         ) : (
           <SocialMediaTimeline 
