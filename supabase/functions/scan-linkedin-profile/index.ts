@@ -105,41 +105,61 @@ serve(async (req) => {
       );
 
       if (!statusResponse.ok) {
+        console.error('Status response error:', await statusResponse.text());
         throw new Error('Failed to check run status');
       }
 
       const status = await statusResponse.json();
-      console.log('Run status:', status.data?.status);
+      console.log('Run status response:', JSON.stringify(status, null, 2));
 
       // Calculate progress based on status and attempts
       let progress = 30;
       let statusMessage = 'Daten werden analysiert... 📊';
       
-      if (status.data?.status === 'RUNNING') {
-        if (attempts < 5) {
-          progress = 30;
-          statusMessage = 'Verbindung zu LinkedIn wird hergestellt... 🔗';
-        } else if (attempts < 10) {
-          progress = 45;
-          statusMessage = 'Profildaten werden geladen... 👤';
-        } else if (attempts < 15) {
-          progress = 60;
-          statusMessage = 'Berufserfahrung wird ausgewertet... 💼';
-        } else if (attempts < 20) {
-          progress = 75;
-          statusMessage = 'Bildungsinformationen werden verarbeitet... 🎓';
-        } else {
-          progress = 90;
-          statusMessage = 'Daten werden gespeichert... 💾';
-        }
-      } else if (status.data?.status === 'SUCCEEDED') {
-        progress = 100;
-        statusMessage = 'Scan erfolgreich abgeschlossen! ✅';
+      if (!status.data?.status) {
+        console.error('Invalid status response:', status);
+        throw new Error('Invalid status response from Apify');
+      }
+
+      switch (status.data.status) {
+        case 'RUNNING':
+          if (attempts < 5) {
+            progress = 30;
+            statusMessage = 'Verbindung zu LinkedIn wird hergestellt... 🔗';
+          } else if (attempts < 10) {
+            progress = 45;
+            statusMessage = 'Profildaten werden geladen... 👤';
+          } else if (attempts < 15) {
+            progress = 60;
+            statusMessage = 'Berufserfahrung wird ausgewertet... 💼';
+          } else if (attempts < 20) {
+            progress = 75;
+            statusMessage = 'Bildungsinformationen werden verarbeitet... 🎓';
+          } else {
+            progress = 90;
+            statusMessage = 'Daten werden gespeichert... 💾';
+          }
+          break;
+        case 'SUCCEEDED':
+          progress = 100;
+          statusMessage = 'Scan erfolgreich abgeschlossen! ✅';
+          break;
+        case 'FAILED':
+          throw new Error(`Actor run failed: ${status.data?.errorMessage || 'Unknown error'}`);
+        case 'ABORTED':
+          throw new Error('Actor run was aborted');
+        case 'TIMING-OUT':
+          throw new Error('Actor run is timing out');
+        case 'TIMED-OUT':
+          throw new Error('Actor run timed out');
+        default:
+          console.error('Unexpected status:', status.data.status);
+          throw new Error(`Unexpected actor status: ${status.data.status}`);
       }
 
       await updateScanProgress(supabase, leadId, progress, statusMessage);
 
-      if (status.data?.status === 'SUCCEEDED') {
+      if (status.data.status === 'SUCCEEDED') {
         const datasetId = status.data?.defaultDatasetId;
         if (!datasetId) throw new Error('No dataset ID found in successful run');
 
@@ -159,8 +179,6 @@ serve(async (req) => {
           console.log('Processing profile data:', JSON.stringify(profileData, null, 2));
           break;
         }
-      } else if (status.data?.status === 'FAILED' || status.data?.status === 'ABORTED') {
-        throw new Error(`Actor run failed: ${status.data?.errorMessage || 'Unknown error'}`);
       }
 
       await new Promise(resolve => setTimeout(resolve, pollingInterval));
