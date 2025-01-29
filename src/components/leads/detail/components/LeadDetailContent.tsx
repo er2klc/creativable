@@ -10,7 +10,6 @@ import { CompactPhaseSelector } from "../CompactPhaseSelector";
 import { LeadTimeline } from "../LeadTimeline";
 import { ContactFieldManager } from "../contact-info/ContactFieldManager";
 import { LeadWithRelations } from "../types/lead";
-import { BioAndInterestsFields } from "../bio/BioAndInterestsFields";
 
 interface LeadDetailContentProps {
   lead: LeadWithRelations;
@@ -59,7 +58,6 @@ export const LeadDetailContent = ({
           onUpdate={onUpdateLead} 
           onDelete={onDeleteClick}
         />
-        <BioAndInterestsFields lead={lead} onUpdate={onUpdateLead} />
         <ContactFieldManager />
         <LeadTimeline lead={lead} />
         <TaskList leadId={lead.id} />
