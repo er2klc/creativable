@@ -30,7 +30,10 @@ export const TimelineHeader = ({
         className={`text-lg font-semibold ${showSocialTimeline ? 'cursor-pointer hover:text-primary' : ''}`}
         onClick={() => handleClick('activities')}
       >
-        {settings?.language === "en" ? "Activities" : "Aktivitäten"}
+        {activeTimeline === 'activities' ? 
+          (settings?.language === "en" ? "Activities" : "Aktivitäten") :
+          (settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten")
+        }
       </h3>
       
       {showSocialTimeline && (
