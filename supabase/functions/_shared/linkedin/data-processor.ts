@@ -42,7 +42,7 @@ export async function processLinkedInData(profileData: any, leadId: string) {
   const experiencePosts = (profileData.positions || []).map((position: any) => ({
     id: `${leadId}-exp-${Math.random().toString(36).substr(2, 9)}`,
     lead_id: leadId,
-    post_type: 'position',
+    post_type: 'experience', // Changed from 'position' to 'experience'
     company: position.companyName || '',
     position: position.title || '',
     location: position.locationName || '',
