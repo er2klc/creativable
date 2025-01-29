@@ -24,6 +24,10 @@ export const LeadCardContent = ({ lead }: LeadCardContentProps) => {
   // Parse experience JSON if it exists and is an array
   const experienceArray = Array.isArray(lead.experience) ? lead.experience : [];
 
+  // Only show industry if it's not empty and not "Not Specified"/"Nicht angegeben"
+  const shouldShowIndustry = lead.industry && 
+    !["Not Specified", "Nicht angegeben", ""].includes(lead.industry.trim());
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -37,10 +41,10 @@ export const LeadCardContent = ({ lead }: LeadCardContentProps) => {
           {socialUsername && (
             <div className="text-sm text-gray-500">@{socialUsername}</div>
           )}
-          {lead.position && lead.current_company_name && (
+          {lead.current_company_name && (
             <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
               <Briefcase className="h-4 w-4" />
-              <span>{lead.position} at {lead.current_company_name}</span>
+              <span>{lead.position ? `${lead.position} at ` : ''}{lead.current_company_name}</span>
             </div>
           )}
           {lead.city && (
@@ -59,9 +63,34 @@ export const LeadCardContent = ({ lead }: LeadCardContentProps) => {
           )}
         </div>
       </div>
+
+      {/* LinkedIn specific information */}
+      {lead.platform === 'LinkedIn' && (
+        <div className="space-y-4">
+          {lead.position && (
+            <>
+              <div className="text-sm text-gray-600">
+                <span className="font-medium">Position: </span>
+                {lead.position}
+              </div>
+              <div className="border-t border-gray-200" />
+            </>
+          )}
+          
+          {shouldShowIndustry && (
+            <>
+              <div className="text-sm text-gray-600">
+                <span className="font-medium">Industrie: </span>
+                {lead.industry}
+              </div>
+              <div className="border-t border-gray-200" />
+            </>
+          )}
+        </div>
+      )}
       
       {lead.social_media_bio && (
-        <div className="text-sm text-gray-600 leading-relaxed border-t pt-4">
+        <div className="text-sm text-gray-600 leading-relaxed">
           {lead.social_media_bio}
         </div>
       )}
