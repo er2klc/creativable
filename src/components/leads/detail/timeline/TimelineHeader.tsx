@@ -23,25 +23,10 @@ export const TimelineHeader = ({
     }
   };
 
-  const getTitle = () => {
-    if (activeTimeline === 'activities') {
-      return settings?.language === "en" ? "Activities" : "Aktivitäten";
-    }
-    
-    if (platform === 'LinkedIn') {
-      return settings?.language === "en" ? "LinkedIn Activities" : "LinkedIn Aktivitäten";
-    }
-    
-    return settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten";
-  };
-
   return (
     <div className="flex items-center justify-between mb-4">
-      <h3 
-        className={`text-lg font-semibold ${showSocialTimeline ? 'cursor-pointer hover:text-primary' : ''}`}
-        onClick={() => handleClick('activities')}
-      >
-        {getTitle()}
+      <h3 className={`text-lg font-semibold ${showSocialTimeline ? 'cursor-pointer hover:text-primary' : ''}`}>
+        {settings?.language === "en" ? "Activities" : "Aktivitäten"}
       </h3>
       
       {showSocialTimeline && (
