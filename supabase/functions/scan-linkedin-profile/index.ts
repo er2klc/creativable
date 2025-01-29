@@ -60,8 +60,14 @@ serve(async (req) => {
     try {
       await updateScanProgress(supabase, leadId, 10, 'Profil wird aufgerufen... 🔍');
 
+      // Prepare the LinkedIn profile URL
+      const linkedInUrl = username.startsWith('https://') ? 
+        username : 
+        `https://www.linkedin.com/in/${username.replace(/^@/, '')}`;
+
+      console.log('Starting Apify actor run for profile URL:', linkedInUrl);
+
       // Start the Apify run using run-sync endpoint
-      console.log('Starting Apify actor run for profile:', username);
       const runResponse = await fetch(
         'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/run-sync',
         {
@@ -71,7 +77,7 @@ serve(async (req) => {
             'Authorization': `Bearer ${settings.apify_api_key}`,
           },
           body: JSON.stringify({
-            url: [`https://www.linkedin.com/in/${username}`]
+            url: [linkedInUrl]
           })
         }
       );
@@ -98,37 +104,16 @@ serve(async (req) => {
       const actorResult = await runResponse.json();
       console.log('Actor result:', JSON.stringify(actorResult, null, 2));
 
-      if (actorResult?.error) {
-        console.error('Actor failed with error:', actorResult.error);
-        
-        // Update scan history with error
-        await supabase
-          .from('social_media_scan_history')
-          .update({
-            success: false,
-            error_message: `Actor run failed: ${actorResult.error.message}`,
-            processing_progress: 100,
-            current_file: `Fehler beim Scan: ${actorResult.error.message} ❌`
-          })
-          .eq('lead_id', leadId)
-          .eq('platform', 'linkedin');
-          
-        throw new Error(`Actor run failed: ${actorResult.error.message}`);
+      if (!actorResult?.data?.[0]) {
+        throw new Error('No profile data returned from Apify');
       }
 
       await updateScanProgress(supabase, leadId, 75, 'Profildaten werden verarbeitet... 💼');
 
       // Process the LinkedIn data
-      const profileData = Array.isArray(actorResult.data) ? actorResult.data[0] : actorResult.data;
-      
-      if (!profileData) {
-        throw new Error('No profile data returned from Apify');
-      }
-
-      console.log('Successfully retrieved profile data');
-
-      // Process the LinkedIn data
+      const profileData = actorResult.data[0];
       const { leadUpdate, experiencePosts, educationPosts } = await processLinkedInData(profileData, leadId);
+      
       console.log('Processed LinkedIn data:', {
         leadUpdate,
         experiencePosts,
