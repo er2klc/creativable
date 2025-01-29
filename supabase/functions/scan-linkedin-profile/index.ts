@@ -7,9 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const POLLING_INTERVAL = 5000; // 5 seconds
-const MAX_POLLING_ATTEMPTS = 30;
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -60,7 +57,7 @@ serve(async (req) => {
     console.log('Starting Apify actor run for profile:', username);
 
     const runResponse = await fetch(
-      'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs',
+      'https://api.apify.com/v2/acts/apimaestro~linkedin-profile-detail/runs',
       {
         method: 'POST',
         headers: {
@@ -68,7 +65,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${settings.apify_api_key}`,
         },
         body: JSON.stringify({
-         url: [`https://www.linkedin.com/in/${username}`]  // ✅ Korrekte Struktur
+          username: username
         })
       }
     );
@@ -85,7 +82,7 @@ serve(async (req) => {
     if (!runId) throw new Error('No run ID returned from Apify');
     console.log('Apify run started with ID:', runId);
 
-    // Update progress to 10% after successful start
+    // Update progress to 10%
     await supabase
       .from('social_media_scan_history')
       .update({
@@ -95,36 +92,27 @@ serve(async (req) => {
       .eq('lead_id', leadId)
       .eq('platform', 'linkedin');
 
+    // Poll for results
+    const maxAttempts = 30;
+    const pollingInterval = 5000;
     let attempts = 0;
     let profileData = null;
 
-   while (attempts < MAX_POLLING_ATTEMPTS) {
-  console.log(`Polling attempt ${attempts + 1}/${MAX_POLLING_ATTEMPTS}`);
-  
-  const statusResponse = await fetch(
-    `https://api.apify.com/v2/actor-runs/${runId}?token=${settings.apify_api_key}`
-  );
+    while (attempts < maxAttempts) {
+      console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
+      
+      const statusResponse = await fetch(
+        `https://api.apify.com/v2/actor-runs/${runId}?token=${settings.apify_api_key}`
+      );
 
-  console.log('Raw status response:', statusResponse.status, await statusResponse.text());
-
-  if (!statusResponse.ok) {
-    console.error('Failed to check run status:', await statusResponse.text());
-    throw new Error('Failed to check run status');
-  }
-
-  const status = await statusResponse.json();
-  console.log('Parsed status response:', JSON.stringify(status, null, 2));
-
-  if (status.data?.status === 'FAILED' || status.data?.status === 'ABORTED') {
-    throw new Error(`Actor run failed: ${status.data?.errorMessage || 'Unknown error'}`);
-  }
-
+      if (!statusResponse.ok) {
+        throw new Error('Failed to check run status');
+      }
 
       const status = await statusResponse.json();
       console.log('Run status:', status.data?.status);
 
-      // Update progress based on status
-      const progress = Math.min(90, 10 + (attempts * (80 / MAX_POLLING_ATTEMPTS)));
+      const progress = Math.min(90, 10 + (attempts * (80 / maxAttempts)));
       await supabase
         .from('social_media_scan_history')
         .update({
@@ -152,22 +140,10 @@ serve(async (req) => {
           break;
         }
       } else if (status.data?.status === 'FAILED' || status.data?.status === 'ABORTED') {
-        const errorMessage = status.data?.errorMessage || 'Unknown error';
-        console.error('Actor run failed:', errorMessage);
-        
-        await supabase
-          .from('social_media_scan_history')
-          .update({
-            error_message: errorMessage,
-            success: false
-          })
-          .eq('lead_id', leadId)
-          .eq('platform', 'linkedin');
-          
-        throw new Error(`Actor run failed: ${errorMessage}`);
+        throw new Error(`Actor run failed: ${status.data?.errorMessage || 'Unknown error'}`);
       }
 
-      await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
+      await new Promise(resolve => setTimeout(resolve, pollingInterval));
       attempts++;
     }
 
@@ -175,28 +151,51 @@ serve(async (req) => {
       throw new Error('No profile data returned after maximum polling attempts');
     }
 
-    console.log('Successfully retrieved profile data:', profileData);
+    console.log('Successfully retrieved profile data');
 
-    // Process the data
+    // Process the LinkedIn data
     const { scanHistory, leadData } = processLinkedInData(profileData);
 
+    // Update lead data
+    const { data: existingLead, error: existingLeadError } = await supabase
+      .from('leads')
+      .select('id, linkedin_id')
+      .eq('linkedin_id', leadData.linkedin_id)
+      .maybeSingle();
+
+    if (existingLeadError) throw existingLeadError;
+
+    if (existingLead && existingLead.id !== leadId) {
+      throw new Error('LinkedIn profile already exists for another lead');
+    }
+
+    // Update the lead with LinkedIn data
+    const { error: updateLeadError } = await supabase
+      .from('leads')
+      .update({
+        ...leadData,
+        platform: 'LinkedIn',
+        last_social_media_scan: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', leadId);
+
+    if (updateLeadError) throw updateLeadError;
+
     // Update scan history with final data
-    await supabase
+    const { error: finalScanError } = await supabase
       .from('social_media_scan_history')
       .update({
         ...scanHistory,
         processing_progress: 100,
         current_file: 'Completed',
-        success: true
+        success: true,
+        scanned_at: new Date().toISOString()
       })
       .eq('lead_id', leadId)
       .eq('platform', 'linkedin');
 
-    // Update lead with profile data
-    await supabase
-      .from('leads')
-      .update(leadData)
-      .eq('id', leadId);
+    if (finalScanError) throw finalScanError;
 
     return new Response(
       JSON.stringify({ 
@@ -210,10 +209,25 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error scanning LinkedIn profile:', error);
+    
+    // Update scan history with error
+    if (error instanceof Error) {
+      const supabase = getSupabase();
+      await supabase
+        .from('social_media_scan_history')
+        .update({
+          success: false,
+          error_message: error.message,
+          processing_progress: 100,
+          current_file: 'Error'
+        })
+        .eq('platform', 'linkedin');
+    }
+
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'Unknown error occurred' 
+        error: error instanceof Error ? error.message : 'Unknown error occurred' 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
