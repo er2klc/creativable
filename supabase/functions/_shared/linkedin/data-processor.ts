@@ -5,89 +5,82 @@ export async function processLinkedInData(profileData: any, leadId: string) {
   
   // Prepare lead data update
   const leadUpdate = {
-    // Use fullname if available, otherwise keep existing name
-    name: profileData.basic_info?.fullname || profileData.full_name || '',
+    // Name handling - use fullname if available, otherwise username
+    name: profileData.basic_info?.fullname || profileData.social_media_username || '',
     
     // Store LinkedIn username
     social_media_username: profileData.basic_info?.username || profileData.profile_url?.split('/in/')?.[1]?.replace(/\/$/, '') || '',
     
     // Store profile image URL
-    social_media_profile_image_url: profileData.basic_info?.avatar_url || profileData.profile_picture_url || null,
+    social_media_profile_image_url: profileData.avatar_url || null,
     
     // Store LinkedIn ID if available
-    linkedin_id: profileData.basic_info?.linkedin_id || profileData.profile_id || null,
+    linkedin_id: profileData.linkedin_id || null,
     
-    // Keep existing fields
-    city: profileData.location?.full || '',
+    // Store location data
+    city: profileData.basic_info?.location?.full || '',
+    
+    // Store languages as array
+    languages: (profileData.languages || []).map((lang: any) => lang.language),
+    
+    // Store social media stats
+    social_media_followers: profileData.connections || 0,
+    
+    // Store bio/summary
+    social_media_bio: profileData.basic_info?.summary || '',
+    
+    // Store current position and company
     position: profileData.experience?.[0]?.title || '',
     current_company_name: profileData.experience?.[0]?.company || '',
-    education_summary: profileData.education?.map((edu: any) => 
-      `${edu.degree || ''} at ${edu.school || ''}`
-    ).join(', ') || '',
-    website: profileData.website || '',
-    languages: profileData.languages?.map((lang: any) => lang.language) || [],
-    social_media_followers: profileData.followers_count || 0,
-    social_media_following: profileData.connections_count || 0,
+    
+    // Update scan timestamp
     last_social_media_scan: new Date().toISOString()
   };
 
   // Helper function to safely format dates
-  function formatDate(dateInput: any): string | null {
-    if (!dateInput) return null;
+  function formatDate(year: any, month: any = '01'): string | null {
+    if (!year) return null;
     
-    // Handle string dates
-    if (typeof dateInput === 'string') {
-      const date = new Date(dateInput);
+    try {
+      const date = new Date(`${year}-${month}-01`);
       return isNaN(date.getTime()) ? null : date.toISOString();
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return null;
     }
-    
-    // Handle object dates with year/month format
-    if (typeof dateInput === 'object' && dateInput.year) {
-      const year = dateInput.year;
-      const month = dateInput.month || '01';
-      const day = '01';
-      
-      const date = new Date(`${year}-${month}-${day}`);
-      return isNaN(date.getTime()) ? null : date.toISOString();
-    }
-    
-    return null;
   }
 
   // Prepare experience posts
   const experiencePosts = (profileData.experience || []).map((exp: any) => ({
-    id: `${profileData.profile_id}-exp-${Math.random().toString(36).substr(2, 9)}`,
+    id: `${leadId}-exp-${Math.random().toString(36).substr(2, 9)}`,
     lead_id: leadId,
     post_type: 'experience',
     company: exp.company || '',
     position: exp.title || '',
     location: exp.location || '',
-    start_date: formatDate(exp.start_date),
-    end_date: formatDate(exp.end_date),
+    start_date: formatDate(exp.start_date?.year, exp.start_date?.month),
+    end_date: formatDate(exp.end_date?.year, exp.end_date?.month),
     content: exp.description || '',
     metadata: {
       is_current: exp.is_current || false,
       company_linkedin_url: exp.company_linkedin_url || null
-    },
-    posted_at: formatDate(exp.start_date)
+    }
   }));
 
   // Prepare education posts
   const educationPosts = (profileData.education || []).map((edu: any) => ({
-    id: `${profileData.profile_id}-edu-${Math.random().toString(36).substr(2, 9)}`,
+    id: `${leadId}-edu-${Math.random().toString(36).substr(2, 9)}`,
     lead_id: leadId,
     post_type: 'education',
     school: edu.school || '',
     degree: edu.degree || '',
-    start_date: formatDate(edu.start_date),
-    end_date: formatDate(edu.end_date),
+    start_date: formatDate(edu.start_year),
+    end_date: formatDate(edu.end_year),
     school_linkedin_url: edu.school_linkedin_url || null,
     content: edu.description || '',
     metadata: {
-      field_of_study: edu.field_of_study || null,
-      activities: edu.activities || null
-    },
-    posted_at: formatDate(edu.start_date)
+      field_of_study: edu.field_of_study || null
+    }
   }));
 
   return {

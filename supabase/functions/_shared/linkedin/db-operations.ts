@@ -9,51 +9,49 @@ export async function saveLinkedInData(
 ) {
   console.log('Starting LinkedIn data save operation for lead:', leadId);
 
-  // Save scan history
-  const { error: scanError } = await supabaseClient
-    .from('social_media_scan_history')
-    .insert(scanHistory);
+  try {
+    // Save scan history
+    const { error: scanError } = await supabaseClient
+      .from('social_media_scan_history')
+      .insert(scanHistory);
 
-  if (scanError) {
-    console.error('Error storing scan history:', scanError);
-    throw scanError;
-  }
-
-  // Save posts if available
-  if (posts.length > 0) {
-    const postsToInsert = posts.map(post => ({
-      id: post.id || `${leadId}-${Math.random().toString(36).substr(2, 9)}`,
-      lead_id: leadId,
-      content: post.text || '',
-      url: post.url || null,
-      media_urls: post.images || [],
-      post_type: 'activity',
-      reactions: post.statistics || {},
-      metadata: post,
-      posted_at: post.date ? new Date(post.date).toISOString() : new Date().toISOString()
-    }));
-
-    const { error: postsError } = await supabaseClient
-      .from('linkedin_posts')
-      .upsert(postsToInsert, {
-        onConflict: 'id'
-      });
-
-    if (postsError) {
-      console.error('Error storing LinkedIn posts:', postsError);
+    if (scanError) {
+      console.error('Error storing scan history:', scanError);
+      throw scanError;
     }
+
+    // Update lead data - only update non-null values
+    const cleanLeadData = Object.fromEntries(
+      Object.entries(leadData).filter(([_, v]) => v != null)
+    );
+
+    const { error: leadUpdateError } = await supabaseClient
+      .from('leads')
+      .update(cleanLeadData)
+      .eq('id', leadId);
+
+    if (leadUpdateError) {
+      console.error('Error updating lead:', leadUpdateError);
+      throw leadUpdateError;
+    }
+
+    // Save posts if available
+    if (posts.length > 0) {
+      const { error: postsError } = await supabaseClient
+        .from('linkedin_posts')
+        .upsert(posts, {
+          onConflict: 'id'
+        });
+
+      if (postsError) {
+        console.error('Error storing LinkedIn posts:', postsError);
+        throw postsError;
+      }
+    }
+
+    console.log('Successfully saved LinkedIn data for lead:', leadId);
+  } catch (error) {
+    console.error('Error in saveLinkedInData:', error);
+    throw error;
   }
-
-  // Update lead data
-  const { error: leadUpdateError } = await supabaseClient
-    .from('leads')
-    .update(leadData)
-    .eq('id', leadId);
-
-  if (leadUpdateError) {
-    console.error('Error updating lead:', leadUpdateError);
-    throw leadUpdateError;
-  }
-
-  console.log('Successfully saved LinkedIn data for lead:', leadId);
 }
