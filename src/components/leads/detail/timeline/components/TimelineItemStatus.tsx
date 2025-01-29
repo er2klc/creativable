@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
-import { TimelineItemType } from "../TimelineUtils";
+import { TimelineItem } from "../TimelineUtils";
 
 interface TimelineItemStatusProps {
-  type: TimelineItemType;
+  type: TimelineItem['type'];
   status?: string;
   metadata?: {
     status?: 'completed' | 'cancelled' | 'outdated';

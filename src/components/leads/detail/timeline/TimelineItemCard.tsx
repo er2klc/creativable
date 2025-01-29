@@ -1,29 +1,14 @@
 import { cn } from "@/lib/utils";
-import { TimelineItemType } from "./TimelineUtils";
+import { TimelineItem } from "./TimelineUtils";
 import { TimelineItemStatus } from "./components/TimelineItemStatus";
 import { TimelineItemDate } from "./components/TimelineItemDate";
 import { TimelineItemActions } from "./components/TimelineItemActions";
 
 interface TimelineItemCardProps {
-  type: TimelineItemType;
+  type: TimelineItem['type'];
   content: string;
   platform?: string;
-  metadata?: {
-    dueDate?: string;
-    fileName?: string;
-    fileType?: string;
-    fileSize?: number;
-    filePath?: string;
-    status?: 'completed' | 'cancelled' | 'outdated';
-    completedAt?: string;
-    cancelledAt?: string;
-    updatedAt?: string;
-    oldDate?: string;
-    newDate?: string;
-    type?: string;
-    oldStatus?: string;
-    newStatus?: string;
-  };
+  metadata?: TimelineItem['metadata'];
   status?: string;
   onDelete?: () => void;
 }

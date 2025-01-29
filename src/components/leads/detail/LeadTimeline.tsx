@@ -15,8 +15,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const { settings } = useSettings();
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
   
-  const showSocialTimeline = (Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0) ||
-                            (Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0);
+  const showSocialTimeline = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
 
   const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
     id: note.id,
@@ -35,10 +34,9 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     created_at: task.created_at,
     timestamp: task.created_at,
     metadata: {
-      dueDate: task.due_date,
-      status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : undefined,
       completedAt: task.completed ? task.updated_at : undefined,
-      color: task.color
+      dueDate: task.due_date,
+      status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : 'outdated'
     }
   });
 
@@ -68,28 +66,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     }
   });
 
-  const mapLinkedInPostToTimelineItem = (post: any): TimelineItemType => ({
-    id: post.id,
-    type: 'linkedin_post',
-    content: post.content || '',
-    created_at: post.posted_at || post.created_at,
-    timestamp: post.posted_at || post.created_at,
-    platform: 'linkedin',
-    metadata: {
-      likes_count: post.likes_count,
-      comments_count: post.comments_count,
-      shares_count: post.shares_count,
-      media_urls: post.media_urls,
-      reactions: post.reactions,
-      company: post.company,
-      position: post.position,
-      start_date: post.start_date,
-      end_date: post.end_date,
-      school: post.school,
-      degree: post.degree
-    }
-  });
-
   // Create contact creation timeline item
   const contactCreationItem: TimelineItemType = {
     id: 'contact-creation',
@@ -108,7 +84,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     ...(lead.tasks || []).map(mapTaskToTimelineItem),
     ...(lead.messages || []).map(mapMessageToTimelineItem),
     ...(lead.lead_files || []).map(mapFileToTimelineItem),
-    ...(lead.linkedin_posts || []).map(mapLinkedInPostToTimelineItem),
     contactCreationItem
   ];
 
@@ -127,6 +102,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       caption: typeof post === 'string' ? '' : post.content || '',
       likesCount: typeof post === 'string' ? 0 : post.likes_count || 0,
       commentsCount: typeof post === 'string' ? 0 : post.comments_count || 0,
+      posted_at: typeof post === 'string' ? null : post.posted_at || post.created_at || null,
       timestamp: typeof post === 'string' ? '' : post.posted_at || post.created_at || '',
       engagement_count: typeof post === 'string' ? 0 : (post.likes_count || 0) + (post.comments_count || 0),
       media_type: typeof post === 'string' ? '' : post.media_type || 'post',
@@ -149,6 +125,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       caption: post.content || '',
       likesCount: post.likes_count || 0,
       commentsCount: post.comments_count || 0,
+      posted_at: post.posted_at || post.created_at || null,
       timestamp: post.posted_at || post.created_at || '',
       engagement_count: (post.likes_count || 0) + (post.comments_count || 0) + (post.shares_count || 0),
       media_type: post.media_type || 'post',
@@ -167,8 +144,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       start_date: post.start_date,
       end_date: post.end_date,
       school: post.school,
-      degree: post.degree,
-      school_linkedin_url: post.school_linkedin_url
+      degree: post.degree
     })) : [])
   ];
 
