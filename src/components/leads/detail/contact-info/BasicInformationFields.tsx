@@ -3,12 +3,12 @@ import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { InfoRow } from "./InfoRow";
 import { ContactInfoGroup } from "./ContactInfoGroup";
-import { User, AtSign, Phone, Globe, Calendar, Building2, MapPin, Hash, UserCircle } from "lucide-react";
+import { User, AtSign, Phone, Globe, Calendar, Building2, MapPin, Hash } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 interface BasicInformationFieldsProps {
   lead: Tables<"leads">;
@@ -53,6 +53,16 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
     });
   };
 
+  const getInterestColor = (interest: string) => {
+    if (lead.platform === 'instagram') {
+      return 'bg-[#ea384c]/10 text-[#ea384c] hover:bg-[#ea384c]/20';
+    }
+    if (lead.platform === 'linkedin') {
+      return 'bg-[#0077B5]/10 text-[#0077B5] hover:bg-[#0077B5]/20';
+    }
+    return 'bg-gray-100 hover:bg-gray-200';
+  };
+
   return (
     <div className="mt-8 space-y-6">
       <ContactInfoGroup
@@ -73,29 +83,31 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
           />
         ))}
 
-        <div className="col-span-2">
-          <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2 antialiased">
-            <UserCircle className="h-4 w-4 text-gray-900" />
-            Bio
-          </dt>
-          <dd>
-            <Textarea
-              value={lead.social_media_bio || ""}
-              onChange={(e) => onUpdate({ social_media_bio: e.target.value })}
-              placeholder={settings?.language === "en" ? "Enter bio" : "Bio eingeben"}
-              className="min-h-[150px] antialiased"
-            />
-          </dd>
-        </div>
-
-        <div className="col-span-2">
-          <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2 antialiased">
-            <Hash className="h-4 w-4 text-gray-900" />
-            {settings?.language === "en" ? "Interests/Skills/Positives" : "Interessen/Skills/Positives"}
-          </dt>
-          <dd className="space-y-2">
-            <div className="flex gap-2">
+        <ContactInfoGroup
+          title={settings?.language === "en" ? "Interests & Skills" : "Interessen & Skills"}
+          leadId={lead.id}
+          showEmptyFields={true}
+          groupName="interests_goals"
+          rightIcon={
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => {
+                const input = document.getElementById('new-interest-input');
+                if (input) {
+                  input.focus();
+                }
+              }}
+            >
+              +
+            </Button>
+          }
+        >
+          <div className="col-span-2">
+            <div className="flex gap-2 mb-2">
               <Input
+                id="new-interest-input"
                 value={newInterest}
                 onChange={(e) => setNewInterest(e.target.value)}
                 placeholder={settings?.language === "en" ? "Add new interest/skill" : "Neue Interesse/Skill hinzufügen"}
@@ -121,9 +133,12 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
                   <Badge
                     key={index}
                     variant="secondary"
-                    className="flex items-center gap-1 antialiased"
+                    className={cn(
+                      "flex items-center gap-1 antialiased font-normal",
+                      getInterestColor(interest)
+                    )}
                   >
-                    {interest}
+                    #{interest}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -136,8 +151,8 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
                 ))}
               </div>
             </ScrollArea>
-          </dd>
-        </div>
+          </div>
+        </ContactInfoGroup>
       </ContactInfoGroup>
     </div>
   );
