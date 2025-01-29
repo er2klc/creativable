@@ -1,6 +1,6 @@
 export interface TimelineItem {
   id: string;
-  type: 'note' | 'task' | 'message' | 'phase_change' | 'file_upload' | 'contact_created' | 'linkedin_post';
+  type: 'note' | 'task' | 'message' | 'phase_change' | 'file_upload' | 'contact_created' | 'linkedin_post' | 'appointment' | 'reminder' | 'presentation';
   content: string;
   created_at: string;
   timestamp: string;
