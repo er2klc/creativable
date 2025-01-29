@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Briefcase, GraduationCap } from "lucide-react";
+import { Briefcase, GraduationCap, Award, BookOpen, Trophy, Heart } from "lucide-react";
 
 interface LinkedInPost {
   id: string;
@@ -15,6 +15,7 @@ interface LinkedInPost {
   content?: string;
   school?: string;
   degree?: string;
+  metadata?: any;
 }
 
 interface LinkedInTimelineProps {
@@ -25,6 +26,44 @@ export const LinkedInTimeline = ({ posts }: LinkedInTimelineProps) => {
   const formatDate = (date: string | undefined) => {
     if (!date) return '';
     return format(new Date(date), 'MMM yyyy', { locale: de });
+  };
+
+  const getIcon = (postType: string) => {
+    switch (postType) {
+      case 'experience':
+        return <Briefcase className="h-5 w-5 text-blue-600" />;
+      case 'education':
+        return <GraduationCap className="h-5 w-5 text-purple-600" />;
+      case 'certification':
+        return <Award className="h-5 w-5 text-green-600" />;
+      case 'course':
+        return <BookOpen className="h-5 w-5 text-yellow-600" />;
+      case 'honor':
+        return <Trophy className="h-5 w-5 text-orange-600" />;
+      case 'volunteer':
+        return <Heart className="h-5 w-5 text-red-600" />;
+      default:
+        return <Briefcase className="h-5 w-5 text-gray-600" />;
+    }
+  };
+
+  const getBackgroundColor = (postType: string) => {
+    switch (postType) {
+      case 'experience':
+        return "bg-blue-50";
+      case 'education':
+        return "bg-purple-50";
+      case 'certification':
+        return "bg-green-50";
+      case 'course':
+        return "bg-yellow-50";
+      case 'honor':
+        return "bg-orange-50";
+      case 'volunteer':
+        return "bg-red-50";
+      default:
+        return "bg-gray-50";
+    }
   };
 
   const sortedPosts = [...posts].sort((a, b) => {
@@ -39,32 +78,36 @@ export const LinkedInTimeline = ({ posts }: LinkedInTimelineProps) => {
         sortedPosts.map((post) => (
           <Card key={post.id} className={cn(
             "p-4 border rounded-lg",
-            post.post_type === 'experience' ? "bg-blue-50" : "bg-purple-50"
+            getBackgroundColor(post.post_type)
           )}>
             <div className="flex items-start gap-4">
               <div className={cn(
                 "p-2 rounded-full",
-                post.post_type === 'experience' ? "bg-blue-100" : "bg-purple-100"
+                post.post_type === 'experience' ? "bg-blue-100" : 
+                post.post_type === 'education' ? "bg-purple-100" :
+                post.post_type === 'certification' ? "bg-green-100" :
+                post.post_type === 'course' ? "bg-yellow-100" :
+                post.post_type === 'honor' ? "bg-orange-100" :
+                post.post_type === 'volunteer' ? "bg-red-100" :
+                "bg-gray-100"
               )}>
-                {post.post_type === 'experience' ? (
-                  <Briefcase className="h-5 w-5 text-blue-600" />
-                ) : (
-                  <GraduationCap className="h-5 w-5 text-purple-600" />
-                )}
+                {getIcon(post.post_type)}
               </div>
               
               <div className="flex-1">
                 <div className="font-semibold">
                   {post.post_type === 'experience' ? (
                     <>
-                      {post.position}
+                      {post.position || post.content}
                       {post.company && <span className="text-gray-600"> bei {post.company}</span>}
                     </>
-                  ) : (
+                  ) : post.post_type === 'education' ? (
                     <>
-                      {post.degree}
+                      {post.degree || post.content}
                       {post.school && <span className="text-gray-600"> bei {post.school}</span>}
                     </>
+                  ) : (
+                    post.content
                   )}
                 </div>
                 
@@ -73,9 +116,9 @@ export const LinkedInTimeline = ({ posts }: LinkedInTimelineProps) => {
                   {post.location && <span> · {post.location}</span>}
                 </div>
                 
-                {post.content && (
-                  <div className="mt-2 text-sm text-gray-700 whitespace-pre-wrap">
-                    {post.content}
+                {post.metadata && typeof post.metadata === 'object' && (
+                  <div className="mt-2 text-sm text-gray-700">
+                    {post.metadata.description || post.metadata.authority || post.metadata.organization}
                   </div>
                 )}
               </div>
