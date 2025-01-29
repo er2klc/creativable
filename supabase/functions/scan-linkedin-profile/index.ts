@@ -61,19 +61,19 @@ serve(async (req) => {
     console.log('Starting Apify actor run for profile:', username);
     await updateScanProgress(supabase, leadId, 10, 'Profil wird aufgerufen... 🔍');
 
-   const runResponse = await fetch(
-  'https://api.apify.com/v2/acts/scrap3r~LinkedIn-people-profiles-by-url/runs',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${settings.apify_api_key}`,
-    },
-    body: JSON.stringify({
-      url: [`https://www.linkedin.com/in/${username}`]
-    })
-  }
-);
+    const runResponse = await fetch(
+      'https://api.apify.com/v2/acts/apimaestro~linkedin-profile-detail/runs',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${settings.apify_api_key}`,
+        },
+        body: JSON.stringify({
+          username: username
+        })
+      }
+    );
 
     if (!runResponse.ok) {
       const errorText = await runResponse.text();
