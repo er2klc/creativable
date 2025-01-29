@@ -62,7 +62,7 @@ export const LeadDetailContent = ({
         <LeadTimeline lead={lead} />
         <TaskList leadId={lead.id} />
         <NoteList leadId={lead.id} />
-        <LeadMessages leadId={lead.id} messages={lead.messages} />
+        <LeadMessages leadId={lead.id} messages={lead.messages || []} />
       </div>
     </div>
   );

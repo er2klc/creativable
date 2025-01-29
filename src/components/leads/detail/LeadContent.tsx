@@ -20,13 +20,18 @@ interface LeadContentProps {
 export const LeadContent = ({ lead, onUpdateLead, onDeletePhaseChange }: LeadContentProps) => {
   const { settings } = useSettings();
 
+  // Only hide phase selector if lead has a status other than 'lead'
+  const showPhaseSelector = !lead.status || lead.status === 'lead';
+
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="space-y-6">
-        <CompactPhaseSelector
-          lead={lead}
-          onUpdateLead={onUpdateLead}
-        />
+        {showPhaseSelector && (
+          <CompactPhaseSelector
+            lead={lead}
+            onUpdateLead={onUpdateLead}
+          />
+        )}
         
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -38,15 +43,15 @@ export const LeadContent = ({ lead, onUpdateLead, onDeletePhaseChange }: LeadCon
           <LeadSummary lead={lead} />
         </div>
         
-        <LeadInfoCard lead={lead} onUpdate={onUpdateLead} />
-        <ContactFieldManager />
-        <LeadTimeline 
+        <LeadInfoCard 
           lead={lead} 
-          onDeletePhaseChange={onDeletePhaseChange}
+          onUpdate={onUpdateLead}
         />
+        <ContactFieldManager />
+        <LeadTimeline lead={lead} />
         <TaskList leadId={lead.id} />
         <NoteList leadId={lead.id} />
-        <LeadMessages leadId={lead.id} messages={lead.messages} />
+        <LeadMessages leadId={lead.id} messages={lead.messages || []} />
       </div>
     </div>
   );
