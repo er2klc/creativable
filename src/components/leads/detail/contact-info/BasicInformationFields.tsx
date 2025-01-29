@@ -88,16 +88,6 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
           />
         ))}
 
-        {lead.platform === 'LinkedIn' && lead.social_media_bio && (
-          <InfoRow
-            icon={User}
-            label={settings?.language === "en" ? "Bio" : "Bio"}
-            value={lead.social_media_bio}
-            field="social_media_bio"
-            onUpdate={onUpdate}
-          />
-        )}
-
         {lead.platform === 'LinkedIn' && lead.industry && (
           <InfoRow
             icon={Building2}
