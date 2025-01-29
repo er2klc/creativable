@@ -8,7 +8,6 @@ export async function processLinkedInData(profileData: any, leadId: string) {
     if (!date) return null;
     
     try {
-      // Handle different date formats
       if (typeof date === 'object' && date.year) {
         const month = date.month || 1;
         const day = date.day || 1;
@@ -22,23 +21,34 @@ export async function processLinkedInData(profileData: any, leadId: string) {
     }
   }
 
-  // Prepare lead data update
+  // Prepare lead data update according to mapping
   const leadUpdate = {
+    linkedin_id: profileData.id || null,
     name: [profileData.firstName, profileData.lastName].filter(Boolean).join(' '),
     social_media_username: profileData.publicIdentifier || profileData.profile_url?.split('/in/')?.[1]?.replace(/\/$/, ''),
     social_media_profile_image_url: profileData.pictureUrl || null,
-    city: profileData.geoLocationName || null,
-    region: profileData.geoCountryName || null,
+    city: profileData.geoLocationName || profileData.city || null,
     social_media_followers: profileData.followersCount || 0,
-    social_media_following: profileData.connectionsCount || 0,
     industry: profileData.industryName || null,
-    social_media_bio: profileData.summary || profileData.headline || null,
-    position: profileData.occupation || profileData.headline || null,
+    social_media_bio: profileData.summary || null,
+    position: profileData.headline || profileData.occupation || null,
     current_company_name: profileData.positions?.[0]?.companyName || null,
+    website: profileData.companyLinkedinUrl || null,
+    languages: Array.isArray(profileData.languages) ? profileData.languages : [],
+    social_media_interests: Array.isArray(profileData.skills) ? profileData.skills : [],
+    education_summary: Array.isArray(profileData.education) ? 
+      profileData.education.map((edu: any) => 
+        `${edu.schoolName || ''} - ${edu.degreeName || ''} ${edu.fieldOfStudy ? `(${edu.fieldOfStudy})` : ''}`
+      ).join('; ') : null,
+    experience: profileData.positions || [],
+    social_media_stats: {
+      connectionsCount: profileData.connectionsCount || 0,
+      // Add other stats here if needed
+    },
     last_social_media_scan: new Date().toISOString()
   };
 
-  // Process positions (work experience)
+  // Process positions into linkedin_posts
   const experiencePosts = (profileData.positions || []).map((position: any) => ({
     id: `${leadId}-exp-${Math.random().toString(36).substr(2, 9)}`,
     lead_id: leadId,
@@ -56,7 +66,7 @@ export async function processLinkedInData(profileData: any, leadId: string) {
     }
   }));
 
-  // Process education
+  // Process education entries
   const educationPosts = (profileData.education || []).map((edu: any) => ({
     id: `${leadId}-edu-${Math.random().toString(36).substr(2, 9)}`,
     lead_id: leadId,
@@ -73,68 +83,14 @@ export async function processLinkedInData(profileData: any, leadId: string) {
     }
   }));
 
-  // Process certifications
-  const certificationPosts = (profileData.certifications || []).map((cert: any) => ({
-    id: `${leadId}-cert-${Math.random().toString(36).substr(2, 9)}`,
-    lead_id: leadId,
-    post_type: 'certification',
-    content: cert.name || '',
-    start_date: formatDate(cert.timePeriod?.startDate),
-    metadata: {
-      authority: cert.authority || null
-    }
-  }));
-
-  // Process courses
-  const coursePosts = (profileData.courses || []).map((course: any) => ({
-    id: `${leadId}-course-${Math.random().toString(36).substr(2, 9)}`,
-    lead_id: leadId,
-    post_type: 'course',
-    content: course.name || '',
-    metadata: {
-      organization: course.organization || null
-    }
-  }));
-
-  // Process honors
-  const honorPosts = (profileData.honors || []).map((honor: any) => ({
-    id: `${leadId}-honor-${Math.random().toString(36).substr(2, 9)}`,
-    lead_id: leadId,
-    post_type: 'honor',
-    content: honor.title || '',
-    metadata: {
-      description: honor.description || null
-    }
-  }));
-
-  // Process volunteer experiences
-  const volunteerPosts = (profileData.volunteerExperiences || []).map((vol: any) => ({
-    id: `${leadId}-vol-${Math.random().toString(36).substr(2, 9)}`,
-    lead_id: leadId,
-    post_type: 'volunteer',
-    content: vol.role || '',
-    start_date: formatDate(vol.timePeriod?.startDate),
-    end_date: formatDate(vol.timePeriod?.endDate),
-    metadata: {
-      organization: vol.organization || null,
-      description: vol.description || null
-    }
-  }));
-
-  // Process skills as tags
-  const skillTags = (profileData.skills || []).map((skill: string) => ({
-    lead_id: leadId,
-    tag: skill
-  }));
+  // Combine all posts
+  const allPosts = [
+    ...experiencePosts,
+    ...educationPosts
+  ];
 
   return {
     leadUpdate,
-    experiencePosts,
-    educationPosts,
-    certificationPosts,
-    coursePosts,
-    honorPosts,
-    volunteerPosts,
-    skillTags
+    allPosts
   };
 }
