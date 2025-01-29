@@ -3,83 +3,73 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 export async function processLinkedInData(profileData: any, leadId: string) {
   console.log('Processing LinkedIn data for lead:', leadId);
   
-  // Prepare lead data update
-  const leadUpdate = {
-    // Name handling - use fullname if available, otherwise username
-    name: profileData.basic_info?.fullname || profileData.social_media_username || '',
-    
-    // Store LinkedIn username
-    social_media_username: profileData.basic_info?.username || profileData.profile_url?.split('/in/')?.[1]?.replace(/\/$/, '') || '',
-    
-    // Store profile image URL
-    social_media_profile_image_url: profileData.avatar_url || null,
-    
-    // Store LinkedIn ID if available
-    linkedin_id: profileData.linkedin_id || null,
-    
-    // Store location data
-    city: profileData.basic_info?.location?.full || '',
-    
-    // Store languages as array
-    languages: (profileData.languages || []).map((lang: any) => lang.language),
-    
-    // Store social media stats
-    social_media_followers: profileData.connections || 0,
-    
-    // Store bio/summary
-    social_media_bio: profileData.basic_info?.summary || '',
-    
-    // Store current position and company
-    position: profileData.experience?.[0]?.title || '',
-    current_company_name: profileData.experience?.[0]?.company || '',
-    
-    // Update scan timestamp
-    last_social_media_scan: new Date().toISOString()
-  };
-
   // Helper function to safely format dates
-  function formatDate(year: any, month: any = '01'): string | null {
-    if (!year) return null;
+  function formatDate(date: any): string | null {
+    if (!date) return null;
     
     try {
-      const date = new Date(`${year}-${month}-01`);
-      return isNaN(date.getTime()) ? null : date.toISOString();
+      // Handle different date formats
+      if (typeof date === 'object' && date.year) {
+        const month = date.month || 1;
+        const day = date.day || 1;
+        return new Date(date.year, month - 1, day).toISOString();
+      }
+      const parsedDate = new Date(date);
+      return isNaN(parsedDate.getTime()) ? null : parsedDate.toISOString();
     } catch (error) {
       console.error('Error formatting date:', error);
       return null;
     }
   }
 
-  // Prepare experience posts
-  const experiencePosts = (profileData.experience || []).map((exp: any) => ({
+  // Prepare lead data update
+  const leadUpdate = {
+    name: [profileData.firstName, profileData.lastName].filter(Boolean).join(' '),
+    social_media_username: profileData.publicIdentifier || profileData.profile_url?.split('/in/')?.[1]?.replace(/\/$/, ''),
+    social_media_profile_image_url: profileData.pictureUrl || null,
+    city: profileData.geoLocationName || null,
+    region: profileData.geoCountryName || null,
+    social_media_followers: profileData.followersCount || 0,
+    social_media_following: profileData.connectionsCount || 0,
+    industry: profileData.industryName || null,
+    social_media_bio: profileData.summary || profileData.headline || null,
+    position: profileData.occupation || profileData.headline || null,
+    current_company_name: profileData.positions?.[0]?.companyName || null,
+    last_social_media_scan: new Date().toISOString()
+  };
+
+  // Process positions (work experience)
+  const experiencePosts = (profileData.positions || []).map((position: any) => ({
     id: `${leadId}-exp-${Math.random().toString(36).substr(2, 9)}`,
     lead_id: leadId,
-    post_type: 'experience',
-    company: exp.company || '',
-    position: exp.title || '',
-    location: exp.location || '',
-    start_date: formatDate(exp.start_date?.year, exp.start_date?.month),
-    end_date: formatDate(exp.end_date?.year, exp.end_date?.month),
-    content: exp.description || '',
+    post_type: 'position',
+    company: position.companyName || '',
+    position: position.title || '',
+    location: position.locationName || '',
+    start_date: formatDate(position.timePeriod?.startDate),
+    end_date: formatDate(position.timePeriod?.endDate),
+    content: position.description || '',
+    media_urls: position.company?.logo ? [position.company.logo] : [],
     metadata: {
-      is_current: exp.is_current || false,
-      company_linkedin_url: exp.company_linkedin_url || null
+      is_current: position.timePeriod?.endDate ? false : true,
+      company_linkedin_url: position.companyUrl || null
     }
   }));
 
-  // Prepare education posts
+  // Process education
   const educationPosts = (profileData.education || []).map((edu: any) => ({
     id: `${leadId}-edu-${Math.random().toString(36).substr(2, 9)}`,
     lead_id: leadId,
     post_type: 'education',
-    school: edu.school || '',
-    degree: edu.degree || '',
-    start_date: formatDate(edu.start_year),
-    end_date: formatDate(edu.end_year),
-    school_linkedin_url: edu.school_linkedin_url || null,
-    content: edu.description || '',
+    school: edu.schoolName || '',
+    degree: edu.degreeName || '',
+    content: edu.fieldOfStudy || '',
+    start_date: formatDate(edu.timePeriod?.startDate),
+    end_date: formatDate(edu.timePeriod?.endDate),
+    school_linkedin_url: edu.schoolUrl || null,
     metadata: {
-      field_of_study: edu.field_of_study || null
+      degree_name: edu.degreeName || null,
+      field_of_study: edu.fieldOfStudy || null
     }
   }));
 

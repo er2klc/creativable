@@ -184,8 +184,8 @@ serve(async (req) => {
     const { leadUpdate, experiencePosts, educationPosts } = await processLinkedInData(profileData, leadId);
     console.log('Processed LinkedIn data:', {
       leadUpdate,
-      experiencePosts,
-      educationPosts
+      experiencePosts: experiencePosts.length,
+      educationPosts: educationPosts.length
     });
 
     // Update the lead with LinkedIn data
@@ -202,17 +202,13 @@ serve(async (req) => {
     if (updateLeadError) throw updateLeadError;
 
     // Insert LinkedIn posts (experience and education)
-    if (Array.isArray(experiencePosts) && experiencePosts.length > 0 || 
-        Array.isArray(educationPosts) && educationPosts.length > 0) {
-      const postsWithLeadId = [...(experiencePosts || []), ...(educationPosts || [])].map(post => ({
-        ...post,
-        lead_id: leadId
-      }));
-
-      if (postsWithLeadId.length > 0) {
+    if (experiencePosts.length > 0 || educationPosts.length > 0) {
+      const allPosts = [...experiencePosts, ...educationPosts];
+      
+      if (allPosts.length > 0) {
         const { error: postsError } = await supabase
           .from('linkedin_posts')
-          .upsert(postsWithLeadId, {
+          .upsert(allPosts, {
             onConflict: 'id'
           });
 
