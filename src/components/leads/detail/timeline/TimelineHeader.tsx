@@ -1,5 +1,6 @@
 import { Settings } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
+import { cn } from "@/lib/utils";
 
 interface TimelineHeaderProps {
   title: string;
