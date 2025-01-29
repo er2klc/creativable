@@ -109,27 +109,30 @@ serve(async (req) => {
       const status = await statusResponse.json();
       console.log('Run status:', status.data?.status);
 
-      // Calculate progress based on status
+      // Calculate progress based on status and attempts
       let progress = 30;
       let statusMessage = 'Daten werden analysiert... 📊';
       
       if (status.data?.status === 'RUNNING') {
         if (attempts < 5) {
           progress = 30;
-          statusMessage = 'Daten werden analysiert... 📊';
+          statusMessage = 'Verbindung zu LinkedIn wird hergestellt... 🔗';
         } else if (attempts < 10) {
-          progress = 50;
-          statusMessage = 'Bildungsinformationen werden verarbeitet... 🎓';
+          progress = 45;
+          statusMessage = 'Profildaten werden geladen... 👤';
         } else if (attempts < 15) {
-          progress = 70;
+          progress = 60;
           statusMessage = 'Berufserfahrung wird ausgewertet... 💼';
+        } else if (attempts < 20) {
+          progress = 75;
+          statusMessage = 'Bildungsinformationen werden verarbeitet... 🎓';
         } else {
           progress = 90;
           statusMessage = 'Daten werden gespeichert... 💾';
         }
       } else if (status.data?.status === 'SUCCEEDED') {
-        progress = 90;
-        statusMessage = 'Daten werden gespeichert... 💾';
+        progress = 100;
+        statusMessage = 'Scan erfolgreich abgeschlossen! ✅';
       }
 
       await updateScanProgress(supabase, leadId, progress, statusMessage);
@@ -166,13 +169,13 @@ serve(async (req) => {
     console.log('Successfully retrieved profile data');
 
     // Process the LinkedIn data
-    const { scanHistory, leadData, posts } = processLinkedInData(profileData);
+    const { leadUpdate, experiencePosts, educationPosts } = processLinkedInData(profileData, leadId);
 
     // Update the lead with LinkedIn data
     const { error: updateLeadError } = await supabase
       .from('leads')
       .update({
-        ...leadData,
+        ...leadUpdate,
         platform: 'LinkedIn',
         last_social_media_scan: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -182,8 +185,8 @@ serve(async (req) => {
     if (updateLeadError) throw updateLeadError;
 
     // Insert LinkedIn posts (experience and education)
-    if (posts.length > 0) {
-      const postsWithLeadId = posts.map(post => ({
+    if (experiencePosts.length > 0 || educationPosts.length > 0) {
+      const postsWithLeadId = [...experiencePosts, ...educationPosts].map(post => ({
         ...post,
         lead_id: leadId
       }));

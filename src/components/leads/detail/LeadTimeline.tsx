@@ -105,6 +105,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         showSocialTimeline={showSocialTimeline}
         activeTimeline={activeTimeline}
         onTimelineChange={setActiveTimeline}
+        platform={lead.platform}
       />
 
       {activeTimeline === 'activities' ? (

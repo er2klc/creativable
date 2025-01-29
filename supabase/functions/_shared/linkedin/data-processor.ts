@@ -19,6 +19,7 @@ export async function processLinkedInData(profileData: any, leadId: string) {
     social_media_followers: profileData.followers_count || 0,
     social_media_following: profileData.connections_count || 0,
     social_media_profile_image_url: profileData.profile_picture_url || null,
+    avatar_url: profileData.profile_picture_url || null,
     last_social_media_scan: new Date().toISOString()
   };
 

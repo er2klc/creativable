@@ -5,20 +5,23 @@ interface TimelineHeaderProps {
   showSocialTimeline: boolean;
   activeTimeline: 'activities' | 'social';
   onTimelineChange: (timeline: 'activities' | 'social') => void;
+  platform?: string;
 }
 
 export const TimelineHeader = ({ 
   title, 
   showSocialTimeline,
   activeTimeline,
-  onTimelineChange 
+  onTimelineChange,
+  platform 
 }: TimelineHeaderProps) => {
   const { settings } = useSettings();
 
-  const handleClick = (type: 'activities' | 'social') => {
-    if (showSocialTimeline) {
-      onTimelineChange(type);
+  const getSocialTimelineTitle = () => {
+    if (platform === 'LinkedIn') {
+      return settings?.language === "en" ? "Experience & Education" : "Lebenslauf & Erfahrung";
     }
+    return settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten";
   };
 
   return (
@@ -35,9 +38,15 @@ export const TimelineHeader = ({
           className={`text-lg font-semibold cursor-pointer hover:text-primary`}
           onClick={() => handleClick('social')}
         >
-          {settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten"}
+          {getSocialTimelineTitle()}
         </h3>
       )}
     </div>
   );
+
+  function handleClick(type: 'activities' | 'social') {
+    if (showSocialTimeline) {
+      onTimelineChange(type);
+    }
+  }
 };
