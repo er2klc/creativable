@@ -158,10 +158,14 @@ serve(async (req) => {
         const items = await datasetResponse.json();
         console.log('Received LinkedIn profile data:', JSON.stringify(items, null, 2));
         
+        // Safely check if items is an array and has content
         if (items && Array.isArray(items) && items.length > 0) {
           profileData = items[0];
           console.log('Processing profile data:', JSON.stringify(profileData, null, 2));
           break;
+        } else {
+          console.log('No valid profile data found in items:', items);
+          throw new Error('No profile data found in dataset');
         }
       } else if (status.data?.status === 'FAILED' || status.data?.status === 'ABORTED') {
         throw new Error(`Actor run failed: ${status.data?.errorMessage || 'Unknown error'}`);
@@ -178,26 +182,11 @@ serve(async (req) => {
     console.log('Successfully retrieved profile data');
 
     // Process the LinkedIn data
-    const { 
-      leadUpdate, 
-      experiencePosts, 
-      educationPosts,
-      certificationPosts,
-      coursePosts,
-      honorPosts,
-      volunteerPosts,
-      skillTags 
-    } = await processLinkedInData(profileData, leadId);
+    const { leadUpdate, allPosts } = await processLinkedInData(profileData, leadId);
 
     console.log('Processed LinkedIn data:', {
       leadUpdate,
-      experiencePosts: experiencePosts.length,
-      educationPosts: educationPosts.length,
-      certificationPosts: certificationPosts.length,
-      coursePosts: coursePosts.length,
-      honorPosts: honorPosts.length,
-      volunteerPosts: volunteerPosts.length,
-      skillTags: skillTags.length
+      postsCount: allPosts?.length || 0
     });
 
     // Update the lead with LinkedIn data
@@ -213,17 +202,8 @@ serve(async (req) => {
 
     if (updateLeadError) throw updateLeadError;
 
-    // Insert all LinkedIn posts
-    const allPosts = [
-      ...experiencePosts,
-      ...educationPosts,
-      ...certificationPosts,
-      ...coursePosts,
-      ...honorPosts,
-      ...volunteerPosts
-    ];
-    
-    if (allPosts.length > 0) {
+    // Insert all LinkedIn posts if we have any
+    if (Array.isArray(allPosts) && allPosts.length > 0) {
       const { error: postsError } = await supabase
         .from('linkedin_posts')
         .upsert(allPosts, {
@@ -232,19 +212,6 @@ serve(async (req) => {
 
       if (postsError) {
         console.error('Error storing LinkedIn posts:', postsError);
-      }
-    }
-
-    // Insert skill tags
-    if (skillTags.length > 0) {
-      const { error: tagsError } = await supabase
-        .from('lead_tags')
-        .upsert(skillTags, {
-          onConflict: 'lead_id,tag'
-        });
-
-      if (tagsError) {
-        console.error('Error storing skill tags:', tagsError);
       }
     }
 
