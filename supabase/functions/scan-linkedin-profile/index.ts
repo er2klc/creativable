@@ -160,7 +160,17 @@ serve(async (req) => {
           break;
         }
       } else if (status.data?.status === 'FAILED' || status.data?.status === 'ABORTED') {
-        throw new Error(`Actor run failed: ${status.data?.errorMessage || 'Unknown error'}`);
+        const logsResponse = await fetch(
+          `https://api.apify.com/v2/actor-runs/${runId}/logs?token=${settings.apify_api_key}`
+        );
+        const logsText = await logsResponse.text();
+        console.error('Actor logs:', logsText);
+
+        throw new Error(
+          `Actor run failed: ${
+            status.data?.errorMessage || 'Unknown error'
+          }. Logs: ${logsText}`
+        );
       }
 
       await new Promise(resolve => setTimeout(resolve, pollingInterval));
