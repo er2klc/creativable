@@ -57,114 +57,135 @@ serve(async (req) => {
       throw initialScanError;
     }
 
-    // Update scan progress to show we're starting
-    await updateScanProgress(supabase, leadId, 10, 'Profil wird aufgerufen... 🔍');
+    try {
+      await updateScanProgress(supabase, leadId, 10, 'Profil wird aufgerufen... 🔍');
 
-    // Start the Apify run using run-sync endpoint
-    console.log('Starting Apify actor run for profile:', username);
-    const runResponse = await fetch(
-      'https://api.apify.com/v2/acts/scrap3r~LinkedIn-people-profiles-by-url/run-sync',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${settings.apify_api_key}`,
-        },
-        body: JSON.stringify({
-          url: [`https://www.linkedin.com/in/${username}`]
-        })
+      // Start the Apify run using run-sync endpoint
+      console.log('Starting Apify actor run for profile:', username);
+      const runResponse = await fetch(
+        'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/run-sync',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${settings.apify_api_key}`,
+          },
+          body: JSON.stringify({
+            url: [`https://www.linkedin.com/in/${username}`]
+          })
+        }
+      );
+
+      if (!runResponse.ok) {
+        const errorText = await runResponse.text();
+        console.error('Failed to execute Apify actor:', errorText);
+        
+        // Update scan history with error
+        await supabase
+          .from('social_media_scan_history')
+          .update({
+            success: false,
+            error_message: `Failed to execute Apify actor: ${errorText}`,
+            processing_progress: 100,
+            current_file: `Fehler beim Scan: ${errorText} ❌`
+          })
+          .eq('lead_id', leadId)
+          .eq('platform', 'linkedin');
+          
+        throw new Error(`Failed to execute Apify actor: ${errorText}`);
       }
-    );
 
-    if (!runResponse.ok) {
-      const errorText = await runResponse.text();
-      console.error('Failed to execute Apify actor:', errorText);
-      throw new Error(`Failed to execute Apify actor: ${errorText}`);
-    }
+      const actorResult = await runResponse.json();
+      console.log('Actor result:', JSON.stringify(actorResult, null, 2));
 
-    await updateScanProgress(supabase, leadId, 50, 'Daten werden analysiert... 📊');
+      if (actorResult?.error) {
+        console.error('Actor failed with error:', actorResult.error);
+        
+        // Update scan history with error
+        await supabase
+          .from('social_media_scan_history')
+          .update({
+            success: false,
+            error_message: `Actor run failed: ${actorResult.error.message}`,
+            processing_progress: 100,
+            current_file: `Fehler beim Scan: ${actorResult.error.message} ❌`
+          })
+          .eq('lead_id', leadId)
+          .eq('platform', 'linkedin');
+          
+        throw new Error(`Actor run failed: ${actorResult.error.message}`);
+      }
 
-    const actorResult = await runResponse.json();
-    console.log('Actor result:', JSON.stringify(actorResult, null, 2));
+      await updateScanProgress(supabase, leadId, 75, 'Profildaten werden verarbeitet... 💼');
 
-    if (actorResult?.error) {
-      console.error('Actor failed with error:', actorResult.error);
-      throw new Error(`Actor run failed: ${actorResult.error.message}`);
-    }
+      // Process the LinkedIn data
+      const profileData = Array.isArray(actorResult.data) ? actorResult.data[0] : actorResult.data;
+      
+      if (!profileData) {
+        throw new Error('No profile data returned from Apify');
+      }
 
-    // Process the LinkedIn data
-    const profileData = Array.isArray(actorResult.data) ? actorResult.data[0] : actorResult.data;
-    
-    if (!profileData) {
-      throw new Error('No profile data returned from Apify');
-    }
+      console.log('Successfully retrieved profile data');
 
-    console.log('Successfully retrieved profile data');
-    await updateScanProgress(supabase, leadId, 75, 'Profildaten werden verarbeitet... 💼');
+      // Process the LinkedIn data
+      const { leadUpdate, experiencePosts, educationPosts } = await processLinkedInData(profileData, leadId);
+      console.log('Processed LinkedIn data:', {
+        leadUpdate,
+        experiencePosts,
+        educationPosts
+      });
 
-    // Process the LinkedIn data
-    const { leadUpdate, experiencePosts, educationPosts } = await processLinkedInData(profileData, leadId);
-    console.log('Processed LinkedIn data:', {
-      leadUpdate,
-      experiencePosts,
-      educationPosts
-    });
+      // Update the lead with LinkedIn data
+      const { error: updateLeadError } = await supabase
+        .from('leads')
+        .update({
+          ...leadUpdate,
+          platform: 'LinkedIn',
+          last_social_media_scan: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', leadId);
 
-    // Update the lead with LinkedIn data
-    const { error: updateLeadError } = await supabase
-      .from('leads')
-      .update({
-        ...leadUpdate,
-        platform: 'LinkedIn',
-        last_social_media_scan: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', leadId);
+      if (updateLeadError) throw updateLeadError;
 
-    if (updateLeadError) throw updateLeadError;
+      await updateScanProgress(supabase, leadId, 90, 'Daten werden gespeichert... 💾');
 
-    await updateScanProgress(supabase, leadId, 90, 'Daten werden gespeichert... 💾');
+      // Insert LinkedIn posts (experience and education)
+      if (Array.isArray(experiencePosts) && experiencePosts.length > 0 || 
+          Array.isArray(educationPosts) && educationPosts.length > 0) {
+        const postsWithLeadId = [...(experiencePosts || []), ...(educationPosts || [])].map(post => ({
+          ...post,
+          lead_id: leadId
+        }));
 
-    // Insert LinkedIn posts (experience and education)
-    if (Array.isArray(experiencePosts) && experiencePosts.length > 0 || 
-        Array.isArray(educationPosts) && educationPosts.length > 0) {
-      const postsWithLeadId = [...(experiencePosts || []), ...(educationPosts || [])].map(post => ({
-        ...post,
-        lead_id: leadId
-      }));
+        if (postsWithLeadId.length > 0) {
+          const { error: postsError } = await supabase
+            .from('linkedin_posts')
+            .upsert(postsWithLeadId, {
+              onConflict: 'id'
+            });
 
-      if (postsWithLeadId.length > 0) {
-        const { error: postsError } = await supabase
-          .from('linkedin_posts')
-          .upsert(postsWithLeadId, {
-            onConflict: 'id'
-          });
-
-        if (postsError) {
-          console.error('Error storing LinkedIn posts:', postsError);
+          if (postsError) {
+            console.error('Error storing LinkedIn posts:', postsError);
+          }
         }
       }
-    }
 
-    // Update scan history with final success status
-    await updateScanProgress(supabase, leadId, 100, 'Scan erfolgreich abgeschlossen! ✅', true);
+      // Update scan history with final success status
+      await updateScanProgress(supabase, leadId, 100, 'Scan erfolgreich abgeschlossen! ✅', true);
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        data: profileData 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          data: profileData 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
 
-  } catch (error) {
-    console.error('Error scanning LinkedIn profile:', error);
-    
-    // Update scan history with error
-    if (error instanceof Error) {
-      const supabase = getSupabase();
+    } catch (error) {
+      // Update scan history with error
       await supabase
         .from('social_media_scan_history')
         .update({
@@ -173,9 +194,15 @@ serve(async (req) => {
           processing_progress: 100,
           current_file: `Fehler beim Scan: ${error.message} ❌`
         })
+        .eq('lead_id', leadId)
         .eq('platform', 'linkedin');
+        
+      throw error;
     }
 
+  } catch (error) {
+    console.error('Error scanning LinkedIn profile:', error);
+    
     return new Response(
       JSON.stringify({ 
         success: false, 
