@@ -42,7 +42,7 @@ export async function processLinkedInData(profileData: any, leadId: string) {
   const experiencePosts = (profileData.positions || []).map((position: any) => ({
     id: `${leadId}-exp-${Math.random().toString(36).substr(2, 9)}`,
     lead_id: leadId,
-    post_type: 'experience', // Changed from 'position' to 'experience'
+    post_type: 'experience',
     company: position.companyName || '',
     position: position.title || '',
     location: position.locationName || '',
@@ -73,9 +73,68 @@ export async function processLinkedInData(profileData: any, leadId: string) {
     }
   }));
 
+  // Process certifications
+  const certificationPosts = (profileData.certifications || []).map((cert: any) => ({
+    id: `${leadId}-cert-${Math.random().toString(36).substr(2, 9)}`,
+    lead_id: leadId,
+    post_type: 'certification',
+    content: cert.name || '',
+    start_date: formatDate(cert.timePeriod?.startDate),
+    metadata: {
+      authority: cert.authority || null
+    }
+  }));
+
+  // Process courses
+  const coursePosts = (profileData.courses || []).map((course: any) => ({
+    id: `${leadId}-course-${Math.random().toString(36).substr(2, 9)}`,
+    lead_id: leadId,
+    post_type: 'course',
+    content: course.name || '',
+    metadata: {
+      organization: course.organization || null
+    }
+  }));
+
+  // Process honors
+  const honorPosts = (profileData.honors || []).map((honor: any) => ({
+    id: `${leadId}-honor-${Math.random().toString(36).substr(2, 9)}`,
+    lead_id: leadId,
+    post_type: 'honor',
+    content: honor.title || '',
+    metadata: {
+      description: honor.description || null
+    }
+  }));
+
+  // Process volunteer experiences
+  const volunteerPosts = (profileData.volunteerExperiences || []).map((vol: any) => ({
+    id: `${leadId}-vol-${Math.random().toString(36).substr(2, 9)}`,
+    lead_id: leadId,
+    post_type: 'volunteer',
+    content: vol.role || '',
+    start_date: formatDate(vol.timePeriod?.startDate),
+    end_date: formatDate(vol.timePeriod?.endDate),
+    metadata: {
+      organization: vol.organization || null,
+      description: vol.description || null
+    }
+  }));
+
+  // Process skills as tags
+  const skillTags = (profileData.skills || []).map((skill: string) => ({
+    lead_id: leadId,
+    tag: skill
+  }));
+
   return {
     leadUpdate,
     experiencePosts,
-    educationPosts
+    educationPosts,
+    certificationPosts,
+    coursePosts,
+    honorPosts,
+    volunteerPosts,
+    skillTags
   };
 }
