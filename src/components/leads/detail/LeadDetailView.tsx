@@ -1,3 +1,4 @@
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
@@ -8,33 +9,34 @@ import { LeadDetailContent } from "./components/LeadDetailContent";
 import { useLeadMutations } from "./hooks/useLeadMutations";
 
 interface LeadDetailViewProps {
-  leadId: string;
+  leadId: string | null;
   onClose: () => void;
 }
 
-export function LeadDetailView({ leadId, onClose }: LeadDetailViewProps) {
+const isValidUUID = (uuid: string) => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
+export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
-
-  const isValidUUID = (uuid: string) => {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(uuid);
-  };
-
+  
   const { data: lead, isLoading } = useQuery({
     queryKey: ["lead", leadId],
     queryFn: async () => {
-      if (!leadId) {
-        throw new Error("No lead ID provided");
+      if (!leadId || !isValidUUID(leadId)) {
+        throw new Error("Invalid lead ID");
       }
 
       const { data, error } = await supabase
         .from("leads")
         .select(`
           *,
-          messages (*),
-          tasks (*),
-          notes (*),
-          lead_files (*)
+          messages(*),
+          tasks(*),
+          notes(*),
+          lead_files(*),
+          linkedin_posts(*)
         `)
         .eq("id", leadId)
         .maybeSingle();
@@ -51,32 +53,34 @@ export function LeadDetailView({ leadId, onClose }: LeadDetailViewProps) {
       return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
   });
 
   const { updateLeadMutation, deleteLeadMutation } = useLeadMutations(leadId, onClose);
-
   useLeadSubscription(leadId);
 
-  if (isLoading || !lead) {
-    return (
-      <div className="p-6">
-        {settings?.language === "en" ? "Loading..." : "Lädt..."}
-      </div>
-    );
-  }
-
   return (
-    <>
-      <LeadDetailHeader
-        lead={lead}
-        onUpdateLead={updateLeadMutation.mutate}
-        onDeleteLead={() => deleteLeadMutation.mutate()}
-      />
-      <LeadDetailContent 
-        lead={lead}
-        onUpdateLead={updateLeadMutation.mutate}
-        isLoading={isLoading}
-      />
-    </>
+    <Dialog open={!!leadId} onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg overflow-hidden">
+        <DialogHeader className="p-0">
+          {lead && (
+            <LeadDetailHeader
+              lead={lead}
+              onUpdateLead={updateLeadMutation.mutate}
+              onDeleteLead={() => deleteLeadMutation.mutate()}
+            />
+          )}
+        </DialogHeader>
+
+        {lead && (
+          <LeadDetailContent
+            lead={lead}
+            onUpdateLead={updateLeadMutation.mutate}
+            isLoading={isLoading}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
   );
-}
+};
