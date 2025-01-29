@@ -25,24 +25,24 @@ export const TimelineHeader = ({
 
   return (
     <div className="flex items-center justify-between mb-4">
-      <h3 className={`text-lg font-semibold ${showSocialTimeline ? 'cursor-pointer hover:text-primary' : ''}`}>
+      <h3 
+        className={cn(
+          "text-lg font-semibold",
+          activeTimeline === 'social' && showSocialTimeline && "cursor-pointer hover:text-primary"
+        )}
+        onClick={() => activeTimeline === 'social' && handleClick('activities')}
+      >
         {settings?.language === "en" ? "Activities" : "Aktivitäten"}
       </h3>
       
       {showSocialTimeline && (
         <div 
           className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-primary"
-          onClick={() => handleClick('social')}
+          onClick={() => activeTimeline === 'activities' && handleClick('social')}
         >
           <Settings className="h-4 w-4" />
           <span>
-            {activeTimeline === 'social' ? 
-              (settings?.language === "en" ? "Show Activities" : "Aktivitäten anzeigen") : 
-              (platform === 'LinkedIn' ?
-                (settings?.language === "en" ? "Show LinkedIn Activities" : "LinkedIn Aktivitäten anzeigen") :
-                (settings?.language === "en" ? "Show Social Media" : "Social Media anzeigen")
-              )
-            }
+            {settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten"}
           </span>
         </div>
       )}
