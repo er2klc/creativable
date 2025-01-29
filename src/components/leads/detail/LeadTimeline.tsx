@@ -2,6 +2,7 @@ import { useState } from "react";
 import { TimelineHeader } from "./timeline/TimelineHeader";
 import { TimelineItem } from "./timeline/TimelineItem";
 import { SocialMediaTimeline } from "./timeline/social/SocialMediaTimeline";
+import { LinkedInTimeline } from "./timeline/social/LinkedInTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "./types/lead";
 import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
@@ -123,11 +124,15 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           ))}
         </div>
       ) : (
-        <SocialMediaTimeline 
-          posts={lead.social_media_posts || []} 
-          linkedInPosts={lead.linkedin_posts || []}
-          platform={lead.platform}
-        />
+        lead.platform === 'LinkedIn' && lead.linkedin_posts ? (
+          <LinkedInTimeline posts={lead.linkedin_posts} />
+        ) : (
+          <SocialMediaTimeline 
+            posts={lead.social_media_posts || []} 
+            linkedInPosts={lead.linkedin_posts || []}
+            platform={lead.platform}
+          />
+        )
       )}
     </div>
   );

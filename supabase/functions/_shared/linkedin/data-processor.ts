@@ -29,6 +29,7 @@ export async function processLinkedInData(profileData: any, leadId: string) {
     social_media_profile_image_url: profileData.pictureUrl || null,
     city: profileData.geoLocationName || profileData.city || null,
     social_media_followers: profileData.followersCount || 0,
+    social_media_following: profileData.connectionsCount || 0, // Store connections count here
     industry: profileData.industryName || null,
     social_media_bio: profileData.summary || null,
     position: profileData.headline || profileData.occupation || null,
@@ -41,10 +42,6 @@ export async function processLinkedInData(profileData: any, leadId: string) {
         `${edu.schoolName || ''} - ${edu.degreeName || ''} ${edu.fieldOfStudy ? `(${edu.fieldOfStudy})` : ''}`
       ).join('; ') : null,
     experience: profileData.positions || [],
-    social_media_stats: {
-      connectionsCount: profileData.connectionsCount || 0,
-      // Add other stats here if needed
-    },
     last_social_media_scan: new Date().toISOString()
   };
 
