@@ -4,11 +4,15 @@ import { useSettings } from "@/hooks/use-settings";
 import { InfoRow } from "./InfoRow";
 import { ContactInfoGroup } from "./ContactInfoGroup";
 import { User, AtSign, Phone, Globe, Calendar, Building2, MapPin, Hash } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface BasicInformationFieldsProps {
   lead: Tables<"leads">;
@@ -89,68 +93,69 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
           showEmptyFields={true}
           groupName="interests_goals"
           rightIcon={
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => {
-                const input = document.getElementById('new-interest-input');
-                if (input) {
-                  input.focus();
-                }
-              }}
-            >
-              +
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 hover:bg-transparent"
+                >
+                  +
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="end" 
+                className="w-[200px] p-2"
+              >
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={newInterest}
+                    onChange={(e) => setNewInterest(e.target.value)}
+                    placeholder={settings?.language === "en" ? "New interest/skill" : "Neue Interesse/Skill"}
+                    className="px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-ring"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddInterest();
+                      }
+                    }}
+                  />
+                  <Button 
+                    onClick={handleAddInterest}
+                    size="sm"
+                    className="w-full"
+                  >
+                    {settings?.language === "en" ? "Add" : "Hinzufügen"}
+                  </Button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           }
         >
           <div className="col-span-2">
-            <div className="flex gap-2 mb-2">
-              <Input
-                id="new-interest-input"
-                value={newInterest}
-                onChange={(e) => setNewInterest(e.target.value)}
-                placeholder={settings?.language === "en" ? "Add new interest/skill" : "Neue Interesse/Skill hinzufügen"}
-                className="antialiased"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddInterest();
-                  }
-                }}
-              />
-              <Button 
-                onClick={handleAddInterest}
-                type="button"
-                className="antialiased"
-              >
-                {settings?.language === "en" ? "Add" : "Hinzufügen"}
-              </Button>
-            </div>
-            <ScrollArea className="h-24 w-full rounded-md border">
-              <div className="p-4 flex flex-wrap gap-2">
-                {(lead.social_media_interests || []).map((interest, index) => (
-                  <Badge
-                    key={index}
-                    variant="secondary"
-                    className={cn(
-                      "flex items-center gap-1 antialiased font-normal",
-                      getInterestColor(interest)
-                    )}
+            <div className="flex flex-wrap gap-2">
+              {(lead.social_media_interests || []).map((interest, index) => (
+                <Badge
+                  key={index}
+                  variant="secondary"
+                  className={cn(
+                    "flex items-center gap-1 antialiased font-normal",
+                    getInterestColor(interest)
+                  )}
+                >
+                  #{interest}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-4 w-4 p-0 hover:bg-transparent"
+                    onClick={() => handleRemoveInterest(interest)}
                   >
-                    #{interest}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 hover:bg-transparent"
-                      onClick={() => handleRemoveInterest(interest)}
-                    >
-                      ×
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
-            </ScrollArea>
+                    ×
+                  </Button>
+                </Badge>
+              ))}
+            </div>
           </div>
         </ContactInfoGroup>
       </ContactInfoGroup>
