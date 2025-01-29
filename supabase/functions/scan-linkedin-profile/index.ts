@@ -82,6 +82,8 @@ serve(async (req) => {
     }
 
     const runData = await runResponse.json();
+    console.log('Apify run response:', JSON.stringify(runData, null, 2));
+    
     const runId = runData.data?.id;
     
     if (!runId) throw new Error('No run ID returned from Apify');
@@ -150,8 +152,11 @@ serve(async (req) => {
         }
 
         const items = await datasetResponse.json();
+        console.log('Received LinkedIn profile data:', JSON.stringify(items, null, 2));
+        
         if (items && Array.isArray(items) && items.length > 0) {
           profileData = items[0];
+          console.log('Processing profile data:', JSON.stringify(profileData, null, 2));
           break;
         }
       } else if (status.data?.status === 'FAILED' || status.data?.status === 'ABORTED') {
@@ -170,6 +175,11 @@ serve(async (req) => {
 
     // Process the LinkedIn data
     const { leadUpdate, experiencePosts, educationPosts } = await processLinkedInData(profileData, leadId);
+    console.log('Processed LinkedIn data:', {
+      leadUpdate,
+      experiencePosts,
+      educationPosts
+    });
 
     // Update the lead with LinkedIn data
     const { error: updateLeadError } = await supabase
