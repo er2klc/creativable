@@ -44,7 +44,15 @@ export const LeadCardContent = ({ lead }: LeadCardContentProps) => {
           {lead.current_company_name && (
             <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
               <Briefcase className="h-4 w-4" />
-              <span>{lead.position ? `${lead.position} at ` : ''}{lead.current_company_name}</span>
+              <div className="flex flex-wrap gap-x-2">
+                {lead.position && <span>{lead.position}</span>}
+                {lead.current_company_name && (
+                  <span className="flex items-center gap-1">
+                    {lead.position ? " bei " : "bei "}
+                    <span className="font-medium">{lead.current_company_name}</span>
+                  </span>
+                )}
+              </div>
             </div>
           )}
           {lead.city && (
@@ -65,27 +73,13 @@ export const LeadCardContent = ({ lead }: LeadCardContentProps) => {
       </div>
 
       {/* LinkedIn specific information */}
-      {lead.platform === 'LinkedIn' && (
+      {lead.platform === 'LinkedIn' && shouldShowIndustry && (
         <div className="space-y-4">
-          {lead.position && (
-            <>
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">Position: </span>
-                {lead.position}
-              </div>
-              <div className="border-t border-gray-200" />
-            </>
-          )}
-          
-          {shouldShowIndustry && (
-            <>
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">Industrie: </span>
-                {lead.industry}
-              </div>
-              <div className="border-t border-gray-200" />
-            </>
-          )}
+          <div className="text-sm text-gray-600">
+            <span className="font-medium">Branche: </span>
+            {lead.industry}
+          </div>
+          <div className="border-t border-gray-200" />
         </div>
       )}
       
