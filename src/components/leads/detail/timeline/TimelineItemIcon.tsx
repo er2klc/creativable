@@ -19,10 +19,10 @@ import {
   Clock,
   ThumbsDown
 } from "lucide-react";
-import { TimelineItem } from "./TimelineUtils";
+import { TimelineItemType } from "./TimelineUtils";
 
 interface TimelineItemIconProps {
-  type: TimelineItem['type'];
+  type: TimelineItemType;
   status?: string;
   platform?: string;
   metadata?: {

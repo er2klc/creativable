@@ -4,7 +4,7 @@ import { TimelineItem } from "./timeline/TimelineItem";
 import { SocialMediaTimeline } from "./timeline/SocialMediaTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "./types/lead";
-import { TimelineItem as TimelineItemType, SocialMediaPostRaw } from "./timeline/TimelineUtils";
+import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -34,9 +34,11 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     created_at: task.created_at,
     timestamp: task.created_at,
     metadata: {
-      completedAt: task.completed ? task.updated_at : undefined,
       dueDate: task.due_date,
-      status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : 'outdated'
+      status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : undefined,
+      completedAt: task.completed ? task.updated_at : undefined,
+      color: task.color,
+      meetingType: task.meeting_type
     }
   });
 
@@ -92,61 +94,41 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
-  // Transform social media posts
-  const transformedPosts: SocialMediaPostRaw[] = [
-    ...(Array.isArray(lead.social_media_posts) ? lead.social_media_posts.map(post => ({
-      id: typeof post === 'string' ? post : post.id || '',
-      platform: typeof post === 'string' ? '' : post.platform || 'instagram',
-      type: typeof post === 'string' ? '' : post.post_type || 'post',
-      post_type: typeof post === 'string' ? 'post' : post.post_type || 'post',
-      caption: typeof post === 'string' ? '' : post.content || '',
-      likesCount: typeof post === 'string' ? 0 : post.likes_count || 0,
-      commentsCount: typeof post === 'string' ? 0 : post.comments_count || 0,
-      posted_at: typeof post === 'string' ? null : post.posted_at || post.created_at || null,
-      timestamp: typeof post === 'string' ? '' : post.posted_at || post.created_at || '',
-      engagement_count: typeof post === 'string' ? 0 : (post.likes_count || 0) + (post.comments_count || 0),
-      media_type: typeof post === 'string' ? '' : post.media_type || 'post',
-      media_urls: typeof post === 'string' ? [] : post.media_urls || [],
-      content: typeof post === 'string' ? '' : post.content || '',
-      url: typeof post === 'string' ? null : post.url || null,
-      location: null,
-      mentioned_profiles: null,
-      tagged_profiles: null,
-      local_video_path: null,
-      local_media_paths: null,
-      video_url: null,
-      metadata: {}
-    })) : []),
-    ...(Array.isArray(lead.linkedin_posts) ? lead.linkedin_posts.map(post => ({
-      id: post.id,
-      platform: 'linkedin',
-      type: post.post_type || 'post',
-      post_type: post.post_type || 'post',
-      caption: post.content || '',
-      likesCount: post.likes_count || 0,
-      commentsCount: post.comments_count || 0,
-      posted_at: post.posted_at || post.created_at || null,
-      timestamp: post.posted_at || post.created_at || '',
-      engagement_count: (post.likes_count || 0) + (post.comments_count || 0) + (post.shares_count || 0),
-      media_type: post.media_type || 'post',
-      media_urls: post.media_urls || [],
-      content: post.content || '',
-      url: post.url || null,
-      location: null,
-      mentioned_profiles: null,
-      tagged_profiles: null,
-      local_video_path: null,
-      local_media_paths: null,
-      video_url: null,
-      metadata: post.metadata || {},
-      company: post.company,
-      position: post.position,
-      start_date: post.start_date,
-      end_date: post.end_date,
-      school: post.school,
-      degree: post.degree
-    })) : [])
-  ];
+  // Transform social media posts to include required fields
+  const transformedPosts = Array.isArray(lead.social_media_posts) 
+    ? (lead.social_media_posts as any[]).map(post => ({
+        ...post,
+        type: post.type || 'post',
+        caption: post.caption || '',
+        likesCount: post.likesCount || 0,
+        commentsCount: post.commentsCount || 0,
+        timestamp: post.timestamp || post.posted_at || new Date().toISOString(),
+        engagement_count: post.engagement_count || 0,
+        first_comment: post.first_comment || '',
+        media_type: post.media_type || 'post',
+        media_urls: post.media_urls || [],
+        tagged_users: post.tagged_users || [],
+        comments_count: post.comments_count || 0,
+        content: post.content || '',
+        created_at: post.created_at || post.posted_at || new Date().toISOString(),
+        likes_count: post.likes_count || 0,
+        location: post.location || '',
+        locationName: post.locationName || '',
+        mentioned_profiles: post.mentioned_profiles || [],
+        tagged_profiles: post.tagged_profiles || [],
+        platform: post.platform || 'unknown',
+        post_type: post.post_type || 'post',
+        url: post.url || null,
+        lead_id: post.lead_id || lead.id,
+        metadata: post.metadata || {},
+        posted_at: post.posted_at || post.created_at || new Date().toISOString(),
+        local_video_path: post.local_video_path || null,
+        local_media_paths: post.local_media_paths || null,
+        video_url: post.video_url || post.videoUrl || null,
+        images: post.images || [],
+        hashtags: post.hashtags || []
+      }))
+    : [];
 
   return (
     <div className="space-y-4">
