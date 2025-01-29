@@ -4,7 +4,7 @@ import { TimelineItem } from "./timeline/TimelineItem";
 import { SocialMediaTimeline } from "./timeline/SocialMediaTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "./types/lead";
-import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
+import { TimelineItem as TimelineItemType, SocialMediaPostRaw } from "./timeline/TimelineUtils";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -81,7 +81,13 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       comments_count: post.comments_count,
       shares_count: post.shares_count,
       media_urls: post.media_urls,
-      reactions: post.reactions
+      reactions: post.reactions,
+      company: post.company,
+      position: post.position,
+      start_date: post.start_date,
+      end_date: post.end_date,
+      school: post.school,
+      degree: post.degree
     }
   });
 
@@ -113,10 +119,23 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   );
 
   // Transform social media posts to include required fields
-  const transformedPosts = [
-    ...(Array.isArray(lead.social_media_posts) ? lead.social_media_posts : []),
-    ...(Array.isArray(lead.linkedin_posts) ? lead.linkedin_posts.map(post => ({
+  const transformedPosts: SocialMediaPostRaw[] = [
+    ...(Array.isArray(lead.social_media_posts) ? lead.social_media_posts.map(post => ({
       ...post,
+      platform: post.platform || 'instagram',
+      type: post.post_type || 'post',
+      caption: post.content || '',
+      likesCount: post.likes_count || 0,
+      commentsCount: post.comments_count || 0,
+      timestamp: post.posted_at || post.created_at,
+      engagement_count: (post.likes_count || 0) + (post.comments_count || 0),
+      media_type: post.media_type || 'post',
+      media_urls: post.media_urls || [],
+      content: post.content || '',
+      url: post.url || null
+    })) : []),
+    ...(Array.isArray(lead.linkedin_posts) ? lead.linkedin_posts.map(post => ({
+      id: post.id,
       platform: 'linkedin',
       type: post.post_type || 'post',
       caption: post.content || '',
@@ -131,7 +150,14 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       metadata: {
         ...post.metadata,
         reactions: post.reactions || {}
-      }
+      },
+      company: post.company,
+      position: post.position,
+      start_date: post.start_date,
+      end_date: post.end_date,
+      school: post.school,
+      degree: post.degree,
+      school_linkedin_url: post.school_linkedin_url
     })) : [])
   ];
 
