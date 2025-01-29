@@ -41,21 +41,11 @@ serve(async (req) => {
       throw new Error('Apify API key not found in settings');
     }
 
-    // Create initial scan history record with first status
-    const { error: scanHistoryError } = await supabase
-      .from('social_media_scan_history')
-      .insert({
-        lead_id: leadId,
-        platform: 'linkedin',
-        processing_progress: 0,
-        current_file: 'Verbindung zu LinkedIn wird hergestellt... 🔗',
-      });
-
-    if (scanHistoryError) throw scanHistoryError;
+    // Create initial scan history record
+    await updateScanProgress(supabase, leadId, 0, 'Verbindung zu LinkedIn wird hergestellt... 🔗');
 
     // Start the Apify run
     console.log('Starting Apify actor run for profile:', username);
-    
     await updateScanProgress(supabase, leadId, 10, 'Profil wird aufgerufen... 🔍');
 
     const runResponse = await fetch(

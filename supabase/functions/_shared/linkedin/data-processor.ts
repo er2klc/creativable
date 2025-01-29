@@ -21,7 +21,8 @@ export function processLinkedInData(profileData: any) {
     website: website,
     social_media_username: profileData.profile_url?.split('/in/')?.[1]?.replace(/\/$/, '') || null,
     social_media_followers: profileData.followers_count || 0,
-    social_media_following: profileData.connections_count || 0
+    social_media_following: profileData.connections_count || 0,
+    education_summary: createEducationSummary(profileData.education)
   };
 
   // Prepare scan history data
@@ -45,4 +46,19 @@ export function processLinkedInData(profileData: any) {
   };
 
   return { scanHistory, leadData };
+}
+
+function createEducationSummary(education: any[]): string {
+  if (!education || !Array.isArray(education) || education.length === 0) {
+    return '';
+  }
+
+  // Get the highest/latest education entry
+  const latestEducation = education[0];
+  if (!latestEducation) return '';
+
+  const degree = latestEducation.degree || 'Studied';
+  const school = latestEducation.school || '';
+
+  return `${degree}, ${school}`.trim();
 }
