@@ -101,9 +101,18 @@ serve(async (req) => {
       let statusMessage = 'Daten werden analysiert... 📊';
       
       if (status.data?.status === 'RUNNING') {
-        progress = Math.min(70, 30 + (attempts * 2));
-        if (progress >= 50) {
+        if (attempts < 5) {
+          progress = 30;
+          statusMessage = 'Daten werden analysiert... 📊';
+        } else if (attempts < 10) {
+          progress = 50;
           statusMessage = 'Bildungsinformationen werden verarbeitet... 🎓';
+        } else if (attempts < 15) {
+          progress = 70;
+          statusMessage = 'Berufserfahrung wird ausgewertet... 💼';
+        } else {
+          progress = 90;
+          statusMessage = 'Daten werden gespeichert... 💾';
         }
       } else if (status.data?.status === 'SUCCEEDED') {
         progress = 90;
@@ -145,37 +154,6 @@ serve(async (req) => {
 
     // Process the LinkedIn data
     const { scanHistory, leadData } = processLinkedInData(profileData);
-
-    // Process education data for timeline
-    if (profileData.education && Array.isArray(profileData.education)) {
-      const educationPosts = profileData.education.map((edu: any) => ({
-        id: `edu-${Math.random().toString(36).substr(2, 9)}`,
-        lead_id: leadId,
-        post_type: 'education',
-        school: edu.school || null,
-        degree: edu.degree || null,
-        start_date: edu.start_date ? new Date(edu.start_date) : null,
-        end_date: edu.end_date ? new Date(edu.end_date) : null,
-        school_linkedin_url: edu.school_url || null,
-        location: edu.location || null,
-        content: `${edu.degree || 'Studied'} at ${edu.school}`,
-        posted_at: edu.start_date ? new Date(edu.start_date) : new Date(),
-      }));
-
-      // Insert education entries
-      if (educationPosts.length > 0) {
-        const { error: eduError } = await supabase
-          .from('linkedin_posts')
-          .upsert(educationPosts, {
-            onConflict: 'id'
-          });
-
-        if (eduError) {
-          console.error('Error storing education posts:', eduError);
-          throw eduError;
-        }
-      }
-    }
 
     // Update the lead with LinkedIn data
     const { error: updateLeadError } = await supabase
