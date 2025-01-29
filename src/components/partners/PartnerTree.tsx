@@ -40,7 +40,7 @@ export const PartnerTree = ({ unassignedPartners, currentUser, onContactClick }:
               >
                 <CardContent className="flex items-center gap-4 p-4">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={partner.avatar_url || undefined} />
+                    <AvatarImage src={partner.social_media_profile_image_url || undefined} />
                     <AvatarFallback>
                       {partner.name.substring(0, 2).toUpperCase()}
                     </AvatarFallback>

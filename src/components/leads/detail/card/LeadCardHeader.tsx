@@ -97,7 +97,7 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <LeadAvatar
-          imageUrl={lead.social_media_profile_image_url || lead.avatar_url}
+          imageUrl={lead.social_media_profile_image_url}
           name={displayName}
           platform={lead.platform}
         />
