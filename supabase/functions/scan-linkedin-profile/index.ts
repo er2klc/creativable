@@ -150,7 +150,7 @@ serve(async (req) => {
         }
 
         const items = await datasetResponse.json();
-        if (items && items.length > 0) {
+        if (items && Array.isArray(items) && items.length > 0) {
           profileData = items[0];
           break;
         }
@@ -169,7 +169,7 @@ serve(async (req) => {
     console.log('Successfully retrieved profile data');
 
     // Process the LinkedIn data
-    const { leadUpdate, experiencePosts, educationPosts } = processLinkedInData(profileData, leadId);
+    const { leadUpdate, experiencePosts, educationPosts } = await processLinkedInData(profileData, leadId);
 
     // Update the lead with LinkedIn data
     const { error: updateLeadError } = await supabase
@@ -185,20 +185,23 @@ serve(async (req) => {
     if (updateLeadError) throw updateLeadError;
 
     // Insert LinkedIn posts (experience and education)
-    if (experiencePosts.length > 0 || educationPosts.length > 0) {
-      const postsWithLeadId = [...experiencePosts, ...educationPosts].map(post => ({
+    if (Array.isArray(experiencePosts) && experiencePosts.length > 0 || 
+        Array.isArray(educationPosts) && educationPosts.length > 0) {
+      const postsWithLeadId = [...(experiencePosts || []), ...(educationPosts || [])].map(post => ({
         ...post,
         lead_id: leadId
       }));
 
-      const { error: postsError } = await supabase
-        .from('linkedin_posts')
-        .upsert(postsWithLeadId, {
-          onConflict: 'id'
-        });
+      if (postsWithLeadId.length > 0) {
+        const { error: postsError } = await supabase
+          .from('linkedin_posts')
+          .upsert(postsWithLeadId, {
+            onConflict: 'id'
+          });
 
-      if (postsError) {
-        console.error('Error storing LinkedIn posts:', postsError);
+        if (postsError) {
+          console.error('Error storing LinkedIn posts:', postsError);
+        }
       }
     }
 
