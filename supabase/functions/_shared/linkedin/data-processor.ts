@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { Database } from '../../../types/database';
 
 export async function processLinkedInData(profileData: any, leadId: string) {
