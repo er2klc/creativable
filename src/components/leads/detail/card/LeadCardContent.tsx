@@ -41,7 +41,7 @@ export const LeadCardContent = ({ lead }: LeadCardContentProps) => {
           {socialUsername && (
             <div className="text-sm text-gray-500">@{socialUsername}</div>
           )}
-          {lead.current_company_name && (
+          {(lead.position || lead.current_company_name) && (
             <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
               <Briefcase className="h-4 w-4" />
               <div className="flex flex-wrap gap-x-2">

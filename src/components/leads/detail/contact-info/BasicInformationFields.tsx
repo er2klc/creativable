@@ -3,7 +3,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { InfoRow } from "./InfoRow";
 import { ContactInfoGroup } from "./ContactInfoGroup";
-import { User, AtSign, Phone, Globe, Calendar, Building2, MapPin, Hash } from "lucide-react";
+import { User, AtSign, Phone, Globe, Calendar, Building2, MapPin, Hash, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,8 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
     { icon: Phone, label: settings?.language === "en" ? "Phone" : "Telefon", field: "phone_number", value: lead.phone_number },
     { icon: Globe, label: settings?.language === "en" ? "Website" : "Webseite", field: "website", value: lead.website },
     { icon: Calendar, label: settings?.language === "en" ? "Birth Date" : "Geburtsdatum", field: "birth_date", value: lead.birth_date },
-    { icon: Building2, label: settings?.language === "en" ? "Company" : "Firma", field: "company_name", value: lead.company_name },
+    { icon: Building2, label: settings?.language === "en" ? "Company" : "Firma", field: "current_company_name", value: lead.current_company_name },
+    { icon: Briefcase, label: settings?.language === "en" ? "Position" : "Position", field: "position", value: lead.position },
     { icon: MapPin, label: settings?.language === "en" ? "City" : "Stadt", field: "city", value: lead.city }
   ];
 
@@ -86,6 +87,26 @@ export function BasicInformationFields({ lead, onUpdate }: BasicInformationField
             onUpdate={onUpdate}
           />
         ))}
+
+        {lead.platform === 'LinkedIn' && lead.social_media_bio && (
+          <InfoRow
+            icon={User}
+            label={settings?.language === "en" ? "Bio" : "Bio"}
+            value={lead.social_media_bio}
+            field="social_media_bio"
+            onUpdate={onUpdate}
+          />
+        )}
+
+        {lead.platform === 'LinkedIn' && lead.industry && (
+          <InfoRow
+            icon={Building2}
+            label={settings?.language === "en" ? "Industry" : "Branche"}
+            value={lead.industry}
+            field="industry"
+            onUpdate={onUpdate}
+          />
+        )}
 
         <ContactInfoGroup
           title={settings?.language === "en" ? "Interests & Skills" : "Interessen & Skills"}
