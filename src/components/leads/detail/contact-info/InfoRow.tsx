@@ -136,7 +136,7 @@ export function InfoRow({
             <div 
               onClick={() => !isReordering && handleStartEdit(value)}
               className={cn(
-                "text-sm py-0.5 min-h-[20px]",
+                "text-sm py-0.5 min-h-[20px] truncate max-w-full",
                 !isReordering && "cursor-pointer text-gray-900 hover:text-gray-700 transition-colors"
               )}
             >
