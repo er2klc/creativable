@@ -110,16 +110,29 @@ serve(async (req) => {
       }
 
       const status = await statusResponse.json();
-      console.log('Run status response:', JSON.stringify(status, null, 2));
+      console.log("Full Apify Status Response:", JSON.stringify(status, null, 2));
 
-      // Calculate progress based on status and attempts
-      let progress = 30;
-      let statusMessage = 'Daten werden analysiert... 📊';
-      
+      // Check for empty or invalid response
+      if (!status || !status.data) {
+        console.error('Apify returned an empty or undefined response:', status);
+        throw new Error('Apify API call failed - no response received');
+      }
+
+      // Check for Apify error messages
+      if (status.error || status.data?.errorMessage) {
+        console.error("Apify Error Response:", status.error || status.data?.errorMessage);
+        throw new Error(`Apify Error: ${status.error || status.data?.errorMessage}`);
+      }
+
+      // Check for valid status field
       if (!status.data?.status) {
         console.error('Invalid status response:', status);
         throw new Error('Invalid status response from Apify');
       }
+
+      // Calculate progress based on status and attempts
+      let progress = 30;
+      let statusMessage = 'Daten werden analysiert... 📊';
 
       switch (status.data.status) {
         case 'RUNNING':
@@ -192,11 +205,10 @@ serve(async (req) => {
     console.log('Successfully retrieved profile data');
 
     // Process the LinkedIn data
-    const { leadUpdate, experiencePosts, educationPosts } = await processLinkedInData(profileData, leadId);
+    const { leadUpdate, linkedinPosts } = await processLinkedInData(profileData, leadId);
     console.log('Processed LinkedIn data:', {
       leadUpdate,
-      experiencePosts,
-      educationPosts
+      linkedinPosts
     });
 
     // Update the lead with LinkedIn data
@@ -212,24 +224,16 @@ serve(async (req) => {
 
     if (updateLeadError) throw updateLeadError;
 
-    // Insert LinkedIn posts (experience and education)
-    if (Array.isArray(experiencePosts) && experiencePosts.length > 0 || 
-        Array.isArray(educationPosts) && educationPosts.length > 0) {
-      const postsWithLeadId = [...(experiencePosts || []), ...(educationPosts || [])].map(post => ({
-        ...post,
-        lead_id: leadId
-      }));
+    // Insert LinkedIn posts
+    if (Array.isArray(linkedinPosts) && linkedinPosts.length > 0) {
+      const { error: postsError } = await supabase
+        .from('linkedin_posts')
+        .upsert(linkedinPosts, {
+          onConflict: 'id'
+        });
 
-      if (postsWithLeadId.length > 0) {
-        const { error: postsError } = await supabase
-          .from('linkedin_posts')
-          .upsert(postsWithLeadId, {
-            onConflict: 'id'
-          });
-
-        if (postsError) {
-          console.error('Error storing LinkedIn posts:', postsError);
-        }
+      if (postsError) {
+        console.error('Error storing LinkedIn posts:', postsError);
       }
     }
 
