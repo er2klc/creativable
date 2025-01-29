@@ -57,12 +57,12 @@ serve(async (req) => {
       throw initialScanError;
     }
 
-    // Start the Apify run
+    // Start the Apify run with the new actor and input format
     console.log('Starting Apify actor run for profile:', username);
     await updateScanProgress(supabase, leadId, 10, 'Profil wird aufgerufen... 🔍');
 
     const runResponse = await fetch(
-      'https://api.apify.com/v2/acts/apimaestro~linkedin-profile-detail/runs',
+      'https://api.apify.com/v2/acts/supreme_coder~linkedin-profile-scraper/runs',
       {
         method: 'POST',
         headers: {
@@ -70,8 +70,15 @@ serve(async (req) => {
           'Authorization': `Bearer ${settings.apify_api_key}`,
         },
         body: JSON.stringify({
-          username: username
-        })
+          findContacts: false,
+          scrapeCompany: false,
+          urls: [
+            {
+              url: `https://www.linkedin.com/in/${username}/`,
+              method: "GET",
+            },
+          ],
+        }),
       }
     );
 
