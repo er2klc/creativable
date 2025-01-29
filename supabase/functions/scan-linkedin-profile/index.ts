@@ -63,13 +63,13 @@ serve(async (req) => {
       // Prepare the LinkedIn profile URL
       const linkedInUrl = username.startsWith('https://') ? 
         username : 
-        `https://www.linkedin.com/in/${username.replace(/^@/, '')}`;
+        `https://www.linkedin.com/in/${username.replace(/^@/, '')}/`;
 
       console.log('Starting Apify actor run for profile URL:', linkedInUrl);
 
-      // Start the Apify run using run-sync endpoint
+      // Start the Apify run using run-sync endpoint with new actor and input format
       const runResponse = await fetch(
-        'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/run-sync',
+        'https://api.apify.com/v2/acts/supreme_coder~linkedin-profile-scraper/run-sync',
         {
           method: 'POST',
           headers: {
@@ -77,7 +77,14 @@ serve(async (req) => {
             'Authorization': `Bearer ${settings.apify_api_key}`,
           },
           body: JSON.stringify({
-            url: [linkedInUrl]
+            findContacts: false,
+            scrapeCompany: false,
+            urls: [
+              {
+                url: linkedInUrl,
+                method: "GET"
+              }
+            ]
           })
         }
       );
