@@ -1,4 +1,4 @@
-import { Share2, UserPlus } from "lucide-react";
+import { Share2 } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { InfoRow } from "./InfoRow";
@@ -15,7 +15,6 @@ export function SourceInfoFields({ lead, onUpdate, showToast = false }: SourceIn
 
   const fields = [
     { icon: Share2, label: settings?.language === "en" ? "Contact Source" : "Kontakt-Quelle", field: "platform", value: lead.platform, isSourceField: true },
-    { icon: UserPlus, label: settings?.language === "en" ? "Referred By" : "Empfohlen durch", field: "referred_by", value: lead.referred_by },
   ];
 
   return (

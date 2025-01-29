@@ -11,5 +11,4 @@ export type LeadWithRelations = Tables<"leads"> & {
   linkedin_posts?: any[];
   parent_id?: string | null;
   level?: number | null;
-  avatar_url?: string | null;
 };

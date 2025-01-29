@@ -1,4 +1,4 @@
-import { Calendar, MessageSquare, Clock, Languages } from "lucide-react";
+import { Calendar, Languages } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { InfoRow } from "./InfoRow";
@@ -14,8 +14,6 @@ export function AdditionalInfoFields({ lead, onUpdate }: AdditionalInfoFieldsPro
 
   const fields = [
     { icon: Calendar, label: settings?.language === "en" ? "Birth Date" : "Geburtsdatum", field: "birth_date", value: lead.birth_date ? new Date(lead.birth_date).toLocaleDateString() : null },
-    { icon: MessageSquare, label: settings?.language === "en" ? "Preferred Contact Channel" : "Bevorzugter Kontaktkanal", field: "preferred_communication_channel", value: lead.preferred_communication_channel },
-    { icon: Clock, label: settings?.language === "en" ? "Best Contact Times" : "Beste Erreichbarkeitszeit", field: "best_contact_times", value: lead.best_contact_times },
     { icon: Languages, label: settings?.language === "en" ? "Languages" : "Sprachen", field: "languages", value: lead.languages },
   ];
 

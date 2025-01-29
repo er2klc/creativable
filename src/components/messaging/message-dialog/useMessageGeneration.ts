@@ -14,8 +14,6 @@ export function useMessageGeneration() {
           leadPlatform: lead.platform,
           leadIndustry: lead.industry,
           companyName: lead.company_name,
-          productsServices: lead.products_services,
-          targetAudience: lead.target_audience,
           usp: lead.usp,
         },
       });
