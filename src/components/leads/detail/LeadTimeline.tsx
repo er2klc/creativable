@@ -38,8 +38,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       dueDate: task.due_date,
       status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : undefined,
       completedAt: task.completed ? task.updated_at : undefined,
-      color: task.color,
-      meetingType: task.meeting_type
+      color: task.color
     }
   });
 
@@ -118,39 +117,51 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
-  // Transform social media posts to include required fields
+  // Transform social media posts
   const transformedPosts: SocialMediaPostRaw[] = [
     ...(Array.isArray(lead.social_media_posts) ? lead.social_media_posts.map(post => ({
-      ...post,
-      platform: post.platform || 'instagram',
-      type: post.post_type || 'post',
-      caption: post.content || '',
-      likesCount: post.likes_count || 0,
-      commentsCount: post.comments_count || 0,
-      timestamp: post.posted_at || post.created_at,
-      engagement_count: (post.likes_count || 0) + (post.comments_count || 0),
-      media_type: post.media_type || 'post',
-      media_urls: post.media_urls || [],
-      content: post.content || '',
-      url: post.url || null
+      id: typeof post === 'string' ? post : post.id || '',
+      platform: typeof post === 'string' ? '' : post.platform || 'instagram',
+      type: typeof post === 'string' ? '' : post.post_type || 'post',
+      post_type: typeof post === 'string' ? 'post' : post.post_type || 'post',
+      caption: typeof post === 'string' ? '' : post.content || '',
+      likesCount: typeof post === 'string' ? 0 : post.likes_count || 0,
+      commentsCount: typeof post === 'string' ? 0 : post.comments_count || 0,
+      timestamp: typeof post === 'string' ? '' : post.posted_at || post.created_at || '',
+      engagement_count: typeof post === 'string' ? 0 : (post.likes_count || 0) + (post.comments_count || 0),
+      media_type: typeof post === 'string' ? '' : post.media_type || 'post',
+      media_urls: typeof post === 'string' ? [] : post.media_urls || [],
+      content: typeof post === 'string' ? '' : post.content || '',
+      url: typeof post === 'string' ? null : post.url || null,
+      location: null,
+      mentioned_profiles: null,
+      tagged_profiles: null,
+      local_video_path: null,
+      local_media_paths: null,
+      video_url: null,
+      metadata: {}
     })) : []),
     ...(Array.isArray(lead.linkedin_posts) ? lead.linkedin_posts.map(post => ({
       id: post.id,
       platform: 'linkedin',
       type: post.post_type || 'post',
+      post_type: post.post_type || 'post',
       caption: post.content || '',
       likesCount: post.likes_count || 0,
       commentsCount: post.comments_count || 0,
-      timestamp: post.posted_at || post.created_at,
+      timestamp: post.posted_at || post.created_at || '',
       engagement_count: (post.likes_count || 0) + (post.comments_count || 0) + (post.shares_count || 0),
       media_type: post.media_type || 'post',
       media_urls: post.media_urls || [],
       content: post.content || '',
       url: post.url || null,
-      metadata: {
-        ...post.metadata,
-        reactions: post.reactions || {}
-      },
+      location: null,
+      mentioned_profiles: null,
+      tagged_profiles: null,
+      local_video_path: null,
+      local_media_paths: null,
+      video_url: null,
+      metadata: post.metadata || {},
       company: post.company,
       position: post.position,
       start_date: post.start_date,

@@ -5,6 +5,7 @@ export interface TimelineItem {
   created_at: string;
   timestamp: string;
   platform?: string;
+  status?: string;
   metadata?: {
     type?: string;
     dueDate?: string;
@@ -25,6 +26,13 @@ export interface TimelineItem {
     shares_count?: number;
     media_urls?: string[];
     reactions?: Record<string, any>;
+    color?: string;
+    company?: string;
+    position?: string;
+    start_date?: string;
+    end_date?: string;
+    school?: string;
+    degree?: string;
   };
 }
 
@@ -32,7 +40,7 @@ export interface SocialMediaPostRaw {
   id: string;
   platform: string;
   type: string;
-  post_type?: string;
+  post_type: string;
   content: string | null;
   caption: string | null;
   likesCount: number | null;
