@@ -108,6 +108,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         activeTimeline={activeTimeline}
         onTimelineChange={setActiveTimeline}
         platform={lead.platform}
+        hasLinkedInPosts={hasLinkedInPosts}
       />
 
       {activeTimeline === 'activities' ? (
@@ -125,7 +126,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           ))}
         </div>
       ) : (
-        lead.platform === 'LinkedIn' && hasLinkedInPosts ? (
+        hasLinkedInPosts ? (
           <LinkedInTimeline posts={lead.linkedin_posts || []} />
         ) : (
           <SocialMediaTimeline 

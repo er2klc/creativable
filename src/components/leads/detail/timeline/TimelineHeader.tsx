@@ -8,15 +8,18 @@ interface TimelineHeaderProps {
   activeTimeline: 'activities' | 'social';
   onTimelineChange: (timeline: 'activities' | 'social') => void;
   platform?: string;
+  hasLinkedInPosts?: boolean;
 }
 
 export const TimelineHeader = ({ 
   showSocialTimeline, 
   activeTimeline,
   onTimelineChange,
-  platform
+  platform,
+  hasLinkedInPosts
 }: TimelineHeaderProps) => {
   const { settings } = useSettings();
+  const displayPlatform = hasLinkedInPosts ? 'LinkedIn' : platform;
 
   const handleClick = (timeline: 'activities' | 'social') => {
     if (showSocialTimeline) {
