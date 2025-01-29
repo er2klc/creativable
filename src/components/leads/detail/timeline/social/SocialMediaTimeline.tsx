@@ -34,7 +34,7 @@ interface SocialMediaTimelineProps {
 }
 
 export const SocialMediaTimeline = ({ posts, linkedInPosts = [], platform }: SocialMediaTimelineProps) => {
-  if (platform === 'linkedin' && linkedInPosts.length > 0) {
+  if (platform === 'LinkedIn' && linkedInPosts.length > 0) {
     return <LinkedInTimeline posts={linkedInPosts} />;
   }
 
