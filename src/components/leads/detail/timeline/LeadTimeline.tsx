@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { TimelineHeader } from "./TimelineHeader";
 import { TimelineItem } from "./TimelineItem";
-import { SocialMediaTimeline } from "./social/SocialMediaTimeline";
+import { SocialMediaTimeline } from "../timeline/SocialMediaTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "../types/lead";
 import { TimelineItem as TimelineItemType } from "./TimelineUtils";
