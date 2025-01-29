@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { Database } from '../../../types/database';
 
+// Remove database types import since it's not needed in the edge function
 export async function processLinkedInData(profileData: any, leadId: string) {
   console.log('Processing LinkedIn data for lead:', leadId);
   
