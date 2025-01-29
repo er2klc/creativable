@@ -57,7 +57,6 @@ serve(async (req) => {
       throw initialScanError;
     }
 
-    // Start the Apify run with the new actor and input format
     console.log('Starting Apify actor run for profile:', username);
     await updateScanProgress(supabase, leadId, 10, 'Profil wird aufgerufen... 🔍');
 
@@ -92,7 +91,6 @@ serve(async (req) => {
     console.log('Apify run response:', JSON.stringify(runData, null, 2));
     
     const runId = runData.data?.id;
-    
     if (!runId) throw new Error('No run ID returned from Apify');
     console.log('Apify run started with ID:', runId);
 
@@ -118,7 +116,6 @@ serve(async (req) => {
       const status = await statusResponse.json();
       console.log('Run status:', status.data?.status);
 
-      // Calculate progress based on status and attempts
       let progress = 30;
       let statusMessage = 'Daten werden analysiert... 📊';
       
@@ -181,11 +178,26 @@ serve(async (req) => {
     console.log('Successfully retrieved profile data');
 
     // Process the LinkedIn data
-    const { leadUpdate, experiencePosts, educationPosts } = await processLinkedInData(profileData, leadId);
+    const { 
+      leadUpdate, 
+      experiencePosts, 
+      educationPosts,
+      certificationPosts,
+      coursePosts,
+      honorPosts,
+      volunteerPosts,
+      skillTags 
+    } = await processLinkedInData(profileData, leadId);
+
     console.log('Processed LinkedIn data:', {
       leadUpdate,
       experiencePosts: experiencePosts.length,
-      educationPosts: educationPosts.length
+      educationPosts: educationPosts.length,
+      certificationPosts: certificationPosts.length,
+      coursePosts: coursePosts.length,
+      honorPosts: honorPosts.length,
+      volunteerPosts: volunteerPosts.length,
+      skillTags: skillTags.length
     });
 
     // Update the lead with LinkedIn data
@@ -201,20 +213,38 @@ serve(async (req) => {
 
     if (updateLeadError) throw updateLeadError;
 
-    // Insert LinkedIn posts (experience and education)
-    if (experiencePosts.length > 0 || educationPosts.length > 0) {
-      const allPosts = [...experiencePosts, ...educationPosts];
-      
-      if (allPosts.length > 0) {
-        const { error: postsError } = await supabase
-          .from('linkedin_posts')
-          .upsert(allPosts, {
-            onConflict: 'id'
-          });
+    // Insert all LinkedIn posts
+    const allPosts = [
+      ...experiencePosts,
+      ...educationPosts,
+      ...certificationPosts,
+      ...coursePosts,
+      ...honorPosts,
+      ...volunteerPosts
+    ];
+    
+    if (allPosts.length > 0) {
+      const { error: postsError } = await supabase
+        .from('linkedin_posts')
+        .upsert(allPosts, {
+          onConflict: 'id'
+        });
 
-        if (postsError) {
-          console.error('Error storing LinkedIn posts:', postsError);
-        }
+      if (postsError) {
+        console.error('Error storing LinkedIn posts:', postsError);
+      }
+    }
+
+    // Insert skill tags
+    if (skillTags.length > 0) {
+      const { error: tagsError } = await supabase
+        .from('lead_tags')
+        .upsert(skillTags, {
+          onConflict: 'lead_id,tag'
+        });
+
+      if (tagsError) {
+        console.error('Error storing skill tags:', tagsError);
       }
     }
 
