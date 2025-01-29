@@ -16,8 +16,9 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const { settings } = useSettings();
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
   
-  const showSocialTimeline = (Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0) || 
-                            (Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0);
+  const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
+  const hasSocialPosts = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
+  const showSocialTimeline = hasLinkedInPosts || hasSocialPosts;
 
   const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
     id: note.id,
@@ -124,8 +125,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           ))}
         </div>
       ) : (
-        lead.platform === 'LinkedIn' && lead.linkedin_posts ? (
-          <LinkedInTimeline posts={lead.linkedin_posts} />
+        lead.platform === 'LinkedIn' && hasLinkedInPosts ? (
+          <LinkedInTimeline posts={lead.linkedin_posts || []} />
         ) : (
           <SocialMediaTimeline 
             posts={lead.social_media_posts || []} 

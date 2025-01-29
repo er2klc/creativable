@@ -1,55 +1,66 @@
+import { Settings } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 
 interface TimelineHeaderProps {
   title: string;
-  showSocialTimeline: boolean;
+  showSocialTimeline?: boolean;
   activeTimeline: 'activities' | 'social';
   onTimelineChange: (timeline: 'activities' | 'social') => void;
   platform?: string;
 }
 
 export const TimelineHeader = ({ 
-  title, 
-  showSocialTimeline,
+  showSocialTimeline, 
   activeTimeline,
   onTimelineChange,
-  platform 
+  platform
 }: TimelineHeaderProps) => {
   const { settings } = useSettings();
 
-  const getSocialTimelineTitle = () => {
-    if (platform === 'LinkedIn') {
-      return settings?.language === "en" ? "Experience & Education" : "Lebenslauf & Erfahrung";
+  const handleClick = (timeline: 'activities' | 'social') => {
+    if (showSocialTimeline) {
+      onTimelineChange(timeline);
     }
+  };
+
+  const getTitle = () => {
+    if (activeTimeline === 'activities') {
+      return settings?.language === "en" ? "Activities" : "Aktivitäten";
+    }
+    
+    if (platform === 'LinkedIn') {
+      return settings?.language === "en" ? "LinkedIn Activities" : "LinkedIn Aktivitäten";
+    }
+    
     return settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten";
   };
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between mb-4">
       <h3 
         className={`text-lg font-semibold ${showSocialTimeline ? 'cursor-pointer hover:text-primary' : ''}`}
         onClick={() => handleClick('activities')}
       >
-        {activeTimeline === 'activities' ? 
-          (settings?.language === "en" ? "Activities" : "Aktivitäten") :
-          (settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten")
-        }
+        {getTitle()}
       </h3>
       
       {showSocialTimeline && (
-        <h3 
-          className={`text-lg font-semibold cursor-pointer hover:text-primary`}
+        <div 
+          className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-primary"
           onClick={() => handleClick('social')}
         >
-          {getSocialTimelineTitle()}
-        </h3>
+          <Settings className="h-4 w-4" />
+          <span>
+            {activeTimeline === 'social' ? 
+              (settings?.language === "en" ? "Show Activities" : "Aktivitäten anzeigen") : 
+              (platform === 'LinkedIn' ?
+                (settings?.language === "en" ? "Show LinkedIn Activities" : "LinkedIn Aktivitäten anzeigen") :
+                (settings?.language === "en" ? "Show Social Media" : "Social Media anzeigen")
+              )
+            }
+          </span>
+        </div>
       )}
     </div>
   );
-
-  function handleClick(type: 'activities' | 'social') {
-    if (showSocialTimeline) {
-      onTimelineChange(type);
-    }
-  }
 };
