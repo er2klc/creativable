@@ -2,7 +2,6 @@ import { useState } from "react";
 import { TimelineHeader } from "./TimelineHeader";
 import { TimelineItem } from "./TimelineItem";
 import { SocialMediaTimeline } from "./social/SocialMediaTimeline";
-import { LinkedInTimeline } from "./social/LinkedInTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "../types/lead";
 import { TimelineItem as TimelineItemType } from "./TimelineUtils";
@@ -14,10 +13,9 @@ interface LeadTimelineProps {
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
   const { settings } = useSettings();
-  const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social' | 'linkedin'>('activities');
+  const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
   
-  const showSocialTimeline = lead.platform === 'Instagram' && Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
-  const showLinkedInTimeline = lead.platform === 'LinkedIn' && Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
+  const showSocialTimeline = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
 
   const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
     id: note.id,
@@ -36,9 +34,11 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     created_at: task.created_at,
     timestamp: task.created_at,
     metadata: {
-      completedAt: task.completed ? task.updated_at : undefined,
       dueDate: task.due_date,
-      status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : 'outdated'
+      status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : undefined,
+      completedAt: task.completed ? task.updated_at : undefined,
+      color: task.color,
+      meetingType: task.meeting_type
     }
   });
 
@@ -97,9 +97,11 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   return (
     <div className="space-y-4">
       <TimelineHeader 
-        title={settings?.language === "en" ? "Activities" : "Aktivitäten"}
+        title={activeTimeline === 'activities' ? 
+          (settings?.language === "en" ? "Activities" : "Aktivitäten") :
+          (settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten")
+        }
         showSocialTimeline={showSocialTimeline}
-        showLinkedInTimeline={showLinkedInTimeline}
         activeTimeline={activeTimeline}
         onTimelineChange={setActiveTimeline}
       />
@@ -118,10 +120,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
             />
           ))}
         </div>
-      ) : activeTimeline === 'social' ? (
-        <SocialMediaTimeline posts={lead.social_media_posts || []} />
       ) : (
-        <LinkedInTimeline posts={lead.linkedin_posts || []} />
+        <SocialMediaTimeline posts={lead.social_media_posts || []} />
       )}
     </div>
   );
