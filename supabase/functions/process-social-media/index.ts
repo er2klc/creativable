@@ -13,12 +13,12 @@ serve(async (req) => {
   }
 
   try {
-    const { mediaUrl, leadId, platform, postId, mediaType } = await req.json();
-    console.log('Processing media:', { mediaUrl, platform, leadId, postId, mediaType });
+    const { leadId, mediaUrl, postId, mediaType } = await req.json();
+    console.log('Processing media:', { mediaUrl, leadId, postId, mediaType });
 
-    if (!mediaUrl) {
-      console.error('Missing mediaUrl parameter:', { leadId, platform, postId });
-      throw new Error('Missing mediaUrl parameter');
+    if (!mediaUrl || !leadId) {
+      console.error('Missing required parameters:', { leadId, mediaUrl });
+      throw new Error('Missing required parameters');
     }
 
     // Skip video processing
@@ -41,6 +41,18 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Get lead data to access social_media_posts
+    const { data: lead, error: leadError } = await supabase
+      .from('leads')
+      .select('social_media_posts')
+      .eq('id', leadId)
+      .single();
+
+    if (leadError) {
+      console.error('Error fetching lead:', leadError);
+      throw leadError;
+    }
 
     // Download image
     console.log('Downloading image from:', mediaUrl);
@@ -105,20 +117,41 @@ serve(async (req) => {
       throw publicUrlError;
     }
 
-    // Update social_media_posts table
-    const { error: updateError } = await supabase
-      .from('social_media_posts')
-      .update({
-        bucket_path: filePath,
-        media_urls: [publicUrl],
-        media_processing_status: 'processed'
-      })
-      .eq('id', postId)
-      .eq('lead_id', leadId);
+    // Find the post in the social_media_posts JSON array
+    const posts = lead.social_media_posts || [];
+    const post = posts.find((p: any) => p.id === postId);
 
-    if (updateError) {
-      console.error('Error updating social media post:', updateError);
-      throw updateError;
+    if (!post) {
+      console.error('Post not found in lead data:', { postId, leadId });
+      throw new Error('Post not found in lead data');
+    }
+
+    // Create entry in social_media_posts table
+    const { error: insertError } = await supabase
+      .from('social_media_posts')
+      .insert({
+        id: postId,
+        lead_id: leadId,
+        platform: 'Instagram',
+        post_type: post.type || 'post',
+        content: post.caption,
+        likes_count: post.likesCount,
+        comments_count: post.commentsCount,
+        url: post.url,
+        location: post.locationName,
+        posted_at: post.timestamp,
+        media_urls: [mediaUrl],
+        bucket_path: filePath,
+        media_type: 'image',
+        media_processing_status: 'processed',
+        hashtags: post.hashtags,
+        first_comment: post.firstComment,
+        engagement_count: post.engagementCount
+      });
+
+    if (insertError) {
+      console.error('Error inserting social media post:', insertError);
+      throw insertError;
     }
 
     console.log('Successfully processed image:', {
