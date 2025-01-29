@@ -166,7 +166,7 @@ serve(async (req) => {
     console.log('Successfully retrieved profile data');
 
     // Process the LinkedIn data
-    const { scanHistory, leadData } = processLinkedInData(profileData);
+    const { scanHistory, leadData, posts } = processLinkedInData(profileData);
 
     // Update the lead with LinkedIn data
     const { error: updateLeadError } = await supabase
@@ -180,6 +180,24 @@ serve(async (req) => {
       .eq('id', leadId);
 
     if (updateLeadError) throw updateLeadError;
+
+    // Insert LinkedIn posts (experience and education)
+    if (posts.length > 0) {
+      const postsWithLeadId = posts.map(post => ({
+        ...post,
+        lead_id: leadId
+      }));
+
+      const { error: postsError } = await supabase
+        .from('linkedin_posts')
+        .upsert(postsWithLeadId, {
+          onConflict: 'id'
+        });
+
+      if (postsError) {
+        console.error('Error storing LinkedIn posts:', postsError);
+      }
+    }
 
     // Update scan history with final success status
     await updateScanProgress(supabase, leadId, 100, 'Scan erfolgreich abgeschlossen! ✅', true);

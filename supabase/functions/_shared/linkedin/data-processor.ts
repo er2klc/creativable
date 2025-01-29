@@ -5,6 +5,9 @@ export function processLinkedInData(profileData: any) {
   const websiteMatch = profileData.basic_info?.summary?.match(/(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+(?:\.[a-zA-Z]{2,})+(?:\/[^\s]*)?)/);
   const website = websiteMatch ? websiteMatch[0] : null;
 
+  // Process languages array
+  const languages = profileData.languages?.map((lang: any) => lang.language).filter(Boolean) || [];
+
   // Prepare lead data - only include fields that exist in the leads table
   const leadData = {
     name: profileData.basic_info?.fullname || '',
@@ -19,8 +22,46 @@ export function processLinkedInData(profileData: any) {
     social_media_username: profileData.profile_url?.split('/in/')?.[1]?.replace(/\/$/, '') || null,
     social_media_followers: profileData.followers_count || 0,
     social_media_following: profileData.connections_count || 0,
-    education_summary: createEducationSummary(profileData.education)
+    education_summary: createEducationSummary(profileData.education),
+    languages: languages,
+    last_social_media_scan: new Date().toISOString()
   };
+
+  // Prepare experience posts
+  const experiencePosts = (profileData.experience || []).map((exp: any) => ({
+    id: `${profileData.profile_id}-exp-${Math.random().toString(36).substr(2, 9)}`,
+    lead_id: null, // Will be set when saving
+    post_type: 'experience',
+    company: exp.company || '',
+    position: exp.title || '',
+    location: exp.location || '',
+    start_date: exp.start_date ? new Date(exp.start_date).toISOString() : null,
+    end_date: exp.end_date ? new Date(exp.end_date).toISOString() : null,
+    content: exp.description || '',
+    metadata: {
+      is_current: exp.is_current || false,
+      company_linkedin_url: exp.company_linkedin_url || null,
+      company_logo: exp.company_logo || null
+    }
+  }));
+
+  // Prepare education posts
+  const educationPosts = (profileData.education || []).map((edu: any) => ({
+    id: `${profileData.profile_id}-edu-${Math.random().toString(36).substr(2, 9)}`,
+    lead_id: null, // Will be set when saving
+    post_type: 'education',
+    school: edu.school || '',
+    degree: edu.degree || '',
+    start_date: edu.start_date ? new Date(edu.start_date).toISOString() : null,
+    end_date: edu.end_date ? new Date(edu.end_date).toISOString() : null,
+    school_linkedin_url: edu.school_linkedin_url || null,
+    content: edu.description || '',
+    metadata: {
+      field_of_study: edu.field_of_study || null,
+      activities: edu.activities || null,
+      school_logo: edu.school_logo || null
+    }
+  }));
 
   // Prepare scan history data
   const scanHistory = {
@@ -42,7 +83,11 @@ export function processLinkedInData(profileData: any) {
     recommendations: profileData.recommendations || []
   };
 
-  return { scanHistory, leadData };
+  return { 
+    scanHistory, 
+    leadData,
+    posts: [...experiencePosts, ...educationPosts]
+  };
 }
 
 function createEducationSummary(education: any[]): string {
@@ -50,7 +95,6 @@ function createEducationSummary(education: any[]): string {
     return '';
   }
 
-  // Get the highest/latest education entry
   const latestEducation = education[0];
   if (!latestEducation) return '';
 
