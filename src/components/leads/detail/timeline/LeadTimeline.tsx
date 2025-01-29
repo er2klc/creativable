@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { TimelineHeader } from "./TimelineHeader";
 import { TimelineItem } from "./TimelineItem";
-import { SocialMediaTimeline } from "./SocialMediaTimeline";
+import { SocialMediaTimeline } from "./social/SocialMediaTimeline";
+import { LinkedInTimeline } from "./social/LinkedInTimeline";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadWithRelations } from "./types/lead";
+import { LeadWithRelations } from "../types/lead";
 import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 
 interface LeadTimelineProps {
@@ -13,9 +14,10 @@ interface LeadTimelineProps {
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
   const { settings } = useSettings();
-  const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
+  const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social' | 'linkedin'>('activities');
   
-  const showSocialTimeline = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
+  const showSocialTimeline = lead.platform === 'Instagram' && Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
+  const showLinkedInTimeline = lead.platform === 'LinkedIn' && Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
 
   const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
     id: note.id,
@@ -92,36 +94,12 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
-  // Transform social media posts
-  const transformedPosts = Array.isArray(lead.social_media_posts) 
-    ? (lead.social_media_posts as any[]).map(post => ({
-        ...post,
-        posted_at: post.posted_at || post.created_at || new Date().toISOString(),
-        engagement_count: post.engagement_count || 0,
-        first_comment: post.first_comment || '',
-        media_type: post.media_type || 'post',
-        media_urls: post.media_urls || [],
-        tagged_users: post.tagged_users || [],
-        comments_count: post.comments_count || 0,
-        content: post.content || '',
-        created_at: post.created_at || post.posted_at || new Date().toISOString(),
-        likes_count: post.likes_count || 0,
-        location: post.location || '',
-        mentioned_profiles: post.mentioned_profiles || [],
-        tagged_profiles: post.tagged_profiles || [],
-        platform: post.platform || 'unknown',
-        post_type: post.post_type || 'post',
-        url: post.url || null,
-        lead_id: post.lead_id || lead.id,
-        metadata: post.metadata || {}
-      }))
-    : [];
-
   return (
     <div className="space-y-4">
       <TimelineHeader 
         title={settings?.language === "en" ? "Activities" : "Aktivitäten"}
         showSocialTimeline={showSocialTimeline}
+        showLinkedInTimeline={showLinkedInTimeline}
         activeTimeline={activeTimeline}
         onTimelineChange={setActiveTimeline}
       />
@@ -140,8 +118,10 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
             />
           ))}
         </div>
+      ) : activeTimeline === 'social' ? (
+        <SocialMediaTimeline posts={lead.social_media_posts || []} />
       ) : (
-        <SocialMediaTimeline posts={transformedPosts} />
+        <LinkedInTimeline posts={lead.linkedin_posts || []} />
       )}
     </div>
   );

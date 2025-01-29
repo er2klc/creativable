@@ -1,40 +1,54 @@
-import { cn } from "@/lib/utils";
+import { useSettings } from "@/hooks/use-settings";
+import { Button } from "@/components/ui/button";
 
 interface TimelineHeaderProps {
   title: string;
-  showSocialTimeline?: boolean;
-  activeTimeline: 'activities' | 'social';
-  onTimelineChange: (timeline: 'activities' | 'social') => void;
+  showSocialTimeline: boolean;
+  showLinkedInTimeline?: boolean;
+  activeTimeline: 'activities' | 'social' | 'linkedin';
+  onTimelineChange: (timeline: 'activities' | 'social' | 'linkedin') => void;
 }
 
 export const TimelineHeader = ({ 
   title, 
-  showSocialTimeline = false,
+  showSocialTimeline,
+  showLinkedInTimeline,
   activeTimeline,
   onTimelineChange 
 }: TimelineHeaderProps) => {
+  const { settings } = useSettings();
+
   return (
-    <div className="flex justify-between items-center mb-4">
-      <h3 
-        className={cn(
-          "text-lg font-semibold cursor-pointer transition-colors",
-          activeTimeline === 'activities' ? "text-primary" : "text-muted-foreground hover:text-primary"
-        )}
-        onClick={() => onTimelineChange('activities')}
-      >
-        {title}
-      </h3>
-      
-      {showSocialTimeline && (
-        <h3 
-          className={cn(
-            "text-lg font-semibold cursor-pointer transition-colors",
-            activeTimeline === 'social' ? "text-primary" : "text-muted-foreground hover:text-primary"
+    <div className="flex items-center justify-between">
+      <h3 className="text-lg font-semibold">{title}</h3>
+      {(showSocialTimeline || showLinkedInTimeline) && (
+        <div className="flex gap-2">
+          <Button
+            variant={activeTimeline === 'activities' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onTimelineChange('activities')}
+          >
+            {settings?.language === "en" ? "Activities" : "Aktivitäten"}
+          </Button>
+          {showSocialTimeline && (
+            <Button
+              variant={activeTimeline === 'social' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onTimelineChange('social')}
+            >
+              {settings?.language === "en" ? "Social Media" : "Social Media"}
+            </Button>
           )}
-          onClick={() => onTimelineChange('social')}
-        >
-          Social Media Aktivitäten
-        </h3>
+          {showLinkedInTimeline && (
+            <Button
+              variant={activeTimeline === 'linkedin' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onTimelineChange('linkedin')}
+            >
+              LinkedIn
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );
