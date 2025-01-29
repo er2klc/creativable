@@ -62,7 +62,7 @@ serve(async (req) => {
     await updateScanProgress(supabase, leadId, 10, 'Profil wird aufgerufen... 🔍');
 
     const runResponse = await fetch(
-      'https://api.apify.com/v2/acts/apimaestro~linkedin-profile-detail/runs',
+      'https://api.apify.com/v2/acts/scrap3r~linkedin-people-profiles-by-url/runs',
       {
         method: 'POST',
         headers: {
@@ -70,7 +70,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${settings.apify_api_key}`,
         },
         body: JSON.stringify({
-          username: username
+          url: [`https://www.linkedin.com/in/${username}`]
         })
       }
     );
