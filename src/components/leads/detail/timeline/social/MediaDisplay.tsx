@@ -18,78 +18,120 @@ export const MediaDisplay = ({
   const [emblaRef, emblaApi] = useEmblaCarousel();
   const [processedUrls, setProcessedUrls] = useState<string[]>([]);
 
-  // Medienquellen mit useMemo memoizen
-  const mediaSources = useMemo(() => {
-    return [
-      ...localMediaPaths.map(path => ({
+  // 1. Medienquellen mit strenger Typisierung
+  type MediaSource = {
+    type: 'image' | 'video';
+    path: string;
+    source: 'local' | 'external';
+  };
+
+  const mediaSources = useMemo((): MediaSource[] => {
+    const sources: MediaSource[] = [];
+    
+    // Lokale Pfade immer als Bilder behandeln
+    if (localMediaPaths?.length > 0) {
+      sources.push(...localMediaPaths.map(path => ({
         type: 'image',
         source: 'local',
         path
-      })),
-      ...mediaUrls.filter(url => url.includes('.mp4')).map(url => ({
+      })));
+    }
+
+    // Externe URLs nur als Videos wenn mp4
+    if (mediaUrls?.length > 0) {
+      sources.push(...mediaUrls.filter(url => url.includes('.mp4')).map(url => ({
         type: 'video',
         source: 'external',
         path: url
-      }))
-    ];
+      })));
+    }
+
+    console.log('Medienquellen analysiert:', sources);
+    return sources;
   }, [localMediaPaths, mediaUrls]);
 
-  // Media loading mit useCallback memoizen
+  // 2. Medienladung mit Fehlerbehandlung
   const loadMedia = useCallback(async () => {
     try {
+      console.log('Starte Medienladung für:', mediaSources);
+      
       const urls = await Promise.all(
         mediaSources.map(async (media) => {
           if (media.type === 'video') return media.path;
-          
-          const { data } = supabase.storage
-            .from('social-media-files')
-            .getPublicUrl(media.path);
 
-          return data.publicUrl;
+          // Supabase URL-Generierung mit Validierung
+          if (media.source === 'local') {
+            const { data, error } = supabase.storage
+              .from('social-media-files')
+              .getPublicUrl(media.path);
+
+            if (error) throw error;
+            
+            console.log('Generierte URL für', media.path, ':', data.publicUrl);
+            return data.publicUrl;
+          }
+
+          return media.path;
         })
       );
 
-      // Nur updaten wenn sich URLs tatsächlich ändern
-      const filteredUrls = urls.filter(Boolean);
-      if (JSON.stringify(filteredUrls) !== JSON.stringify(processedUrls)) {
-        setProcessedUrls(filteredUrls);
-      }
-    } catch (error) {
-      console.error("Fehler beim Laden der Medien:", error);
-    }
-  }, [mediaSources, processedUrls]);
+      const validUrls = urls.filter(url => {
+        const isValid = url && url.length > 0;
+        if (!isValid) console.warn('Ungültige URL gefiltert:', url);
+        return isValid;
+      });
 
+      console.log('Gültige URLs:', validUrls);
+      setProcessedUrls(validUrls);
+      
+    } catch (error) {
+      console.error("Kritischer Medienladefehler:", error);
+      setProcessedUrls([]); // Fallback um leere Anzeige zu vermeiden
+    }
+  }, [mediaSources]);
+
+  // 3. Effekt mit klaren Bedingungen
   useEffect(() => {
     if (mediaSources.length > 0) {
+      console.log('Aktiviere Medienladung');
       loadMedia();
+    } else {
+      console.warn('Keine Medienquellen gefunden');
+      setProcessedUrls([]);
     }
   }, [loadMedia, mediaSources]);
 
-  // Debugging nur bei Änderungen
+  // 4. Debugging mit Performance-Optimierung
   useEffect(() => {
     if (processedUrls.length > 0) {
-      console.log('Aktive Medienquellen:', {
-        localMediaPaths,
-        mediaUrls,
-        processedUrls
-      });
+      console.log('Verarbeitete URLs:', processedUrls);
     }
-  }, [processedUrls]); // Nur bei processedUrls-Änderungen
+  }, [processedUrls]);
 
-  if (processedUrls.length === 0) return null;
+  // 5. Garantiertes Rendering mit Fallback
+  if (processedUrls.length === 0) {
+    console.warn('Keine verarbeiteten URLs - Rendere Fallback');
+    return (
+      <div className="bg-gray-100 w-full h-96 flex items-center justify-center rounded-lg">
+        <p className="text-gray-500">Keine Medien verfügbar</p>
+      </div>
+    );
+  }
 
+  // 6. UI-Rendering mit Schlüssel-Reset
   return (
     <div className="relative rounded-lg overflow-hidden">
       {isSidecar ? (
-        <div className="overflow-hidden" ref={emblaRef}>
+        <div className="overflow-hidden" ref={emblaRef} key={processedUrls.join(',')}>
           <div className="flex">
             {processedUrls.map((url, index) => (
-              <div key={index} className="flex-[0_0_100%] min-w-0">
+              <div key={`${url}-${index}`} className="flex-[0_0_100%] min-w-0">
                 {url.includes('.mp4') ? (
                   <video
                     controls
                     className="w-full h-auto object-contain max-h-[400px]"
                     src={url}
+                    aria-label={`Video ${index + 1}`}
                   />
                 ) : (
                   <img
@@ -97,12 +139,17 @@ export const MediaDisplay = ({
                     alt={`Beitragsbild ${index + 1}`}
                     className="w-full h-auto object-contain max-h-[400px]"
                     loading="lazy"
+                    decoding="async"
+                    onError={(e) => {
+                      console.error('Bildladefehler:', e.currentTarget.src);
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 )}
               </div>
             ))}
           </div>
-          
+
           {processedUrls.length > 1 && (
             <>
               <Button
@@ -130,13 +177,19 @@ export const MediaDisplay = ({
             controls
             className="w-full h-auto object-contain max-h-[400px]"
             src={processedUrls[0]}
+            aria-label="Hauptvideo"
           />
         ) : (
           <img
             src={processedUrls[0]}
-            alt="Beitragsbild"
+            alt="Hauptbild"
             className="w-full h-auto object-contain max-h-[400px]"
             loading="lazy"
+            decoding="async"
+            onError={(e) => {
+              console.error('Bildladefehler:', e.currentTarget.src);
+              e.currentTarget.style.display = 'none';
+            }}
           />
         )
       )}
