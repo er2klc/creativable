@@ -11,18 +11,6 @@ interface MediaDisplayProps {
 export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
 
-  const getProxiedUrl = (url: string) => {
-    if (!url) return '';
-    
-    // Return original URL for non-Instagram images or videos
-    if (url.startsWith('http')) {
-      return url;
-    }
-    
-    // Handle storage URLs
-    return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${url}`;
-  };
-
   if (mediaUrls.length === 0) return null;
 
   if (isSidecar) {
@@ -33,7 +21,7 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
             {mediaUrls.map((url, index) => (
               <div key={index} className="flex-[0_0_100%] min-w-0">
                 <img
-                  src={getProxiedUrl(url)}
+                  src={url}
                   alt={`Media ${index + 1}`}
                   className="w-full h-auto object-contain max-h-[400px]"
                 />
@@ -65,18 +53,17 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
     );
   }
 
-  // For single image or video
   return (
     <div className="relative rounded-lg overflow-hidden">
       {hasVideo ? (
         <video
           controls
           className="w-full h-auto object-contain max-h-[400px]"
-          src={getProxiedUrl(mediaUrls[0])}
+          src={mediaUrls[0]}
         />
       ) : (
         <img
-          src={getProxiedUrl(mediaUrls[0])}
+          src={mediaUrls[0]}
           alt="Post media"
           className="w-full h-auto object-contain max-h-[400px]"
         />

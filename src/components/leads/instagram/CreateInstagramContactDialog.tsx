@@ -116,7 +116,7 @@ export function CreateInstagramContactDialog({
 
       scanState.pollProgress(lead.id);
 
-      // Call scan-social-profile only
+      // First call scan-social-profile
       const { error: scanError } = await supabase.functions.invoke('scan-social-profile', {
         body: {
           platform: 'instagram',
@@ -126,6 +126,13 @@ export function CreateInstagramContactDialog({
       });
 
       if (scanError) throw scanError;
+
+      // Then call process-social-media
+      const { error: processError } = await supabase.functions.invoke('process-social-media', {
+        body: { leadId: lead.id }
+      });
+
+      if (processError) throw processError;
 
     } catch (error) {
       console.error("Error adding Instagram contact:", error);

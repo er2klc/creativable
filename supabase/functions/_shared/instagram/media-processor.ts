@@ -1,70 +1,105 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { InstagramPost, ProcessingState } from '../types/instagram.ts';
 
+export async function downloadAndUploadImage(
+  imageUrl: string | undefined,
+  supabaseClient: ReturnType<typeof createClient>,
+  leadId: string
+): Promise<string | null> {
+  try {
+    if (!imageUrl) return null;
+
+    const response = await fetch(imageUrl);
+    if (!response.ok) throw new Error('Failed to fetch image');
+    
+    const imageBuffer = await response.arrayBuffer();
+    const fileExt = 'jpg';
+    const fileName = `${leadId}-${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabaseClient
+      .storage
+      .from('contact-avatars')
+      .upload(filePath, imageBuffer, {
+        contentType: 'image/jpeg',
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('Error uploading image:', uploadError);
+      return null;
+    }
+
+    const { data: { publicUrl } } = supabaseClient
+      .storage
+      .from('contact-avatars')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  } catch (error) {
+    console.error('Error processing image:', error);
+    return null;
+  }
+}
+
 export async function processMediaFiles(
   posts: InstagramPost[],
   leadId: string,
   supabaseClient: ReturnType<typeof createClient>,
   updateProgress: (state: ProcessingState) => Promise<void>
 ): Promise<void> {
-  console.log('Starting media processing for posts:', posts.length);
+  const totalFiles = posts.reduce((sum, post) => 
+    sum + (post.media_urls?.length || 0), 0);
+
+  console.log(`Starting media processing for ${totalFiles} files`);
   
+  let processedFiles = 0;
+
   for (const post of posts) {
-    try {
-      let mediaUrls: string[] = [];
-      
-      // For Image Posts
-      if (post.type === 'Image' && post.displayUrl) {
-        console.log('Processing Image post:', post.id);
-        mediaUrls = [post.displayUrl];
-      }
-      // For Sidecar Posts
-      else if (post.type === 'Sidecar' && post.media_urls && post.media_urls.length > 0) {
-        console.log('Processing Sidecar post:', post.id);
-        mediaUrls = post.media_urls;
-      }
-      
-      if (mediaUrls.length === 0) {
-        console.log('No valid media URLs found for post:', post.id);
-        continue;
-      }
+    if (!post.media_urls || post.media_urls.length === 0) continue;
 
-      console.log('Processing media for post:', {
-        postId: post.id,
-        type: post.type,
-        mediaUrls: mediaUrls
-      });
+    for (const mediaUrl of post.media_urls) {
+      try {
+        processedFiles++;
+        await updateProgress({
+          totalFiles,
+          processedFiles,
+          currentFile: `Processing ${mediaUrl.split('/').pop()}`
+        });
 
-      const response = await supabaseClient.functions.invoke('process-instagram-media', {
-        body: {
-          mediaUrls,
-          leadId,
-          postId: post.id
+        console.log(`Processing media ${processedFiles}/${totalFiles}: ${mediaUrl}`);
+
+        const response = await supabaseClient.functions.invoke('process-social-media', {
+          body: {
+            mediaUrl,
+            leadId: post.lead_id,
+            mediaType: post.media_type,
+            postId: post.id,
+            platform: 'Instagram'
+          }
+        });
+
+        if (!response.data?.success) {
+          throw new Error(`Failed to process media: ${response.data?.error || 'Unknown error'}`);
         }
-      });
 
-      if (!response.data?.success) {
-        throw new Error(`Failed to process media: ${response.data?.error || 'Unknown error'}`);
+        // Small delay to prevent overwhelming the system
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error('Error processing media:', error);
+        await updateProgress({
+          totalFiles,
+          processedFiles,
+          currentFile: mediaUrl,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
       }
-
-      console.log('Successfully processed media for post:', post.id);
-
-      // Update progress
-      await updateProgress({
-        progress: 100,
-        currentFile: `Processed ${post.type} post ${post.id}`,
-        error: null
-      });
-
-    } catch (error) {
-      console.error('Error processing post:', error);
-      await updateProgress({
-        progress: 0,
-        currentFile: null,
-        error: `Error processing post ${post.id}: ${error.message}`
-      });
     }
   }
 
-  console.log('Media processing completed');
+  await updateProgress({
+    totalFiles,
+    processedFiles: totalFiles,
+    currentFile: 'All media processed successfully'
+  });
 }

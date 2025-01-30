@@ -36,9 +36,7 @@ interface SocialMediaPost {
   metadata?: {
     videoUrl?: string;
     media_urls?: string[];
-    displayUrl?: string;
   } | null;
-  displayUrl?: string;
 }
 
 interface SocialMediaPostProps {
@@ -72,6 +70,7 @@ const getPostTypeIcon = (type: string) => {
 };
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
+  // Get all possible media URLs
   const getMediaUrls = () => {
     // First check for direct media_urls
     if (post.media_urls && post.media_urls.length > 0) {
@@ -89,12 +88,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       return [videoUrl];
     }
 
-    // Check for displayUrl for Image type
-    if ((post.type === 'Image' || post.post_type === 'Image') && (post.displayUrl || post.metadata?.displayUrl)) {
-      console.log('Using displayUrl for Image type:', post.displayUrl || post.metadata?.displayUrl);
-      return [post.displayUrl || post.metadata?.displayUrl || ''];
-    }
-
     // Check for images array
     if (post.images && post.images.length > 0) {
       return post.images;
@@ -107,8 +100,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const mediaUrls = getMediaUrls();
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = mediaUrls.length > 1;
-  const hasVideo = postType === 'video';
-
+  const hasVideo = post.video_url !== null || post.videoUrl !== null || post.metadata?.videoUrl !== null;
   const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
   return (
