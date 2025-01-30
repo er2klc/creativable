@@ -80,7 +80,7 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
         <video
           controls
           className="w-full h-auto object-contain max-h-[400px]"
-          src={publicUrls[0]}
+          src={mediaUrls[0]}
         />
       ) : (
         <img
