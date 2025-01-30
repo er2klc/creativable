@@ -5,56 +5,78 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 
 interface MediaDisplayProps {
-  mediaUrls: string[];
-  hasVideo: boolean;
+  localMediaPaths: string[];  // Pfade aus local_media_paths (Supabase Storage)
+  mediaUrls: string[];        // URLs aus media_urls (externe Videos)
   isSidecar: boolean;
 }
 
-export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayProps) => {
+export const MediaDisplay = ({ 
+  localMediaPaths = [],
+  mediaUrls = [],
+  isSidecar 
+}: MediaDisplayProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
-  const [publicUrls, setPublicUrls] = useState<string[]>([]);
+  const [processedUrls, setProcessedUrls] = useState<string[]>([]);
+  const hasVideo = mediaUrls.some(url => url.includes('.mp4'));
 
   useEffect(() => {
-    const loadPublicUrls = async () => {
+    const loadMedia = async () => {
       try {
-        console.log("Loading media URLs:", mediaUrls);
-        
+        // Kombiniere und verarbeite beide Medienquellen
+        const supabasePaths = localMediaPaths.map(path => ({
+          type: 'image',
+          path
+        }));
+
+        const externalMedia = mediaUrls.map(url => ({
+          type: url.includes('.mp4') ? 'video' : 'image',
+          path: url
+        }));
+
+        const allMedia = [...supabasePaths, ...externalMedia];
+
         const urls = await Promise.all(
-          mediaUrls.map(async (path) => {
-            // Skip video URLs or external URLs - return them as is
-            if (path.includes('.mp4') || path.startsWith('http')) {
-              console.log("Using direct URL for video/external:", path);
-              return path;
-            }
+          allMedia.map(async (media) => {
+            // Direkte Rückgabe für Videos
+            if (media.type === 'video') return media.path;
             
-            // Get public URL from Supabase storage for local media
+            // Generiere Supabase-URL für Bilder
             const { data } = supabase.storage
               .from('social-media-files')
-              .getPublicUrl(path);
-              
-            console.log("Generated public URL for local media:", data.publicUrl);
-            return data.publicUrl;
+              .getPublicUrl(media.path);
+
+            // Cache-Busting für Bilder
+            return `${data.publicUrl}?ts=${Date.now()}`;
           })
         );
-        setPublicUrls(urls);
+
+        setProcessedUrls(urls.filter(url => url));
       } catch (error) {
-        console.error("Error loading media URLs:", error);
+        console.error("Medien konnten nicht geladen werden:", error);
       }
     };
 
-    if (mediaUrls.length > 0) {
-      loadPublicUrls();
+    if (localMediaPaths?.length > 0 || mediaUrls?.length > 0) {
+      loadMedia();
     }
-  }, [mediaUrls]);
+  }, [localMediaPaths, mediaUrls]);
 
-  if (mediaUrls.length === 0) return null;
+  // Debugging
+  useEffect(() => {
+    console.log('Verarbeitete URLs:', {
+      sources: [...localMediaPaths, ...mediaUrls],
+      processed: processedUrls
+    });
+  }, [processedUrls]);
 
-  if (isSidecar) {
-    return (
-      <div className="relative rounded-lg overflow-hidden">
+  if (processedUrls.length === 0) return null;
+
+  return (
+    <div className="relative rounded-lg overflow-hidden">
+      {isSidecar ? (
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex">
-            {publicUrls.map((url, index) => (
+            {processedUrls.map((url, index) => (
               <div key={index} className="flex-[0_0_100%] min-w-0">
                 {url.includes('.mp4') ? (
                   <video
@@ -65,19 +87,21 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
                 ) : (
                   <img
                     src={url}
-                    alt={`Media ${index + 1}`}
+                    alt={`Medieninhalt ${index + 1}`}
                     className="w-full h-auto object-contain max-h-[400px]"
+                    loading="lazy"
                   />
                 )}
               </div>
             ))}
           </div>
-          {publicUrls.length > 1 && (
+          
+          {processedUrls.length > 1 && (
             <>
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full hover:bg-black/70"
                 onClick={() => emblaApi?.scrollPrev()}
               >
                 <ChevronLeft className="h-6 w-6" />
@@ -85,7 +109,7 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full hover:bg-black/70"
                 onClick={() => emblaApi?.scrollNext()}
               >
                 <ChevronRight className="h-6 w-6" />
@@ -93,24 +117,21 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
             </>
           )}
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative rounded-lg overflow-hidden">
-      {hasVideo || publicUrls[0]?.includes('.mp4') ? (
-        <video
-          controls
-          className="w-full h-auto object-contain max-h-[400px]"
-          src={publicUrls[0]}
-        />
       ) : (
-        <img
-          src={publicUrls[0]}
-          alt="Post media"
-          className="w-full h-auto object-contain max-h-[400px]"
-        />
+        hasVideo ? (
+          <video
+            controls
+            className="w-full h-auto object-contain max-h-[400px]"
+            src={processedUrls[0]}
+          />
+        ) : (
+          <img
+            src={processedUrls[0]}
+            alt="Post-Medieninhalt"
+            className="w-full h-auto object-contain max-h-[400px]"
+            loading="lazy"
+          />
+        )
       )}
     </div>
   );
