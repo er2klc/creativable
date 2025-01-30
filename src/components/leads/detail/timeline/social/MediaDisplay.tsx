@@ -18,77 +18,54 @@ export const MediaDisplay = ({
   const [emblaRef, emblaApi] = useEmblaCarousel();
   const [processedUrls, setProcessedUrls] = useState<string[]>([]);
 
-  // Memoize media sources to prevent unnecessary recalculations
+  // Medienquellen intelligent kombinieren
   const mediaSources = useMemo(() => {
-    const supabaseMedia = localMediaPaths.map(path => ({
-      type: 'image',
-      path,
-      isLocal: true
-    }));
-
-    const externalMedia = mediaUrls.map(url => ({
-      type: url.includes('.mp4') ? 'video' : 'image',
-      path: url,
-      isLocal: false
-    }));
-
-    return [...supabaseMedia, ...externalMedia];
+    return [
+      ...localMediaPaths.map(path => ({
+        type: 'image',
+        source: 'local',
+        path
+      })),
+      ...mediaUrls.filter(url => url.includes('.mp4')).map(url => ({
+        type: 'video',
+        source: 'external',
+        path: url
+      }))
+    ];
   }, [localMediaPaths, mediaUrls]);
 
-  // Main media loading effect
   useEffect(() => {
-    let isMounted = true;
-
     const loadMedia = async () => {
       try {
         const urls = await Promise.all(
           mediaSources.map(async (media) => {
             if (media.type === 'video') return media.path;
+            
+            // Generiere nur für lokale Bilder Supabase-URLs
+            const { data } = supabase.storage
+              .from('social-media-files')
+              .getPublicUrl(media.path);
 
-            // Only generate URLs for local media
-            if (media.isLocal) {
-              const { data } = supabase.storage
-                .from('social-media-files')
-                .getPublicUrl(media.path);
-              return data.publicUrl;
-            }
-
-            return media.path;
+            console.log('Generierte Bild-URL:', data.publicUrl);
+            return data.publicUrl;
           })
         );
 
-        // Filter valid URLs and update state only if necessary
-        const filteredUrls = urls.filter(url => url && url.length > 0);
-        if (isMounted && JSON.stringify(filteredUrls) !== JSON.stringify(processedUrls)) {
-          setProcessedUrls(filteredUrls);
-          console.log('Processed URLs updated:', filteredUrls);
-        }
+        setProcessedUrls(urls.filter(Boolean));
       } catch (error) {
-        console.error("Error loading media:", error);
+        console.error("Fehler beim Laden der Medien:", error);
       }
     };
 
-    if (mediaSources.length > 0) {
-      loadMedia();
-    }
+    if (mediaSources.length > 0) loadMedia();
+  }, [mediaSources]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [mediaSources]); // Only run when sources change
-
-  // Determine if video exists
-  const hasVideo = useMemo(
-    () => processedUrls.some(url => url.includes('.mp4')),
-    [processedUrls]
-  );
-
-  // Reset carousel when URLs change
-  useEffect(() => {
-    if (emblaApi && processedUrls.length > 0) {
-      emblaApi.reInit();
-    }
-  }, [emblaApi, processedUrls]);
+  // Debugging-Ausgabe
+  console.log('Aktive Medienquellen:', {
+    localMediaPaths,
+    mediaUrls,
+    processedUrls
+  });
 
   if (processedUrls.length === 0) return null;
 
@@ -98,7 +75,7 @@ export const MediaDisplay = ({
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex">
             {processedUrls.map((url, index) => (
-              <div key={`${url}-${index}`} className="flex-[0_0_100%] min-w-0">
+              <div key={index} className="flex-[0_0_100%] min-w-0">
                 {url.includes('.mp4') ? (
                   <video
                     controls
@@ -108,16 +85,15 @@ export const MediaDisplay = ({
                 ) : (
                   <img
                     src={url}
-                    alt={`Media ${index + 1}`}
+                    alt={`Beitragsbild ${index + 1}`}
                     className="w-full h-auto object-contain max-h-[400px]"
                     loading="lazy"
-                    decoding="async"
                   />
                 )}
               </div>
             ))}
           </div>
-
+          
           {processedUrls.length > 1 && (
             <>
               <Button
@@ -140,7 +116,7 @@ export const MediaDisplay = ({
           )}
         </div>
       ) : (
-        hasVideo ? (
+        processedUrls[0]?.includes('.mp4') ? (
           <video
             controls
             className="w-full h-auto object-contain max-h-[400px]"
@@ -149,10 +125,9 @@ export const MediaDisplay = ({
         ) : (
           <img
             src={processedUrls[0]}
-            alt="Post media"
+            alt="Beitragsbild"
             className="w-full h-auto object-contain max-h-[400px]"
             loading="lazy"
-            decoding="async"
           />
         )
       )}
