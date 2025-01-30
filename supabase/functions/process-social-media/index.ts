@@ -1,16 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { Image } from "https://deno.land/x/imagescript@1.2.15/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const BATCH_SIZE = 3; // Reduziert von 5 auf 3 für weniger CPU-Last
-const BATCH_DELAY = 3000; // Erhöht von 2000 auf 3000ms
-const MAX_IMAGE_SIZE = 800;
-const JPEG_QUALITY = 65; // Reduziert von 70 auf 65 für kleinere Dateien
+const BATCH_SIZE = 3; // Reduced from 5 to 3
+const BATCH_DELAY = 3000; // Increased from 2000 to 3000ms
 
 async function processPostBatch(
   posts: any[],
@@ -26,6 +23,12 @@ async function processPostBatch(
     const progress = Math.round((currentIndex / posts.length) * 100);
     
     try {
+      // Skip video posts
+      if (post.type?.toLowerCase() === 'video' || post.media_type?.toLowerCase() === 'video') {
+        console.log(`Skipping video post ${post.id}`);
+        continue;
+      }
+
       console.log(`Processing post ${currentIndex + 1}/${posts.length}: ${post.id}`);
       
       let imageUrls = post.images || [];
@@ -56,7 +59,7 @@ async function processPostBatch(
 
       for (const [index, mediaUrl] of imageUrls.entries()) {
         try {
-          if (index >= 10) { // Limit to max 10 images per post
+          if (index >= 10) {
             console.log(`Skipping remaining images for post ${post.id} (max 10 reached)`);
             break;
           }
@@ -87,44 +90,22 @@ async function processPostBatch(
 
           const imageBuffer = await imageResponse.arrayBuffer();
           
-          try {
-            const image = await Image.decode(new Uint8Array(imageBuffer));
-            
-            let width = image.width;
-            let height = image.height;
-            
-            if (width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) {
-              if (width > height) {
-                height = Math.round((height * MAX_IMAGE_SIZE) / width);
-                width = MAX_IMAGE_SIZE;
-              } else {
-                width = Math.round((width * MAX_IMAGE_SIZE) / height);
-                height = MAX_IMAGE_SIZE;
-              }
-              image.resize(width, height);
-            }
+          // Direct upload without compression
+          const { error: uploadError } = await supabase
+            .storage
+            .from('social-media-files')
+            .upload(filePath, imageBuffer, {
+              contentType: 'image/jpeg',
+              upsert: true
+            });
 
-            const compressedImageBuffer = await image.encodeJPEG(JPEG_QUALITY);
-            
-            const { error: uploadError } = await supabase
-              .storage
-              .from('social-media-files')
-              .upload(filePath, compressedImageBuffer, {
-                contentType: 'image/jpeg',
-                upsert: true
-              });
-
-            if (uploadError) {
-              console.error('Upload error:', uploadError);
-              continue;
-            }
-
-            processedImagePaths.push(filePath);
-            
-          } catch (imageError) {
-            console.error(`Error processing image ${index} for post ${post.id}:`, imageError);
+          if (uploadError) {
+            console.error('Upload error:', uploadError);
             continue;
           }
+
+          processedImagePaths.push(filePath);
+          
         } catch (mediaError) {
           console.error(`Error processing media URL ${index} for post ${post.id}:`, mediaError);
           continue;
@@ -142,13 +123,13 @@ async function processPostBatch(
             id: post.id,
             lead_id: leadId,
             platform: 'Instagram',
-            post_type: post.type || 'post',
+            post_type: post.type === 'Sidecar' ? 'sidecar' : 'image',
             content: post.caption,
             url: post.url,
             posted_at: post.timestamp,
             media_urls: imageUrls,
             local_media_paths: processedImagePaths,
-            media_type: post.type || 'image',
+            media_type: post.type === 'Sidecar' ? 'sidecar' : 'image',
             media_processing_status: 'processed',
             hashtags: hashtags,
             processing_progress: progress
