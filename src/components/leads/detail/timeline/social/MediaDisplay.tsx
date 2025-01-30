@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 
 interface MediaDisplayProps {
   localMediaPaths: string[];
@@ -18,7 +18,7 @@ export const MediaDisplay = ({
   const [emblaRef, emblaApi] = useEmblaCarousel();
   const [processedUrls, setProcessedUrls] = useState<string[]>([]);
 
-  // Medienquellen intelligent kombinieren
+  // Medienquellen mit useMemo memoizen
   const mediaSources = useMemo(() => {
     return [
       ...localMediaPaths.map(path => ({
@@ -34,38 +34,47 @@ export const MediaDisplay = ({
     ];
   }, [localMediaPaths, mediaUrls]);
 
-  useEffect(() => {
-    const loadMedia = async () => {
-      try {
-        const urls = await Promise.all(
-          mediaSources.map(async (media) => {
-            if (media.type === 'video') return media.path;
-            
-            // Generiere nur für lokale Bilder Supabase-URLs
-            const { data } = supabase.storage
-              .from('social-media-files')
-              .getPublicUrl(media.path);
+  // Media loading mit useCallback memoizen
+  const loadMedia = useCallback(async () => {
+    try {
+      const urls = await Promise.all(
+        mediaSources.map(async (media) => {
+          if (media.type === 'video') return media.path;
+          
+          const { data } = supabase.storage
+            .from('social-media-files')
+            .getPublicUrl(media.path);
 
-            console.log('Generierte Bild-URL:', data.publicUrl);
-            return data.publicUrl;
-          })
-        );
+          return data.publicUrl;
+        })
+      );
 
-        setProcessedUrls(urls.filter(Boolean));
-      } catch (error) {
-        console.error("Fehler beim Laden der Medien:", error);
+      // Nur updaten wenn sich URLs tatsächlich ändern
+      const filteredUrls = urls.filter(Boolean);
+      if (JSON.stringify(filteredUrls) !== JSON.stringify(processedUrls)) {
+        setProcessedUrls(filteredUrls);
       }
-    };
+    } catch (error) {
+      console.error("Fehler beim Laden der Medien:", error);
+    }
+  }, [mediaSources, processedUrls]);
 
-    if (mediaSources.length > 0) loadMedia();
-  }, [mediaSources]);
+  useEffect(() => {
+    if (mediaSources.length > 0) {
+      loadMedia();
+    }
+  }, [loadMedia, mediaSources]);
 
-  // Debugging-Ausgabe
-  console.log('Aktive Medienquellen:', {
-    localMediaPaths,
-    mediaUrls,
-    processedUrls
-  });
+  // Debugging nur bei Änderungen
+  useEffect(() => {
+    if (processedUrls.length > 0) {
+      console.log('Aktive Medienquellen:', {
+        localMediaPaths,
+        mediaUrls,
+        processedUrls
+      });
+    }
+  }, [processedUrls]); // Nur bei processedUrls-Änderungen
 
   if (processedUrls.length === 0) return null;
 
