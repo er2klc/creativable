@@ -7,8 +7,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const MAX_CONCURRENT_IMAGES = 2; // Process images in smaller batches
+const MAX_IMAGE_SIZE = 800;
+const JPEG_QUALITY = 70;
+
 serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -29,7 +32,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get lead data to access social_media_posts
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .select('social_media_posts')
@@ -58,19 +60,18 @@ serve(async (req) => {
     const posts = Array.isArray(lead.social_media_posts) ? lead.social_media_posts : [lead.social_media_posts];
     console.log(`Found ${posts.length} posts to process`);
 
-    for (const post of posts) {
+    // Process posts in batches to avoid CPU time limits
+    for (let i = 0; i < posts.length; i++) {
+      const post = posts[i];
       try {
         console.log('Processing post:', post.id);
         
-        // Check for images in both the images array and media_urls
-        let imageUrls = [];
-        if (post.images && Array.isArray(post.images)) {
-          imageUrls = post.images;
-        } else if (post.media_urls && Array.isArray(post.media_urls)) {
+        let imageUrls = post.images || [];
+        if (!imageUrls.length && post.media_urls) {
           imageUrls = post.media_urls;
         }
-        
-        if (!imageUrls || imageUrls.length === 0) {
+
+        if (!imageUrls || !imageUrls.length) {
           console.log('No image URLs found for post:', post.id);
           continue;
         }
@@ -78,77 +79,75 @@ serve(async (req) => {
         console.log(`Found ${imageUrls.length} images for post:`, post.id);
         const processedImagePaths = [];
 
-        for (const imageUrl of imageUrls) {
-          try {
-            console.log('Processing image URL:', imageUrl);
+        // Process images in smaller batches
+        for (let j = 0; j < imageUrls.length; j += MAX_CONCURRENT_IMAGES) {
+          const batch = imageUrls.slice(j, j + MAX_CONCURRENT_IMAGES);
+          const batchPromises = batch.map(async (imageUrl) => {
+            try {
+              console.log('Processing image URL:', imageUrl);
 
-            // Download image
-            const imageResponse = await fetch(imageUrl);
-            if (!imageResponse.ok) {
-              console.error('Failed to fetch image:', imageUrl);
-              continue;
-            }
-
-            // Get image buffer
-            const imageBuffer = await imageResponse.arrayBuffer();
-
-            // Process and compress image using ImageScript
-            const image = await Image.decode(new Uint8Array(imageBuffer));
-            
-            // Calculate new dimensions while maintaining aspect ratio
-            const MAX_SIZE = 800;
-            let width = image.width;
-            let height = image.height;
-            
-            if (width > MAX_SIZE || height > MAX_SIZE) {
-              if (width > height) {
-                height = Math.round((height * MAX_SIZE) / width);
-                width = MAX_SIZE;
-              } else {
-                width = Math.round((width * MAX_SIZE) / height);
-                height = MAX_SIZE;
+              const imageResponse = await fetch(imageUrl);
+              if (!imageResponse.ok) {
+                console.error('Failed to fetch image:', imageUrl);
+                return null;
               }
-              image.resize(width, height);
+
+              const imageBuffer = await imageResponse.arrayBuffer();
+              const image = await Image.decode(new Uint8Array(imageBuffer));
+              
+              let width = image.width;
+              let height = image.height;
+              
+              if (width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) {
+                if (width > height) {
+                  height = Math.round((height * MAX_IMAGE_SIZE) / width);
+                  width = MAX_IMAGE_SIZE;
+                } else {
+                  width = Math.round((width * MAX_IMAGE_SIZE) / height);
+                  height = MAX_IMAGE_SIZE;
+                }
+                image.resize(width, height);
+              }
+
+              const compressedImageBuffer = await image.encodeJPEG(JPEG_QUALITY);
+              const filePath = `instagram/${leadId}/${post.id}_${processedImagePaths.length}.jpg`;
+              
+              console.log('Uploading compressed image to bucket:', filePath);
+
+              const { error: uploadError } = await supabase
+                .storage
+                .from('social-media-files')
+                .upload(filePath, compressedImageBuffer, {
+                  contentType: 'image/jpeg',
+                  upsert: true
+                });
+
+              if (uploadError) {
+                console.error('Upload error:', uploadError);
+                return null;
+              }
+
+              return filePath;
+            } catch (imageError) {
+              console.error('Error processing image:', imageError);
+              return null;
             }
+          });
 
-            // Encode with quality reduction (JPEG compression)
-            const compressedImageBuffer = await image.encodeJPEG(70);
-
-            // Generate file path
-            const filePath = `instagram/${leadId}/${post.id}_${processedImagePaths.length}.jpg`;
-            
-            console.log('Uploading compressed image to bucket:', filePath);
-
-            // Upload to storage
-            const { error: uploadError } = await supabase
-              .storage
-              .from('social-media-files')
-              .upload(filePath, compressedImageBuffer, {
-                contentType: 'image/jpeg',
-                upsert: true
-              });
-
-            if (uploadError) {
-              console.error('Upload error:', uploadError);
-              continue;
-            }
-
-            processedImagePaths.push(filePath);
-            console.log('Successfully processed and uploaded image:', filePath);
-
-          } catch (imageError) {
-            console.error('Error processing image:', imageError);
-            continue;
+          const batchResults = await Promise.all(batchPromises);
+          processedImagePaths.push(...batchResults.filter(Boolean));
+          
+          // Add a small delay between batches to prevent CPU overload
+          if (j + MAX_CONCURRENT_IMAGES < imageUrls.length) {
+            await new Promise(resolve => setTimeout(resolve, 500));
           }
         }
 
         if (processedImagePaths.length > 0) {
-          // Extract hashtags from caption
           const hashtags = post.caption ? 
             (post.caption.match(/#[\w\u0590-\u05ff]+/g) || []) : 
             [];
 
-          // Create entry in social_media_posts table
           const { error: insertError } = await supabase
             .from('social_media_posts')
             .insert({
@@ -177,6 +176,11 @@ serve(async (req) => {
       } catch (postError) {
         console.error('Error processing post:', postError);
         continue;
+      }
+
+      // Add a delay between posts to prevent CPU overload
+      if (i < posts.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
 
