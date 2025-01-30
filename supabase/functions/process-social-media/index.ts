@@ -25,11 +25,11 @@ async function processPostBatch(
     try {
       // Skip video posts
       if (post.type?.toLowerCase() === 'video' || post.media_type?.toLowerCase() === 'video') {
-        console.log(`Skipping video post ${post.id}`);
+        console.log(`Skipping video post ${post.id} (Type: ${post.type || post.media_type})`);
         continue;
       }
 
-      console.log(`Processing post ${currentIndex + 1}/${posts.length}: ${post.id}`);
+      console.log(`Processing post ${currentIndex + 1}/${posts.length}: Post ID ${post.id}, Type: ${post.type || post.media_type}`);
       
       let imageUrls = post.images || [];
       if (!imageUrls.length && post.media_urls) {
@@ -40,7 +40,7 @@ async function processPostBatch(
       }
 
       if (!imageUrls || !imageUrls.length) {
-        console.log('No image URLs found for post:', post.id);
+        console.log(`No image URLs found for post: ${post.id}`);
         continue;
       }
 
@@ -64,7 +64,7 @@ async function processPostBatch(
             break;
           }
 
-          console.log(`Processing media ${index + 1}/${imageUrls.length} for post ${post.id}`);
+          console.log(`Processing media ${index + 1}/${imageUrls.length} for post ${post.id} (Type: ${post.type || post.media_type})`);
           
           // Generate a clean file path using UUID
           const filePath = `${leadId}/${post.id}_${index}.jpg`;
@@ -78,14 +78,14 @@ async function processPostBatch(
           const fileExists = existingFile?.some(file => file.name === `${post.id}_${index}.jpg`);
           
           if (fileExists) {
-            console.log(`File already exists: ${filePath}`);
+            console.log(`File already exists: ${filePath} for post ${post.id}`);
             processedImagePaths.push(filePath);
             continue;
           }
 
           const imageResponse = await fetch(mediaUrl);
           if (!imageResponse.ok) {
-            console.error(`Failed to fetch image: ${mediaUrl}`);
+            console.error(`Failed to fetch image: ${mediaUrl} for post ${post.id}`);
             continue;
           }
 
@@ -100,7 +100,7 @@ async function processPostBatch(
             });
 
           if (uploadError) {
-            console.error('Upload error:', uploadError);
+            console.error(`Upload error for post ${post.id}:`, uploadError);
             continue;
           }
 
@@ -139,11 +139,11 @@ async function processPostBatch(
           });
 
         if (insertError) {
-          console.error('Error inserting social media post:', insertError);
+          console.error(`Error inserting social media post ${post.id}:`, insertError);
           continue;
         }
 
-        console.log(`Successfully processed post ${post.id} with ${processedImagePaths.length} images`);
+        console.log(`Successfully processed post ${post.id} (Type: ${postType}) with ${processedImagePaths.length} images`);
       }
 
     } catch (postError) {
