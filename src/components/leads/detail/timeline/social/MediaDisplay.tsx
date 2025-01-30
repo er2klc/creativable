@@ -26,14 +26,6 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
               return path;
             }
             
-            // Extract the correct file path from the storage URL if it exists
-            const storagePathMatch = path.match(/social-media-files\/([^?]+)/);
-            if (storagePathMatch) {
-              const storagePath = storagePathMatch[1];
-              console.log("Found storage path:", storagePath);
-              return path;
-            }
-            
             // Get public URL from Supabase storage
             const { data } = supabase.storage
               .from('social-media-files')
