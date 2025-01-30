@@ -23,7 +23,6 @@ async function processPostBatch(
     const progress = Math.round((currentIndex / posts.length) * 100);
     
     try {
-      // Skip video posts
       if (post.type?.toLowerCase() === 'video' || post.media_type?.toLowerCase() === 'video') {
         console.log(`Skipping video post ${post.id} (Type: ${post.type || post.media_type})`);
         continue;
@@ -79,7 +78,10 @@ async function processPostBatch(
           
           if (fileExists) {
             console.log(`File already exists: ${filePath} for post ${post.id}`);
-            processedImagePaths.push(filePath);
+            const { data } = supabase.storage
+              .from('social-media-files')
+              .getPublicUrl(filePath);
+            processedImagePaths.push(data.publicUrl);
             continue;
           }
 
@@ -104,7 +106,11 @@ async function processPostBatch(
             continue;
           }
 
-          processedImagePaths.push(filePath);
+          const { data } = supabase.storage
+            .from('social-media-files')
+            .getPublicUrl(filePath);
+          
+          processedImagePaths.push(data.publicUrl);
           
         } catch (mediaError) {
           console.error(`Error processing media URL ${index} for post ${post.id}:`, mediaError);
@@ -130,8 +136,7 @@ async function processPostBatch(
             content: post.caption,
             url: post.url,
             posted_at: post.timestamp,
-            media_urls: imageUrls,
-            local_media_paths: processedImagePaths,
+            media_urls: processedImagePaths, // Hier speichern wir die Bucket-URLs direkt in media_urls
             media_type: postType,
             media_processing_status: 'processed',
             hashtags: hashtags,
