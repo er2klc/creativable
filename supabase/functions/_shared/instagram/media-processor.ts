@@ -15,18 +15,21 @@ export async function processMediaFiles(
   let processedFiles = 0;
 
   for (const post of posts) {
-    if (!post.media_urls || post.media_urls.length === 0) continue;
+    if (!post.media_urls || post.media_urls.length === 0) {
+      console.log('No media URLs found for post:', post.id);
+      continue;
+    }
 
     for (const mediaUrl of post.media_urls) {
       try {
         processedFiles++;
+        console.log(`Processing media ${processedFiles}/${totalFiles}: ${mediaUrl}`);
+
         await updateProgress({
           totalFiles,
           processedFiles,
           currentFile: `Processing ${mediaUrl.split('/').pop()}`
         });
-
-        console.log(`Processing media ${processedFiles}/${totalFiles}: ${mediaUrl}`);
 
         const response = await supabaseClient.functions.invoke('process-instagram-media', {
           body: {
@@ -35,6 +38,8 @@ export async function processMediaFiles(
             postId: post.id
           }
         });
+
+        console.log('Media processing response:', response);
 
         if (!response.data?.success) {
           throw new Error(`Failed to process media: ${response.data?.error || 'Unknown error'}`);
