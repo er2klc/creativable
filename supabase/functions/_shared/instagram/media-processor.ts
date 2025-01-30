@@ -13,12 +13,12 @@ export async function processMediaFiles(
     try {
       let mediaUrls: string[] = [];
       
-      // Für Image Posts
+      // For Image Posts
       if (post.type === 'Image' && post.displayUrl) {
         console.log('Processing Image post:', post.id);
         mediaUrls = [post.displayUrl];
       }
-      // Für Sidecar Posts
+      // For Sidecar Posts
       else if (post.type === 'Sidecar' && post.media_urls && post.media_urls.length > 0) {
         console.log('Processing Sidecar post:', post.id);
         mediaUrls = post.media_urls;
@@ -49,8 +49,20 @@ export async function processMediaFiles(
 
       console.log('Successfully processed media for post:', post.id);
 
+      // Update progress
+      await updateProgress({
+        progress: 100,
+        currentFile: `Processed ${post.type} post ${post.id}`,
+        error: null
+      });
+
     } catch (error) {
       console.error('Error processing post:', error);
+      await updateProgress({
+        progress: 0,
+        currentFile: null,
+        error: `Error processing post ${post.id}: ${error.message}`
+      });
     }
   }
 
