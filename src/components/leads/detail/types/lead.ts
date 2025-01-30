@@ -9,4 +9,5 @@ export type LeadWithRelations = Tables<"leads"> & {
   social_media_posts?: any[];
   linkedin_posts?: Tables<"linkedin_posts">[];
   platform: Platform;
+  social_media_raw_data?: any[];
 };

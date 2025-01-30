@@ -22,13 +22,11 @@ serve(async (req) => {
       timestamp: new Date().toISOString()
     });
 
-    // Create Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Create initial progress record
     await supabaseClient
       .from('social_media_posts')
       .upsert({
@@ -40,7 +38,6 @@ serve(async (req) => {
         current_file: 'Starting profile scan...'
       });
 
-    // Get Apify API key
     const { data: secrets, error: secretError } = await supabaseClient
       .from('secrets')
       .select('value')
@@ -51,10 +48,8 @@ serve(async (req) => {
       throw new Error('Could not retrieve Apify API key');
     }
 
-    // Update progress to 20%
     await updateProgress(supabaseClient, leadId, 'Connecting to Instagram API...', 20);
 
-    // Start Apify scraping run
     const runResponse = await fetch(`https://api.apify.com/v2/acts/apify~instagram-profile-scraper/runs`, {
       method: 'POST',
       headers: {
@@ -75,7 +70,6 @@ serve(async (req) => {
 
     console.log('Apify run started:', { runId });
 
-    // Poll for results
     let attempts = 0;
     const maxAttempts = 30;
     
@@ -103,10 +97,25 @@ serve(async (req) => {
 
         await updateProgress(supabaseClient, leadId, 'Processing profile data...', 90);
         
-        // Process profile data
-        await processInstagramProfile(profileData, leadId, supabaseClient);
+        // Update the lead with raw social media data
+        const { error: updateError } = await supabaseClient
+          .from('leads')
+          .update({
+            social_media_raw_data: profileData.latestPosts || [],
+            social_media_bio: profileData.bio,
+            social_media_followers: profileData.followersCount,
+            social_media_following: profileData.followingCount,
+            social_media_posts_count: profileData.postsCount,
+            social_media_profile_image_url: profileData.profilePicUrl,
+            last_social_media_scan: new Date().toISOString()
+          })
+          .eq('id', leadId);
+
+        if (updateError) {
+          throw updateError;
+        }
         
-        // Mark as complete
+        await processInstagramProfile(profileData, leadId, supabaseClient);
         await updateProgress(supabaseClient, leadId, 'Profile scan completed', 100);
 
         return new Response(

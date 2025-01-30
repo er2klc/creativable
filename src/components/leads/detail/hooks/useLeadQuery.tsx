@@ -1,44 +1,38 @@
 import { useQuery } from "@tanstack/react-query";
-import { type Tables } from "@/integrations/supabase/types";
-import { Platform } from "@/config/platforms";
-import { getLeadWithRelations } from "@/utils/query-helpers";
+import { supabase } from "@/integrations/supabase/client";
+import { LeadWithRelations } from "../types/lead";
 
-type LeadWithRelations = Tables<"leads"> & {
-  platform: Platform;
-  messages: Tables<"messages">[];
-  tasks: Tables<"tasks">[];
-  notes: Tables<"notes">[];
-};
-
-export const useLeadQuery = (leadId: string | null) => {
+export function useLeadQuery(leadId: string | null) {
   return useQuery({
-    queryKey: ["lead-with-relations", leadId],
+    queryKey: ["lead", leadId],
     queryFn: async () => {
-      if (!leadId) {
-        console.error("[useLeadQuery] Invalid lead ID");
-        throw new Error("Invalid lead ID");
-      }
-      
-      console.log("[useLeadQuery] Starting fetch for lead ID:", leadId);
-      const data = await getLeadWithRelations(leadId);
-      
-      if (!data) {
-        console.error("[useLeadQuery] Lead not found");
-        throw new Error("Lead not found");
+      if (!leadId) throw new Error("No lead ID provided");
+
+      const { data: lead, error } = await supabase
+        .from("leads")
+        .select(`
+          *,
+          messages (*),
+          tasks (*),
+          notes (*),
+          lead_files (*),
+          social_media_posts (*),
+          linkedin_posts (*)
+        `)
+        .eq("id", leadId)
+        .single();
+
+      if (error) throw error;
+
+      // Convert social_media_raw_data to social_media_posts if it exists
+      if (lead.social_media_raw_data) {
+        lead.social_media_posts = Array.isArray(lead.social_media_raw_data) 
+          ? lead.social_media_raw_data 
+          : [lead.social_media_raw_data];
       }
 
-      console.log("[useLeadQuery] Data received:", {
-        id: data.id,
-        messages: data.messages?.length || 0,
-        tasks: data.tasks?.length || 0,
-        notes: data.notes?.length || 0,
-        timestamp: new Date().toISOString()
-      });
-
-      return data as LeadWithRelations;
+      return lead as LeadWithRelations;
     },
     enabled: !!leadId,
-    staleTime: 30000, // Consider data fresh for 30 seconds
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
-};
+}
