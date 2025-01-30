@@ -21,9 +21,16 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
         
         const urls = await Promise.all(
           mediaUrls.map(async (path) => {
-            // If the path already contains the correct Supabase storage URL, use it directly
-            if (path.includes('supabase.co/storage/v1/object/public/social-media-files')) {
-              console.log("Using existing Supabase URL:", path);
+            // Skip video URLs - return them as is
+            if (path.includes('.mp4')) {
+              return path;
+            }
+            
+            // Extract the correct file path from the storage URL if it exists
+            const storagePathMatch = path.match(/social-media-files\/([^?]+)/);
+            if (storagePathMatch) {
+              const storagePath = storagePathMatch[1];
+              console.log("Found storage path:", storagePath);
               return path;
             }
             
