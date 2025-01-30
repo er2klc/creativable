@@ -16,15 +16,30 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
 
   useEffect(() => {
     const loadPublicUrls = async () => {
-      const urls = await Promise.all(
-        mediaUrls.map(async (path) => {
-          const { data } = supabase.storage
-            .from('social-media-files')
-            .getPublicUrl(path);
-          return data.publicUrl;
-        })
-      );
-      setPublicUrls(urls);
+      try {
+        console.log("Loading media URLs:", mediaUrls);
+        
+        const urls = await Promise.all(
+          mediaUrls.map(async (path) => {
+            // Check if the path is already a full URL
+            if (path.startsWith('http')) {
+              console.log("Using direct URL:", path);
+              return path;
+            }
+            
+            // Get public URL from Supabase storage
+            const { data } = supabase.storage
+              .from('social-media-files')
+              .getPublicUrl(path);
+              
+            console.log("Generated public URL:", data.publicUrl);
+            return data.publicUrl;
+          })
+        );
+        setPublicUrls(urls);
+      } catch (error) {
+        console.error("Error loading media URLs:", error);
+      }
     };
 
     if (mediaUrls.length > 0) {
@@ -80,7 +95,7 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
         <video
           controls
           className="w-full h-auto object-contain max-h-[400px]"
-          src={mediaUrls[0]}
+          src={publicUrls[0]}
         />
       ) : (
         <img

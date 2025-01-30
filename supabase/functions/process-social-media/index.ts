@@ -66,13 +66,14 @@ async function processPostBatch(
 
           console.log(`Processing media ${index + 1}/${imageUrls.length} for post ${post.id}`);
           
-          const filePath = `instagram/${leadId}/${post.id}_${index}.jpg`;
+          // Generate a clean file path using UUID
+          const filePath = `${leadId}/${post.id}_${index}.jpg`;
           
           // Check if file already exists
           const { data: existingFile } = await supabase
             .storage
             .from('social-media-files')
-            .list(`instagram/${leadId}`);
+            .list(`${leadId}`);
 
           const fileExists = existingFile?.some(file => file.name === `${post.id}_${index}.jpg`);
           
@@ -157,7 +158,6 @@ async function processPostBatch(
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { 
       headers: corsHeaders,
@@ -166,8 +166,6 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting process-social-media function');
-    
     const { leadId } = await req.json();
     console.log('Processing media for lead:', leadId);
 
