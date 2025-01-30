@@ -72,43 +72,42 @@ const getPostTypeIcon = (type: string) => {
 };
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
+  const getMediaUrls = () => {
+    // First check for direct media_urls
+    if (post.media_urls && post.media_urls.length > 0) {
+      return post.media_urls;
+    }
 
-const getMediaUrls = () => {
-  // First check for direct media_urls
-  if (post.media_urls && post.media_urls.length > 0) {
-    return post.media_urls;
-  }
+    // Then check for local paths
+    if (post.local_media_paths && post.local_media_paths.length > 0) {
+      return post.local_media_paths;
+    }
 
-  // Then check for local paths
-  if (post.local_media_paths && post.local_media_paths.length > 0) {
-    return post.local_media_paths;
-  }
+    // Check for video URLs
+    const videoUrl = post.video_url || post.videoUrl || post.metadata?.videoUrl;
+    if (videoUrl) {
+      return [videoUrl];
+    }
 
-  // Check for video URLs
-  const videoUrl = post.video_url || post.videoUrl || post.metadata?.videoUrl;
-  if (videoUrl) {
-    return [videoUrl];
-  }
+    // Check for displayUrl for Image type
+    if ((post.type === 'Image' || post.post_type === 'Image') && (post.displayUrl || post.metadata?.displayUrl)) {
+      console.log('Using displayUrl for Image type:', post.displayUrl || post.metadata?.displayUrl);
+      return [post.displayUrl || post.metadata?.displayUrl || ''];
+    }
 
-  // Check for displayUrl for Image type
-  if ((post.type === 'Image' || post.post_type === 'Image') && (post.displayUrl || post.metadata?.displayUrl)) {
-    console.log('Using displayUrl for Image type:', post.displayUrl || post.metadata?.displayUrl);
-    return [post.displayUrl || post.metadata?.displayUrl || ''];
-  }
+    // Check for images array
+    if (post.images && post.images.length > 0) {
+      return post.images;
+    }
 
-  // Check for images array
-  if (post.images && post.images.length > 0) {
-    return post.images;
-  }
+    // If no other media found, return empty array
+    return [];
+  };
 
-  // If no other media found, return empty array
-  return [];
-};
-
-const mediaUrls = getMediaUrls();
-const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
-const isSidecar = mediaUrls.length > 1;
-const hasVideo = postType === 'video' || post.video_url !== null || post.videoUrl !== null || post.metadata?.videoUrl !== null;
+  const mediaUrls = getMediaUrls();
+  const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
+  const isSidecar = mediaUrls.length > 1;
+  const hasVideo = postType === 'video';
 
   const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
