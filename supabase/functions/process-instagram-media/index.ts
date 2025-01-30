@@ -35,14 +35,14 @@ serve(async (req) => {
     }
 
     const blob = await response.blob()
-    const fileExt = mediaUrl.split('.').pop()?.split('?')[0] || 'jpg'
-    const fileName = `${leadId}/${postId}_${Date.now()}.${fileExt}`
+    const fileName = `${postId}_${Date.now()}.jpg`
+    const filePath = `${leadId}/${fileName}`
 
-    console.log('Uploading to storage:', fileName)
+    console.log('Uploading to storage:', filePath)
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('instagram-media')
-      .upload(fileName, blob, {
-        contentType: blob.type,
+      .upload(filePath, blob, {
+        contentType: 'image/jpeg',
         upsert: true
       })
 
@@ -53,17 +53,16 @@ serve(async (req) => {
 
     const { data: { publicUrl } } = supabase.storage
       .from('instagram-media')
-      .getPublicUrl(fileName)
+      .getPublicUrl(filePath)
 
     console.log('File uploaded successfully:', publicUrl)
 
     const { error: updateError } = await supabase
       .from('social_media_posts')
       .update({
+        local_media_paths: [filePath],
         local_media_urls: [publicUrl],
-        storage_status: 'completed',
-        media_processing_status: 'completed',
-        processing_progress: 100
+        storage_status: 'completed'
       })
       .eq('id', postId)
 
