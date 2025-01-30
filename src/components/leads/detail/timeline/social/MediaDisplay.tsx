@@ -2,72 +2,93 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 interface MediaDisplayProps {
-  localMediaPaths: string[];  // Pfade aus local_media_paths (Supabase Storage)
-  mediaUrls: string[];        // URLs aus media_urls (externe Videos)
+  localMediaPaths: string[];
+  mediaUrls: string[];
   isSidecar: boolean;
 }
 
-export const MediaDisplay = ({ 
+export const MediaDisplay = ({
   localMediaPaths = [],
   mediaUrls = [],
-  isSidecar 
+  isSidecar,
 }: MediaDisplayProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
   const [processedUrls, setProcessedUrls] = useState<string[]>([]);
-  const hasVideo = mediaUrls.some(url => url.includes('.mp4'));
 
+  // Memoize media sources to prevent unnecessary recalculations
+  const mediaSources = useMemo(() => {
+    const supabaseMedia = localMediaPaths.map(path => ({
+      type: 'image',
+      path,
+      isLocal: true
+    }));
+
+    const externalMedia = mediaUrls.map(url => ({
+      type: url.includes('.mp4') ? 'video' : 'image',
+      path: url,
+      isLocal: false
+    }));
+
+    return [...supabaseMedia, ...externalMedia];
+  }, [localMediaPaths, mediaUrls]);
+
+  // Main media loading effect
   useEffect(() => {
+    let isMounted = true;
+
     const loadMedia = async () => {
       try {
-        // Kombiniere und verarbeite beide Medienquellen
-        const supabasePaths = localMediaPaths.map(path => ({
-          type: 'image',
-          path
-        }));
-
-        const externalMedia = mediaUrls.map(url => ({
-          type: url.includes('.mp4') ? 'video' : 'image',
-          path: url
-        }));
-
-        const allMedia = [...supabasePaths, ...externalMedia];
-
         const urls = await Promise.all(
-          allMedia.map(async (media) => {
-            // Direkte Rückgabe für Videos
+          mediaSources.map(async (media) => {
             if (media.type === 'video') return media.path;
-            
-            // Generiere Supabase-URL für Bilder
-            const { data } = supabase.storage
-              .from('social-media-files')
-              .getPublicUrl(media.path);
 
-            // Cache-Busting für Bilder
-            return `${data.publicUrl}?ts=${Date.now()}`;
+            // Only generate URLs for local media
+            if (media.isLocal) {
+              const { data } = supabase.storage
+                .from('social-media-files')
+                .getPublicUrl(media.path);
+              return data.publicUrl;
+            }
+
+            return media.path;
           })
         );
 
-        setProcessedUrls(urls.filter(url => url));
+        // Filter valid URLs and update state only if necessary
+        const filteredUrls = urls.filter(url => url && url.length > 0);
+        if (isMounted && JSON.stringify(filteredUrls) !== JSON.stringify(processedUrls)) {
+          setProcessedUrls(filteredUrls);
+          console.log('Processed URLs updated:', filteredUrls);
+        }
       } catch (error) {
-        console.error("Medien konnten nicht geladen werden:", error);
+        console.error("Error loading media:", error);
       }
     };
 
-    if (localMediaPaths?.length > 0 || mediaUrls?.length > 0) {
+    if (mediaSources.length > 0) {
       loadMedia();
     }
-  }, [localMediaPaths, mediaUrls]);
 
-  // Debugging
+    return () => {
+      isMounted = false;
+    };
+  }, [mediaSources]); // Only run when sources change
+
+  // Determine if video exists
+  const hasVideo = useMemo(
+    () => processedUrls.some(url => url.includes('.mp4')),
+    [processedUrls]
+  );
+
+  // Reset carousel when URLs change
   useEffect(() => {
-    console.log('Verarbeitete URLs:', {
-      sources: [...localMediaPaths, ...mediaUrls],
-      processed: processedUrls
-    });
-  }, [processedUrls]);
+    if (emblaApi && processedUrls.length > 0) {
+      emblaApi.reInit();
+    }
+  }, [emblaApi, processedUrls]);
 
   if (processedUrls.length === 0) return null;
 
@@ -77,7 +98,7 @@ export const MediaDisplay = ({
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex">
             {processedUrls.map((url, index) => (
-              <div key={index} className="flex-[0_0_100%] min-w-0">
+              <div key={`${url}-${index}`} className="flex-[0_0_100%] min-w-0">
                 {url.includes('.mp4') ? (
                   <video
                     controls
@@ -87,15 +108,16 @@ export const MediaDisplay = ({
                 ) : (
                   <img
                     src={url}
-                    alt={`Medieninhalt ${index + 1}`}
+                    alt={`Media ${index + 1}`}
                     className="w-full h-auto object-contain max-h-[400px]"
                     loading="lazy"
+                    decoding="async"
                   />
                 )}
               </div>
             ))}
           </div>
-          
+
           {processedUrls.length > 1 && (
             <>
               <Button
@@ -127,9 +149,10 @@ export const MediaDisplay = ({
         ) : (
           <img
             src={processedUrls[0]}
-            alt="Post-Medieninhalt"
+            alt="Post media"
             className="w-full h-auto object-contain max-h-[400px]"
             loading="lazy"
+            decoding="async"
           />
         )
       )}
