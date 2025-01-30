@@ -41,7 +41,7 @@ serve(async (req) => {
       throw leadError;
     }
 
-    if (!lead?.social_media_posts || !Array.isArray(lead.social_media_posts)) {
+    if (!lead?.social_media_posts) {
       console.log('No social media posts found for lead:', leadId);
       return new Response(
         JSON.stringify({ 
@@ -55,29 +55,33 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Found ${lead.social_media_posts.length} posts to process`);
+    const posts = Array.isArray(lead.social_media_posts) ? lead.social_media_posts : [lead.social_media_posts];
+    console.log(`Found ${posts.length} posts to process`);
 
-    for (const post of lead.social_media_posts) {
+    for (const post of posts) {
       try {
-        if (!post.media_urls?.length) {
-          console.log('No media URLs for post:', post.id);
+        console.log('Processing post:', post.id);
+        
+        // Handle both single image and multiple images
+        const imageUrls = post.images || (post.media_urls ? post.media_urls : []);
+        
+        if (!imageUrls || imageUrls.length === 0) {
+          console.log('No image URLs found for post:', post.id);
           continue;
         }
 
-        for (const mediaUrl of post.media_urls) {
-          try {
-            console.log('Processing media URL:', mediaUrl, 'for post:', post.id);
+        console.log(`Found ${imageUrls.length} images for post:`, post.id);
+        const processedImagePaths = [];
 
-            // Skip video processing
-            if (post.media_type?.toLowerCase() === 'video') {
-              console.log('Skipping video processing:', { mediaUrl, post });
-              continue;
-            }
+        for (const imageUrl of imageUrls) {
+          try {
+            console.log('Processing image URL:', imageUrl);
 
             // Download image
-            const imageResponse = await fetch(mediaUrl);
+            const imageResponse = await fetch(imageUrl);
             if (!imageResponse.ok) {
-              throw new Error('Failed to fetch image');
+              console.error('Failed to fetch image:', imageUrl);
+              continue;
             }
 
             // Get image buffer
@@ -106,8 +110,7 @@ serve(async (req) => {
             const compressedImageBuffer = await image.encodeJPEG(70);
 
             // Generate file path
-            const timestamp = new Date().getTime();
-            const filePath = `instagram/${leadId}/${post.id}_${timestamp}.jpg`;
+            const filePath = `instagram/${leadId}/${post.id}_${processedImagePaths.length}.jpg`;
             
             console.log('Uploading compressed image to bucket:', filePath);
 
@@ -122,47 +125,48 @@ serve(async (req) => {
 
             if (uploadError) {
               console.error('Upload error:', uploadError);
-              throw uploadError;
+              continue;
             }
 
-            // Create entry in social_media_posts table
-            const { error: insertError } = await supabase
-              .from('social_media_posts')
-              .insert({
-                id: post.id,
-                lead_id: leadId,
-                platform: 'Instagram',
-                post_type: post.type || 'post',
-                content: post.caption,
-                likes_count: post.likesCount,
-                comments_count: post.commentsCount,
-                url: post.url,
-                location: post.locationName,
-                posted_at: post.timestamp,
-                media_urls: [mediaUrl],
-                bucket_path: filePath,
-                media_type: 'image',
-                media_processing_status: 'processed',
-                hashtags: post.hashtags,
-                first_comment: post.firstComment,
-                engagement_count: post.engagementCount
-              });
+            processedImagePaths.push(filePath);
+            console.log('Successfully processed and uploaded image:', filePath);
 
-            if (insertError) {
-              console.error('Error inserting social media post:', insertError);
-              throw insertError;
-            }
-
-            console.log('Successfully processed image for post:', post.id);
-
-          } catch (mediaError) {
-            console.error('Error processing media:', mediaError, 'for post:', post.id);
-            // Continue with next media URL even if one fails
+          } catch (imageError) {
+            console.error('Error processing image:', imageError);
+            continue;
           }
         }
+
+        if (processedImagePaths.length > 0) {
+          // Create entry in social_media_posts table
+          const { error: insertError } = await supabase
+            .from('social_media_posts')
+            .insert({
+              id: post.id,
+              lead_id: leadId,
+              platform: 'Instagram',
+              post_type: post.type || 'post',
+              content: post.caption,
+              url: post.url,
+              posted_at: post.timestamp,
+              media_urls: imageUrls,
+              local_media_paths: processedImagePaths,
+              media_type: 'image',
+              media_processing_status: 'processed',
+              hashtags: post.caption ? extractHashtags(post.caption) : null
+            });
+
+          if (insertError) {
+            console.error('Error inserting social media post:', insertError);
+            continue;
+          }
+
+          console.log('Successfully processed post:', post.id);
+        }
+
       } catch (postError) {
         console.error('Error processing post:', postError);
-        // Continue with next post even if one fails
+        continue;
       }
     }
 
@@ -188,3 +192,8 @@ serve(async (req) => {
     );
   }
 });
+
+function extractHashtags(text: string): string[] {
+  const hashtagRegex = /#[\w\u0590-\u05ff]+/g;
+  return text.match(hashtagRegex) || [];
+}
