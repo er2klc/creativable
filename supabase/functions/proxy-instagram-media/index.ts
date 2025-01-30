@@ -16,6 +16,7 @@ serve(async (req) => {
     const imageUrl = url.searchParams.get('url');
 
     if (!imageUrl) {
+      console.error('Missing image URL parameter');
       return new Response('Missing image URL', { 
         status: 400,
         headers: corsHeaders 
@@ -38,11 +39,17 @@ serve(async (req) => {
       });
     }
 
+    const contentType = response.headers.get('Content-Type');
+    console.log('Content-Type:', contentType);
+
     const headers = new Headers(corsHeaders);
-    headers.set('Content-Type', response.headers.get('Content-Type') || 'image/jpeg');
+    headers.set('Content-Type', contentType || 'image/jpeg');
     headers.set('Cache-Control', 'public, max-age=31536000');
 
-    return new Response(response.body, { 
+    const imageData = await response.arrayBuffer();
+    console.log('Successfully fetched image, size:', imageData.byteLength, 'bytes');
+
+    return new Response(imageData, { 
       headers,
       status: 200 
     });
