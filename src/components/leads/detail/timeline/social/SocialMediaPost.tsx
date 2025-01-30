@@ -33,10 +33,6 @@ interface SocialMediaPost {
   videoUrl?: string | null;
   images?: string[] | null;
   hashtags?: string[] | null;
-  metadata?: {
-    videoUrl?: string;
-    media_urls?: string[];
-  } | null;
 }
 
 interface SocialMediaPostProps {
@@ -70,40 +66,24 @@ const getPostTypeIcon = (type: string) => {
 };
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
-  // Get media URLs based on post type
   const getMediaUrls = () => {
-    console.log("Post type:", post.post_type);
-    console.log("Media URLs:", post.media_urls);
-    console.log("Video URL:", post.video_url);
-    
     const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
     
-    // For videos, use video_url from leads.social_media_posts
+    // Für Videos
     if (postType === 'video') {
-      const videoUrl = post.video_url || post.videoUrl || post.metadata?.videoUrl;
+      const videoUrl = post.video_url || post.videoUrl;
       return videoUrl ? [videoUrl] : [];
     }
     
-    // For images and sidecar, use media_urls from social_media_posts table
-    if (postType === 'image' || postType === 'sidecar') {
-      if (post.media_urls && post.media_urls.length > 0) {
-        console.log("Using media URLs from post.media_urls:", post.media_urls);
-        return post.media_urls;
-      }
-    }
-
-    // Fallback to local media paths if available
-    if (post.local_media_paths && post.local_media_paths.length > 0) {
-      console.log("Using local media paths:", post.local_media_paths);
-      return post.local_media_paths;
+    // Für Bilder und Sidecar
+    if ((postType === 'image' || postType === 'sidecar') && post.media_urls && post.media_urls.length > 0) {
+      return post.media_urls;
     }
 
     return [];
   };
 
   const mediaUrls = getMediaUrls();
-  console.log("Final media URLs:", mediaUrls);
-  
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = postType === 'sidecar' && mediaUrls.length > 1;
   const hasVideo = postType === 'video';
@@ -116,13 +96,11 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       transition={{ duration: 0.3 }}
       className="flex flex-col gap-1"
     >
-      {/* Date above the card */}
       <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
         {formatDate(post.timestamp || post.posted_at || '')}
       </div>
       
       <div className="flex gap-4 items-start group relative">
-        {/* Circle with Icon */}
         <div className="relative">
           <div className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center",
@@ -132,16 +110,13 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           </div>
         </div>
         
-        {/* Vertical Timeline Line */}
         <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-200" style={{ height: '100%' }} />
-        
-        {/* Connecting Line to Card */}
         <div className="absolute left-8 top-4 w-4 h-[2px] bg-gray-200" />
         
         <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-4">
             {mediaUrls.length > 0 && (
-              <div className="w-1/3 min-w-[200px]">
+              <div className="w-full">
                 <MediaDisplay 
                   mediaUrls={mediaUrls} 
                   hasVideo={hasVideo} 
