@@ -11,12 +11,6 @@ interface MediaDisplayProps {
 export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
 
-  const getPublicUrl = (path: string) => {
-    if (!path) return '';
-    if (path.startsWith('http')) return path;
-    return `https://agqaitxlmxztqyhpcjau.supabase.co/storage/v1/object/public/${path}`;
-  };
-
   if (mediaUrls.length === 0) return null;
 
   if (isSidecar) {
@@ -27,7 +21,7 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
             {mediaUrls.map((url, index) => (
               <div key={index} className="flex-[0_0_100%] min-w-0">
                 <img
-                  src={getPublicUrl(url)}
+                  src={url}
                   alt={`Media ${index + 1}`}
                   className="w-full h-auto object-contain max-h-[400px]"
                 />
@@ -65,11 +59,11 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
         <video
           controls
           className="w-full h-auto object-contain max-h-[400px]"
-          src={getPublicUrl(mediaUrls[0])}
+          src={mediaUrls[0]}
         />
       ) : (
         <img
-          src={getPublicUrl(mediaUrls[0])}
+          src={mediaUrls[0]}
           alt="Post media"
           className="w-full h-auto object-contain max-h-[400px]"
         />

@@ -1,13 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { formatDate } from "../TimelineUtils";
+import { Image, Video, MessageCircle, Heart } from "lucide-react";
 import { MediaDisplay } from "./MediaDisplay";
 import { PostHeader } from "./PostHeader";
 import { PostContent } from "./PostContent";
 import { PostMetadata } from "./PostMetadata";
 import { PostActions } from "./PostActions";
-import { motion } from "framer-motion";
-import { formatDate } from "../TimelineUtils";
-import { Image, Video, MessageCircle, Heart } from "lucide-react";
 
 interface SocialMediaPost {
   id: string;
@@ -70,31 +70,37 @@ const getPostTypeIcon = (type: string) => {
 };
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
+  // Get all possible media URLs
   const getMediaUrls = () => {
-    if (post.local_media_paths && post.local_media_paths.length > 0) {
-      return post.local_media_paths;
-    }
-
+    // First check for direct media_urls
     if (post.media_urls && post.media_urls.length > 0) {
       return post.media_urls;
     }
 
-    if (post.metadata?.media_urls && post.metadata.media_urls.length > 0) {
-      return post.metadata.media_urls;
+    // Then check for local paths
+    if (post.local_media_paths && post.local_media_paths.length > 0) {
+      return post.local_media_paths;
     }
 
+    // Check for video URLs
     const videoUrl = post.video_url || post.videoUrl || post.metadata?.videoUrl;
     if (videoUrl) {
       return [videoUrl];
     }
 
+    // Check for images array
+    if (post.images && post.images.length > 0) {
+      return post.images;
+    }
+
+    // If no other media found, return empty array
     return [];
   };
 
   const mediaUrls = getMediaUrls();
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = mediaUrls.length > 1;
-  const hasVideo = post.video_url !== null;
+  const hasVideo = post.video_url !== null || post.videoUrl !== null || post.metadata?.videoUrl !== null;
   const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
   return (
