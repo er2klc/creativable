@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 interface MediaDisplayProps {
   localMediaPaths: string[];
@@ -18,62 +18,34 @@ export const MediaDisplay = ({
   const [emblaRef, emblaApi] = useEmblaCarousel();
   const [processedUrls, setProcessedUrls] = useState<string[]>([]);
 
-  // 1. Medienquellen mit tiefer Memoization
+  // 1. Medienquellen kombinieren
   const mediaSources = useMemo(() => {
-    return {
-      localImages: [...localMediaPaths],
-      externalVideos: mediaUrls.filter(url => url.includes('.mp4'))
-    };
+    const videos = mediaUrls.filter(url => url.includes('.mp4'));
+    const images = localMediaPaths.map(path => 
+      supabase.storage
+        .from('social-media-files')
+        .getPublicUrl(path).data.publicUrl
+    );
+    return [...images, ...videos];
   }, [localMediaPaths, mediaUrls]);
 
-  // 2. Stabilisierte URL-Generierung
-  const generateUrls = useCallback(async () => {
-    try {
-      const imageUrls = await Promise.all(
-        mediaSources.localImages.map(async (path) => {
-          const { data } = supabase.storage
-            .from('social-media-files')
-            .getPublicUrl(path);
-          return data.publicUrl;
-        })
-      );
-
-      const videoUrls = mediaSources.externalVideos;
-      const newUrls = [...imageUrls, ...videoUrls].filter(Boolean);
-      
-      // 3. Zustandsaktualisierung mit Tiefenvergleich
-      setProcessedUrls(prev => {
-        const prevString = JSON.stringify(prev);
-        const newString = JSON.stringify(newUrls);
-        return prevString === newString ? prev : newUrls;
-      });
-
-    } catch (error) {
-      console.error("Medienfehler:", error);
+  // 2. URLs einmalig setzen
+  useEffect(() => {
+    if (mediaSources.length > 0) {
+      setProcessedUrls(mediaSources);
+      console.log('Generierte URLs:', mediaSources);
     }
   }, [mediaSources]);
 
-  // 4. Effekt mit stabilen Abhängigkeiten
-  useEffect(() => {
-    generateUrls();
-  }, [generateUrls]);
-
-  // 5. Carousel-Reset bei Änderungen
+  // 3. Carousel-Reset
   useEffect(() => {
     emblaApi?.reInit();
   }, [emblaApi, processedUrls]);
 
-  // 6. Debugging mit Schutzmechanismus
-  useEffect(() => {
-    if (processedUrls.length > 0) {
-      console.log('Aktive Medien:', processedUrls);
-    }
-  }, [processedUrls]);
-
   if (processedUrls.length === 0) {
     return (
       <div className="bg-gray-100 w-full h-96 flex items-center justify-center rounded-lg">
-        <p className="text-gray-500">Keine Medien verfügbar</p>
+        <p className="text-gray-500">Lade Medien...</p>
       </div>
     );
   }
@@ -81,10 +53,10 @@ export const MediaDisplay = ({
   return (
     <div className="relative rounded-lg overflow-hidden">
       {isSidecar ? (
-        <div className="overflow-hidden" ref={emblaRef} key={processedUrls.join('-')}>
+        <div className="overflow-hidden" ref={emblaRef} key={processedUrls.join('')}>
           <div className="flex">
             {processedUrls.map((url, index) => (
-              <div key={`${url}-${index}`} className="flex-[0_0_100%] min-w-0">
+              <div key={index} className="flex-[0_0_100%] min-w-0">
                 {url.includes('.mp4') ? (
                   <video
                     controls
@@ -98,7 +70,7 @@ export const MediaDisplay = ({
                     className="w-full h-auto object-contain max-h-[400px]"
                     loading="lazy"
                     onError={(e) => {
-                      console.error('Bild fehlgeschlagen:', url);
+                      console.error('Bild nicht gefunden:', url);
                       (e.target as HTMLImageElement).style.display = 'none';
                     }}
                   />
