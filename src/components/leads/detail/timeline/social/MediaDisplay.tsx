@@ -14,13 +14,6 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
   const getProxiedUrl = (url: string) => {
     if (!url) return '';
     
-    // Only proxy Instagram image URLs (both single and sidecar)
-    if (url.includes('instagram') && !hasVideo) {
-      const proxyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/proxy-instagram-media`;
-      console.log('Proxying Instagram image:', url);
-      return `${proxyUrl}?url=${encodeURIComponent(url)}`;
-    }
-    
     // Return original URL for non-Instagram images or videos
     if (url.startsWith('http')) {
       return url;
