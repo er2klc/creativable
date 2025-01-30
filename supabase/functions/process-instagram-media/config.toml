@@ -2,3 +2,6 @@ project_id = "agqaitxlmxztqyhpcjau"
 
 [build]
 command = ""
+
+[deploy]
+allowed_http_methods = ["POST", "OPTIONS"]
