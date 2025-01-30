@@ -13,8 +13,10 @@ serve(async (req) => {
 
   try {
     const { mediaUrl, leadId, postId } = await req.json()
+    console.log('Processing media for:', { mediaUrl, leadId, postId })
 
     if (!mediaUrl || !leadId || !postId) {
+      console.error('Missing required parameters:', { mediaUrl, leadId, postId })
       return new Response(
         JSON.stringify({ error: 'Missing required parameters' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -26,7 +28,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Download the media file
+    console.log('Downloading media from:', mediaUrl)
     const response = await fetch(mediaUrl)
     if (!response.ok) {
       throw new Error(`Failed to fetch media: ${response.statusText}`)
@@ -36,7 +38,7 @@ serve(async (req) => {
     const fileExt = mediaUrl.split('.').pop()?.split('?')[0] || 'jpg'
     const fileName = `${leadId}/${postId}_${Date.now()}.${fileExt}`
 
-    // Upload to Supabase Storage
+    console.log('Uploading to storage:', fileName)
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('instagram-media')
       .upload(fileName, blob, {
@@ -45,15 +47,16 @@ serve(async (req) => {
       })
 
     if (uploadError) {
+      console.error('Upload error:', uploadError)
       throw uploadError
     }
 
-    // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from('instagram-media')
       .getPublicUrl(fileName)
 
-    // Update social_media_posts table
+    console.log('File uploaded successfully:', publicUrl)
+
     const { error: updateError } = await supabase
       .from('social_media_posts')
       .update({
@@ -63,8 +66,11 @@ serve(async (req) => {
       .eq('id', postId)
 
     if (updateError) {
+      console.error('Update error:', updateError)
       throw updateError
     }
+
+    console.log('Post updated successfully')
 
     return new Response(
       JSON.stringify({ 
