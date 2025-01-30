@@ -11,6 +11,9 @@ const initialState: ScanState = {
   isSuccess: false
 };
 
+const BATCH_SIZE = 2; // Process 2 posts at a time
+const BATCH_DELAY = 2000; // 2 second delay between batches
+
 export function useInstagramScan() {
   const [state, setState] = useState<ScanState>(initialState);
   const lastProgressRef = useRef<number>(0);
@@ -39,17 +42,28 @@ export function useInstagramScan() {
       try {
         const { data: posts, error } = await supabase
           .from('social_media_posts')
-          .select('processing_progress, current_file')
+          .select('processing_progress, current_file, error_message')
           .eq('lead_id', leadId)
-          .order('processing_progress', { ascending: false });
+          .order('processing_progress', { ascending: false })
+          .limit(1);
 
         if (error) {
           console.error('Error polling progress:', error);
+          toast.error('Error checking scan progress');
           return;
         }
 
         const latestPost = posts && posts.length > 0 ? posts[0] : null;
         if (!latestPost) return;
+
+        // Check for errors
+        if (latestPost.error_message) {
+          console.error('Processing error:', latestPost.error_message);
+          toast.error(`Error processing posts: ${latestPost.error_message}`);
+          pollingState.isActive = false;
+          clearInterval(interval);
+          return;
+        }
 
         const currentProgress = latestPost.processing_progress ?? pollingState.lastProgress;
         
@@ -67,10 +81,12 @@ export function useInstagramScan() {
           updateState({ isSuccess: true });
           pollingState.isActive = false;
           clearInterval(interval);
+          toast.success('Instagram scan completed successfully');
         }
 
       } catch (err) {
         console.error('Error in progress polling:', err);
+        toast.error('Error checking scan progress');
       }
     }, 500);
 

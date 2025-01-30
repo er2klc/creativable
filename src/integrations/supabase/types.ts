@@ -2833,7 +2833,14 @@ export type Database = {
         | "whatsapp"
         | "social_media"
       gender_type: "male" | "female" | "other" | "prefer_not_to_say"
-      post_type: "post" | "video" | "reel" | "story" | "igtv"
+      post_type:
+        | "post"
+        | "video"
+        | "reel"
+        | "story"
+        | "igtv"
+        | "Image"
+        | "Sidecar"
       recurring_pattern: "none" | "daily" | "weekly" | "monthly" | "yearly"
       shortcut_type:
         | "team"
