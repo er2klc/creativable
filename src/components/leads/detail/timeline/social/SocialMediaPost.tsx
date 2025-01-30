@@ -149,6 +149,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                 timestamp={post.timestamp || post.posted_at || ''} 
                 type={post.type || post.post_type || ''} 
                 postTypeColor={postTypeColor}
+                id={post.id} // Pass the ID to PostHeader
               />
 
               <PostContent 
