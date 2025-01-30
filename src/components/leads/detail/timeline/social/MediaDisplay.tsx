@@ -21,17 +21,18 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
         
         const urls = await Promise.all(
           mediaUrls.map(async (path) => {
-            // Skip video URLs - return them as is
-            if (path.includes('.mp4')) {
+            // Skip video URLs or external URLs - return them as is
+            if (path.includes('.mp4') || path.startsWith('http')) {
+              console.log("Using direct URL for video/external:", path);
               return path;
             }
             
-            // Get public URL from Supabase storage
+            // Get public URL from Supabase storage for local media
             const { data } = supabase.storage
               .from('social-media-files')
               .getPublicUrl(path);
               
-            console.log("Generated public URL:", data.publicUrl);
+            console.log("Generated public URL for local media:", data.publicUrl);
             return data.publicUrl;
           })
         );
@@ -55,11 +56,19 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
           <div className="flex">
             {publicUrls.map((url, index) => (
               <div key={index} className="flex-[0_0_100%] min-w-0">
-                <img
-                  src={url}
-                  alt={`Media ${index + 1}`}
-                  className="w-full h-auto object-contain max-h-[400px]"
-                />
+                {url.includes('.mp4') ? (
+                  <video
+                    controls
+                    className="w-full h-auto object-contain max-h-[400px]"
+                    src={url}
+                  />
+                ) : (
+                  <img
+                    src={url}
+                    alt={`Media ${index + 1}`}
+                    className="w-full h-auto object-contain max-h-[400px]"
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -90,7 +99,7 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
 
   return (
     <div className="relative rounded-lg overflow-hidden">
-      {hasVideo ? (
+      {hasVideo || publicUrls[0]?.includes('.mp4') ? (
         <video
           controls
           className="w-full h-auto object-contain max-h-[400px]"
