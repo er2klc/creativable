@@ -62,8 +62,13 @@ serve(async (req) => {
       try {
         console.log('Processing post:', post.id);
         
-        // Handle both single image and multiple images
-        const imageUrls = post.images || (post.media_urls ? post.media_urls : []);
+        // Check for images in both the images array and media_urls
+        let imageUrls = [];
+        if (post.images && Array.isArray(post.images)) {
+          imageUrls = post.images;
+        } else if (post.media_urls && Array.isArray(post.media_urls)) {
+          imageUrls = post.media_urls;
+        }
         
         if (!imageUrls || imageUrls.length === 0) {
           console.log('No image URLs found for post:', post.id);
@@ -138,6 +143,11 @@ serve(async (req) => {
         }
 
         if (processedImagePaths.length > 0) {
+          // Extract hashtags from caption
+          const hashtags = post.caption ? 
+            (post.caption.match(/#[\w\u0590-\u05ff]+/g) || []) : 
+            [];
+
           // Create entry in social_media_posts table
           const { error: insertError } = await supabase
             .from('social_media_posts')
@@ -153,7 +163,7 @@ serve(async (req) => {
               local_media_paths: processedImagePaths,
               media_type: 'image',
               media_processing_status: 'processed',
-              hashtags: post.caption ? extractHashtags(post.caption) : null
+              hashtags: hashtags
             });
 
           if (insertError) {
@@ -192,8 +202,3 @@ serve(async (req) => {
     );
   }
 });
-
-function extractHashtags(text: string): string[] {
-  const hashtagRegex = /#[\w\u0590-\u05ff]+/g;
-  return text.match(hashtagRegex) || [];
-}
