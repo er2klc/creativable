@@ -807,9 +807,9 @@ export type Database = {
           social_media_interests: string[] | null
           social_media_last_post_date: string | null
           social_media_mentioned_users: Json | null
+          social_media_posts: Json | null
           social_media_posts_count: number | null
           social_media_profile_image_url: string | null
-          social_media_raw_data: Json | null
           social_media_stats: Json | null
           social_media_tagged_users: Json | null
           social_media_username: string | null
@@ -862,9 +862,9 @@ export type Database = {
           social_media_interests?: string[] | null
           social_media_last_post_date?: string | null
           social_media_mentioned_users?: Json | null
+          social_media_posts?: Json | null
           social_media_posts_count?: number | null
           social_media_profile_image_url?: string | null
-          social_media_raw_data?: Json | null
           social_media_stats?: Json | null
           social_media_tagged_users?: Json | null
           social_media_username?: string | null
@@ -917,9 +917,9 @@ export type Database = {
           social_media_interests?: string[] | null
           social_media_last_post_date?: string | null
           social_media_mentioned_users?: Json | null
+          social_media_posts?: Json | null
           social_media_posts_count?: number | null
           social_media_profile_image_url?: string | null
-          social_media_raw_data?: Json | null
           social_media_stats?: Json | null
           social_media_tagged_users?: Json | null
           social_media_username?: string | null
@@ -1432,7 +1432,6 @@ export type Database = {
           lead_id: string | null
           likes_count: number | null
           local_media_paths: string[] | null
-          local_media_urls: string[] | null
           local_video_path: string | null
           location: string | null
           media_processing_status: string | null
@@ -1444,7 +1443,6 @@ export type Database = {
           post_type: Database["public"]["Enums"]["post_type"]
           posted_at: string | null
           processing_progress: number | null
-          storage_status: string | null
           tagged_profiles: string[] | null
           tagged_users: Json | null
           url: string | null
@@ -1464,7 +1462,6 @@ export type Database = {
           lead_id?: string | null
           likes_count?: number | null
           local_media_paths?: string[] | null
-          local_media_urls?: string[] | null
           local_video_path?: string | null
           location?: string | null
           media_processing_status?: string | null
@@ -1476,7 +1473,6 @@ export type Database = {
           post_type: Database["public"]["Enums"]["post_type"]
           posted_at?: string | null
           processing_progress?: number | null
-          storage_status?: string | null
           tagged_profiles?: string[] | null
           tagged_users?: Json | null
           url?: string | null
@@ -1496,7 +1492,6 @@ export type Database = {
           lead_id?: string | null
           likes_count?: number | null
           local_media_paths?: string[] | null
-          local_media_urls?: string[] | null
           local_video_path?: string | null
           location?: string | null
           media_processing_status?: string | null
@@ -1508,7 +1503,6 @@ export type Database = {
           post_type?: Database["public"]["Enums"]["post_type"]
           posted_at?: string | null
           processing_progress?: number | null
-          storage_status?: string | null
           tagged_profiles?: string[] | null
           tagged_users?: Json | null
           url?: string | null
