@@ -90,7 +90,6 @@ async function processPostBatch(
 
           const imageBuffer = await imageResponse.arrayBuffer();
           
-          // Direct upload without compression
           const { error: uploadError } = await supabase
             .storage
             .from('social-media-files')
@@ -132,7 +131,7 @@ async function processPostBatch(
             posted_at: post.timestamp,
             media_urls: imageUrls,
             local_media_paths: processedImagePaths,
-            media_type: post.type === 'Sidecar' ? 'Sidecar' : 'Image',
+            media_type: postType,
             media_processing_status: 'processed',
             hashtags: hashtags,
             processing_progress: progress
@@ -151,7 +150,6 @@ async function processPostBatch(
       continue;
     }
 
-    // Add a small delay between processing each post in the batch
     if (i < posts.length - 1) {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
@@ -159,8 +157,12 @@ async function processPostBatch(
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204
+    });
   }
 
   try {
@@ -170,7 +172,6 @@ serve(async (req) => {
     console.log('Processing media for lead:', leadId);
 
     if (!leadId) {
-      console.error('Missing leadId parameter');
       throw new Error('Missing leadId parameter');
     }
 
@@ -235,7 +236,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error processing media:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        success: false
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
