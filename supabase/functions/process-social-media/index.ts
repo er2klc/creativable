@@ -28,9 +28,14 @@ async function processPostBatch(
     try {
       console.log(`Processing post ${currentIndex + 1}/${posts.length}: ${post.id}`);
       
+      // Handle different image URL sources
       let imageUrls = post.images || [];
       if (!imageUrls.length && post.media_urls) {
         imageUrls = post.media_urls;
+      }
+      // Add support for displayUrl
+      if (!imageUrls.length && post.displayUrl) {
+        imageUrls = [post.displayUrl];
       }
 
       if (!imageUrls || !imageUrls.length) {
@@ -105,7 +110,7 @@ async function processPostBatch(
       if (processedImagePaths.length > 0) {
         const hashtags = post.caption ? 
           (post.caption.match(/#[\w\u0590-\u05ff]+/g) || []) : 
-          [];
+          post.hashtags || [];
 
         const { error: insertError } = await supabase
           .from('social_media_posts')
@@ -119,7 +124,7 @@ async function processPostBatch(
             posted_at: post.timestamp,
             media_urls: imageUrls,
             local_media_paths: processedImagePaths,
-            media_type: 'image',
+            media_type: post.type || 'image',
             media_processing_status: 'processed',
             hashtags: hashtags,
             processing_progress: progress
