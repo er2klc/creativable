@@ -7,10 +7,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const BATCH_SIZE = 2; // Process 2 posts at a time
-const BATCH_DELAY = 2000; // 2 second delay between batches
+const BATCH_SIZE = 3; // Reduziert von 5 auf 3 für weniger CPU-Last
+const BATCH_DELAY = 3000; // Erhöht von 2000 auf 3000ms
 const MAX_IMAGE_SIZE = 800;
-const JPEG_QUALITY = 70;
+const JPEG_QUALITY = 65; // Reduziert von 70 auf 65 für kleinere Dateien
 
 async function processPostBatch(
   posts: any[],
@@ -18,7 +18,7 @@ async function processPostBatch(
   leadId: string,
   startIndex: number
 ): Promise<void> {
-  console.log(`Processing batch starting at index ${startIndex}`);
+  console.log(`Processing batch starting at index ${startIndex} for lead ${leadId}`);
   
   for (let i = 0; i < posts.length; i++) {
     const post = posts[i];
@@ -28,12 +28,10 @@ async function processPostBatch(
     try {
       console.log(`Processing post ${currentIndex + 1}/${posts.length}: ${post.id}`);
       
-      // Handle different image URL sources
       let imageUrls = post.images || [];
       if (!imageUrls.length && post.media_urls) {
         imageUrls = post.media_urls;
       }
-      // Add support for displayUrl
       if (!imageUrls.length && post.displayUrl) {
         imageUrls = [post.displayUrl];
       }
@@ -45,64 +43,90 @@ async function processPostBatch(
 
       const processedImagePaths = [];
 
-      for (const mediaUrl of imageUrls) {
+      // Update progress in database
+      await supabase
+        .from('social_media_posts')
+        .upsert({
+          id: post.id,
+          lead_id: leadId,
+          processing_progress: progress,
+          current_file: imageUrls[0]?.split('/').pop(),
+          media_processing_status: 'processing'
+        });
+
+      for (const [index, mediaUrl] of imageUrls.entries()) {
         try {
-          console.log('Processing media URL:', mediaUrl);
+          if (index >= 10) { // Limit to max 10 images per post
+            console.log(`Skipping remaining images for post ${post.id} (max 10 reached)`);
+            break;
+          }
+
+          console.log(`Processing media ${index + 1}/${imageUrls.length} for post ${post.id}`);
           
-          // Update progress in database
-          await supabase
-            .from('social_media_posts')
-            .upsert({
-              id: post.id,
-              lead_id: leadId,
-              processing_progress: progress,
-              current_file: mediaUrl.split('/').pop(),
-              media_processing_status: 'processing'
-            });
+          const filePath = `instagram/${leadId}/${post.id}_${index}.jpg`;
+          
+          // Check if file already exists
+          const { data: existingFile } = await supabase
+            .storage
+            .from('social-media-files')
+            .list(`instagram/${leadId}`);
+
+          const fileExists = existingFile?.some(file => file.name === `${post.id}_${index}.jpg`);
+          
+          if (fileExists) {
+            console.log(`File already exists: ${filePath}`);
+            processedImagePaths.push(filePath);
+            continue;
+          }
 
           const imageResponse = await fetch(mediaUrl);
           if (!imageResponse.ok) {
-            console.error('Failed to fetch image:', mediaUrl);
+            console.error(`Failed to fetch image: ${mediaUrl}`);
             continue;
           }
 
           const imageBuffer = await imageResponse.arrayBuffer();
-          const image = await Image.decode(new Uint8Array(imageBuffer));
           
-          let width = image.width;
-          let height = image.height;
-          
-          if (width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) {
-            if (width > height) {
-              height = Math.round((height * MAX_IMAGE_SIZE) / width);
-              width = MAX_IMAGE_SIZE;
-            } else {
-              width = Math.round((width * MAX_IMAGE_SIZE) / height);
-              height = MAX_IMAGE_SIZE;
+          try {
+            const image = await Image.decode(new Uint8Array(imageBuffer));
+            
+            let width = image.width;
+            let height = image.height;
+            
+            if (width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) {
+              if (width > height) {
+                height = Math.round((height * MAX_IMAGE_SIZE) / width);
+                width = MAX_IMAGE_SIZE;
+              } else {
+                width = Math.round((width * MAX_IMAGE_SIZE) / height);
+                height = MAX_IMAGE_SIZE;
+              }
+              image.resize(width, height);
             }
-            image.resize(width, height);
-          }
 
-          const compressedImageBuffer = await image.encodeJPEG(JPEG_QUALITY);
-          const filePath = `instagram/${leadId}/${post.id}_${processedImagePaths.length}.jpg`;
-          
-          const { error: uploadError } = await supabase
-            .storage
-            .from('social-media-files')
-            .upload(filePath, compressedImageBuffer, {
-              contentType: 'image/jpeg',
-              upsert: true
-            });
+            const compressedImageBuffer = await image.encodeJPEG(JPEG_QUALITY);
+            
+            const { error: uploadError } = await supabase
+              .storage
+              .from('social-media-files')
+              .upload(filePath, compressedImageBuffer, {
+                contentType: 'image/jpeg',
+                upsert: true
+              });
 
-          if (uploadError) {
-            console.error('Upload error:', uploadError);
+            if (uploadError) {
+              console.error('Upload error:', uploadError);
+              continue;
+            }
+
+            processedImagePaths.push(filePath);
+            
+          } catch (imageError) {
+            console.error(`Error processing image ${index} for post ${post.id}:`, imageError);
             continue;
           }
-
-          processedImagePaths.push(filePath);
-          
         } catch (mediaError) {
-          console.error('Error processing media:', mediaError);
+          console.error(`Error processing media URL ${index} for post ${post.id}:`, mediaError);
           continue;
         }
       }
@@ -135,12 +159,17 @@ async function processPostBatch(
           continue;
         }
 
-        console.log('Successfully processed post:', post.id);
+        console.log(`Successfully processed post ${post.id} with ${processedImagePaths.length} images`);
       }
 
     } catch (postError) {
-      console.error('Error processing post:', postError);
+      console.error(`Error processing post ${post.id}:`, postError);
       continue;
+    }
+
+    // Add a small delay between processing each post in the batch
+    if (i < posts.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
 }
@@ -197,12 +226,11 @@ serve(async (req) => {
     
     console.log(`Found ${posts.length} posts to process`);
 
-    // Process posts in batches
+    // Process posts in smaller batches with longer delays
     for (let i = 0; i < posts.length; i += BATCH_SIZE) {
       const batch = posts.slice(i, i + BATCH_SIZE);
       await processPostBatch(batch, supabase, leadId, i);
       
-      // Add delay between batches if not the last batch
       if (i + BATCH_SIZE < posts.length) {
         console.log(`Waiting ${BATCH_DELAY}ms before processing next batch...`);
         await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
