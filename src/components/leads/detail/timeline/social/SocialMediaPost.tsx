@@ -27,7 +27,6 @@ interface SocialMediaPost {
   timestamp: string | null;
   media_urls: string[] | null;
   media_type: string | null;
-  local_video_path: string | null;
   local_media_paths: string[] | null;
   video_url: string | null;
   videoUrl?: string | null;
@@ -75,11 +74,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     // First check for direct media_urls
     if (post.media_urls && post.media_urls.length > 0) {
       return post.media_urls;
-    }
-
-    // Then check for local paths
-    if (post.local_media_paths && post.local_media_paths.length > 0) {
-      return post.local_media_paths;
     }
 
     // Check for video URLs
@@ -134,12 +128,13 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
         
         <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>
           <div className="flex gap-4">
-            {mediaUrls.length > 0 && (
+            {(mediaUrls.length > 0 || (post.local_media_paths && post.local_media_paths.length > 0)) && (
               <div className="w-1/3 min-w-[200px]">
                 <MediaDisplay 
                   mediaUrls={mediaUrls} 
                   hasVideo={hasVideo} 
-                  isSidecar={isSidecar} 
+                  isSidecar={isSidecar}
+                  localMediaPaths={post.local_media_paths || []}
                 />
               </div>
             )}
@@ -149,7 +144,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                 timestamp={post.timestamp || post.posted_at || ''} 
                 type={post.type || post.post_type || ''} 
                 postTypeColor={postTypeColor}
-                id={post.id} // Pass the ID to PostHeader
+                id={post.id}
               />
 
               <PostContent 

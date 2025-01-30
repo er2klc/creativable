@@ -8,9 +8,10 @@ interface MediaDisplayProps {
   mediaUrls: string[];
   hasVideo: boolean;
   isSidecar: boolean;
+  localMediaPaths?: string[];
 }
 
-export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayProps) => {
+export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar, localMediaPaths = [] }: MediaDisplayProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
   const [publicUrls, setPublicUrls] = useState<string[]>([]);
 
@@ -18,11 +19,13 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
     const loadPublicUrls = async () => {
       try {
         console.log("Loading media URLs:", mediaUrls);
+        console.log("Loading local media paths:", localMediaPaths);
         
         const urls = await Promise.all(
           mediaUrls.map(async (path) => {
-            // Skip video URLs - return them as is
-            if (path.includes('.mp4')) {
+            // If it's a video URL or external URL, return it as is
+            if (path.includes('.mp4') || path.startsWith('http')) {
+              console.log("Using direct URL for video/external:", path);
               return path;
             }
             
@@ -35,18 +38,37 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
             return data.publicUrl;
           })
         );
-        setPublicUrls(urls);
+
+        // Handle local media paths from social_media_posts table
+        const localUrls = await Promise.all(
+          localMediaPaths.map(async (path) => {
+            if (!path) return null;
+            
+            const { data } = supabase.storage
+              .from('social-media-files')
+              .getPublicUrl(path);
+            
+            console.log("Generated local media URL:", data.publicUrl);
+            return data.publicUrl;
+          })
+        );
+
+        // Combine and filter out any null values
+        const allUrls = [...urls, ...localUrls].filter(url => url !== null);
+        console.log("Final combined URLs:", allUrls);
+        
+        setPublicUrls(allUrls);
       } catch (error) {
         console.error("Error loading media URLs:", error);
       }
     };
 
-    if (mediaUrls.length > 0) {
+    if (mediaUrls.length > 0 || localMediaPaths.length > 0) {
       loadPublicUrls();
     }
-  }, [mediaUrls]);
+  }, [mediaUrls, localMediaPaths]);
 
-  if (mediaUrls.length === 0) return null;
+  if (!publicUrls.length) return null;
 
   if (isSidecar) {
     return (
@@ -55,11 +77,19 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
           <div className="flex">
             {publicUrls.map((url, index) => (
               <div key={index} className="flex-[0_0_100%] min-w-0">
-                <img
-                  src={url}
-                  alt={`Media ${index + 1}`}
-                  className="w-full h-auto object-contain max-h-[400px]"
-                />
+                {url.includes('.mp4') ? (
+                  <video
+                    controls
+                    className="w-full h-auto object-contain max-h-[400px]"
+                    src={url}
+                  />
+                ) : (
+                  <img
+                    src={url}
+                    alt={`Media ${index + 1}`}
+                    className="w-full h-auto object-contain max-h-[400px]"
+                  />
+                )}
               </div>
             ))}
           </div>
