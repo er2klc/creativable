@@ -69,32 +69,28 @@ const getPostTypeIcon = (type: string) => {
 };
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
-  // Get all possible media URLs
+  // Get media URLs based on post type
   const getMediaUrls = () => {
-    // First check for direct media_urls
-    if (post.media_urls && post.media_urls.length > 0) {
-      return post.media_urls;
+    const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
+    
+    // For videos, use video_url from leads.social_media_posts
+    if (postType === 'video') {
+      const videoUrl = post.video_url || post.videoUrl || post.metadata?.videoUrl;
+      return videoUrl ? [videoUrl] : [];
+    }
+    
+    // For images and sidecar, use media_urls from social_media_posts table
+    if (postType === 'image' || postType === 'sidecar') {
+      return post.media_urls || [];
     }
 
-    // Check for video URLs
-    const videoUrl = post.video_url || post.videoUrl || post.metadata?.videoUrl;
-    if (videoUrl) {
-      return [videoUrl];
-    }
-
-    // Check for images array
-    if (post.images && post.images.length > 0) {
-      return post.images;
-    }
-
-    // If no other media found, return empty array
     return [];
   };
 
   const mediaUrls = getMediaUrls();
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
-  const isSidecar = mediaUrls.length > 1;
-  const hasVideo = post.video_url !== null || post.videoUrl !== null || post.metadata?.videoUrl !== null;
+  const isSidecar = postType === 'sidecar' && mediaUrls.length > 1;
+  const hasVideo = postType === 'video';
   const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
   return (
@@ -128,7 +124,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
         
         <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>
           <div className="flex gap-4">
-            {(mediaUrls.length > 0 || (post.local_media_paths && post.local_media_paths.length > 0)) && (
+            {mediaUrls.length > 0 && (
               <div className="w-1/3 min-w-[200px]">
                 <MediaDisplay 
                   mediaUrls={mediaUrls} 
