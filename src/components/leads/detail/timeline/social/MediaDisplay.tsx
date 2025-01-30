@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 
 interface MediaDisplayProps {
@@ -11,60 +10,16 @@ interface MediaDisplayProps {
   localMediaPaths?: string[];
 }
 
-export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar, localMediaPaths = [] }: MediaDisplayProps) => {
+export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
   const [publicUrls, setPublicUrls] = useState<string[]>([]);
 
   useEffect(() => {
-    const loadPublicUrls = async () => {
-      try {
-        console.log("Loading media URLs:", mediaUrls);
-        console.log("Loading local media paths:", localMediaPaths);
-        
-        let urls: string[] = [];
-
-        // If it's a sidecar post and we have local media paths, prioritize those
-        if (isSidecar && localMediaPaths.length > 0) {
-          urls = await Promise.all(
-            localMediaPaths.map(async (path) => {
-              const { data } = supabase.storage
-                .from('social-media-files')
-                .getPublicUrl(path);
-              
-              console.log("Generated local media URL:", data.publicUrl);
-              return data.publicUrl;
-            })
-          );
-        } else {
-          // Otherwise use media_urls and handle videos/external URLs
-          urls = await Promise.all(
-            mediaUrls.map(async (path) => {
-              if (path.includes('.mp4') || path.startsWith('http')) {
-                console.log("Using direct URL for video/external:", path);
-                return path;
-              }
-              
-              const { data } = supabase.storage
-                .from('social-media-files')
-                .getPublicUrl(path);
-                
-              console.log("Generated public URL:", data.publicUrl);
-              return data.publicUrl;
-            })
-          );
-        }
-
-        console.log("Final combined URLs:", urls);
-        setPublicUrls(urls.filter(url => url !== null));
-      } catch (error) {
-        console.error("Error loading media URLs:", error);
-      }
-    };
-
-    if (mediaUrls.length > 0 || localMediaPaths.length > 0) {
-      loadPublicUrls();
+    if (mediaUrls?.length > 0) {
+      console.log("Using media URLs directly:", mediaUrls);
+      setPublicUrls(mediaUrls);
     }
-  }, [mediaUrls, localMediaPaths, isSidecar]);
+  }, [mediaUrls]);
 
   if (!publicUrls.length) return null;
 
