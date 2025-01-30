@@ -61,7 +61,9 @@ serve(async (req) => {
       .from('social_media_posts')
       .update({
         local_media_urls: [publicUrl],
-        storage_status: 'completed'
+        storage_status: 'completed',
+        media_processing_status: 'completed',
+        processing_progress: 100
       })
       .eq('id', postId)
 
