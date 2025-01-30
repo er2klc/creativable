@@ -8,13 +8,16 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('Starting process-social-media function');
+    
     const { leadId } = await req.json();
-    console.log('Starting media processing for lead:', leadId);
+    console.log('Processing media for lead:', leadId);
 
     if (!leadId) {
       console.error('Missing leadId parameter');
