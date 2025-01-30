@@ -18,99 +18,59 @@ export const MediaDisplay = ({
   const [emblaRef, emblaApi] = useEmblaCarousel();
   const [processedUrls, setProcessedUrls] = useState<string[]>([]);
 
-  // 1. Medienquellen mit strenger Typisierung
-  type MediaSource = {
-    type: 'image' | 'video';
-    path: string;
-    source: 'local' | 'external';
-  };
-
-  const mediaSources = useMemo((): MediaSource[] => {
-    const sources: MediaSource[] = [];
-    
-    // Lokale Pfade immer als Bilder behandeln
-    if (localMediaPaths?.length > 0) {
-      sources.push(...localMediaPaths.map(path => ({
-        type: 'image',
-        source: 'local',
-        path
-      })));
-    }
-
-    // Externe URLs nur als Videos wenn mp4
-    if (mediaUrls?.length > 0) {
-      sources.push(...mediaUrls.filter(url => url.includes('.mp4')).map(url => ({
-        type: 'video',
-        source: 'external',
-        path: url
-      })));
-    }
-
-    console.log('Medienquellen analysiert:', sources);
-    return sources;
+  // 1. Medienquellen mit tiefer Memoization
+  const mediaSources = useMemo(() => {
+    return {
+      localImages: [...localMediaPaths],
+      externalVideos: mediaUrls.filter(url => url.includes('.mp4'))
+    };
   }, [localMediaPaths, mediaUrls]);
 
-  // 2. Medienladung mit Fehlerbehandlung
-  const loadMedia = useCallback(async () => {
+  // 2. Stabilisierte URL-Generierung
+  const generateUrls = useCallback(async () => {
     try {
-      console.log('Starte Medienladung für:', mediaSources);
-      
-      const urls = await Promise.all(
-        mediaSources.map(async (media) => {
-          if (media.type === 'video') return media.path;
-
-          // Supabase URL-Generierung mit Validierung
-          if (media.source === 'local') {
-            const { data, error } = supabase.storage
-              .from('social-media-files')
-              .getPublicUrl(media.path);
-
-            if (error) throw error;
-            
-            console.log('Generierte URL für', media.path, ':', data.publicUrl);
-            return data.publicUrl;
-          }
-
-          return media.path;
+      const imageUrls = await Promise.all(
+        mediaSources.localImages.map(async (path) => {
+          const { data } = supabase.storage
+            .from('social-media-files')
+            .getPublicUrl(path);
+          return data.publicUrl;
         })
       );
 
-      const validUrls = urls.filter(url => {
-        const isValid = url && url.length > 0;
-        if (!isValid) console.warn('Ungültige URL gefiltert:', url);
-        return isValid;
+      const videoUrls = mediaSources.externalVideos;
+      const newUrls = [...imageUrls, ...videoUrls].filter(Boolean);
+      
+      // 3. Zustandsaktualisierung mit Tiefenvergleich
+      setProcessedUrls(prev => {
+        const prevString = JSON.stringify(prev);
+        const newString = JSON.stringify(newUrls);
+        return prevString === newString ? prev : newUrls;
       });
 
-      console.log('Gültige URLs:', validUrls);
-      setProcessedUrls(validUrls);
-      
     } catch (error) {
-      console.error("Kritischer Medienladefehler:", error);
-      setProcessedUrls([]); // Fallback um leere Anzeige zu vermeiden
+      console.error("Medienfehler:", error);
     }
   }, [mediaSources]);
 
-  // 3. Effekt mit klaren Bedingungen
+  // 4. Effekt mit stabilen Abhängigkeiten
   useEffect(() => {
-    if (mediaSources.length > 0) {
-      console.log('Aktiviere Medienladung');
-      loadMedia();
-    } else {
-      console.warn('Keine Medienquellen gefunden');
-      setProcessedUrls([]);
-    }
-  }, [loadMedia, mediaSources]);
+    generateUrls();
+  }, [generateUrls]);
 
-  // 4. Debugging mit Performance-Optimierung
+  // 5. Carousel-Reset bei Änderungen
+  useEffect(() => {
+    emblaApi?.reInit();
+  }, [emblaApi, processedUrls]);
+
+  // 6. Debugging mit Schutzmechanismus
   useEffect(() => {
     if (processedUrls.length > 0) {
-      console.log('Verarbeitete URLs:', processedUrls);
+      console.log('Aktive Medien:', processedUrls);
     }
   }, [processedUrls]);
 
-  // 5. Garantiertes Rendering mit Fallback
   if (processedUrls.length === 0) {
-    console.warn('Keine verarbeiteten URLs - Rendere Fallback');
     return (
       <div className="bg-gray-100 w-full h-96 flex items-center justify-center rounded-lg">
         <p className="text-gray-500">Keine Medien verfügbar</p>
@@ -118,11 +78,10 @@ export const MediaDisplay = ({
     );
   }
 
-  // 6. UI-Rendering mit Schlüssel-Reset
   return (
     <div className="relative rounded-lg overflow-hidden">
       {isSidecar ? (
-        <div className="overflow-hidden" ref={emblaRef} key={processedUrls.join(',')}>
+        <div className="overflow-hidden" ref={emblaRef} key={processedUrls.join('-')}>
           <div className="flex">
             {processedUrls.map((url, index) => (
               <div key={`${url}-${index}`} className="flex-[0_0_100%] min-w-0">
@@ -131,7 +90,6 @@ export const MediaDisplay = ({
                     controls
                     className="w-full h-auto object-contain max-h-[400px]"
                     src={url}
-                    aria-label={`Video ${index + 1}`}
                   />
                 ) : (
                   <img
@@ -139,10 +97,9 @@ export const MediaDisplay = ({
                     alt={`Beitragsbild ${index + 1}`}
                     className="w-full h-auto object-contain max-h-[400px]"
                     loading="lazy"
-                    decoding="async"
                     onError={(e) => {
-                      console.error('Bildladefehler:', e.currentTarget.src);
-                      e.currentTarget.style.display = 'none';
+                      console.error('Bild fehlgeschlagen:', url);
+                      (e.target as HTMLImageElement).style.display = 'none';
                     }}
                   />
                 )}
@@ -177,7 +134,6 @@ export const MediaDisplay = ({
             controls
             className="w-full h-auto object-contain max-h-[400px]"
             src={processedUrls[0]}
-            aria-label="Hauptvideo"
           />
         ) : (
           <img
@@ -185,11 +141,6 @@ export const MediaDisplay = ({
             alt="Hauptbild"
             className="w-full h-auto object-contain max-h-[400px]"
             loading="lazy"
-            decoding="async"
-            onError={(e) => {
-              console.error('Bildladefehler:', e.currentTarget.src);
-              e.currentTarget.style.display = 'none';
-            }}
           />
         )
       )}
