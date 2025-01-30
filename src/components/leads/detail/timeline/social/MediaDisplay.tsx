@@ -17,6 +17,7 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
       // Only proxy Instagram image URLs
       if (url.includes('instagram') && !hasVideo) {
         const proxyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/proxy-instagram-media`;
+        console.log('Proxying Instagram image:', url);
         return `${proxyUrl}?url=${encodeURIComponent(url)}`;
       }
       return url;

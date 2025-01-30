@@ -91,6 +91,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
     // Check for displayUrl for Image type
     if ((post.type === 'Image' || post.post_type === 'Image') && post.metadata?.displayUrl) {
+      console.log('Using displayUrl for Image type:', post.metadata.displayUrl);
       return [post.metadata.displayUrl];
     }
 
