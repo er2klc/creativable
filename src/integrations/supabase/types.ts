@@ -1432,6 +1432,7 @@ export type Database = {
           lead_id: string | null
           likes_count: number | null
           local_media_paths: string[] | null
+          local_media_urls: string[] | null
           local_video_path: string | null
           location: string | null
           media_processing_status: string | null
@@ -1443,6 +1444,7 @@ export type Database = {
           post_type: Database["public"]["Enums"]["post_type"]
           posted_at: string | null
           processing_progress: number | null
+          storage_status: string | null
           tagged_profiles: string[] | null
           tagged_users: Json | null
           url: string | null
@@ -1462,6 +1464,7 @@ export type Database = {
           lead_id?: string | null
           likes_count?: number | null
           local_media_paths?: string[] | null
+          local_media_urls?: string[] | null
           local_video_path?: string | null
           location?: string | null
           media_processing_status?: string | null
@@ -1473,6 +1476,7 @@ export type Database = {
           post_type: Database["public"]["Enums"]["post_type"]
           posted_at?: string | null
           processing_progress?: number | null
+          storage_status?: string | null
           tagged_profiles?: string[] | null
           tagged_users?: Json | null
           url?: string | null
@@ -1492,6 +1496,7 @@ export type Database = {
           lead_id?: string | null
           likes_count?: number | null
           local_media_paths?: string[] | null
+          local_media_urls?: string[] | null
           local_video_path?: string | null
           location?: string | null
           media_processing_status?: string | null
@@ -1503,6 +1508,7 @@ export type Database = {
           post_type?: Database["public"]["Enums"]["post_type"]
           posted_at?: string | null
           processing_progress?: number | null
+          storage_status?: string | null
           tagged_profiles?: string[] | null
           tagged_users?: Json | null
           url?: string | null

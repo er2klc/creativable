@@ -1,47 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { InstagramPost, ProcessingState } from '../types/instagram.ts';
 
-export async function downloadAndUploadImage(
-  imageUrl: string | undefined,
-  supabaseClient: ReturnType<typeof createClient>,
-  leadId: string
-): Promise<string | null> {
-  try {
-    if (!imageUrl) return null;
-
-    const response = await fetch(imageUrl);
-    if (!response.ok) throw new Error('Failed to fetch image');
-    
-    const imageBuffer = await response.arrayBuffer();
-    const fileExt = 'jpg';
-    const fileName = `${leadId}-${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
-
-    const { error: uploadError } = await supabaseClient
-      .storage
-      .from('contact-avatars')
-      .upload(filePath, imageBuffer, {
-        contentType: 'image/jpeg',
-        upsert: true
-      });
-
-    if (uploadError) {
-      console.error('Error uploading image:', uploadError);
-      return null;
-    }
-
-    const { data: { publicUrl } } = supabaseClient
-      .storage
-      .from('contact-avatars')
-      .getPublicUrl(filePath);
-
-    return publicUrl;
-  } catch (error) {
-    console.error('Error processing image:', error);
-    return null;
-  }
-}
-
 export async function processMediaFiles(
   posts: InstagramPost[],
   leadId: string,
@@ -69,13 +28,11 @@ export async function processMediaFiles(
 
         console.log(`Processing media ${processedFiles}/${totalFiles}: ${mediaUrl}`);
 
-        const response = await supabaseClient.functions.invoke('process-social-media', {
+        const response = await supabaseClient.functions.invoke('process-instagram-media', {
           body: {
             mediaUrl,
-            leadId: post.lead_id,
-            mediaType: post.media_type,
-            postId: post.id,
-            platform: 'Instagram'
+            leadId,
+            postId: post.id
           }
         });
 
