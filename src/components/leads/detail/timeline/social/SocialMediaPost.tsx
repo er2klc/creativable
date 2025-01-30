@@ -27,6 +27,7 @@ interface SocialMediaPost {
   timestamp: string | null;
   media_urls: string[] | null;
   media_type: string | null;
+  local_video_path: string | null;
   local_media_paths: string[] | null;
   video_url: string | null;
   videoUrl?: string | null;
@@ -71,6 +72,10 @@ const getPostTypeIcon = (type: string) => {
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   // Get media URLs based on post type
   const getMediaUrls = () => {
+    console.log("Post type:", post.post_type);
+    console.log("Media URLs:", post.media_urls);
+    console.log("Video URL:", post.video_url);
+    
     const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
     
     // For videos, use video_url from leads.social_media_posts
@@ -81,13 +86,24 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     
     // For images and sidecar, use media_urls from social_media_posts table
     if (postType === 'image' || postType === 'sidecar') {
-      return post.media_urls || [];
+      if (post.media_urls && post.media_urls.length > 0) {
+        console.log("Using media URLs from post.media_urls:", post.media_urls);
+        return post.media_urls;
+      }
+    }
+
+    // Fallback to local media paths if available
+    if (post.local_media_paths && post.local_media_paths.length > 0) {
+      console.log("Using local media paths:", post.local_media_paths);
+      return post.local_media_paths;
     }
 
     return [];
   };
 
   const mediaUrls = getMediaUrls();
+  console.log("Final media URLs:", mediaUrls);
+  
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = postType === 'sidecar' && mediaUrls.length > 1;
   const hasVideo = postType === 'video';
