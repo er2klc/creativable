@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 interface MediaDisplayProps {
   mediaUrls: string[];
@@ -10,6 +12,25 @@ interface MediaDisplayProps {
 
 export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
+  const [publicUrls, setPublicUrls] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadPublicUrls = async () => {
+      const urls = await Promise.all(
+        mediaUrls.map(async (path) => {
+          const { data } = supabase.storage
+            .from('social-media-files')
+            .getPublicUrl(path);
+          return data.publicUrl;
+        })
+      );
+      setPublicUrls(urls);
+    };
+
+    if (mediaUrls.length > 0) {
+      loadPublicUrls();
+    }
+  }, [mediaUrls]);
 
   if (mediaUrls.length === 0) return null;
 
@@ -18,7 +39,7 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
       <div className="relative rounded-lg overflow-hidden">
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex">
-            {mediaUrls.map((url, index) => (
+            {publicUrls.map((url, index) => (
               <div key={index} className="flex-[0_0_100%] min-w-0">
                 <img
                   src={url}
@@ -28,7 +49,7 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
               </div>
             ))}
           </div>
-          {mediaUrls.length > 1 && (
+          {publicUrls.length > 1 && (
             <>
               <Button
                 variant="ghost"
@@ -59,11 +80,11 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
         <video
           controls
           className="w-full h-auto object-contain max-h-[400px]"
-          src={mediaUrls[0]}
+          src={publicUrls[0]}
         />
       ) : (
         <img
-          src={mediaUrls[0]}
+          src={publicUrls[0]}
           alt="Post media"
           className="w-full h-auto object-contain max-h-[400px]"
         />
