@@ -168,7 +168,7 @@ serve(async (req) => {
 
     const { data: lead, error: leadError } = await supabase
       .from('leads')
-      .select('social_media_posts')
+      .select('social_media_raw_data')  // Updated column name here
       .eq('id', leadId)
       .single();
 
@@ -177,7 +177,7 @@ serve(async (req) => {
       throw leadError;
     }
 
-    if (!lead?.social_media_posts) {
+    if (!lead?.social_media_raw_data) {  // Updated column name here
       console.log('No social media posts found for lead:', leadId);
       return new Response(
         JSON.stringify({ 
@@ -191,9 +191,9 @@ serve(async (req) => {
       );
     }
 
-    const posts = Array.isArray(lead.social_media_posts) ? 
-      lead.social_media_posts : 
-      [lead.social_media_posts];
+    const posts = Array.isArray(lead.social_media_raw_data) ?  // Updated column name here
+      lead.social_media_raw_data : 
+      [lead.social_media_raw_data];
     
     console.log(`Found ${posts.length} posts to process`);
 
