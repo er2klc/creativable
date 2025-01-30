@@ -21,43 +21,41 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar, localMediaPaths =
         console.log("Loading media URLs:", mediaUrls);
         console.log("Loading local media paths:", localMediaPaths);
         
-        const urls = await Promise.all(
-          mediaUrls.map(async (path) => {
-            // If it's a video URL or external URL, return it as is
-            if (path.includes('.mp4') || path.startsWith('http')) {
-              console.log("Using direct URL for video/external:", path);
-              return path;
-            }
-            
-            // Get public URL from Supabase storage
-            const { data } = supabase.storage
-              .from('social-media-files')
-              .getPublicUrl(path);
+        let urls: string[] = [];
+
+        // If it's a sidecar post and we have local media paths, prioritize those
+        if (isSidecar && localMediaPaths.length > 0) {
+          urls = await Promise.all(
+            localMediaPaths.map(async (path) => {
+              const { data } = supabase.storage
+                .from('social-media-files')
+                .getPublicUrl(path);
               
-            console.log("Generated public URL:", data.publicUrl);
-            return data.publicUrl;
-          })
-        );
+              console.log("Generated local media URL:", data.publicUrl);
+              return data.publicUrl;
+            })
+          );
+        } else {
+          // Otherwise use media_urls and handle videos/external URLs
+          urls = await Promise.all(
+            mediaUrls.map(async (path) => {
+              if (path.includes('.mp4') || path.startsWith('http')) {
+                console.log("Using direct URL for video/external:", path);
+                return path;
+              }
+              
+              const { data } = supabase.storage
+                .from('social-media-files')
+                .getPublicUrl(path);
+                
+              console.log("Generated public URL:", data.publicUrl);
+              return data.publicUrl;
+            })
+          );
+        }
 
-        // Handle local media paths from social_media_posts table
-        const localUrls = await Promise.all(
-          localMediaPaths.map(async (path) => {
-            if (!path) return null;
-            
-            const { data } = supabase.storage
-              .from('social-media-files')
-              .getPublicUrl(path);
-            
-            console.log("Generated local media URL:", data.publicUrl);
-            return data.publicUrl;
-          })
-        );
-
-        // Combine and filter out any null values
-        const allUrls = [...urls, ...localUrls].filter(url => url !== null);
-        console.log("Final combined URLs:", allUrls);
-        
-        setPublicUrls(allUrls);
+        console.log("Final combined URLs:", urls);
+        setPublicUrls(urls.filter(url => url !== null));
       } catch (error) {
         console.error("Error loading media URLs:", error);
       }
@@ -66,7 +64,7 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar, localMediaPaths =
     if (mediaUrls.length > 0 || localMediaPaths.length > 0) {
       loadPublicUrls();
     }
-  }, [mediaUrls, localMediaPaths]);
+  }, [mediaUrls, localMediaPaths, isSidecar]);
 
   if (!publicUrls.length) return null;
 
