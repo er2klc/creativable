@@ -76,7 +76,7 @@ export interface Tables {
       created_at?: string | null;
       id?: string;
       keyword: string;
-      user_id?: string;
+      user_id: string;
     };
     Relationships: [];
   };
@@ -95,14 +95,11 @@ export interface Tables {
       notes: string | null;
       social_media_username: string | null;
       company_name: string | null;
-      products_services: string | null;
-      target_audience: string | null;
       usp: string | null;
-      business_description: string | null;
       phone_number: string | null;
       email: string | null;
       contact_type: string | null;
-      social_media_posts: Json | null;
+      social_media_raw_data: Json | null;  // Updated from social_media_posts
       social_media_interests: string[] | null;
       social_media_bio: string | null;
       last_social_media_scan: string | null;
@@ -122,14 +119,11 @@ export interface Tables {
       notes?: string | null;
       social_media_username?: string | null;
       company_name?: string | null;
-      products_services?: string | null;
-      target_audience?: string | null;
       usp?: string | null;
-      business_description?: string | null;
       phone_number?: string;
       email?: string;
       contact_type?: string;
-      social_media_posts?: Json | null;
+      social_media_raw_data?: Json | null;  // Updated from social_media_posts
       social_media_interests?: string[] | null;
       social_media_bio?: string | null;
       last_social_media_scan?: string | null;
@@ -149,14 +143,11 @@ export interface Tables {
       notes?: string | null;
       social_media_username?: string | null;
       company_name?: string | null;
-      products_services?: string | null;
-      target_audience?: string | null;
       usp?: string | null;
-      business_description?: string | null;
       phone_number?: string;
       email?: string;
       contact_type?: string;
-      social_media_posts?: Json | null;
+      social_media_raw_data?: Json | null;  // Updated from social_media_posts
       social_media_interests?: string[] | null;
       social_media_bio?: string | null;
       last_social_media_scan?: string | null;
