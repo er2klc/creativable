@@ -12,11 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const { mediaUrl, leadId, postId } = await req.json()
-    console.log('Processing media for:', { mediaUrl, leadId, postId })
+    const { mediaUrls, leadId, postId } = await req.json()
+    console.log('Processing media for:', { mediaUrls, leadId, postId })
 
-    if (!mediaUrl || !leadId || !postId) {
-      console.error('Missing required parameters:', { mediaUrl, leadId, postId })
+    if (!mediaUrls || !leadId || !postId) {
+      console.error('Missing required parameters:', { mediaUrls, leadId, postId })
       return new Response(
         JSON.stringify({ error: 'Missing required parameters' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -28,55 +28,69 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    console.log('Downloading media from:', mediaUrl)
-    const response = await fetch(mediaUrl)
-    if (!response.ok) {
-      throw new Error(`Failed to fetch media: ${response.statusText}`)
+    const processedUrls: string[] = [];
+    const processedPaths: string[] = [];
+
+    for (const mediaUrl of mediaUrls) {
+      try {
+        console.log('Downloading media from:', mediaUrl)
+        const response = await fetch(mediaUrl)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch media: ${response.statusText}`)
+        }
+
+        const blob = await response.blob()
+        const fileName = `${postId}_${Date.now()}_${processedUrls.length}.jpg`
+        const filePath = `${leadId}/${fileName}`
+
+        console.log('Uploading to storage:', filePath)
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('instagram-media')
+          .upload(filePath, blob, {
+            contentType: 'image/jpeg',
+            upsert: true
+          })
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError)
+          throw uploadError
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('instagram-media')
+          .getPublicUrl(filePath)
+
+        console.log('File uploaded successfully:', publicUrl)
+        processedUrls.push(publicUrl);
+        processedPaths.push(filePath);
+
+      } catch (error) {
+        console.error('Error processing media URL:', mediaUrl, error)
+      }
     }
 
-    const blob = await response.blob()
-    const fileName = `${postId}_${Date.now()}.jpg`
-    const filePath = `${leadId}/${fileName}`
+    if (processedUrls.length > 0) {
+      const { error: updateError } = await supabase
+        .from('social_media_posts')
+        .update({
+          local_media_paths: processedPaths,
+          local_media_urls: processedUrls,
+          storage_status: 'completed'
+        })
+        .eq('id', postId)
 
-    console.log('Uploading to storage:', filePath)
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('instagram-media')
-      .upload(filePath, blob, {
-        contentType: 'image/jpeg',
-        upsert: true
-      })
+      if (updateError) {
+        console.error('Update error:', updateError)
+        throw updateError
+      }
 
-    if (uploadError) {
-      console.error('Upload error:', uploadError)
-      throw uploadError
+      console.log('Post updated successfully')
     }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('instagram-media')
-      .getPublicUrl(filePath)
-
-    console.log('File uploaded successfully:', publicUrl)
-
-    const { error: updateError } = await supabase
-      .from('social_media_posts')
-      .update({
-        local_media_paths: [filePath],
-        local_media_urls: [publicUrl],
-        storage_status: 'completed'
-      })
-      .eq('id', postId)
-
-    if (updateError) {
-      console.error('Update error:', updateError)
-      throw updateError
-    }
-
-    console.log('Post updated successfully')
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        publicUrl,
+        processedUrls,
         message: 'Media processed successfully'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

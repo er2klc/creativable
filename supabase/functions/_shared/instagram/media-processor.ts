@@ -11,22 +11,33 @@ export async function processMediaFiles(
   
   for (const post of posts) {
     try {
-      // Nur displayUrl für Images und Sidecar verarbeiten
-      const mediaUrl = post.displayUrl;
+      let mediaUrls: string[] = [];
       
-      if (!mediaUrl) {
-        console.log('No displayUrl found for post:', post.id);
+      // Für Image Posts
+      if (post.type === 'Image' && post.displayUrl) {
+        console.log('Processing Image post:', post.id);
+        mediaUrls = [post.displayUrl];
+      }
+      // Für Sidecar Posts
+      else if (post.type === 'Sidecar' && post.media_urls && post.media_urls.length > 0) {
+        console.log('Processing Sidecar post:', post.id);
+        mediaUrls = post.media_urls;
+      }
+      
+      if (mediaUrls.length === 0) {
+        console.log('No valid media URLs found for post:', post.id);
         continue;
       }
 
       console.log('Processing media for post:', {
         postId: post.id,
-        mediaUrl: mediaUrl
+        type: post.type,
+        mediaUrls: mediaUrls
       });
 
       const response = await supabaseClient.functions.invoke('process-instagram-media', {
         body: {
-          mediaUrl,
+          mediaUrls,
           leadId,
           postId: post.id
         }
