@@ -36,6 +36,7 @@ interface SocialMediaPost {
   metadata?: {
     videoUrl?: string;
     media_urls?: string[];
+    displayUrl?: string;
   } | null;
 }
 
@@ -86,6 +87,11 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     const videoUrl = post.video_url || post.videoUrl || post.metadata?.videoUrl;
     if (videoUrl) {
       return [videoUrl];
+    }
+
+    // Check for displayUrl for Image type
+    if ((post.type === 'Image' || post.post_type === 'Image') && post.metadata?.displayUrl) {
+      return [post.metadata.displayUrl];
     }
 
     // Check for images array
