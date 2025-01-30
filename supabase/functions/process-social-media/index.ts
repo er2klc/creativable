@@ -6,8 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const BATCH_SIZE = 3; // Reduced from 5 to 3
-const BATCH_DELAY = 3000; // Increased from 2000 to 3000ms
+const BATCH_SIZE = 3;
+const BATCH_DELAY = 3000;
 
 async function processPostBatch(
   posts: any[],
@@ -117,19 +117,22 @@ async function processPostBatch(
           (post.caption.match(/#[\w\u0590-\u05ff]+/g) || []) : 
           post.hashtags || [];
 
+        // Use correct case for post_type enum values
+        const postType = post.type === 'Sidecar' ? 'Sidecar' : 'Image';
+
         const { error: insertError } = await supabase
           .from('social_media_posts')
           .upsert({
             id: post.id,
             lead_id: leadId,
             platform: 'Instagram',
-            post_type: post.type === 'Sidecar' ? 'sidecar' : 'image',
+            post_type: postType,
             content: post.caption,
             url: post.url,
             posted_at: post.timestamp,
             media_urls: imageUrls,
             local_media_paths: processedImagePaths,
-            media_type: post.type === 'Sidecar' ? 'sidecar' : 'image',
+            media_type: post.type === 'Sidecar' ? 'Sidecar' : 'Image',
             media_processing_status: 'processed',
             hashtags: hashtags,
             processing_progress: progress
