@@ -21,9 +21,9 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
         
         const urls = await Promise.all(
           mediaUrls.map(async (path) => {
-            // Check if the path is already a full URL
-            if (path.startsWith('http')) {
-              console.log("Using direct URL:", path);
+            // If the path already contains the correct Supabase storage URL, use it directly
+            if (path.includes('supabase.co/storage/v1/object/public/social-media-files')) {
+              console.log("Using existing Supabase URL:", path);
               return path;
             }
             
