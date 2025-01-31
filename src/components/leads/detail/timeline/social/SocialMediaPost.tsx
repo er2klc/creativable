@@ -27,18 +27,19 @@ interface SocialMediaPost {
   tagged_profiles?: string[] | null;
   posted_at: string | null;
   timestamp?: string | null;
-  // Die alte Spalte media_urls wird hier nicht mehr genutzt
+  // Wir nutzen hier nicht mehr die alte Spalte media_urls aus der DB,
+  // sondern bauen die URL direkt zusammen.
   media_type: string | null;
   video_url?: string | null;
   videoUrl?: string | null;
   hashtags?: string[] | null;
-  lead_id?: string; // Diese ID entspricht eurer Kontakt:ID
+  lead_id?: string; // Das ist eure Kontakt:ID (muss vorhanden sein – ansonsten nutzen wir den Fallback)
   imageCount?: number; // Optional: Anzahl der Bilder bei Sidecar-Posts
 }
 
 interface SocialMediaPostProps {
   post: SocialMediaPost;
-  // Fallback, falls im Post keine Kontakt‑ID vorhanden ist
+  /** Falls im Post keine lead_id vorhanden ist, kannst du hier die aktuelle Lead-ID übergeben */
   kontaktIdFallback?: string;
 }
 
@@ -68,28 +69,34 @@ const getPostTypeIcon = (type: string) => {
   }
 };
 
-// Helferfunktion zum direkten Zusammenbauen der Bild-URLs
+/**
+ * Baut die Bild-URLs direkt zusammen, basierend auf dem Bucket-Schema:
+ *   baseUrl / {Kontakt:ID} / {PostID}_{Index}.jpg
+ *
+ * Bei "image" gibt es nur _0.jpg,
+ * bei "sidecar" wird anhand von imageCount (oder einem Default) eine Reihe erzeugt.
+ * Bei "video" wird die vorhandene Video-URL genutzt.
+ */
 const getDirectMediaUrls = (
   post: SocialMediaPost,
   kontaktIdFallback?: string
 ): string[] => {
   const baseUrl =
     "https://agqaitxlmxztqyhpcjau.supabase.co/storage/v1/object/public/social-media-files";
-  // Nutze post.lead_id als Kontakt:ID, oder den Fallback, falls nicht vorhanden
+  // Verwende die lead_id aus dem Post oder den Fallback (z. B. aus der Subscription)
   const kontaktId = post.lead_id || kontaktIdFallback || "default_kontakt";
   const postId = post.id;
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
 
   if (postType === "video") {
-    // Bei Video-Posts bleibt die vorhandene Video-URL erhalten
+    // Bei Video-Posts wird die vorhandene Video-URL genutzt
     const videoUrl = post.video_url || post.videoUrl;
     return videoUrl ? [videoUrl] : [];
   } else if (postType === "image") {
-    // Bei Image-Posts gibt es nur ein Bild: _0.jpg
+    // Einzelbild: Nur _0.jpg
     return [`${baseUrl}/${kontaktId}/${postId}_0.jpg`];
   } else if (postType === "sidecar") {
-    // Bei Sidecar-Posts wird eine Reihe von Bildern generiert.
-    // Nutze post.imageCount, falls vorhanden, ansonsten einen Standardwert (hier 2)
+    // Sidecar: Mehrere Bilder – nutze post.imageCount oder einen Standardwert (z. B. 2)
     const count = post.imageCount || 2;
     return Array.from({ length: count }, (_, index) => `${baseUrl}/${kontaktId}/${postId}_${index}.jpg`);
   }
@@ -97,7 +104,7 @@ const getDirectMediaUrls = (
 };
 
 export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProps) => {
-  // Statt die DB-Felder zu nutzen, bauen wir die URLs direkt aus dem Bucket
+  // Wir bauen die Medien-URLs direkt aus dem Bucket zusammen
   const mediaUrls = getDirectMediaUrls(post, kontaktIdFallback);
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = postType === "sidecar" && mediaUrls.length > 1;
