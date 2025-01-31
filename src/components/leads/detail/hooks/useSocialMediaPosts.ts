@@ -1,6 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-
 export const useSocialMediaPosts = (leadId: string) => {
   return useQuery({
     queryKey: ["social-media-posts", leadId],
@@ -13,7 +10,8 @@ export const useSocialMediaPosts = (leadId: string) => {
 
       if (error) throw error;
 
-      // 🔹 Falls media_urls ein JSON-String ist, konvertieren
+      console.log("🚀 DEBUG: API Antwort von Supabase:", data);
+
       return data.map(post => ({
         ...post,
         media_urls: typeof post.media_urls === "string" ? JSON.parse(post.media_urls) : post.media_urls
