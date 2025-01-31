@@ -67,14 +67,20 @@ const getPostTypeIcon = (type: string) => {
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const getMediaUrls = () => {
-    const mediaUrls = post.media_urls || post.images || [];
-    const videoUrl = post.video_url || post.videoUrl;
+    const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
     
-    if (videoUrl) {
-      return [videoUrl];
+    // For videos, only use video URLs
+    if (postType === 'video') {
+      const videoUrl = post.video_url || post.videoUrl;
+      return videoUrl ? [videoUrl] : [];
     }
     
-    return mediaUrls;
+    // For images and sidecar, use media_urls from social_media_posts table
+    if ((postType === 'image' || postType === 'sidecar') && post.media_urls) {
+      return post.media_urls;
+    }
+
+    return [];
   };
 
   const mediaUrls = getMediaUrls();
