@@ -7,7 +7,6 @@ interface MediaDisplayProps {
   mediaUrls: string[];
   hasVideo: boolean;
   isSidecar: boolean;
-  localMediaPaths?: string[];
 }
 
 export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayProps) => {

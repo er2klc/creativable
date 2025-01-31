@@ -34,7 +34,7 @@ export const useSocialMediaPosts = (leadId: string) => {
       console.log("🚀 DEBUG: API Antwort von Supabase (Social Media Posts):", socialMediaPosts);
       console.log("🚀 DEBUG: API Antwort von Supabase (Lead Data):", leadData);
 
-      // ✅ Extrahiere die `videoUrl` für jeden Post, falls vorhanden
+      // ✅ Extrahiere die Video-URLs aus den Lead-Daten
       let leadSocialPosts = [];
       if (leadData?.social_media_posts) {
         try {
@@ -46,11 +46,11 @@ export const useSocialMediaPosts = (leadId: string) => {
         }
       }
 
-      // ✅ Kombiniere die Daten (Falls ein Post `video_url` aus Leads hat, überschreiben wir `video_url`)
+      // ✅ Kombiniere die Daten
       const mergedPosts = socialMediaPosts.map(post => {
         const matchingLeadPost = leadSocialPosts.find(leadPost => leadPost.id === post.id);
         
-        // Versuche zuerst media_urls zu verwenden, falls nicht vorhanden, verwende images
+        // Verarbeite media_urls
         let mediaUrls = [];
         if (post.media_urls) {
           mediaUrls = typeof post.media_urls === 'string' 
@@ -58,17 +58,15 @@ export const useSocialMediaPosts = (leadId: string) => {
             : Array.isArray(post.media_urls) 
               ? post.media_urls 
               : [];
-        } else if (matchingLeadPost?.images) {
-          // Fallback auf images aus dem Lead-Post
-          mediaUrls = Array.isArray(matchingLeadPost.images) 
-            ? matchingLeadPost.images 
-            : [];
         }
+
+        // Bevorzuge video_url aus dem Post, Fallback auf videoUrl aus Lead-Daten
+        const videoUrl = post.video_url || matchingLeadPost?.videoUrl;
 
         return {
           ...post,
           media_urls: mediaUrls,
-          video_url: matchingLeadPost?.videoUrl || post.video_url, // Bevorzuge die videoUrl aus Leads
+          video_url: videoUrl
         };
       });
 
