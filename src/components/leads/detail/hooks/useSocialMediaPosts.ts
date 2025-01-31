@@ -49,13 +49,25 @@ export const useSocialMediaPosts = (leadId: string) => {
       // ✅ Kombiniere die Daten (Falls ein Post `video_url` aus Leads hat, überschreiben wir `video_url`)
       const mergedPosts = socialMediaPosts.map(post => {
         const matchingLeadPost = leadSocialPosts.find(leadPost => leadPost.id === post.id);
-        return {
-          ...post,
-          media_urls: typeof post.media_urls === 'string' 
+        
+        // Versuche zuerst media_urls zu verwenden, falls nicht vorhanden, verwende images
+        let mediaUrls = [];
+        if (post.media_urls) {
+          mediaUrls = typeof post.media_urls === 'string' 
             ? JSON.parse(post.media_urls) 
             : Array.isArray(post.media_urls) 
               ? post.media_urls 
-              : [],
+              : [];
+        } else if (matchingLeadPost?.images) {
+          // Fallback auf images aus dem Lead-Post
+          mediaUrls = Array.isArray(matchingLeadPost.images) 
+            ? matchingLeadPost.images 
+            : [];
+        }
+
+        return {
+          ...post,
+          media_urls: mediaUrls,
           video_url: matchingLeadPost?.videoUrl || post.video_url, // Bevorzuge die videoUrl aus Leads
         };
       });
