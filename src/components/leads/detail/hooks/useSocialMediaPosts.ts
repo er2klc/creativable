@@ -1,3 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
 export const useSocialMediaPosts = (leadId: string) => {
   return useQuery({
     queryKey: ["social-media-posts", leadId],
