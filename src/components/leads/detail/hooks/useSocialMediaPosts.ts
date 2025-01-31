@@ -48,30 +48,30 @@ export const useSocialMediaPosts = (leadId: string) => {
 
       // Kombiniere die Daten – ausschließliche Nutzung von media_urls
       const mergedPosts = socialMediaPosts.map((post) => {
-        const matchingLeadPost = leadSocialPosts.find((leadPost) => leadPost.id === post.id);
+  const matchingLeadPost = leadSocialPosts.find((leadPost) => leadPost.id === post.id);
 
-        // Verarbeite media_urls ausschließlich
-        let mediaUrls: string[] = [];
-        if (post.media_urls) {
-          mediaUrls = typeof post.media_urls === "string"
-            ? JSON.parse(post.media_urls)
-            : Array.isArray(post.media_urls)
-              ? post.media_urls
-              : [];
-        }
+  let mediaUrls: string[] = [];
+  if (post.media_urls) {
+    mediaUrls = typeof post.media_urls === "string"
+      ? JSON.parse(post.media_urls)
+      : Array.isArray(post.media_urls)
+        ? post.media_urls
+        : [];
+  }
 
-        // Bevorzuge video_url aus den Lead-Daten (sofern vorhanden) – ansonsten aus post.video_url
-        const videoUrl = post.video_url || matchingLeadPost?.videoUrl;
+  const videoUrl = post.video_url || matchingLeadPost?.videoUrl;
 
-        return {
-          ...post,
-          media_urls: mediaUrls,
-          video_url: videoUrl,
-        };
-      });
+  return {
+    ...post,
+    media_urls: mediaUrls,
+    video_url: videoUrl,
+  };
+});
 
-      return mergedPosts;
-    },
-    enabled: !!leadId,
-  });
-};
+// Füge diesen Log hinzu:
+console.log(
+  "DEBUG: Merged Post (3326722177866331652):",
+  mergedPosts.find((p) => p.id === "3326722177866331652")
+);
+
+return mergedPosts;
