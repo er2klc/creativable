@@ -121,9 +121,32 @@ export const LeadFilters = ({
   };
 
   const handleDeletePipeline = async () => {
-    if (!selectedPipelineId) return;
+    if (!selectedPipelineId || pipelines.length === 0) return;
 
     try {
+      // Get the first pipeline and its first phase as fallback
+      const fallbackPipeline = pipelines.find(p => p.id !== selectedPipelineId);
+      if (!fallbackPipeline) return;
+
+      const { data: fallbackPhase } = await supabase
+        .from("pipeline_phases")
+        .select("id")
+        .eq("pipeline_id", fallbackPipeline.id)
+        .order("order_index")
+        .limit(1)
+        .single();
+
+      if (fallbackPhase) {
+        // Move all leads to the first phase of the first pipeline
+        await supabase
+          .from("leads")
+          .update({
+            pipeline_id: fallbackPipeline.id,
+            phase_id: fallbackPhase.id
+          })
+          .eq("pipeline_id", selectedPipelineId);
+      }
+
       // First delete all phases
       const { error: phasesError } = await supabase
         .from("pipeline_phases")
@@ -143,7 +166,7 @@ export const LeadFilters = ({
       queryClient.invalidateQueries({ queryKey: ["pipelines"] });
       localStorage.removeItem('lastUsedPipelineId');
       
-      // Select first available pipeline or null if none left
+      // Select first available pipeline
       const remainingPipelines = pipelines.filter(p => p.id !== selectedPipelineId);
       setSelectedPipelineId(remainingPipelines[0]?.id || null);
       
@@ -153,6 +176,8 @@ export const LeadFilters = ({
           : "Pipeline erfolgreich gelöscht"
       );
       setShowDeleteDialog(false);
+      setIsEditMode(false);
+      onEditModeChange?.(false);
     } catch (error) {
       console.error("Error deleting pipeline:", error);
       toast.error(
@@ -214,7 +239,7 @@ export const LeadFilters = ({
         <Pencil className="h-4 w-4" />
       </Button>
 
-      {selectedPipelineId && (
+      {selectedPipelineId && isEditMode && pipelines.length > 1 && (
         <Button
           variant="outline"
           size="icon"
