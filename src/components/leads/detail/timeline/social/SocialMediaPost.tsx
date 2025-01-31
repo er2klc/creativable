@@ -77,6 +77,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     
     // For images and sidecar, use media_urls from social_media_posts table
     if ((postType === 'image' || postType === 'sidecar') && post.media_urls) {
+      console.log("Using media URLs directly:", post.media_urls);
       return post.media_urls;
     }
 
