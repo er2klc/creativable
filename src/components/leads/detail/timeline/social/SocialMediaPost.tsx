@@ -27,19 +27,16 @@ interface SocialMediaPost {
   tagged_profiles?: string[] | null;
   posted_at: string | null;
   timestamp?: string | null;
-  // Wir nutzen hier nicht mehr die alte Spalte media_urls aus der DB,
-  // sondern bauen die URL direkt zusammen.
   media_type: string | null;
   video_url?: string | null;
   videoUrl?: string | null;
   hashtags?: string[] | null;
-  lead_id?: string; // Das ist eure Kontakt:ID (muss vorhanden sein – ansonsten nutzen wir den Fallback)
-  imageCount?: number; // Optional: Anzahl der Bilder bei Sidecar-Posts
+  lead_id?: string;
+  imageCount?: number;
 }
 
 interface SocialMediaPostProps {
   post: SocialMediaPost;
-  /** Falls im Post keine lead_id vorhanden ist, kannst du hier die aktuelle Lead-ID übergeben */
   kontaktIdFallback?: string;
 }
 
@@ -69,26 +66,17 @@ const getPostTypeIcon = (type: string) => {
   }
 };
 
-/**
- * Baut die Bild-URLs direkt zusammen, basierend auf dem Bucket-Schema:
- *   baseUrl / {Kontakt:ID} / {PostID}_{Index}.jpg
- *
- * Bei "image" gibt es nur _0.jpg,
- * bei "sidecar" wird anhand von imageCount (oder einem Default) eine Reihe erzeugt.
- * Bei "video" wird die vorhandene Video-URL genutzt.
- */
-// Helferfunktion zum direkten Zusammenbauen der Bild-URLs
 const getDirectMediaUrls = (
   post: SocialMediaPost,
   kontaktIdFallback?: string
 ): string[] => {
-  const baseUrl =
-    "https://agqaitxlmxztqyhpcjau.supabase.co/storage/v1/object/public/social-media-files";
-// Debug-Log für lead_id
-console.log("🚀 Post ID:", post.id, "Lead ID:", post.lead_id);
-  // Nutze post.lead_id als Kontakt-ID oder den Fallback
+  const baseUrl = "https://agqaitxlmxztqyhpcjau.supabase.co/storage/v1/object/public/social-media-files";
+  
+  // Debug log for lead_id
+  console.log("🚀 Post ID:", post.id, "Lead ID:", post.lead_id || kontaktIdFallback);
+  
+  // Use post.lead_id as Kontakt-ID or the fallback
   const kontaktId = post.lead_id || kontaktIdFallback || "default_kontakt";
-  // Hier wird die Post-ID verwendet – diese entspricht auch der im PostHeader angezeigten ID.
   const postId = post.id;
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
 
@@ -105,7 +93,6 @@ console.log("🚀 Post ID:", post.id, "Lead ID:", post.lead_id);
 };
 
 export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProps) => {
-  // Wir bauen die Medien-URLs direkt aus dem Bucket zusammen
   const mediaUrls = getDirectMediaUrls(post, kontaktIdFallback);
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = postType === "sidecar" && mediaUrls.length > 1;

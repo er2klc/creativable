@@ -1,47 +1,39 @@
 import { SocialMediaPost } from "./SocialMediaPost";
-import { LinkedInTimeline } from "./LinkedInTimeline";
 
 interface SocialMediaPostRaw {
   id: string;
-  platform?: string;
-  type?: string;
+  platform: string;
+  type: string;
   post_type: string;
   content: string | null;
-  caption?: string | null;
-  likesCount?: number | null;
-  commentsCount?: number | null;
-  likes_count?: number | null;
-  comments_count?: number | null;
+  caption: string | null;
+  likesCount: number | null;
+  commentsCount: number | null;
   url: string | null;
-  location?: string | null;
+  location: string | null;
   locationName?: string | null;
-  mentioned_profiles?: string[] | null;
-  tagged_profiles?: string[] | null;
+  mentioned_profiles: string[] | null;
+  tagged_profiles: string[] | null;
   posted_at: string | null;
-  timestamp?: string | null;
+  timestamp: string | null;
   media_urls: string[] | null;
   media_type: string | null;
-  local_video_path?: string | null;
-  local_media_paths?: string[] | null;
-  video_url?: string | null;
+  local_video_path: string | null;
+  local_media_paths: string[] | null;
+  video_url: string | null;
   videoUrl?: string | null;
   images?: string[] | null;
   hashtags?: string[] | null;
-  lead_id?: string;
 }
 
 interface SocialMediaTimelineProps {
   posts: SocialMediaPostRaw[];
   linkedInPosts?: any[];
   platform?: string;
-  kontaktIdFallback?: string; // Make sure this prop is defined
+  kontaktIdFallback?: string;
 }
 
-export const SocialMediaTimeline = ({ posts, linkedInPosts = [], platform }: SocialMediaTimelineProps) => {
-  if (platform === 'LinkedIn' && linkedInPosts.length > 0) {
-    return <LinkedInTimeline posts={linkedInPosts} />;
-  }
-
+export const SocialMediaTimeline = ({ posts, kontaktIdFallback }: SocialMediaTimelineProps) => {
   const sortedPosts = [...posts].sort((a, b) => {
     const dateA = a.timestamp ? new Date(a.timestamp) : new Date(a.posted_at || '');
     const dateB = b.timestamp ? new Date(b.timestamp) : new Date(b.posted_at || '');
@@ -52,7 +44,11 @@ export const SocialMediaTimeline = ({ posts, linkedInPosts = [], platform }: Soc
     <div className="relative space-y-6">
       {sortedPosts.length > 0 ? (
         sortedPosts.map((post) => (
-          <SocialMediaPost key={post.id} post={post} kontaktIdFallback={kontaktIdFallback} // Pass the prop here/>
+          <SocialMediaPost 
+            key={post.id} 
+            post={post} 
+            kontaktIdFallback={kontaktIdFallback}
+          />
         ))
       ) : (
         <div className="text-center text-muted-foreground py-4 ml-4">
