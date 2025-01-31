@@ -43,41 +43,6 @@ interface SocialMediaPostProps {
   kontaktIdFallback?: string;
 }
 
-const getPostTypeColor = (type: string) => {
-  switch (type?.toLowerCase()) {
-    case "video":
-      return "bg-cyan-50 border-cyan-200";
-    case "image":
-      return "bg-purple-50 border-purple-200";
-    case "sidecar":
-      return "bg-amber-50 border-amber-200";
-    default:
-      return "bg-gray-50 border-gray-200";
-  }
-};
-
-const getPostTypeIcon = (type: string) => {
-  switch (type?.toLowerCase()) {
-    case "video":
-      return <Video className="h-5 w-5 text-cyan-500" />;
-    case "image":
-      return <Image className="h-5 w-5 text-purple-500" />;
-    case "sidecar":
-      return <MessageCircle className="h-5 w-5 text-amber-500" />;
-    default:
-      return <Heart className="h-5 w-5 text-gray-500" />;
-  }
-};
-
-/**
- * Baut die Bild-URLs direkt zusammen, basierend auf dem Bucket-Schema:
- *   baseUrl / {Kontakt:ID} / {PostID}_{Index}.jpg
- *
- * Bei "image" gibt es nur _0.jpg,
- * bei "sidecar" wird anhand von imageCount (oder einem Default) eine Reihe erzeugt.
- * Bei "video" wird die vorhandene Video-URL genutzt.
- */
-// Helferfunktion zum direkten Zusammenbauen der Bild-URLs
 const getDirectMediaUrls = (
   post: SocialMediaPost,
   kontaktIdFallback?: string
@@ -107,6 +72,32 @@ const getDirectMediaUrls = (
     return Array.from({ length: count }, (_, index) => `${baseUrl}/${kontaktId}/${postId}_${index}.jpg`);
   }
   return [];
+};
+
+const getPostTypeColor = (type: string) => {
+  switch (type?.toLowerCase()) {
+    case "video":
+      return "bg-cyan-50 border-cyan-200";
+    case "image":
+      return "bg-purple-50 border-purple-200";
+    case "sidecar":
+      return "bg-amber-50 border-amber-200";
+    default:
+      return "bg-gray-50 border-gray-200";
+  }
+};
+
+const getPostTypeIcon = (type: string) => {
+  switch (type?.toLowerCase()) {
+    case "video":
+      return <Video className="h-5 w-5 text-cyan-500" />;
+    case "image":
+      return <Image className="h-5 w-5 text-purple-500" />;
+    case "sidecar":
+      return <MessageCircle className="h-5 w-5 text-amber-500" />;
+    default:
+      return <Heart className="h-5 w-5 text-gray-500" />;
+  }
 };
 
 export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProps) => {
