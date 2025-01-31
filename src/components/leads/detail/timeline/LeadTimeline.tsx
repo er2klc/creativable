@@ -135,6 +135,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
             posts={socialMediaPosts || []} 
             linkedInPosts={lead.linkedin_posts || []}
             platform={lead.platform}
+            kontaktIdFallback={lead.id} // Add this line to pass the lead ID
           />
         )
       )}
