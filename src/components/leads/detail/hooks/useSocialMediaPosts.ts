@@ -20,5 +20,6 @@ export const useSocialMediaPosts = (leadId: string) => {
         media_urls: typeof post.media_urls === "string" ? JSON.parse(post.media_urls) : post.media_urls
       }));
     },
+    enabled: !!leadId,
   });
 };
