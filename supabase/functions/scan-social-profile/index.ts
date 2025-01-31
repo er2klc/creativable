@@ -1,171 +1,157 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { getSupabase } from '../_shared/supabase.ts'
-import { processMediaFiles } from '../_shared/instagram/media-processor.ts'
-import { ProcessingState } from '../_shared/types/instagram.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { processInstagramProfile } from "../_shared/instagram/profile-processor.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { username, leadId, platform = 'instagram' } = await req.json()
-
-    if (!username || !leadId) {
-      throw new Error('Username and leadId are required')
-    }
-
-    const supabase = getSupabase()
+    const { platform, username, leadId } = await req.json();
     
-    // Get the API key from settings
-    const { data: settings } = await supabase
-      .from('settings')
-      .select('apify_api_key')
-      .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-      .single()
+    console.log('Starting profile scan:', {
+      platform,
+      username,
+      leadId,
+      timestamp: new Date().toISOString()
+    });
 
-    if (!settings?.apify_api_key) {
-      throw new Error('Apify API key not found in settings')
-    }
+    // Create Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    console.log('Starting Instagram profile scan for:', username)
-
-    const apifyUrl = `https://api.apify.com/v2/acts/apify~instagram-profile-scraper/run-sync-get-dataset-items?token=${settings.apify_api_key}`
-    
-    const response = await fetch(apifyUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        "usernames": [username],
-        "resultsLimit": 50,
-        "resultsType": "posts",
-        "extendOutputFunction": "($) => { return { timestamp: new Date().toISOString() } }",
-        "proxy": { "useApifyProxy": true }
-      })
-    })
-
-    if (!response.ok) {
-      throw new Error(`Apify API error: ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    if (!data || !Array.isArray(data)) {
-      throw new Error('Invalid response from Apify')
-    }
-
-    const profile = data[0]
-    if (!profile) {
-      throw new Error('No profile data found')
-    }
-
-    const posts = profile.latestPosts.map(post => ({
-      id: post.id,
-      type: post.type,
-      caption: post.caption,
-      url: post.url,
-      timestamp: post.timestamp,
-      media_urls: post.imageUrls || [],
-      hashtags: post.hashtags || [],
-      mentions: post.mentions || [],
-      likes: post.likesCount,
-      comments: post.commentsCount
-    }))
-
-    // Beim ersten Speichern der Posts
-    const postsToInsert = posts.map(post => ({
-      ...post,
-      lead_id: leadId,
-      platform: platform.toLowerCase(),
-      media_count: post.media_urls ? Math.min(post.media_urls.length, 10) : 0
-    }))
-
-    const { error: postsError } = await supabase
+    // Create initial progress record
+    await supabaseClient
       .from('social_media_posts')
-      .upsert(postsToInsert, { onConflict: 'id' })
-
-    if (postsError) {
-      throw new Error(`Error inserting posts: ${postsError.message}`)
-    }
-
-    // Update lead profile data
-    const { error: leadError } = await supabase
-      .from('leads')
-      .update({
-        social_media_bio: profile.bio,
-        social_media_followers: profile.followersCount,
-        social_media_following: profile.followingCount,
-        social_media_posts_count: profile.postsCount,
-        social_media_profile_image_url: profile.profilePicUrl,
-        last_social_media_scan: new Date().toISOString()
-      })
-      .eq('id', leadId)
-
-    if (leadError) {
-      throw new Error(`Error updating lead: ${leadError.message}`)
-    }
-
-    // Track scan history
-    const { error: historyError } = await supabase
-      .from('social_media_scan_history')
-      .insert({
+      .upsert({
+        id: `temp-${leadId}`,
         lead_id: leadId,
-        platform: platform.toLowerCase(),
-        scanned_at: new Date().toISOString(),
-        followers_count: profile.followersCount,
-        following_count: profile.followingCount,
-        posts_count: profile.postsCount,
-        success: true,
-        profile_data: profile
+        platform: platform,
+        post_type: 'post',
+        processing_progress: 0,
+        current_file: 'Starting profile scan...'
+      });
+
+    // Get Apify API key
+    const { data: secrets, error: secretError } = await supabaseClient
+      .from('secrets')
+      .select('value')
+      .eq('name', 'APIFY_API_TOKEN')
+      .single();
+
+    if (secretError || !secrets?.value) {
+      throw new Error('Could not retrieve Apify API key');
+    }
+
+    // Update progress to 20%
+    await updateProgress(supabaseClient, leadId, 'Connecting to Instagram API...', 20);
+
+    // Start Apify scraping run
+    const runResponse = await fetch(`https://api.apify.com/v2/acts/apify~instagram-profile-scraper/runs`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${secrets.value}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        usernames: [username]
       })
+    });
 
-    if (historyError) {
-      throw new Error(`Error inserting scan history: ${historyError.message}`)
+    if (!runResponse.ok) {
+      throw new Error(`HTTP error! status: ${runResponse.status}`);
     }
 
-    // Start media processing
-    const updateProgress = async (state: ProcessingState) => {
-      const { error } = await supabase
-        .from('social_media_posts')
-        .update({
-          processing_progress: (state.processedFiles / state.totalFiles) * 100,
-          current_file: state.currentFile,
-          error_message: state.error
-        })
-        .eq('lead_id', leadId)
+    const runData = await runResponse.json();
+    const runId = runData.data.id;
 
-      if (error) {
-        console.error('Error updating progress:', error)
+    console.log('Apify run started:', { runId });
+
+    // Poll for results
+    let attempts = 0;
+    const maxAttempts = 30;
+    
+    while (attempts < maxAttempts) {
+      console.log(`Polling for results (attempt ${attempts + 1}/${maxAttempts})`);
+      
+      const progress = Math.min(80, 20 + Math.floor((attempts / maxAttempts) * 60));
+      await updateProgress(supabaseClient, leadId, 'Scanning Instagram profile...', progress);
+
+      const datasetResponse = await fetch(`https://api.apify.com/v2/actor-runs/${runId}/dataset/items`, {
+        headers: {
+          'Authorization': `Bearer ${secrets.value}`
+        }
+      });
+
+      if (!datasetResponse.ok) {
+        throw new Error(`HTTP error! status: ${datasetResponse.status}`);
       }
+
+      const items = await datasetResponse.json();
+      
+      if (items.length > 0) {
+        const profileData = items[0];
+        console.log('Profile data received');
+
+        await updateProgress(supabaseClient, leadId, 'Processing profile data...', 90);
+        
+        // Process profile data
+        await processInstagramProfile(profileData, leadId, supabaseClient);
+        
+        // Mark as complete
+        await updateProgress(supabaseClient, leadId, 'Profile scan completed', 100);
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'Profile scan completed successfully'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      attempts++;
     }
 
-    // Process media files in background
-    processMediaFiles(postsToInsert, leadId, supabase, updateProgress)
-      .catch(error => console.error('Error processing media files:', error))
-
+    throw new Error('Maximum polling attempts reached');
+  } catch (error) {
+    console.error('Error during scan:', error);
     return new Response(
       JSON.stringify({ 
-        success: true,
-        message: 'Profile scan completed successfully',
-        data: {
-          postsCount: posts.length,
-          followersCount: profile.followersCount,
-          followingCount: profile.followingCount
-        }
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error during scanning'
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-
-  } catch (error) {
-    console.error('Error in scan-social-profile:', error)
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    )
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      }
+    );
   }
-})
+});
+
+async function updateProgress(
+  supabaseClient: ReturnType<typeof createClient>,
+  leadId: string,
+  message: string,
+  progress: number
+): Promise<void> {
+  console.log(`Updating progress: ${progress}% - ${message}`);
+  
+  await supabaseClient
+    .from('social_media_posts')
+    .update({ 
+      processing_progress: progress,
+      current_file: message,
+      media_processing_status: progress === 100 ? 'completed' : 'processing'
+    })
+    .eq('id', `temp-${leadId}`);
+}
