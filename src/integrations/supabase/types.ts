@@ -1435,7 +1435,6 @@ export type Database = {
           local_media_urls: string[] | null
           local_video_path: string | null
           location: string | null
-          media_count: number | null
           media_processing_status: string | null
           media_type: string | null
           media_urls: string[] | null
@@ -1468,7 +1467,6 @@ export type Database = {
           local_media_urls?: string[] | null
           local_video_path?: string | null
           location?: string | null
-          media_count?: number | null
           media_processing_status?: string | null
           media_type?: string | null
           media_urls?: string[] | null
@@ -1501,7 +1499,6 @@ export type Database = {
           local_media_urls?: string[] | null
           local_video_path?: string | null
           location?: string | null
-          media_count?: number | null
           media_processing_status?: string | null
           media_type?: string | null
           media_urls?: string[] | null

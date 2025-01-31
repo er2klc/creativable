@@ -43,37 +43,6 @@ interface SocialMediaPostProps {
   kontaktIdFallback?: string;
 }
 
-const getDirectMediaUrls = (
-  post: SocialMediaPost,
-  kontaktIdFallback?: string
-): string[] => {
-  const baseUrl =
-    "https://agqaitxlmxztqyhpcjau.supabase.co/storage/v1/object/public/social-media-files";
-    
-  // Nutze lead_id aus dem Post oder den Fallback
-  const kontaktId = post.lead_id || kontaktIdFallback;
-  
-  // Wenn keine ID vorhanden ist, gib leeres Array zurück
-  if (!kontaktId) {
-    console.warn('No lead_id found for post:', post.id);
-    return [];
-  }
-
-  const postId = post.id;
-  const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
-
-  if (postType === "video") {
-    const videoUrl = post.video_url || post.videoUrl;
-    return videoUrl ? [videoUrl] : [];
-  } else if (postType === "image") {
-    return [`${baseUrl}/${kontaktId}/${postId}_0.jpg`];
-  } else if (postType === "sidecar") {
-    const count = post.imageCount || 2;
-    return Array.from({ length: count }, (_, index) => `${baseUrl}/${kontaktId}/${postId}_${index}.jpg`);
-  }
-  return [];
-};
-
 const getPostTypeColor = (type: string) => {
   switch (type?.toLowerCase()) {
     case "video":
@@ -98,6 +67,39 @@ const getPostTypeIcon = (type: string) => {
     default:
       return <Heart className="h-5 w-5 text-gray-500" />;
   }
+};
+
+/**
+ * Baut die Bild-URLs direkt zusammen, basierend auf dem Bucket-Schema:
+ *   baseUrl / {Kontakt:ID} / {PostID}_{Index}.jpg
+ *
+ * Bei "image" gibt es nur _0.jpg,
+ * bei "sidecar" wird anhand von imageCount (oder einem Default) eine Reihe erzeugt.
+ * Bei "video" wird die vorhandene Video-URL genutzt.
+ */
+// Helferfunktion zum direkten Zusammenbauen der Bild-URLs
+const getDirectMediaUrls = (
+  post: SocialMediaPost,
+  kontaktIdFallback?: string
+): string[] => {
+  const baseUrl =
+    "https://agqaitxlmxztqyhpcjau.supabase.co/storage/v1/object/public/social-media-files";
+  // Nutze post.lead_id als Kontakt-ID oder den Fallback
+  const kontaktId = post.lead_id || kontaktIdFallback || "default_kontakt";
+  // Hier wird die Post-ID verwendet – diese entspricht auch der im PostHeader angezeigten ID.
+  const postId = post.id;
+  const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
+
+  if (postType === "video") {
+    const videoUrl = post.video_url || post.videoUrl;
+    return videoUrl ? [videoUrl] : [];
+  } else if (postType === "image") {
+    return [`${baseUrl}/${kontaktId}/${postId}_0.jpg`];
+  } else if (postType === "sidecar") {
+    const count = post.imageCount || 2;
+    return Array.from({ length: count }, (_, index) => `${baseUrl}/${kontaktId}/${postId}_${index}.jpg`);
+  }
+  return [];
 };
 
 export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProps) => {
