@@ -27,11 +27,9 @@ interface SocialMediaPost {
   tagged_profiles?: string[] | null;
   posted_at: string | null;
   timestamp?: string | null;
-  media_urls: string[] | null;
+  media_urls: string[] | null; // ✅ NUR für Bilder aus Supabase
   media_type: string | null;
-  local_video_path?: string | null;
-  local_media_paths?: string[] | null;
-  video_url?: string | null;
+  video_url?: string | null; // ✅ Nur für Videos aus leads
   videoUrl?: string | null;
   images?: string[] | null;
   hashtags?: string[] | null;
@@ -69,45 +67,48 @@ const getPostTypeIcon = (type: string) => {
 };
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
- const getMediaUrls = () => {
-  const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
+  const getMediaUrls = () => {
+    const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
 
-  console.log("DEBUG: Post Type:", postType);
-  console.log("DEBUG: Post ID:", post.id);
-  console.log("DEBUG: media_urls vorhanden?", post.media_urls ? "Ja" : "Nein", post.media_urls);
-  console.log("DEBUG: video_url vorhanden?", post.video_url ? "Ja" : "Nein", post.video_url);
+    console.log("DEBUG: Post Type:", postType);
+    console.log("DEBUG: Post ID:", post.id);
+    console.log("DEBUG: media_urls vorhanden?", post.media_urls ? "Ja" : "Nein", post.media_urls);
+    console.log("DEBUG: video_url vorhanden?", post.video_url ? "Ja" : "Nein", post.video_url);
 
-  // ✅ Falls es sich um ein Video handelt, NUR die `videoUrl` von Instagram verwenden
-  if (postType === "video" && post.video_url) {
-    console.log(`🎥 Video-Post gefunden! Verwende Instagram Video-URL für Post ID: ${post.id}`);
-    return [post.video_url];  // <-- Direkt die `videoUrl` von Instagram nehmen
-  }
-
-  // ✅ Falls media_urls in Supabase als JSON-String gespeichert wurde, konvertieren
-  let mediaUrls = post.media_urls;
-  if (typeof mediaUrls === "string") {
-    try {
-      mediaUrls = JSON.parse(mediaUrls);
-    } catch (e) {
-      console.error(`⚠️ Fehler beim Parsen von media_urls für Post ID: ${post.id}`, e);
-      mediaUrls = [];
+    // ✅ Falls es sich um ein Video handelt, NUR die `videoUrl` aus leads verwenden
+    if (postType === "video") {
+      const videoUrl = post.video_url || post.videoUrl;
+      if (videoUrl) {
+        console.log(`🎥 Video-Post gefunden! Verwende Instagram Video-URL für Post ID: ${post.id}`);
+        return [videoUrl];
+      }
     }
-  }
 
-  // ✅ Falls media_urls leer oder nicht existiert, Fehlermeldung ausgeben
-  if (!mediaUrls || !Array.isArray(mediaUrls) || mediaUrls.length === 0) {
-    console.warn(`⚠️ Keine gültigen media_urls gefunden für Post ID: ${post.id}`);
-    return [];
-  }
+    // ✅ Falls media_urls in Supabase als JSON-String gespeichert wurde, konvertieren
+    let mediaUrls = post.media_urls;
+    if (typeof mediaUrls === "string") {
+      try {
+        mediaUrls = JSON.parse(mediaUrls);
+      } catch (e) {
+        console.error(`⚠️ Fehler beim Parsen von media_urls für Post ID: ${post.id}`, e);
+        mediaUrls = [];
+      }
+    }
 
-  console.log(`🖼️ Bild-Post gefunden! Verwende media_urls für Post ID: ${post.id}`, mediaUrls);
-  return mediaUrls;
-};
+    // ✅ Falls media_urls leer oder nicht existiert, Fehlermeldung ausgeben
+    if (!mediaUrls || !Array.isArray(mediaUrls) || mediaUrls.length === 0) {
+      console.warn(`⚠️ Keine gültigen media_urls gefunden für Post ID: ${post.id}`);
+      return [];
+    }
+
+    console.log(`🖼️ Bild-Post gefunden! Verwende media_urls für Post ID: ${post.id}`, mediaUrls);
+    return mediaUrls;
+  };
 
   const mediaUrls = getMediaUrls();
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = postType === "sidecar" && mediaUrls.length > 1;
-  const hasVideo = postType === "video";
+  const hasVideo = postType === "video" && mediaUrls.length > 0;
   const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
   return (
@@ -147,7 +148,6 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                   mediaUrls={mediaUrls}
                   hasVideo={hasVideo}
                   isSidecar={isSidecar}
-                  localMediaPaths={post.local_media_paths || []}
                 />
               </div>
             ) : (
