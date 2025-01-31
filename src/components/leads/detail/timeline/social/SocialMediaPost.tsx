@@ -27,9 +27,9 @@ interface SocialMediaPost {
   tagged_profiles?: string[] | null;
   posted_at: string | null;
   timestamp?: string | null;
-  media_urls: string[] | null;
+  media_urls: string[] | null; // ✅ NUR für Bilder aus Supabase
   media_type: string | null;
-  video_url?: string | null;
+  video_url?: string | null; // ✅ Nur für Videos aus leads
   videoUrl?: string | null;
   images?: string[] | null;
   hashtags?: string[] | null;
@@ -68,41 +68,41 @@ const getPostTypeIcon = (type: string) => {
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const getMediaUrls = () => {
-    console.log("DEBUG: Post Type:", post.post_type);
+    const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
+
+    console.log("DEBUG: Post Type:", postType);
     console.log("DEBUG: Post ID:", post.id);
+    console.log("DEBUG: media_urls vorhanden?", post.media_urls ? "Ja" : "Nein", post.media_urls);
+    console.log("DEBUG: video_url vorhanden?", post.video_url ? "Ja" : "Nein", post.video_url);
 
-    // Überprüfe zuerst media_urls
-    if (post.media_urls) {
-      let urls = post.media_urls;
-      if (typeof urls === 'string') {
-        try {
-          urls = JSON.parse(urls);
-        } catch (e) {
-          console.error("Fehler beim Parsen von media_urls:", e);
-          urls = [];
-        }
-      }
-      if (Array.isArray(urls) && urls.length > 0) {
-        return urls;
-      }
-    }
-
-    // Fallback auf images
-    if (post.images && Array.isArray(post.images) && post.images.length > 0) {
-      return post.images;
-    }
-
-    // Wenn ein Video vorhanden ist
-    if (post.post_type?.toLowerCase() === "video") {
-      console.log("🎥 Video-Post gefunden! Verwende Instagram Video-URL für Post ID:", post.id);
+    // ✅ Falls es sich um ein Video handelt, NUR die `videoUrl` aus leads verwenden
+    if (postType === "video") {
       const videoUrl = post.video_url || post.videoUrl;
       if (videoUrl) {
+        console.log(`🎥 Video-Post gefunden! Verwende Instagram Video-URL für Post ID: ${post.id}`);
         return [videoUrl];
       }
     }
 
-    console.warn("⚠️ Keine gültigen media_urls gefunden für Post ID:", post.id);
-    return [];
+    // ✅ Falls media_urls in Supabase als JSON-String gespeichert wurde, konvertieren
+    let mediaUrls = post.media_urls;
+    if (typeof mediaUrls === "string") {
+      try {
+        mediaUrls = JSON.parse(mediaUrls);
+      } catch (e) {
+        console.error(`⚠️ Fehler beim Parsen von media_urls für Post ID: ${post.id}`, e);
+        mediaUrls = [];
+      }
+    }
+
+    // ✅ Falls media_urls leer oder nicht existiert, Fehlermeldung ausgeben
+    if (!mediaUrls || !Array.isArray(mediaUrls) || mediaUrls.length === 0) {
+      console.warn(`⚠️ Keine gültigen media_urls gefunden für Post ID: ${post.id}`);
+      return [];
+    }
+
+    console.log(`🖼️ Bild-Post gefunden! Verwende media_urls für Post ID: ${post.id}`, mediaUrls);
+    return mediaUrls;
   };
 
   const mediaUrls = getMediaUrls();
