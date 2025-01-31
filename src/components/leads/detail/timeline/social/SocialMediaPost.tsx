@@ -27,11 +27,11 @@ interface SocialMediaPost {
   tagged_profiles?: string[] | null;
   posted_at: string | null;
   timestamp?: string | null;
-  media_urls: string[] | null;
+  media_urls: string[] | null; // Nur die neue Spalte!
   media_type: string | null;
   video_url?: string | null;
   videoUrl?: string | null;
-  images?: string[] | null;
+  // Alte Felder wie images werden nicht mehr verwendet!
   hashtags?: string[] | null;
   lead_id?: string;
 }
@@ -74,7 +74,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     console.log("DEBUG: media_urls vorhanden?", post.media_urls ? "Ja" : "Nein", post.media_urls);
     console.log("DEBUG: video_url vorhanden?", post.video_url ? "Ja" : "Nein", post.video_url);
 
-    // Für Videos
+    // Für Video-Posts: Verwende ausschließlich die Video-URL
     if (postType === "video") {
       const videoUrl = post.video_url || post.videoUrl;
       if (videoUrl) {
@@ -83,7 +83,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       }
     }
 
-    // Für Bilder und Sidecar
+    // Für Bild-/Sidecar-Posts: Nutze ausschließlich die neue Spalte media_urls
     let mediaUrls = post.media_urls;
     if (typeof mediaUrls === "string") {
       try {
@@ -94,10 +94,9 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       }
     }
 
-    // Fallback auf images wenn keine media_urls vorhanden
     if (!mediaUrls || !Array.isArray(mediaUrls) || mediaUrls.length === 0) {
-      mediaUrls = post.images || [];
-      console.log(`⚠️ Fallback auf images für Post ID: ${post.id}`, mediaUrls);
+      console.warn(`⚠️ Keine gültigen media_urls gefunden für Post ID: ${post.id}`);
+      return [];
     }
 
     console.log(`🖼️ Medien gefunden! URLs für Post ID: ${post.id}`, mediaUrls);
