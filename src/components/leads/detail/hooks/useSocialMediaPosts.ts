@@ -38,7 +38,9 @@ export const useSocialMediaPosts = (leadId: string) => {
       let leadSocialPosts = [];
       if (leadData?.social_media_posts) {
         try {
-          leadSocialPosts = JSON.parse(leadData.social_media_posts);
+          leadSocialPosts = typeof leadData.social_media_posts === 'string' 
+            ? JSON.parse(leadData.social_media_posts)
+            : leadData.social_media_posts;
         } catch (e) {
           console.error("⚠️ Fehler beim Parsen von social_media_posts aus leads:", e);
         }
@@ -49,7 +51,11 @@ export const useSocialMediaPosts = (leadId: string) => {
         const matchingLeadPost = leadSocialPosts.find(leadPost => leadPost.id === post.id);
         return {
           ...post,
-          media_urls: typeof post.media_urls === "string" ? JSON.parse(post.media_urls) : post.media_urls,
+          media_urls: typeof post.media_urls === 'string' 
+            ? JSON.parse(post.media_urls) 
+            : Array.isArray(post.media_urls) 
+              ? post.media_urls 
+              : [],
           video_url: matchingLeadPost?.videoUrl || post.video_url, // Bevorzuge die videoUrl aus Leads
         };
       });
