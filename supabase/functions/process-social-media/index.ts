@@ -43,7 +43,9 @@ async function processPostBatch(
         continue;
       }
 
+      // Neue Logik: Direkte URL-Konstruktion basierend auf Schema
       const processedImagePaths = [];
+      const mediaCount = Math.min(imageUrls.length, 10); // Maximal 10 Bilder pro Post
 
       // Update progress in database
       await supabase
@@ -53,22 +55,19 @@ async function processPostBatch(
           lead_id: leadId,
           processing_progress: progress,
           current_file: imageUrls[0]?.split('/').pop(),
-          media_processing_status: 'processing'
+          media_processing_status: 'processing',
+          media_count: mediaCount // Speichere die Anzahl der Bilder
         });
 
-      for (const [index, mediaUrl] of imageUrls.entries()) {
+      for (let index = 0; index < mediaCount; index++) {
         try {
-          if (index >= 10) {
-            console.log(`Skipping remaining images for post ${post.id} (max 10 reached)`);
-            break;
-          }
+          const mediaUrl = imageUrls[index];
+          if (!mediaUrl) continue;
 
-          console.log(`Processing media ${index + 1}/${imageUrls.length} for post ${post.id} (Type: ${post.type || post.media_type})`);
-          
-          // Generate a clean file path using UUID
+          // Generiere einen sauberen Dateipfad nach Schema: leadId/postId_index.jpg
           const filePath = `${leadId}/${post.id}_${index}.jpg`;
           
-          // Check if file already exists
+          // Prüfe ob die Datei bereits existiert
           const { data: existingFile } = await supabase
             .storage
             .from('social-media-files')
@@ -77,7 +76,7 @@ async function processPostBatch(
           const fileExists = existingFile?.some(file => file.name === `${post.id}_${index}.jpg`);
           
           if (fileExists) {
-            console.log(`File already exists: ${filePath} for post ${post.id}`);
+            console.log(`File already exists: ${filePath}`);
             const { data } = supabase.storage
               .from('social-media-files')
               .getPublicUrl(filePath);
@@ -87,7 +86,7 @@ async function processPostBatch(
 
           const imageResponse = await fetch(mediaUrl);
           if (!imageResponse.ok) {
-            console.error(`Failed to fetch image: ${mediaUrl} for post ${post.id}`);
+            console.error(`Failed to fetch image: ${mediaUrl}`);
             continue;
           }
 
@@ -123,7 +122,6 @@ async function processPostBatch(
           (post.caption.match(/#[\w\u0590-\u05ff]+/g) || []) : 
           post.hashtags || [];
 
-        // Use correct case for post_type enum values
         const postType = post.type === 'Sidecar' ? 'Sidecar' : 'Image';
 
         const { error: insertError } = await supabase
@@ -136,11 +134,12 @@ async function processPostBatch(
             content: post.caption,
             url: post.url,
             posted_at: post.timestamp,
-            media_urls: processedImagePaths, // Hier speichern wir die Bucket-URLs direkt in media_urls
+            media_urls: processedImagePaths,
             media_type: postType,
             media_processing_status: 'processed',
             hashtags: hashtags,
-            processing_progress: progress
+            processing_progress: progress,
+            media_count: processedImagePaths.length // Aktualisiere die tatsächliche Anzahl der verarbeiteten Bilder
           });
 
         if (insertError) {
