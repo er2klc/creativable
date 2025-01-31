@@ -104,7 +104,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
         <div className="relative">
           <div className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center",
-            postTypeColor.replace('bg-', 'bg-').replace('border-', 'border-')
+            postTypeColor
           )}>
             {getPostTypeIcon(post.media_type || post.type || post.post_type)}
           </div>
