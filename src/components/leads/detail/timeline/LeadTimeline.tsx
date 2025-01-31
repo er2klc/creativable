@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { TimelineHeader } from "./TimelineHeader";
-import { TimelineItem } from "./TimelineItem";
-import { SocialMediaTimeline } from "./social/SocialMediaTimeline";
-import { LinkedInTimeline } from "./social/LinkedInTimeline";
+import { TimelineHeader } from "./timeline/TimelineHeader";
+import { TimelineItem } from "./timeline/TimelineItem";
+import { SocialMediaTimeline } from "./timeline/social/SocialMediaTimeline";
+import { LinkedInTimeline } from "./timeline/social/LinkedInTimeline";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadWithRelations } from "../types/lead";
-import { TimelineItem as TimelineItemType } from "./TimelineUtils";
+import { LeadWithRelations } from "./types/lead";
+import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
 import { useSocialMediaPosts } from "../hooks/useSocialMediaPosts";
 
 interface LeadTimelineProps {
@@ -85,7 +85,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     }
   };
 
-  // Combine all activities
   const allActivities = [
     ...(lead.notes || []).map(mapNoteToTimelineItem),
     ...(lead.tasks || []).map(mapTaskToTimelineItem),
@@ -132,10 +131,10 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           <LinkedInTimeline posts={lead.linkedin_posts || []} />
         ) : (
           <SocialMediaTimeline 
-            posts={socialMediaPosts || []} 
+            posts={socialMediaPosts || []}
             linkedInPosts={lead.linkedin_posts || []}
             platform={lead.platform}
-            kontaktIdFallback={lead.id} // Add this line to pass the lead ID
+            kontaktIdFallback={lead.id}
           />
         )
       )}

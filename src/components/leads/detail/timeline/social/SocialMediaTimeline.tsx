@@ -24,6 +24,7 @@ interface SocialMediaPostRaw {
   videoUrl?: string | null;
   images?: string[] | null;
   hashtags?: string[] | null;
+  lead_id?: string | null;
 }
 
 interface SocialMediaTimelineProps {
