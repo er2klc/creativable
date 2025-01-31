@@ -8,10 +8,23 @@ import { PhaseList } from "./phases/PhaseList";
 import { PhaseCreator } from "./phases/PhaseCreator";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
 import { Tables } from "@/integrations/supabase/types";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const LeadPhaseManager = () => {
   const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
   const [targetPhase, setTargetPhase] = useState<string>("");
+  const [showDeletePipelineDialog, setShowDeletePipelineDialog] = useState(false);
   const { settings } = useSettings();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -204,13 +217,69 @@ export const LeadPhaseManager = () => {
     },
   });
 
+  const deletePipeline = useMutation({
+    mutationFn: async () => {
+      if (!session?.user?.id || !pipeline?.id) {
+        throw new Error("No pipeline selected");
+      }
+
+      // First delete all phases
+      const { error: phasesError } = await supabase
+        .from("pipeline_phases")
+        .delete()
+        .eq("pipeline_id", pipeline.id);
+
+      if (phasesError) throw phasesError;
+
+      // Then delete the pipeline
+      const { error: pipelineError } = await supabase
+        .from("pipelines")
+        .delete()
+        .eq("id", pipeline.id);
+
+      if (pipelineError) throw pipelineError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
+      queryClient.invalidateQueries({ queryKey: ["default-pipeline"] });
+      localStorage.removeItem('lastUsedPipelineId');
+      toast({
+        title: settings?.language === "en" ? "Pipeline deleted" : "Pipeline gelöscht",
+        description: settings?.language === "en"
+          ? "The pipeline and its phases have been deleted successfully"
+          : "Die Pipeline und ihre Phasen wurden erfolgreich gelöscht",
+      });
+      setShowDeletePipelineDialog(false);
+    },
+    onError: (error) => {
+      console.error("Error deleting pipeline:", error);
+      toast({
+        variant: "destructive",
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description: settings?.language === "en"
+          ? "Failed to delete pipeline"
+          : "Fehler beim Löschen der Pipeline",
+      });
+    },
+  });
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
   return (
     <div className="space-y-4">
-      <PhaseCreator onAddPhase={(name) => addPhase.mutate(name)} />
+      <div className="flex justify-between items-center">
+        <PhaseCreator onAddPhase={(name) => addPhase.mutate(name)} />
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => setShowDeletePipelineDialog(true)}
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          {settings?.language === "en" ? "Delete Pipeline" : "Pipeline löschen"}
+        </Button>
+      </div>
       
       <PhaseList
         phases={phases}
@@ -226,6 +295,29 @@ export const LeadPhaseManager = () => {
         onConfirm={() => deletePhase.mutate()}
         phases={phases}
       />
+
+      <AlertDialog open={showDeletePipelineDialog} onOpenChange={setShowDeletePipelineDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {settings?.language === "en" ? "Delete Pipeline" : "Pipeline löschen"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {settings?.language === "en" 
+                ? "Are you sure you want to delete this pipeline? This action cannot be undone."
+                : "Sind Sie sicher, dass Sie diese Pipeline löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {settings?.language === "en" ? "Cancel" : "Abbrechen"}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => deletePipeline.mutate()}>
+              {settings?.language === "en" ? "Delete" : "Löschen"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
