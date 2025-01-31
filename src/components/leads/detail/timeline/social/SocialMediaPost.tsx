@@ -31,7 +31,6 @@ interface SocialMediaPost {
   media_type: string | null;
   video_url?: string | null;
   videoUrl?: string | null;
-  // Alte Felder wie images werden nicht mehr verwendet!
   hashtags?: string[] | null;
   lead_id?: string;
 }
