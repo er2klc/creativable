@@ -84,9 +84,16 @@ const getDirectMediaUrls = (
 ): string[] => {
   const baseUrl =
     "https://agqaitxlmxztqyhpcjau.supabase.co/storage/v1/object/public/social-media-files";
-  // Nutze post.lead_id als Kontakt-ID oder den Fallback
-  const kontaktId = post.lead_id || kontaktIdFallback || "default_kontakt";
-  // Hier wird die Post-ID verwendet – diese entspricht auch der im PostHeader angezeigten ID.
+    
+  // Nutze lead_id aus dem Post oder den Fallback
+  const kontaktId = post.lead_id || kontaktIdFallback;
+  
+  // Wenn keine ID vorhanden ist, gib leeres Array zurück
+  if (!kontaktId) {
+    console.warn('No lead_id found for post:', post.id);
+    return [];
+  }
+
   const postId = post.id;
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
 
