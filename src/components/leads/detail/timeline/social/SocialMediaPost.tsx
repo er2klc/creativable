@@ -67,45 +67,44 @@ const getPostTypeIcon = (type: string) => {
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const getMediaUrls = () => {
-  const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
+    const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
 
-  console.log("DEBUG: Post Type:", postType);
-  console.log("DEBUG: Post ID:", post.id);
-  console.log("DEBUG: media_urls vorhanden?", post.media_urls ? "Ja" : "Nein", post.media_urls);
-  console.log("DEBUG: video_url vorhanden?", post.video_url ? "Ja" : "Nein", post.video_url);
+    console.log("DEBUG: Post Type:", postType);
+    console.log("DEBUG: Post ID:", post.id);
+    console.log("DEBUG: media_urls vorhanden?", post.media_urls ? "Ja" : "Nein", post.media_urls);
+    console.log("DEBUG: video_url vorhanden?", post.video_url ? "Ja" : "Nein", post.video_url);
 
-  // ✅ Falls es sich um ein Video handelt, NUR die Instagram-URL nehmen
-  if (postType === 'video' && post.video_url) {
-    console.log(`🎥 Video-Post gefunden! Verwende Instagram Video-URL für Post ID: ${post.id}`);
-    return [post.video_url];
-  }
-
-  // ✅ Falls media_urls in Supabase als JSON-String gespeichert wurde, konvertieren
-  let mediaUrls = post.media_urls;
-  if (typeof mediaUrls === "string") {
-    try {
-      mediaUrls = JSON.parse(mediaUrls);
-    } catch (e) {
-      console.error(`⚠️ Fehler beim Parsen von media_urls für Post ID: ${post.id}`, e);
-      mediaUrls = [];
+    // ✅ Falls es sich um ein Video handelt, NUR die Instagram-URL nehmen
+    if (postType === "video" && post.video_url) {
+      console.log(`🎥 Video-Post gefunden! Verwende Instagram Video-URL für Post ID: ${post.id}`);
+      return [post.video_url];
     }
-  }
 
-  // ✅ Falls media_urls leer oder nicht existiert, Fehlermeldung ausgeben
-  if (!mediaUrls || !Array.isArray(mediaUrls) || mediaUrls.length === 0) {
-    console.warn(`⚠️ Keine gültigen media_urls gefunden für Post ID: ${post.id}`);
-    return [];
-  }
+    // ✅ Falls media_urls in Supabase als JSON-String gespeichert wurde, konvertieren
+    let mediaUrls = post.media_urls;
+    if (typeof mediaUrls === "string") {
+      try {
+        mediaUrls = JSON.parse(mediaUrls);
+      } catch (e) {
+        console.error(`⚠️ Fehler beim Parsen von media_urls für Post ID: ${post.id}`, e);
+        mediaUrls = [];
+      }
+    }
 
-  console.log(`🖼️ Bild-Post gefunden! Verwende media_urls für Post ID: ${post.id}`, mediaUrls);
-  return mediaUrls;
-};
+    // ✅ Falls media_urls leer oder nicht existiert, Fehlermeldung ausgeben
+    if (!mediaUrls || !Array.isArray(mediaUrls) || mediaUrls.length === 0) {
+      console.warn(`⚠️ Keine gültigen media_urls gefunden für Post ID: ${post.id}`);
+      return [];
+    }
 
+    console.log(`🖼️ Bild-Post gefunden! Verwende media_urls für Post ID: ${post.id}`, mediaUrls);
+    return mediaUrls;
+  };
 
   const mediaUrls = getMediaUrls();
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
-  const isSidecar = postType === 'sidecar' && mediaUrls.length > 1;
-  const hasVideo = postType === 'video';
+  const isSidecar = postType === "sidecar" && mediaUrls.length > 1;
+  const hasVideo = postType === "video";
   const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
   return (
@@ -116,29 +115,34 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       className="flex flex-col gap-1"
     >
       <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
-        {formatDate(post.timestamp || post.posted_at || '')}
+        {formatDate(post.timestamp || post.posted_at || "")}
       </div>
 
       <div className="flex gap-4 items-start group relative">
         <div className="relative">
-          <div className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center",
-            postTypeColor
-          )}>
+          <div
+            className={cn(
+              "w-8 h-8 rounded-full flex items-center justify-center",
+              postTypeColor
+            )}
+          >
             {getPostTypeIcon(post.media_type || post.type || post.post_type)}
           </div>
         </div>
 
-        <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-200" style={{ height: '100%' }} />
+        <div
+          className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-200"
+          style={{ height: "100%" }}
+        />
         <div className="absolute left-8 top-4 w-4 h-[2px] bg-gray-200" />
 
         <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>
           <div className="flex gap-6">
             {mediaUrls.length > 0 ? (
               <div className="w-1/3 min-w-[200px]">
-                <MediaDisplay 
-                  mediaUrls={mediaUrls} 
-                  hasVideo={hasVideo} 
+                <MediaDisplay
+                  mediaUrls={mediaUrls}
+                  hasVideo={hasVideo}
                   isSidecar={isSidecar}
                   localMediaPaths={post.local_media_paths || []}
                 />
@@ -148,21 +152,17 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
             )}
 
             <div className="flex-1 min-w-0">
-              <PostHeader 
-                timestamp={post.timestamp || post.posted_at || ''} 
-                type={post.type || post.post_type || ''} 
+              <PostHeader
+                timestamp={post.timestamp || post.posted_at || ""}
+                type={post.type || post.post_type || ""}
                 postTypeColor={postTypeColor}
                 id={post.id}
               />
 
-              <PostContent 
-                content={post.content} 
-                caption={post.caption}
-                hashtags={post.hashtags}
-              />
+              <PostContent content={post.content} caption={post.caption} hashtags={post.hashtags} />
 
-              <PostMetadata 
-                likesCount={post.likesCount} 
+              <PostMetadata
+                likesCount={post.likesCount}
                 commentsCount={post.commentsCount}
                 location={post.location}
                 locationName={post.locationName}
