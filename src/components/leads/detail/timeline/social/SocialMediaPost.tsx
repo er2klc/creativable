@@ -8,6 +8,15 @@ import { PostHeader } from "./PostHeader";
 import { PostContent } from "./PostContent";
 import { PostMetadata } from "./PostMetadata";
 import { PostActions } from "./PostActions";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useSettings } from "@/hooks/use-settings";
+import { LeadDetailHeader } from "./detail/LeadDetailHeader";
+import { useLeadSubscription } from "./detail/hooks/useLeadSubscription";
+import { LeadWithRelations } from "./detail/types/lead";
+import { LeadDetailContent } from "./detail/components/LeadDetailContent";
+import { useLeadMutations } from "./detail/hooks/useLeadMutations";
 
 interface SocialMediaPost {
   id: string;
