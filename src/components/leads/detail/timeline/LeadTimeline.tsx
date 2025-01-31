@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { TimelineHeader } from "./timeline/TimelineHeader";
-import { TimelineItem } from "./timeline/TimelineItem";
-import { SocialMediaTimeline } from "./timeline/social/SocialMediaTimeline";
-import { LinkedInTimeline } from "./timeline/social/LinkedInTimeline";
+import { TimelineHeader } from "./TimelineHeader";
+import { TimelineItem } from "./TimelineItem";
+import { SocialMediaTimeline } from "./social/SocialMediaTimeline";
+import { LinkedInTimeline } from "./social/LinkedInTimeline";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadWithRelations } from "./types/lead";
-import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
+import { LeadWithRelations } from "../types/lead";
+import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 import { useSocialMediaPosts } from "../hooks/useSocialMediaPosts";
 
 interface LeadTimelineProps {
@@ -73,7 +73,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     }
   });
 
-  // Create contact creation timeline item
   const contactCreationItem: TimelineItemType = {
     id: 'contact-creation',
     type: 'contact_created',
@@ -93,7 +92,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     contactCreationItem
   ];
 
-  // Sort all activities by timestamp in reverse chronological order
   const timelineItems = allActivities.sort((a, b) => 
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
