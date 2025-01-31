@@ -67,20 +67,14 @@ const getPostTypeIcon = (type: string) => {
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const getMediaUrls = () => {
-    const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
+    const mediaUrls = post.media_urls || post.images || [];
+    const videoUrl = post.video_url || post.videoUrl;
     
-    // Für Videos
-    if (postType === 'video') {
-      const videoUrl = post.video_url || post.videoUrl;
-      return videoUrl ? [videoUrl] : [];
+    if (videoUrl) {
+      return [videoUrl];
     }
     
-    // Für Bilder und Sidecar
-    if ((postType === 'image' || postType === 'sidecar') && post.media_urls && post.media_urls.length > 0) {
-      return post.media_urls;
-    }
-
-    return [];
+    return mediaUrls;
   };
 
   const mediaUrls = getMediaUrls();
@@ -114,9 +108,9 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
         <div className="absolute left-8 top-4 w-4 h-[2px] bg-gray-200" />
         
         <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>
-          <div className="flex flex-col gap-4">
+          <div className="flex gap-6">
             {mediaUrls.length > 0 && (
-              <div className="w-full">
+              <div className="w-1/3 min-w-[200px]">
                 <MediaDisplay 
                   mediaUrls={mediaUrls} 
                   hasVideo={hasVideo} 
