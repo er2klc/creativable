@@ -67,36 +67,40 @@ const getPostTypeIcon = (type: string) => {
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const getMediaUrls = () => {
-    const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
-    
-    console.log("DEBUG: Post Type:", postType);
-    console.log("DEBUG: Post ID:", post.id);
-    console.log("DEBUG: media_urls vorhanden?", post.media_urls ? "Ja" : "Nein", post.media_urls);
-    
-    // For videos, use the direct Instagram video URL
-    if (postType === 'video' && post.video_url) {
-      return [post.video_url];
-    }
-    
-    // For other types, use media_urls
-    let mediaUrls = post.media_urls;
-    if (typeof mediaUrls === "string") {
-      try {
-        mediaUrls = JSON.parse(mediaUrls);
-      } catch (e) {
-        console.error(`⚠️ Fehler beim Parsen von media_urls für Post ID: ${post.id}`, e);
-        mediaUrls = [];
-      }
-    }
+  const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
 
-    // Falls das Feld nicht existiert oder leer ist
-    if (!mediaUrls || !Array.isArray(mediaUrls) || mediaUrls.length === 0) {
-      console.warn(`⚠️ Keine gültigen media_urls gefunden für Post ID: ${post.id}`);
-      return [];
-    }
+  console.log("DEBUG: Post Type:", postType);
+  console.log("DEBUG: Post ID:", post.id);
+  console.log("DEBUG: media_urls vorhanden?", post.media_urls ? "Ja" : "Nein", post.media_urls);
+  console.log("DEBUG: video_url vorhanden?", post.video_url ? "Ja" : "Nein", post.video_url);
 
-    return mediaUrls;
-  };
+  // ✅ Falls es sich um ein Video handelt, NUR die Instagram-URL nehmen
+  if (postType === 'video' && post.video_url) {
+    console.log(`🎥 Video-Post gefunden! Verwende Instagram Video-URL für Post ID: ${post.id}`);
+    return [post.video_url];
+  }
+
+  // ✅ Falls media_urls in Supabase als JSON-String gespeichert wurde, konvertieren
+  let mediaUrls = post.media_urls;
+  if (typeof mediaUrls === "string") {
+    try {
+      mediaUrls = JSON.parse(mediaUrls);
+    } catch (e) {
+      console.error(`⚠️ Fehler beim Parsen von media_urls für Post ID: ${post.id}`, e);
+      mediaUrls = [];
+    }
+  }
+
+  // ✅ Falls media_urls leer oder nicht existiert, Fehlermeldung ausgeben
+  if (!mediaUrls || !Array.isArray(mediaUrls) || mediaUrls.length === 0) {
+    console.warn(`⚠️ Keine gültigen media_urls gefunden für Post ID: ${post.id}`);
+    return [];
+  }
+
+  console.log(`🖼️ Bild-Post gefunden! Verwende media_urls für Post ID: ${post.id}`, mediaUrls);
+  return mediaUrls;
+};
+
 
   const mediaUrls = getMediaUrls();
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
