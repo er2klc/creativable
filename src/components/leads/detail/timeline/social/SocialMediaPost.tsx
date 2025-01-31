@@ -68,19 +68,24 @@ const getPostTypeIcon = (type: string) => {
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const getMediaUrls = () => {
     const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
-    
-    // For videos, only use video URLs
+
+    console.log("DEBUG: Post Type:", postType);
+    console.log("DEBUG: media_urls vorhanden?", post.media_urls ? "Ja" : "Nein", post.media_urls);
+
+    // Für Videos nur die Video-URL verwenden
     if (postType === 'video') {
       const videoUrl = post.video_url || post.videoUrl;
+      console.log("DEBUG: Video-URL gefunden:", videoUrl);
       return videoUrl ? [videoUrl] : [];
     }
-    
-    // For images and sidecar, use media_urls from social_media_posts table
-    if ((postType === 'image' || postType === 'sidecar') && post.media_urls) {
-      console.log("Using media URLs directly:", post.media_urls);
+
+    // Für Bilder und Sidecars die media_urls verwenden
+    if ((postType === 'image' || postType === 'sidecar') && post.media_urls && post.media_urls.length > 0) {
+      console.log("DEBUG: media_urls werden genutzt:", post.media_urls);
       return post.media_urls;
     }
 
+    console.warn("⚠️ Keine gültigen media_urls gefunden für diesen Post!");
     return [];
   };
 
@@ -100,7 +105,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
         {formatDate(post.timestamp || post.posted_at || '')}
       </div>
-      
+
       <div className="flex gap-4 items-start group relative">
         <div className="relative">
           <div className={cn(
@@ -110,13 +115,13 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
             {getPostTypeIcon(post.media_type || post.type || post.post_type)}
           </div>
         </div>
-        
+
         <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-200" style={{ height: '100%' }} />
         <div className="absolute left-8 top-4 w-4 h-[2px] bg-gray-200" />
-        
+
         <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>
           <div className="flex gap-6">
-            {mediaUrls.length > 0 && (
+            {mediaUrls.length > 0 ? (
               <div className="w-1/3 min-w-[200px]">
                 <MediaDisplay 
                   mediaUrls={mediaUrls} 
@@ -125,6 +130,8 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                   localMediaPaths={post.local_media_paths || []}
                 />
               </div>
+            ) : (
+              <p className="text-red-500">⚠️ Keine Medien gefunden!</p>
             )}
 
             <div className="flex-1 min-w-0">
