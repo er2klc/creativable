@@ -34,6 +34,7 @@ interface SocialMediaTimelineProps {
   posts: SocialMediaPostRaw[];
   linkedInPosts?: any[];
   platform?: string;
+  kontaktIdFallback?: string; // Make sure this prop is defined
 }
 
 export const SocialMediaTimeline = ({ posts, linkedInPosts = [], platform }: SocialMediaTimelineProps) => {
@@ -51,7 +52,7 @@ export const SocialMediaTimeline = ({ posts, linkedInPosts = [], platform }: Soc
     <div className="relative space-y-6">
       {sortedPosts.length > 0 ? (
         sortedPosts.map((post) => (
-          <SocialMediaPost key={post.id} post={post} />
+          <SocialMediaPost key={post.id} post={post} kontaktIdFallback={kontaktIdFallback} // Pass the prop here/>
         ))
       ) : (
         <div className="text-center text-muted-foreground py-4 ml-4">
