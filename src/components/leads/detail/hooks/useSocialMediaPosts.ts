@@ -5,9 +5,9 @@ export const useSocialMediaPosts = (leadId: string) => {
   return useQuery({
     queryKey: ["social-media-posts", leadId],
     queryFn: async () => {
-      console.log(`🚀 API wird für Lead ID: ${leadId} aufgerufen`);
-
-      // Abfrage für Posts aus der Tabelle "social_media_posts"
+      console.log(`🚀 API wird für Lead ID: ${leadId} ausgeführt`);
+      
+      // Abfrage für Posts aus "social_media_posts"
       const { data: socialMediaPosts, error: postsError } = await supabase
         .from("social_media_posts")
         .select("id, lead_id, post_type, media_urls, video_url, posted_at, content, likes_count, comments_count, url, media_type")
@@ -19,7 +19,7 @@ export const useSocialMediaPosts = (leadId: string) => {
         throw postsError;
       }
 
-      // Abfrage für zusätzliche Daten (z. B. Video-URLs) aus "leads"
+      // Abfrage für zusätzliche Daten aus "leads" (z. B. Video-URLs)
       const { data: leadData, error: leadError } = await supabase
         .from("leads")
         .select("social_media_posts")
@@ -48,30 +48,33 @@ export const useSocialMediaPosts = (leadId: string) => {
 
       // Kombiniere die Daten – ausschließliche Nutzung von media_urls
       const mergedPosts = socialMediaPosts.map((post) => {
-  const matchingLeadPost = leadSocialPosts.find((leadPost) => leadPost.id === post.id);
+        const matchingLeadPost = leadSocialPosts.find((leadPost) => leadPost.id === post.id);
+        let mediaUrls: string[] = [];
+        if (post.media_urls) {
+          mediaUrls = typeof post.media_urls === "string"
+            ? JSON.parse(post.media_urls)
+            : Array.isArray(post.media_urls)
+              ? post.media_urls
+              : [];
+        }
+        const videoUrl = post.video_url || matchingLeadPost?.videoUrl;
 
-  let mediaUrls: string[] = [];
-  if (post.media_urls) {
-    mediaUrls = typeof post.media_urls === "string"
-      ? JSON.parse(post.media_urls)
-      : Array.isArray(post.media_urls)
-        ? post.media_urls
-        : [];
-  }
+        const mergedPost = {
+          ...post,
+          media_urls: mediaUrls,
+          video_url: videoUrl,
+        };
 
-  const videoUrl = post.video_url || matchingLeadPost?.videoUrl;
+        // Debug-Log für den speziellen Post mit der ID 3326722177866331652
+        if (post.id === "3326722177866331652") {
+          console.log("DEBUG: Merged Post (3326722177866331652):", mergedPost);
+        }
 
-  return {
-    ...post,
-    media_urls: mediaUrls,
-    video_url: videoUrl,
-  };
-});
+        return mergedPost;
+      });
 
-// Füge diesen Log hinzu:
-console.log(
-  "DEBUG: Merged Post (3326722177866331652):",
-  mergedPosts.find((p) => p.id === "3326722177866331652")
-);
-
-return mergedPosts;
+      return mergedPosts;
+    },
+    enabled: !!leadId,
+  });
+};
