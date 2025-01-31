@@ -68,7 +68,7 @@ const getPostTypeIcon = (type: string) => {
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const getMediaUrls = () => {
     const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
-
+    
     console.log("DEBUG: Post Type:", postType);
     console.log("DEBUG: Post ID:", post.id);
     console.log("DEBUG: media_urls vorhanden?", post.media_urls ? "Ja" : "Nein", post.media_urls);
