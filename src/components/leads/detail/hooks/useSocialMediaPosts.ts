@@ -5,13 +5,18 @@ export const useSocialMediaPosts = (leadId: string) => {
   return useQuery({
     queryKey: ["social-media-posts", leadId],
     queryFn: async () => {
+      console.log(`🚀 API wird für Lead ID: ${leadId} aufgerufen`);
+
       const { data, error } = await supabase
         .from("social_media_posts")
         .select("id, lead_id, post_type, media_urls, video_url, posted_at, content, likes_count, comments_count, url, media_type")
         .eq("lead_id", leadId)
         .order("posted_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("⚠️ Supabase Fehler:", error);
+        throw error;
+      }
 
       console.log("🚀 DEBUG: API Antwort von Supabase:", data);
 
