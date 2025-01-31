@@ -6,6 +6,7 @@ import { LinkedInTimeline } from "./social/LinkedInTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "../types/lead";
 import { TimelineItem as TimelineItemType } from "./TimelineUtils";
+import { useSocialMediaPosts } from "../hooks/useSocialMediaPosts";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -15,6 +16,7 @@ interface LeadTimelineProps {
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
   const { settings } = useSettings();
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
+  const { data: socialMediaPosts } = useSocialMediaPosts(lead.id);
   
   const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
   const hasSocialPosts = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
@@ -108,6 +110,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         activeTimeline={activeTimeline}
         onTimelineChange={setActiveTimeline}
         platform={lead.platform}
+        hasLinkedInPosts={hasLinkedInPosts}
       />
 
       {activeTimeline === 'activities' ? (
@@ -125,11 +128,11 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           ))}
         </div>
       ) : (
-        lead.platform === 'LinkedIn' ? (
+        lead.platform === 'LinkedIn' && hasLinkedInPosts ? (
           <LinkedInTimeline posts={lead.linkedin_posts || []} />
         ) : (
           <SocialMediaTimeline 
-            posts={lead.social_media_posts || []} 
+            posts={socialMediaPosts || []} 
             linkedInPosts={lead.linkedin_posts || []}
             platform={lead.platform}
           />
