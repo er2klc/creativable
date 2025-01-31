@@ -11,28 +11,31 @@ import { PostActions } from "./PostActions";
 
 interface SocialMediaPost {
   id: string;
-  platform: string;
-  type: string;
+  platform?: string;
+  type?: string;
   post_type: string;
   content: string | null;
-  caption: string | null;
-  likesCount: number | null;
-  commentsCount: number | null;
+  caption?: string | null;
+  likesCount?: number | null;
+  commentsCount?: number | null;
+  likes_count?: number | null;
+  comments_count?: number | null;
   url: string | null;
-  location: string | null;
+  location?: string | null;
   locationName?: string | null;
-  mentioned_profiles: string[] | null;
-  tagged_profiles: string[] | null;
+  mentioned_profiles?: string[] | null;
+  tagged_profiles?: string[] | null;
   posted_at: string | null;
-  timestamp: string | null;
+  timestamp?: string | null;
   media_urls: string[] | null;
   media_type: string | null;
-  local_video_path: string | null;
-  local_media_paths: string[] | null;
-  video_url: string | null;
+  local_video_path?: string | null;
+  local_media_paths?: string[] | null;
+  video_url?: string | null;
   videoUrl?: string | null;
   images?: string[] | null;
   hashtags?: string[] | null;
+  lead_id?: string;
 }
 
 interface SocialMediaPostProps {
@@ -162,8 +165,8 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
               <PostContent content={post.content} caption={post.caption} hashtags={post.hashtags} />
 
               <PostMetadata
-                likesCount={post.likesCount}
-                commentsCount={post.commentsCount}
+                likesCount={post.likesCount || post.likes_count}
+                commentsCount={post.commentsCount || post.comments_count}
                 location={post.location}
                 locationName={post.locationName}
               />
