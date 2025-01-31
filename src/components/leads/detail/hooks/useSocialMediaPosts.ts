@@ -7,7 +7,7 @@ export const useSocialMediaPosts = (leadId: string) => {
     queryFn: async () => {
       console.log(`🚀 API wird für Lead ID: ${leadId} aufgerufen`);
 
-      // ✅ Abfrage für Bilder & Metadaten aus "social_media_posts"
+      // Abfrage für Posts aus der Tabelle "social_media_posts"
       const { data: socialMediaPosts, error: postsError } = await supabase
         .from("social_media_posts")
         .select("id, lead_id, post_type, media_urls, video_url, posted_at, content, likes_count, comments_count, url, media_type")
@@ -19,7 +19,7 @@ export const useSocialMediaPosts = (leadId: string) => {
         throw postsError;
       }
 
-      // ✅ Abfrage für Video-URLs aus "leads" (social_media_posts Spalte)
+      // Abfrage für zusätzliche Daten (z. B. Video-URLs) aus "leads"
       const { data: leadData, error: leadError } = await supabase
         .from("leads")
         .select("social_media_posts")
@@ -34,11 +34,11 @@ export const useSocialMediaPosts = (leadId: string) => {
       console.log("🚀 DEBUG: API Antwort von Supabase (Social Media Posts):", socialMediaPosts);
       console.log("🚀 DEBUG: API Antwort von Supabase (Lead Data):", leadData);
 
-      // ✅ Extrahiere die Video-URLs aus den Lead-Daten
+      // Extrahiere die Post-Daten aus den Lead-Daten (hauptsächlich für videoUrl)
       let leadSocialPosts = [];
       if (leadData?.social_media_posts) {
         try {
-          leadSocialPosts = typeof leadData.social_media_posts === 'string' 
+          leadSocialPosts = typeof leadData.social_media_posts === "string"
             ? JSON.parse(leadData.social_media_posts)
             : leadData.social_media_posts;
         } catch (e) {
@@ -46,27 +46,27 @@ export const useSocialMediaPosts = (leadId: string) => {
         }
       }
 
-      // ✅ Kombiniere die Daten
-      const mergedPosts = socialMediaPosts.map(post => {
-        const matchingLeadPost = leadSocialPosts.find(leadPost => leadPost.id === post.id);
-        
-        // Verarbeite media_urls
-        let mediaUrls = [];
+      // Kombiniere die Daten – ausschließliche Nutzung von media_urls
+      const mergedPosts = socialMediaPosts.map((post) => {
+        const matchingLeadPost = leadSocialPosts.find((leadPost) => leadPost.id === post.id);
+
+        // Verarbeite media_urls ausschließlich
+        let mediaUrls: string[] = [];
         if (post.media_urls) {
-          mediaUrls = typeof post.media_urls === 'string' 
-            ? JSON.parse(post.media_urls) 
-            : Array.isArray(post.media_urls) 
-              ? post.media_urls 
+          mediaUrls = typeof post.media_urls === "string"
+            ? JSON.parse(post.media_urls)
+            : Array.isArray(post.media_urls)
+              ? post.media_urls
               : [];
         }
 
-        // Bevorzuge video_url aus dem Post, Fallback auf videoUrl aus Lead-Daten
+        // Bevorzuge video_url aus den Lead-Daten (sofern vorhanden) – ansonsten aus post.video_url
         const videoUrl = post.video_url || matchingLeadPost?.videoUrl;
 
         return {
           ...post,
           media_urls: mediaUrls,
-          video_url: videoUrl
+          video_url: videoUrl,
         };
       });
 
