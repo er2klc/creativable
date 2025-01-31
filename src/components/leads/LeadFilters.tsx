@@ -6,7 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PlusCircle, GitBranch, Pencil, Save } from "lucide-react";
+import { PlusCircle, GitBranch, Pencil, Save, Trash2 } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,16 @@ import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface LeadFiltersProps {
   selectedPipelineId: string | null;
@@ -34,6 +44,7 @@ export const LeadFilters = ({
   const queryClient = useQueryClient();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingPipelineName, setEditingPipelineName] = useState("");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: pipelines = [] } = useQuery({
     queryKey: ["pipelines"],
@@ -52,7 +63,6 @@ export const LeadFilters = ({
     enabled: !!session?.user?.id,
   });
 
-  // Load last selected pipeline on initial render
   useEffect(() => {
     if (settings?.last_selected_pipeline_id && !selectedPipelineId) {
       setSelectedPipelineId(settings.last_selected_pipeline_id);
@@ -61,7 +71,6 @@ export const LeadFilters = ({
     }
   }, [settings?.last_selected_pipeline_id, pipelines, selectedPipelineId, setSelectedPipelineId]);
 
-  // Save selected pipeline to settings
   const handlePipelineSelect = async (pipelineId: string) => {
     setSelectedPipelineId(pipelineId);
     try {
@@ -107,6 +116,49 @@ export const LeadFilters = ({
         settings?.language === "en"
           ? "Failed to update pipeline name"
           : "Fehler beim Aktualisieren des Pipeline-Namens"
+      );
+    }
+  };
+
+  const handleDeletePipeline = async () => {
+    if (!selectedPipelineId) return;
+
+    try {
+      // First delete all phases
+      const { error: phasesError } = await supabase
+        .from("pipeline_phases")
+        .delete()
+        .eq("pipeline_id", selectedPipelineId);
+
+      if (phasesError) throw phasesError;
+
+      // Then delete the pipeline
+      const { error: pipelineError } = await supabase
+        .from("pipelines")
+        .delete()
+        .eq("id", selectedPipelineId);
+
+      if (pipelineError) throw pipelineError;
+
+      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
+      localStorage.removeItem('lastUsedPipelineId');
+      
+      // Select first available pipeline or null if none left
+      const remainingPipelines = pipelines.filter(p => p.id !== selectedPipelineId);
+      setSelectedPipelineId(remainingPipelines[0]?.id || null);
+      
+      toast.success(
+        settings?.language === "en"
+          ? "Pipeline deleted successfully"
+          : "Pipeline erfolgreich gelöscht"
+      );
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error("Error deleting pipeline:", error);
+      toast.error(
+        settings?.language === "en"
+          ? "Failed to delete pipeline"
+          : "Fehler beim Löschen der Pipeline"
       );
     }
   };
@@ -162,6 +214,18 @@ export const LeadFilters = ({
         <Pencil className="h-4 w-4" />
       </Button>
 
+      {selectedPipelineId && (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setShowDeleteDialog(true)}
+          className="h-9 w-9"
+          title={settings?.language === "en" ? "Delete Pipeline" : "Pipeline löschen"}
+        >
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      )}
+
       {isEditMode && (
         <div className="flex items-center gap-2">
           <Input
@@ -186,6 +250,29 @@ export const LeadFilters = ({
         open={showCreateDialog} 
         onOpenChange={setShowCreateDialog} 
       />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {settings?.language === "en" ? "Delete Pipeline" : "Pipeline löschen"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {settings?.language === "en" 
+                ? "Are you sure you want to delete this pipeline? This action cannot be undone."
+                : "Sind Sie sicher, dass Sie diese Pipeline löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {settings?.language === "en" ? "Cancel" : "Abbrechen"}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeletePipeline}>
+              {settings?.language === "en" ? "Delete" : "Löschen"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
