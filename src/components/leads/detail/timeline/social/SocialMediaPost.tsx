@@ -27,16 +27,19 @@ interface SocialMediaPost {
   tagged_profiles?: string[] | null;
   posted_at: string | null;
   timestamp?: string | null;
-  media_urls: string[] | null; // Nur die neue Spalte!
+  // Die alte Spalte media_urls wird hier nicht mehr genutzt
   media_type: string | null;
   video_url?: string | null;
   videoUrl?: string | null;
   hashtags?: string[] | null;
-  lead_id?: string;
+  lead_id?: string; // Diese ID entspricht eurer Kontakt:ID
+  imageCount?: number; // Optional: Anzahl der Bilder bei Sidecar-Posts
 }
 
 interface SocialMediaPostProps {
   post: SocialMediaPost;
+  // Fallback, falls im Post keine Kontakt‑ID vorhanden ist
+  kontaktIdFallback?: string;
 }
 
 const getPostTypeColor = (type: string) => {
@@ -65,44 +68,37 @@ const getPostTypeIcon = (type: string) => {
   }
 };
 
-export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
-  const getMediaUrls = () => {
-    const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
-    console.log("DEBUG: Post Type:", postType);
-    console.log("DEBUG: Post ID:", post.id);
-    console.log("DEBUG: media_urls vorhanden?", post.media_urls ? "Ja" : "Nein", post.media_urls);
-    console.log("DEBUG: video_url vorhanden?", post.video_url ? "Ja" : "Nein", post.video_url);
+// Helferfunktion zum direkten Zusammenbauen der Bild-URLs
+const getDirectMediaUrls = (
+  post: SocialMediaPost,
+  kontaktIdFallback?: string
+): string[] => {
+  const baseUrl =
+    "https://agqaitxlmxztqyhpcjau.supabase.co/storage/v1/object/public/social-media-files";
+  // Nutze post.lead_id als Kontakt:ID, oder den Fallback, falls nicht vorhanden
+  const kontaktId = post.lead_id || kontaktIdFallback || "default_kontakt";
+  const postId = post.id;
+  const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
 
-    // Für Video-Posts: Verwende ausschließlich die Video-URL
-    if (postType === "video") {
-      const videoUrl = post.video_url || post.videoUrl;
-      if (videoUrl) {
-        console.log(`🎥 Video-Post gefunden! Verwende Video-URL für Post ID: ${post.id}`);
-        return [videoUrl];
-      }
-    }
+  if (postType === "video") {
+    // Bei Video-Posts bleibt die vorhandene Video-URL erhalten
+    const videoUrl = post.video_url || post.videoUrl;
+    return videoUrl ? [videoUrl] : [];
+  } else if (postType === "image") {
+    // Bei Image-Posts gibt es nur ein Bild: _0.jpg
+    return [`${baseUrl}/${kontaktId}/${postId}_0.jpg`];
+  } else if (postType === "sidecar") {
+    // Bei Sidecar-Posts wird eine Reihe von Bildern generiert.
+    // Nutze post.imageCount, falls vorhanden, ansonsten einen Standardwert (hier 2)
+    const count = post.imageCount || 2;
+    return Array.from({ length: count }, (_, index) => `${baseUrl}/${kontaktId}/${postId}_${index}.jpg`);
+  }
+  return [];
+};
 
-    // Für Bild-/Sidecar-Posts: Nutze ausschließlich die neue Spalte media_urls
-    let mediaUrls = post.media_urls;
-    if (typeof mediaUrls === "string") {
-      try {
-        mediaUrls = JSON.parse(mediaUrls);
-      } catch (e) {
-        console.error(`⚠️ Fehler beim Parsen von media_urls für Post ID: ${post.id}`, e);
-        mediaUrls = [];
-      }
-    }
-
-    if (!mediaUrls || !Array.isArray(mediaUrls) || mediaUrls.length === 0) {
-      console.warn(`⚠️ Keine gültigen media_urls gefunden für Post ID: ${post.id}`);
-      return [];
-    }
-
-    console.log(`🖼️ Medien gefunden! URLs für Post ID: ${post.id}`, mediaUrls);
-    return mediaUrls;
-  };
-
-  const mediaUrls = getMediaUrls();
+export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProps) => {
+  // Statt die DB-Felder zu nutzen, bauen wir die URLs direkt aus dem Bucket
+  const mediaUrls = getDirectMediaUrls(post, kontaktIdFallback);
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = postType === "sidecar" && mediaUrls.length > 1;
   const hasVideo = postType === "video" && mediaUrls.length > 0;
@@ -121,31 +117,19 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
       <div className="flex gap-4 items-start group relative">
         <div className="relative">
-          <div
-            className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center",
-              postTypeColor
-            )}
-          >
+          <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", postTypeColor)}>
             {getPostTypeIcon(post.media_type || post.type || post.post_type)}
           </div>
         </div>
 
-        <div
-          className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-200"
-          style={{ height: "100%" }}
-        />
+        <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-200" style={{ height: "100%" }} />
         <div className="absolute left-8 top-4 w-4 h-[2px] bg-gray-200" />
 
         <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>
           <div className="flex gap-6">
             {mediaUrls.length > 0 ? (
               <div className="w-1/3 min-w-[200px]">
-                <MediaDisplay
-                  mediaUrls={mediaUrls}
-                  hasVideo={hasVideo}
-                  isSidecar={isSidecar}
-                />
+                <MediaDisplay mediaUrls={mediaUrls} hasVideo={hasVideo} isSidecar={isSidecar} />
               </div>
             ) : (
               <p className="text-red-500">⚠️ Keine Medien gefunden!</p>
