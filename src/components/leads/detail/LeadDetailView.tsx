@@ -7,6 +7,7 @@ import { useLeadSubscription } from "./hooks/useLeadSubscription";
 import { LeadWithRelations } from "./types/lead";
 import { LeadDetailContent } from "./components/LeadDetailContent";
 import { useLeadMutations } from "./hooks/useLeadMutations";
+import { Tables } from "@/integrations/supabase/types";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -111,7 +112,12 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     const hasChanges = Object.entries(updates).some(([key, value]) => {
       // Skip if the key doesn't exist in lead
       if (!(key in lead)) return false;
-      // Compare the values
+      // Compare the values, including special handling for phase_id
+      if (key === 'phase_id') {
+        // Only consider it a change if the phase_id is actually different
+        return lead.phase_id !== value;
+      }
+      // Compare other values
       return lead[key as keyof typeof lead] !== value;
     });
 
