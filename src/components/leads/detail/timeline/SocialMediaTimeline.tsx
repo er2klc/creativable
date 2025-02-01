@@ -26,7 +26,8 @@ export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdF
             key={post.id} 
             post={{
               ...post,
-              post_type: post.post_type as PostType
+              post_type: post.post_type as PostType,
+              video_url: post.video_url || undefined // Ensure video_url is passed
             }}
             kontaktIdFallback={kontaktIdFallback}
           />
