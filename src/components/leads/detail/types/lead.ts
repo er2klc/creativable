@@ -5,7 +5,7 @@ export interface Message extends Tables<"messages"> {
   created_at: string;
 }
 
-export interface Note extends Omit<Tables<"notes">, "color" | "metadata"> {
+export interface Note extends Tables<"notes"> {
   id: string;
   content: string;
   lead_id: string;

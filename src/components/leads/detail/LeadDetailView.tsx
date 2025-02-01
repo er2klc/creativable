@@ -30,7 +30,14 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
       const { data, error } = await supabase
         .from("leads")
-        .select("*, messages(*), tasks(*), notes(*), lead_files(*), linkedin_posts(*)")
+        .select(`
+          *,
+          messages (*),
+          tasks (*),
+          notes (*),
+          lead_files (*),
+          linkedin_posts (*)
+        `)
         .eq("id", leadId)
         .maybeSingle();
 
@@ -43,7 +50,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Lead not found");
       }
 
-      return data as unknown as LeadWithRelations;
+      return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
     retry: 3,
