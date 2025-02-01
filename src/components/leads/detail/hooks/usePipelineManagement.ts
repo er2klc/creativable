@@ -41,46 +41,60 @@ export function usePipelineManagement(initialPipelineId: string | null) {
 
   const updateLeadPipeline = useMutation({
     mutationFn: async ({ leadId, pipelineId, phaseId }: { leadId: string; pipelineId: string; phaseId: string }) => {
-      // First update the lead's pipeline and phase
-      const { data: updatedLead, error: updateError } = await supabase
+      // First get the current lead data to check if phase actually changed
+      const { data: currentLead, error: fetchError } = await supabase
         .from("leads")
-        .update({
-          pipeline_id: pipelineId,
-          phase_id: phaseId,
-        })
+        .select("phase_id")
         .eq("id", leadId)
-        .select()
         .single();
 
-      if (updateError) throw updateError;
+      if (fetchError) throw fetchError;
 
-      // Get the new phase name
-      const newPhase = phases.find(p => p.id === phaseId);
-      if (!newPhase) throw new Error("Phase not found");
-
-      // Create a note for the phase change
-      const { error: noteError } = await supabase
-        .from("notes")
-        .insert({
-          lead_id: leadId,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          content: `Phase wurde zu "${newPhase.name}" geändert`,
-          metadata: {
-            type: 'phase_change',
+      // Only proceed with update if phase actually changed
+      if (currentLead.phase_id !== phaseId) {
+        // Update the lead's pipeline and phase
+        const { data: updatedLead, error: updateError } = await supabase
+          .from("leads")
+          .update({
+            pipeline_id: pipelineId,
             phase_id: phaseId,
-            phase_name: newPhase.name
-          }
-        });
+          })
+          .eq("id", leadId)
+          .select()
+          .single();
 
-      if (noteError) throw noteError;
+        if (updateError) throw updateError;
 
-      return updatedLead;
+        // Get the new phase name
+        const newPhase = phases.find(p => p.id === phaseId);
+        if (!newPhase) throw new Error("Phase not found");
+
+        // Create a note for the phase change
+        const { error: noteError } = await supabase
+          .from("notes")
+          .insert({
+            lead_id: leadId,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            content: `Phase wurde zu "${newPhase.name}" geändert`,
+            metadata: {
+              type: 'phase_change',
+              phase_id: phaseId,
+              phase_name: newPhase.name
+            }
+          });
+
+        if (noteError) throw noteError;
+
+        return updatedLead;
+      }
+
+      return currentLead;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["lead", variables.leadId] });
       
       // Only show toast if this was triggered by a user action, not initial load
-      if (variables.phaseId !== data.phase_id || variables.pipelineId !== data.pipeline_id) {
+      if (variables.phaseId !== data.phase_id) {
         toast.success(
           settings?.language === "en" ? "Phase updated" : "Phase aktualisiert"
         );
