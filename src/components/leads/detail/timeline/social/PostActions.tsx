@@ -1,17 +1,22 @@
+import { Button } from "@/components/ui/button";
+import { Link as LinkIcon } from "lucide-react";
+
 interface PostActionsProps {
-  likes: number;
-  comments: number;
+  url: string | null;
 }
 
-export const PostActions = ({ likes, comments }: PostActionsProps) => {
+export const PostActions = ({ url }: PostActionsProps) => {
+  if (!url) return null;
+
   return (
-    <div className="flex items-center gap-4 text-sm text-gray-500">
-      <div>
-        <span className="font-medium">{likes}</span> likes
-      </div>
-      <div>
-        <span className="font-medium">{comments}</span> comments
-      </div>
-    </div>
+    <Button
+      variant="outline"
+      size="sm"
+      className="w-full"
+      onClick={() => window.open(url, "_blank")}
+    >
+      <LinkIcon className="h-4 w-4 mr-2" />
+      Zum Beitrag
+    </Button>
   );
 };

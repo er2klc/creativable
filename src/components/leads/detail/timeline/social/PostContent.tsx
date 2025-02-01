@@ -1,26 +1,30 @@
-export interface PostContentProps {
-  text: string;
-  caption: string;
-  expanded: boolean;
-  onToggle: () => void;
+import { Badge } from "@/components/ui/badge";
+
+interface PostContentProps {
+  content: string | null;
+  caption: string | null;
+  hashtags?: string[] | null;
 }
 
-export const PostContent = ({ text, caption, expanded, onToggle }: PostContentProps) => {
-  const content = text || caption;
-  const shouldTruncate = content.length > 150;
+export const PostContent = ({ content, caption, hashtags }: PostContentProps) => {
+  if (!content && !caption && (!hashtags || hashtags.length === 0)) return null;
 
   return (
-    <div>
-      <p className={`${!expanded && shouldTruncate ? 'line-clamp-3' : ''}`}>
-        {content}
-      </p>
-      {shouldTruncate && (
-        <button 
-          onClick={onToggle} 
-          className="text-gray-500 text-sm mt-1"
-        >
-          {expanded ? 'Show less' : 'Show more'}
-        </button>
+    <div className="space-y-2 mb-3">
+      {(caption || content) && (
+        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+          {caption || content}
+        </p>
+      )}
+
+      {hashtags && hashtags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {hashtags.map((tag, index) => (
+            <Badge key={index} variant="secondary" className="text-xs">
+              #{tag}
+            </Badge>
+          ))}
+        </div>
       )}
     </div>
   );

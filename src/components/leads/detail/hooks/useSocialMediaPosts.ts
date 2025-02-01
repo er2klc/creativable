@@ -4,24 +4,14 @@ import { SocialMediaPostRaw, PostType } from "../types/lead";
 
 const saveTaggedUserAvatar = async (user: any) => {
   try {
-    // Create a proxy request to bypass CORS
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(user.profile_pic_url)}`;
-    
-    const response = await fetch(proxyUrl);
-    
-    if (!response.ok) {
-      console.warn(`⚠️ Could not fetch avatar for ${user.username}, using default`);
-      return {
-        ...user,
-        profile_pic_url: '/placeholder.svg'
-      };
-    }
+    const response = await fetch(user.profile_pic_url);
+    if (!response.ok) throw new Error("Failed to fetch image");
 
     const imageBuffer = await response.blob();
     const fileExt = "jpg";
     const fileName = `${user.id}.${fileExt}`;
 
-    const { error: uploadError, data } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from("tagged-user-avatars")
       .upload(fileName, imageBuffer, {
         contentType: "image/jpeg",
@@ -30,26 +20,20 @@ const saveTaggedUserAvatar = async (user: any) => {
 
     if (uploadError) {
       console.error("⚠️ Error uploading tagged user avatar:", uploadError);
-      return {
-        ...user,
-        profile_pic_url: '/placeholder.svg'
-      };
+      return user;
     }
 
-    const { data: publicUrl } = supabase.storage
+    const { data } = supabase.storage
       .from("tagged-user-avatars")
       .getPublicUrl(fileName);
 
     return {
       ...user,
-      profile_pic_url: publicUrl?.publicUrl || user.profile_pic_url,
+      profile_pic_url: data?.publicUrl || user.profile_pic_url,
     };
   } catch (error) {
     console.error(`⚠️ Error processing user ${user.username}:`, error);
-    return {
-      ...user,
-      profile_pic_url: '/placeholder.svg'
-    };
+    return user;
   }
 };
 
@@ -59,6 +43,7 @@ export const useSocialMediaPosts = (leadId: string) => {
     queryFn: async () => {
       console.log(`🚀 API being executed for Lead ID: ${leadId}`);
       
+      // ✅ Get all social media posts from `social_media_posts`
       const { data: socialMediaPosts, error: postsError } = await supabase
         .from("social_media_posts")
         .select("*")
@@ -70,6 +55,7 @@ export const useSocialMediaPosts = (leadId: string) => {
         throw postsError;
       }
 
+      // ✅ Get `social_media_posts` from `leads`
       const { data: leadData, error: leadError } = await supabase
         .from("leads")
         .select("social_media_posts")
@@ -84,6 +70,7 @@ export const useSocialMediaPosts = (leadId: string) => {
       console.log("🚀 DEBUG: Supabase API response (Social Media Posts):", socialMediaPosts);
       console.log("🚀 DEBUG: Supabase API response (Lead Data):", leadData);
 
+      // ✅ Parse `social_media_posts` from `leads` table
       let leadSocialPosts = [];
       if (leadData?.social_media_posts) {
         try {
@@ -95,6 +82,7 @@ export const useSocialMediaPosts = (leadId: string) => {
         }
       }
 
+      // ✅ Combine both data sources (social_media_posts + leads)
       const mergedPosts = await Promise.all(socialMediaPosts.map(async (post): Promise<SocialMediaPostRaw> => {
         const matchingLeadPost = leadSocialPosts.find((leadPost) => leadPost.id === post.id);
 
@@ -107,8 +95,10 @@ export const useSocialMediaPosts = (leadId: string) => {
               : [];
         }
 
+        // ✅ Prefer `videoUrl` from `leads` if available
         const videoUrl = matchingLeadPost?.videoUrl || post.video_url || null;
 
+        // ✅ Prefer likes & comments from `leads` if they're not 0
         const likesCount = matchingLeadPost?.likesCount && matchingLeadPost.likesCount > 0 
           ? matchingLeadPost.likesCount 
           : post.likes_count || 0;
@@ -117,6 +107,7 @@ export const useSocialMediaPosts = (leadId: string) => {
           ? matchingLeadPost.commentsCount 
           : post.comments_count || 0;
 
+        // ✅ Process tagged users and store their avatars
         let taggedUsers = matchingLeadPost?.taggedUsers || [];
         if (taggedUsers.length > 0) {
           taggedUsers = await Promise.all(
@@ -143,11 +134,10 @@ export const useSocialMediaPosts = (leadId: string) => {
           taggedUsers: taggedUsers,
           local_video_path: post.local_video_path || null,
           local_media_paths: post.local_media_paths || null,
-          kontaktIdFallback: leadId
         };
       }));
 
-      // Add missing video URL entries from leads as separate posts
+      // ✅ Add missing `videoUrl` entries from `leads` as separate posts
       leadSocialPosts.forEach((leadPost) => {
         const existsInMerged = mergedPosts.some((p) => p.id === leadPost.id);
         if (!existsInMerged && leadPost.videoUrl) {
@@ -158,7 +148,7 @@ export const useSocialMediaPosts = (leadId: string) => {
             lead_id: leadId,
             platform: "Instagram",
             type: "video",
-            post_type: "video" as PostType,
+            post_type: "video",
             content: leadPost.caption || null,
             caption: leadPost.caption || null,
             url: leadPost.url || null,
@@ -169,14 +159,7 @@ export const useSocialMediaPosts = (leadId: string) => {
             video_url: leadPost.videoUrl,
             likesCount: leadPost.likesCount || null,
             commentsCount: leadPost.commentsCount || null,
-            location: null,
-            mentioned_profiles: null,
-            tagged_profiles: null,
-            local_video_path: null,
-            local_media_paths: null,
-            taggedUsers: leadPost.taggedUsers || [],
-            kontaktIdFallback: leadId
-          });
+          } as SocialMediaPostRaw);
         }
       });
 

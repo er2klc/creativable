@@ -1,31 +1,36 @@
+import { Heart, MessageCircle, MapPin } from "lucide-react";
+
 interface PostMetadataProps {
-  location: string;
-  postedAt: string;
-  tags: string[];
+  likesCount: number | null;
+  commentsCount: number | null;
+  location: string | null;
+  locationName?: string | null;
 }
 
-export const PostMetadata = ({ location, postedAt, tags }: PostMetadataProps) => {
+export const PostMetadata = ({ 
+  likesCount, 
+  commentsCount, 
+  location, 
+  locationName 
+}: PostMetadataProps) => {
   return (
-    <div className="text-sm text-gray-500 space-y-1">
-      {location && (
-        <div>
-          <span className="font-medium">Location: </span>
-          {location}
+    <div className="flex gap-4 text-sm text-muted-foreground">
+      {typeof likesCount === "number" && (
+        <div className="flex items-center gap-1">
+          <Heart className="h-4 w-4" />
+          <span>{likesCount.toLocaleString()}</span>
         </div>
       )}
-      {postedAt && (
-        <div>
-          <span className="font-medium">Posted: </span>
-          {new Date(postedAt).toLocaleDateString()}
+      {typeof commentsCount === "number" && (
+        <div className="flex items-center gap-1">
+          <MessageCircle className="h-4 w-4" />
+          <span>{commentsCount.toLocaleString()}</span>
         </div>
       )}
-      {tags && tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {tags.map((tag, index) => (
-            <span key={index} className="text-blue-500">
-              #{tag}
-            </span>
-          ))}
+      {(location || locationName) && (
+        <div className="flex items-center gap-1">
+          <MapPin className="h-4 w-4" />
+          <span>{locationName || location}</span>
         </div>
       )}
     </div>

@@ -1,23 +1,24 @@
-import { formatDistanceToNow } from "date-fns";
-import { useSettings } from "@/hooks/use-settings";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
 
-export interface PostHeaderProps {
-  platform: string;
+interface PostHeaderProps {
   timestamp: string;
-  username: string;
+  type: string;
+  postTypeColor: string;
+  id?: string; // Added ID as optional prop
 }
 
-export const PostHeader = ({ platform, timestamp, username }: PostHeaderProps) => {
-  const { settings } = useSettings();
-  const timeAgo = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
-
+export const PostHeader = ({ type, postTypeColor, id }: PostHeaderProps) => {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center">
-        <span className="font-semibold">{username}</span>
-        <span className="text-gray-500 ml-2">{timeAgo}</span>
-      </div>
-      <span className="text-sm text-gray-400">{platform}</span>
+    <div className="flex items-center justify-between mb-2">
+      <span className={`text-xs px-2 py-1 rounded-full border ${postTypeColor}`}>
+        {type || "Post"}
+      </span>
+      {id && (
+        <span className="text-xs text-gray-500">
+          ID: {id}
+        </span>
+      )}
     </div>
   );
 };
