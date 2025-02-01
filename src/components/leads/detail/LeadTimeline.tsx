@@ -4,9 +4,9 @@ import { TimelineItem } from "./timeline/TimelineItem";
 import { SocialMediaTimeline } from "./timeline/social/SocialMediaTimeline";
 import { LinkedInTimeline } from "./timeline/social/LinkedInTimeline";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadWithRelations } from "../types/lead";
+import { LeadWithRelations } from "./types/lead";
 import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
-import { useSocialMediaPosts } from "../hooks/useSocialMediaPosts";
+import { useSocialMediaPosts } from "./hooks/useSocialMediaPosts";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -129,11 +129,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           <LinkedInTimeline posts={lead.linkedin_posts || []} />
         ) : (
           <SocialMediaTimeline 
-            posts={(socialMediaPosts || []).map(post => ({
-              ...post,
-              lead_id: lead.id,
-              platform: lead.platform || 'Instagram'
-            }))}
+            posts={socialMediaPosts || []}
             linkedInPosts={lead.linkedin_posts || []}
             platform={lead.platform}
             kontaktIdFallback={lead.id}

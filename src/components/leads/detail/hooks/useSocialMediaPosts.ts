@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SocialMediaPostRaw } from "../types/lead";
 
 export const useSocialMediaPosts = (leadId: string) => {
   return useQuery({
@@ -19,7 +20,7 @@ export const useSocialMediaPosts = (leadId: string) => {
         throw postsError;
       }
 
-      // Abfrage für zusätzliche Daten aus "leads" (z. B. Video-URLs)
+      // Abfrage für zusätzliche Daten aus "leads" (z. B. Video-URLs)
       const { data: leadData, error: leadError } = await supabase
         .from("leads")
         .select("social_media_posts")
@@ -46,8 +47,8 @@ export const useSocialMediaPosts = (leadId: string) => {
         }
       }
 
-      // Kombiniere die Daten – ausschließliche Nutzung von media_urls
-      const mergedPosts = socialMediaPosts.map((post) => {
+      // Kombiniere die Daten
+      const mergedPosts = socialMediaPosts.map((post): SocialMediaPostRaw => {
         const matchingLeadPost = leadSocialPosts.find((leadPost) => leadPost.id === post.id);
         let mediaUrls: string[] = [];
         if (post.media_urls) {
@@ -59,18 +60,13 @@ export const useSocialMediaPosts = (leadId: string) => {
         }
         const videoUrl = post.video_url || matchingLeadPost?.videoUrl;
 
-        const mergedPost = {
+        return {
           ...post,
           media_urls: mediaUrls,
           video_url: videoUrl,
+          platform: "Instagram", // Default platform
+          post_type: post.post_type || "post" // Ensure post_type is set
         };
-
-        // Debug-Log für den speziellen Post mit der ID 3326722177866331652
-        if (post.id === "3326722177866331652") {
-          console.log("DEBUG: Merged Post (3326722177866331652):", mergedPost);
-        }
-
-        return mergedPost;
       });
 
       return mergedPosts;
