@@ -46,7 +46,7 @@ export interface Message {
   id: string;
   content: string;
   created_at: string;
-  sent_at: string;
+  sent_at?: string;
   platform: string;
   lead_id: string;
   read: boolean;

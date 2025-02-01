@@ -1,53 +1,53 @@
 import { useState } from "react";
-import { SocialMediaPostRaw } from "../../types/lead";
 import { PostHeader } from "./PostHeader";
-import { MediaDisplay } from "./MediaDisplay";
 import { PostContent } from "./PostContent";
 import { PostMetadata } from "./PostMetadata";
 import { PostActions } from "./PostActions";
+import { MediaDisplay } from "./MediaDisplay";
+import { SocialMediaPostRaw } from "../../types/lead";
 
 interface SocialMediaPostProps {
   post: SocialMediaPostRaw;
-  kontaktIdFallback?: string;
 }
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const mediaUrls = post.media_urls || [];
-  const hashtags = post.hashtags || [];
+  const handleToggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border p-4 space-y-4">
       <PostHeader 
-        username={post.platform || ''} 
-        profileImage={post.video_url || ''} 
-        isVerified={false} 
+        platform={post.platform || ""}
+        timestamp={post.posted_at || ""}
+        username={post.caption || ""}
       />
 
-      {mediaUrls.length > 0 && (
+      {(post.media_urls?.length || 0) > 0 && (
         <MediaDisplay 
-          urls={mediaUrls}
-          type={post.media_type || 'image'} 
+          urls={post.media_urls || []}
+          type={post.media_type || "image"}
         />
       )}
 
       <PostContent 
-        text={post.content || ''}
-        caption={post.caption || ''}
-        onToggle={() => setIsExpanded(!isExpanded)}
+        text={post.content || ""}
+        caption={post.caption || ""}
         expanded={isExpanded}
+        onToggle={handleToggleExpand}
       />
 
       <PostMetadata 
-        location={post.location || ''}
-        date={post.posted_at || ''}
-        tags={hashtags}
+        location={post.location || ""}
+        postedAt={post.posted_at || ""}
+        tags={post.hashtags || []}
       />
 
       <PostActions 
-        likes={post.likesCount || 0}
-        comments={post.commentsCount || 0}
+        likes={post.likes_count || 0}
+        comments={post.comments_count || 0}
       />
     </div>
   );

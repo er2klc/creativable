@@ -1,21 +1,23 @@
+import { formatDistanceToNow } from "date-fns";
+import { useSettings } from "@/hooks/use-settings";
+
 export interface PostHeaderProps {
+  platform: string;
+  timestamp: string;
   username: string;
-  profileImage: string;
-  isVerified: boolean;
 }
 
-export const PostHeader = ({ username, profileImage, isVerified }: PostHeaderProps) => {
+export const PostHeader = ({ platform, timestamp, username }: PostHeaderProps) => {
+  const { settings } = useSettings();
+  const timeAgo = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+
   return (
-    <div className="flex items-center space-x-3">
-      <img 
-        src={profileImage || '/placeholder.svg'} 
-        alt={username}
-        className="w-10 h-10 rounded-full"
-      />
-      <div>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center">
         <span className="font-semibold">{username}</span>
-        {isVerified && <span className="ml-1">✓</span>}
+        <span className="text-gray-500 ml-2">{timeAgo}</span>
       </div>
+      <span className="text-sm text-gray-400">{platform}</span>
     </div>
   );
 };

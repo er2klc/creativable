@@ -1,11 +1,11 @@
 export interface PostContentProps {
   text: string;
   caption: string;
-  onToggle: () => void;
   expanded: boolean;
+  onToggle: () => void;
 }
 
-export const PostContent = ({ text, caption, onToggle, expanded }: PostContentProps) => {
+export const PostContent = ({ text, caption, expanded, onToggle }: PostContentProps) => {
   const content = text || caption;
   const shouldTruncate = content.length > 150;
 
