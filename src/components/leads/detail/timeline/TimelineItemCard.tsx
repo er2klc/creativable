@@ -123,77 +123,6 @@ export const TimelineItemCard = ({
     }
   };
 
-  const startRecording = () => {
-    if (!('webkitSpeechRecognition' in window)) {
-      toast.error(
-        settings?.language === "en"
-          ? "Speech recognition is not supported in your browser"
-          : "Spracherkennung wird in Ihrem Browser nicht unterstützt"
-      );
-      return;
-    }
-
-    const recognition = new (window as any).webkitSpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = settings?.language === "en" ? 'en-US' : 'de-DE';
-
-    recognition.onstart = () => {
-      setIsRecording(true);
-      toast.success(
-        settings?.language === "en"
-          ? "Recording started..."
-          : "Aufnahme gestartet..."
-      );
-    };
-
-    recognition.onresult = (event: any) => {
-      let interimTranscript = '';
-      let finalTranscript = '';
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-        }
-      }
-
-      if (finalTranscript) {
-        setEditedContent(prev => prev + (prev ? ' ' : '') + finalTranscript);
-      }
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
-      setIsRecording(false);
-      toast.error(
-        settings?.language === "en"
-          ? "Error during speech recognition"
-          : "Fehler bei der Spracherkennung"
-      );
-    };
-
-    recognition.onend = () => {
-      setIsRecording(false);
-      toast.success(
-        settings?.language === "en"
-          ? "Recording stopped"
-          : "Aufnahme beendet"
-      );
-    };
-
-    recognition.start();
-    return recognition;
-  };
-
-  const stopRecording = () => {
-    if (window.recognition) {
-      window.recognition.stop();
-    }
-    setIsRecording(false);
-  };
-
   const handleEditAppointment = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowAppointmentDialog(true);
@@ -227,14 +156,6 @@ export const TimelineItemCard = ({
             >
               <Save className="h-4 w-4 mr-1" />
               {settings?.language === "en" ? "Save" : "Speichern"}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={isRecording ? stopRecording : startRecording}
-              className={isRecording ? "bg-red-50 text-red-600" : ""}
-            >
-              <Mic className={`h-4 w-4 ${isRecording ? 'text-red-500' : ''}`} />
             </Button>
           </div>
         </div>
@@ -328,7 +249,7 @@ export const TimelineItemCard = ({
               </div>
             </button>
           )}
-          {type === 'task' && metadata?.meeting_type && (
+          {type === 'appointment' && (
             <button
               onClick={handleEditAppointment}
               className="p-1 hover:bg-gray-100 rounded"
@@ -397,7 +318,7 @@ export const TimelineItemCard = ({
         {renderMetadata()}
       </div>
       
-      {showAppointmentDialog && type === 'task' && metadata?.meeting_type && (
+      {showAppointmentDialog && type === 'appointment' && (
         <NewAppointmentDialog
           open={showAppointmentDialog}
           onOpenChange={setShowAppointmentDialog}
@@ -405,10 +326,10 @@ export const TimelineItemCard = ({
           appointmentToEdit={{
             id: id,
             leadId: metadata?.leadId,
-            time: format(new Date(metadata.dueDate), 'HH:mm'),
+            time: metadata?.dueDate ? format(new Date(metadata.dueDate), 'HH:mm') : '',
             title: content,
             color: metadata?.color || '#40E0D0',
-            meeting_type: metadata.meeting_type,
+            meeting_type: metadata?.meeting_type,
             completed: isCompleted,
           }}
         />

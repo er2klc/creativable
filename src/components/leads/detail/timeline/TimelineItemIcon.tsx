@@ -1,7 +1,7 @@
 import { 
   FileText, MessageSquare, ClipboardList, GitCommit, 
   Calendar, Phone, MapPin, Video, Users, BarChart, 
-  RefreshCw, Check, X 
+  RefreshCw, Check, X, User, PenTool, Folder
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +23,7 @@ export const TimelineItemIcon = ({ type, status, platform }: TimelineItemIconPro
 
     switch (type) {
       case 'note':
-        return <FileText className="h-4 w-4" />;
+        return <PenTool className="h-4 w-4" />;
       case 'message':
         return <MessageSquare className="h-4 w-4" />;
       case 'task':
@@ -33,11 +33,15 @@ export const TimelineItemIcon = ({ type, status, platform }: TimelineItemIconPro
         if (status === 'initial_meeting') return <Users className="h-4 w-4" />;
         if (status === 'presentation') return <BarChart className="h-4 w-4" />;
         if (status === 'follow_up') return <RefreshCw className="h-4 w-4" />;
-        return <Calendar className="h-4 w-4" />;
+        return <ClipboardList className="h-4 w-4" />;
       case 'phase_change':
         return <GitCommit className="h-4 w-4" />;
       case 'file_upload':
-        return <FileText className="h-4 w-4" />;
+        return <Folder className="h-4 w-4" />;
+      case 'appointment':
+        return <Calendar className="h-4 w-4" />;
+      case 'contact_created':
+        return <User className="h-4 w-4" />;
       default:
         return <ClipboardList className="h-4 w-4" />;
     }
