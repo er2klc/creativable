@@ -31,12 +31,35 @@ export interface SocialMediaPostRaw {
   comments_count?: number | null;
 }
 
-export type LeadWithRelations = Tables<"leads"> & {
-  platform: Platform;
-  messages: Tables<"messages">[];
+export interface Note {
+  id: string;
+  content: string;
+  created_at: string;
+  metadata?: {
+    type?: string;
+  };
+  status?: string;
+  lead_id: string;
+  user_id: string;
+}
+
+export interface Message {
+  id: string;
+  content: string;
+  created_at: string;
+  sent_at?: string;
+  platform: string;
+  lead_id: string;
+  read: boolean;
+  user_id: string;
+}
+
+export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
+  messages: Message[];
   tasks: Tables<"tasks">[];
-  notes: Tables<"notes">[];
+  notes: Note[];
   lead_files: Tables<"lead_files">[];
   social_media_posts?: any[];
   linkedin_posts?: Tables<"linkedin_posts">[];
-};
+  platform: Platform;
+}

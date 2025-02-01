@@ -5,13 +5,12 @@ interface SocialMediaTimelineProps {
   posts: SocialMediaPostRaw[];
   linkedInPosts?: any[];
   platform?: string;
-  kontaktIdFallback?: string;
 }
 
-export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdFallback }: SocialMediaTimelineProps) => {
+export const SocialMediaTimeline = ({ posts, linkedInPosts, platform }: SocialMediaTimelineProps) => {
   // Filter out temp posts and sort the remaining posts
   const sortedPosts = [...posts]
-    .filter(post => !post.id.startsWith('temp-') && post.post_type?.toLowerCase() !== 'post')
+    .filter(post => !post.id.startsWith('temp-')) // Filter out temp posts
     .sort((a, b) => {
       const dateA = a.timestamp ? new Date(a.timestamp) : new Date(a.posted_at || '');
       const dateB = b.timestamp ? new Date(b.timestamp) : new Date(b.posted_at || '');
@@ -29,7 +28,6 @@ export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdF
               post_type: post.post_type as PostType,
               video_url: post.video_url || undefined
             }}
-            kontaktIdFallback={kontaktIdFallback}
           />
         ))
       ) : (
