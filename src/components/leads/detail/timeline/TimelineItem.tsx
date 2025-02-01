@@ -3,6 +3,9 @@ import { TimelineItemIcon } from "./TimelineItemIcon";
 import { TimelineItemCard } from "./TimelineItemCard";
 import { formatDate } from "./TimelineUtils";
 import { motion } from "framer-motion";
+import { Check } from "lucide-react";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
 
 interface TimelineItemProps {
   item: TimelineItemType;
@@ -16,6 +19,10 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
   // Only allow deletion of phase changes
   const canDelete = onDelete && item.type === 'phase_change';
 
+  const isTaskCompleted = item.type === 'task' && item.metadata?.status === 'completed';
+  const completedDate = item.metadata?.completedAt ? 
+    format(new Date(item.metadata.completedAt), 'PPp', { locale: de }) : null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -27,6 +34,11 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
       {/* Date above the card */}
       <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
         {formatDate(item.timestamp)}
+        {isTaskCompleted && completedDate && (
+          <span className="text-green-600">
+            (Erledigt am {completedDate})
+          </span>
+        )}
       </div>
       
       <div className="flex gap-4 items-start group relative">
@@ -34,7 +46,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
         <div className="relative">
           <TimelineItemIcon 
             type={item.type} 
-            status={item.status} 
+            status={item.metadata?.status} 
             platform={item.platform} 
           />
           {isOutdated && (
@@ -64,6 +76,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
           onDelete={canDelete ? () => onDelete(item.id) : undefined}
           id={item.id}
           created_at={item.created_at}
+          isCompleted={isTaskCompleted}
         />
       </div>
     </motion.div>

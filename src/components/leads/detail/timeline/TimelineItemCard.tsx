@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Pencil, Save, X, Trash2 } from "lucide-react";
+import { Check, Save, X, Trash2 } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +32,7 @@ interface TimelineItemCardProps {
   onDelete?: () => void;
   id?: string;
   created_at?: string;
+  isCompleted?: boolean;
 }
 
 export const TimelineItemCard = ({ 
@@ -41,12 +42,14 @@ export const TimelineItemCard = ({
   status,
   onDelete,
   id,
-  created_at 
+  created_at,
+  isCompleted
 }: TimelineItemCardProps) => {
   const { settings } = useSettings();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Function to determine border color based on type and status
   const getBorderColor = () => {
@@ -59,6 +62,35 @@ export const TimelineItemCard = ({
     if (type === 'file_upload') return 'border-cyan-500';
     if (type === 'contact_created') return 'border-emerald-500';
     return 'border-gray-200';
+  };
+
+  const handleTaskComplete = async () => {
+    if (!id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ 
+          completed: !isCompleted,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success(
+        isCompleted
+          ? (settings?.language === "en" ? "Task uncompleted" : "Aufgabe nicht erledigt")
+          : (settings?.language === "en" ? "Task completed! 🎉" : "Aufgabe erledigt! 🎉")
+      );
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error updating task"
+          : "Fehler beim Aktualisieren der Aufgabe"
+      );
+    }
   };
 
   const handleSave = async () => {
@@ -132,14 +164,22 @@ export const TimelineItemCard = ({
     }
 
     return (
-      <div className="relative group">
-        <div className="whitespace-pre-wrap break-words">{content}</div>
-        {type === 'note' && (
+      <div 
+        className="relative group"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div className={`whitespace-pre-wrap break-words ${isCompleted ? 'line-through text-gray-500' : ''}`}>
+          {content}
+        </div>
+        {type === 'task' && isHovered && !isCompleted && (
           <button
-            onClick={() => setIsEditing(true)}
-            className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={handleTaskComplete}
+            className="absolute -left-6 top-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
           >
-            <Pencil className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+            <div className="w-4 h-4 border border-gray-400 rounded flex items-center justify-center hover:border-green-500 hover:bg-green-50">
+              <Check className="h-3 w-3 text-transparent hover:text-green-500" />
+            </div>
           </button>
         )}
         {onDelete && (
