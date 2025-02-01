@@ -54,7 +54,7 @@ export interface SocialMediaPostRaw {
   taggedUsers?: { username: string }[];
 }
 
-export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
+export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "social_media_posts"> {
   messages: Message[];
   tasks: Tables<"tasks">[];
   notes: Note[];
