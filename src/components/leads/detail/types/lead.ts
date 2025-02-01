@@ -2,8 +2,15 @@ import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 import { Json } from "@/integrations/supabase/types/auth";
 
-export interface Message extends Tables<"messages"> {
-  created_at: string;
+export interface Message {
+  id: string;
+  content: string;
+  lead_id: string | null;
+  platform: string;
+  sent_at: string | null;
+  read: boolean;
+  user_id: string;
+  created_at?: string;
 }
 
 export interface Note {
