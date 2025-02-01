@@ -412,4 +412,5 @@ export const TimelineItemCard = ({
       {renderContent()}
       {renderMetadata()}
     </div>
+  );
 };
