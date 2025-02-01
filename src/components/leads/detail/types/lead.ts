@@ -1,5 +1,6 @@
 import { Platform } from "@/config/platforms";
 import { Tables } from "@/integrations/supabase/types";
+import { Json } from "@/integrations/supabase/types/auth";
 
 export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
 
@@ -54,7 +55,7 @@ export interface SocialMediaPostRaw {
   taggedUsers?: { username: string }[];
 }
 
-export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "social_media_posts" | "messages"> {
+export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "messages" | "social_media_posts"> {
   messages: Message[];
   tasks: Tables<"tasks">[];
   notes: Note[];
