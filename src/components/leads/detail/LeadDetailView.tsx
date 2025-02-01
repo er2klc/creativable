@@ -7,6 +7,7 @@ import { useLeadSubscription } from "./hooks/useLeadSubscription";
 import { LeadWithRelations } from "./types/lead";
 import { LeadDetailContent } from "./components/LeadDetailContent";
 import { useLeadMutations } from "./hooks/useLeadMutations";
+import { Platform } from "@/config/platforms";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -50,8 +51,8 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Lead not found");
       }
 
-      // Ensure all arrays are initialized
-      const transformedData = {
+      // Ensure all arrays are initialized and types are correct
+      const transformedData: LeadWithRelations = {
         ...data,
         messages: data.messages || [],
         tasks: data.tasks || [],
@@ -59,7 +60,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         lead_files: data.lead_files || [],
         linkedin_posts: data.linkedin_posts || [],
         platform: data.platform as Platform
-      } as LeadWithRelations;
+      };
 
       return transformedData;
     },

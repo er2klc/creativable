@@ -6,15 +6,15 @@ export interface Message extends Tables<"messages"> {
   created_at: string;
 }
 
-export interface Note extends Tables<"notes"> {
+export interface Note {
   id: string;
   content: string;
   lead_id: string;
   user_id: string;
-  color: string | null;
+  color: string;
   created_at: string;
   updated_at: string | null;
-  metadata?: Json;
+  metadata: Json;
 }
 
 export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
