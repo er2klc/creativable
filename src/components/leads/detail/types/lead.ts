@@ -42,51 +42,59 @@ export interface SocialMediaPostRaw {
   kontaktIdFallback?: string;
 }
 
+export interface Message {
+  id: string;
+  content: string;
+  created_at: string;
+  sent_at: string;
+  platform: string;
+  lead_id: string;
+  read: boolean;
+  user_id: string;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  created_at: string;
+  due_date?: string;
+  completed?: boolean;
+  cancelled?: boolean;
+  updated_at?: string;
+  color?: string;
+  meeting_type?: string;
+  lead_id: string;
+  user_id: string;
+}
+
+export interface Note {
+  id: string;
+  content: string;
+  created_at: string;
+  metadata?: {
+    type?: string;
+  };
+  status?: string;
+  lead_id: string;
+  user_id: string;
+}
+
+export interface LeadFile {
+  id: string;
+  file_name: string;
+  file_path: string;
+  file_type: string;
+  file_size: number;
+  created_at: string;
+  lead_id: string;
+  user_id: string;
+}
+
 export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
-  messages: Array<{
-    id: string;
-    content: string;
-    created_at: string;
-    sent_at?: string;
-    platform: string;
-    lead_id: string;
-    read: boolean;
-    user_id: string;
-  }>;
-  tasks: Array<{
-    id: string;
-    title: string;
-    created_at: string;
-    due_date?: string;
-    completed?: boolean;
-    cancelled?: boolean;
-    updated_at?: string;
-    color?: string;
-    meeting_type?: string;
-    lead_id: string;
-    user_id: string;
-  }>;
-  notes: Array<{
-    id: string;
-    content: string;
-    created_at: string;
-    metadata?: {
-      type?: string;
-    };
-    status?: string;
-    lead_id: string;
-    user_id: string;
-  }>;
-  lead_files: Array<{
-    id: string;
-    file_name: string;
-    file_path: string;
-    file_type: string;
-    file_size: number;
-    created_at: string;
-    lead_id: string;
-    user_id: string;
-  }>;
+  messages: Message[];
+  tasks: Task[];
+  notes: Note[];
+  lead_files: LeadFile[];
   linkedin_posts?: any[];
   social_media_posts?: any[];
   platform: Platform;
