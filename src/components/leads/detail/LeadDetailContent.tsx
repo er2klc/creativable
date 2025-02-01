@@ -14,13 +14,15 @@ interface LeadDetailContentProps {
   onUpdateLead: (updates: Partial<Tables<"leads">>) => void;
   isLoading: boolean;
   onDeleteClick?: () => void;
+  onDeletePhaseChange?: (noteId: string) => void;
 }
 
 export const LeadDetailContent = ({ 
   lead, 
   onUpdateLead,
   isLoading,
-  onDeleteClick
+  onDeleteClick,
+  onDeletePhaseChange
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
 
@@ -48,7 +50,10 @@ export const LeadDetailContent = ({
         {/* Right Column - 8 columns */}
         <div className="col-span-8 space-y-6">
           <LeadDetailTabs lead={lead} />
-          <LeadTimeline lead={lead} />
+          <LeadTimeline 
+            lead={lead} 
+            onDeletePhaseChange={onDeletePhaseChange}
+          />
         </div>
       </div>
     </div>
