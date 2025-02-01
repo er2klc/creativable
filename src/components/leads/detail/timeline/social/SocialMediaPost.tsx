@@ -180,7 +180,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
         
         <span>{user.full_name || user.username}</span>
         {user.is_verified && (
-  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white ml-1">
+  <span className="flex items-center justify-center w-5 h-5 text-blue-500 ml-1">
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 40 40"
