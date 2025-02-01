@@ -4,26 +4,24 @@ import { SocialMediaPostRaw, PostType } from "../types/lead";
 
 const saveTaggedUserAvatar = async (user: any) => {
   try {
-    // Use no-cors mode for the initial fetch
-    const response = await fetch(user.profile_pic_url, {
-      mode: 'no-cors',
-      credentials: 'omit',
-      headers: {
-        'Accept': 'image/jpeg'
-      }
-    });
-
-    // If we can't get the image directly, use a default avatar
+    // Create a proxy request to bypass CORS
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(user.profile_pic_url)}`;
+    
+    const response = await fetch(proxyUrl);
+    
     if (!response.ok) {
       console.warn(`⚠️ Could not fetch avatar for ${user.username}, using default`);
-      return user;
+      return {
+        ...user,
+        profile_pic_url: '/placeholder.svg'
+      };
     }
 
     const imageBuffer = await response.blob();
     const fileExt = "jpg";
     const fileName = `${user.id}.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError, data } = await supabase.storage
       .from("tagged-user-avatars")
       .upload(fileName, imageBuffer, {
         contentType: "image/jpeg",
@@ -32,20 +30,26 @@ const saveTaggedUserAvatar = async (user: any) => {
 
     if (uploadError) {
       console.error("⚠️ Error uploading tagged user avatar:", uploadError);
-      return user;
+      return {
+        ...user,
+        profile_pic_url: '/placeholder.svg'
+      };
     }
 
-    const { data } = supabase.storage
+    const { data: publicUrl } = supabase.storage
       .from("tagged-user-avatars")
       .getPublicUrl(fileName);
 
     return {
       ...user,
-      profile_pic_url: data?.publicUrl || user.profile_pic_url,
+      profile_pic_url: publicUrl?.publicUrl || user.profile_pic_url,
     };
   } catch (error) {
     console.error(`⚠️ Error processing user ${user.username}:`, error);
-    return user;
+    return {
+      ...user,
+      profile_pic_url: '/placeholder.svg'
+    };
   }
 };
 
@@ -139,6 +143,7 @@ export const useSocialMediaPosts = (leadId: string) => {
           taggedUsers: taggedUsers,
           local_video_path: post.local_video_path || null,
           local_media_paths: post.local_media_paths || null,
+          kontaktIdFallback: leadId
         };
       }));
 
@@ -170,6 +175,7 @@ export const useSocialMediaPosts = (leadId: string) => {
             local_video_path: null,
             local_media_paths: null,
             taggedUsers: leadPost.taggedUsers || [],
+            kontaktIdFallback: leadId
           });
         }
       });
