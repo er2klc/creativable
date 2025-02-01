@@ -23,6 +23,9 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
   const completedDate = item.metadata?.completedAt ? 
     format(new Date(item.metadata.completedAt), 'PPp', { locale: de }) : null;
 
+  const isImage = item.type === 'file_upload' && 
+    item.metadata?.fileType?.toLowerCase().match(/^(image\/jpeg|image\/png|image\/gif|image\/webp)$/);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}

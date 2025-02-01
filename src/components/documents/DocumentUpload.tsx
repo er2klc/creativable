@@ -48,6 +48,9 @@ export function DocumentUpload() {
       toast.success("Dokument erfolgreich hochgeladen");
       setFile(null);
       setTitle("");
+
+      // Trigger a refresh of the timeline
+      window.dispatchEvent(new CustomEvent('refreshTimeline'));
     } catch (error) {
       console.error("Upload error:", error);
       toast.error("Fehler beim Hochladen: " + (error as Error).message);
@@ -76,7 +79,7 @@ export function DocumentUpload() {
           <Input
             id="file"
             type="file"
-            accept=".pdf,.doc,.docx,.txt"
+            accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
           />
         </div>

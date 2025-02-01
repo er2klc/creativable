@@ -18,9 +18,23 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
   const fileType = document.file_type?.toLowerCase() || document.name.split('.').pop()?.toLowerCase();
   const previewUrl = document.preview_url || document.url;
 
+  const isImage = fileType?.match(/^(jpg|jpeg|png|gif|webp)$/);
+
   const renderPreview = () => {
+    // Handle images with direct preview
+    if (isImage) {
+      return (
+        <div className="flex justify-center items-center h-[80vh] overflow-auto">
+          <img
+            src={document.url}
+            alt={document.name}
+            className="max-w-full max-h-full object-contain"
+          />
+        </div>
+      );
+    }
     // Handle Office documents (xlsx and docx)
-    if (fileType?.match(/^(xlsx|docx)$/)) {
+    else if (fileType?.match(/^(xlsx|docx)$/)) {
       const encodedUrl = encodeURIComponent(document.url);
       const officePreviewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}`;
       
@@ -43,18 +57,6 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
             src={`${previewUrl}#toolbar=0&view=FitH`}
             className="w-full h-full"
             title={document.name}
-          />
-        </div>
-      );
-    }
-    // Handle images
-    else if (fileType?.match(/^(jpg|jpeg|png|gif|webp)$/)) {
-      return (
-        <div className="flex justify-center items-center h-[80vh] overflow-auto">
-          <img
-            src={document.url}
-            alt={document.name}
-            className="max-w-full max-h-full object-contain"
           />
         </div>
       );
