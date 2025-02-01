@@ -42,6 +42,7 @@ export type SocialMediaPostRaw = {
   local_media_urls: string[] | null;
   storage_status: string | null;
   media_count: number | null;
+  timestamp?: string | null;
 };
 
 export type LeadWithRelations = {
@@ -102,4 +103,6 @@ export type LeadWithRelations = {
   phone_number?: string | null;
   updated_at?: string | null;
   slug?: string | null;
+  usp?: string | null;
+  social_media_interests?: string[] | null;
 };
