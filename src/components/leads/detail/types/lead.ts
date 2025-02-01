@@ -1,6 +1,5 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
-import { Note } from "@/components/leads/detail/types/lead";
 
 export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
 
@@ -44,6 +43,16 @@ export interface SocialMediaPost {
   local_media_paths: string[] | null;
 }
 
+export type SocialMediaPostRaw = SocialMediaPost;
+
+export interface Note {
+  id: string;
+  content: string;
+  created_at: string;
+  metadata?: any;
+  status?: string;
+}
+
 export type LeadWithRelations = Tables<"leads"> & {
   platform: Platform;
   messages: Tables<"messages">[];
@@ -54,4 +63,5 @@ export type LeadWithRelations = Tables<"leads"> & {
   level?: number | null;
   avatar_url?: string | null;
   social_media_posts?: SocialMediaPost[];
+  linkedin_posts?: any[];
 };

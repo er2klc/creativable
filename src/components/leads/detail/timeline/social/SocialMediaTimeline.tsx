@@ -1,8 +1,8 @@
-import { SocialMediaPost } from "./social/SocialMediaPost";
-import { SocialMediaPost as SocialMediaPostType, PostType } from "../types/lead";
+import { SocialMediaPost } from "../../types/lead";
+import { PostType } from "../../types/lead";
 
 interface SocialMediaTimelineProps {
-  posts: SocialMediaPostType[];
+  posts: SocialMediaPost[];
   linkedInPosts?: any[];
   platform?: string;
   kontaktIdFallback?: string;
@@ -26,15 +26,52 @@ export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdF
       <div className="space-y-6">
         {sortedPosts.length > 0 ? (
           sortedPosts.map((post) => (
-            <SocialMediaPost 
-              key={post.id} 
-              post={{
-                ...post,
-                post_type: post.post_type as PostType,
-                video_url: post.video_url || post.videoUrl
-              }}
-              kontaktIdFallback={kontaktIdFallback}
-            />
+            <div key={post.id} className="flex flex-col gap-4">
+              {/* Post content */}
+              <div className="flex-1 p-4">
+                <div className="flex flex-col gap-2">
+                  {/* Post header */}
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">
+                      {new Date(post.posted_at || post.timestamp || '').toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  {/* Post content */}
+                  <p className="text-sm">{post.content || post.caption}</p>
+                  
+                  {/* Media display */}
+                  {(post.media_urls?.length > 0 || post.video_url) && (
+                    <div className="mt-2">
+                      {post.video_url ? (
+                        <video 
+                          controls 
+                          className="w-full h-auto rounded-lg"
+                          src={post.video_url}
+                        />
+                      ) : post.media_urls?.map((url, index) => (
+                        <img
+                          key={index}
+                          src={url}
+                          alt={`Media ${index + 1}`}
+                          className="w-full h-auto rounded-lg mb-2"
+                        />
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Post metadata */}
+                  <div className="flex gap-4 text-sm text-gray-500 mt-2">
+                    {post.likes_count !== undefined && (
+                      <span>👍 {post.likes_count}</span>
+                    )}
+                    {post.comments_count !== undefined && (
+                      <span>💬 {post.comments_count}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           ))
         ) : (
           <div className="text-center text-muted-foreground py-4 ml-4">
