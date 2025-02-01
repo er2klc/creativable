@@ -1,23 +1,19 @@
 import { Tables } from "@/integrations/supabase/types";
-import { Platform } from "@/config/platforms";
 
-export type Note = {
+export type PostType = 'post' | 'story' | 'reel' | 'igtv';
+
+export interface Note {
   id: string;
   content: string;
   created_at: string;
   metadata?: {
     type?: string;
-    oldStatus?: string;
-    newStatus?: string;
     oldPhase?: string;
     newPhase?: string;
   };
-  status?: string;
-};
+}
 
-export type PostType = "image" | "video" | "carousel" | "text";
-
-export type SocialMediaPostRaw = {
+export interface SocialMediaPostRaw {
   id: string;
   lead_id: string;
   platform: string;
@@ -28,34 +24,34 @@ export type SocialMediaPostRaw = {
   url: string;
   posted_at: string;
   created_at: string;
-  media_urls?: string[];
+  metadata?: any;
+  tagged_users?: any[];
+  media_urls: string[];
   media_type?: string;
-  video_url: string;
-  bucket_path?: string;
-  current_file?: string;
-  engagement_count?: number;
-  error_message?: string;
   first_comment?: string;
+  engagement_count?: number;
+  video_url?: string;
   hashtags?: string[];
-  local_media_paths?: string[];
-  local_media_urls?: string[];
   local_video_path?: string;
-  media_count?: number;
+  local_media_paths?: string[];
+  bucket_path?: string;
   media_processing_status?: string;
   processing_progress?: number;
-  metadata?: any;
+  error_message?: string;
+  current_file?: string;
+  local_media_urls?: string[];
   storage_status?: string;
-  tagged_users?: any[];
+  media_count?: number;
   location?: string;
-  caption?: string;
   mentioned_profiles?: string[];
-};
+  tagged_profiles?: string[];
+}
 
 export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
   notes: Note[];
-  tasks?: Tables<"tasks">[];
   messages?: Tables<"messages">[];
+  tasks?: Tables<"tasks">[];
   lead_files?: Tables<"lead_files">[];
-  linkedin_posts?: Tables<"linkedin_posts">[];
+  linkedin_posts?: any[];
   social_media_posts?: SocialMediaPostRaw[];
 }

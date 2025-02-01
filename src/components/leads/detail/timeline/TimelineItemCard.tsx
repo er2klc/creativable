@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Mic, Check, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface TimelineItemCardProps {
   id: string;
@@ -14,12 +13,6 @@ interface TimelineItemCardProps {
   timestamp: string;
   metadata?: any;
   onDelete?: () => void;
-}
-
-declare global {
-  interface Window {
-    recognition?: any;
-  }
 }
 
 export const TimelineItemCard = ({
@@ -35,6 +28,14 @@ export const TimelineItemCard = ({
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+
+  let recognition: any;
+  if (typeof window !== 'undefined') {
+    recognition = new (window as any).webkitSpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = settings?.language === "en" ? 'en-US' : 'de-DE';
+  }
 
   const handleTaskComplete = async () => {
     try {
@@ -99,7 +100,7 @@ export const TimelineItemCard = ({
   };
 
   const startRecording = () => {
-    if (!('webkitSpeechRecognition' in window)) {
+    if (!recognition) {
       toast.error(
         settings?.language === "en"
           ? "Speech recognition is not supported in your browser"
@@ -107,11 +108,6 @@ export const TimelineItemCard = ({
       );
       return;
     }
-
-    const recognition = new (window as any).webkitSpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = settings?.language === "en" ? 'en-US' : 'de-DE';
 
     recognition.onstart = () => {
       setIsRecording(true);
@@ -158,13 +154,12 @@ export const TimelineItemCard = ({
       );
     };
 
-    window.recognition = recognition;
     recognition.start();
   };
 
   const stopRecording = () => {
-    if (window.recognition) {
-      window.recognition.stop();
+    if (recognition) {
+      recognition.stop();
     }
     setIsRecording(false);
   };
@@ -285,13 +280,15 @@ export const TimelineItemCard = ({
     return null;
   };
 
+  const formattedDate = timestamp ? format(new Date(timestamp), "PPp", {
+    locale: settings?.language === "en" ? undefined : de,
+  }) : "";
+
   return (
     <div className={`p-4 border rounded-lg ${getBorderColor()} bg-white`}>
       <div className="flex justify-between items-start mb-2">
         <div className="text-sm text-gray-500">
-          {format(new Date(timestamp), "PPp", {
-            locale: settings?.language === "en" ? undefined : de,
-          })}
+          {formattedDate}
         </div>
         {onDelete && (
           <Button
