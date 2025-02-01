@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { TimelineHeader } from "./TimelineHeader";
-import { TimelineItem } from "./TimelineItem";
-import { SocialMediaTimeline } from "./social/SocialMediaTimeline";
-import { LinkedInTimeline } from "./social/LinkedInTimeline";
+import { TimelineHeader } from "./timeline/TimelineHeader";
+import { TimelineItem } from "./timeline/TimelineItem";
+import { SocialMediaTimeline } from "./timeline/social/SocialMediaTimeline";
+import { LinkedInTimeline } from "./timeline/social/LinkedInTimeline";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadWithRelations } from "../types/lead";
+import { LeadWithRelations } from "./types/lead";
 import { TimelineItem as TimelineItemType } from "./TimelineUtils";
-import { useSocialMediaPosts } from "../hooks/useSocialMediaPosts";
+import { useSocialMediaPosts } from "./hooks/useSocialMediaPosts";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -18,20 +18,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
   const { data: socialMediaPosts } = useSocialMediaPosts(lead.id);
   
-  // Überprüfe, ob LinkedIn Posts vorhanden sind
   const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
-  console.log("LinkedIn Posts vorhanden:", hasLinkedInPosts, lead.linkedin_posts);
-  console.log("LinkedIn Posts:", lead.linkedin_posts);
-console.log("LinkedIn Posts Typ:", typeof lead.linkedin_posts);
-console.log("Lead ID:", lead.id);
-console.log("Lead Plattform:", lead.platform);
-
-  
-  // Überprüfe, ob Social Media Posts vorhanden sind
   const hasSocialPosts = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
-  console.log("Social Media Posts vorhanden:", hasSocialPosts, lead.social_media_posts);
-  
-  // Zeige die Social Timeline an, wenn entweder LinkedIn oder andere Social Media Posts vorhanden sind
   const showSocialTimeline = hasLinkedInPosts || hasSocialPosts;
 
   const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
@@ -109,49 +97,51 @@ console.log("Lead Plattform:", lead.platform);
   );
 
   return (
-    <div className="p-4 bg-red-500 text-white font-bold">
-  DEBUG: LeadTimeline wird geladen!
-</div>
-
     <div className="space-y-4">
-      <TimelineHeader 
-        title={activeTimeline === 'activities' ? 
-          (settings?.language === "en" ? "Activities" : "Aktivitäten") :
-          (settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten")
-        }
-        showSocialTimeline={showSocialTimeline}
-        activeTimeline={activeTimeline}
-        onTimelineChange={setActiveTimeline}
-        platform={lead.platform}
-        hasLinkedInPosts={hasLinkedInPosts}
-      />
+      <div className="p-4 bg-red-500 text-white font-bold">
+        DEBUG: LeadTimeline wird geladen!
+      </div>
 
-      {activeTimeline === 'activities' ? (
-        <div className="relative space-y-6">
-          <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400" />
-          {timelineItems.map((item) => (
-            <TimelineItem 
-              key={item.id} 
-              item={item} 
-              onDelete={onDeletePhaseChange && item.type !== 'contact_created' ? 
-                () => onDeletePhaseChange(item.id) : 
-                undefined
-              } 
-            />
-          ))}
-        </div>
-      ) : (
-        lead.platform === 'LinkedIn' && hasLinkedInPosts ? (
-          <LinkedInTimeline posts={lead.linkedin_posts || []} />
+      <div className="space-y-4">
+        <TimelineHeader 
+          title={activeTimeline === 'activities' ? 
+            (settings?.language === "en" ? "Activities" : "Aktivitäten") :
+            (settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten")
+          }
+          showSocialTimeline={showSocialTimeline}
+          activeTimeline={activeTimeline}
+          onTimelineChange={setActiveTimeline}
+          platform={lead.platform}
+          hasLinkedInPosts={hasLinkedInPosts}
+        />
+
+        {activeTimeline === 'activities' ? (
+          <div className="relative space-y-6">
+            <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400" />
+            {timelineItems.map((item) => (
+              <TimelineItem 
+                key={item.id} 
+                item={item} 
+                onDelete={onDeletePhaseChange && item.type !== 'contact_created' ? 
+                  () => onDeletePhaseChange(item.id) : 
+                  undefined
+                } 
+              />
+            ))}
+          </div>
         ) : (
-          <SocialMediaTimeline 
-            posts={socialMediaPosts || []}
-            linkedInPosts={lead.linkedin_posts || []}
-            platform={lead.platform}
-            kontaktIdFallback={lead.id}
-          />
-        )
-      )}
+          lead.platform === 'LinkedIn' && hasLinkedInPosts ? (
+            <LinkedInTimeline posts={lead.linkedin_posts || []} />
+          ) : (
+            <SocialMediaTimeline 
+              posts={socialMediaPosts || []}
+              linkedInPosts={lead.linkedin_posts || []}
+              platform={lead.platform}
+              kontaktIdFallback={lead.id}
+            />
+          )
+        )}
+      </div>
     </div>
   );
 };
