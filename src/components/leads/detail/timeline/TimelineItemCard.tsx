@@ -36,7 +36,7 @@ interface TimelineItemCardProps {
 }
 
 export const TimelineItemCard = ({ 
-  type,
+  type: itemType,
   content,
   metadata,
   status,
@@ -83,7 +83,7 @@ export const TimelineItemCard = ({
   };
 
   const handleSave = async () => {
-    if (!id || type !== 'note') return;
+    if (!id || itemType !== 'note') return;
     
     setIsSaving(true);
     try {
@@ -191,7 +191,7 @@ export const TimelineItemCard = ({
   };
 
   const renderContent = () => {
-    if (isEditing && type === 'note') {
+    if (isEditing && itemType === 'note') {
       return (
         <div className="space-y-2">
           <Textarea
@@ -241,7 +241,7 @@ export const TimelineItemCard = ({
           {content}
         </div>
         <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          {type === 'task' && !isCompleted && (
+          {itemType === 'task' && !isCompleted && (
             <button
               onClick={handleTaskComplete}
               className="p-1 hover:bg-gray-100 rounded"
@@ -251,7 +251,7 @@ export const TimelineItemCard = ({
               </div>
             </button>
           )}
-          {type === 'note' && (
+          {itemType === 'note' && (
             <button
               onClick={() => setIsEditing(true)}
               className="p-1 hover:bg-gray-100 rounded"
@@ -259,7 +259,7 @@ export const TimelineItemCard = ({
               <Edit className="h-4 w-4 text-gray-500 hover:text-blue-600" />
             </button>
           )}
-          {type === 'phase_change' && onDelete && (
+          {itemType === 'phase_change' && onDelete && (
             <button
               onClick={onDelete}
               className="p-1 hover:bg-gray-100 rounded"
@@ -283,7 +283,7 @@ export const TimelineItemCard = ({
       );
     }
     
-    if (type === 'task' && isCompleted && metadata?.completedAt) {
+    if (itemType === 'task' && isCompleted && metadata?.completedAt) {
       return (
         <div className="text-xs text-gray-500 mt-2">
           {settings?.language === "en" ? "Completed" : "Erledigt"}: {format(new Date(metadata.completedAt), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
@@ -301,14 +301,14 @@ export const TimelineItemCard = ({
   );
 };
 
-  const getBorderColor = () => {
-    if (status === 'completed') return 'border-green-500';
-    if (status === 'cancelled') return 'border-red-500';
-    if (type === 'phase_change') return 'border-blue-500';
-    if (type === 'note') return 'border-yellow-400';
-    if (type === 'message') return 'border-purple-500';
-    if (type === 'task') return 'border-orange-500';
-    if (type === 'file_upload') return 'border-cyan-500';
-    if (type === 'contact_created') return 'border-emerald-500';
-    return 'border-gray-200';
-  };
+const getBorderColor = () => {
+  if (status === 'completed') return 'border-green-500';
+  if (status === 'cancelled') return 'border-red-500';
+  if (itemType === 'phase_change') return 'border-blue-500';
+  if (itemType === 'note') return 'border-yellow-400';
+  if (itemType === 'message') return 'border-purple-500';
+  if (itemType === 'task') return 'border-orange-500';
+  if (itemType === 'file_upload') return 'border-cyan-500';
+  if (itemType === 'contact_created') return 'border-emerald-500';
+  return 'border-gray-200';
+};

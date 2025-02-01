@@ -1,4 +1,5 @@
 import { Tables } from "@/integrations/supabase/types";
+import { Platform } from "@/config/platforms";
 
 export type Note = {
   id: string;
@@ -19,7 +20,7 @@ export type SocialMediaPostRaw = {
   lead_id: string;
   platform: string;
   post_type: PostType;
-  content?: string;
+  content: string;
   likes_count?: number;
   comments_count?: number;
   url?: string;
@@ -39,14 +40,16 @@ export type SocialMediaPostRaw = {
   local_video_path?: string;
   media_count?: number;
   media_processing_status?: string;
-  metadata?: any;
   processing_progress?: number;
+  metadata?: any;
   storage_status?: string;
   tagged_users?: any[];
+  timestamp?: string;
+  caption?: string;
 };
 
-export interface LeadWithRelations extends Tables<"leads"> {
-  notes?: Note[];
+export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
+  notes: Note[];
   tasks?: Tables<"tasks">[];
   messages?: Tables<"messages">[];
   lead_files?: Tables<"lead_files">[];
