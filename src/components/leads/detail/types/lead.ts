@@ -27,6 +27,8 @@ export interface SocialMediaPostRaw {
   videoUrl?: string | null;
   images?: string[] | null;
   hashtags?: string[] | null;
+  likes_count?: number | null;
+  comments_count?: number | null;
 }
 
 export type LeadWithRelations = Tables<"leads"> & {

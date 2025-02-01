@@ -103,6 +103,10 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const hasVideo = postType === "video";
   const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
+  // Use the correct like and comment counts from either source
+  const likesCount = post.likesCount || post.likes_count || 0;
+  const commentsCount = post.commentsCount || post.comments_count || 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -157,8 +161,8 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
               <PostContent content={post.content} caption={post.caption} hashtags={post.hashtags} />
 
               <PostMetadata
-                likesCount={post.likesCount || post.likes_count}
-                commentsCount={post.commentsCount || post.comments_count}
+                likesCount={likesCount}
+                commentsCount={commentsCount}
                 location={post.location}
                 locationName={post.locationName}
               />

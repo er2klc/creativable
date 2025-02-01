@@ -1,5 +1,5 @@
 import { SocialMediaPost } from "./SocialMediaPost";
-import { SocialMediaPostRaw, PostType } from "../types/lead";
+import { SocialMediaPostRaw, PostType } from "../../types/lead";
 
 interface SocialMediaTimelineProps {
   posts: SocialMediaPostRaw[];
@@ -9,7 +9,7 @@ interface SocialMediaTimelineProps {
 }
 
 export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdFallback }: SocialMediaTimelineProps) => {
-  // Filter out temp posts and posts with type "post", then sort the remaining posts
+  // Filter out temp posts and sort the remaining posts
   const sortedPosts = [...posts]
     .filter(post => !post.id.startsWith('temp-') && post.post_type?.toLowerCase() !== 'post')
     .sort((a, b) => {
