@@ -21,6 +21,11 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   // Überprüfe, ob LinkedIn Posts vorhanden sind
   const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
   console.log("LinkedIn Posts vorhanden:", hasLinkedInPosts, lead.linkedin_posts);
+  console.log("LinkedIn Posts:", lead.linkedin_posts);
+console.log("LinkedIn Posts Typ:", typeof lead.linkedin_posts);
+console.log("Lead ID:", lead.id);
+console.log("Lead Plattform:", lead.platform);
+
   
   // Überprüfe, ob Social Media Posts vorhanden sind
   const hasSocialPosts = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
