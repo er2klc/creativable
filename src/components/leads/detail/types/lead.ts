@@ -1,5 +1,6 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
+import { Json } from "@/integrations/supabase/types/auth";
 
 export interface Message {
   id: string;
@@ -51,14 +52,15 @@ export interface SocialMediaPostRaw {
   hashtags?: string[] | null;
   likes_count?: number | null;
   comments_count?: number | null;
+  taggedUsers?: any[];
 }
 
-export type LeadWithRelations = Omit<Tables<"leads">, "notes"> & {
+export type LeadWithRelations = Omit<Tables<"leads">, "notes" | "social_media_posts"> & {
   platform: Platform;
   messages: Message[];
   tasks: Tables<"tasks">[];
   notes: Note[];
   lead_files: Tables<"lead_files">[];
-  social_media_posts?: any[];
+  social_media_posts?: SocialMediaPostRaw[];
   linkedin_posts?: Tables<"linkedin_posts">[];
 };
