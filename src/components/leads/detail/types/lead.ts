@@ -61,5 +61,5 @@ export interface LeadWithRelations extends Tables<"leads"> {
   lead_files: Tables<"lead_files">[];
   linkedin_posts?: any[];
   platform: Platform;
-  social_media_posts?: any[];
+  social_media_posts?: SocialMediaPostRaw[];
 }
