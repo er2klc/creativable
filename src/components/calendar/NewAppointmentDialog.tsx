@@ -11,7 +11,6 @@ import {
 import { toast } from "sonner";
 import { AppointmentForm } from "./appointment-dialog/AppointmentForm";
 import { useState, useEffect } from "react";
-import { DateSelector } from "./appointment-dialog/DateSelector";
 import { CompletionCheckbox } from "./appointment-dialog/CompletionCheckbox";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
@@ -47,28 +46,22 @@ export const NewAppointmentDialog = ({
   defaultValues,
 }: NewAppointmentDialogProps) => {
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [completed, setCompleted] = useState(appointmentToEdit?.completed || false);
   const [cancelled, setCancelled] = useState(appointmentToEdit?.cancelled || false);
 
   useEffect(() => {
     if (open) {
-      setSelectedDate(initialSelectedDate);
       setCompleted(appointmentToEdit?.completed || false);
       setCancelled(appointmentToEdit?.cancelled || false);
     }
-  }, [initialSelectedDate, open, appointmentToEdit]);
+  }, [open, appointmentToEdit]);
 
   const createAppointment = useMutation({
     mutationFn: async (values: any) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      if (!selectedDate) {
-        throw new Error("Bitte wähle ein Datum aus");
-      }
-
-      const appointmentDate = new Date(selectedDate);
+      const appointmentDate = new Date(values.date);
       const [hours, minutes] = values.time.split(":");
       appointmentDate.setHours(parseInt(hours), parseInt(minutes));
 
@@ -109,14 +102,10 @@ export const NewAppointmentDialog = ({
       onOpenChange(false);
     },
     onError: (error) => {
-      if (error instanceof Error && error.message === "Bitte wähle ein Datum aus") {
-        toast.error(error.message);
-      } else {
-        toast.error(appointmentToEdit 
-          ? "Der Termin konnte nicht aktualisiert werden."
-          : "Der Termin konnte nicht erstellt werden.");
-        console.error("Error with appointment:", error);
-      }
+      console.error("Error with appointment:", error);
+      toast.error(appointmentToEdit 
+        ? "Der Termin konnte nicht aktualisiert werden."
+        : "Der Termin konnte nicht erstellt werden.");
     },
   });
 
@@ -138,10 +127,22 @@ export const NewAppointmentDialog = ({
       onOpenChange(false);
     },
     onError: (error) => {
-      toast.error("Der Termin konnte nicht gelöscht werden");
       console.error("Error deleting appointment:", error);
+      toast.error("Der Termin konnte nicht gelöscht werden");
     },
   });
+
+  const formDefaultValues = appointmentToEdit ? {
+    leadId: appointmentToEdit.leadId,
+    time: appointmentToEdit.time,
+    date: initialSelectedDate ? format(initialSelectedDate, 'yyyy-MM-dd') : undefined,
+    title: appointmentToEdit.title,
+    color: appointmentToEdit.color,
+    meeting_type: appointmentToEdit.meeting_type,
+  } : {
+    ...defaultValues,
+    date: initialSelectedDate ? format(initialSelectedDate, 'yyyy-MM-dd') : undefined,
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -151,50 +152,36 @@ export const NewAppointmentDialog = ({
             <DialogTitle>
               {appointmentToEdit ? "Termin bearbeiten" : "Neuer Termin"}
             </DialogTitle>
-            <div className="flex items-center gap-2">
-              {appointmentToEdit && (
-                <>
-                  <CompletionCheckbox 
-                    completed={completed}
-                    cancelled={cancelled}
-                    onChange={(newCompleted, newCancelled) => {
-                      setCompleted(newCompleted);
-                      setCancelled(newCancelled);
-                    }}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => deleteAppointment.mutate()}
-                    disabled={deleteAppointment.isPending}
-                    className="text-destructive hover:text-destructive/90 h-8 w-8"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-            </div>
+            {appointmentToEdit && (
+              <div className="flex items-center gap-2">
+                <CompletionCheckbox 
+                  completed={completed}
+                  cancelled={cancelled}
+                  onChange={(newCompleted, newCancelled) => {
+                    setCompleted(newCompleted);
+                    setCancelled(newCancelled);
+                  }}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => deleteAppointment.mutate()}
+                  disabled={deleteAppointment.isPending}
+                  className="text-destructive hover:text-destructive/90 h-8 w-8"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
           <DialogDescription>
             Fülle die folgenden Felder aus, um {appointmentToEdit ? "den Termin zu aktualisieren" : "einen neuen Termin zu erstellen"}.
           </DialogDescription>
-          <div className="mt-4">
-            <DateSelector 
-              selectedDate={selectedDate} 
-              onDateSelect={setSelectedDate}
-            />
-          </div>
         </DialogHeader>
 
         <AppointmentForm 
-          onSubmit={(values) => {
-            if (!selectedDate) {
-              toast.error("Bitte wähle ein Datum aus");
-              return;
-            }
-            createAppointment.mutate(values);
-          }}
-          defaultValues={appointmentToEdit || defaultValues}
+          onSubmit={(values) => createAppointment.mutate(values)}
+          defaultValues={formDefaultValues}
           isEditing={!!appointmentToEdit}
         />
       </DialogContent>

@@ -1,22 +1,21 @@
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { useSettings } from "@/hooks/use-settings";
-import { ContactField } from "./form-fields/ContactField";
+import { Form } from "@/components/ui/form";
 import { TimeField } from "./form-fields/TimeField";
 import { TitleField } from "./form-fields/TitleField";
 import { ColorField } from "./form-fields/ColorField";
 import { MeetingTypeField } from "./form-fields/MeetingTypeField";
-import { Form } from "@/components/ui/form";
+import { ContactField } from "./form-fields/ContactField";
 
 interface AppointmentFormProps {
   onSubmit: (values: any) => void;
   defaultValues?: {
-    id?: string;
-    leadId: string;
-    time: string;
-    title: string;
-    color: string;
-    meeting_type: string;
+    leadId?: string;
+    time?: string;
+    date?: string;
+    title?: string;
+    color?: string;
+    meeting_type?: string;
   };
   isEditing?: boolean;
 }
@@ -26,41 +25,29 @@ export const AppointmentForm = ({
   defaultValues,
   isEditing = false,
 }: AppointmentFormProps) => {
-  const { settings } = useSettings();
   const form = useForm({
     defaultValues: {
       leadId: defaultValues?.leadId || "",
-      time: defaultValues?.time || "09:00",
+      time: defaultValues?.time || "",
+      date: defaultValues?.date || new Date().toISOString().split('T')[0],
       title: defaultValues?.title || "",
-      color: defaultValues?.color || "#40E0D0", // Turquoise for appointments
-      meeting_type: defaultValues?.meeting_type || "phone_call",
+      color: defaultValues?.color || "#4CAF50",
+      meeting_type: defaultValues?.meeting_type || "meeting",
     },
   });
 
-  const handleSubmit = (values: any) => {
-    onSubmit(values);
-  };
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <TitleField form={form} />
-        <ContactField form={form} />
         <TimeField form={form} />
-        <MeetingTypeField form={form} />
         <ColorField form={form} />
+        <MeetingTypeField form={form} />
+        <ContactField form={form} />
         
-        <div className="flex justify-end">
-          <Button type="submit">
-            {isEditing
-              ? settings?.language === "en"
-                ? "Update Appointment"
-                : "Termin aktualisieren"
-              : settings?.language === "en"
-              ? "Create Appointment"
-              : "Termin erstellen"}
-          </Button>
-        </div>
+        <Button type="submit" className="w-full">
+          {isEditing ? "Aktualisieren" : "Termin erstellen"}
+        </Button>
       </form>
     </Form>
   );
