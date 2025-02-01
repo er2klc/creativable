@@ -1,5 +1,7 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
+import { Note } from "@/components/leads/detail/types/lead";
+
 
 export type LeadWithRelations = Tables<"leads"> & {
   platform: Platform;
