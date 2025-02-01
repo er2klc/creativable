@@ -29,6 +29,7 @@ export interface SocialMediaPostRaw {
   hashtags?: string[] | null;
   likes_count?: number | null;
   comments_count?: number | null;
+  taggedUsers?: { username: string }[];
 }
 
 export interface Note {

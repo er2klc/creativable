@@ -1,5 +1,5 @@
 import { SocialMediaPost } from "./SocialMediaPost";
-import { SocialMediaPostRaw, PostType } from "../../types/lead";
+import { SocialMediaPostRaw } from "../../types/lead";
 
 interface SocialMediaTimelineProps {
   posts: SocialMediaPostRaw[];
@@ -23,11 +23,7 @@ export const SocialMediaTimeline = ({ posts, linkedInPosts, platform }: SocialMe
         sortedPosts.map((post) => (
           <SocialMediaPost 
             key={post.id} 
-            post={{
-              ...post,
-              post_type: post.post_type as PostType,
-              video_url: post.video_url || undefined
-            }}
+            post={post}
           />
         ))
       ) : (
