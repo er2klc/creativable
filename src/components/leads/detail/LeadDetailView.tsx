@@ -2,11 +2,11 @@ import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadDetailHeader } from "./detail/LeadDetailHeader";
-import { useLeadSubscription } from "./detail/hooks/useLeadSubscription";
-import { LeadWithRelations } from "./detail/types/lead";
-import { LeadDetailContent } from "./detail/components/LeadDetailContent";
-import { useLeadMutations } from "./detail/hooks/useLeadMutations";
+import { LeadDetailHeader } from "./LeadDetailHeader";
+import { useLeadSubscription } from "./hooks/useLeadSubscription";
+import { LeadWithRelations } from "./types/lead";
+import { LeadDetailContent } from "./components/LeadDetailContent";
+import { useLeadMutations } from "./hooks/useLeadMutations";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -43,7 +43,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Lead not found");
       }
 
-      // Type assertion to ensure all required properties are present
       return data as unknown as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
