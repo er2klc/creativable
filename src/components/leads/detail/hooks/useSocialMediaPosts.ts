@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SocialMediaPostRaw } from "../types/lead";
+import { SocialMediaPostRaw, PostType } from "../types/lead";
 
 export const useSocialMediaPosts = (leadId: string) => {
   return useQuery({
@@ -8,10 +8,9 @@ export const useSocialMediaPosts = (leadId: string) => {
     queryFn: async () => {
       console.log(`🚀 API wird für Lead ID: ${leadId} ausgeführt`);
       
-      // Abfrage für Posts aus "social_media_posts"
       const { data: socialMediaPosts, error: postsError } = await supabase
         .from("social_media_posts")
-        .select("id, lead_id, post_type, media_urls, video_url, posted_at, content, likes_count, comments_count, url, media_type")
+        .select("*")
         .eq("lead_id", leadId)
         .order("posted_at", { ascending: false });
 
@@ -20,7 +19,6 @@ export const useSocialMediaPosts = (leadId: string) => {
         throw postsError;
       }
 
-      // Abfrage für zusätzliche Daten aus "leads" (z. B. Video-URLs)
       const { data: leadData, error: leadError } = await supabase
         .from("leads")
         .select("social_media_posts")
@@ -35,7 +33,6 @@ export const useSocialMediaPosts = (leadId: string) => {
       console.log("🚀 DEBUG: API Antwort von Supabase (Social Media Posts):", socialMediaPosts);
       console.log("🚀 DEBUG: API Antwort von Supabase (Lead Data):", leadData);
 
-      // Extrahiere die Post-Daten aus den Lead-Daten (hauptsächlich für videoUrl)
       let leadSocialPosts = [];
       if (leadData?.social_media_posts) {
         try {
@@ -47,10 +44,10 @@ export const useSocialMediaPosts = (leadId: string) => {
         }
       }
 
-      // Kombiniere die Daten
       const mergedPosts = socialMediaPosts.map((post): SocialMediaPostRaw => {
         const matchingLeadPost = leadSocialPosts.find((leadPost) => leadPost.id === post.id);
         let mediaUrls: string[] = [];
+        
         if (post.media_urls) {
           mediaUrls = typeof post.media_urls === "string"
             ? JSON.parse(post.media_urls)
@@ -58,14 +55,25 @@ export const useSocialMediaPosts = (leadId: string) => {
               ? post.media_urls
               : [];
         }
+        
         const videoUrl = post.video_url || matchingLeadPost?.videoUrl;
 
         return {
           ...post,
           media_urls: mediaUrls,
           video_url: videoUrl,
-          platform: "Instagram", // Default platform
-          post_type: (post.post_type || "post") as "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar"
+          platform: "Instagram",
+          type: post.post_type || "post",
+          post_type: (post.post_type || "post") as PostType,
+          caption: post.content || null,
+          likesCount: post.likes_count || null,
+          commentsCount: post.comments_count || null,
+          location: post.location || null,
+          mentioned_profiles: post.mentioned_profiles || null,
+          tagged_profiles: post.tagged_profiles || null,
+          timestamp: post.posted_at || null,
+          local_video_path: post.local_video_path || null,
+          local_media_paths: post.local_media_paths || null,
         };
       });
 

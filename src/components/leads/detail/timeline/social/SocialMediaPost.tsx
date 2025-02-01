@@ -8,24 +8,23 @@ import { PostHeader } from "./PostHeader";
 import { PostContent } from "./PostContent";
 import { PostMetadata } from "./PostMetadata";
 import { PostActions } from "./PostActions";
+import { PostType } from "../../types/lead";
 
-interface SocialMediaPost {
+export interface SocialMediaPost {
   id: string;
   lead_id?: string;
   platform: string;
-  type?: string;
-  post_type: "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
+  type: string;
+  post_type: PostType;
   content: string | null;
-  caption?: string | null;
-  likesCount?: number | null;
-  commentsCount?: number | null;
-  likes_count?: number | null;
-  comments_count?: number | null;
+  caption: string | null;
+  likesCount: number | null;
+  commentsCount: number | null;
   url: string | null;
-  location?: string | null;
+  location: string | null;
   locationName?: string | null;
-  mentioned_profiles?: string[] | null;
-  tagged_profiles?: string[] | null;
+  mentioned_profiles: string[] | null;
+  tagged_profiles: string[] | null;
   posted_at: string | null;
   timestamp?: string | null;
   media_urls: string[] | null;
