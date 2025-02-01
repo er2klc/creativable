@@ -50,7 +50,6 @@ export const TimelineItemCard = ({
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
 
   const handleTaskComplete = async () => {
     if (!id) return;
@@ -117,76 +116,75 @@ export const TimelineItemCard = ({
     }
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      const audioChunks: BlobPart[] = [];
+  const startRecording = () => {
+    if (!('webkitSpeechRecognition' in window)) {
+      toast.error(
+        settings?.language === "en"
+          ? "Speech recognition is not supported in your browser"
+          : "Spracherkennung wird in Ihrem Browser nicht unterstützt"
+      );
+      return;
+    }
 
-      recorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
-      };
+    const recognition = new (window as any).webkitSpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = settings?.language === "en" ? 'en-US' : 'de-DE';
 
-      recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = async () => {
-          const base64Audio = reader.result?.toString().split(',')[1];
-          
-          try {
-            const response = await fetch('https://agqaitxlmxztqyhpcjau.functions.supabase.co/voice-to-text', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`
-              },
-              body: JSON.stringify({ audio: base64Audio })
-            });
-
-            const { text } = await response.json();
-            if (text) {
-              setEditedContent(prev => prev + (prev ? '\n' : '') + text);
-            }
-          } catch (error) {
-            console.error('Error transcribing audio:', error);
-            toast.error(
-              settings?.language === "en"
-                ? "Error transcribing audio"
-                : "Fehler bei der Audiotranskription"
-            );
-          }
-        };
-      };
-
-      setMediaRecorder(recorder);
-      recorder.start();
+    recognition.onstart = () => {
       setIsRecording(true);
       toast.success(
         settings?.language === "en"
           ? "Recording started..."
           : "Aufnahme gestartet..."
       );
-    } catch (error) {
-      console.error('Error starting recording:', error);
+    };
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+
+      if (finalTranscript) {
+        setEditedContent(prev => prev + (prev ? ' ' : '') + finalTranscript);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      setIsRecording(false);
       toast.error(
         settings?.language === "en"
-          ? "Error accessing microphone"
-          : "Fehler beim Zugriff auf das Mikrofon"
+          ? "Error during speech recognition"
+          : "Fehler bei der Spracherkennung"
       );
-    }
-  };
+    };
 
-  const stopRecording = () => {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      mediaRecorder.stop();
+    recognition.onend = () => {
       setIsRecording(false);
       toast.success(
         settings?.language === "en"
           ? "Recording stopped"
           : "Aufnahme beendet"
       );
+    };
+
+    recognition.start();
+    return recognition;
+  };
+
+  const stopRecording = () => {
+    if (window.recognition) {
+      window.recognition.stop();
     }
+    setIsRecording(false);
   };
 
   const renderContent = () => {
@@ -222,6 +220,7 @@ export const TimelineItemCard = ({
               size="sm"
               variant="outline"
               onClick={isRecording ? stopRecording : startRecording}
+              className={isRecording ? "bg-red-50 text-red-600" : ""}
             >
               <Mic className={`h-4 w-4 ${isRecording ? 'text-red-500' : ''}`} />
             </Button>
