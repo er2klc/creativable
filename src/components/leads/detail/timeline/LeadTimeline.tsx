@@ -18,8 +18,15 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
   const { data: socialMediaPosts } = useSocialMediaPosts(lead.id);
   
+  // Überprüfe, ob LinkedIn Posts vorhanden sind
   const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
+  console.log("LinkedIn Posts vorhanden:", hasLinkedInPosts, lead.linkedin_posts);
+  
+  // Überprüfe, ob Social Media Posts vorhanden sind
   const hasSocialPosts = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
+  console.log("Social Media Posts vorhanden:", hasSocialPosts, lead.social_media_posts);
+  
+  // Zeige die Social Timeline an, wenn entweder LinkedIn oder andere Social Media Posts vorhanden sind
   const showSocialTimeline = hasLinkedInPosts || hasSocialPosts;
 
   const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
