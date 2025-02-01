@@ -15,7 +15,6 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
 
   useEffect(() => {
     if (mediaUrls?.length > 0) {
-      console.log("Using media URLs directly:", mediaUrls);
       setPublicUrls(mediaUrls);
     }
   }, [mediaUrls]);
