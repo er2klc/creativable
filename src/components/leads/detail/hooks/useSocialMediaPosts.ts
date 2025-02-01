@@ -48,58 +48,57 @@ export const useSocialMediaPosts = (leadId: string) => {
       }
 
       // ✅ Kombiniere beide Datenquellen (social_media_posts + leads)
-     const mergedPosts = socialMediaPosts.map((post): SocialMediaPostRaw => {
-  const matchingLeadPost = leadSocialPosts.find((leadPost) => leadPost.id === post.id);
+      const mergedPosts = socialMediaPosts.map((post): SocialMediaPostRaw => {
+        const matchingLeadPost = leadSocialPosts.find((leadPost) => leadPost.id === post.id);
 
-  let mediaUrls: string[] = [];
-  if (post.media_urls) {
-    mediaUrls = typeof post.media_urls === "string"
-      ? JSON.parse(post.media_urls)
-      : Array.isArray(post.media_urls)
-        ? post.media_urls
-        : [];
-  }
+        let mediaUrls: string[] = [];
+        if (post.media_urls) {
+          mediaUrls = typeof post.media_urls === "string"
+            ? JSON.parse(post.media_urls)
+            : Array.isArray(post.media_urls)
+              ? post.media_urls
+              : [];
+        }
 
-  // ✅ Bevorzuge `videoUrl` aus `leads`, falls vorhanden
-  const videoUrl = matchingLeadPost?.videoUrl || post.video_url || null;
+        // ✅ Bevorzuge `videoUrl` aus `leads`, falls vorhanden
+        const videoUrl = matchingLeadPost?.videoUrl || post.video_url || null;
 
-  // ✅ Bevorzuge Likes & Kommentare aus `leads`, falls sie nicht 0 sind
-  const likesCount = matchingLeadPost?.likesCount && matchingLeadPost.likesCount > 0 
-    ? matchingLeadPost.likesCount 
-    : post.likes_count || 0;
+        // ✅ Bevorzuge Likes & Kommentare aus `leads`, falls sie nicht 0 sind
+        const likesCount = matchingLeadPost?.likesCount && matchingLeadPost.likesCount > 0 
+          ? matchingLeadPost.likesCount 
+          : post.likes_count || 0;
 
-  const commentsCount = matchingLeadPost?.commentsCount && matchingLeadPost.commentsCount > 0 
-    ? matchingLeadPost.commentsCount 
-    : post.comments_count || 0;
+        const commentsCount = matchingLeadPost?.commentsCount && matchingLeadPost.commentsCount > 0 
+          ? matchingLeadPost.commentsCount 
+          : post.comments_count || 0;
 
-  // ✅ Entferne `profile_pic_url` aus den `taggedUsers`
-  const taggedUsers = (matchingLeadPost?.taggedUsers || []).map((user) => {
-    const { profile_pic_url, ...rest } = user; // Entferne das Profilbild
-    return rest; // Rückgabe der restlichen Benutzerdaten
-  });
+        // ✅ Entferne `profile_pic_url` aus den `taggedUsers`
+        const taggedUsers = (matchingLeadPost?.taggedUsers || []).map((user) => {
+          const { profile_pic_url, ...rest } = user; // Entferne das Profilbild
+          return rest; // Rückgabe der restlichen Benutzerdaten
+        });
 
-  console.log(`🏷️ DEBUG: Tagged Users für Post ID ${post.id}:`, taggedUsers);
+        console.log(`🏷️ DEBUG: Tagged Users für Post ID ${post.id}:`, taggedUsers);
 
-  return {
-    ...post,
-    media_urls: mediaUrls,
-    video_url: videoUrl,
-    platform: "Instagram",
-    type: post.post_type || "post",
-    post_type: (post.post_type || "post") as PostType,
-    caption: post.content || null,
-    likesCount: likesCount,
-    commentsCount: commentsCount,
-    location: post.location || null,
-    mentioned_profiles: post.mentioned_profiles || null,
-    tagged_profiles: post.tagged_profiles || null,
-    timestamp: post.posted_at || null,
-    taggedUsers: taggedUsers, // ✅ Jetzt vorhanden!
-    local_video_path: post.local_video_path || null,
-    local_media_paths: post.local_media_paths || null,
-  };
-});
-
+        return {
+          ...post,
+          media_urls: mediaUrls,
+          video_url: videoUrl,
+          platform: "Instagram",
+          type: post.post_type || "post",
+          post_type: (post.post_type || "post") as PostType,
+          caption: post.content || null,
+          likesCount: likesCount,
+          commentsCount: commentsCount,
+          location: post.location || null,
+          mentioned_profiles: post.mentioned_profiles || null,
+          tagged_profiles: post.tagged_profiles || null,
+          timestamp: post.posted_at || null,
+          taggedUsers: taggedUsers, // ✅ Jetzt vorhanden!
+          local_video_path: post.local_video_path || null,
+          local_media_paths: post.local_media_paths || null,
+        };
+      });
 
       // ✅ Füge fehlende `videoUrl`-Einträge aus `leads` als eigene Posts hinzu
       leadSocialPosts.forEach((leadPost) => {

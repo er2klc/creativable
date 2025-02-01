@@ -1,24 +1,23 @@
-import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface PostActionsProps {
-  url: string | null;
+export interface PostActionsProps {
+  likesCount: number;
+  commentsCount: number;
+  platform: string;
 }
 
-export const PostActions = ({ url }: PostActionsProps) => {
-  if (!url) return null;
-
+export const PostActions = ({ likesCount, commentsCount, platform }: PostActionsProps) => {
   return (
-    <div className="px-4 py-2 flex justify-end">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-blue-500 hover:text-blue-600"
-        onClick={() => window.open(url, '_blank')}
-      >
-        <ExternalLink className="h-4 w-4 mr-2" />
-        View Original
-      </Button>
+    <div className="flex justify-between items-center">
+      <div className="flex items-center">
+        <Button variant="outline" className="mr-2">
+          Like {likesCount > 0 && `(${likesCount})`}
+        </Button>
+        <Button variant="outline">
+          Comment {commentsCount > 0 && `(${commentsCount})`}
+        </Button>
+      </div>
+      <span className="text-sm text-gray-500">{platform}</span>
     </div>
   );
 };

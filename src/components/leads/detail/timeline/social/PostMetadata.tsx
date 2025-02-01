@@ -1,25 +1,22 @@
-import { MapPin } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface PostMetadataProps {
+export interface PostMetadataProps {
   likesCount: number;
   commentsCount: number;
-  location: string;
-  locationName?: string | null;
+  timestamp: string;
+  platform: string;
 }
 
-export const PostMetadata = ({ likesCount, commentsCount, location, locationName }: PostMetadataProps) => {
+export const PostMetadata = ({ likesCount, commentsCount, timestamp, platform }: PostMetadataProps) => {
   return (
-    <div className="px-4 py-2 text-sm text-gray-500">
-      <div className="flex items-center gap-4">
-        <span>{likesCount} Likes</span>
-        <span>{commentsCount} Comments</span>
-      </div>
-      {(location || locationName) && (
-        <div className="flex items-center gap-1 mt-1">
-          <MapPin className="h-4 w-4" />
-          <span>{locationName || location}</span>
-        </div>
-      )}
-    </div>
+    <CardHeader>
+      <CardTitle className="flex items-center justify-between">
+        <span>{platform}</span>
+        <span>{likesCount} Likes | {commentsCount} Comments</span>
+      </CardTitle>
+      <CardContent>
+        <span>{new Date(timestamp).toLocaleString()}</span>
+      </CardContent>
+    </CardHeader>
   );
 };
