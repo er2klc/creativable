@@ -5,7 +5,7 @@ import { Json } from "@/integrations/supabase/types/auth";
 // Helper type: Overwrites in T all properties that are defined in U
 export type Overwrite<T, U> = Omit<T, keyof U> & U;
 
-export interface Message {
+export interface Message extends Tables<"messages"> {
   id: string;
   content: string;
   lead_id: string | null;
@@ -16,7 +16,7 @@ export interface Message {
   created_at?: string;
 }
 
-export interface Note {
+export interface Note extends Tables<"notes"> {
   id: string;
   content: string;
   lead_id: string;
@@ -29,7 +29,7 @@ export interface Note {
 
 export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar" | "experience" | "education";
 
-export interface SocialMediaPostRaw {
+export interface SocialMediaPostRaw extends Tables<"social_media_posts"> {
   id: string;
   lead_id: string | null;
   platform: string;
@@ -69,7 +69,7 @@ export interface SocialMediaPostRaw {
   local_media_paths: string[] | null;
 }
 
-// Important: We override here the properties that exist in Tables<"leads">
+// Important: We extend the base lead type from Supabase and override specific properties
 export type LeadWithRelations = Overwrite<Tables<"leads">, {
   platform: Platform;
   messages: Message[];
@@ -81,4 +81,10 @@ export type LeadWithRelations = Overwrite<Tables<"leads">, {
   parent_id?: string | null;
   level: number | null;
   avatar_url?: string | null;
+  experience?: Json;
+  education_summary?: string | null;
+  social_media_stats?: Json;
+  social_media_posts_count?: number | null;
+  social_media_tagged_users?: Json;
+  social_media_mentioned_users?: Json;
 }>;
