@@ -8,51 +8,108 @@ import { PostHeader } from "./PostHeader";
 import { PostContent } from "./PostContent";
 import { PostMetadata } from "./PostMetadata";
 import { PostActions } from "./PostActions";
-import { PostType } from "../../types/lead";
 
-export interface SocialMediaPost {
+interface SocialMediaPost {
   id: string;
-  lead_id?: string;
-  platform: string;
-  type: string;
-  post_type: PostType;
+  platform?: string;
+  type?: string;
+  post_type: string;
   content: string | null;
-  caption: string | null;
-  likesCount: number | null;
-  commentsCount: number | null;
+  caption?: string | null;
+  likesCount?: number | null;
+  commentsCount?: number | null;
+  likes_count?: number | null;
+  comments_count?: number | null;
   url: string | null;
-  location: string | null;
+  location?: string | null;
   locationName?: string | null;
-  mentioned_profiles: string[] | null;
-  tagged_profiles: string[] | null;
+  mentioned_profiles?: string[] | null;
+  tagged_profiles?: string[] | null;
   posted_at: string | null;
   timestamp?: string | null;
-  media_urls: string[] | null;
+  media_urls: string[] | null; // ✅ NUR für Bilder aus Supabase
   media_type: string | null;
-  local_video_path?: string | null;
-  local_media_paths?: string[] | null;
-  video_url?: string | null;
+  video_url?: string | null; // ✅ Nur für Videos aus leads
   videoUrl?: string | null;
   images?: string[] | null;
   hashtags?: string[] | null;
+  lead_id?: string;
 }
 
 interface SocialMediaPostProps {
   post: SocialMediaPost;
-  kontaktIdFallback?: string;
 }
 
-export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProps) => {
+const getPostTypeColor = (type: string) => {
+  switch (type?.toLowerCase()) {
+    case "video":
+      return "bg-cyan-50 border-cyan-200";
+    case "image":
+      return "bg-purple-50 border-purple-200";
+    case "sidecar":
+      return "bg-amber-50 border-amber-200";
+    default:
+      return "bg-gray-50 border-gray-200";
+  }
+};
+
+const getPostTypeIcon = (type: string) => {
+  switch (type?.toLowerCase()) {
+    case "video":
+      return <Video className="h-5 w-5 text-cyan-500" />;
+    case "image":
+      return <Image className="h-5 w-5 text-purple-500" />;
+    case "sidecar":
+      return <MessageCircle className="h-5 w-5 text-amber-500" />;
+    default:
+      return <Heart className="h-5 w-5 text-gray-500" />;
+  }
+};
+
+export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
+  const getMediaUrls = () => {
+    const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
+
+    console.log("DEBUG: Post Type:", postType);
+    console.log("DEBUG: Post ID:", post.id);
+    console.log("DEBUG: media_urls vorhanden?", post.media_urls ? "Ja" : "Nein", post.media_urls);
+    console.log("DEBUG: video_url vorhanden?", post.video_url ? "Ja" : "Nein", post.video_url);
+
+    // ✅ Falls es sich um ein Video handelt, NUR die `videoUrl` aus leads verwenden
+    if (postType === "video") {
+      const videoUrl = post.video_url || post.videoUrl;
+      if (videoUrl) {
+        console.log(`🎥 Video-Post gefunden! Verwende Instagram Video-URL für Post ID: ${post.id}`);
+        return [videoUrl];
+      }
+    }
+
+    // ✅ Falls media_urls in Supabase als JSON-String gespeichert wurde, konvertieren
+    let mediaUrls = post.media_urls;
+    if (typeof mediaUrls === "string") {
+      try {
+        mediaUrls = JSON.parse(mediaUrls);
+      } catch (e) {
+        console.error(`⚠️ Fehler beim Parsen von media_urls für Post ID: ${post.id}`, e);
+        mediaUrls = [];
+      }
+    }
+
+    // ✅ Falls media_urls leer oder nicht existiert, Fehlermeldung ausgeben
+    if (!mediaUrls || !Array.isArray(mediaUrls) || mediaUrls.length === 0) {
+      console.warn(`⚠️ Keine gültigen media_urls gefunden für Post ID: ${post.id}`);
+      return [];
+    }
+
+    console.log(`🖼️ Bild-Post gefunden! Verwende media_urls für Post ID: ${post.id}`, mediaUrls);
+    return mediaUrls;
+  };
+
+  const mediaUrls = getMediaUrls();
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
-  const isSidecar = postType === "sidecar" && post.media_urls && post.media_urls.length > 1;
-  const hasVideo = (postType === "video" || post.video_url || post.videoUrl) && (post.media_urls?.length > 0 || post.video_url || post.videoUrl);
-  
-  console.log("🎥 Video Post Debug:", { 
-    postType, 
-    hasVideo, 
-    videoUrl: post.video_url || post.videoUrl,
-    mediaUrls: post.media_urls 
-  });
+  const isSidecar = postType === "sidecar" && mediaUrls.length > 1;
+  const hasVideo = postType === "video" && mediaUrls.length > 0;
+  const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
   return (
     <motion.div
@@ -67,59 +124,49 @@ export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProp
 
       <div className="flex gap-4 items-start group relative">
         <div className="relative">
-          <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", 
-            postType === "video" ? "bg-cyan-50 border-cyan-200" :
-            postType === "image" ? "bg-purple-50 border-purple-200" :
-            postType === "sidecar" ? "bg-amber-50 border-amber-200" :
-            "bg-gray-50 border-gray-200"
-          )}>
-            {postType === "video" ? <Video className="h-5 w-5 text-cyan-500" /> :
-             postType === "image" ? <Image className="h-5 w-5 text-purple-500" /> :
-             postType === "sidecar" ? <MessageCircle className="h-5 w-5 text-amber-500" /> :
-             <Heart className="h-5 w-5 text-gray-500" />}
+          <div
+            className={cn(
+              "w-8 h-8 rounded-full flex items-center justify-center",
+              postTypeColor
+            )}
+          >
+            {getPostTypeIcon(post.media_type || post.type || post.post_type)}
           </div>
         </div>
 
-        <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-200" style={{ height: "100%" }} />
+        <div
+          className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-200"
+          style={{ height: "100%" }}
+        />
         <div className="absolute left-8 top-4 w-4 h-[2px] bg-gray-200" />
 
-        <Card className={cn("flex-1 p-4 text-sm overflow-hidden",
-          postType === "video" ? "bg-cyan-50 border-cyan-200" :
-          postType === "image" ? "bg-purple-50 border-purple-200" :
-          postType === "sidecar" ? "bg-amber-50 border-amber-200" :
-          "bg-gray-50 border-gray-200"
-        )}>
+        <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>
           <div className="flex gap-6">
-            {(post.media_urls?.length > 0 || post.video_url || post.videoUrl) && (
+            {mediaUrls.length > 0 ? (
               <div className="w-1/3 min-w-[200px]">
-                <MediaDisplay 
-                  mediaUrls={post.media_urls || [post.video_url || post.videoUrl].filter(Boolean) as string[]}
+                <MediaDisplay
+                  mediaUrls={mediaUrls}
                   hasVideo={hasVideo}
                   isSidecar={isSidecar}
                 />
               </div>
+            ) : (
+              <p className="text-red-500">⚠️ Keine Medien gefunden!</p>
             )}
 
             <div className="flex-1 min-w-0">
               <PostHeader
                 timestamp={post.timestamp || post.posted_at || ""}
                 type={post.type || post.post_type || ""}
-                postTypeColor={postType === "video" ? "text-cyan-500" :
-                             postType === "image" ? "text-purple-500" :
-                             postType === "sidecar" ? "text-amber-500" :
-                             "text-gray-500"}
+                postTypeColor={postTypeColor}
                 id={post.id}
               />
 
-              <PostContent 
-                content={post.content} 
-                caption={post.caption} 
-                hashtags={post.hashtags} 
-              />
+              <PostContent content={post.content} caption={post.caption} hashtags={post.hashtags} />
 
               <PostMetadata
-                likesCount={post.likesCount}
-                commentsCount={post.commentsCount}
+                likesCount={post.likesCount || post.likes_count}
+                commentsCount={post.commentsCount || post.comments_count}
                 location={post.location}
                 locationName={post.locationName}
               />
