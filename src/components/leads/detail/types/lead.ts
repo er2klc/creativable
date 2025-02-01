@@ -1,6 +1,5 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
-import { Json } from "@/integrations/supabase/types/auth";
 
 export interface Message {
   id: string;
