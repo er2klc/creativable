@@ -26,7 +26,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
       return (
         <div className="flex justify-center items-center h-[80vh] overflow-auto">
           <img
-            src={document.url}
+            src={previewUrl}
             alt={document.name}
             className="max-w-full max-h-full object-contain"
           />
@@ -35,7 +35,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
     }
     // Handle Office documents (xlsx and docx)
     else if (fileType?.match(/^(xlsx|docx)$/)) {
-      const encodedUrl = encodeURIComponent(document.url);
+      const encodedUrl = encodeURIComponent(previewUrl);
       const officePreviewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}`;
       
       return (
@@ -54,7 +54,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
       return (
         <div className="w-full h-[80vh]">
           <iframe
-            src={`${previewUrl}#toolbar=0&view=FitH`}
+            src={previewUrl}
             className="w-full h-full"
             title={document.name}
           />
@@ -72,7 +72,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
           )}
           <p className="text-lg font-medium mb-2">{document.name}</p>
           <Button asChild variant="outline">
-            <a href={document.url} download target="_blank" rel="noopener noreferrer">
+            <a href={previewUrl} download target="_blank" rel="noopener noreferrer">
               <Download className="h-4 w-4 mr-2" />
               Herunterladen
             </a>
@@ -88,7 +88,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-semibold">{document.name}</h3>
           <Button asChild variant="outline" size="sm">
-            <a href={document.url} download target="_blank" rel="noopener noreferrer">
+            <a href={previewUrl} download target="_blank" rel="noopener noreferrer">
               <Download className="h-4 w-4" />
             </a>
           </Button>
