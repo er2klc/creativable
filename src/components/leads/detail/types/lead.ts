@@ -9,6 +9,8 @@ export type Note = {
     type?: string;
     oldStatus?: string;
     newStatus?: string;
+    oldPhase?: string;
+    newPhase?: string;
   };
   status?: string;
 };
@@ -24,11 +26,11 @@ export type SocialMediaPostRaw = {
   likes_count?: number;
   comments_count?: number;
   url: string;
-  posted_at?: string;
+  posted_at: string;
   created_at: string;
   media_urls?: string[];
   media_type?: string;
-  video_url?: string;
+  video_url: string;
   bucket_path?: string;
   current_file?: string;
   engagement_count?: number;
@@ -44,12 +46,12 @@ export type SocialMediaPostRaw = {
   metadata?: any;
   storage_status?: string;
   tagged_users?: any[];
-  timestamp?: string;
-  caption?: string;
   location?: string;
+  caption?: string;
+  mentioned_profiles?: string[];
 };
 
-export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "social_media_posts"> {
+export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
   notes: Note[];
   tasks?: Tables<"tasks">[];
   messages?: Tables<"messages">[];
