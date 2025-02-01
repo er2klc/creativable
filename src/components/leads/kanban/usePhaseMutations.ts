@@ -24,6 +24,18 @@ export const usePhaseMutations = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
 
+      // First check if the phase has actually changed
+      const { data: currentLead } = await supabase
+        .from("leads")
+        .select("phase_id")
+        .eq("id", leadId)
+        .single();
+
+      // If the phase hasn't changed, don't do anything
+      if (currentLead?.phase_id === phaseId) {
+        return;
+      }
+
       // Update the lead's phase
       const { error: updateError } = await supabase
         .from("leads")
@@ -75,26 +87,15 @@ export const usePhaseMutations = () => {
   });
 
   const addPhase = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ name, pipelineId }: { name: string; pipelineId: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user found");
-
-      // Get the default pipeline
-      const { data: pipeline } = await supabase
-        .from("pipelines")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("order_index")
-        .limit(1)
-        .single();
-
-      if (!pipeline) throw new Error("No pipeline found");
 
       // Get the current highest order_index
       const { data: phases } = await supabase
         .from("pipeline_phases")
         .select("order_index")
-        .eq("pipeline_id", pipeline.id)
+        .eq("pipeline_id", pipelineId)
         .order("order_index", { ascending: false })
         .limit(1);
 
@@ -103,9 +104,9 @@ export const usePhaseMutations = () => {
       const { error } = await supabase
         .from("pipeline_phases")
         .insert({
-          name: settings?.language === "en" ? "New Phase" : "Neue Phase",
+          name,
           order_index: nextOrderIndex,
-          pipeline_id: pipeline.id,
+          pipeline_id: pipelineId,
         });
 
       if (error) throw error;
@@ -142,7 +143,16 @@ export const usePhaseMutations = () => {
   });
 
   const deletePhase = useMutation({
-    mutationFn: async ({ phaseId }: { phaseId: string }) => {
+    mutationFn: async ({ phaseId, targetPhaseId }: { phaseId: string; targetPhaseId: string }) => {
+      // First update all leads in this phase to the target phase
+      const { error: updateError } = await supabase
+        .from("leads")
+        .update({ phase_id: targetPhaseId })
+        .eq("phase_id", phaseId);
+
+      if (updateError) throw updateError;
+
+      // Then delete the phase
       const { error } = await supabase
         .from("pipeline_phases")
         .delete()
@@ -152,6 +162,7 @@ export const usePhaseMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast({
         title: settings?.language === "en" ? "Phase deleted" : "Phase gelöscht",
         description: settings?.language === "en"
@@ -165,6 +176,8 @@ export const usePhaseMutations = () => {
     mutationFn: async (phases: Tables<"pipeline_phases">[]) => {
       const updates = phases.map((phase) => ({
         id: phase.id,
+        name: phase.name,
+        pipeline_id: phase.pipeline_id,
         order_index: phase.order_index,
       }));
 
