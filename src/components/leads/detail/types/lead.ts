@@ -11,11 +11,13 @@ export type LeadWithRelations = Tables<"leads"> & {
   platform: Platform;
 };
 
+export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
+
 export interface SocialMediaPostRaw {
   id: string;
   lead_id?: string;
   platform: string;
-  post_type: "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
+  post_type: PostType;
   content: string | null;
   likes_count?: number | null;
   comments_count?: number | null;
