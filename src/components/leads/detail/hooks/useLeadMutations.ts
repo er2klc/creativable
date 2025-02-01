@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "../types/lead";
 import { useNavigate } from "react-router-dom";
+import { Tables } from "@/integrations/supabase/types";
 
 export const useLeadMutations = (leadId: string | null, onClose: () => void) => {
   const queryClient = useQueryClient();
@@ -11,7 +12,7 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
   const { settings } = useSettings();
 
    const updateLeadMutation = useMutation({
-    mutationFn: async (updates: Partial<Tables<"leads">>) => {  // <-- Typ geändert
+    mutationFn: async (updates: Partial<Tables<"leads">>) => {
       if (!leadId) throw new Error("Invalid lead ID");
 
       const { data, error } = await supabase
