@@ -16,9 +16,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
   const isOutdated = item.type === 'appointment' && 
     (item.status === 'cancelled' || item.metadata?.status === 'outdated');
 
-  // Only allow deletion of phase changes
   const canDelete = onDelete && item.type === 'phase_change';
-
   const isTaskCompleted = item.type === 'task' && item.metadata?.status === 'completed';
   const completedDate = item.metadata?.completedAt ? 
     format(new Date(item.metadata.completedAt), 'PPp', { locale: de }) : null;
@@ -31,7 +29,6 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
       key={item.id} 
       className="flex flex-col gap-1"
     >
-      {/* Date above the card */}
       <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
         {formatDate(item.timestamp)}
         {isTaskCompleted && completedDate && (
@@ -42,7 +39,6 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
       </div>
       
       <div className="flex gap-4 items-start group relative">
-        {/* Circle with Icon */}
         <div className="relative">
           <TimelineItemIcon 
             type={item.type} 
@@ -64,18 +60,15 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
           )}
         </div>
         
-        {/* Connecting Line to Card */}
         <div className="absolute left-8 top-[1.1rem] w-4 h-0.5 bg-gray-400" />
         
-        {/* Event Card */}
         <TimelineItemCard 
+          id={item.id}
           type={item.type}
           content={item.content}
-          metadata={item.metadata}
-          status={item.status}
-          onDelete={canDelete ? () => onDelete(item.id) : undefined}
-          id={item.id}
           created_at={item.created_at}
+          metadata={item.metadata}
+          onDelete={canDelete ? () => onDelete(item.id) : undefined}
           isCompleted={isTaskCompleted}
         />
       </div>

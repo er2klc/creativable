@@ -5,23 +5,26 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Mic, Check, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TimelineItemCardProps {
   id: string;
   type: string;
   content: string;
-  timestamp: string;
+  created_at: string;
   metadata?: any;
   onDelete?: () => void;
+  isCompleted?: boolean;
 }
 
 export const TimelineItemCard = ({
   id,
   type,
   content,
-  timestamp,
+  created_at,
   metadata,
-  onDelete
+  onDelete,
+  isCompleted
 }: TimelineItemCardProps) => {
   const { settings } = useSettings();
   const [isEditing, setIsEditing] = useState(false);
@@ -280,7 +283,7 @@ export const TimelineItemCard = ({
     return null;
   };
 
-  const formattedDate = timestamp ? format(new Date(timestamp), "PPp", {
+  const formattedDate = created_at ? format(new Date(created_at), "PPp", {
     locale: settings?.language === "en" ? undefined : de,
   }) : "";
 

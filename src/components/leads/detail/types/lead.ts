@@ -27,7 +27,7 @@ export interface SocialMediaPostRaw {
   metadata?: any;
   tagged_users?: any[];
   media_urls: string[];
-  media_type?: string;
+  media_type: string;
   first_comment?: string;
   engagement_count?: number;
   video_url?: string;
@@ -47,7 +47,7 @@ export interface SocialMediaPostRaw {
   tagged_profiles?: string[];
 }
 
-export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
+export interface LeadWithRelations extends Tables<"leads"> {
   notes: Note[];
   messages?: Tables<"messages">[];
   tasks?: Tables<"tasks">[];
