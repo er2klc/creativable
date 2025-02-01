@@ -10,7 +10,8 @@ export const useLeadSubscription = (leadId: string | null) => {
   const {
     handleNotesChange,
     handleTasksChange,
-    handleMessagesChange
+    handleMessagesChange,
+    handleFilesChange
   } = useRelatedDataHandler(leadId, queryClient);
 
   useEffect(() => {
@@ -67,6 +68,17 @@ export const useLeadSubscription = (leadId: string | null) => {
         },
         handleMessagesChange
       )
+      // Files changes
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'lead_files',
+          filter: `lead_id=eq.${leadId}`
+        },
+        handleFilesChange
+      )
       .subscribe((status) => {
         console.log('Subscription status:', status);
         
@@ -81,5 +93,5 @@ export const useLeadSubscription = (leadId: string | null) => {
       console.log('Cleaning up subscriptions for leadId:', leadId);
       supabase.removeChannel(channel);
     };
-  }, [leadId, queryClient, handleLeadChange, handleNotesChange, handleTasksChange, handleMessagesChange]);
+  }, [leadId, queryClient, handleLeadChange, handleNotesChange, handleTasksChange, handleMessagesChange, handleFilesChange]);
 };
