@@ -288,7 +288,7 @@ export const TimelineItemCard = ({
   }) : "";
 
   return (
-    <div className={`p-4 border rounded-lg ${getBorderColor()} bg-white`}>
+    <div className={`p-4 border rounded-lg ${getBorderColor()} bg-white shadow-sm w-full`}>
       <div className="flex justify-between items-start mb-2">
         <div className="text-sm text-gray-500">
           {formattedDate}

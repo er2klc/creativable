@@ -3,7 +3,6 @@ import { TimelineItemIcon } from "./TimelineItemIcon";
 import { TimelineItemCard } from "./TimelineItemCard";
 import { formatDate } from "./TimelineUtils";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
