@@ -4,10 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadDetailHeader } from "./LeadDetailHeader";
 import { useLeadSubscription } from "./hooks/useLeadSubscription";
-import { LeadWithRelations, Message, Note } from "./types/lead";
+import { LeadWithRelations } from "./types/lead";
 import { LeadDetailContent } from "./components/LeadDetailContent";
 import { useLeadMutations } from "./hooks/useLeadMutations";
-import { Platform } from "@/config/platforms";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -29,46 +28,56 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Invalid lead ID");
       }
 
-      const { data, error } = await supabase
+      // First, get the lead data
+      const { data: leadData, error: leadError } = await supabase
         .from("leads")
-        .select(`
-          *,
-          messages (*),
-          tasks (*),
-          notes (*),
-          lead_files (*),
-          linkedin_posts (*)
-        `)
+        .select("*, messages(*), tasks(*), notes(*), lead_files(*), linkedin_posts(*)")
         .eq("id", leadId)
         .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching lead:", error);
-        throw error;
+      if (leadError) {
+        console.error("Error fetching lead:", leadError);
+        throw leadError;
       }
 
-      if (!data) {
+      if (!leadData) {
         throw new Error("Lead not found");
       }
 
-      // Transform and type the data correctly
-      const transformedData: LeadWithRelations = {
-        ...data,
-        messages: (data.messages || []).map((msg: any): Message => ({
-          ...msg,
-          created_at: msg.sent_at // Use sent_at as created_at if needed
-        })),
-        tasks: data.tasks || [],
-        notes: (data.notes || []).map((note: any): Note => ({
-          ...note,
-          metadata: note.metadata || {}
-        })),
-        lead_files: data.lead_files || [],
-        linkedin_posts: data.linkedin_posts || [],
-        platform: data.platform as Platform
-      };
+      // Log LinkedIn specific information
+      if (leadData.platform === 'LinkedIn') {
+        console.log('LinkedIn Contact Found:', {
+          name: leadData.name,
+          linkedInId: leadData.linkedin_id,
+          position: leadData.position,
+          company: leadData.current_company_name
+        });
 
-      return transformedData;
+        // Get LinkedIn posts for this lead
+        const { data: linkedInPosts, error: postsError } = await supabase
+          .from('linkedin_posts')
+          .select('*')
+          .eq('lead_id', leadId)
+          .order('posted_at', { ascending: false });
+
+        if (postsError) {
+          console.error('Error fetching LinkedIn posts:', postsError);
+        } else {
+          console.log('LinkedIn Posts:', linkedInPosts);
+          
+          // Log timestamps for each post
+          linkedInPosts?.forEach(post => {
+            console.log('Post Time:', {
+              id: post.id,
+              postedAt: post.posted_at,
+              createdAt: post.created_at,
+              type: post.post_type
+            });
+          });
+        }
+      }
+
+      return leadData as unknown as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
     retry: 3,
