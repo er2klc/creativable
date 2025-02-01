@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Check, Save, X, Trash2 } from "lucide-react";
+import { Check, Save, X, Trash2, Edit, Mic } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,19 +50,8 @@ export const TimelineItemCard = ({
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-
-  // Function to determine border color based on type and status
-  const getBorderColor = () => {
-    if (status === 'completed') return 'border-green-500';
-    if (status === 'cancelled') return 'border-red-500';
-    if (type === 'phase_change') return 'border-blue-500';
-    if (type === 'note') return 'border-yellow-400';
-    if (type === 'message') return 'border-purple-500';
-    if (type === 'task') return 'border-orange-500';
-    if (type === 'file_upload') return 'border-cyan-500';
-    if (type === 'contact_created') return 'border-emerald-500';
-    return 'border-gray-200';
-  };
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
 
   const handleTaskComplete = async () => {
     if (!id) return;
@@ -129,6 +118,78 @@ export const TimelineItemCard = ({
     }
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const audioChunks: BlobPart[] = [];
+
+      recorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+          const base64Audio = reader.result?.toString().split(',')[1];
+          
+          try {
+            const response = await fetch('https://agqaitxlmxztqyhpcjau.functions.supabase.co/voice-to-text', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`
+              },
+              body: JSON.stringify({ audio: base64Audio })
+            });
+
+            const { text } = await response.json();
+            if (text) {
+              setEditedContent(prev => prev + (prev ? '\n' : '') + text);
+            }
+          } catch (error) {
+            console.error('Error transcribing audio:', error);
+            toast.error(
+              settings?.language === "en"
+                ? "Error transcribing audio"
+                : "Fehler bei der Audiotranskription"
+            );
+          }
+        };
+      };
+
+      setMediaRecorder(recorder);
+      recorder.start();
+      setIsRecording(true);
+      toast.success(
+        settings?.language === "en"
+          ? "Recording started..."
+          : "Aufnahme gestartet..."
+      );
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error accessing microphone"
+          : "Fehler beim Zugriff auf das Mikrofon"
+      );
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+      setIsRecording(false);
+      toast.success(
+        settings?.language === "en"
+          ? "Recording stopped"
+          : "Aufnahme beendet"
+      );
+    }
+  };
+
   const renderContent = () => {
     if (isEditing && type === 'note') {
       return (
@@ -158,6 +219,13 @@ export const TimelineItemCard = ({
               <Save className="h-4 w-4 mr-1" />
               {settings?.language === "en" ? "Save" : "Speichern"}
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={isRecording ? stopRecording : startRecording}
+            >
+              <Mic className={`h-4 w-4 ${isRecording ? 'text-red-500' : ''}`} />
+            </Button>
           </div>
         </div>
       );
@@ -181,6 +249,14 @@ export const TimelineItemCard = ({
               <div className="w-4 h-4 border border-gray-400 rounded flex items-center justify-center hover:border-green-500 hover:bg-green-50">
                 <Check className="h-3 w-3 text-transparent hover:text-green-500" />
               </div>
+            </button>
+          )}
+          {type === 'note' && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <Edit className="h-4 w-4 text-gray-500 hover:text-blue-600" />
             </button>
           )}
           {type === 'phase_change' && onDelete && (
@@ -207,7 +283,6 @@ export const TimelineItemCard = ({
       );
     }
     
-    // Show completion date for completed tasks
     if (type === 'task' && isCompleted && metadata?.completedAt) {
       return (
         <div className="text-xs text-gray-500 mt-2">
@@ -225,3 +300,15 @@ export const TimelineItemCard = ({
     </div>
   );
 };
+
+  const getBorderColor = () => {
+    if (status === 'completed') return 'border-green-500';
+    if (status === 'cancelled') return 'border-red-500';
+    if (type === 'phase_change') return 'border-blue-500';
+    if (type === 'note') return 'border-yellow-400';
+    if (type === 'message') return 'border-purple-500';
+    if (type === 'task') return 'border-orange-500';
+    if (type === 'file_upload') return 'border-cyan-500';
+    if (type === 'contact_created') return 'border-emerald-500';
+    return 'border-gray-200';
+  };
