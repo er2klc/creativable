@@ -1,4 +1,4 @@
-import { TimelineItem as TimelineItemType } from "./TimelineUtils";
+import { TimelineItemType } from "./TimelineUtils";
 import { TimelineItemIcon } from "./TimelineItemIcon";
 import { TimelineItemCard } from "./TimelineItemCard";
 import { formatDate } from "./TimelineUtils";
