@@ -32,9 +32,18 @@ const tabColors = {
 export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const { settings } = useSettings();
   const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
+  const [selectedTab, setSelectedTab] = useState("notes");
+
+  const handleTabChange = (value: string) => {
+    if (value === "appointments") {
+      setAppointmentDialogOpen(true);
+    } else {
+      setSelectedTab(value);
+    }
+  };
 
   return (
-    <Tabs defaultValue="notes" className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-4 pt-4">
+    <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-4 pt-4">
       <TabsList className="w-full">
         <TabsTrigger
           value="notes"
@@ -90,14 +99,6 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
 
       <TabsContent value="appointments" className="mt-4">
         <div className="space-y-4">
-          <Button 
-            onClick={() => setAppointmentDialogOpen(true)}
-            className="w-full"
-          >
-            <CalendarIcon className="w-4 h-4 mr-2" />
-            {settings?.language === "en" ? "Add Appointment" : "Termin hinzufügen"}
-          </Button>
-          
           <NewAppointmentDialog
             open={appointmentDialogOpen}
             onOpenChange={setAppointmentDialogOpen}
