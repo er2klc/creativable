@@ -10,6 +10,8 @@ import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { LeadTimeline } from "./LeadTimeline";
 import { ContactFieldManager } from "./contact-info/ContactFieldManager";
 import { LeadWithRelations } from "./types/lead";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LeadContentProps {
   lead: LeadWithRelations;
@@ -48,7 +50,10 @@ export const LeadContent = ({ lead, onUpdateLead, onDeletePhaseChange }: LeadCon
           onUpdate={onUpdateLead}
         />
         <ContactFieldManager />
-        <LeadTimeline lead={lead} />
+        <LeadTimeline 
+          lead={lead} 
+          onDeletePhaseChange={onDeletePhaseChange}
+        />
         <TaskList leadId={lead.id} />
         <NoteList leadId={lead.id} />
         <LeadMessages leadId={lead.id} messages={lead.messages || []} />

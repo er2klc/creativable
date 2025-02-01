@@ -49,12 +49,6 @@ export default function LeadDetail() {
         throw new Error("Lead not found");
       }
 
-      console.log("🔍 DEBUG - Lead data from query:", {
-        id: data.id,
-        linkedin_posts: data.linkedin_posts,
-        timestamp: new Date().toISOString()
-      });
-
       return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
@@ -90,6 +84,33 @@ export default function LeadDetail() {
         settings?.language === "en"
           ? "Error updating contact"
           : "Fehler beim Aktualisieren des Kontakts"
+      );
+    },
+  });
+
+  const deletePhaseChangeMutation = useMutation({
+    mutationFn: async (noteId: string) => {
+      const { error } = await supabase
+        .from("notes")
+        .delete()
+        .eq("id", noteId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      toast.success(
+        settings?.language === "en"
+          ? "Phase change deleted successfully"
+          : "Phasenänderung erfolgreich gelöscht"
+      );
+    },
+    onError: (error) => {
+      console.error("Error deleting phase change:", error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error deleting phase change"
+          : "Fehler beim Löschen der Phasenänderung"
       );
     },
   });
@@ -167,6 +188,7 @@ export default function LeadDetail() {
         onUpdateLead={updateLeadMutation.mutate}
         isLoading={isLoading}
         onDeleteClick={() => deleteLeadMutation.mutate()}
+        onDeletePhaseChange={(noteId) => deletePhaseChangeMutation.mutate(noteId)}
       />
     </div>
   );
