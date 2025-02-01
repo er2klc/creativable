@@ -1688,6 +1688,7 @@ export type Database = {
           order_index: number | null
           priority: string | null
           title: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -1702,6 +1703,7 @@ export type Database = {
           order_index?: number | null
           priority?: string | null
           title: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -1716,6 +1718,7 @@ export type Database = {
           order_index?: number | null
           priority?: string | null
           title?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [

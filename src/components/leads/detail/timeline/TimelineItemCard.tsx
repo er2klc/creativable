@@ -172,24 +172,26 @@ export const TimelineItemCard = ({
         <div className={`whitespace-pre-wrap break-words ${isCompleted ? 'line-through text-gray-500' : ''}`}>
           {content}
         </div>
-        {type === 'task' && isHovered && !isCompleted && (
-          <button
-            onClick={handleTaskComplete}
-            className="absolute -left-6 top-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <div className="w-4 h-4 border border-gray-400 rounded flex items-center justify-center hover:border-green-500 hover:bg-green-50">
-              <Check className="h-3 w-3 text-transparent hover:text-green-500" />
-            </div>
-          </button>
-        )}
-        {onDelete && (
-          <button
-            onClick={onDelete}
-            className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
-          </button>
-        )}
+        <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {type === 'task' && !isCompleted && (
+            <button
+              onClick={handleTaskComplete}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <div className="w-4 h-4 border border-gray-400 rounded flex items-center justify-center hover:border-green-500 hover:bg-green-50">
+                <Check className="h-3 w-3 text-transparent hover:text-green-500" />
+              </div>
+            </button>
+          )}
+          {type === 'phase_change' && onDelete && (
+            <button
+              onClick={onDelete}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
+            </button>
+          )}
+        </div>
       </div>
     );
   };
@@ -201,6 +203,15 @@ export const TimelineItemCard = ({
           {settings?.language === "en" ? "Created" : "Erstellt"}: {format(new Date(created_at || ''), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
           <br />
           {settings?.language === "en" ? "Last edited" : "Zuletzt bearbeitet"}: {format(new Date(metadata.last_edited_at), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
+        </div>
+      );
+    }
+    
+    // Show completion date for completed tasks
+    if (type === 'task' && isCompleted && metadata?.completedAt) {
+      return (
+        <div className="text-xs text-gray-500 mt-2">
+          {settings?.language === "en" ? "Completed" : "Erledigt"}: {format(new Date(metadata.completedAt), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
         </div>
       );
     }
