@@ -1,6 +1,5 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
-import { Json } from "@/integrations/supabase/types/auth";
 
 export interface Message {
   id: string;
@@ -66,7 +65,7 @@ export interface SocialMediaPostRaw {
   local_media_paths: string[] | null;
 }
 
-export type LeadWithRelations = Omit<Tables<"leads">, "notes" | "social_media_posts" | "platform"> & {
+export type LeadWithRelations = Omit<Tables<"leads">, "platform" | "notes"> & {
   platform: Platform;
   messages: Message[];
   tasks: Tables<"tasks">[];
