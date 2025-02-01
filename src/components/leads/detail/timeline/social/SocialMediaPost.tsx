@@ -119,7 +119,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       </div>
 
       <div className="flex gap-4 items-start group relative">
-        <div className="relative">
+        <div className="relative z-10">
           <div
             className={cn(
               "w-8 h-8 rounded-full flex items-center justify-center",
@@ -131,10 +131,10 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
         </div>
 
         <div
-          className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-200"
-          style={{ height: "100%" }}
+          className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-400 z-0"
+           style={{ minHeight: "100vh" }}
         />
-        <div className="absolute left-8 top-4 w-4 h-[2px] bg-gray-200" />
+        <div className="absolute left-8 top-4 w-4 h-[2px] bg-gray-400" />
 
         <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>
           <div className="flex gap-6">
