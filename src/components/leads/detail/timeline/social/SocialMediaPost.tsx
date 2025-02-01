@@ -167,6 +167,28 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                 locationName={post.locationName}
               />
 
+              {post.taggedUsers && post.taggedUsers.length > 0 && (
+  <div className="flex flex-wrap gap-2 mt-2">
+    {post.taggedUsers.map((user) => (
+      <a 
+        key={user.id} 
+        href={`https://www.instagram.com/${user.username}/`} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="flex items-center space-x-2 text-sm bg-gray-100 p-2 rounded-lg hover:bg-gray-200"
+      >
+        <img 
+          src={user.profile_pic_url} 
+          alt={user.username} 
+          className="w-8 h-8 rounded-full"
+        />
+        <span>{user.full_name || user.username}</span>
+        {user.is_verified && <span className="text-blue-500">✔️</span>}
+      </a>
+    ))}
+  </div>
+)}
+
               <PostActions url={post.url} />
             </div>
           </div>
