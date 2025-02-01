@@ -49,7 +49,10 @@ export const SocialMediaTimeline = ({ posts, kontaktIdFallback }: SocialMediaTim
         sortedPosts.map((post) => (
           <SocialMediaPost 
             key={post.id} 
-            post={post} 
+            post={{
+              ...post,
+              platform: post.platform || 'Instagram'
+            }}
             kontaktIdFallback={kontaktIdFallback}
           />
         ))

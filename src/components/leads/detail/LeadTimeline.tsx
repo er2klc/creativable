@@ -4,8 +4,9 @@ import { TimelineItem } from "./timeline/TimelineItem";
 import { SocialMediaTimeline } from "./timeline/social/SocialMediaTimeline";
 import { LinkedInTimeline } from "./timeline/social/LinkedInTimeline";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadWithRelations } from "./types/lead";
+import { LeadWithRelations } from "../types/lead";
 import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
+import { useSocialMediaPosts } from "../hooks/useSocialMediaPosts";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -15,6 +16,7 @@ interface LeadTimelineProps {
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
   const { settings } = useSettings();
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
+  const { data: socialMediaPosts } = useSocialMediaPosts(lead.id);
   
   const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
   const hasSocialPosts = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
@@ -71,7 +73,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     }
   });
 
-  // Create contact creation timeline item
   const contactCreationItem: TimelineItemType = {
     id: 'contact-creation',
     type: 'contact_created',
@@ -83,7 +84,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     }
   };
 
-  // Combine all activities
   const allActivities = [
     ...(lead.notes || []).map(mapNoteToTimelineItem),
     ...(lead.tasks || []).map(mapTaskToTimelineItem),
@@ -92,7 +92,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     contactCreationItem
   ];
 
-  // Sort all activities by timestamp in reverse chronological order
   const timelineItems = allActivities.sort((a, b) => 
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
@@ -130,9 +129,14 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           <LinkedInTimeline posts={lead.linkedin_posts || []} />
         ) : (
           <SocialMediaTimeline 
-            posts={lead.social_media_posts || []} 
+            posts={(socialMediaPosts || []).map(post => ({
+              ...post,
+              lead_id: lead.id,
+              platform: lead.platform || 'Instagram'
+            }))}
             linkedInPosts={lead.linkedin_posts || []}
             platform={lead.platform}
+            kontaktIdFallback={lead.id}
           />
         )
       )}

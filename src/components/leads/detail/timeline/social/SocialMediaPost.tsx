@@ -12,7 +12,7 @@ import { PostActions } from "./PostActions";
 interface SocialMediaPost {
   id: string;
   lead_id?: string;
-  platform?: string;
+  platform: string;
   type?: string;
   post_type: "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
   content: string | null;
@@ -43,65 +43,13 @@ interface SocialMediaPostProps {
   kontaktIdFallback?: string;
 }
 
-const getPostTypeColor = (type: string) => {
-  switch (type?.toLowerCase()) {
-    case "video":
-      return "bg-cyan-50 border-cyan-200";
-    case "image":
-      return "bg-purple-50 border-purple-200";
-    case "sidecar":
-      return "bg-amber-50 border-amber-200";
-    default:
-      return "bg-gray-50 border-gray-200";
-  }
-};
-
-const getPostTypeIcon = (type: string) => {
-  switch (type?.toLowerCase()) {
-    case "video":
-      return <Video className="h-5 w-5 text-cyan-500" />;
-    case "image":
-      return <Image className="h-5 w-5 text-purple-500" />;
-    case "sidecar":
-      return <MessageCircle className="h-5 w-5 text-amber-500" />;
-    default:
-      return <Heart className="h-5 w-5 text-gray-500" />;
-  }
-};
-
-const getDirectMediaUrls = (
-  post: SocialMediaPost,
-  kontaktIdFallback?: string
-): string[] => {
-  const baseUrl = "https://agqaitxlmxztqyhpcjau.supabase.co/storage/v1/object/public/social-media-files";
-  
-  // Use post.lead_id as Kontakt-ID or the fallback
-  const leadId = post.lead_id || kontaktIdFallback;
-  
-  // Debug log for lead_id
-  console.log("🚀 Post ID:", post.id, "Lead ID:", leadId, "Raw post:", post);
-  
-  const postId = post.id;
-  const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
-
-  if (postType === "video") {
-    const videoUrl = post.video_url || post.videoUrl;
-    return videoUrl ? [videoUrl] : [];
-  } else if (postType === "image") {
-    return [`${baseUrl}/${leadId}/${postId}_0.jpg`];
-  } else if (postType === "sidecar") {
-    const count = post.media_urls?.length || 2;
-    return Array.from({ length: count }, (_, index) => `${baseUrl}/${leadId}/${postId}_${index}.jpg`);
-  }
-  return [];
-};
-
 export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProps) => {
-  const mediaUrls = post.media_urls || getDirectMediaUrls(post, kontaktIdFallback);
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
-  const isSidecar = postType === "sidecar" && mediaUrls.length > 1;
-  const hasVideo = postType === "video" && mediaUrls.length > 0;
-  const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
+  const isSidecar = postType === "sidecar" && post.media_urls && post.media_urls.length > 1;
+  const hasVideo = postType === "video" && post.media_urls && post.media_urls.length > 0;
+  
+  // Log the lead ID information
+  console.log("🚀 Post ID:", post.id, "Lead ID:", post.lead_id || kontaktIdFallback, "Raw post:", post);
 
   return (
     <motion.div
@@ -116,33 +64,55 @@ export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProp
 
       <div className="flex gap-4 items-start group relative">
         <div className="relative">
-          <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", postTypeColor)}>
-            {getPostTypeIcon(post.media_type || post.type || post.post_type)}
+          <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", 
+            postType === "video" ? "bg-cyan-50 border-cyan-200" :
+            postType === "image" ? "bg-purple-50 border-purple-200" :
+            postType === "sidecar" ? "bg-amber-50 border-amber-200" :
+            "bg-gray-50 border-gray-200"
+          )}>
+            {postType === "video" ? <Video className="h-5 w-5 text-cyan-500" /> :
+             postType === "image" ? <Image className="h-5 w-5 text-purple-500" /> :
+             postType === "sidecar" ? <MessageCircle className="h-5 w-5 text-amber-500" /> :
+             <Heart className="h-5 w-5 text-gray-500" />}
           </div>
         </div>
 
         <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-200" style={{ height: "100%" }} />
         <div className="absolute left-8 top-4 w-4 h-[2px] bg-gray-200" />
 
-        <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>
+        <Card className={cn("flex-1 p-4 text-sm overflow-hidden",
+          postType === "video" ? "bg-cyan-50 border-cyan-200" :
+          postType === "image" ? "bg-purple-50 border-purple-200" :
+          postType === "sidecar" ? "bg-amber-50 border-amber-200" :
+          "bg-gray-50 border-gray-200"
+        )}>
           <div className="flex gap-6">
-            {mediaUrls.length > 0 ? (
+            {post.media_urls && post.media_urls.length > 0 ? (
               <div className="w-1/3 min-w-[200px]">
-                <MediaDisplay mediaUrls={mediaUrls} hasVideo={hasVideo} isSidecar={isSidecar} />
+                <MediaDisplay 
+                  mediaUrls={post.media_urls} 
+                  hasVideo={hasVideo} 
+                  isSidecar={isSidecar} 
+                />
               </div>
-            ) : (
-              <p className="text-red-500">⚠️ Keine Medien gefunden!</p>
-            )}
+            ) : null}
 
             <div className="flex-1 min-w-0">
               <PostHeader
                 timestamp={post.timestamp || post.posted_at || ""}
                 type={post.type || post.post_type || ""}
-                postTypeColor={postTypeColor}
+                postTypeColor={postType === "video" ? "text-cyan-500" :
+                             postType === "image" ? "text-purple-500" :
+                             postType === "sidecar" ? "text-amber-500" :
+                             "text-gray-500"}
                 id={post.id}
               />
 
-              <PostContent content={post.content} caption={post.caption} hashtags={post.hashtags} />
+              <PostContent 
+                content={post.content} 
+                caption={post.caption} 
+                hashtags={post.hashtags} 
+              />
 
               <PostMetadata
                 likesCount={post.likesCount || post.likes_count}
