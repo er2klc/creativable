@@ -15,6 +15,12 @@ export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | 
 
 export type SocialMediaPostRaw = Overwrite<Tables<"social_media_posts">, {
   post_type: PostType;
+  timestamp?: string;
+  caption?: string | null;
+  likesCount?: number;
+  commentsCount?: number;
+  videoUrl?: string;
+  type?: string;
 }>;
 
 // Important: We extend the base lead type from Supabase and override specific properties
@@ -35,4 +41,13 @@ export type LeadWithRelations = Overwrite<Tables<"leads">, {
   social_media_posts_count?: number | null;
   social_media_tagged_users?: Json;
   social_media_mentioned_users?: Json;
+  archive_reason?: string | null;
+  birth_date?: string | null;
+  city?: string | null;
+  company_name?: string | null;
+  contact_type?: string | null;
+  created_at?: string | null;
+  current_company_name?: string | null;
+  email?: string | null;
+  website?: string | null;
 }>;
