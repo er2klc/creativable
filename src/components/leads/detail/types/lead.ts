@@ -1,33 +1,12 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
-
-export interface Message {
-  id: string;
-  content: string;
-  lead_id: string | null;
-  platform: string;
-  read: boolean;
-  sent_at: string | null;
-  user_id: string;
-  created_at: string;
-}
-
-export interface Note {
-  id: string;
-  content: string;
-  lead_id: string;
-  user_id: string;
-  color?: string;
-  created_at: string;
-  updated_at: string | null;
-  metadata?: Record<string, any>;
-}
+import { Note } from "@/components/leads/detail/types/lead";
 
 export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
 
-export interface SocialMediaPostRaw {
+export interface SocialMediaPost {
   id: string;
-  lead_id: string | null;
+  lead_id: string;
   platform: string;
   type: string;
   post_type: PostType;
@@ -65,15 +44,14 @@ export interface SocialMediaPostRaw {
   local_media_paths: string[] | null;
 }
 
-export type LeadWithRelations = Omit<Tables<"leads">, "platform" | "notes" | "social_media_posts"> & {
+export type LeadWithRelations = Tables<"leads"> & {
   platform: Platform;
-  messages: Message[];
+  messages: Tables<"messages">[];
   tasks: Tables<"tasks">[];
   notes: Note[];
   lead_files: Tables<"lead_files">[];
-  social_media_posts?: SocialMediaPostRaw[];
-  linkedin_posts?: Tables<"linkedin_posts">[];
   parent_id?: string | null;
   level?: number | null;
   avatar_url?: string | null;
+  social_media_posts?: SocialMediaPost[];
 };
