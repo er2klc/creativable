@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Pencil, Save, X } from "lucide-react";
+import { Pencil, Save, X, Trash2 } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -140,6 +140,14 @@ export const TimelineItemCard = ({
             className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <Pencil className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+          </button>
+        )}
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
           </button>
         )}
       </div>

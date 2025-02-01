@@ -6,12 +6,14 @@ import { motion } from "framer-motion";
 
 interface TimelineItemProps {
   item: TimelineItemType;
-  onDelete?: () => void;
+  onDelete?: (noteId: string) => void;
 }
 
 export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
   const isOutdated = item.type === 'appointment' && 
     (item.status === 'cancelled' || item.metadata?.status === 'outdated');
+
+  const canDelete = onDelete && (item.type === 'note' || item.type === 'phase_change');
 
   return (
     <motion.div
@@ -58,7 +60,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
           content={item.content}
           metadata={item.metadata}
           status={item.status}
-          onDelete={onDelete}
+          onDelete={canDelete ? () => onDelete(item.id) : undefined}
           id={item.id}
           created_at={item.created_at}
         />
