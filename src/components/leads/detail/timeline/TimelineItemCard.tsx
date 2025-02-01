@@ -1,416 +1,80 @@
-import { useState } from "react";
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Check, Save, X, Trash2, Edit, Mic } from "lucide-react";
-import { useSettings } from "@/hooks/use-settings";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { DocumentPreview } from "@/components/elevate/platform/detail/DocumentPreview";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { TimelineItem } from "./TimelineUtils";
+import { TimelineItemIcon } from "./TimelineItemIcon";
+import { TimelineItemDate } from "./components/TimelineItemDate";
+import { TimelineItemStatus } from "./components/TimelineItemStatus";
+import { TimelineItemActions } from "./components/TimelineItemActions";
 
 interface TimelineItemCardProps {
-  type: string;
-  content: string;
-  metadata?: {
-    dueDate?: string;
-    fileName?: string;
-    fileType?: string;
-    fileSize?: number;
-    filePath?: string;
-    status?: 'completed' | 'cancelled' | 'outdated';
-    completedAt?: string;
-    cancelledAt?: string;
-    updatedAt?: string;
-    oldDate?: string;
-    newDate?: string;
-    type?: string;
-    oldStatus?: string;
-    newStatus?: string;
-    last_edited_at?: string;
-  };
-  status?: string;
+  item: TimelineItem;
   onDelete?: () => void;
-  id?: string;
-  created_at?: string;
-  isCompleted?: boolean;
 }
 
-export const TimelineItemCard = ({ 
-  type,
-  content,
-  metadata,
-  status,
-  onDelete,
-  id,
-  created_at,
-  isCompleted
-}: TimelineItemCardProps) => {
-  const { settings } = useSettings();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(content);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-
-  const isImage = type === 'file_upload' && 
-    metadata?.fileType?.toLowerCase().match(/^(image\/jpeg|image\/png|image\/gif|image\/webp)$/);
-
-  const handleTaskComplete = async () => {
-    if (!id) return;
-    
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ 
-          completed: !isCompleted,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast.success(
-        isCompleted
-          ? (settings?.language === "en" ? "Task uncompleted" : "Aufgabe nicht erledigt")
-          : (settings?.language === "en" ? "Task completed! 🎉" : "Aufgabe erledigt! 🎉")
-      );
-    } catch (error) {
-      console.error('Error updating task:', error);
-      toast.error(
-        settings?.language === "en"
-          ? "Error updating task"
-          : "Fehler beim Aktualisieren der Aufgabe"
-      );
+export const TimelineItemCard = ({ item, onDelete }: TimelineItemCardProps) => {
+  const getCardClassName = () => {
+    switch (item.type) {
+      case "task":
+        return "border-l-4 border-blue-500";
+      case "note":
+        return "border-l-4 border-green-500";
+      case "phase_change":
+        return "border-l-4 border-yellow-500";
+      case "file_upload":
+        return "border-l-4 border-purple-500";
+      default:
+        return "border-l-4 border-gray-500";
     }
   };
 
-  const handleSave = async () => {
-    if (!id || type !== 'note') return;
-    
-    setIsSaving(true);
-    try {
-      const { error } = await supabase
-        .from('notes')
-        .update({ 
-          content: editedContent,
-          metadata: {
-            ...metadata,
-            last_edited_at: new Date().toISOString()
-          }
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setIsEditing(false);
-      toast.success(
-        settings?.language === "en" 
-          ? "Note updated successfully" 
-          : "Notiz erfolgreich aktualisiert"
-      );
-    } catch (error) {
-      console.error('Error updating note:', error);
-      toast.error(
-        settings?.language === "en"
-          ? "Error updating note"
-          : "Fehler beim Aktualisieren der Notiz"
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const startRecording = () => {
-    if (!('webkitSpeechRecognition' in window)) {
-      toast.error(
-        settings?.language === "en"
-          ? "Speech recognition is not supported in your browser"
-          : "Spracherkennung wird in Ihrem Browser nicht unterstützt"
-      );
-      return;
-    }
-
-    const recognition = new (window as any).webkitSpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = settings?.language === "en" ? 'en-US' : 'de-DE';
-
-    recognition.onstart = () => {
-      setIsRecording(true);
-      toast.success(
-        settings?.language === "en"
-          ? "Recording started..."
-          : "Aufnahme gestartet..."
-      );
-    };
-
-    recognition.onresult = (event: any) => {
-      let interimTranscript = '';
-      let finalTranscript = '';
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-        }
-      }
-
-      if (finalTranscript) {
-        setEditedContent(prev => prev + (prev ? ' ' : '') + finalTranscript);
-      }
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
-      setIsRecording(false);
-      toast.error(
-        settings?.language === "en"
-          ? "Error during speech recognition"
-          : "Fehler bei der Spracherkennung"
-      );
-    };
-
-    recognition.onend = () => {
-      setIsRecording(false);
-      toast.success(
-        settings?.language === "en"
-          ? "Recording stopped"
-          : "Aufnahme beendet"
-      );
-    };
-
-    recognition.start();
-    return recognition;
-  };
-
-  const stopRecording = () => {
-    if (window.recognition) {
-      window.recognition.stop();
-    }
-    setIsRecording(false);
-  };
-
-  const handleDeleteFile = async () => {
-    if (!metadata?.filePath || !id) return;
-    
-    try {
-      // Delete from storage
-      const { error: storageError } = await supabase.storage
-        .from('documents')
-        .remove([metadata.filePath]);
-
-      if (storageError) throw storageError;
-
-      // Delete from database
-      const { error: dbError } = await supabase
-        .from('lead_files')
-        .delete()
-        .eq('id', id);
-
-      if (dbError) throw dbError;
-
-      toast.success(
-        settings?.language === "en" 
-          ? "File deleted successfully" 
-          : "Datei erfolgreich gelöscht"
-      );
-
-      if (onDelete) {
-        onDelete();
-      }
-    } catch (error) {
-      console.error('Error deleting file:', error);
-      toast.error(
-        settings?.language === "en"
-          ? "Error deleting file"
-          : "Fehler beim Löschen der Datei"
-      );
-    }
-  };
-
-  const renderContent = () => {
-    if (isEditing && type === 'note') {
-      return (
-        <div className="space-y-2">
-          <Textarea
-            value={editedContent}
-            onChange={(e) => setEditedContent(e.target.value)}
-            className="min-h-[100px] w-full"
-          />
-          <div className="flex gap-2 justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setIsEditing(false);
-                setEditedContent(content);
-              }}
-            >
-              <X className="h-4 w-4 mr-1" />
-              {settings?.language === "en" ? "Cancel" : "Abbrechen"}
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={isSaving || editedContent.trim() === content.trim()}
-            >
-              <Save className="h-4 w-4 mr-1" />
-              {settings?.language === "en" ? "Save" : "Speichern"}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={isRecording ? stopRecording : startRecording}
-              className={isRecording ? "bg-red-50 text-red-600" : ""}
-            >
-              <Mic className={`h-4 w-4 ${isRecording ? 'text-red-500' : ''}`} />
-            </Button>
+  const getItemContent = () => {
+    switch (item.type) {
+      case "task":
+        return (
+          <div>
+            <h4 className="font-semibold">Task: {item.content}</h4>
+            <p>Due Date: {item.due_date}</p>
           </div>
-        </div>
-      );
-    }
-
-    if (isImage && metadata?.filePath) {
-      const imageUrl = supabase.storage
-        .from('documents')
-        .getPublicUrl(metadata.filePath).data.publicUrl;
-
-      return (
-        <div className="relative group">
-          <div 
-            className="cursor-pointer" 
-            onClick={() => setShowPreview(true)}
-          >
-            <div className={`whitespace-pre-wrap break-words ${isCompleted ? 'line-through text-gray-500' : ''}`}>
-              {content}
-            </div>
-            <img 
-              src={imageUrl} 
-              alt={content}
-              className="mt-2 max-h-32 rounded-lg object-contain"
-            />
+        );
+      case "note":
+        return (
+          <div>
+            <h4 className="font-semibold">Note: {item.content}</h4>
           </div>
-          {showPreview && (
-            <DocumentPreview
-              document={{
-                id,
-                name: content,
-                url: imageUrl,
-                file_type: metadata.fileType
-              }}
-              open={showPreview}
-              onOpenChange={setShowPreview}
-              onDelete={handleDeleteFile}
-            />
-          )}
-          <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            {type === 'task' && !isCompleted && (
-              <button
-                onClick={handleTaskComplete}
-                className="p-1 hover:bg-gray-100 rounded"
-              >
-                <div className="w-4 h-4 border border-gray-400 rounded flex items-center justify-center hover:border-green-500 hover:bg-green-50">
-                  <Check className="h-3 w-3 text-transparent hover:text-green-500" />
-                </div>
-              </button>
-            )}
-            {type === 'note' && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="p-1 hover:bg-gray-100 rounded"
-              >
-                <Edit className="h-4 w-4 text-gray-500 hover:text-blue-600" />
-              </button>
-            )}
-            {(type === 'phase_change' || type === 'file_upload') && onDelete && (
-              <button
-                onClick={type === 'file_upload' ? handleDeleteFile : onDelete}
-                className="p-1 hover:bg-gray-100 rounded"
-              >
-                <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
-              </button>
-            )}
+        );
+      case "phase_change":
+        return (
+          <div>
+            <h4 className="font-semibold">Phase Change</h4>
+            <p>{item.metadata?.oldStatus} to {item.metadata?.newStatus}</p>
           </div>
-        </div>
-      );
+        );
+      case "file_upload":
+        return (
+          <div>
+            <h4 className="font-semibold">File Uploaded: {item.content}</h4>
+          </div>
+        );
+      default:
+        return null;
     }
-
-    return (
-      <div className="relative group">
-        <div className={`whitespace-pre-wrap break-words ${isCompleted ? 'line-through text-gray-500' : ''}`}>
-          {content}
-        </div>
-        <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          {type === 'task' && !isCompleted && (
-            <button
-              onClick={handleTaskComplete}
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              <div className="w-4 h-4 border border-gray-400 rounded flex items-center justify-center hover:border-green-500 hover:bg-green-50">
-                <Check className="h-3 w-3 text-transparent hover:text-green-500" />
-              </div>
-            </button>
-          )}
-          {type === 'note' && (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              <Edit className="h-4 w-4 text-gray-500 hover:text-blue-600" />
-            </button>
-          )}
-          {(type === 'phase_change' || type === 'file_upload') && onDelete && (
-            <button
-              onClick={type === 'file_upload' ? handleDeleteFile : onDelete}
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderMetadata = () => {
-    if (metadata?.last_edited_at) {
-      return (
-        <div className="text-xs text-gray-500 mt-2">
-          {settings?.language === "en" ? "Created" : "Erstellt"}: {format(new Date(created_at || ''), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
-          <br />
-          {settings?.language === "en" ? "Last edited" : "Zuletzt bearbeitet"}: {format(new Date(metadata.last_edited_at), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
-        </div>
-      );
-    }
-    
-    if (type === 'task' && isCompleted && metadata?.completedAt) {
-      return (
-        <div className="text-xs text-gray-500 mt-2">
-          {settings?.language === "en" ? "Completed" : "Erledigt"}: {format(new Date(metadata.completedAt), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
-        </div>
-    );
-    }
-    return null;
-  };
-
-  const getBorderColor = () => {
-    if (status === 'completed') return 'border-green-500';
-    if (status === 'cancelled') return 'border-red-500';
-    if (type === 'phase_change') return 'border-blue-500';
-    if (type === 'note') return 'border-yellow-400';
-    if (type === 'message') return 'border-purple-500';
-    if (type === 'task') return 'border-orange-500';
-    if (type === 'file_upload') return 'border-cyan-500';
-    if (type === 'contact_created') return 'border-emerald-500';
-    return 'border-gray-200';
   };
 
   return (
-    <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}>
-      {renderContent()}
-      {renderMetadata()}
+    <div className="relative flex gap-4 group">
+      <TimelineItemIcon type={item.type} />
+      <Card className={cn("flex-1 p-4", getCardClassName())}>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 space-y-1">
+            {getItemContent()}
+          </div>
+          <TimelineItemActions item={item} onDelete={onDelete} />
+        </div>
+        <div className="mt-2 flex items-center justify-between">
+          <TimelineItemDate date={item.created_at} />
+          <TimelineItemStatus item={item} />
+        </div>
+      </Card>
     </div>
   );
 };
