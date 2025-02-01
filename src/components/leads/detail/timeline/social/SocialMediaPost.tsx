@@ -27,9 +27,9 @@ interface SocialMediaPost {
   tagged_profiles?: string[] | null;
   posted_at: string | null;
   timestamp?: string | null;
-  media_urls: string[] | null; // ✅ NUR für Bilder aus Supabase
+  media_urls: string[] | null;
   media_type: string | null;
-  video_url?: string | null; // ✅ Nur für Videos aus leads
+  video_url?: string | null;
   videoUrl?: string | null;
   images?: string[] | null;
   hashtags?: string[] | null;
@@ -38,6 +38,7 @@ interface SocialMediaPost {
 
 interface SocialMediaPostProps {
   post: SocialMediaPost;
+  kontaktIdFallback?: string;
 }
 
 const getPostTypeColor = (type: string) => {
@@ -108,7 +109,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const mediaUrls = getMediaUrls();
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = postType === "sidecar" && mediaUrls.length > 1;
-  const hasVideo = postType === "video" && mediaUrls.length > 0;
+  const hasVideo = postType === "video";
   const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
   return (
