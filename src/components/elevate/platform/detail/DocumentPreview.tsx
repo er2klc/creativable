@@ -1,24 +1,34 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, FileSpreadsheet, FileText } from "lucide-react";
+import { Download, FileSpreadsheet, FileText, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface DocumentPreviewProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   document: {
+    id?: string;
     name: string;
     url: string;
     file_type?: string;
     preview_url?: string;
   };
+  onDelete?: () => void;
 }
 
-export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPreviewProps) => {
+export const DocumentPreview = ({ open, onOpenChange, document, onDelete }: DocumentPreviewProps) => {
   const fileType = document.file_type?.toLowerCase() || document.name.split('.').pop()?.toLowerCase();
   const previewUrl = document.preview_url || document.url;
 
   const isImage = fileType?.match(/^(jpg|jpeg|png|gif|webp)$/);
+
+  const handleDelete = async () => {
+    if (onDelete) {
+      onDelete();
+      onOpenChange(false);
+    }
+  };
 
   const renderPreview = () => {
     // Handle images with direct preview
@@ -87,11 +97,23 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
       <DialogContent className="max-w-5xl w-full p-0" hideClose>
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-semibold">{document.name}</h3>
-          <Button asChild variant="outline" size="sm">
-            <a href={previewUrl} download target="_blank" rel="noopener noreferrer">
-              <Download className="h-4 w-4" />
-            </a>
-          </Button>
+          <div className="flex gap-2">
+            {onDelete && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleDelete}
+                className="text-red-600 hover:text-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            <Button asChild variant="outline" size="sm">
+              <a href={previewUrl} download target="_blank" rel="noopener noreferrer">
+                <Download className="h-4 w-4" />
+              </a>
+            </Button>
+          </div>
         </div>
         <div className="p-4">
           {renderPreview()}
