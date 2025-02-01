@@ -9,11 +9,14 @@ interface SocialMediaTimelineProps {
 }
 
 export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdFallback }: SocialMediaTimelineProps) => {
-  const sortedPosts = [...posts].sort((a, b) => {
-    const dateA = a.timestamp ? new Date(a.timestamp) : new Date(a.posted_at || '');
-    const dateB = b.timestamp ? new Date(b.timestamp) : new Date(b.posted_at || '');
-    return dateB.getTime() - dateA.getTime();
-  });
+  // Filter out temp posts and sort the remaining posts
+  const sortedPosts = [...posts]
+    .filter(post => !post.id.startsWith('temp-')) // Filter out temp posts
+    .sort((a, b) => {
+      const dateA = a.timestamp ? new Date(a.timestamp) : new Date(a.posted_at || '');
+      const dateB = b.timestamp ? new Date(b.timestamp) : new Date(b.posted_at || '');
+      return dateB.getTime() - dateA.getTime();
+    });
 
   return (
     <div className="relative space-y-6">
@@ -23,7 +26,7 @@ export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdF
             key={post.id} 
             post={{
               ...post,
-              post_type: post.post_type as PostType // Ensure correct type casting
+              post_type: post.post_type as PostType
             }}
             kontaktIdFallback={kontaktIdFallback}
           />
