@@ -23,6 +23,12 @@ interface LinkedInTimelineProps {
 }
 
 export const LinkedInTimeline = ({ posts }: LinkedInTimelineProps) => {
+  console.log("🔍 DEBUG - LinkedInTimeline render:", {
+    postsCount: posts.length,
+    firstPost: posts[0],
+    timestamp: new Date().toISOString()
+  });
+
   const formatDate = (date: string | undefined) => {
     if (!date) return '';
     return format(new Date(date), 'MMM yyyy', { locale: de });

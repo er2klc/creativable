@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { TimelineHeader } from "./TimelineHeader";
-import { TimelineItem } from "./TimelineItem";
-import { SocialMediaTimeline } from "./social/SocialMediaTimeline";
-import { LinkedInTimeline } from "./social/LinkedInTimeline";
+import { TimelineHeader } from "../timeline/TimelineHeader";
+import { TimelineItem } from "../timeline/TimelineItem";
+import { SocialMediaTimeline } from "../timeline/social/SocialMediaTimeline";
+import { LinkedInTimeline } from "../timeline/social/LinkedInTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "../types/lead";
-import { TimelineItem as TimelineItemType } from "./TimelineUtils";
+import { TimelineItem as TimelineItemType } from "../timeline/TimelineUtils";
 import { useSocialMediaPosts } from "../hooks/useSocialMediaPosts";
 
 interface LeadTimelineProps {
@@ -18,20 +18,16 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
   const { data: socialMediaPosts } = useSocialMediaPosts(lead.id);
   
-  // Überprüfe, ob LinkedIn Posts vorhanden sind
-  const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
-  console.log("LinkedIn Posts vorhanden:", hasLinkedInPosts, lead.linkedin_posts);
-  console.log("LinkedIn Posts:", lead.linkedin_posts);
-console.log("LinkedIn Posts Typ:", typeof lead.linkedin_posts);
-console.log("Lead ID:", lead.id);
-console.log("Lead Plattform:", lead.platform);
+  console.log("🔍 DEBUG - LeadTimeline render:", {
+    leadId: lead.id,
+    hasLinkedInPosts: Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0,
+    linkedInPostsData: lead.linkedin_posts,
+    activeTimeline,
+    timestamp: new Date().toISOString()
+  });
 
-  
-  // Überprüfe, ob Social Media Posts vorhanden sind
+  const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
   const hasSocialPosts = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
-  console.log("Social Media Posts vorhanden:", hasSocialPosts, lead.social_media_posts);
-  
-  // Zeige die Social Timeline an, wenn entweder LinkedIn oder andere Social Media Posts vorhanden sind
   const showSocialTimeline = hasLinkedInPosts || hasSocialPosts;
 
   const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
@@ -110,6 +106,11 @@ console.log("Lead Plattform:", lead.platform);
 
   return (
     <div className="space-y-4">
+      {/* Debug output */}
+      <div className="text-xs text-gray-500 mb-2">
+        Debug: LinkedIn Posts Available: {hasLinkedInPosts ? 'Yes' : 'No'} ({lead.linkedin_posts?.length || 0})
+      </div>
+      
       <TimelineHeader 
         title={activeTimeline === 'activities' ? 
           (settings?.language === "en" ? "Activities" : "Aktivitäten") :

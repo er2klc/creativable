@@ -34,7 +34,8 @@ export default function LeadDetail() {
           messages (*),
           tasks (*),
           notes (*),
-          lead_files (*)
+          lead_files (*),
+          linkedin_posts (*)
         `)
         .eq("id", leadId)
         .maybeSingle();
@@ -47,6 +48,12 @@ export default function LeadDetail() {
       if (!data) {
         throw new Error("Lead not found");
       }
+
+      console.log("🔍 DEBUG - Lead data from query:", {
+        id: data.id,
+        linkedin_posts: data.linkedin_posts,
+        timestamp: new Date().toISOString()
+      });
 
       return data as LeadWithRelations;
     },
