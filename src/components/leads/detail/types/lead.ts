@@ -42,18 +42,18 @@ export interface SocialMediaPostRaw {
   kontaktIdFallback?: string;
 }
 
-export interface LeadWithRelations extends Tables<"leads"> {
-  messages: {
+export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
+  messages: Array<{
     id: string;
     content: string;
     created_at: string;
     sent_at?: string;
-    platform?: string;
+    platform: string;
     lead_id: string;
     read: boolean;
     user_id: string;
-  }[];
-  tasks: {
+  }>;
+  tasks: Array<{
     id: string;
     title: string;
     created_at: string;
@@ -65,8 +65,8 @@ export interface LeadWithRelations extends Tables<"leads"> {
     meeting_type?: string;
     lead_id: string;
     user_id: string;
-  }[];
-  notes: {
+  }>;
+  notes: Array<{
     id: string;
     content: string;
     created_at: string;
@@ -76,8 +76,8 @@ export interface LeadWithRelations extends Tables<"leads"> {
     status?: string;
     lead_id: string;
     user_id: string;
-  }[];
-  lead_files: {
+  }>;
+  lead_files: Array<{
     id: string;
     file_name: string;
     file_path: string;
@@ -86,6 +86,8 @@ export interface LeadWithRelations extends Tables<"leads"> {
     created_at: string;
     lead_id: string;
     user_id: string;
-  }[];
+  }>;
+  linkedin_posts?: any[];
+  social_media_posts?: any[];
   platform: Platform;
 }
