@@ -7,7 +7,7 @@ import { Check, Save, X, Trash2, Edit, Mic } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { DocumentPreview } from "../../elevate/platform/detail/DocumentPreview";
+import { DocumentPreview } from "@/components/elevate/platform/detail/DocumentPreview";
 
 interface TimelineItemCardProps {
   type: string;
