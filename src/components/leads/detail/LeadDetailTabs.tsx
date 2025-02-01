@@ -8,7 +8,6 @@ import { MessageTab } from "./tabs/MessageTab";
 import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
 import { LeadFileUpload } from "./files/LeadFileUpload";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { CalendarIcon } from "lucide-react";
 
 interface LeadDetailTabsProps {
@@ -37,9 +36,9 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const handleTabChange = (value: string) => {
     if (value === "appointments") {
       setAppointmentDialogOpen(true);
-    } else {
-      setSelectedTab(value);
+      return;
     }
+    setSelectedTab(value);
   };
 
   return (
@@ -101,7 +100,12 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
         <div className="space-y-4">
           <NewAppointmentDialog
             open={appointmentDialogOpen}
-            onOpenChange={setAppointmentDialogOpen}
+            onOpenChange={(open) => {
+              setAppointmentDialogOpen(open);
+              if (!open) {
+                setSelectedTab("notes");
+              }
+            }}
             initialSelectedDate={new Date()}
             defaultValues={{
               leadId: lead.id,
