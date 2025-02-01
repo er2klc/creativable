@@ -50,27 +50,11 @@ export const LeadKanbanView = ({
         // Update the lead's phase
         await updateLeadPhase.mutateAsync({ 
           leadId, 
-          phaseId: newPhaseId 
+          phaseId: newPhaseId,
+          oldPhaseName: oldPhase,
+          newPhaseName: newPhase
         });
 
-        // Create a note to track the phase change
-        const { error: noteError } = await supabase
-          .from('notes')
-          .insert({
-            lead_id: leadId,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-            content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
-            color: '#E9D5FF',
-            metadata: {
-              type: 'phase_change',
-              oldPhase,
-              newPhase
-            }
-          });
-
-        if (noteError) {
-          console.error("Error creating phase change note:", noteError);
-        }
       } catch (error) {
         console.error("Error updating lead phase:", error);
       }
@@ -125,7 +109,7 @@ export const LeadKanbanView = ({
       onDragEnd={handleDragEnd}
     >
       <div className="mt-6 border-t border-gray-200 shadow-sm pt-6">
-    <div className="flex-1 overflow-x-auto no-scrollbar relative h-[calc(100vh)]">
+        <div className="flex-1 overflow-x-auto no-scrollbar relative h-[calc(100vh)]">
           <div 
             className="flex gap-4 px-4 h-full" 
             style={{ minWidth: 'fit-content' }}
