@@ -45,9 +45,14 @@ interface SocialMediaPostProps {
 export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProps) => {
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = postType === "sidecar" && post.media_urls && post.media_urls.length > 1;
-  const hasVideo = postType === "video" && post.media_urls && post.media_urls.length > 0;
+  const hasVideo = (postType === "video" || post.video_url || post.videoUrl) && (post.media_urls?.length > 0 || post.video_url || post.videoUrl);
   
-  console.log("🚀 Post ID:", post.id, "Lead ID:", post.lead_id || kontaktIdFallback, "Raw post:", post);
+  console.log("🎥 Video Post Debug:", { 
+    postType, 
+    hasVideo, 
+    videoUrl: post.video_url || post.videoUrl,
+    mediaUrls: post.media_urls 
+  });
 
   return (
     <motion.div
@@ -85,15 +90,15 @@ export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProp
           "bg-gray-50 border-gray-200"
         )}>
           <div className="flex gap-6">
-            {post.media_urls && post.media_urls.length > 0 ? (
+            {(post.media_urls?.length > 0 || post.video_url || post.videoUrl) && (
               <div className="w-1/3 min-w-[200px]">
                 <MediaDisplay 
-                  mediaUrls={post.media_urls} 
-                  hasVideo={hasVideo} 
-                  isSidecar={isSidecar} 
+                  mediaUrls={post.media_urls || [post.video_url || post.videoUrl].filter(Boolean) as string[]}
+                  hasVideo={hasVideo}
+                  isSidecar={isSidecar}
                 />
               </div>
-            ) : null}
+            )}
 
             <div className="flex-1 min-w-0">
               <PostHeader
