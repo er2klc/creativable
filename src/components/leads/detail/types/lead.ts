@@ -1,67 +1,58 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 
-export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
-
-export interface SocialMediaPost {
-  id: string;
-  lead_id: string;
-  platform: string;
-  type: string;
-  post_type: PostType;
-  content: string | null;
-  caption: string | null;
-  likesCount: number | null;
-  commentsCount: number | null;
-  url: string | null;
-  location: string | null;
-  locationName?: string | null;
-  mentioned_profiles: string[] | null;
-  tagged_profiles: string[] | null;
-  posted_at: string | null;
-  timestamp: string | null;
-  media_urls: string[] | null;
-  media_type: string | null;
-  video_url: string | null;
-  videoUrl?: string | null;
-  images?: string[] | null;
-  hashtags?: string[] | null;
-  likes_count?: number | null;
-  comments_count?: number | null;
-  taggedUsers?: any[];
-  first_comment?: string | null;
-  engagement_count?: number | null;
-  bucket_path?: string | null;
-  media_processing_status?: string;
-  processing_progress?: number;
-  error_message?: string | null;
-  current_file?: string | null;
-  local_media_urls?: string[] | null;
-  storage_status?: string;
-  media_count?: number;
-  local_video_path: string | null;
-  local_media_paths: string[] | null;
-}
-
-export type SocialMediaPostRaw = SocialMediaPost;
-
-export interface Note {
+export type Note = {
   id: string;
   content: string;
   created_at: string;
-  metadata?: any;
+  metadata?: {
+    type?: string;
+    oldStatus?: string;
+    newStatus?: string;
+  };
   status?: string;
-}
-
-export type LeadWithRelations = Tables<"leads"> & {
-  platform: Platform;
-  messages: Tables<"messages">[];
-  tasks: Tables<"tasks">[];
-  notes: Note[];
-  lead_files: Tables<"lead_files">[];
-  parent_id?: string | null;
-  level?: number | null;
-  avatar_url?: string | null;
-  social_media_posts?: SocialMediaPost[];
-  linkedin_posts?: any[];
 };
+
+export type PostType = "image" | "video" | "carousel" | "text";
+
+export type SocialMediaPost = {
+  id: string;
+  lead_id: string;
+  platform: string;
+  post_type: PostType;
+  content: string;
+  likes_count?: number;
+  comments_count?: number;
+  url: string;
+  posted_at: string;
+  created_at: string;
+  media_urls?: string[];
+  media_type?: string;
+  video_url?: string;
+  bucket_path?: string;
+  current_file?: string;
+  engagement_count?: number;
+  error_message?: string;
+  first_comment?: string;
+  hashtags?: string[];
+  local_media_paths?: string[];
+  local_media_urls?: string[];
+  local_video_path?: string;
+  media_count?: number;
+  media_processing_status?: string;
+  processing_progress?: number;
+  storage_status?: string;
+  tagged_users?: any[];
+  timestamp?: string;
+  caption?: string;
+  location?: string;
+};
+
+export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "social_media_posts"> {
+  notes: Note[];
+  tasks?: Tables<"tasks">[];
+  messages?: Tables<"messages">[];
+  lead_files?: Tables<"lead_files">[];
+  linkedin_posts?: Tables<"linkedin_posts">[];
+  social_media_posts?: SocialMediaPost[];
+}

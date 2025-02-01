@@ -7,20 +7,18 @@ interface MediaDisplayProps {
   mediaUrls: string[];
   hasVideo: boolean;
   isSidecar: boolean;
-  videoUrl?: string;
 }
 
-export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar, videoUrl }: MediaDisplayProps) => {
+export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
   const [publicUrls, setPublicUrls] = useState<string[]>([]);
 
   useEffect(() => {
-    if (hasVideo && videoUrl) {
-      setPublicUrls([videoUrl]);
-    } else if (mediaUrls?.length > 0) {
+    if (mediaUrls?.length > 0) {
+      console.log("Using media URLs directly:", mediaUrls);
       setPublicUrls(mediaUrls);
     }
-  }, [mediaUrls, hasVideo, videoUrl]);
+  }, [mediaUrls]);
 
   if (!publicUrls.length) return null;
 
@@ -31,7 +29,7 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar, videoUrl }: Media
           <div className="flex">
             {publicUrls.map((url, index) => (
               <div key={index} className="flex-[0_0_100%] min-w-0">
-                {url.includes('.mp4') || hasVideo ? (
+                {url.includes('.mp4') ? (
                   <video
                     controls
                     className="w-full h-auto object-contain max-h-[400px]"
@@ -74,11 +72,11 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar, videoUrl }: Media
 
   return (
     <div className="relative rounded-lg overflow-hidden">
-      {hasVideo || publicUrls[0]?.includes('.mp4') ? (
+      {hasVideo ? (
         <video
           controls
           className="w-full h-auto object-contain max-h-[400px]"
-          src={videoUrl || publicUrls[0]}
+          src={publicUrls[0]}
         />
       ) : (
         <img
