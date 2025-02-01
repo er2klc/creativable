@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { TimelineItem } from "./TimelineUtils";
+import { TimelineItem, TimelineItemType } from "../types/lead";
 import { TimelineItemIcon } from "./TimelineItemIcon";
 import { TimelineItemDate } from "./components/TimelineItemDate";
 import { TimelineItemStatus } from "./components/TimelineItemStatus";
@@ -33,7 +33,7 @@ export const TimelineItemCard = ({ item, onDelete }: TimelineItemCardProps) => {
         return (
           <div>
             <h4 className="font-semibold">Task: {item.content}</h4>
-            <p>Due Date: {item.due_date}</p>
+            {item.metadata?.dueDate && <p>Due Date: {item.metadata.dueDate}</p>}
           </div>
         );
       case "note":
@@ -68,11 +68,11 @@ export const TimelineItemCard = ({ item, onDelete }: TimelineItemCardProps) => {
           <div className="flex-1 space-y-1">
             {getItemContent()}
           </div>
-          <TimelineItemActions item={item} onDelete={onDelete} />
+          {onDelete && <TimelineItemActions onDelete={onDelete} />}
         </div>
         <div className="mt-2 flex items-center justify-between">
-          <TimelineItemDate date={item.created_at} />
-          <TimelineItemStatus item={item} />
+          <TimelineItemDate created_at={item.created_at} />
+          <TimelineItemStatus type={item.type} status={item.metadata?.status} metadata={item.metadata} />
         </div>
       </Card>
     </div>
