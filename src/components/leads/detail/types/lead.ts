@@ -28,6 +28,7 @@ export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | 
 
 export interface SocialMediaPostRaw {
   id: string;
+  lead_id: string | null;
   platform: string;
   type: string;
   post_type: PostType;
@@ -44,8 +45,6 @@ export interface SocialMediaPostRaw {
   timestamp: string | null;
   media_urls: string[] | null;
   media_type: string | null;
-  local_video_path: string | null;
-  local_media_paths: string[] | null;
   video_url: string | null;
   videoUrl?: string | null;
   images?: string[] | null;
@@ -63,6 +62,8 @@ export interface SocialMediaPostRaw {
   local_media_urls?: string[] | null;
   storage_status?: string;
   media_count?: number;
+  local_video_path: string | null;
+  local_media_paths: string[] | null;
 }
 
 export type LeadWithRelations = Omit<Tables<"leads">, "notes" | "social_media_posts" | "platform"> & {
@@ -73,4 +74,7 @@ export type LeadWithRelations = Omit<Tables<"leads">, "notes" | "social_media_po
   lead_files: Tables<"lead_files">[];
   social_media_posts?: SocialMediaPostRaw[];
   linkedin_posts?: Tables<"linkedin_posts">[];
+  parent_id?: string | null;
+  level?: number | null;
+  avatar_url?: string | null;
 };
