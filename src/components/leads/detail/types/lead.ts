@@ -1,4 +1,5 @@
 import { Tables } from "@/integrations/supabase/types";
+import { Platform } from "@/config/platforms";
 
 export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
 
@@ -15,7 +16,7 @@ export interface SocialMediaPostRaw {
   platform?: string;
   type?: string;
   post_type: PostType;
-  content: string | null;
+  content: string;
   caption?: string | null;
   likesCount?: number | null;
   commentsCount?: number | null;
@@ -41,17 +42,18 @@ export interface SocialMediaPostRaw {
   kontaktIdFallback?: string;
 }
 
-export type LeadWithRelations = Tables<"leads"> & {
-  notes?: Array<{
+export interface LeadWithRelations extends Tables<"leads"> {
+  messages: {
     id: string;
     content: string;
     created_at: string;
-    metadata?: {
-      type?: string;
-    };
-    status?: string;
-  }>;
-  tasks?: Array<{
+    sent_at?: string;
+    platform?: string;
+    lead_id: string;
+    read: boolean;
+    user_id: string;
+  }[];
+  tasks: {
     id: string;
     title: string;
     created_at: string;
@@ -61,26 +63,29 @@ export type LeadWithRelations = Tables<"leads"> & {
     updated_at?: string;
     color?: string;
     meeting_type?: string;
-  }>;
-  messages?: Array<{
+    lead_id: string;
+    user_id: string;
+  }[];
+  notes: {
     id: string;
     content: string;
     created_at: string;
-    sent_at?: string;
-    platform?: string;
-  }>;
-  lead_files?: Array<{
+    metadata?: {
+      type?: string;
+    };
+    status?: string;
+    lead_id: string;
+    user_id: string;
+  }[];
+  lead_files: {
     id: string;
     file_name: string;
     file_path: string;
     file_type: string;
     file_size: number;
     created_at: string;
-  }>;
-  linkedin_posts?: any[];
-  social_media_posts?: any[];
-  stats?: {
-    totalMembers: number;
-    admins: number;
-  };
+    lead_id: string;
+    user_id: string;
+  }[];
+  platform: Platform;
 }

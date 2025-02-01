@@ -36,7 +36,12 @@ const getPostTypeIcon = (type: string) => {
   }
 };
 
-export const SocialMediaPost = ({ post }: { post: SocialMediaPostRaw }) => {
+interface SocialMediaPostProps {
+  post: SocialMediaPostRaw;
+  kontaktIdFallback?: string;
+}
+
+export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProps) => {
   const getMediaUrls = () => {
     const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
 
