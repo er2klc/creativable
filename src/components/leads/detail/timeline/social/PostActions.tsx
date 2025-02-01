@@ -1,5 +1,5 @@
+import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link as LinkIcon } from "lucide-react";
 
 interface PostActionsProps {
   url: string | null;
@@ -9,14 +9,16 @@ export const PostActions = ({ url }: PostActionsProps) => {
   if (!url) return null;
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      className="w-full"
-      onClick={() => window.open(url, "_blank")}
-    >
-      <LinkIcon className="h-4 w-4 mr-2" />
-      Zum Beitrag
-    </Button>
+    <div className="px-4 py-2 flex justify-end">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-blue-500 hover:text-blue-600"
+        onClick={() => window.open(url, '_blank')}
+      >
+        <ExternalLink className="h-4 w-4 mr-2" />
+        View Original
+      </Button>
+    </div>
   );
 };
