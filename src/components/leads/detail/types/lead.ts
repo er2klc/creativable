@@ -66,7 +66,7 @@ export interface SocialMediaPostRaw {
   local_media_paths: string[] | null;
 }
 
-export type LeadWithRelations = Omit<Tables<"leads">, "notes" | "social_media_posts"> & {
+export type LeadWithRelations = Omit<Tables<"leads">, "notes"> & {
   platform: Platform;
   messages: Message[];
   tasks: Tables<"tasks">[];

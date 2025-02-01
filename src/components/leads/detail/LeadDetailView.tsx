@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadDetailHeader } from "./LeadDetailHeader";
 import { useLeadSubscription } from "./hooks/useLeadSubscription";
-import { LeadWithRelations, Message, Note, SocialMediaPostRaw } from "./types/lead";
+import { LeadWithRelations, Message, Note } from "./types/lead";
 import { LeadDetailContent } from "./components/LeadDetailContent";
 import { useLeadMutations } from "./hooks/useLeadMutations";
 import { Platform } from "@/config/platforms";
@@ -54,10 +54,9 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       // Transform and type the data correctly
       const transformedData: LeadWithRelations = {
         ...data,
-        platform: data.platform as Platform,
         messages: (data.messages || []).map((msg: any): Message => ({
           ...msg,
-          created_at: msg.sent_at
+          created_at: msg.sent_at // Use sent_at as created_at if needed
         })),
         tasks: data.tasks || [],
         notes: (data.notes || []).map((note: any): Note => ({
@@ -66,14 +65,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         })),
         lead_files: data.lead_files || [],
         linkedin_posts: data.linkedin_posts || [],
-        social_media_posts: data.social_media_posts ? 
-          (Array.isArray(data.social_media_posts) ? data.social_media_posts : [])
-            .map((post: any): SocialMediaPostRaw => ({
-              ...post,
-              type: post.type || post.post_type || 'post',
-              post_type: post.post_type || 'post'
-            }))
-          : []
+        platform: data.platform as Platform
       };
 
       return transformedData;
