@@ -26,6 +26,7 @@ interface TimelineItemCardProps {
     type?: string;
     oldStatus?: string;
     newStatus?: string;
+    last_edited_at?: string;
   };
   status?: string;
   onDelete?: () => void;
@@ -46,6 +47,19 @@ export const TimelineItemCard = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Function to determine border color based on type and status
+  const getBorderColor = () => {
+    if (status === 'completed') return 'border-green-500';
+    if (status === 'cancelled') return 'border-red-500';
+    if (type === 'phase_change') return 'border-blue-500';
+    if (type === 'note') return 'border-yellow-400';
+    if (type === 'message') return 'border-purple-500';
+    if (type === 'task') return 'border-orange-500';
+    if (type === 'file_upload') return 'border-cyan-500';
+    if (type === 'contact_created') return 'border-emerald-500';
+    return 'border-gray-200';
+  };
 
   const handleSave = async () => {
     if (!id || type !== 'note') return;
@@ -146,12 +160,7 @@ export const TimelineItemCard = ({
   };
 
   return (
-    <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border group relative
-      ${status === 'completed' ? 'border-green-500' : 
-        status === 'cancelled' ? 'border-red-500' : 
-        type === 'phase_change' ? 'border-blue-500' : 
-        'border-gray-200'}`}
-    >
+    <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}>
       {renderContent()}
       {renderMetadata()}
     </div>
