@@ -32,7 +32,7 @@ interface SocialMediaPost {
   videoUrl?: string | null;
   hashtags?: string[] | null;
   lead_id?: string;
-  imageCount?: number;
+  media_urls: string[] | null;
 }
 
 interface SocialMediaPostProps {
@@ -72,11 +72,12 @@ const getDirectMediaUrls = (
 ): string[] => {
   const baseUrl = "https://agqaitxlmxztqyhpcjau.supabase.co/storage/v1/object/public/social-media-files";
   
-  // Debug log for lead_id
-  console.log("🚀 Post ID:", post.id, "Lead ID:", post.lead_id || kontaktIdFallback);
-  
   // Use post.lead_id as Kontakt-ID or the fallback
-  const kontaktId = post.lead_id || kontaktIdFallback || "default_kontakt";
+  const leadId = post.lead_id || kontaktIdFallback;
+  
+  // Debug log for lead_id
+  console.log("🚀 Post ID:", post.id, "Lead ID:", leadId);
+  
   const postId = post.id;
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
 
@@ -84,16 +85,16 @@ const getDirectMediaUrls = (
     const videoUrl = post.video_url || post.videoUrl;
     return videoUrl ? [videoUrl] : [];
   } else if (postType === "image") {
-    return [`${baseUrl}/${kontaktId}/${postId}_0.jpg`];
+    return [`${baseUrl}/${leadId}/${postId}_0.jpg`];
   } else if (postType === "sidecar") {
-    const count = post.imageCount || 2;
-    return Array.from({ length: count }, (_, index) => `${baseUrl}/${kontaktId}/${postId}_${index}.jpg`);
+    const count = post.media_urls?.length || 2;
+    return Array.from({ length: count }, (_, index) => `${baseUrl}/${leadId}/${postId}_${index}.jpg`);
   }
   return [];
 };
 
 export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProps) => {
-  const mediaUrls = getDirectMediaUrls(post, kontaktIdFallback);
+  const mediaUrls = post.media_urls || getDirectMediaUrls(post, kontaktIdFallback);
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = postType === "sidecar" && mediaUrls.length > 1;
   const hasVideo = postType === "video" && mediaUrls.length > 0;
