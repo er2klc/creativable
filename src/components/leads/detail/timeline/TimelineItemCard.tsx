@@ -3,11 +3,12 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Check, Save, X, Trash2, Edit, Mic } from "lucide-react";
+import { Check, Save, X, Trash2, Edit, Mic, Calendar, RefreshCw } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DocumentPreview } from "@/components/elevate/platform/detail/DocumentPreview";
+import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
 
 interface TimelineItemCardProps {
   type: string;
@@ -52,6 +53,7 @@ export const TimelineItemCard = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showAppointmentDialog, setShowAppointmentDialog] = useState(false);
 
   const isImage = type === 'file_upload' && 
     metadata?.fileType?.toLowerCase().match(/^(image\/jpeg|image\/png|image\/gif|image\/webp)$/);
@@ -192,6 +194,11 @@ export const TimelineItemCard = ({
     setIsRecording(false);
   };
 
+  const handleEditAppointment = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowAppointmentDialog(true);
+  };
+
   const renderContent = () => {
     if (isEditing && type === 'note') {
       return (
@@ -276,6 +283,14 @@ export const TimelineItemCard = ({
                 </div>
               </button>
             )}
+            {type === 'task' && metadata?.meeting_type && (
+              <button
+                onClick={handleEditAppointment}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <RefreshCw className="h-4 w-4 text-gray-500 hover:text-blue-600" />
+              </button>
+            )}
             {type === 'note' && (
               <button
                 onClick={() => setIsEditing(true)}
@@ -311,6 +326,14 @@ export const TimelineItemCard = ({
               <div className="w-4 h-4 border border-gray-400 rounded flex items-center justify-center hover:border-green-500 hover:bg-green-50">
                 <Check className="h-3 w-3 text-transparent hover:text-green-500" />
               </div>
+            </button>
+          )}
+          {type === 'task' && metadata?.meeting_type && (
+            <button
+              onClick={handleEditAppointment}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <RefreshCw className="h-4 w-4 text-gray-500 hover:text-blue-600" />
             </button>
           )}
           {type === 'note' && (
@@ -368,9 +391,28 @@ export const TimelineItemCard = ({
   };
 
   return (
-    <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}>
-      {renderContent()}
-      {renderMetadata()}
-    </div>
+    <>
+      <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}>
+        {renderContent()}
+        {renderMetadata()}
+      </div>
+      
+      {showAppointmentDialog && type === 'task' && metadata?.meeting_type && (
+        <NewAppointmentDialog
+          open={showAppointmentDialog}
+          onOpenChange={setShowAppointmentDialog}
+          initialSelectedDate={metadata?.dueDate ? new Date(metadata.dueDate) : null}
+          appointmentToEdit={{
+            id: id,
+            leadId: metadata?.leadId,
+            time: format(new Date(metadata.dueDate), 'HH:mm'),
+            title: content,
+            color: metadata?.color || '#40E0D0',
+            meeting_type: metadata.meeting_type,
+            completed: isCompleted,
+          }}
+        />
+      )}
+    </>
   );
 };

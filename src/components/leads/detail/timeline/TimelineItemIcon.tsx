@@ -1,127 +1,54 @@
 import { 
-  MessageSquare, 
-  CheckSquare, 
-  StickyNote, 
-  Calendar,
-  FileText,
-  Bell,
-  Instagram,
-  Linkedin,
-  MessageCircle,
-  UserPlus,
-  ListTodo,
-  Send,
-  ArrowUpCircle,
-  Upload,
-  X,
-  Check,
-  Heart,
-  Clock,
-  ThumbsDown
+  FileText, MessageSquare, ClipboardList, GitCommit, 
+  Calendar, Phone, MapPin, Video, Users, BarChart, 
+  RefreshCw, Check, X 
 } from "lucide-react";
-import { TimelineItemType } from "./TimelineUtils";
+import { cn } from "@/lib/utils";
 
 interface TimelineItemIconProps {
-  type: TimelineItemType;
+  type: string;
   status?: string;
   platform?: string;
-  metadata?: {
-    type?: string;
-    oldStatus?: string;
-    newStatus?: string;
-  };
 }
 
-export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineItemIconProps) => {
+export const TimelineItemIcon = ({ type, status, platform }: TimelineItemIconProps) => {
   const getIcon = () => {
-    if (type === 'phase_change' && metadata?.type === 'status_change') {
-      switch(metadata.newStatus) {
-        case 'partner':
-          return <Heart className="h-4 w-4 text-white" />;
-        case 'customer':
-          return <UserPlus className="h-4 w-4 text-white" />;
-        case 'not_for_now':
-          return <Clock className="h-4 w-4 text-white" />;
-        case 'no_interest':
-          return <ThumbsDown className="h-4 w-4 text-white" />;
-        default:
-          return <ArrowUpCircle className="h-4 w-4 text-white" />;
-      }
+    if (type === 'task' && status === 'completed') {
+      return <Check className="h-4 w-4 text-green-500" />;
+    }
+    
+    if (type === 'task' && status === 'cancelled') {
+      return <X className="h-4 w-4 text-red-500" />;
     }
 
     switch (type) {
-      case 'contact_created':
-        return <UserPlus className="h-4 w-4 text-white" />;
-      case 'message':
-        if (platform === 'instagram') return <Instagram className="h-4 w-4 text-white" />;
-        if (platform === 'linkedin') return <Linkedin className="h-4 w-4 text-white" />;
-        if (platform === 'whatsapp') return <MessageCircle className="h-4 w-4 text-white" />;
-        return <MessageSquare className="h-4 w-4 text-white" />;
-      case 'task':
-        return status === 'completed' ? 
-          <Check className="h-4 w-4 text-white" /> : 
-          <ListTodo className="h-4 w-4 text-white" />;
-      case 'appointment':
-        return status === 'cancelled' ? 
-          <X className="h-4 w-4 text-white" /> : 
-          <Calendar className="h-4 w-4 text-white" />;
       case 'note':
-        return <StickyNote className="h-4 w-4 text-white" />;
-      case 'phase_change':
-        return <ArrowUpCircle className="h-4 w-4 text-white" />;
-      case 'reminder':
-        return <Bell className="h-4 w-4 text-white" />;
-      case 'file_upload':
-        return <FileText className="h-4 w-4 text-white" />;
-      case 'presentation':
-        return <Send className="h-4 w-4 text-white" />;
-      default:
-        return <MessageSquare className="h-4 w-4 text-white" />;
-    }
-  };
-
-  const getIconColor = () => {
-    if (type === 'phase_change' && metadata?.type === 'status_change') {
-      switch(metadata.newStatus) {
-        case 'partner':
-          return 'bg-[#8B5CF6]'; // Vivid Purple
-        case 'customer':
-          return 'bg-[#D946EF]'; // Magenta Pink
-        case 'not_for_now':
-          return 'bg-[#F2FCE2]'; // Soft Green
-        case 'no_interest':
-          return 'bg-[#ea384c]'; // Red
-        default:
-          return 'bg-gray-500';
-      }
-    }
-
-    switch (type) {
-      case 'contact_created':
-        return 'bg-green-500';
+        return <FileText className="h-4 w-4" />;
       case 'message':
-        return 'bg-blue-500';
+        return <MessageSquare className="h-4 w-4" />;
       case 'task':
-        return status === 'completed' ? 'bg-green-500' : 'bg-cyan-500';
-      case 'appointment':
-        return status === 'cancelled' ? 'bg-red-500' : 'bg-orange-500';
-      case 'note':
-        return 'bg-yellow-500';
+        if (status === 'phone_call') return <Phone className="h-4 w-4" />;
+        if (status === 'on_site') return <MapPin className="h-4 w-4" />;
+        if (status === 'zoom') return <Video className="h-4 w-4" />;
+        if (status === 'initial_meeting') return <Users className="h-4 w-4" />;
+        if (status === 'presentation') return <BarChart className="h-4 w-4" />;
+        if (status === 'follow_up') return <RefreshCw className="h-4 w-4" />;
+        return <Calendar className="h-4 w-4" />;
       case 'phase_change':
-        return 'bg-purple-500';
-      case 'reminder':
-        return 'bg-red-500';
+        return <GitCommit className="h-4 w-4" />;
       case 'file_upload':
-        return 'bg-gray-500';
-      case 'presentation':
-        return 'bg-indigo-500';
+        return <FileText className="h-4 w-4" />;
       default:
-        return 'bg-gray-500';
+        return <ClipboardList className="h-4 w-4" />;
     }
   };
 
   return (
-    <div className={`z-10 flex items-center justify-center w-8 h-8 rounded-full ${getIconColor()}`}>
+    <div className={cn(
+      "w-8 h-8 rounded-full bg-white border-2 border-gray-400 flex items-center justify-center",
+      status === 'completed' && "border-green-500",
+      status === 'cancelled' && "border-red-500"
+    )}>
       {getIcon()}
     </div>
   );
