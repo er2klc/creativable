@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
@@ -6,7 +7,7 @@ import { toast } from "sonner";
 export function usePipelineManagement(initialPipelineId: string | null) {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
-  const [selectedPipelineId, setSelectedPipelineId] = React.useState<string | null>(initialPipelineId);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(initialPipelineId);
 
   const { data: pipelines = [] } = useQuery({
     queryKey: ["pipelines"],
@@ -65,7 +66,7 @@ export function usePipelineManagement(initialPipelineId: string | null) {
     },
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (initialPipelineId) {
       setSelectedPipelineId(initialPipelineId);
     } else if (pipelines.length > 0) {

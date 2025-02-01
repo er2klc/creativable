@@ -15,7 +15,7 @@ export type Note = {
 
 export type PostType = "image" | "video" | "carousel" | "text";
 
-export type SocialMediaPostRaw = {
+export type SocialMediaPost = {
   id: string;
   lead_id: string;
   platform: string;
@@ -24,7 +24,7 @@ export type SocialMediaPostRaw = {
   likes_count?: number;
   comments_count?: number;
   url: string;
-  posted_at?: string;
+  posted_at: string;
   created_at: string;
   media_urls?: string[];
   media_type?: string;
@@ -41,7 +41,6 @@ export type SocialMediaPostRaw = {
   media_count?: number;
   media_processing_status?: string;
   processing_progress?: number;
-  metadata?: any;
   storage_status?: string;
   tagged_users?: any[];
   timestamp?: string;
@@ -55,5 +54,5 @@ export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "soci
   messages?: Tables<"messages">[];
   lead_files?: Tables<"lead_files">[];
   linkedin_posts?: Tables<"linkedin_posts">[];
-  social_media_posts?: SocialMediaPostRaw[];
+  social_media_posts?: SocialMediaPost[];
 }
