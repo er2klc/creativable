@@ -177,11 +177,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
         rel="noopener noreferrer"
         className="flex items-center space-x-2 text-sm bg-gray-100 p-2 rounded-lg hover:bg-gray-200"
       >
-        <img 
-          src={user.profile_pic_url} 
-          alt={user.username} 
-          className="w-8 h-8 rounded-full"
-        />
+        
         <span>{user.full_name || user.username}</span>
         {user.is_verified && <span className="text-blue-500">✔️</span>}
       </a>
