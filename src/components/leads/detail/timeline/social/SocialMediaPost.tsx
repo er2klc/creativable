@@ -34,6 +34,8 @@ interface SocialMediaPost {
   images?: string[] | null;
   hashtags?: string[] | null;
   lead_id?: string;
+  // NEU:
+  taggedUsers?: any[];
 }
 
 interface SocialMediaPostProps {
