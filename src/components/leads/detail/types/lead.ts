@@ -8,7 +8,7 @@ export interface Message {
   lead_id: string | null;
   platform: string;
   read: boolean;
-  sent_at: string | null;
+  sent_at?: string | null;
   user_id: string;
   created_at: string;
 }
@@ -53,9 +53,19 @@ export interface SocialMediaPostRaw {
   likes_count?: number | null;
   comments_count?: number | null;
   taggedUsers?: any[];
+  first_comment?: string | null;
+  engagement_count?: number | null;
+  bucket_path?: string | null;
+  media_processing_status?: string;
+  processing_progress?: number;
+  error_message?: string | null;
+  current_file?: string | null;
+  local_media_urls?: string[] | null;
+  storage_status?: string;
+  media_count?: number;
 }
 
-export type LeadWithRelations = Omit<Tables<"leads">, "notes" | "social_media_posts"> & {
+export type LeadWithRelations = Omit<Tables<"leads">, "notes" | "social_media_posts" | "platform"> & {
   platform: Platform;
   messages: Message[];
   tasks: Tables<"tasks">[];
