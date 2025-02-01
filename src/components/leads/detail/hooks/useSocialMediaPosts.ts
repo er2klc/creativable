@@ -56,7 +56,7 @@ export const useSocialMediaPosts = (leadId: string) => {
               : [];
         }
         
-        const videoUrl = post.video_url || matchingLeadPost?.videoUrl;
+        const videoUrl = matchingLeadPost?.videoUrl || post.video_url || null;
 
         return {
           ...post,
