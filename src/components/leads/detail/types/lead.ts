@@ -1,6 +1,28 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 
+export interface Message {
+  id: string;
+  content: string;
+  lead_id: string | null;
+  platform: string;
+  read: boolean;
+  sent_at: string | null;
+  user_id: string;
+  created_at: string;
+}
+
+export interface Note {
+  id: string;
+  content: string;
+  lead_id: string;
+  user_id: string;
+  color?: string;
+  created_at: string;
+  updated_at: string | null;
+  metadata?: Record<string, any>;
+}
+
 export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
 
 export interface SocialMediaPostRaw {
@@ -31,40 +53,11 @@ export interface SocialMediaPostRaw {
   comments_count?: number | null;
 }
 
-export type LeadWithRelations = Tables<"leads"> & {
+export type LeadWithRelations = Omit<Tables<"leads">, "notes"> & {
   platform: Platform;
-  messages: Tables<"messages">[];
+  messages: Message[];
   tasks: Tables<"tasks">[];
-  notes: Tables<"notes">[];
-  lead_files: Tables<"lead_files">[];
-  social_media_posts?: any[];
-  linkedin_posts?: Tables<"linkedin_posts">[];
-};
-
-export interface Message {
-  id: string;
-  content: string;
-  lead_id: string;
-  platform: string;
-  read: boolean;
-  sent_at: string;
-  user_id: string;
-  created_at: string; // Fehlendes Feld
-}
-
-export interface Note {
-  id: string;
-  content: string;
-  lead_id: string;
-  user_id: string;
-  created_at: string; // Fehlendes Feld
-}
-
-export type LeadWithRelations = Tables<"leads"> & {
-  platform: Platform;
-  messages: Message[]; // Angepasster Typ
-  tasks: Tables<"tasks">[];
-  notes: Note[]; // Angepasster Typ
+  notes: Note[];
   lead_files: Tables<"lead_files">[];
   social_media_posts?: any[];
   linkedin_posts?: Tables<"linkedin_posts">[];
