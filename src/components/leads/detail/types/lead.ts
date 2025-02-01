@@ -1,57 +1,50 @@
-import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
+import { Tables } from "@/integrations/supabase/types";
 
-export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
+export type PostType = 'image' | 'video' | 'carousel' | 'Sidecar' | 'post';
 
 export interface SocialMediaPostRaw {
   id: string;
-  platform: string;
-  type: string;
-  post_type: PostType;
-  content: string | null;
-  caption: string | null;
-  likesCount: number | null;
-  commentsCount: number | null;
-  url: string | null;
-  location: string | null;
-  locationName?: string | null;
-  mentioned_profiles: string[] | null;
-  tagged_profiles: string[] | null;
-  posted_at: string | null;
-  timestamp: string | null;
-  media_urls: string[] | null;
-  media_type: string | null;
-  local_video_path: string | null;
-  local_media_paths: string[] | null;
-  video_url: string | null;
-  videoUrl?: string | null;
-  images?: string[] | null;
+  platform?: string;
+  type?: string;
+  post_type?: PostType;
+  content: string;
+  caption?: string;
+  likesCount?: number;
+  commentsCount?: number;
+  likes_count?: number;
+  comments_count?: number;
+  url?: string;
+  location?: string;
+  locationName?: string;
+  mentioned_profiles?: string[];
+  tagged_profiles?: string[];
+  posted_at?: string;
+  timestamp?: string;
+  media_urls?: string[];
+  media_type?: string;
+  video_url?: string;
+  local_video_path?: string;
+  local_media_paths?: string[];
   hashtags?: string[] | null;
-  likes_count?: number | null;
-  comments_count?: number | null;
-  taggedUsers?: { username: string }[];
 }
 
 export interface Note {
   id: string;
   content: string;
   created_at: string;
-  metadata?: {
-    type?: string;
-  };
-  status?: string;
-  lead_id: string;
-  user_id: string;
+  color?: string;
+  metadata?: any;
 }
 
 export interface Message {
   id: string;
   content: string;
   created_at: string;
-  sent_at?: string;
   platform: string;
-  lead_id: string;
+  sent_at?: string;
   read: boolean;
+  lead_id: string;
   user_id: string;
 }
 
@@ -60,7 +53,9 @@ export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
   tasks: Tables<"tasks">[];
   notes: Note[];
   lead_files: Tables<"lead_files">[];
-  social_media_posts?: any[];
-  linkedin_posts?: Tables<"linkedin_posts">[];
   platform: Platform;
+  parent_id?: string | null;
+  level?: number | null;
+  avatar_url?: string | null;
+  social_media_posts?: any[];
 }

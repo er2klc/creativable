@@ -15,40 +15,37 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const mediaUrls = post.media_urls || [];
-  const hasVideo = post.video_url || post.media_type?.toLowerCase() === 'video';
-  const isSidecar = post.post_type === 'Sidecar';
+  const mediaType = post.media_type || 'image';
 
   return (
     <Card className="overflow-hidden">
       <div className="space-y-4">
-        <PostHeader 
-          type={post.post_type} 
-          postTypeColor={post.post_type === 'video' ? 'text-blue-500' : 'text-gray-500'}
-          id={post.id}
-        />
+        <PostHeader post={post} />
 
         {mediaUrls.length > 0 && (
           <MediaDisplay 
             mediaUrls={mediaUrls} 
-            hasVideo={hasVideo}
-            isSidecar={isSidecar}
+            mediaType={mediaType} 
           />
         )}
 
         <PostContent
           content={post.content || ''}
           caption={post.caption || ''}
-          hashtags={post.hashtags || []}
+          isExpanded={isExpanded}
+          onToggleExpand={() => setIsExpanded(!isExpanded)}
         />
 
         <PostMetadata
-          likesCount={post.likesCount || post.likes_count || 0}
-          commentsCount={post.commentsCount || post.comments_count || 0}
           location={post.location || ''}
-          locationName={post.locationName}
+          timestamp={post.timestamp || post.posted_at || ''}
+          hashtags={post.hashtags || []}
         />
 
-        <PostActions url={post.url} />
+        <PostActions
+          likesCount={post.likesCount || post.likes_count || 0}
+          commentsCount={post.commentsCount || post.comments_count || 0}
+        />
       </div>
     </Card>
   );
