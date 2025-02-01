@@ -10,7 +10,7 @@ interface SocialMediaTimelineProps {
 export const SocialMediaTimeline = ({ posts, linkedInPosts, platform }: SocialMediaTimelineProps) => {
   // Filter out temp posts and sort the remaining posts
   const sortedPosts = [...posts]
-    .filter(post => !post.id.startsWith('temp-')) // Filter out temp posts
+    .filter(post => !post.id.startsWith('temp-'))
     .sort((a, b) => {
       const dateA = a.timestamp ? new Date(a.timestamp) : new Date(a.posted_at || '');
       const dateB = b.timestamp ? new Date(b.timestamp) : new Date(b.posted_at || '');

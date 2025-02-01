@@ -3,6 +3,28 @@ import { Tables } from "@/integrations/supabase/types";
 
 export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
 
+export interface Note {
+  id: string;
+  content: string;
+  created_at: string;
+  metadata?: {
+    type?: string;
+  };
+  status?: string;
+  color?: string;
+}
+
+export interface Message {
+  id: string;
+  content: string;
+  created_at: string;
+  sent_at?: string;
+  platform: string;
+  lead_id: string;
+  read: boolean;
+  user_id: string;
+}
+
 export interface SocialMediaPostRaw {
   id: string;
   platform: string;
@@ -32,29 +54,7 @@ export interface SocialMediaPostRaw {
   taggedUsers?: { username: string }[];
 }
 
-export interface Note {
-  id: string;
-  content: string;
-  created_at: string;
-  metadata?: {
-    type?: string;
-  };
-  status?: string;
-  color?: string;
-}
-
-export interface Message {
-  id: string;
-  content: string;
-  created_at: string;
-  sent_at?: string;
-  platform: string;
-  lead_id: string;
-  read: boolean;
-  user_id: string;
-}
-
-export interface LeadWithRelations extends Tables<"leads"> {
+export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
   messages: Message[];
   tasks: Tables<"tasks">[];
   notes: Note[];
