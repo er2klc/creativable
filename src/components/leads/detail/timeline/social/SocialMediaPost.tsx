@@ -130,10 +130,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           </div>
         </div>
 
-        <div
-          className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-400 z-0"
-          style={{ height: "100%" }}
-        />
+       <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400 z-0" />
         <div className="absolute left-8 top-4 w-4 h-[2px] bg-gray-400" />
 
         <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>
