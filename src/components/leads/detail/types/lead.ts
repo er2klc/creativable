@@ -2,11 +2,15 @@ import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 import { Json } from "@/integrations/supabase/types/auth";
 
+// Hilfstyp: Überschreibt in T alle Eigenschaften, die in U definiert sind.
+export type Overwrite<T, U> = Omit<T, keyof U> & U;
+
 export interface Message {
   id: string;
   content: string;
   lead_id: string | null;
-  platform: string;
+  // Hier wird nun der Typ Platform verwendet, anstatt string
+  platform: Platform;
   sent_at: string | null;
   read: boolean;
   user_id: string;
@@ -66,10 +70,11 @@ export interface SocialMediaPostRaw {
   local_media_paths: string[] | null;
 }
 
-export type LeadWithRelations = Tables<"leads"> & {
+export type LeadWithRelations = Overwrite<Tables<"leads">, {
   platform: Platform;
   messages: Message[];
   tasks: Tables<"tasks">[];
+  // Hier wird der ursprüngliche (z. B. string-)Typ der Spalte 'notes' komplett ersetzt durch Note[]
   notes: Note[];
   lead_files: Tables<"lead_files">[];
   social_media_posts?: SocialMediaPostRaw[];
@@ -77,4 +82,4 @@ export type LeadWithRelations = Tables<"leads"> & {
   parent_id?: string | null;
   level?: number | null;
   avatar_url?: string | null;
-};
+}>;
