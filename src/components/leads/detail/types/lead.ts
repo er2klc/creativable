@@ -50,7 +50,7 @@ export interface SocialMediaPostRaw {
   hashtags?: string[] | null;
   likes_count?: number | null;
   comments_count?: number | null;
-  taggedUsers?: string[];
+  taggedUsers?: any[];
   first_comment?: string | null;
   engagement_count?: number | null;
   bucket_path?: string | null;
@@ -65,7 +65,7 @@ export interface SocialMediaPostRaw {
   local_media_paths: string[] | null;
 }
 
-export type LeadWithRelations = Omit<Tables<"leads">, "platform" | "notes" | "social_media_posts"> & {
+export type LeadWithRelations = Omit<Tables<"leads">, "platform" | "notes"> & {
   platform: Platform;
   messages: Message[];
   tasks: Tables<"tasks">[];
