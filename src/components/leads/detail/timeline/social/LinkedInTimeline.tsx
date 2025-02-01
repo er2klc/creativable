@@ -107,8 +107,8 @@ export const LinkedInTimeline = ({ posts }: LinkedInTimelineProps) => {
                 {getIcon(post.post_type)}
               </div>
               
-              {/* Verbindungslinie zur Card */}
-              <div className="absolute left-8 top-4 w-4 h-0.5 bg-gray-400" />
+              {/* Verbindungslinie zur Card - angepasst um vom Icon zur Karte zu gehen */}
+              <div className="absolute left-8 top-[1.1rem] w-4 h-0.5 bg-gray-400" />
               
               <Card className={cn(
                 "flex-1 p-4 border rounded-lg",
