@@ -13,7 +13,7 @@ export type Note = {
   status?: string;
 };
 
-export type PostType = "image" | "video" | "carousel" | "text" | "sidecar";
+export type PostType = "image" | "video" | "carousel" | "text" | "sidecar" | "post";
 
 export type SocialMediaPost = {
   id: string;
@@ -26,7 +26,7 @@ export type SocialMediaPost = {
   url: string;
   posted_at: string;
   created_at: string;
-  media_urls?: string[];
+  media_urls: string[];
   media_type?: string;
   video_url?: string;
   bucket_path?: string;

@@ -23,7 +23,7 @@ export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdF
       {/* Linie */}
       <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-400 z-0" />
       {/* Posts */}
-      <div className="relative space-y-6">
+      <div className="space-y-6">
         {sortedPosts.length > 0 ? (
           sortedPosts.map((post) => (
             <SocialMediaPost 
