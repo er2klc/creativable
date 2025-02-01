@@ -2,14 +2,14 @@ import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 import { Json } from "@/integrations/supabase/types/auth";
 
-// Hilfstyp: Überschreibt in T alle Eigenschaften, die in U definiert sind.
+// Helper type: Overwrites in T all properties that are defined in U
 export type Overwrite<T, U> = Omit<T, keyof U> & U;
 
 export interface Message {
   id: string;
   content: string;
   lead_id: string | null;
-  platform: Platform; // Verwendung des korrekten Typs
+  platform: Platform;
   sent_at: string | null;
   read: boolean;
   user_id: string;
@@ -27,7 +27,7 @@ export interface Note {
   metadata: Json;
 }
 
-export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
+export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar" | "experience" | "education";
 
 export interface SocialMediaPostRaw {
   id: string;
@@ -69,10 +69,7 @@ export interface SocialMediaPostRaw {
   local_media_paths: string[] | null;
 }
 
-// Wichtig: Wir überschreiben hier die in Tables<"leads"> vorhandenen Eigenschaften.
-// Dadurch wird beispielsweise das Feld "notes" (das in der DB vermutlich als string definiert ist)
-// vollständig durch den Typ Note[] ersetzt.
-// Ebenfalls wird "level" nun als required (aber nullable) deklariert, sodass es nicht mehr optional ist.
+// Important: We override here the properties that exist in Tables<"leads">
 export type LeadWithRelations = Overwrite<Tables<"leads">, {
   platform: Platform;
   messages: Message[];
@@ -82,6 +79,6 @@ export type LeadWithRelations = Overwrite<Tables<"leads">, {
   social_media_posts?: SocialMediaPostRaw[];
   linkedin_posts?: Tables<"linkedin_posts">[];
   parent_id?: string | null;
-  level: number | null; // jetzt als required (aber kann null sein)
+  level: number | null;
   avatar_url?: string | null;
 }>;

@@ -28,7 +28,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Invalid lead ID");
       }
 
-      // First, get the lead data
       const { data: leadData, error: leadError } = await supabase
         .from("leads")
         .select("*, messages(*), tasks(*), notes(*), lead_files(*), linkedin_posts(*)")
@@ -50,7 +49,9 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           name: leadData.name,
           linkedInId: leadData.linkedin_id,
           position: leadData.position,
-          company: leadData.current_company_name
+          company: leadData.current_company_name,
+          experience: leadData.experience,
+          educationSummary: leadData.education_summary
         });
 
         // Get LinkedIn posts for this lead
@@ -71,9 +72,17 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
               id: post.id,
               postedAt: post.posted_at,
               createdAt: post.created_at,
-              type: post.post_type
+              type: post.post_type,
+              content: post.content,
+              position: post.position,
+              company: post.company,
+              school: post.school,
+              degree: post.degree
             });
           });
+
+          // Assign the posts to leadData
+          leadData.linkedin_posts = linkedInPosts;
         }
       }
 
