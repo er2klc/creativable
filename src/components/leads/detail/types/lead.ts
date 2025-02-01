@@ -57,7 +57,7 @@ export type LeadWithRelations = {
   tasks: Task[];
   notes: Note[];
   lead_files: LeadFile[];
-  linkedin_posts?: LinkedInPost[];
+  linkedin_posts: LinkedInPost[];
   social_media_posts?: SocialMediaPostRaw[];
   parent_id?: string | null;
   level?: number | null;
