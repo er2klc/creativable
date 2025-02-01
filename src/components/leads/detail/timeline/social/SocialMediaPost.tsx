@@ -132,7 +132,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
         <div
           className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-400 z-0"
-           style={{ minHeight: "100vh" }}
+          style={{ height: "100%" }}
         />
         <div className="absolute left-8 top-4 w-4 h-[2px] bg-gray-400" />
 
