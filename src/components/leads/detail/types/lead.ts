@@ -7,7 +7,7 @@ export interface Message {
   lead_id: string | null;
   platform: string;
   read: boolean;
-  sent_at?: string | null;
+  sent_at: string | null;
   user_id: string;
   created_at: string;
 }
