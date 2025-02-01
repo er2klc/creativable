@@ -43,7 +43,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Lead not found");
       }
 
-      return data as LeadWithRelations;
+      return data as unknown as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
     retry: 3,
@@ -67,7 +67,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         </DialogHeader>
 
         {lead && (
-          <LeadDetailContent
+          <LeadDetailContent 
             lead={lead}
             onUpdateLead={updateLeadMutation.mutate}
             isLoading={isLoading}
