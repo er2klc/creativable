@@ -2,6 +2,9 @@ import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 import { Json } from "@/integrations/supabase/types/auth";
 
+// Helper type: Overwrites in T all properties that are defined in U
+export type Overwrite<T, U> = Omit<T, keyof U> & U;
+
 export type Message = Tables<"messages">;
 export type Note = Tables<"notes">;
 export type Task = Tables<"tasks">;
@@ -10,55 +13,37 @@ export type LinkedInPost = Tables<"linkedin_posts">;
 
 export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
 
-export type SocialMediaPostRaw = {
-  id: string;
-  lead_id: string | null;
-  platform: string;
+// Base type for social media posts that matches the database schema
+export type SocialMediaPostRaw = Tables<"social_media_posts"> & {
   post_type: PostType;
-  content: string | null;
-  likes_count: number | null;
-  comments_count: number | null;
-  url: string | null;
-  location: string | null;
-  mentioned_profiles: string[] | null;
-  tagged_profiles: string[] | null;
-  posted_at: string | null;
-  created_at: string | null;
-  metadata: Json | null;
-  tagged_users: Json | null;
-  media_urls: string[] | null;
-  media_type: string | null;
-  first_comment: string | null;
-  engagement_count: number | null;
-  video_url: string | null;
-  hashtags: string[] | null;
-  local_video_path: string | null;
-  local_media_paths: string[] | null;
-  bucket_path: string | null;
-  media_processing_status: string | null;
-  processing_progress: number | null;
-  error_message: string | null;
-  current_file: string | null;
-  local_media_urls: string[] | null;
-  storage_status: string | null;
-  media_count: number | null;
+  posted_at?: string | null;
   timestamp?: string | null;
+  caption?: string | null;
+  likes_count?: number | null;
+  comments_count?: number | null;
+  video_url?: string | null;
+  tagged_users?: Json | null;
+  media_urls?: string[] | null;
+  local_media_paths?: string[] | null;
+  bucket_path?: string | null;
+  media_processing_status?: string | null;
+  processing_progress?: number | null;
+  error_message?: string | null;
+  current_file?: string | null;
 };
 
+// Important: We extend the base lead type from Supabase and override specific properties
 export type LeadWithRelations = {
   id: string;
   user_id: string;
   name: string;
   platform: Platform;
-  industry: string;
-  pipeline_id: string;
-  phase_id: string;
   messages: Message[];
   tasks: Task[];
   notes: Note[];
   lead_files: LeadFile[];
-  linkedin_posts: LinkedInPost[];
   social_media_posts?: SocialMediaPostRaw[];
+  linkedin_posts?: LinkedInPost[];
   parent_id?: string | null;
   level?: number | null;
   avatar_url?: string | null;
@@ -95,14 +80,9 @@ export type LeadWithRelations = {
   follow_up_date?: string | null;
   last_interaction_date?: string | null;
   network_marketing_id?: string | null;
+  pipeline_id: string;
+  phase_id: string;
   status?: string | null;
+  industry: string;
   notes_text?: string | null;
-  last_action?: string | null;
-  last_action_date?: string | null;
-  last_social_media_scan?: string | null;
-  phone_number?: string | null;
-  updated_at?: string | null;
-  slug?: string | null;
-  usp?: string | null;
-  social_media_interests?: string[] | null;
 };
