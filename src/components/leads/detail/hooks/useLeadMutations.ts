@@ -10,8 +10,8 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
   const navigate = useNavigate();
   const { settings } = useSettings();
 
-  const updateLeadMutation = useMutation({
-    mutationFn: async (updates: Partial<LeadWithRelations>) => {
+   const updateLeadMutation = useMutation({
+    mutationFn: async (updates: Partial<Tables<"leads">>) => {  // <-- Typ geändert
       if (!leadId) throw new Error("Invalid lead ID");
 
       const { data, error } = await supabase
