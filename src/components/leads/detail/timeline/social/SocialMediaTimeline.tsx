@@ -19,24 +19,29 @@ export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdF
     });
 
   return (
-    <div className="relative space-y-6">
-      {sortedPosts.length > 0 ? (
-        sortedPosts.map((post) => (
-          <SocialMediaPost 
-            key={post.id} 
-            post={{
-              ...post,
-              post_type: post.post_type as PostType,
-              video_url: post.video_url || undefined
-            }}
-            kontaktIdFallback={kontaktIdFallback}
-          />
-        ))
-      ) : (
-        <div className="text-center text-muted-foreground py-4 ml-4">
-          Keine Social Media Aktivitäten vorhanden
-        </div>
-      )}
+    <div className="relative">
+      {/* Linie */}
+      <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-400 z-0" />
+      {/* Posts */}
+      <div className="relative space-y-6">
+        {sortedPosts.length > 0 ? (
+          sortedPosts.map((post, index) => (
+            <SocialMediaPost 
+              key={post.id} 
+              post={{
+                ...post,
+                post_type: post.post_type as PostType,
+                video_url: post.video_url || undefined
+              }}
+              kontaktIdFallback={kontaktIdFallback}
+            />
+          ))
+        ) : (
+          <div className="text-center text-muted-foreground py-4 ml-4">
+            Keine Social Media Aktivitäten vorhanden
+          </div>
+        )}
+      </div>
     </div>
   );
 };
