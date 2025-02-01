@@ -65,7 +65,7 @@ export const useSocialMediaPosts = (leadId: string) => {
           media_urls: mediaUrls,
           video_url: videoUrl,
           platform: "Instagram", // Default platform
-          post_type: post.post_type || "post" // Ensure post_type is set
+          post_type: (post.post_type || "post") as "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar"
         };
       });
 
