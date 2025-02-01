@@ -13,7 +13,8 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
   const isOutdated = item.type === 'appointment' && 
     (item.status === 'cancelled' || item.metadata?.status === 'outdated');
 
-  const canDelete = onDelete && (item.type === 'note' || item.type === 'phase_change');
+  // Only allow deletion of phase changes
+  const canDelete = onDelete && item.type === 'phase_change';
 
   return (
     <motion.div
