@@ -103,6 +103,24 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { updateLeadMutation, deleteLeadMutation } = useLeadMutations(leadId, onClose);
   useLeadSubscription(leadId);
 
+  // Handler for updating lead that checks if values have actually changed
+  const handleUpdateLead = (updates: Partial<Tables<"leads">>) => {
+    if (!lead) return;
+    
+    // Check if any values are actually different
+    const hasChanges = Object.entries(updates).some(([key, value]) => {
+      // Skip if the key doesn't exist in lead
+      if (!(key in lead)) return false;
+      // Compare the values
+      return lead[key as keyof typeof lead] !== value;
+    });
+
+    // Only trigger mutation if there are actual changes
+    if (hasChanges) {
+      updateLeadMutation.mutate(updates);
+    }
+  };
+
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg overflow-hidden">
@@ -110,7 +128,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           {lead && (
             <LeadDetailHeader
               lead={lead}
-              onUpdateLead={updateLeadMutation.mutate}
+              onUpdateLead={handleUpdateLead}
               onDeleteLead={() => deleteLeadMutation.mutate()}
             />
           )}
@@ -119,7 +137,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         {lead && (
           <LeadDetailContent 
             lead={lead}
-            onUpdateLead={updateLeadMutation.mutate}
+            onUpdateLead={handleUpdateLead}
             isLoading={isLoading}
           />
         )}
