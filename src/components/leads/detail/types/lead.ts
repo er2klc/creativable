@@ -23,7 +23,7 @@ export type SocialMediaPostRaw = {
   content: string;
   likes_count?: number;
   comments_count?: number;
-  url?: string;
+  url: string;
   posted_at?: string;
   created_at: string;
   media_urls?: string[];
@@ -46,9 +46,10 @@ export type SocialMediaPostRaw = {
   tagged_users?: any[];
   timestamp?: string;
   caption?: string;
+  location?: string;
 };
 
-export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
+export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "social_media_posts"> {
   notes: Note[];
   tasks?: Tables<"tasks">[];
   messages?: Tables<"messages">[];

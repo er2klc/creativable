@@ -36,7 +36,7 @@ interface TimelineItemCardProps {
 }
 
 export const TimelineItemCard = ({ 
-  type: itemType,
+  type,
   content,
   metadata,
   status,
@@ -49,7 +49,6 @@ export const TimelineItemCard = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
 
@@ -83,7 +82,7 @@ export const TimelineItemCard = ({
   };
 
   const handleSave = async () => {
-    if (!id || itemType !== 'note') return;
+    if (!id || type !== 'note') return;
     
     setIsSaving(true);
     try {
@@ -191,7 +190,7 @@ export const TimelineItemCard = ({
   };
 
   const renderContent = () => {
-    if (isEditing && itemType === 'note') {
+    if (isEditing && type === 'note') {
       return (
         <div className="space-y-2">
           <Textarea
@@ -234,14 +233,12 @@ export const TimelineItemCard = ({
     return (
       <div 
         className="relative group"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
         <div className={`whitespace-pre-wrap break-words ${isCompleted ? 'line-through text-gray-500' : ''}`}>
           {content}
         </div>
         <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          {itemType === 'task' && !isCompleted && (
+          {type === 'task' && !isCompleted && (
             <button
               onClick={handleTaskComplete}
               className="p-1 hover:bg-gray-100 rounded"
@@ -251,7 +248,7 @@ export const TimelineItemCard = ({
               </div>
             </button>
           )}
-          {itemType === 'note' && (
+          {type === 'note' && (
             <button
               onClick={() => setIsEditing(true)}
               className="p-1 hover:bg-gray-100 rounded"
@@ -259,7 +256,7 @@ export const TimelineItemCard = ({
               <Edit className="h-4 w-4 text-gray-500 hover:text-blue-600" />
             </button>
           )}
-          {itemType === 'phase_change' && onDelete && (
+          {type === 'phase_change' && onDelete && (
             <button
               onClick={onDelete}
               className="p-1 hover:bg-gray-100 rounded"
@@ -283,7 +280,7 @@ export const TimelineItemCard = ({
       );
     }
     
-    if (itemType === 'task' && isCompleted && metadata?.completedAt) {
+    if (type === 'task' && isCompleted && metadata?.completedAt) {
       return (
         <div className="text-xs text-gray-500 mt-2">
           {settings?.language === "en" ? "Completed" : "Erledigt"}: {format(new Date(metadata.completedAt), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
@@ -293,22 +290,22 @@ export const TimelineItemCard = ({
     return null;
   };
 
+  const getBorderColor = () => {
+    if (status === 'completed') return 'border-green-500';
+    if (status === 'cancelled') return 'border-red-500';
+    if (type === 'phase_change') return 'border-blue-500';
+    if (type === 'note') return 'border-yellow-400';
+    if (type === 'message') return 'border-purple-500';
+    if (type === 'task') return 'border-orange-500';
+    if (type === 'file_upload') return 'border-cyan-500';
+    if (type === 'contact_created') return 'border-emerald-500';
+    return 'border-gray-200';
+  };
+
   return (
     <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}>
       {renderContent()}
       {renderMetadata()}
     </div>
   );
-};
-
-const getBorderColor = () => {
-  if (status === 'completed') return 'border-green-500';
-  if (status === 'cancelled') return 'border-red-500';
-  if (itemType === 'phase_change') return 'border-blue-500';
-  if (itemType === 'note') return 'border-yellow-400';
-  if (itemType === 'message') return 'border-purple-500';
-  if (itemType === 'task') return 'border-orange-500';
-  if (itemType === 'file_upload') return 'border-cyan-500';
-  if (itemType === 'contact_created') return 'border-emerald-500';
-  return 'border-gray-200';
 };
