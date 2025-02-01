@@ -1,30 +1,7 @@
-import { Platform } from "@/config/platforms";
 import { Tables } from "@/integrations/supabase/types";
-import { Json } from "@/integrations/supabase/types/auth";
+import { Platform } from "@/config/platforms";
 
 export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
-
-export interface Note {
-  id: string;
-  content: string;
-  created_at: string;
-  metadata?: {
-    type?: string;
-  };
-  status?: string;
-  color?: string;
-}
-
-export interface Message {
-  id: string;
-  content: string;
-  created_at: string;
-  sent_at: string;
-  platform: string;
-  lead_id: string;
-  read: boolean;
-  user_id: string;
-}
 
 export interface SocialMediaPostRaw {
   id: string;
@@ -52,15 +29,14 @@ export interface SocialMediaPostRaw {
   hashtags?: string[] | null;
   likes_count?: number | null;
   comments_count?: number | null;
-  taggedUsers?: { username: string }[];
 }
 
-export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "messages" | "social_media_posts"> {
-  messages: Message[];
-  tasks: Tables<"tasks">[];
-  notes: Note[];
-  lead_files: Tables<"lead_files">[];
-  linkedin_posts?: any[];
+export type LeadWithRelations = Tables<"leads"> & {
   platform: Platform;
-  social_media_posts?: SocialMediaPostRaw[];
-}
+  messages: Tables<"messages">[];
+  tasks: Tables<"tasks">[];
+  notes: Tables<"notes">[];
+  lead_files: Tables<"lead_files">[];
+  social_media_posts?: any[];
+  linkedin_posts?: Tables<"linkedin_posts">[];
+};
