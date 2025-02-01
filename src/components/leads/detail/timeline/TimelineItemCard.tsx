@@ -7,6 +7,7 @@ import { Check, Save, X, Trash2, Edit, Mic } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { DocumentPreview } from "../../elevate/platform/detail/DocumentPreview";
 
 interface TimelineItemCardProps {
   type: string;
@@ -50,6 +51,10 @@ export const TimelineItemCard = ({
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const isImage = type === 'file_upload' && 
+    metadata?.fileType?.toLowerCase().match(/^(image\/jpeg|image\/png|image\/gif|image\/webp)$/);
 
   const handleTaskComplete = async () => {
     if (!id) return;
@@ -229,10 +234,71 @@ export const TimelineItemCard = ({
       );
     }
 
+    if (isImage && metadata?.filePath) {
+      const imageUrl = supabase.storage
+        .from('documents')
+        .getPublicUrl(metadata.filePath).data.publicUrl;
+
+      return (
+        <div className="relative group">
+          <div 
+            className="cursor-pointer" 
+            onClick={() => setShowPreview(true)}
+          >
+            <div className={`whitespace-pre-wrap break-words ${isCompleted ? 'line-through text-gray-500' : ''}`}>
+              {content}
+            </div>
+            <img 
+              src={imageUrl} 
+              alt={content}
+              className="mt-2 max-h-32 rounded-lg object-contain"
+            />
+          </div>
+          {showPreview && (
+            <DocumentPreview
+              document={{
+                name: content,
+                url: imageUrl,
+                file_type: metadata.fileType
+              }}
+              open={showPreview}
+              onOpenChange={setShowPreview}
+            />
+          )}
+          <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            {type === 'task' && !isCompleted && (
+              <button
+                onClick={handleTaskComplete}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <div className="w-4 h-4 border border-gray-400 rounded flex items-center justify-center hover:border-green-500 hover:bg-green-50">
+                  <Check className="h-3 w-3 text-transparent hover:text-green-500" />
+                </div>
+              </button>
+            )}
+            {type === 'note' && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <Edit className="h-4 w-4 text-gray-500 hover:text-blue-600" />
+              </button>
+            )}
+            {type === 'phase_change' && onDelete && (
+              <button
+                onClick={onDelete}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div 
-        className="relative group"
-      >
+      <div className="relative group">
         <div className={`whitespace-pre-wrap break-words ${isCompleted ? 'line-through text-gray-500' : ''}`}>
           {content}
         </div>
