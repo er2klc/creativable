@@ -59,6 +59,8 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
           metadata={item.metadata}
           status={item.status}
           onDelete={onDelete}
+          id={item.id}
+          created_at={item.created_at}
         />
       </div>
     </motion.div>
