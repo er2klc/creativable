@@ -13,15 +13,15 @@ interface TimeFieldProps {
 
 export const TimeField = ({ form }: TimeFieldProps) => {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-4">
       <FormField
         control={form.control}
-        name="date"
+        name="time"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Datum</FormLabel>
+            <FormLabel>Startzeit</FormLabel>
             <FormControl>
-              <Input type="date" {...field} />
+              <Input type="time" {...field} />
             </FormControl>
           </FormItem>
         )}
@@ -29,10 +29,10 @@ export const TimeField = ({ form }: TimeFieldProps) => {
 
       <FormField
         control={form.control}
-        name="time"
+        name="end_time"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Uhrzeit</FormLabel>
+            <FormLabel>Endzeit (optional)</FormLabel>
             <FormControl>
               <Input type="time" {...field} />
             </FormControl>
