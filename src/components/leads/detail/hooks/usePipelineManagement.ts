@@ -41,7 +41,8 @@ export function usePipelineManagement(initialPipelineId: string | null) {
 
   const updateLeadPipeline = useMutation({
     mutationFn: async ({ leadId, pipelineId, phaseId }: { leadId: string; pipelineId: string; phaseId: string }) => {
-      const { data, error } = await supabase
+      // First update the lead's pipeline and phase
+      const { data: updatedLead, error: updateError } = await supabase
         .from("leads")
         .update({
           pipeline_id: pipelineId,
@@ -51,8 +52,29 @@ export function usePipelineManagement(initialPipelineId: string | null) {
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (updateError) throw updateError;
+
+      // Get the new phase name
+      const newPhase = phases.find(p => p.id === phaseId);
+      if (!newPhase) throw new Error("Phase not found");
+
+      // Create a note for the phase change
+      const { error: noteError } = await supabase
+        .from("notes")
+        .insert({
+          lead_id: leadId,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          content: `Phase wurde zu "${newPhase.name}" geändert`,
+          metadata: {
+            type: 'phase_change',
+            phase_id: phaseId,
+            phase_name: newPhase.name
+          }
+        });
+
+      if (noteError) throw noteError;
+
+      return updatedLead;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["lead", variables.leadId] });
