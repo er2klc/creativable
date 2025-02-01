@@ -11,9 +11,10 @@ import { PostActions } from "./PostActions";
 
 interface SocialMediaPost {
   id: string;
+  lead_id?: string;
   platform?: string;
   type?: string;
-  post_type: string;
+  post_type: "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
   content: string | null;
   caption?: string | null;
   likesCount?: number | null;
@@ -27,12 +28,14 @@ interface SocialMediaPost {
   tagged_profiles?: string[] | null;
   posted_at: string | null;
   timestamp?: string | null;
+  media_urls: string[] | null;
   media_type: string | null;
+  local_video_path?: string | null;
+  local_media_paths?: string[] | null;
   video_url?: string | null;
   videoUrl?: string | null;
+  images?: string[] | null;
   hashtags?: string[] | null;
-  lead_id?: string;
-  media_urls: string[] | null;
 }
 
 interface SocialMediaPostProps {
@@ -76,7 +79,7 @@ const getDirectMediaUrls = (
   const leadId = post.lead_id || kontaktIdFallback;
   
   // Debug log for lead_id
-  console.log("🚀 Post ID:", post.id, "Lead ID:", leadId);
+  console.log("🚀 Post ID:", post.id, "Lead ID:", leadId, "Raw post:", post);
   
   const postId = post.id;
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
