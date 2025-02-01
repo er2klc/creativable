@@ -192,6 +192,44 @@ export const TimelineItemCard = ({
     setIsRecording(false);
   };
 
+  const handleDeleteFile = async () => {
+    if (!metadata?.filePath || !id) return;
+    
+    try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('documents')
+        .remove([metadata.filePath]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('lead_files')
+        .delete()
+        .eq('id', id);
+
+      if (dbError) throw dbError;
+
+      toast.success(
+        settings?.language === "en" 
+          ? "File deleted successfully" 
+          : "Datei erfolgreich gelöscht"
+      );
+
+      if (onDelete) {
+        onDelete();
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error deleting file"
+          : "Fehler beim Löschen der Datei"
+      );
+    }
+  };
+
   const renderContent = () => {
     if (isEditing && type === 'note') {
       return (
@@ -257,12 +295,14 @@ export const TimelineItemCard = ({
           {showPreview && (
             <DocumentPreview
               document={{
+                id,
                 name: content,
                 url: imageUrl,
                 file_type: metadata.fileType
               }}
               open={showPreview}
               onOpenChange={setShowPreview}
+              onDelete={handleDeleteFile}
             />
           )}
           <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -284,9 +324,9 @@ export const TimelineItemCard = ({
                 <Edit className="h-4 w-4 text-gray-500 hover:text-blue-600" />
               </button>
             )}
-            {type === 'phase_change' && onDelete && (
+            {(type === 'phase_change' || type === 'file_upload') && onDelete && (
               <button
-                onClick={onDelete}
+                onClick={type === 'file_upload' ? handleDeleteFile : onDelete}
                 className="p-1 hover:bg-gray-100 rounded"
               >
                 <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
@@ -321,9 +361,9 @@ export const TimelineItemCard = ({
               <Edit className="h-4 w-4 text-gray-500 hover:text-blue-600" />
             </button>
           )}
-          {type === 'phase_change' && onDelete && (
+          {(type === 'phase_change' || type === 'file_upload') && onDelete && (
             <button
-              onClick={onDelete}
+              onClick={type === 'file_upload' ? handleDeleteFile : onDelete}
               className="p-1 hover:bg-gray-100 rounded"
             >
               <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
@@ -350,7 +390,7 @@ export const TimelineItemCard = ({
         <div className="text-xs text-gray-500 mt-2">
           {settings?.language === "en" ? "Completed" : "Erledigt"}: {format(new Date(metadata.completedAt), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
         </div>
-      );
+    );
     }
     return null;
   };
@@ -372,5 +412,4 @@ export const TimelineItemCard = ({
       {renderContent()}
       {renderMetadata()}
     </div>
-  );
 };
