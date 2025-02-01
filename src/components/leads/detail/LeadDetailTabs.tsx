@@ -96,27 +96,30 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
         <TaskTab leadId={lead.id} />
       </TabsContent>
 
-      <TabsContent value="appointments" className="mt-4">
-        <div className="space-y-4">
-          <NewAppointmentDialog
-            open={appointmentDialogOpen}
-            onOpenChange={(open) => {
-              setAppointmentDialogOpen(open);
-              if (!open) {
-                setSelectedTab("notes");
-              }
-            }}
-            initialSelectedDate={new Date()}
-            defaultValues={{
-              leadId: lead.id,
-              time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false }),
-              title: "",
-              color: "#40E0D0",
-              meeting_type: "phone_call"
-            }}
-          />
-        </div>
-      </TabsContent>
+     {/* Der Dialog muss außerhalb von Tabs sein, damit er nicht von Tabs versteckt wird */}
+<NewAppointmentDialog
+  open={appointmentDialogOpen}
+  onOpenChange={(open) => {
+    setAppointmentDialogOpen(open);
+    if (!open) {
+      setSelectedTab("notes");
+    }
+  }}
+  initialSelectedDate={new Date()}
+  defaultValues={{
+    leadId: lead.id,
+    time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false }),
+    title: "",
+    color: "#40E0D0",
+    meeting_type: "phone_call"
+  }}
+/>
+
+<TabsContent value="appointments" className="mt-4">
+  <div className="space-y-4">
+    {settings?.language === "en" ? "Manage Appointments Here" : "Hier Termine verwalten"}
+  </div>
+</TabsContent>
 
       <TabsContent value="messages" className="mt-4">
         <MessageTab leadId={lead.id} platform={lead.platform} />
