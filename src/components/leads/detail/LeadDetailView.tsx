@@ -28,7 +28,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Invalid lead ID");
       }
 
-      const { data: leadData, error: leadError } = await supabase
+      const { data, error } = await supabase
         .from("leads")
         .select(`
           *,
@@ -41,24 +41,24 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         .eq("id", leadId)
         .maybeSingle();
 
-      if (leadError) {
-        console.error("Error fetching lead:", leadError);
-        throw leadError;
+      if (error) {
+        console.error("Error fetching lead:", error);
+        throw error;
       }
 
-      if (!leadData) {
+      if (!data) {
         throw new Error("Lead not found");
       }
 
       // Log LinkedIn specific information
-      if (leadData.platform === 'LinkedIn') {
+      if (data.platform === 'LinkedIn') {
         console.log('LinkedIn Contact Found:', {
-          name: leadData.name,
-          linkedInId: leadData.linkedin_id,
-          position: leadData.position,
-          company: leadData.current_company_name,
-          experience: leadData.experience,
-          educationSummary: leadData.education_summary
+          name: data.name,
+          linkedInId: data.linkedin_id,
+          position: data.position,
+          company: data.current_company_name,
+          experience: data.experience,
+          educationSummary: data.education_summary
         });
 
         // Get LinkedIn posts for this lead
@@ -88,12 +88,12 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
             });
           });
 
-          // Assign the posts to leadData
-          leadData.linkedin_posts = linkedInPosts;
+          // Assign the posts to data
+          data.linkedin_posts = linkedInPosts;
         }
       }
 
-      return leadData as unknown as LeadWithRelations;
+      return data as unknown as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
     retry: 3,
