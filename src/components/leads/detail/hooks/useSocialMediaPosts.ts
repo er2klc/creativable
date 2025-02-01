@@ -72,8 +72,11 @@ export const useSocialMediaPosts = (leadId: string) => {
     ? matchingLeadPost.commentsCount 
     : post.comments_count || 0;
 
-  // ✅ `taggedUsers` übernehmen, falls vorhanden
-  const taggedUsers = matchingLeadPost?.taggedUsers || [];
+  // ✅ Entferne `profile_pic_url` aus den `taggedUsers`
+  const taggedUsers = (matchingLeadPost?.taggedUsers || []).map((user) => {
+    const { profile_pic_url, ...rest } = user; // Entferne das Profilbild
+    return rest; // Rückgabe der restlichen Benutzerdaten
+  });
 
   console.log(`🏷️ DEBUG: Tagged Users für Post ID ${post.id}:`, taggedUsers);
 
