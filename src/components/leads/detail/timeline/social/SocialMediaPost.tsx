@@ -77,7 +77,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     console.log("DEBUG: video_url vorhanden?", post.video_url ? "Ja" : "Nein", post.video_url);
 
     // For video posts, use the video_url directly
-    if (postType === "video" && (post.video_url || post.videoUrl)) {
+    if (postType === "video" && post.video_url) {
       console.log("🎥 Video-Post gefunden! Verwende Instagram Video-URL für Post ID:", post.id);
       return [post.video_url || post.videoUrl];
     }
@@ -100,7 +100,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const mediaUrls = getMediaUrls();
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
   const isSidecar = postType === "sidecar" && mediaUrls.length > 1;
-  const hasVideo = postType === "video";
+  const hasVideo = postType === "video" && post.video_url !== null;
   const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
 
   // Use the correct like and comment counts from either source
