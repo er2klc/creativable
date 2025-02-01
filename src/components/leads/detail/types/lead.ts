@@ -1,21 +1,10 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 
-export type LeadWithRelations = Tables<"leads"> & {
-  messages: Tables<"messages">[];
-  tasks: Tables<"tasks">[];
-  notes: Tables<"notes">[];
-  lead_files: Tables<"lead_files">[];
-  social_media_posts?: any[];
-  linkedin_posts?: Tables<"linkedin_posts">[];
-  platform: Platform;
-};
-
 export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
 
 export interface SocialMediaPostRaw {
   id: string;
-  lead_id?: string;
   platform: string;
   type: string;
   post_type: PostType;
@@ -39,3 +28,13 @@ export interface SocialMediaPostRaw {
   images?: string[] | null;
   hashtags?: string[] | null;
 }
+
+export type LeadWithRelations = Tables<"leads"> & {
+  platform: Platform;
+  messages: Tables<"messages">[];
+  tasks: Tables<"tasks">[];
+  notes: Tables<"notes">[];
+  lead_files: Tables<"lead_files">[];
+  social_media_posts?: any[];
+  linkedin_posts?: Tables<"linkedin_posts">[];
+};

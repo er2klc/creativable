@@ -47,7 +47,6 @@ export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProp
   const isSidecar = postType === "sidecar" && post.media_urls && post.media_urls.length > 1;
   const hasVideo = postType === "video" && post.media_urls && post.media_urls.length > 0;
   
-  // Log the lead ID information
   console.log("🚀 Post ID:", post.id, "Lead ID:", post.lead_id || kontaktIdFallback, "Raw post:", post);
 
   return (
@@ -114,8 +113,8 @@ export const SocialMediaPost = ({ post, kontaktIdFallback }: SocialMediaPostProp
               />
 
               <PostMetadata
-                likesCount={post.likesCount || post.likes_count}
-                commentsCount={post.commentsCount || post.comments_count}
+                likesCount={post.likesCount}
+                commentsCount={post.commentsCount}
                 location={post.location}
                 locationName={post.locationName}
               />
