@@ -1,6 +1,4 @@
-import { Badge } from "@/components/ui/badge";
-
-export interface PostMetadataProps {
+interface PostMetadataProps {
   location: string;
   postedAt: string;
   tags: string[];
@@ -8,23 +6,25 @@ export interface PostMetadataProps {
 
 export const PostMetadata = ({ location, postedAt, tags }: PostMetadataProps) => {
   return (
-    <div className="flex flex-col">
+    <div className="text-sm text-gray-500 space-y-1">
       {location && (
-        <div className="text-sm text-gray-500">
-          <strong>Location:</strong> {location}
+        <div>
+          <span className="font-medium">Location: </span>
+          {location}
         </div>
       )}
       {postedAt && (
-        <div className="text-sm text-gray-500">
-          <strong>Posted At:</strong> {postedAt}
+        <div>
+          <span className="font-medium">Posted: </span>
+          {new Date(postedAt).toLocaleDateString()}
         </div>
       )}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-2">
+      {tags && tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
           {tags.map((tag, index) => (
-            <Badge key={index} variant="outline">
-              {tag}
-            </Badge>
+            <span key={index} className="text-blue-500">
+              #{tag}
+            </span>
           ))}
         </div>
       )}

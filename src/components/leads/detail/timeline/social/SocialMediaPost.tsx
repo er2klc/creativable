@@ -20,9 +20,9 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   return (
     <div className="bg-white rounded-lg shadow-sm border p-4 space-y-4">
       <PostHeader 
+        username={post.caption || ""}
         platform={post.platform || ""}
         timestamp={post.posted_at || ""}
-        username={post.caption || ""}
       />
 
       {(post.media_urls?.length || 0) > 0 && (
