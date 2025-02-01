@@ -109,6 +109,10 @@ console.log("Lead Plattform:", lead.platform);
   );
 
   return (
+    <div className="p-4 bg-red-500 text-white font-bold">
+  DEBUG: LeadTimeline wird geladen!
+</div>
+
     <div className="space-y-4">
       <TimelineHeader 
         title={activeTimeline === 'activities' ? 
