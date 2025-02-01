@@ -5,7 +5,7 @@ export interface Message {
   id: string;
   content: string;
   lead_id: string | null;
-  platform: string;
+  platform: Platform;
   read: boolean;
   sent_at: string | null;
   user_id: string;
@@ -50,7 +50,7 @@ export interface SocialMediaPostRaw {
   hashtags?: string[] | null;
   likes_count?: number | null;
   comments_count?: number | null;
-  taggedUsers?: any[];
+  taggedUsers?: string[];
   first_comment?: string | null;
   engagement_count?: number | null;
   bucket_path?: string | null;
