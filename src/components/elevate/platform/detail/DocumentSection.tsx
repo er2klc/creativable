@@ -95,7 +95,6 @@ export const DocumentSection = ({ documents, isAdmin, onDelete }: DocumentSectio
       {selectedDocument && (
         <DocumentPreview
           document={{
-            id: selectedDocument.id,
             name: selectedDocument.file_name,
             url: supabase.storage.from('elevate-documents').getPublicUrl(selectedDocument.file_path).data.publicUrl,
             file_type: selectedDocument.file_type,
@@ -105,7 +104,6 @@ export const DocumentSection = ({ documents, isAdmin, onDelete }: DocumentSectio
           }}
           open={!!selectedDocument}
           onOpenChange={(open) => !open && setSelectedDocument(null)}
-          onDelete={() => handleDelete(selectedDocument.id)}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SocialMediaPost, PostType } from "../types/lead";
+import { SocialMediaPostRaw, PostType } from "../types/lead";
 
 export const useSocialMediaPosts = (leadId: string) => {
   return useQuery({
@@ -44,7 +44,7 @@ export const useSocialMediaPosts = (leadId: string) => {
         }
       }
 
-      const mergedPosts = socialMediaPosts.map((post): SocialMediaPost => {
+      const mergedPosts = socialMediaPosts.map((post): SocialMediaPostRaw => {
         const matchingLeadPost = leadSocialPosts.find((leadPost) => leadPost.id === post.id);
 
         let mediaUrls: string[] = [];
@@ -77,13 +77,14 @@ export const useSocialMediaPosts = (leadId: string) => {
           video_url: videoUrl,
           platform: "Instagram",
           post_type: (post.post_type || "post") as PostType,
-          type: post.post_type || "post",
           caption: post.content || null,
           likes_count: likesCount,
           comments_count: commentsCount,
           location: post.location || null,
+          mentioned_profiles: post.mentioned_profiles || null,
+          tagged_profiles: post.tagged_profiles || null,
           timestamp: post.posted_at || null,
-          taggedUsers: taggedUsers,
+          tagged_users: taggedUsers,
           local_video_path: post.local_video_path || null,
           local_media_paths: post.local_media_paths || null,
         };
