@@ -1,18 +1,11 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 
-export interface Message {
-  id: string;
-  content: string;
-  lead_id: string | null;
-  platform: Platform;
-  read: boolean;
-  sent_at: string | null;
-  user_id: string;
+export interface Message extends Tables<"messages"> {
   created_at: string;
 }
 
-export interface Note {
+export interface Note extends Tables<"notes"> {
   id: string;
   content: string;
   lead_id: string;
