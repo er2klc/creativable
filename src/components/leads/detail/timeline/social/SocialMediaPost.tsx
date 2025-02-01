@@ -8,42 +8,7 @@ import { PostHeader } from "./PostHeader";
 import { PostContent } from "./PostContent";
 import { PostMetadata } from "./PostMetadata";
 import { PostActions } from "./PostActions";
-
-interface TaggedUser {
-  id: string;
-  username: string;
-  full_name?: string;
-  profile_pic_url: string;
-  is_verified?: boolean;
-}
-
-interface SocialMediaPost {
-  id: string;
-  platform?: string;
-  type?: string;
-  post_type: string;
-  content: string | null;
-  caption?: string | null;
-  likesCount?: number | null;
-  commentsCount?: number | null;
-  likes_count?: number | null;
-  comments_count?: number | null;
-  url: string | null;
-  location?: string | null;
-  locationName?: string | null;
-  mentioned_profiles?: string[] | null;
-  tagged_profiles?: string[] | null;
-  posted_at: string | null;
-  timestamp?: string | null;
-  media_urls: string[] | null;
-  media_type: string | null;
-  video_url?: string | null;
-  videoUrl?: string | null;
-  images?: string[] | null;
-  hashtags?: string[] | null;
-  lead_id?: string;
-  taggedUsers?: TaggedUser[];
-}
+import { SocialMediaPostRaw } from "../../types/lead";
 
 const getPostTypeColor = (type: string) => {
   switch (type?.toLowerCase()) {
@@ -71,7 +36,7 @@ const getPostTypeIcon = (type: string) => {
   }
 };
 
-export const SocialMediaPost = ({ post }: { post: SocialMediaPost }) => {
+export const SocialMediaPost = ({ post }: { post: SocialMediaPostRaw }) => {
   const getMediaUrls = () => {
     const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
 
@@ -106,10 +71,6 @@ export const SocialMediaPost = ({ post }: { post: SocialMediaPost }) => {
   const isSidecar = postType === "sidecar" && mediaUrls.length > 1;
   const hasVideo = postType === "video" && post.video_url !== null;
   const postTypeColor = getPostTypeColor(post.media_type || post.type || post.post_type);
-
-  // Use the correct like and comment counts from either source
-  const likesCount = post.likesCount || post.likes_count || 0;
-  const commentsCount = post.commentsCount || post.comments_count || 0;
 
   return (
     <motion.div
@@ -165,8 +126,8 @@ export const SocialMediaPost = ({ post }: { post: SocialMediaPost }) => {
               <PostContent content={post.content} caption={post.caption} hashtags={post.hashtags} />
 
               <PostMetadata
-                likesCount={likesCount}
-                commentsCount={commentsCount}
+                likesCount={post.likesCount}
+                commentsCount={post.commentsCount}
                 location={post.location}
                 locationName={post.locationName}
               />
@@ -185,6 +146,10 @@ export const SocialMediaPost = ({ post }: { post: SocialMediaPost }) => {
                         src={user.profile_pic_url} 
                         alt={user.username} 
                         className="w-8 h-8 rounded-full"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/placeholder.svg';
+                        }}
                       />
                       <span>{user.full_name || user.username}</span>
                       {user.is_verified && <span className="text-blue-500">✔️</span>}

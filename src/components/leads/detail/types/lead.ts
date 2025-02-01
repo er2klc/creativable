@@ -3,7 +3,7 @@ import { Platform } from "@/config/platforms";
 
 export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
 
-interface TaggedUser {
+export interface TaggedUser {
   id: string;
   username: string;
   full_name?: string;
@@ -38,6 +38,7 @@ export interface SocialMediaPostRaw {
   likes_count?: number | null;
   comments_count?: number | null;
   taggedUsers?: TaggedUser[];
+  lead_id?: string;
 }
 
 export type LeadWithRelations = Tables<"leads"> & {
