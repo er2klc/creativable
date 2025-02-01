@@ -40,3 +40,32 @@ export type LeadWithRelations = Tables<"leads"> & {
   social_media_posts?: any[];
   linkedin_posts?: Tables<"linkedin_posts">[];
 };
+
+export interface Message {
+  id: string;
+  content: string;
+  lead_id: string;
+  platform: string;
+  read: boolean;
+  sent_at: string;
+  user_id: string;
+  created_at: string; // Fehlendes Feld
+}
+
+export interface Note {
+  id: string;
+  content: string;
+  lead_id: string;
+  user_id: string;
+  created_at: string; // Fehlendes Feld
+}
+
+export type LeadWithRelations = Tables<"leads"> & {
+  platform: Platform;
+  messages: Message[]; // Angepasster Typ
+  tasks: Tables<"tasks">[];
+  notes: Note[]; // Angepasster Typ
+  lead_files: Tables<"lead_files">[];
+  social_media_posts?: any[];
+  linkedin_posts?: Tables<"linkedin_posts">[];
+};
