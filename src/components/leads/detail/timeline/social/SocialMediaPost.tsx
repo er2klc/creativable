@@ -9,6 +9,14 @@ import { PostContent } from "./PostContent";
 import { PostMetadata } from "./PostMetadata";
 import { PostActions } from "./PostActions";
 
+interface TaggedUser {
+  id: string;
+  username: string;
+  full_name?: string;
+  profile_pic_url: string;
+  is_verified?: boolean;
+}
+
 interface SocialMediaPost {
   id: string;
   platform?: string;
@@ -34,11 +42,7 @@ interface SocialMediaPost {
   images?: string[] | null;
   hashtags?: string[] | null;
   lead_id?: string;
-}
-
-interface SocialMediaPostProps {
-  post: SocialMediaPost;
-  kontaktIdFallback?: string;
+  taggedUsers?: TaggedUser[];
 }
 
 const getPostTypeColor = (type: string) => {
@@ -67,7 +71,7 @@ const getPostTypeIcon = (type: string) => {
   }
 };
 
-export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
+export const SocialMediaPost = ({ post }: { post: SocialMediaPost }) => {
   const getMediaUrls = () => {
     const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
 
@@ -168,26 +172,26 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
               />
 
               {post.taggedUsers && post.taggedUsers.length > 0 && (
-  <div className="flex flex-wrap gap-2 mt-2">
-    {post.taggedUsers.map((user) => (
-      <a 
-        key={user.id} 
-        href={`https://www.instagram.com/${user.username}/`} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="flex items-center space-x-2 text-sm bg-gray-100 p-2 rounded-lg hover:bg-gray-200"
-      >
-        <img 
-          src={user.profile_pic_url} 
-          alt={user.username} 
-          className="w-8 h-8 rounded-full"
-        />
-        <span>{user.full_name || user.username}</span>
-        {user.is_verified && <span className="text-blue-500">✔️</span>}
-      </a>
-    ))}
-  </div>
-)}
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {post.taggedUsers.map((user) => (
+                    <a 
+                      key={user.id} 
+                      href={`https://www.instagram.com/${user.username}/`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2 text-sm bg-gray-100 p-2 rounded-lg hover:bg-gray-200"
+                    >
+                      <img 
+                        src={user.profile_pic_url} 
+                        alt={user.username} 
+                        className="w-8 h-8 rounded-full"
+                      />
+                      <span>{user.full_name || user.username}</span>
+                      {user.is_verified && <span className="text-blue-500">✔️</span>}
+                    </a>
+                  ))}
+                </div>
+              )}
 
               <PostActions url={post.url} />
             </div>
