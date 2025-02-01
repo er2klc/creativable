@@ -3,7 +3,7 @@ import { SocialMediaPost } from "./SocialMediaPost";
 interface SocialMediaPostRaw {
   id: string;
   lead_id?: string;
-  platform?: string;
+  platform: string;
   type?: string;
   post_type: "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
   content: string | null;
