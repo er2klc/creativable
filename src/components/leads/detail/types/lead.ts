@@ -11,10 +11,10 @@ export interface Note extends Tables<"notes"> {
   content: string;
   lead_id: string;
   user_id: string;
-  color?: string | null;
+  color: string | null;
   created_at: string;
   updated_at: string | null;
-  metadata?: Record<string, any>;
+  metadata?: Json;
 }
 
 export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
@@ -59,7 +59,7 @@ export interface SocialMediaPostRaw {
   local_media_paths: string[] | null;
 }
 
-export type LeadWithRelations = Omit<Tables<"leads">, "notes"> & {
+export type LeadWithRelations = Tables<"leads"> & {
   platform: Platform;
   messages: Message[];
   tasks: Tables<"tasks">[];

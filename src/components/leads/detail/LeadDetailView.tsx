@@ -50,14 +50,18 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Lead not found");
       }
 
-      return {
+      // Ensure all arrays are initialized
+      const transformedData = {
         ...data,
         messages: data.messages || [],
         tasks: data.tasks || [],
         notes: data.notes || [],
         lead_files: data.lead_files || [],
-        linkedin_posts: data.linkedin_posts || []
+        linkedin_posts: data.linkedin_posts || [],
+        platform: data.platform as Platform
       } as LeadWithRelations;
+
+      return transformedData;
     },
     enabled: !!leadId && isValidUUID(leadId),
     retry: 3,
