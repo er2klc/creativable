@@ -1,32 +1,5 @@
 import { SocialMediaPost } from "./SocialMediaPost";
-
-type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
-
-interface SocialMediaPostRaw {
-  id: string;
-  platform: string;
-  type: string;
-  post_type: PostType;
-  content: string | null;
-  caption: string | null;
-  likesCount: number | null;
-  commentsCount: number | null;
-  url: string | null;
-  location: string | null;
-  locationName?: string | null;
-  mentioned_profiles: string[] | null;
-  tagged_profiles: string[] | null;
-  posted_at: string | null;
-  timestamp: string | null;
-  media_urls: string[] | null;
-  media_type: string | null;
-  local_video_path: string | null;
-  local_media_paths: string[] | null;
-  video_url: string | null;
-  videoUrl?: string | null;
-  images?: string[] | null;
-  hashtags?: string[] | null;
-}
+import { SocialMediaPostRaw, PostType } from "../types/lead";
 
 interface SocialMediaTimelineProps {
   posts: SocialMediaPostRaw[];
@@ -36,17 +9,28 @@ interface SocialMediaTimelineProps {
 }
 
 export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdFallback }: SocialMediaTimelineProps) => {
-  const sortedPosts = [...posts].sort((a, b) => {
-    const dateA = a.timestamp ? new Date(a.timestamp) : new Date(a.posted_at || '');
-    const dateB = b.timestamp ? new Date(b.timestamp) : new Date(b.posted_at || '');
-    return dateB.getTime() - dateA.getTime();
-  });
+  // Filter out temp posts and posts with type "post", then sort the remaining posts
+  const sortedPosts = [...posts]
+    .filter(post => !post.id.startsWith('temp-') && post.post_type?.toLowerCase() !== 'post')
+    .sort((a, b) => {
+      const dateA = a.timestamp ? new Date(a.timestamp) : new Date(a.posted_at || '');
+      const dateB = b.timestamp ? new Date(b.timestamp) : new Date(b.posted_at || '');
+      return dateB.getTime() - dateA.getTime();
+    });
 
   return (
     <div className="relative space-y-6">
       {sortedPosts.length > 0 ? (
         sortedPosts.map((post) => (
-          <SocialMediaPost key={post.id} post={post} />
+          <SocialMediaPost 
+            key={post.id} 
+            post={{
+              ...post,
+              post_type: post.post_type as PostType,
+              video_url: post.video_url || undefined
+            }}
+            kontaktIdFallback={kontaktIdFallback}
+          />
         ))
       ) : (
         <div className="text-center text-muted-foreground py-4 ml-4">

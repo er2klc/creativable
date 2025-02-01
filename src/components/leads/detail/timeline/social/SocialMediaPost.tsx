@@ -76,35 +76,26 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
     console.log("DEBUG: media_urls vorhanden?", post.media_urls ? "Ja" : "Nein", post.media_urls);
     console.log("DEBUG: video_url vorhanden?", post.video_url ? "Ja" : "Nein", post.video_url);
 
-    // ✅ Falls es sich um ein Video handelt, NUR die `videoUrl` aus leads verwenden
-    if (postType === "video") {
-      const videoUrl = post.video_url || post.videoUrl;
-      if (videoUrl) {
-        console.log(`🎥 Video-Post gefunden! Verwende Instagram Video-URL für Post ID: ${post.id}`);
-        return [videoUrl];
-      }
+    // For video posts, use the video_url directly
+    if (postType === "video" && (post.video_url || post.videoUrl)) {
+      console.log("🎥 Video-Post gefunden! Verwende Instagram Video-URL für Post ID:", post.id);
+      return [post.video_url || post.videoUrl];
     }
 
-    // ✅ Falls media_urls in Supabase als JSON-String gespeichert wurde, konvertieren
-    let mediaUrls = post.media_urls;
-    if (typeof mediaUrls === "string") {
-      try {
-        mediaUrls = JSON.parse(mediaUrls);
-      } catch (e) {
-        console.error(`⚠️ Fehler beim Parsen von media_urls für Post ID: ${post.id}`, e);
-        mediaUrls = [];
-      }
+    // For image and sidecar posts, use media_urls from social_media_posts table
+    if ((postType === "image" || postType === "sidecar") && post.media_urls) {
+      console.log(`🖼️ Bild-Post gefunden! Verwende media_urls für Post ID: ${post.id}`, post.media_urls);
+      return post.media_urls;
     }
 
-    // ✅ Falls media_urls leer oder nicht existiert, Fehlermeldung ausgeben
-    if (!mediaUrls || !Array.isArray(mediaUrls) || mediaUrls.length === 0) {
-      console.warn(`⚠️ Keine gültigen media_urls gefunden für Post ID: ${post.id}`);
-      return [];
-    }
-
-    console.log(`🖼️ Bild-Post gefunden! Verwende media_urls für Post ID: ${post.id}`, mediaUrls);
-    return mediaUrls;
+    console.warn(`⚠️ Keine gültigen media_urls gefunden für Post ID: ${post.id}`);
+    return [];
   };
+
+  // Skip temp posts and posts with type "post"
+  if (post.id.startsWith('temp-') || post.post_type?.toLowerCase() === 'post') {
+    return null;
+  }
 
   const mediaUrls = getMediaUrls();
   const postType = post.post_type?.toLowerCase() || post.type?.toLowerCase();
