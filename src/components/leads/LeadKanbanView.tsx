@@ -9,6 +9,7 @@ import { usePhaseMutations } from "./kanban/usePhaseMutations";
 import { useNavigate } from "react-router-dom";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
 import { AddPhaseButton } from "./kanban/AddPhaseButton";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -38,14 +39,38 @@ export const LeadKanbanView = ({
     if (!over || !active) return;
 
     const leadId = active.id as string;
-    const newPhase = over.id as string;
+    const newPhaseId = over.id as string;
     
-    if (newPhase && !isEditMode) {
+    if (newPhaseId && !isEditMode) {
       try {
+        // Get the old and new phase names for the note
+        const oldPhase = phases.find(p => p.id === leads.find(l => l.id === leadId)?.phase_id)?.name || '';
+        const newPhase = phases.find(p => p.id === newPhaseId)?.name || '';
+
+        // Update the lead's phase
         await updateLeadPhase.mutateAsync({ 
           leadId, 
-          phaseId: newPhase 
+          phaseId: newPhaseId 
         });
+
+        // Create a note to track the phase change
+        const { error: noteError } = await supabase
+          .from('notes')
+          .insert({
+            lead_id: leadId,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            content: `Phase von "${oldPhase}" zu "${newPhase}" geändert`,
+            color: '#E9D5FF',
+            metadata: {
+              type: 'phase_change',
+              oldPhase,
+              newPhase
+            }
+          });
+
+        if (noteError) {
+          console.error("Error creating phase change note:", noteError);
+        }
       } catch (error) {
         console.error("Error updating lead phase:", error);
       }

@@ -50,7 +50,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
         </div>
         
         {/* Connecting Line to Card */}
-        <div className="absolute left-8 top-4 w-4 h-0.5 bg-gray-400" />
+        <div className="absolute left-8 top-[1.1rem] w-4 h-0.5 bg-gray-400" />
         
         {/* Event Card */}
         <TimelineItemCard 
