@@ -1,14 +1,12 @@
-import type { SocialMediaPost as SocialMediaPostType } from "@/types/leads";
+import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
-import { MediaDisplay } from "./MediaDisplay";
+import type { SocialMediaPost as SocialMediaPostType } from "@/types/leads";
 import { PostHeader } from "./components/PostHeader";
-import { PostContent } from "./PostContent";
-import { PostMetadata } from "./PostMetadata";
-import { PostActions } from "./PostActions";
-import { PostTypeIndicator } from "./components/PostTypeIndicator";
-import { TaggedUsers } from "./components/TaggedUsers";
+import { PostContent } from "./components/PostContent";
+import { PostMetadata } from "./components/PostMetadata";
+import { MediaDisplay } from "./components/MediaDisplay";
+import { PostActions } from "./components/PostActions";
 
 interface SocialMediaPostProps {
   post: SocialMediaPostType;
@@ -28,25 +26,14 @@ const getPostTypeColor = (type: string) => {
 };
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
-  const getMediaUrls = () => {
-    const postType = post.post_type?.toLowerCase();
-
-    if (postType === "video" && post.video_url) {
-      return [post.video_url];
-    }
-
-    if ((postType === "image" || postType === "sidecar") && post.media_urls) {
-      return post.media_urls;
-    }
-
-    return [];
-  };
-
   if (post.id.startsWith('temp-') || post.post_type?.toLowerCase() === 'post') {
     return null;
   }
 
-  const mediaUrls = getMediaUrls();
+  const mediaUrls = post.post_type?.toLowerCase() === "video" && post.video_url 
+    ? [post.video_url]
+    : post.media_urls || [];
+
   const postType = post.post_type?.toLowerCase();
   const isSidecar = postType === "sidecar" && mediaUrls.length > 1;
   const hasVideo = postType === "video" && post.video_url !== null;
@@ -65,7 +52,9 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
       <div className="flex gap-4 items-start group relative">
         <div className="relative z-10">
-          <PostTypeIndicator type={post.media_type || post.post_type} postTypeColor={postTypeColor} />
+          <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", postTypeColor)}>
+            {/* PostTypeIndicator could be extracted as another component if needed */}
+          </div>
         </div>
 
         <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400 z-0" />
@@ -73,17 +62,13 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
         <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>
           <div className="flex gap-6">
-            {mediaUrls.length > 0 ? (
-              <div className="w-1/3 min-w-[200px]">
-                <MediaDisplay
-                  mediaUrls={mediaUrls}
-                  hasVideo={hasVideo}
-                  isSidecar={isSidecar}
-                />
-              </div>
-            ) : (
-              <p className="text-red-500">⚠️ Keine Medien gefunden!</p>
-            )}
+            <div className="w-1/3 min-w-[200px]">
+              <MediaDisplay 
+                mediaUrls={mediaUrls}
+                hasVideo={hasVideo}
+                isSidecar={isSidecar}
+              />
+            </div>
 
             <div className="flex-1 min-w-0">
               <PostHeader
@@ -103,12 +88,11 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                 likesCount={post.likes_count}
                 commentsCount={post.comments_count}
                 location={post.location}
-                locationName={post.location}
               />
 
-              {post.tagged_users && <TaggedUsers users={post.tagged_users} />}
-
-              <PostActions url={post.url} />
+              <div className="mt-4">
+                <PostActions url={post.url} />
+              </div>
             </div>
           </div>
         </Card>
