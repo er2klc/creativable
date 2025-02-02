@@ -14,6 +14,25 @@ import { FileCard } from "./components/FileCard";
 import { formatDateTime } from "./utils/dateUtils";
 import { TimelineItemType } from "./TimelineUtils";
 
+const getMeetingTypeLabel = (type: string): string => {
+  switch (type) {
+    case "phone_call":
+      return "Telefongespräch";
+    case "on_site":
+      return "Vor-Ort-Termin";
+    case "zoom":
+      return "Zoom Meeting";
+    case "initial_meeting":
+      return "Erstgespräch";
+    case "presentation":
+      return "Präsentation";
+    case "follow_up":
+      return "Folgetermin";
+    default:
+      return type;
+  }
+};
+
 interface TimelineItemCardProps {
   type: TimelineItemType;
   content: string;
