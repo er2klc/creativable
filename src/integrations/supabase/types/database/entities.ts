@@ -257,3 +257,12 @@ export interface SocialMediaScanHistory {
   scan_date: string;
   result: Json;
 }
+
+export {
+  Profile,
+  SocialMediaPost,
+  Team,
+  Setting,
+  SocialMediaScanHistory
+};
+
