@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadDetailHeader } from "./LeadDetailHeader";
 import { useLeadSubscription } from "./hooks/useLeadSubscription";
-import { LeadWithRelations } from "./types/lead";
+import { LeadWithRelations } from "@/types/leads";
 import { LeadDetailContent } from "./components/LeadDetailContent";
 import { useLeadMutations } from "./hooks/useLeadMutations";
 
@@ -78,6 +78,11 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
             lead={lead}
             onUpdateLead={updateLeadMutation.mutate}
             isLoading={isLoading}
+            onDeleteClick={() => deleteLeadMutation.mutate()}
+            onDeletePhaseChange={(noteId) => {
+              // Handle phase change deletion
+              console.log("Delete phase change:", noteId);
+            }}
           />
         )}
       </DialogContent>
