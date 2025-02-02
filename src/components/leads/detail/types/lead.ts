@@ -48,7 +48,29 @@ export type SocialMediaPost = {
   location?: string;
 };
 
+// Alias SocialMediaPostRaw to SocialMediaPost for backward compatibility
+export type SocialMediaPostRaw = SocialMediaPost;
+
+export type TimelineItemType = 
+  | "task" 
+  | "appointment" 
+  | "note" 
+  | "phase_change" 
+  | "reminder" 
+  | "file_upload" 
+  | "presentation" 
+  | "upload" 
+  | "contact_created"
+  | "message";
+
+export type TimelineItemStatus = 
+  | "completed" 
+  | "pending" 
+  | "cancelled" 
+  | "outdated";
+
 export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "social_media_posts"> {
+  platform: Platform;
   notes: Note[];
   tasks?: Tables<"tasks">[];
   messages?: Tables<"messages">[];

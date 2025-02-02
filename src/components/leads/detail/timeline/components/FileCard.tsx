@@ -1,39 +1,28 @@
-import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
+import { FileText } from "lucide-react";
 
 interface FileCardProps {
-  content: string;
-  metadata?: {
-    fileName?: string;
-    filePath?: string;
-    fileType?: string;
-  };
+  name?: string;
+  type?: string;
+  size?: number;
+  path?: string;
 }
 
-export const FileCard = ({ content, metadata }: FileCardProps) => {
-  const isImage = metadata?.fileType?.toLowerCase().match(/^(image\/jpeg|image\/png|image\/gif|image\/webp)$/);
-  
-  if (isImage && metadata?.filePath) {
-    const imageUrl = supabase.storage
-      .from('documents')
-      .getPublicUrl(metadata.filePath).data.publicUrl;
-
-    return (
-      <div>
-        <div className="whitespace-pre-wrap break-words">
-          {content}
-        </div>
-        <img 
-          src={imageUrl} 
-          alt={content}
-          className="mt-2 max-h-32 rounded-lg object-contain"
-        />
-      </div>
-    );
-  }
-
+export const FileCard = ({ name, type, size, path }: FileCardProps) => {
   return (
-    <div className="whitespace-pre-wrap break-words">
-      {content}
-    </div>
+    <Card className="flex items-center gap-4 p-4">
+      <FileText className="h-5 w-5 text-gray-500" />
+      <div className="flex-1">
+        <div className="font-medium">{name}</div>
+        <div className="text-sm text-gray-500">
+          {type} - {size ? `${(size / 1024).toFixed(2)} KB` : "Unknown size"}
+        </div>
+      </div>
+      {path && (
+        <a href={path} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+          Download
+        </a>
+      )}
+    </Card>
   );
 };

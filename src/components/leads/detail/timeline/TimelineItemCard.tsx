@@ -1,12 +1,11 @@
 import { CalendarDays, FileText, MessageCircle, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { TimelineItemStatus } from "./TimelineUtils";
+import { TimelineItemType, TimelineItemStatus } from "../types/lead";
 import { TaskCard } from "./components/TaskCard";
 import { AppointmentCard } from "./components/AppointmentCard";
 import { FileCard } from "./components/FileCard";
 import { formatDateTime } from "./utils/dateUtils";
-import { TimelineItemType } from "./TimelineUtils";
 
 const getMeetingTypeLabel = (type: string): string => {
   switch (type) {
@@ -30,7 +29,7 @@ const getMeetingTypeLabel = (type: string): string => {
 interface TimelineItemCardProps {
   type: TimelineItemType;
   content: string;
-  metadata: {
+  metadata?: {
     dueDate?: string;
     fileName?: string;
     fileType?: string;
@@ -62,10 +61,8 @@ export const TimelineItemCard = ({
         return <CalendarDays className="h-5 w-5" />;
       case "appointment":
         return <Phone className="h-5 w-5" />;
-      case "file":
+      case "file_upload":
         return <FileText className="h-5 w-5" />;
-      case "status_change":
-        return <MessageCircle className="h-5 w-5" />;
       case "phase_change":
         return <MessageCircle className="h-5 w-5" />;
       default:
@@ -79,7 +76,7 @@ export const TimelineItemCard = ({
         return "bg-green-100 text-green-800";
       case "pending":
         return "bg-yellow-100 text-yellow-800";
-      case "canceled":
+      case "cancelled":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -91,42 +88,34 @@ export const TimelineItemCard = ({
       case "task":
         return (
           <TaskCard
-            content={content}
-            dueDate={metadata.dueDate}
-            status={metadata.status}
-            color={metadata.color}
+            title={content}
+            status={metadata?.status}
+            color={metadata?.color}
+            date={metadata?.dueDate}
           />
         );
       case "appointment":
         return (
           <AppointmentCard
-            content={content}
-            meetingType={metadata.meetingType ? getMeetingTypeLabel(metadata.meetingType) : undefined}
-            date={metadata.dueDate}
+            title={content}
+            type={metadata?.meetingType ? getMeetingTypeLabel(metadata.meetingType) : undefined}
+            date={metadata?.dueDate}
           />
         );
-      case "file":
+      case "file_upload":
         return (
           <FileCard
-            fileName={metadata.fileName}
-            fileType={metadata.fileType}
-            fileSize={metadata.fileSize}
-            filePath={metadata.filePath}
+            name={metadata?.fileName}
+            type={metadata?.fileType}
+            size={metadata?.fileSize}
+            path={metadata?.filePath}
           />
-        );
-      case "status_change":
-        return (
-          <div className="mt-2">
-            <Badge variant="outline">
-              {metadata.oldStatus} → {metadata.newStatus}
-            </Badge>
-          </div>
         );
       case "phase_change":
         return (
           <div className="mt-2">
             <Badge variant="outline">
-              {metadata.oldPhase} → {metadata.newPhase}
+              {metadata?.oldStatus} → {metadata?.newStatus}
             </Badge>
           </div>
         );
