@@ -1,0 +1,87 @@
+import { Json } from '../base/json';
+
+export interface LeadTables {
+  leads: {
+    Row: {
+      id: string;
+      user_id: string;
+      name: string;
+      platform: string;
+      industry: string;
+      last_action: string | null;
+      last_action_date: string | null;
+      created_at: string | null;
+      updated_at: string | null;
+      notes: string | null;
+      social_media_username: string | null;
+      company_name: string | null;
+      products_services: string | null;
+      target_audience: string | null;
+      usp: string | null;
+      business_description: string | null;
+      phone_number: string | null;
+      email: string | null;
+      contact_type: string | null;
+      social_media_posts: Json | null;
+      social_media_interests: string[] | null;
+      social_media_bio: string | null;
+      last_social_media_scan: string | null;
+      pipeline_id: string;
+      phase_id: string;
+    };
+    Insert: {
+      id?: string;
+      user_id: string;
+      name: string;
+      platform: string;
+      industry: string;
+      last_action?: string | null;
+      last_action_date?: string | null;
+      created_at?: string | null;
+      updated_at?: string | null;
+      notes?: string | null;
+      social_media_username?: string | null;
+      company_name?: string | null;
+      products_services?: string | null;
+      target_audience?: string | null;
+      usp?: string | null;
+      business_description?: string | null;
+      phone_number?: string;
+      email?: string;
+      contact_type?: string;
+      social_media_posts?: Json | null;
+      social_media_interests?: string[] | null;
+      social_media_bio?: string | null;
+      last_social_media_scan?: string | null;
+      pipeline_id: string;
+      phase_id: string;
+    };
+    Update: {
+      id?: string;
+      user_id?: string;
+      name?: string;
+      platform?: string;
+      industry?: string;
+      last_action?: string | null;
+      last_action_date?: string | null;
+      created_at?: string | null;
+      updated_at?: string | null;
+      notes?: string | null;
+      social_media_username?: string | null;
+      company_name?: string | null;
+      products_services?: string | null;
+      target_audience?: string | null;
+      usp?: string | null;
+      business_description?: string | null;
+      phone_number?: string;
+      email?: string;
+      contact_type?: string;
+      social_media_posts?: Json | null;
+      social_media_interests?: string[] | null;
+      social_media_bio?: string | null;
+      last_social_media_scan?: string | null;
+      pipeline_id?: string;
+      phase_id?: string;
+    };
+  };
+}
