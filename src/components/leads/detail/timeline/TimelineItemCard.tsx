@@ -3,11 +3,49 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Check, Save, X, Trash2, Edit, Mic, Calendar } from "lucide-react";
+import { Check, Save, X, Trash2, Edit, Mic, Calendar, Phone, MapPin, Video, Users, BarChart, RefreshCw } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DocumentPreview } from "@/components/elevate/platform/detail/DocumentPreview";
+
+const getMeetingTypeLabel = (type: string) => {
+  switch (type) {
+    case "phone_call":
+      return "Telefongespräch";
+    case "on_site":
+      return "Vor-Ort-Termin";
+    case "zoom":
+      return "Zoom Meeting";
+    case "initial_meeting":
+      return "Erstgespräch";
+    case "presentation":
+      return "Präsentation";
+    case "follow_up":
+      return "Folgetermin";
+    default:
+      return type;
+  }
+};
+
+const getMeetingTypeIcon = (type: string) => {
+  switch (type) {
+    case "phone_call":
+      return <Phone className="h-4 w-4 text-gray-600" />;
+    case "on_site":
+      return <MapPin className="h-4 w-4 text-gray-600" />;
+    case "zoom":
+      return <Video className="h-4 w-4 text-gray-600" />;
+    case "initial_meeting":
+      return <Users className="h-4 w-4 text-gray-600" />;
+    case "presentation":
+      return <BarChart className="h-4 w-4 text-gray-600" />;
+    case "follow_up":
+      return <RefreshCw className="h-4 w-4 text-gray-600" />;
+    default:
+      return <Calendar className="h-4 w-4 text-gray-600" />;
+  }
+};
 
 interface TimelineItemCardProps {
   type: string;
@@ -239,19 +277,14 @@ export const TimelineItemCard = ({
           <div className={`space-y-2 ${isCompleted ? 'line-through text-gray-500' : ''}`}>
             <div className="font-medium">{content}</div>
             {metadata.meetingType && (
-              <div className="text-sm text-gray-600">
-                {settings?.language === "en" ? "Meeting Type" : "Termin-Typ"}: {metadata.meetingType}
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                {getMeetingTypeIcon(metadata.meetingType)}
+                {getMeetingTypeLabel(metadata.meetingType)}
               </div>
             )}
             {metadata.dueDate && (
               <div className="text-sm text-gray-600">
                 {settings?.language === "en" ? "Date" : "Datum"}: {format(new Date(metadata.dueDate), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
-              </div>
-            )}
-            {metadata.color && (
-              <div className="text-sm text-gray-600 flex items-center gap-2">
-                {settings?.language === "en" ? "Color" : "Farbe"}: 
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: metadata.color }} />
               </div>
             )}
           </div>

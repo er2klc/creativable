@@ -17,7 +17,13 @@ import {
   Check,
   Heart,
   Clock,
-  ThumbsDown
+  ThumbsDown,
+  Phone,
+  MapPin,
+  Video,
+  Users,
+  BarChart,
+  RefreshCw
 } from "lucide-react";
 import { TimelineItemType } from "./TimelineUtils";
 
@@ -50,6 +56,25 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
       }
     }
 
+    if (type === 'task' && metadata?.meetingType) {
+      switch(metadata.meetingType) {
+        case 'phone_call':
+          return <Phone className="h-4 w-4 text-white" />;
+        case 'on_site':
+          return <MapPin className="h-4 w-4 text-white" />;
+        case 'zoom':
+          return <Video className="h-4 w-4 text-white" />;
+        case 'initial_meeting':
+          return <Users className="h-4 w-4 text-white" />;
+        case 'presentation':
+          return <BarChart className="h-4 w-4 text-white" />;
+        case 'follow_up':
+          return <RefreshCw className="h-4 w-4 text-white" />;
+        default:
+          return <Calendar className="h-4 w-4 text-white" />;
+      }
+    }
+
     switch (type) {
       case 'contact_created':
         return <UserPlus className="h-4 w-4 text-white" />;
@@ -59,9 +84,6 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
         if (platform === 'whatsapp') return <MessageCircle className="h-4 w-4 text-white" />;
         return <MessageSquare className="h-4 w-4 text-white" />;
       case 'task':
-        if (metadata?.meetingType) {
-          return <Calendar className="h-4 w-4 text-white" />;
-        }
         return status === 'completed' ? 
           <Check className="h-4 w-4 text-white" /> : 
           <ListTodo className="h-4 w-4 text-white" />;
