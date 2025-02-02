@@ -1,47 +1,40 @@
-import { SocialMediaPost } from "./SocialMediaPost";
-import { SocialMediaPostRaw, PostType } from "../../types/lead";
+import { useState } from "react";
+import { SocialMediaPost } from "../../types/lead";
+import { formatDateTime } from "../utils/dateUtils";
+import { Button } from "@/components/ui/button";
 
 interface SocialMediaTimelineProps {
-  posts: SocialMediaPostRaw[];
-  linkedInPosts?: any[];
-  platform?: string;
-  kontaktIdFallback?: string;
+  posts: SocialMediaPost[];
+  onDeletePost: (postId: string) => void;
 }
 
-export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdFallback }: SocialMediaTimelineProps) => {
-  // Filter out temp posts and sort the remaining posts
-  const sortedPosts = [...posts]
-    .filter(post => !post.id.startsWith('temp-') && post.post_type?.toLowerCase() !== 'post')
-    .sort((a, b) => {
-      const dateA = a.timestamp ? new Date(a.timestamp) : new Date(a.posted_at || '');
-      const dateB = b.timestamp ? new Date(b.timestamp) : new Date(b.posted_at || '');
-      return dateB.getTime() - dateA.getTime();
-    });
+export const SocialMediaTimeline = ({ posts, onDeletePost }: SocialMediaTimelineProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedPost, setEditedPost] = useState<SocialMediaPost | null>(null);
+
+  const handleEdit = (post: SocialMediaPost) => {
+    setIsEditing(true);
+    setEditedPost(post);
+  };
+
+  const handleDelete = (postId: string) => {
+    onDeletePost(postId);
+  };
 
   return (
-    <div className="relative">
-      {/* Linie */}
-      <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-400 z-0" />
-      {/* Posts */}
-      <div className="relative space-y-6">
-        {sortedPosts.length > 0 ? (
-          sortedPosts.map((post, index) => (
-            <SocialMediaPost 
-              key={post.id} 
-              post={{
-                ...post,
-                post_type: post.post_type as PostType,
-                video_url: post.video_url || undefined
-              }}
-              kontaktIdFallback={kontaktIdFallback}
-            />
-          ))
-        ) : (
-          <div className="text-center text-muted-foreground py-4 ml-4">
-            Keine Social Media Aktivitäten vorhanden
+    <div className="space-y-4">
+      {posts.map((post) => (
+        <div key={post.id} className="p-4 border rounded-lg shadow-sm">
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold">{post.content}</h3>
+            <div className="flex gap-2">
+              <Button onClick={() => handleEdit(post)}>Edit</Button>
+              <Button variant="outline" onClick={() => handleDelete(post.id)}>Delete</Button>
+            </div>
           </div>
-        )}
-      </div>
+          <p className="text-sm text-gray-500">{formatDateTime(post.posted_at)}</p>
+        </div>
+      ))}
     </div>
   );
 };

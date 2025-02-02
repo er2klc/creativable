@@ -13,47 +13,37 @@ export type Note = {
   status?: string;
 };
 
-export type PostType = "image" | "video" | "carousel" | "text";
-
 export type SocialMediaPost = {
   id: string;
   user_id: string;
   lead_id: string;
   platform: string;
-  post_type: PostType;
-  content: string;
+  post_type: string;
+  content?: string;
   likes_count?: number;
   comments_count?: number;
-  url: string;
-  posted_at: string;
-  created_at: string;
+  url?: string;
+  location?: string;
+  mentioned_profiles?: string[];
+  tagged_profiles?: string[];
+  posted_at?: string;
+  created_at?: string;
+  metadata?: any;
+  tagged_users?: any[];
   media_urls?: string[];
   media_type?: string;
-  video_url?: string;
-  bucket_path?: string;
-  current_file?: string;
-  engagement_count?: number;
-  error_message?: string;
   first_comment?: string;
+  engagement_count?: number;
+  video_url?: string;
   hashtags?: string[];
-  local_media_paths?: string[];
-  local_media_urls?: string[];
-  local_video_path?: string;
-  media_count?: number;
-  media_processing_status?: string;
-  processing_progress?: number;
-  storage_status?: string;
-  tagged_users?: any[];
-  timestamp?: string;
-  caption?: string;
-  location?: string;
 };
 
 export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "social_media_posts"> {
+  platform: Platform;
+  messages: Tables<"messages">[];
+  tasks: Tables<"tasks">[];
   notes: Note[];
-  tasks?: Tables<"tasks">[];
-  messages?: Tables<"messages">[];
-  lead_files?: Tables<"lead_files">[];
-  linkedin_posts?: Tables<"linkedin_posts">[];
+  lead_files: Tables<"lead_files">[];
   social_media_posts?: SocialMediaPost[];
+  linkedin_posts?: Tables<"linkedin_posts">[];
 }

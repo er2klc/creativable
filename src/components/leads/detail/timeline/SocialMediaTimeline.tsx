@@ -1,47 +1,43 @@
-import { SocialMediaPost } from "./social/SocialMediaPost";
-import { SocialMediaPostRaw, PostType } from "../types/lead";
+import { useState } from "react";
+import { SocialMediaPost } from "../types/lead";
+import { formatDateTime } from "./utils/dateUtils";
+import { Button } from "@/components/ui/button";
+import { useSettings } from "@/hooks/use-settings";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SocialMediaTimelineProps {
-  posts: SocialMediaPostRaw[];
-  linkedInPosts?: any[];
-  platform?: string;
-  kontaktIdFallback?: string;
+  posts: SocialMediaPost[];
+  onDeletePost: (postId: string) => void;
 }
 
-export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdFallback }: SocialMediaTimelineProps) => {
-  // Filter out temp posts and sort the remaining posts
-  const sortedPosts = [...posts]
-    .filter(post => !post.id.startsWith('temp-')) // Filter out temp posts
-    .sort((a, b) => {
-      const dateA = a.timestamp ? new Date(a.timestamp) : new Date(a.posted_at || '');
-      const dateB = b.timestamp ? new Date(b.timestamp) : new Date(b.posted_at || '');
-      return dateB.getTime() - dateA.getTime();
-    });
+export const SocialMediaTimeline = ({ posts, onDeletePost }: SocialMediaTimelineProps) => {
+  const { settings } = useSettings();
+
+  const handleDelete = async (postId: string) => {
+    try {
+      await supabase.from("social_media_posts").delete().eq("id", postId);
+      onDeletePost(postId);
+      toast.success(settings?.language === "en" ? "Post deleted successfully" : "Beitrag erfolgreich gelöscht");
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      toast.error(settings?.language === "en" ? "Error deleting post" : "Fehler beim Löschen des Beitrags");
+    }
+  };
 
   return (
-  <div className="relative">
-    {/* Linie */}
-    <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-400 z-0" />
-    {/* Posts */}
-    <div className="space-y-6">
-      {sortedPosts.length > 0 ? (
-        sortedPosts.map((post) => (
-          <SocialMediaPost 
-            key={post.id} 
-            post={{
-              ...post,
-              post_type: post.post_type as PostType,
-              video_url: post.video_url || undefined // Ensure video_url is passed
-            }}
-            kontaktIdFallback={kontaktIdFallback}
-          />
-        ))
-      ) : (
-        <div className="text-center text-muted-foreground py-4 ml-4">
-          Keine Social Media Aktivitäten vorhanden
+    <div className="space-y-4">
+      {posts.map((post) => (
+        <div key={post.id} className="p-4 border rounded-lg shadow-sm">
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold">{post.content}</h3>
+            <Button variant="outline" onClick={() => handleDelete(post.id)}>
+              Delete
+            </Button>
+          </div>
+          <p className="text-sm text-gray-500">{formatDateTime(post.posted_at)}</p>
         </div>
-      )}
+      ))}
     </div>
-  </div>
-);
+  );
 };
