@@ -40,3 +40,15 @@ export type {
   LeadFile,
   UserDocument
 } from './core';
+
+export type {
+  TreeProfile,
+  TreeLink
+} from './tree';
+
+export type {
+  VisionBoard,
+  VisionBoardImage
+} from './vision';
+
+export type { SupportTicket } from './support';

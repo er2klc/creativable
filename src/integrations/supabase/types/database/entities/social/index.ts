@@ -13,12 +13,11 @@ export interface SocialMediaPost {
   media_type?: string | null;
   likes_count?: number;
   comments_count?: number;
-  engagement_rate?: number;
+  video_url?: string | null;
+  caption?: string | null;
   location?: string | null;
   hashtags?: string[];
-  tagged_users?: Json | null;
-  caption?: string | null;
-  video_url?: string | null;
+  tagged_users?: any[];
   timestamp?: string | null;
 }
 

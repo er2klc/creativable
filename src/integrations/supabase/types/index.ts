@@ -13,12 +13,12 @@ export type * from './database/entities';
 export type * from './database/relationships';
 
 // Feature-specific types 
-export type { Message } from './messages';
-export type { Setting } from './settings';
-export type { UserDocument } from './documents';
+export type { Message } from './database/entities/core';
+export type { Setting } from './database/entities/settings';
+export type { UserDocument } from './database/entities/core';
 export type { Platform } from './platforms';
-export type { Profile } from './profiles';
-export type { SocialMediaPost } from './social-media';
-export type { Task } from './tasks';
-export type { Note } from './notes';
-export type { LeadFile } from './files';
+export type { Profile } from './database/entities/profile';
+export type { SocialMediaPost } from './database/entities/social';
+export type { Task } from './database/entities/core';
+export type { Note } from './database/entities/core';
+export type { LeadFile } from './database/entities/core';
