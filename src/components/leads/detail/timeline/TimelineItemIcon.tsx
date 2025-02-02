@@ -29,6 +29,7 @@ interface TimelineItemIconProps {
     type?: string;
     oldStatus?: string;
     newStatus?: string;
+    meetingType?: string;
   };
 }
 
@@ -58,6 +59,9 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
         if (platform === 'whatsapp') return <MessageCircle className="h-4 w-4 text-white" />;
         return <MessageSquare className="h-4 w-4 text-white" />;
       case 'task':
+        if (metadata?.meetingType) {
+          return <Calendar className="h-4 w-4 text-white" />;
+        }
         return status === 'completed' ? 
           <Check className="h-4 w-4 text-white" /> : 
           <ListTodo className="h-4 w-4 text-white" />;
@@ -84,13 +88,13 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
     if (type === 'phase_change' && metadata?.type === 'status_change') {
       switch(metadata.newStatus) {
         case 'partner':
-          return 'bg-[#8B5CF6]'; // Vivid Purple
+          return 'bg-[#8B5CF6]';
         case 'customer':
-          return 'bg-[#D946EF]'; // Magenta Pink
+          return 'bg-[#D946EF]';
         case 'not_for_now':
-          return 'bg-[#F2FCE2]'; // Soft Green
+          return 'bg-[#F2FCE2]';
         case 'no_interest':
-          return 'bg-[#ea384c]'; // Red
+          return 'bg-[#ea384c]';
         default:
           return 'bg-gray-500';
       }
@@ -102,6 +106,9 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
       case 'message':
         return 'bg-blue-500';
       case 'task':
+        if (metadata?.meetingType) {
+          return 'bg-indigo-500';
+        }
         return status === 'completed' ? 'bg-green-500' : 'bg-cyan-500';
       case 'appointment':
         return status === 'cancelled' ? 'bg-red-500' : 'bg-orange-500';
