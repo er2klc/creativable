@@ -13,6 +13,7 @@ async function processPostBatch(
   posts: any[],
   supabase: ReturnType<typeof createClient>,
   leadId: string,
+  userId: string,
   startIndex: number
 ): Promise<void> {
   console.log(`Processing batch starting at index ${startIndex} for lead ${leadId}`);
@@ -50,6 +51,7 @@ async function processPostBatch(
         .from('social_media_posts')
         .upsert({
           id: post.id,
+          user_id: userId,
           lead_id: leadId,
           processing_progress: progress,
           current_file: imageUrls[0]?.split('/').pop(),
@@ -130,13 +132,14 @@ async function processPostBatch(
           .from('social_media_posts')
           .upsert({
             id: post.id,
+            user_id: userId,
             lead_id: leadId,
             platform: 'Instagram',
             post_type: postType,
             content: post.caption,
             url: post.url,
             posted_at: post.timestamp,
-            media_urls: processedImagePaths, // Hier speichern wir die Bucket-URLs direkt in media_urls
+            media_urls: processedImagePaths,
             media_type: postType,
             media_processing_status: 'processed',
             hashtags: hashtags,
@@ -183,9 +186,10 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Get the user ID from the lead
     const { data: lead, error: leadError } = await supabase
       .from('leads')
-      .select('social_media_posts')
+      .select('user_id, social_media_posts')
       .eq('id', leadId)
       .single();
 
@@ -217,7 +221,7 @@ serve(async (req) => {
     // Process posts in smaller batches with longer delays
     for (let i = 0; i < posts.length; i += BATCH_SIZE) {
       const batch = posts.slice(i, i + BATCH_SIZE);
-      await processPostBatch(batch, supabase, leadId, i);
+      await processPostBatch(batch, supabase, leadId, lead.user_id, i);
       
       if (i + BATCH_SIZE < posts.length) {
         console.log(`Waiting ${BATCH_DELAY}ms before processing next batch...`);

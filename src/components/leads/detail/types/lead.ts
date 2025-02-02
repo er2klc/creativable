@@ -17,6 +17,7 @@ export type PostType = "image" | "video" | "carousel" | "text";
 
 export type SocialMediaPost = {
   id: string;
+  user_id: string;
   lead_id: string;
   platform: string;
   post_type: PostType;

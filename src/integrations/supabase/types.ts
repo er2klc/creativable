@@ -1449,6 +1449,7 @@ export type Database = {
           tagged_profiles: string[] | null
           tagged_users: Json | null
           url: string | null
+          user_id: string
           video_url: string | null
         }
         Insert: {
@@ -1482,6 +1483,7 @@ export type Database = {
           tagged_profiles?: string[] | null
           tagged_users?: Json | null
           url?: string | null
+          user_id: string
           video_url?: string | null
         }
         Update: {
@@ -1515,6 +1517,7 @@ export type Database = {
           tagged_profiles?: string[] | null
           tagged_users?: Json | null
           url?: string | null
+          user_id?: string
           video_url?: string | null
         }
         Relationships: [
