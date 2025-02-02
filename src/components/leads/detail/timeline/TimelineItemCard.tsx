@@ -185,8 +185,8 @@ export const TimelineItemCard = ({
   };
 
   const stopRecording = () => {
-    if (window.recognition) {
-      window.recognition.stop();
+    if ((window as any).recognition) {
+      (window as any).recognition.stop();
     }
     setIsRecording(false);
   };
@@ -272,7 +272,7 @@ export const TimelineItemCard = ({
     }
 
     if (type === 'file_upload' && metadata?.filePath) {
-      const isImage = metadata.fileType?.toLowerCase().match(/^(image\/jpeg|image\/png|image\/gif|image\/webp$/);
+      const isImage = metadata.fileType?.toLowerCase().match(/^(image\/jpeg|image\/png|image\/gif|image\/webp)$/);
       
       if (isImage) {
         const imageUrl = supabase.storage
