@@ -1,10 +1,5 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+import { PostType, RecurringPattern, ShortcutType, CommunicationChannel, GenderType } from '@/types/leads';
+import { Json } from './json';
 
 export interface Lead {
   id: string;
@@ -25,7 +20,6 @@ export interface Lead {
   social_media_following?: number | null;
   social_media_engagement_rate?: number | null;
   social_media_profile_image_url?: string | null;
-  // ... andere Lead-spezifische Felder
 }
 
 export interface SocialMediaPost {
@@ -139,3 +133,4 @@ export interface Database {
     };
   };
 }
+
