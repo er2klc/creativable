@@ -20,7 +20,11 @@ export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadB
 
   return (
     <>
-      <Dialog open={isMainDialogOpen} onOpenChange={setIsMainDialogOpen}>
+      <Dialog 
+        open={isMainDialogOpen} 
+        onOpenChange={setIsMainDialogOpen}
+        modal={true}
+      >
         <DialogTrigger asChild>
           <Button 
             variant="ghost" 
@@ -31,7 +35,12 @@ export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadB
             Neuer Kontakt
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent 
+          className="sm:max-w-[425px]"
+          onInteractOutside={(e) => {
+            e.preventDefault();
+          }}
+        >
           <div className="grid grid-cols-3 gap-4 py-4">
             <Button
               variant="outline"
