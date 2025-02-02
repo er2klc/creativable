@@ -8,7 +8,8 @@ export type {
 } from './base/enums';
 
 export type {
-  Team
+  Team,
+  TeamMember
 } from './team';
 
 export type {

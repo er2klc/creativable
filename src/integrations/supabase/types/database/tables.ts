@@ -1,4 +1,4 @@
-import { Json } from './entities/base/json';
+import { Json } from './base/json';
 import {
   Profile,
   Setting,
