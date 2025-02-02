@@ -9,7 +9,7 @@ import { LeadMessages } from "./LeadMessages";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { LeadTimeline } from "./LeadTimeline";
 import { ContactFieldManager } from "./contact-info/ContactFieldManager";
-import { LeadWithRelations } from "./types/lead";
+import { LeadWithRelations } from "@/types/leads";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 

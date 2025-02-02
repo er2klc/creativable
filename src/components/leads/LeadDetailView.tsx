@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadDetailHeader } from "./detail/LeadDetailHeader";
 import { useLeadSubscription } from "./detail/hooks/useLeadSubscription";
-import { LeadWithRelations } from "./detail/types/lead";
+import { LeadWithRelations } from "@/types/leads";
 import { LeadDetailContent } from "./detail/components/LeadDetailContent";
 import { useLeadMutations } from "./detail/hooks/useLeadMutations";
 

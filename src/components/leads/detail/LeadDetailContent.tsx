@@ -1,13 +1,15 @@
 import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadInfoCard } from "./LeadInfoCard";
-import { LeadSummary } from "./LeadSummary";
-import { CompactPhaseSelector } from "./CompactPhaseSelector";
-import { LeadTimeline } from "./LeadTimeline";
-import { ContactFieldManager } from "./contact-info/ContactFieldManager";
-import { LeadDetailTabs } from "./LeadDetailTabs";
-import { LeadWithRelations } from "./types/lead";
+import { LeadInfoCard } from "../LeadInfoCard";
+import { TaskList } from "../TaskList";
+import { NoteList } from "../NoteList";
+import { LeadSummary } from "../LeadSummary";
+import { LeadMessages } from "../LeadMessages";
+import { CompactPhaseSelector } from "../CompactPhaseSelector";
+import { LeadTimeline } from "../LeadTimeline";
+import { ContactFieldManager } from "../contact-info/ContactFieldManager";
+import { LeadWithRelations } from "@/types/leads";
 
 interface LeadDetailContentProps {
   lead: LeadWithRelations;
@@ -26,35 +28,43 @@ export const LeadDetailContent = ({
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
 
+  // Only hide phase selector if lead has a status other than 'lead'
+  const showPhaseSelector = !lead.status || lead.status === 'lead';
+
   if (isLoading) {
     return <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>;
   }
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
-      <div className="grid grid-cols-12 gap-6">
-        {/* Left Column - 4 columns */}
-        <div className="col-span-4 space-y-6">
-          <div className="space-y-4">
-            <LeadSummary lead={lead} />
+      <div className="space-y-6">
+        {showPhaseSelector && (
+          <CompactPhaseSelector
+            lead={lead}
+            onUpdateLead={onUpdateLead}
+          />
+        )}
+        
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Bot className="h-5 w-5" />
+            <h3 className="text-lg font-semibold">
+              {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
+            </h3>
           </div>
-          
-          <LeadInfoCard 
-            lead={lead} 
-            onUpdate={onUpdateLead} 
-            onDelete={onDeleteClick}
-          />
-          <ContactFieldManager />
+          <LeadSummary lead={lead} />
         </div>
-
-        {/* Right Column - 8 columns */}
-        <div className="col-span-8 space-y-6">
-          <LeadDetailTabs lead={lead} />
-          <LeadTimeline 
-            lead={lead} 
-            onDeletePhaseChange={onDeletePhaseChange}
-          />
-        </div>
+        
+        <LeadInfoCard 
+          lead={lead} 
+          onUpdate={onUpdateLead} 
+          onDelete={onDeleteClick}
+        />
+        <ContactFieldManager />
+        <LeadTimeline lead={lead} onDeletePhaseChange={onDeletePhaseChange} />
+        <TaskList leadId={lead.id} />
+        <NoteList leadId={lead.id} />
+        <LeadMessages leadId={lead.id} messages={lead.messages || []} />
       </div>
     </div>
   );
