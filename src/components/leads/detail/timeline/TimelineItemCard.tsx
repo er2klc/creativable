@@ -1,9 +1,7 @@
 import { useState } from "react";
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Check, Save, X, Trash2, Edit, Mic } from "lucide-react";
+import { Check, Save, X, Mic } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +33,7 @@ interface TimelineItemCardProps {
     last_edited_at?: string;
     meetingType?: string;
     color?: string;
+    endTime?: string;
   };
   status?: string;
   onDelete?: () => void;
@@ -58,7 +57,6 @@ export const TimelineItemCard = ({
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
 
   const handleTaskComplete = async () => {
     if (!id) return;
@@ -196,149 +194,115 @@ export const TimelineItemCard = ({
     setIsRecording(false);
   };
 
-  const renderContent = () => {
-    if (isEditing && type === 'note') {
-      return (
-        <div className="space-y-2">
-          <Textarea
-            value={editedContent}
-            onChange={(e) => setEditedContent(e.target.value)}
-            className="min-h-[100px] w-full"
-          />
-          <div className="flex gap-2 justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setIsEditing(false);
-                setEditedContent(content);
-              }}
-            >
-              <X className="h-4 w-4 mr-1" />
-              {settings?.language === "en" ? "Cancel" : "Abbrechen"}
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={isSaving || editedContent.trim() === content.trim()}
-            >
-              <Save className="h-4 w-4 mr-1" />
-              {settings?.language === "en" ? "Save" : "Speichern"}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={isRecording ? stopRecording : startRecording}
-              className={isRecording ? "bg-red-50 text-red-600" : ""}
-            >
-              <Mic className={`h-4 w-4 ${isRecording ? 'text-red-500' : ''}`} />
-            </Button>
-          </div>
-        </div>
-      );
-    }
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
 
-    if (type === 'task') {
-      return (
-        <TaskCard
-          content={content}
-          metadata={metadata}
-          isCompleted={isCompleted}
-          onDelete={onDelete}
-          onComplete={handleTaskComplete}
-          isEditing={isEditing}
-          onEdit={() => setIsEditing(true)}
-        />
-      );
-    }
-
-    if (type === 'appointment') {
-      return (
-        <AppointmentCard
-          content={content}
-          metadata={metadata}
-          isCompleted={isCompleted}
-          onDelete={onDelete}
-        />
-      );
-    }
-
-    if (type === 'file_upload') {
-      return (
-        <FileCard
-          content={content}
-          metadata={metadata}
-        />
-      );
-    }
-
+  if (type === 'task') {
     return (
-      <div className="relative group">
-        <div className="whitespace-pre-wrap break-words">
-          {content}
-        </div>
-        <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          {type === 'note' && (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              <Edit className="h-4 w-4 text-gray-500 hover:text-blue-600" />
-            </button>
-          )}
-          {type === 'phase_change' && onDelete && (
-            <button
-              onClick={onDelete}
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
-            </button>
-          )}
+      <TaskCard
+        content={content}
+        metadata={metadata}
+        isCompleted={isCompleted}
+        onDelete={onDelete}
+        onComplete={handleTaskComplete}
+        onEdit={handleEdit}
+      />
+    );
+  }
+
+  if (type === 'appointment') {
+    return (
+      <AppointmentCard
+        content={content}
+        metadata={metadata}
+        isCompleted={isCompleted}
+        onDelete={onDelete}
+        onEdit={handleEdit}
+      />
+    );
+  }
+
+  if (type === 'file_upload') {
+    return (
+      <FileCard
+        content={content}
+        metadata={metadata}
+      />
+    );
+  }
+
+  if (isEditing && type === 'note') {
+    return (
+      <div className="space-y-2">
+        <Textarea
+          value={editedContent}
+          onChange={(e) => setEditedContent(e.target.value)}
+          className="min-h-[100px] w-full"
+        />
+        <div className="flex gap-2 justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setIsEditing(false);
+              setEditedContent(content);
+            }}
+          >
+            <X className="h-4 w-4 mr-1" />
+            {settings?.language === "en" ? "Cancel" : "Abbrechen"}
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving || editedContent.trim() === content.trim()}
+          >
+            <Save className="h-4 w-4 mr-1" />
+            {settings?.language === "en" ? "Save" : "Speichern"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={isRecording ? stopRecording : startRecording}
+            className={isRecording ? "bg-red-50 text-red-600" : ""}
+          >
+            <Mic className={`h-4 w-4 ${isRecording ? 'text-red-500' : ''}`} />
+          </Button>
         </div>
       </div>
     );
-  };
+  }
 
-  const renderMetadata = () => {
-    if (metadata?.last_edited_at) {
-      return (
+  return (
+    <div className="relative group">
+      <div className="whitespace-pre-wrap break-words">
+        {content}
+      </div>
+      <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        {type === 'note' && (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="p-1 hover:bg-gray-100 rounded"
+          >
+            <Edit2 className="h-4 w-4 text-gray-500 hover:text-blue-600" />
+          </button>
+        )}
+        {type === 'phase_change' && onDelete && (
+          <button
+            onClick={onDelete}
+            className="p-1 hover:bg-gray-100 rounded"
+          >
+            <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
+          </button>
+        )}
+      </div>
+      {metadata?.last_edited_at && (
         <div className="text-xs text-gray-500 mt-2">
           {settings?.language === "en" ? "Created" : "Erstellt"}: {format(new Date(created_at || ''), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
           <br />
           {settings?.language === "en" ? "Last edited" : "Zuletzt bearbeitet"}: {format(new Date(metadata.last_edited_at), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
         </div>
-      );
-    }
-    
-    if (type === 'task' && isCompleted && metadata?.completedAt) {
-      return (
-        <div className="text-xs text-gray-500 mt-2">
-          {settings?.language === "en" ? "Completed" : "Erledigt"}: {format(new Date(metadata.completedAt), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const getBorderColor = () => {
-    if (status === 'completed') return 'border-green-500';
-    if (status === 'cancelled') return 'border-red-500';
-    if (type === 'phase_change') return 'border-blue-500';
-    if (type === 'note') return 'border-yellow-400';
-    if (type === 'message') return 'border-purple-500';
-    if (type === 'task') {
-      if (metadata?.meetingType) return 'border-indigo-500';
-      return 'border-orange-500';
-    }
-    if (type === 'file_upload') return 'border-cyan-500';
-    if (type === 'contact_created') return 'border-emerald-500';
-    return 'border-gray-200';
-  };
-
-  return (
-    <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}>
-      {renderContent()}
-      {renderMetadata()}
+      )}
     </div>
   );
 };
