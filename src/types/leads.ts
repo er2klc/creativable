@@ -2,11 +2,11 @@ import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 
 // Unified type definitions for all social media related types
-export type PostType = 'post' | 'video' | 'reel' | 'story' | 'igtv' | 'Image' | 'Sidecar';
-export type RecurringPattern = 'none' | 'daily' | 'weekly' | 'monthly';
-export type ShortcutType = 'lead' | 'team' | 'platform';
-export type CommunicationChannel = 'email' | 'phone' | 'whatsapp' | 'instagram' | 'linkedin';
-export type GenderType = 'male' | 'female' | 'other';
+export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
+export type RecurringPattern = "none" | "daily" | "weekly" | "monthly";
+export type ShortcutType = "lead" | "team" | "platform";
+export type CommunicationChannel = "email" | "phone" | "whatsapp" | "instagram" | "linkedin";
+export type GenderType = "male" | "female" | "other";
 
 export interface LeadWithRelations extends Tables<"leads"> {
   messages: Tables<"messages">[];
@@ -21,6 +21,7 @@ export interface LeadWithRelations extends Tables<"leads"> {
 export interface SocialMediaPost {
   id: string;
   lead_id: string;
+  user_id: string;
   platform: string;
   post_type: PostType;
   content: string | null;

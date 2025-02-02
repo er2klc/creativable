@@ -76,6 +76,7 @@ export const useSocialMediaPosts = (leadId: string) => {
           location: post.location || null,
           timestamp: post.posted_at || null,
           tagged_users: post.tagged_users || [],
+          user_id: user.id
         };
       });
 
