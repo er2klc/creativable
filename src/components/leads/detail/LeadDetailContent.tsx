@@ -32,8 +32,8 @@ export const LeadDetailContent = ({
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="grid grid-cols-12 gap-6 p-6">
-        {/* Left Column - 5/12 */}
-        <div className="col-span-5 space-y-6">
+        {/* Left Column - 4/12 */}
+        <div className="col-span-4 space-y-6">
           <div className="space-y-4">
             <LeadSummary lead={lead} />
           </div>
@@ -45,8 +45,8 @@ export const LeadDetailContent = ({
           />
         </div>
 
-        {/* Right Column - 7/12 */}
-        <div className="col-span-7 space-y-6">
+        {/* Right Column - 8/12 */}
+        <div className="col-span-8 space-y-6">
           <ContactFieldManager />
           <LeadDetailTabs lead={lead} />
           <LeadTimeline 
