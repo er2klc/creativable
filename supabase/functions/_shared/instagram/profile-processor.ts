@@ -64,7 +64,7 @@ export async function processInstagramProfile(
       social_media_following: parseInt(profile.followsCount as string) || 0,
       social_media_engagement_rate: engagementRate,
       social_media_profile_image_url: newProfileImageUrl,
-      social_media_posts: profile.latestPosts,
+      apify_instagram_data: profile.latestPosts, // Updated from social_media_posts
       social_media_verified: profile.verified,
       social_media_categories: profile.businessCategoryName ? [profile.businessCategoryName] : null,
       social_media_interests: Array.from(allHashtags),

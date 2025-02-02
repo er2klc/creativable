@@ -17,7 +17,7 @@ export interface Lead {
   created_at?: string;
   updated_at?: string;
   social_media_username?: string | null;
-  social_media_posts?: Json | null;
+  apify_instagram_data?: Json | null; // Updated from social_media_posts
   social_media_followers?: number | null;
   social_media_following?: number | null;
   social_media_engagement_rate?: number | null;

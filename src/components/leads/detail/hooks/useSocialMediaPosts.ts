@@ -24,10 +24,10 @@ export const useSocialMediaPosts = (leadId: string) => {
         throw postsError;
       }
 
-      // ✅ Hole `social_media_posts` aus `leads`
+      // ✅ Hole `apify_instagram_data` aus `leads` (updated from social_media_posts)
       const { data: leadData, error: leadError } = await supabase
         .from("leads")
-        .select("social_media_posts")
+        .select("apify_instagram_data")
         .eq("id", leadId)
         .single();
 
@@ -39,15 +39,15 @@ export const useSocialMediaPosts = (leadId: string) => {
       console.log("🚀 DEBUG: API Antwort von Supabase (Social Media Posts):", socialMediaPosts);
       console.log("🚀 DEBUG: API Antwort von Supabase (Lead Data):", leadData);
 
-      // ✅ Parse die `social_media_posts` aus der `leads`-Tabelle
+      // ✅ Parse die `apify_instagram_data` aus der `leads`-Tabelle
       let leadSocialPosts = [];
-      if (leadData?.social_media_posts) {
+      if (leadData?.apify_instagram_data) {
         try {
-          leadSocialPosts = typeof leadData.social_media_posts === "string"
-            ? JSON.parse(leadData.social_media_posts)
-            : leadData.social_media_posts;
+          leadSocialPosts = typeof leadData.apify_instagram_data === "string"
+            ? JSON.parse(leadData.apify_instagram_data)
+            : leadData.apify_instagram_data;
         } catch (e) {
-          console.error("⚠️ Fehler beim Parsen von social_media_posts aus leads:", e);
+          console.error("⚠️ Fehler beim Parsen von apify_instagram_data aus leads:", e);
         }
       }
 
