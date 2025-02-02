@@ -1,7 +1,6 @@
-import { Tables } from "@/integrations/supabase/types";
-import { Platform } from "@/config/platforms";
-
-export type PostType = "image" | "video" | "carousel" | "text";
+import { Platform } from '@/config/platforms';
+import { Tables } from '@/integrations/supabase/types';
+import { SocialMediaPost } from '@/integrations/supabase/types/social-media';
 
 export interface Note {
   id: string;
@@ -15,30 +14,8 @@ export interface Note {
   status?: string;
 }
 
-export interface SocialMediaPost {
+export interface LeadWithRelations {
   id: string;
-  user_id: string;
-  lead_id: string;
-  platform: string;
-  post_type: PostType;
-  content: string | null;
-  caption: string | null;
-  likes_count: number | null;
-  comments_count: number | null;
-  url: string | null;
-  location: string | null;
-  mentioned_profiles: string[] | null;
-  tagged_profiles: string[] | null;
-  posted_at: string | null;
-  media_urls: string[];
-  media_type: string | null;
-  video_url: string | null;
-  hashtags: string[] | null;
-  tagged_users: any[] | null;
-  timestamp: string | null;
-}
-
-export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
   platform: Platform;
   tasks?: Tables<"tasks">[];
   messages?: Tables<"messages">[];
@@ -46,4 +23,5 @@ export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
   linkedin_posts?: Tables<"linkedin_posts">[];
   social_media_posts?: SocialMediaPost[];
   notes: Note[];
+  [key: string]: any; // Erlaubt zusätzliche Properties aus der leads Tabelle
 }
