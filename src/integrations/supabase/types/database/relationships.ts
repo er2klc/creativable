@@ -3,9 +3,7 @@ import {
   Lead,
   Profile,
   SocialMediaPost,
-  Team,
-  TeamMember,
-  TreeProfile
+  Team
 } from './entities';
 
 export interface LeadWithRelations extends Lead {
@@ -18,7 +16,7 @@ export interface LeadWithRelations extends Lead {
 }
 
 export interface TeamWithRelations extends Team {
-  members: TeamMember[];
+  members: any[];
   posts: any[];
   events: any[];
 }

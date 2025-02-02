@@ -8,8 +8,7 @@ export type {
 } from './base/enums';
 
 export type {
-  Team,
-  TeamMember
+  Team
 } from './team';
 
 export type {
@@ -19,30 +18,13 @@ export type {
 
 export type {
   Setting,
-  ChatbotSetting,
   Keyword
 } from './settings';
 
 export type {
   Pipeline,
-  PipelinePhase
+  PipelinePhase,
+  Lead
 } from './core';
 
 export type { Profile } from './profile';
-
-export type {
-  Lead,
-  LeadFile
-} from './core';
-
-export type {
-  TreeProfile,
-  TreeLink
-} from './tree';
-
-export type {
-  VisionBoard,
-  VisionBoardImage
-} from './vision';
-
-export type { SupportTicket } from './support';
