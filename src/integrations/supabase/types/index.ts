@@ -2,9 +2,13 @@
 export * from './json';
 export * from './enums';
 
-// Entity types
+// Database types
+export * from './database/tables';
+export * from './database/entities';
+export * from './database/relationships';
+
+// Feature-specific types
 export * from './auth';
-export * from './tables';
 export * from './messages';
 export * from './settings';
 export * from './documents';
