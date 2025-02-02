@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SocialMediaPost } from "@/types/leads";
 import { transformApifyPost, transformSocialMediaPost } from "./social-media/transformers";
-import { ApifyPost } from "./social-media/types";
+import { ApifyPost, RawSocialMediaPost } from "./social-media/types";
 
 export const useSocialMediaPosts = (leadId: string) => {
   return useQuery({
@@ -53,7 +53,7 @@ export const useSocialMediaPosts = (leadId: string) => {
       }
 
       // Transform posts
-      const mergedPosts = socialMediaPosts.map(post => 
+      const mergedPosts = (socialMediaPosts as RawSocialMediaPost[]).map(post => 
         transformSocialMediaPost(post, apifyPosts)
       );
 
