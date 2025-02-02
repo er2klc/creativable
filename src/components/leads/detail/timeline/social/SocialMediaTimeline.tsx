@@ -1,7 +1,8 @@
-import { SocialMediaPost } from "../../types/lead";
+import { SocialMediaPost as SocialMediaPostType } from "../../types/lead";
+import { SocialMediaPost } from "./SocialMediaPost";
 
 interface SocialMediaTimelineProps {
-  posts: SocialMediaPost[];
+  posts: SocialMediaPostType[];
   linkedInPosts?: any[];
   platform?: string;
   kontaktIdFallback?: string;
