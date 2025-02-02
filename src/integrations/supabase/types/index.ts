@@ -1,9 +1,8 @@
 // Base types
-export * from './json';
-export * from './enums';
+export { Json } from './json';
+export { PostType, RecurringPattern, ShortcutType, CommunicationChannel, GenderType } from './enums';
 
 // Database types
-export * from './database/tables';
 export * from './database/entities';
 export * from './database/relationships';
 
