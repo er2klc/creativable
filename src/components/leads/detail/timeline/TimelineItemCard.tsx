@@ -21,6 +21,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useSettings } from "@/hooks/use-settings";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { TaskCard } from "./components/TaskCard";
 import { FileCard } from "./components/FileCard";
 import { formatDateTime } from "./utils/dateUtils";
@@ -93,7 +96,7 @@ interface TimelineItemCardProps {
   isCompleted?: boolean;
 }
 
-export const TimelineItemCard = ({ 
+export const TimelineItemCard = ({
   type,
   content,
   metadata,
@@ -103,6 +106,7 @@ export const TimelineItemCard = ({
   created_at,
   isCompleted
 }: TimelineItemCardProps) => {
+  const { settings } = useSettings();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
