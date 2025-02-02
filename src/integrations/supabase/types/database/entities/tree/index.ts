@@ -1,3 +1,13 @@
+export interface TreeLink {
+  id: string;
+  profile_id: string;
+  title: string;
+  url: string;
+  order_index?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface TreeProfile {
   id: string;
   user_id: string;
@@ -7,14 +17,4 @@ export interface TreeProfile {
   created_at?: string;
   updated_at?: string;
   bio?: string;
-}
-
-export interface TreeLink {
-  id: string;
-  profile_id: string;
-  title: string;
-  url: string;
-  order_index?: number;
-  created_at?: string;
-  updated_at?: string;
 }

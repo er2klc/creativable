@@ -1,5 +1,3 @@
-import { Json } from '../base/json';
-
 export interface SupportTicket {
   id: string;
   user_id?: string;

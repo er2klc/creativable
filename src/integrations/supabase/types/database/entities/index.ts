@@ -9,10 +9,7 @@ export type {
 
 export type {
   Team,
-  TeamMember,
-  TeamPost,
-  TeamEvent,
-  TeamPostComment
+  TeamMember
 } from './team';
 
 export type {
@@ -29,16 +26,13 @@ export type {
 export type {
   Pipeline,
   PipelinePhase
-} from './pipeline';
+} from './core';
 
 export type { Profile } from './profile';
 
 export type {
-  Message,
-  Task,
-  Note,
-  LeadFile,
-  UserDocument
+  Lead,
+  LeadFile
 } from './core';
 
 export type {

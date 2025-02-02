@@ -1,26 +1,30 @@
-import { Json } from './base/json';
+import { Json } from './entities/base/json';
 import {
-  ChatbotSetting,
-  Keyword,
-  LeadFile,
-  Message,
-  Note,
-  Pipeline,
-  PipelinePhase,
+  PostType,
+  RecurringPattern,
+  ShortcutType,
+  CommunicationChannel,
+  GenderType
+} from './entities/base/enums';
+
+import {
   Profile,
   Setting,
   SocialMediaPost,
   SocialMediaScanHistory,
-  SupportTicket,
-  Task,
+  Lead,
   Team,
-  TeamMember,
-  TreeLink,
+  Pipeline,
+  PipelinePhase,
+  LeadFile,
   TreeProfile,
-  UserDocument,
-  UserSignature,
+  TreeLink,
   VisionBoard,
-  VisionBoardImage
+  VisionBoardImage,
+  SupportTicket,
+  TeamMember,
+  ChatbotSetting,
+  Keyword
 } from './entities';
 
 export interface Database {
@@ -29,9 +33,6 @@ export interface Database {
       leads: Lead;
       teams: Team;
       profiles: Profile;
-      messages: Message;
-      tasks: Task;
-      notes: Note;
       settings: Setting;
       chatbot_settings: ChatbotSetting;
       documents: Document;
@@ -45,15 +46,36 @@ export interface Database {
       team_members: TeamMember;
       tree_links: TreeLink;
       tree_profiles: TreeProfile;
-      user_documents: UserDocument;
-      user_signatures: UserSignature;
       vision_boards: VisionBoard;
       vision_board_images: VisionBoardImage;
     };
     Views: {
       [_ in never]: never
     };
-    Functions: DatabaseFunctions;
-    Enums: DatabaseEnums;
+    Functions: {
+      match_chunks: {
+        Args: {
+          query_embedding: string;
+          match_threshold: number;
+          match_count: number;
+          user_id: string;
+        };
+        Returns: {
+          id: string;
+          content: string;
+          similarity: number;
+          document_id: string;
+          document_title: string;
+          source_type: string;
+        }[];
+      };
+    };
+    Enums: {
+      post_type: PostType;
+      recurring_pattern: RecurringPattern;
+      shortcut_type: ShortcutType;
+      communication_channel: CommunicationChannel;
+      gender_type: GenderType;
+    };
   };
 }

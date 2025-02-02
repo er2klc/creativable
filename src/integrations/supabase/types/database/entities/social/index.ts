@@ -11,19 +11,12 @@ export interface SocialMediaPost {
   posted_at?: string | null;
   media_urls?: string[];
   media_type?: string | null;
-  likes_count?: number;
-  comments_count?: number;
-  video_url?: string | null;
-  caption?: string | null;
-  location?: string | null;
-  hashtags?: string[];
-  tagged_users?: any[];
-  timestamp?: string | null;
+  created_at?: string;
 }
 
 export interface SocialMediaScanHistory {
   id: string;
-  lead_id?: string;
+  lead_id?: string | null;
   platform: string;
   scanned_at?: string;
   followers_count?: number;
@@ -31,12 +24,6 @@ export interface SocialMediaScanHistory {
   posts_count?: number;
   engagement_rate?: number;
   success?: boolean;
-  error_message?: string;
+  error_message?: string | null;
   profile_data?: Json;
-  experience?: Json;
-  education?: Json;
-  skills?: Json;
-  certifications?: Json;
-  languages?: Json;
-  recommendations?: Json;
 }
