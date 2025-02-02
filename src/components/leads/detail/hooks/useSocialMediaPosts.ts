@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { SocialMediaPost } from "@/types/leads";
+import type { SocialMediaPost, PostType } from "@/types/leads";
 
 export const useSocialMediaPosts = (leadId: string) => {
   return useQuery({

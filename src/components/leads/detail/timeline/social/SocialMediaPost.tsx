@@ -2,12 +2,13 @@ import type { SocialMediaPost as SocialMediaPostType } from "@/types/leads";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Image, Video, MessageCircle, Heart } from "lucide-react";
 import { MediaDisplay } from "./MediaDisplay";
-import { PostHeader } from "./PostHeader";
+import { PostHeader } from "./components/PostHeader";
 import { PostContent } from "./PostContent";
 import { PostMetadata } from "./PostMetadata";
 import { PostActions } from "./PostActions";
+import { PostTypeIndicator } from "./components/PostTypeIndicator";
+import { TaggedUsers } from "./components/TaggedUsers";
 
 interface SocialMediaPostProps {
   post: SocialMediaPostType;
@@ -26,39 +27,18 @@ const getPostTypeColor = (type: string) => {
   }
 };
 
-const getPostTypeIcon = (type: string) => {
-  switch (type?.toLowerCase()) {
-    case "video":
-      return <Video className="h-5 w-5 text-cyan-500 border-cyan-500" />;
-    case "image":
-      return <Image className="h-5 w-5 text-purple-500 border-purple-500" />;
-    case "sidecar":
-      return <MessageCircle className="h-5 w-5 text-amber-500 border-amber-500" />;
-    default:
-      return <Heart className="h-5 w-5 text-gray-500 border-gray-500" />;
-  }
-};
-
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
   const getMediaUrls = () => {
     const postType = post.post_type?.toLowerCase();
 
-    console.log("DEBUG: Post Type:", postType);
-    console.log("DEBUG: Post ID:", post.id);
-    console.log("DEBUG: media_urls vorhanden?", post.media_urls ? "Ja" : "Nein", post.media_urls);
-    console.log("DEBUG: video_url vorhanden?", post.video_url ? "Ja" : "Nein", post.video_url);
-
     if (postType === "video" && post.video_url) {
-      console.log("🎥 Video-Post gefunden! Verwende Instagram Video-URL für Post ID:", post.id);
       return [post.video_url];
     }
 
     if ((postType === "image" || postType === "sidecar") && post.media_urls) {
-      console.log(`🖼️ Bild-Post gefunden! Verwende media_urls für Post ID: ${post.id}`, post.media_urls);
       return post.media_urls;
     }
 
-    console.warn(`⚠️ Keine gültigen media_urls gefunden für Post ID: ${post.id}`);
     return [];
   };
 
@@ -85,14 +65,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
       <div className="flex gap-4 items-start group relative">
         <div className="relative z-10">
-          <div
-            className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center",
-              postTypeColor
-            )}
-          >
-            {getPostTypeIcon(post.media_type || post.post_type)}
-          </div>
+          <PostTypeIndicator type={post.media_type || post.post_type} postTypeColor={postTypeColor} />
         </div>
 
         <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400 z-0" />
@@ -120,7 +93,11 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                 id={post.id}
               />
 
-              <PostContent content={post.content} caption={post.caption} hashtags={post.hashtags} />
+              <PostContent 
+                content={post.content} 
+                caption={post.caption} 
+                hashtags={post.hashtags} 
+              />
 
               <PostMetadata
                 likesCount={post.likes_count}
@@ -129,33 +106,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
                 locationName={post.location}
               />
 
-              {post.tagged_users && post.tagged_users.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {post.tagged_users.map((user) => (
-                    <a 
-                      key={user.id} 
-                      href={`https://www.instagram.com/${user.username}/`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex items-center space-x-2 text-sm bg-gray-100 p-2 rounded-lg hover:bg-gray-200"
-                    >
-                      <span>{user.full_name || user.username}</span>
-                      {user.is_verified && (
-                        <span className="flex items-center justify-center w-5 h-5 text-blue-500 ml-1">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 40 40"
-                            fill="currentColor"
-                            className="w-3 h-3"
-                          >
-                            <path d="M19.998 3.094 14.638 0l-2.972 5.15H5.432v6.354L0 14.64 3.094 20 0 25.359l5.432 3.137v5.905h5.975L14.638 40l5.36-3.094L25.358 40l3.232-5.6h6.162v-6.01L40 25.359 36.905 20 40 14.641l-5.248-3.03v-6.46h-6.419L25.358 0l-5.36 3.094Z" fillRule="evenodd" />
-                          </svg>
-                        </span>
-                      )}
-                    </a>
-                  ))}
-                </div>
-              )}
+              {post.tagged_users && <TaggedUsers users={post.tagged_users} />}
 
               <PostActions url={post.url} />
             </div>
