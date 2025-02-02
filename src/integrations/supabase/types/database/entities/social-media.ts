@@ -1,41 +1,44 @@
-import { PostType } from '../base/enums';
+import { Json } from '../base/json';
 
 export interface SocialMediaPost {
   id: string;
-  lead_id: string;
+  lead_id?: string;
   platform: string;
-  post_type: PostType;
-  content: string | null;
-  url: string | null;
+  post_type: string;
+  content?: string | null;
+  url?: string | null;
   posted_at?: string | null;
   media_urls?: string[];
   media_type?: string | null;
   likes_count?: number;
   comments_count?: number;
-  video_url?: string | null;
-  caption?: string | null;
+  engagement_rate?: number;
   location?: string | null;
   hashtags?: string[];
-  tagged_users?: any[];
-  timestamp?: string | null;
+  tagged_users?: any[] | null;
+  caption?: string | null;
+  video_url?: string | null;
+  user_id: string;
 }
 
 export interface SocialMediaScanHistory {
   id: string;
-  lead_id: string | null;
+  lead_id?: string;
   platform: string;
-  scanned_at: string | null;
-  followers_count: number | null;
-  following_count: number | null;
-  posts_count: number | null;
-  engagement_rate: number | null;
-  success: boolean | null;
-  error_message: string | null;
-  profile_data: any | null;
-  experience: any | null;
-  education: any | null;
-  skills: any | null;
-  certifications: any | null;
-  languages: any | null;
-  recommendations: any | null;
+  scanned_at?: string;
+  followers_count?: number;
+  following_count?: number;
+  posts_count?: number;
+  engagement_rate?: number;
+  success?: boolean;
+  error_message?: string | null;
+  profile_data?: Json;
+  experience?: Json;
+  education?: Json;
+  skills?: Json;
+  certifications?: Json;
+  languages?: Json;
+  recommendations?: Json;
+  current_file?: string | null;
+  processing_progress?: number;
 }

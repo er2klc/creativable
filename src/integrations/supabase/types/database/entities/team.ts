@@ -11,11 +11,3 @@ export interface Team {
   slug: string;
   video_url?: string;
 }
-
-export interface TeamMember {
-  id: string;
-  team_id: string;
-  user_id: string;
-  role: string;
-  joined_at?: string;
-}

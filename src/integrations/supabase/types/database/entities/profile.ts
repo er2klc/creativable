@@ -1,5 +1,3 @@
-import { Json } from '../base/json';
-
 export interface Profile {
   id: string;
   is_admin?: boolean;
