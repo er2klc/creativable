@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Check, Save, X, Trash2, Edit, Mic, Phone, MapPin, Video, Users, BarChart, RefreshCw } from "lucide-react";
+import { Check, Save, X, Trash2, Edit, Mic } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,44 +12,7 @@ import { AppointmentCard } from "./components/AppointmentCard";
 import { TaskCard } from "./components/TaskCard";
 import { FileCard } from "./components/FileCard";
 import { formatDateTime } from "./utils/dateUtils";
-
-const getMeetingTypeLabel = (type: string) => {
-  switch (type) {
-    case "phone_call":
-      return "Telefongespräch";
-    case "on_site":
-      return "Vor-Ort-Termin";
-    case "zoom":
-      return "Zoom Meeting";
-    case "initial_meeting":
-      return "Erstgespräch";
-    case "presentation":
-      return "Präsentation";
-    case "follow_up":
-      return "Folgetermin";
-    default:
-      return type;
-  }
-};
-
-const getMeetingTypeIcon = (type: string) => {
-  switch (type) {
-    case "phone_call":
-      return <Phone className="h-4 w-4 text-gray-600" />;
-    case "on_site":
-      return <MapPin className="h-4 w-4 text-gray-600" />;
-    case "zoom":
-      return <Video className="h-4 w-4 text-gray-600" />;
-    case "initial_meeting":
-      return <Users className="h-4 w-4 text-gray-600" />;
-    case "presentation":
-      return <BarChart className="h-4 w-4 text-gray-600" />;
-    case "follow_up":
-      return <RefreshCw className="h-4 w-4 text-gray-600" />;
-    default:
-      return null;
-  }
-};
+import { TimelineItemType } from "./TimelineUtils";
 
 interface TimelineItemCardProps {
   type: TimelineItemType;
@@ -95,6 +58,7 @@ export const TimelineItemCard = ({
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const handleTaskComplete = async () => {
     if (!id) return;
@@ -290,41 +254,12 @@ export const TimelineItemCard = ({
 
     if (type === 'appointment') {
       return (
-        <div className="relative group">
-          <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                {metadata?.meetingType && getMeetingTypeIcon(metadata.meetingType)}
-                <span className="font-medium">{content}</span>
-              </div>
-              {metadata?.meetingType && (
-                <div className="text-sm text-gray-600 ml-6">
-                  {getMeetingTypeLabel(metadata.meetingType)}
-                </div>
-              )}
-            </div>
-            <div className="text-right">
-              {metadata?.dueDate && (
-                <div className="text-sm font-medium">
-                  {format(new Date(metadata.dueDate), "dd. MMM yyyy", { locale: de })}
-                </div>
-              )}
-              <div className="text-sm text-gray-600">
-                {metadata?.dueDate && format(new Date(metadata.dueDate), "HH:mm 'Uhr'", { locale: de })}
-              </div>
-            </div>
-          </div>
-          {onDelete && (
-            <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={onDelete}
-                className="p-1 hover:bg-gray-100 rounded"
-              >
-                <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
-              </button>
-            </div>
-          )}
-        </div>
+        <AppointmentCard
+          content={content}
+          metadata={metadata}
+          isCompleted={isCompleted}
+          onDelete={onDelete}
+        />
       );
     }
 

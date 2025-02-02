@@ -1,43 +1,47 @@
-import { Platform } from "@/config/platforms";
-import { SocialMediaPost } from "../types/lead";
+import { SocialMediaPost } from "./social/SocialMediaPost";
+import { SocialMediaPostRaw, PostType } from "../types/lead";
 
 interface SocialMediaTimelineProps {
-  posts: SocialMediaPost[];
-  platform: Platform;
-  kontaktIdFallback: string;
+  posts: SocialMediaPostRaw[];
+  linkedInPosts?: any[];
+  platform?: string;
+  kontaktIdFallback?: string;
 }
 
-export const SocialMediaTimeline = ({
-  posts,
-  platform,
-  kontaktIdFallback
-}: SocialMediaTimelineProps) => {
+export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdFallback }: SocialMediaTimelineProps) => {
+  // Filter out temp posts and sort the remaining posts
+  const sortedPosts = [...posts]
+    .filter(post => !post.id.startsWith('temp-')) // Filter out temp posts
+    .sort((a, b) => {
+      const dateA = a.timestamp ? new Date(a.timestamp) : new Date(a.posted_at || '');
+      const dateB = b.timestamp ? new Date(b.timestamp) : new Date(b.posted_at || '');
+      return dateB.getTime() - dateA.getTime();
+    });
+
   return (
-    <div className="space-y-4">
-      {posts.length === 0 ? (
-        <div className="text-gray-500">No social media posts available.</div>
-      ) : (
-        posts.map(post => (
-          <div key={post.id} className="border rounded-lg p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold">{post.platform}</span>
-              <span className="text-sm text-gray-500">{post.posted_at}</span>
-            </div>
-            <p className="mt-2">{post.content}</p>
-            {post.media_urls && post.media_urls.length > 0 && (
-              <div className="mt-2">
-                {post.media_urls.map((url, index) => (
-                  <img key={index} src={url} alt={`Media ${index}`} className="w-full h-auto rounded" />
-                ))}
-              </div>
-            )}
-            <div className="mt-2 flex items-center">
-              <span className="text-sm">{post.likes_count} Likes</span>
-              <span className="text-sm ml-4">{post.comments_count} Comments</span>
-            </div>
-          </div>
+  <div className="relative">
+    {/* Linie */}
+    <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-400 z-0" />
+    {/* Posts */}
+    <div className="space-y-6">
+      {sortedPosts.length > 0 ? (
+        sortedPosts.map((post) => (
+          <SocialMediaPost 
+            key={post.id} 
+            post={{
+              ...post,
+              post_type: post.post_type as PostType,
+              video_url: post.video_url || undefined // Ensure video_url is passed
+            }}
+            kontaktIdFallback={kontaktIdFallback}
+          />
         ))
+      ) : (
+        <div className="text-center text-muted-foreground py-4 ml-4">
+          Keine Social Media Aktivitäten vorhanden
+        </div>
       )}
     </div>
-  );
+  </div>
+);
 };
