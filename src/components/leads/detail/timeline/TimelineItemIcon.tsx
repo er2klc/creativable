@@ -21,7 +21,8 @@ import {
   Phone,
   Video,
   Users,
-  Coffee
+  Coffee,
+  CalendarClock
 } from "lucide-react";
 import { TimelineItemType } from "./TimelineUtils";
 
@@ -76,7 +77,7 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
         } else if (metadata?.meetingType === 'coffee') {
           return <Coffee className="h-4 w-4 text-white" />;
         }
-        return <Calendar className="h-4 w-4 text-white" />;
+        return <CalendarClock className="h-4 w-4 text-white" />;
       case 'note':
         return <StickyNote className="h-4 w-4 text-white" />;
       case 'phase_change':

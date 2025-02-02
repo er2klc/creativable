@@ -72,10 +72,10 @@ export const AppointmentCard = ({
         
         {metadata?.dueDate && (
           <div className="text-right">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm font-medium text-gray-600">
               {formatDateTime(metadata.dueDate, metadata.endTime).date}
             </div>
-            <div className="text-base font-medium text-gray-800">
+            <div className="text-lg font-semibold text-gray-800">
               {formatDateTime(metadata.dueDate, metadata.endTime).time}
             </div>
           </div>

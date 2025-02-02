@@ -7,7 +7,7 @@ export type LeadFile = Tables<"lead_files">;
 export type LinkedInPost = Tables<"linkedin_posts">;
 export type SocialMediaPost = Tables<"social_media_posts">;
 
-export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
+export interface LeadWithRelations extends Tables<"leads"> {
   notes: Note[];
   tasks: Task[];
   messages: Message[];
