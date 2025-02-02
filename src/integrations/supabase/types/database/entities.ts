@@ -219,3 +219,41 @@ export interface VisionBoardImage {
   created_at?: string | null;
   order_index: number;
 }
+
+export interface Profile {
+  id: string;
+  user_id: string;
+  avatar_url?: string;
+  created_at: string;
+}
+
+export interface SocialMediaPost {
+  id: string;
+  user_id: string;
+  platform: string;
+  content: string;
+  media_url?: string;
+  created_at: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+}
+
+export interface Setting {
+  id: string;
+  user_id: string;
+  key: string;
+  value: string;
+}
+
+export interface SocialMediaScanHistory {
+  id: string;
+  user_id: string;
+  platform: string;
+  scan_date: string;
+  result: Json;
+}
