@@ -30,13 +30,13 @@ const getPostTypeColor = (type: string) => {
 const getPostTypeIcon = (type: string) => {
   switch (type?.toLowerCase()) {
     case "video":
-      return <Video className="h-5 w-5 text-cyan-500" />;
+      return <Video className="h-5 w-5 text-cyan-500 border-cyan-200" />;
     case "image":
-      return <Image className="h-5 w-5 text-purple-500" />;
+      return <Image className="h-5 w-5 text-purple-500 border-purple-200" />;
     case "sidecar":
-      return <MessageCircle className="h-5 w-5 text-amber-500" />;
+      return <MessageCircle className="h-5 w-5 text-amber-500 border-amber-200" />;
     default:
-      return <MessageCircle className="h-5 w-5 text-gray-500" />;
+      return <MessageCircle className="h-5 w-5 text-gray-500 border-gray-200" />;
   }
 };
 
