@@ -17,13 +17,13 @@ interface SocialMediaPostProps {
 const getPostTypeColor = (type: string) => {
   switch (type?.toLowerCase()) {
     case "video":
-      return "bg-cyan-50 border-2 border-cyan-300";
+      return "bg-cyan-50 border border-cyan-300";
     case "image":
-      return "bg-purple-50 border-2 border-purple-300";
+      return "bg-purple-50 border border-purple-300";
     case "sidecar":
-      return "bg-amber-50 border-2 border-amber-300";
+      return "bg-amber-50 border border-amber-300";
     default:
-      return "bg-gray-50 border-2 border-gray-300";
+      return "bg-gray-50 border border-gray-300";
   }
 };
 
