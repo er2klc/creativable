@@ -1,46 +1,39 @@
-import { Platform } from '@/config/platforms';
-import { Tables } from '@/integrations/supabase/types';
-import { SocialMediaPost } from '@/integrations/supabase/types/social-media';
-import { Json } from '@/integrations/supabase/types';
+import { Json } from "@/integrations/supabase/types";
+import { Tables } from "@/integrations/supabase/types";
+import { Platform } from "@/config/platforms";
 
-/**
- * Base Lead type directly from the database table
- */
-export type BaseLead = Tables<'leads'>;
+export type PostType = 'image' | 'video' | 'sidecar' | 'post';
+export type RecurringPattern = 'none' | 'daily' | 'weekly' | 'monthly';
+export type ShortcutType = 'lead' | 'team' | 'platform';
+export type CommunicationChannel = 'email' | 'phone' | 'whatsapp' | 'instagram' | 'linkedin';
+export type GenderType = 'male' | 'female' | 'other';
 
-/**
- * Note with metadata for phase changes
- */
-export interface Note extends Omit<Tables<'notes'>, 'metadata'> {
-  metadata?: {
-    type?: string;
-    oldStatus?: string;
-    newStatus?: string;
-  };
+export interface SocialMediaPost {
+  id: string;
+  lead_id: string;
+  platform: string;
+  post_type: PostType;
+  content: string | null;
+  url: string | null;
+  posted_at?: string | null;
+  created_at?: string;
+  media_urls?: string[];
+  media_type?: string | null;
+  likes_count?: number | null;
+  comments_count?: number | null;
+  location?: string | null;
+  hashtags?: string[] | null;
+  tagged_users?: any[] | null;
+  caption?: string | null;
+  video_url?: string | null;
 }
 
-/**
- * Lead with all possible relations
- * This extends the base lead type and adds optional related records
- */
-export interface LeadWithRelations extends BaseLead {
-  // Platform information
-  platform: Platform;
-  
-  // Related records
-  tasks?: Tables<'tasks'>[];
-  messages?: Tables<'messages'>[];
-  notes: Note[];
-  lead_files?: Tables<'lead_files'>[];
-  
-  // Social media related
-  linkedin_posts?: Tables<'linkedin_posts'>[];
+export interface LeadWithRelations extends Omit<Tables<"leads">, "level"> {
+  messages: Tables<"messages">[];
+  tasks: Tables<"tasks">[];
+  notes: Tables<"notes">[];
+  lead_files: Tables<"lead_files">[];
+  linkedin_posts?: any[];
   social_media_posts?: SocialMediaPost[];
-  
-  // Tree structure
-  parent_id?: string | null;
-  level?: number | null;
-  
-  // Additional fields
-  avatar_url?: string | null;
+  level?: number;
 }

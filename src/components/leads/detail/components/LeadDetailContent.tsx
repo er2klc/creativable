@@ -36,7 +36,7 @@ export const LeadDetailContent = ({
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="grid grid-cols-12 gap-6 p-6">
-        {/* Left Column */}
+        {/* Left Column - 8/12 */}
         <div className="col-span-8 space-y-6">
           {showPhaseSelector && (
             <CompactPhaseSelector
@@ -67,7 +67,7 @@ export const LeadDetailContent = ({
           />
         </div>
 
-        {/* Right Column */}
+        {/* Right Column - 4/12 */}
         <div className="col-span-4 space-y-6">
           <ContactFieldManager />
           <LeadDetailTabs lead={lead} />
