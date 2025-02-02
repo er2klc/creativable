@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { SearchBar } from "@/components/dashboard/SearchBar";
@@ -9,18 +9,25 @@ import { useDefaultPipeline } from "@/hooks/use-default-pipeline";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const user = useUser();
-  
-  // Verwende den Hook um sicherzustellen, dass der Benutzer eine Pipeline hat
+  const [user, setUser] = useState(null);
+
+  // Hole den aktuellen Benutzer von Supabase
+  useEffect(() => {
+    async function fetchUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/auth");
+      } else {
+        setUser(user);
+      }
+    }
+    fetchUser();
+  }, [navigate]);
+
+  // Verwende den Hook, um sicherzustellen, dass der Benutzer eine Pipeline hat
   useDefaultPipeline();
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-    }
-  }, [user, navigate]);
-
-  if (!user) return null;
+  if (!user) return <p>Lade Dashboard...</p>;
 
   return (
     <div className="mx-auto">
