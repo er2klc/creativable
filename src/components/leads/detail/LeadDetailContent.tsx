@@ -5,7 +5,7 @@ import { LeadInfoCard } from "./LeadInfoCard";
 import { LeadSummary } from "./LeadSummary";
 import { LeadTimeline } from "./LeadTimeline";
 import { ContactFieldManager } from "./contact-info/ContactFieldManager";
-import { LeadWithRelations } from "./types/lead";
+import { LeadWithRelations } from "@/types/leads";
 import { LeadDetailTabs } from "./LeadDetailTabs";
 
 interface LeadDetailContentProps {
@@ -49,17 +49,16 @@ export const LeadDetailContent = ({
             onUpdate={onUpdateLead} 
             onDelete={onDeleteClick}
           />
-
-          <LeadTimeline 
-            lead={lead} 
-            onDeletePhaseChange={onDeletePhaseChange}
-          />
         </div>
 
         {/* Right Column - 7/12 */}
         <div className="col-span-7 space-y-6">
           <ContactFieldManager />
           <LeadDetailTabs lead={lead} />
+          <LeadTimeline 
+            lead={lead} 
+            onDeletePhaseChange={onDeletePhaseChange}
+          />
         </div>
       </div>
     </div>
