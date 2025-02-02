@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LeadWithRelations } from "@/types/leads";
+import { LeadWithRelations } from "./types/lead";
 import { TaskList } from "./TaskList";
 import { NoteList } from "./NoteList";
 import { LeadMessages } from "./LeadMessages";
