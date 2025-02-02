@@ -22,13 +22,15 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     leadId: lead.id,
     hasLinkedInPosts: Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0,
     linkedInPostsData: lead.linkedin_posts,
+    socialMediaPosts: socialMediaPosts?.length || 0,
     activeTimeline,
     timestamp: new Date().toISOString()
   });
 
   const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
   const hasSocialPosts = Array.isArray(socialMediaPosts) && socialMediaPosts.length > 0;
-  const showSocialTimeline = hasLinkedInPosts || hasSocialPosts;
+  const hasLegacyPosts = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
+  const showSocialTimeline = hasLinkedInPosts || hasSocialPosts || hasLegacyPosts;
 
   const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
     id: note.id,

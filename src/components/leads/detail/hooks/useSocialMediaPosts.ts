@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SocialMediaPostRaw, PostType } from "../types/lead";
+import { SocialMediaPost } from "@/types/leads";
 
 export const useSocialMediaPosts = (leadId: string) => {
   return useQuery({
@@ -52,7 +52,7 @@ export const useSocialMediaPosts = (leadId: string) => {
       }
 
       // ✅ Kombiniere beide Datenquellen (social_media_posts + leads)
-      const mergedPosts = socialMediaPosts.map((post): SocialMediaPostRaw => {
+      const mergedPosts = socialMediaPosts.map((post): SocialMediaPost => {
         const matchingLeadPost = leadSocialPosts.find((leadPost) => leadPost.id === post.id);
 
         let mediaUrls: string[] = [];
@@ -127,7 +127,7 @@ export const useSocialMediaPosts = (leadId: string) => {
             video_url: leadPost.videoUrl,
             likesCount: leadPost.likesCount || null,
             commentsCount: leadPost.commentsCount || null,
-          } as SocialMediaPostRaw);
+          } as SocialMediaPost);
         }
       });
 
