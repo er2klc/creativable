@@ -19,8 +19,11 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const { data: socialMediaPosts } = useSocialMediaPosts(lead.id);
   
   const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
-  const hasSocialPosts = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
-  const showSocialTimeline = hasLinkedInPosts || hasSocialPosts;
+  const hasSocialPosts = Array.isArray(socialMediaPosts) && socialMediaPosts.length > 0;
+  const hasInstagramData = lead.apify_instagram_data && 
+    (typeof lead.apify_instagram_data === 'object' || 
+     Array.isArray(JSON.parse(typeof lead.apify_instagram_data === 'string' ? lead.apify_instagram_data : '[]')));
+  const showSocialTimeline = hasLinkedInPosts || hasSocialPosts || hasInstagramData;
 
   const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
     id: note.id,

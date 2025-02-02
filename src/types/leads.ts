@@ -1,7 +1,6 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 
-// Unified type definitions for all social media related types
 export type PostType = "post" | "video" | "reel" | "story" | "igtv" | "Image" | "Sidecar";
 export type RecurringPattern = "none" | "daily" | "weekly" | "monthly";
 export type ShortcutType = "lead" | "team" | "platform";
