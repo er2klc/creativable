@@ -147,10 +147,17 @@ export function CreateLinkedInContactDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog 
+      open={open} 
+      onOpenChange={onOpenChange}
+      modal={true}
+      forceMount={true}
+    >
       <DialogContent 
         className="sm:max-w-[425px]"
-        aria-describedby="linkedin-scan-description"
+        onPointerDownOutside={(e) => {
+          e.preventDefault();
+        }}
       >
         <DialogHeader>
           <DialogTitle>LinkedIn Kontakt hinzufügen</DialogTitle>

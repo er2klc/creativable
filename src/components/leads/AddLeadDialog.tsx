@@ -83,11 +83,30 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
   };
 
   return (
-    <Dialog open={open ?? isOpen} onOpenChange={onOpenChange ?? setIsOpen}>
+    <Dialog 
+      open={open ?? isOpen} 
+      onOpenChange={onOpenChange ?? setIsOpen}
+      modal={true}
+      forceMount={true}
+    >
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent 
+        className="sm:max-w-[600px]"
+        onPointerDownOutside={(e) => {
+          // Prevent closing when clicking outside
+          e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          // Allow closing with Escape key
+          if (onOpenChange) {
+            onOpenChange(false);
+          } else {
+            setIsOpen(false);
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Neuen Kontakt hinzufügen ✨</DialogTitle>
           <DialogDescription>

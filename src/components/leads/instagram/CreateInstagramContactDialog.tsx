@@ -165,8 +165,18 @@ export function CreateInstagramContactDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog 
+      open={open} 
+      onOpenChange={onOpenChange}
+      modal={true}
+      forceMount={true}
+    >
+      <DialogContent 
+        className="sm:max-w-[425px]"
+        onPointerDownOutside={(e) => {
+          e.preventDefault();
+        }}
+      >
         {scanState.isLoading ? (
           <InstagramScanAnimation 
             scanProgress={scanState.scanProgress} 
