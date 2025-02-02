@@ -1,4 +1,4 @@
-import type { SocialMediaPost as SocialMediaPostType } from "@/types/leads";
+import type { SocialMediaPost } from "@/types/leads";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -10,7 +10,7 @@ import { PostMetadata } from "./PostMetadata";
 import { PostActions } from "./PostActions";
 
 interface SocialMediaPostProps {
-  post: SocialMediaPostType;
+  post: SocialMediaPost;
   kontaktIdFallback?: string;
 }
 
@@ -19,9 +19,8 @@ const getPostTypeColor = (type: string) => {
     case "video":
       return "bg-cyan-50 border-cyan-200";
     case "image":
-      return "bg-purple-50 border-purple-200";
     case "sidecar":
-      return "bg-amber-50 border-amber-200";
+      return "bg-purple-50 border-purple-200";
     default:
       return "bg-gray-50 border-gray-200";
   }
@@ -96,7 +95,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
           </div>
         </div>
 
-       <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400 z-0" />
+        <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400 z-0" />
         <div className="absolute left-8 top-4 w-4 h-[2px] bg-gray-400" />
 
         <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>

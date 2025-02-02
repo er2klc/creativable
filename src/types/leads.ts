@@ -1,6 +1,7 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 
+// Zentrale Definition der Post-Typen
 export type PostType = 'post' | 'video' | 'reel' | 'story' | 'igtv' | 'Image' | 'Sidecar';
 export type RecurringPattern = 'none' | 'daily' | 'weekly' | 'monthly';
 export type ShortcutType = 'lead' | 'team' | 'platform';
