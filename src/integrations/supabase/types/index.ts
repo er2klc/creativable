@@ -1,19 +1,19 @@
 // Base types
-export { Json } from './database/base/json';
-export { PostType, RecurringPattern, ShortcutType, CommunicationChannel, GenderType } from './database/base/enums';
+export type { Json } from './database/base/json';
+export type { PostType, RecurringPattern, ShortcutType, CommunicationChannel, GenderType } from './database/base/enums';
 
 // Database types
-export * from './database/entities';
-export * from './database/relationships';
+export type * from './database/entities';
+export type * from './database/relationships';
 
 // Feature-specific types
-export * from './auth';
-export * from './messages';
-export * from './settings';
-export * from './documents';
-export * from './platforms';
-export * from './profiles';
-export * from './social-media';
-export * from './tasks';
-export * from './notes';
-export * from './files';
+export type * from './auth';
+export type * from './messages';
+export type * from './settings';
+export type * from './documents';
+export type * from './platforms';
+export type * from './profiles';
+export type * from './social-media';
+export type * from './tasks';
+export type * from './notes';
+export type * from './files';

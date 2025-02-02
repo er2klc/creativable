@@ -8,3 +8,5 @@ export * from './team';
 export * from './tree';
 export * from './user';
 export * from './vision';
+export * from './profile';
+export * from './lead';
