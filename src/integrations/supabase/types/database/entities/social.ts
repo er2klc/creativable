@@ -16,7 +16,7 @@ export interface SocialMediaPost {
 
 export interface SocialMediaScanHistory {
   id: string;
-  lead_id?: string | null;
+  lead_id?: string;
   platform: string;
   scanned_at?: string;
   followers_count?: number;
@@ -24,6 +24,6 @@ export interface SocialMediaScanHistory {
   posts_count?: number;
   engagement_rate?: number;
   success?: boolean;
-  error_message?: string | null;
+  error_message?: string;
   profile_data?: Json;
 }

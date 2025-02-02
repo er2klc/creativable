@@ -24,7 +24,12 @@ export type {
 export type {
   Pipeline,
   PipelinePhase,
-  Lead
+  Lead,
+  Message,
+  UserDocument,
+  Task,
+  Note,
+  LeadFile
 } from './core';
 
 export type { Profile } from './profile';
