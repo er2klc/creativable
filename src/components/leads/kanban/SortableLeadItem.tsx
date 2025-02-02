@@ -118,13 +118,30 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       .slice(0, 2);
   };
 
+  // Get platform border color
+  const getPlatformBorderColor = (platform: string) => {
+    switch (platform?.toLowerCase()) {
+      case "instagram":
+        return "border-l-pink-500";
+      case "linkedin":
+        return "border-l-blue-600";
+      case "facebook":
+        return "border-l-blue-700";
+      case "tiktok":
+        return "border-l-black";
+      default:
+        return "border-l-gray-500";
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
-        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200",
+        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative border-l-2",
         getBackgroundStyle(),
+        getPlatformBorderColor(lead.platform),
         isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing",
         !isDragging && !disabled && "cursor-grab",
         disabled && "cursor-default"
@@ -133,30 +150,37 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
     >
+      {/* Platform Icon in top right corner */}
+      <div className={cn(
+        "absolute -right-1 -top-1 rounded-full w-5 h-5 border-2 border-white shadow-lg flex items-center justify-center",
+        getPlatformColor(lead.platform)
+      )}>
+        {getPlatformIcon(lead.platform)}
+      </div>
+
       <div className="space-y-1.5">
         <div className="font-medium text-sm flex items-center gap-2">
-          <div className="relative">
-            <Avatar className="h-8 w-8">
-              {lead.social_media_profile_image_url ? (
-                <AvatarImage 
-                  src={lead.social_media_profile_image_url} 
-                  alt={lead.name}
-                  className="object-cover"
-                />
-              ) : (
-                <AvatarFallback>
-                  {getInitials(lead.name)}
-                </AvatarFallback>
-              )}
-            </Avatar>
-            <div className={cn(
-              "absolute -right-1 -top-1 rounded-full w-5 h-5 border-2 border-white shadow-lg flex items-center justify-center",
-              getPlatformColor(lead.platform)
-            )}>
-              {getPlatformIcon(lead.platform)}
-            </div>
+          <Avatar className="h-8 w-8">
+            {lead.social_media_profile_image_url ? (
+              <AvatarImage 
+                src={lead.social_media_profile_image_url} 
+                alt={lead.name}
+                className="object-cover"
+              />
+            ) : (
+              <AvatarFallback>
+                {getInitials(lead.name)}
+              </AvatarFallback>
+            )}
+          </Avatar>
+          <div className="flex flex-col">
+            <span>{lead.name}</span>
+            {lead.social_media_username && (
+              <span className="text-xs text-muted-foreground">
+                @{lead.social_media_username}
+              </span>
+            )}
           </div>
-          <span>{lead.name}</span>
         </div>
         <div className="text-xs text-muted-foreground">
           {lead.contact_type || "Nicht festgelegt"}
