@@ -10,6 +10,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { LeadTableCell } from "./table/LeadTableCell";
 import { LeadTableActions } from "./table/LeadTableActions";
 import { getLeadsWithRelations } from "@/utils/query-helpers";

@@ -5,12 +5,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { Tables } from "@/integrations/supabase/types";
 
 interface LeadTableCellProps {
   type: "favorite" | "name" | "platform" | "phase" | "lastAction" | "industry";
   value: any;
   onClick?: () => void;
-  lead?: any; // For accessing profile image
+  lead?: Tables<"leads">; // Properly typed lead prop
 }
 
 const getPlatformIcon = (platform: string) => {
