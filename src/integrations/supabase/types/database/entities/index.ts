@@ -17,8 +17,7 @@ export type {
 } from './social';
 
 export type {
-  Setting,
-  Keyword
+  Setting
 } from './settings';
 
 export type {

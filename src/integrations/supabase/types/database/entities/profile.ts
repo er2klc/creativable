@@ -3,8 +3,8 @@ export interface Profile {
   is_admin?: boolean;
   created_at?: string;
   updated_at?: string;
-  email?: string;
-  display_name?: string;
+  email?: string | null;
+  display_name?: string | null;
   is_super_admin?: boolean;
-  avatar_url?: string;
+  avatar_url?: string | null;
 }

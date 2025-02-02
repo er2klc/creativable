@@ -1,4 +1,3 @@
-import { Json } from '../base/json';
 import { PostType } from '../base/enums';
 
 export interface SocialMediaPost {
@@ -16,7 +15,7 @@ export interface SocialMediaPost {
 
 export interface SocialMediaScanHistory {
   id: string;
-  lead_id?: string;
+  lead_id?: string | null;
   platform: string;
   scanned_at?: string;
   followers_count?: number;
@@ -24,6 +23,6 @@ export interface SocialMediaScanHistory {
   posts_count?: number;
   engagement_rate?: number;
   success?: boolean;
-  error_message?: string;
-  profile_data?: Json;
+  error_message?: string | null;
+  profile_data?: any;
 }
