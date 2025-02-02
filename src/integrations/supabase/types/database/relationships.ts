@@ -1,4 +1,4 @@
-import { Lead, Team, Profile, SocialMediaPost, Message, Task, Note, LeadFile, TeamMember, TeamPost, TeamEvent, TeamPostComment } from './entities';
+import type { Lead, Message, Task, Note, LeadFile, Profile, SocialMediaPost, Team, TeamMember, TeamPost, TeamEvent, TeamPostComment } from './entities';
 
 export interface LeadWithRelations extends Omit<Lead, 'social_media_posts'> {
   messages: Message[];
