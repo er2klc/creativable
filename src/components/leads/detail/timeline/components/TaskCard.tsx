@@ -1,6 +1,7 @@
 import { Check, Trash2, Edit } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { formatDateTime } from "../utils/dateUtils";
+import { MEETING_TYPES } from "@/constants/meetingTypes";
 
 interface TaskCardProps {
   content: string;
@@ -33,7 +34,9 @@ export const TaskCard = ({
         <div className="font-medium">{content}</div>
         {metadata?.meetingType && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
-             MEETING_TYPES.find(type => type.value === metadata.meetingType)?.label || metadata.meetingType
+          {
+            MEETING_TYPES.find(type => type.value === metadata.meetingType)?.label || metadata.meetingType
+          }
           </div>
         )}
         {metadata?.dueDate && (
