@@ -6,7 +6,7 @@ import {
   Team
 } from './entities';
 
-export interface LeadWithRelations extends Lead {
+export interface LeadWithRelations extends Omit<Lead, 'social_media_posts'> {
   messages: any[];
   tasks: any[];
   notes: any[];

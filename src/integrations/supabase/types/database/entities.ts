@@ -1,5 +1,5 @@
-import { Json } from '../json';
-import { PostType } from '../enums';
+import { Json } from '../base/json';
+import { PostType } from '../base/enums';
 
 export interface Lead {
   id: string;
@@ -14,12 +14,7 @@ export interface Lead {
   phase_id: string;
   created_at?: string;
   updated_at?: string;
-  social_media_username?: string | null;
-  social_media_posts?: Json | null;
-  social_media_followers?: number | null;
-  social_media_following?: number | null;
-  social_media_engagement_rate?: number | null;
-  social_media_profile_image_url?: string | null;
+  social_media_posts?: Json;
 }
 
 export interface Message {
@@ -254,15 +249,18 @@ export interface SocialMediaScanHistory {
   id: string;
   user_id: string;
   platform: string;
-  scan_date: string;
-  result: Json;
+  scanned_at: string;
+  followers_count?: number;
+  following_count?: number;
+  posts_count?: number;
+  engagement_rate?: number;
+  success?: boolean;
+  error_message?: string | null;
+  profile_data?: Json;
 }
 
-export {
-  Profile,
-  SocialMediaPost,
-  Team,
-  Setting,
-  SocialMediaScanHistory
-};
-
+export type { Profile } from './entities/profile';
+export type { SocialMediaPost } from './entities/social-media';
+export type { Team } from './entities/team';
+export type { Setting } from './entities/setting';
+export type { SocialMediaScanHistory } from './entities/social-media';
