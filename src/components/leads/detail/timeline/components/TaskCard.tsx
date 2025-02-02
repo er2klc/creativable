@@ -33,7 +33,7 @@ export const TaskCard = ({
         <div className="font-medium">{content}</div>
         {metadata?.meetingType && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            {metadata.meetingType}
+             MEETING_TYPES.find(type => type.value === metadata.meetingType)?.label || metadata.meetingType
           </div>
         )}
         {metadata?.dueDate && (
