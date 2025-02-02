@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { SocialMediaPost, PostType } from "@/types/leads";
+import type { SocialMediaPost } from "@/types/leads";
 
 export const useSocialMediaPosts = (leadId: string) => {
   return useQuery({
@@ -37,10 +37,10 @@ export const useSocialMediaPosts = (leadId: string) => {
       let apifyPosts: any[] = [];
       if (leadData?.apify_instagram_data) {
         try {
-          apifyPosts = typeof leadData.apify_instagram_data === "string"
-            ? JSON.parse(leadData.apify_instagram_data)
-            : Array.isArray(leadData.apify_instagram_data) 
-              ? leadData.apify_instagram_data 
+          apifyPosts = Array.isArray(leadData.apify_instagram_data) 
+            ? leadData.apify_instagram_data 
+            : typeof leadData.apify_instagram_data === 'string'
+              ? JSON.parse(leadData.apify_instagram_data)
               : [];
         } catch (e) {
           console.error("⚠️ Fehler beim Parsen von apify_instagram_data:", e);
@@ -99,7 +99,7 @@ export const useSocialMediaPosts = (leadId: string) => {
               video_url: apifyPost.videoUrl,
               likes_count: apifyPost.likesCount || null,
               comments_count: apifyPost.commentsCount || null,
-            } as SocialMediaPost);
+            });
           }
         });
       }

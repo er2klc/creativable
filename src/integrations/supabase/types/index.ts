@@ -5,8 +5,6 @@ export * from './enums';
 // Entity types
 export * from './auth';
 export * from './tables';
-export * from './leads';
-export * from './teams';
 export * from './messages';
 export * from './settings';
 export * from './documents';
