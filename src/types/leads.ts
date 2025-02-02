@@ -1,7 +1,7 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 
-export type PostType = 'image' | 'video' | 'sidecar' | 'post';
+export type PostType = 'post' | 'video' | 'reel' | 'story' | 'igtv' | 'Image' | 'Sidecar';
 export type RecurringPattern = 'none' | 'daily' | 'weekly' | 'monthly';
 export type ShortcutType = 'lead' | 'team' | 'platform';
 export type CommunicationChannel = 'email' | 'phone' | 'whatsapp' | 'instagram' | 'linkedin';

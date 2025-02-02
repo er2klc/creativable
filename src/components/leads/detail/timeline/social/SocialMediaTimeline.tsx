@@ -1,4 +1,4 @@
-import { SocialMediaPost as SocialMediaPostType } from "../../types/lead";
+import { SocialMediaPost as SocialMediaPostType } from "@/types/leads";
 import { LeadWithRelations } from "@/types/leads";
 import { SocialMediaPost } from "./SocialMediaPost";
 
@@ -18,8 +18,8 @@ export const SocialMediaTimeline = ({
   const sortedPosts = [...posts]
     .filter(post => !post.id.startsWith('temp-'))
     .sort((a, b) => {
-      const dateA = a.timestamp ? new Date(a.timestamp) : new Date(a.posted_at || '');
-      const dateB = b.timestamp ? new Date(b.timestamp) : new Date(b.posted_at || '');
+      const dateA = a.posted_at ? new Date(a.posted_at) : new Date();
+      const dateB = b.posted_at ? new Date(b.posted_at) : new Date();
       return dateB.getTime() - dateA.getTime();
     });
 
