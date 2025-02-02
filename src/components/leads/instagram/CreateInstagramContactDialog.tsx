@@ -21,6 +21,7 @@ export function CreateInstagramContactDialog({
   defaultPhase 
 }: CreateInstagramContactDialogProps) {
   const [username, setUsername] = useState("");
+  const [contactType, setContactType] = useState("");
   const scanState = useInstagramScan();
 
   // Close dialog when scan reaches 100%
@@ -73,7 +74,12 @@ export function CreateInstagramContactDialog({
 
   const handleSubmit = async () => {
     if (!username) {
-      toast.error("Please enter an Instagram username");
+      toast.error("Bitte gib einen Instagram Benutzernamen ein");
+      return;
+    }
+
+    if (!contactType) {
+      toast.error("Bitte wähle einen Kontakttyp aus");
       return;
     }
 
@@ -87,7 +93,7 @@ export function CreateInstagramContactDialog({
       if (!user) throw new Error("No user found");
 
       if (!scanState.settings?.apify_api_key) {
-        toast.error("Please add an Apify API key in settings first");
+        toast.error("Bitte füge einen Apify API Key in den Einstellungen hinzu");
         return;
       }
 
@@ -95,7 +101,7 @@ export function CreateInstagramContactDialog({
       const targetPhaseId = defaultPhase || firstPhase?.id;
 
       if (!targetPipelineId || !targetPhaseId) {
-        toast.error("No pipeline or phase found");
+        toast.error("Keine Pipeline oder Phase gefunden");
         return;
       }
 
@@ -108,6 +114,7 @@ export function CreateInstagramContactDialog({
           social_media_username: username,
           pipeline_id: targetPipelineId,
           phase_id: targetPhaseId,
+          contact_type: contactType,
           industry: "Not Specified"
         })
         .select()
@@ -152,23 +159,14 @@ export function CreateInstagramContactDialog({
 
     } catch (error) {
       console.error("Error adding Instagram contact:", error);
-      toast.error("Error adding Instagram contact");
+      toast.error("Fehler beim Hinzufügen des Instagram Kontakts");
       scanState.setIsLoading(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="sm:max-w-[425px]"
-        aria-describedby="instagram-scan-description"
-      >
-        <DialogHeader>
-          <DialogTitle>Add Instagram Contact</DialogTitle>
-        </DialogHeader>
-        <div id="instagram-scan-description" className="sr-only">
-          Dialog for adding a new Instagram contact. Enter the username to scan their profile.
-        </div>
+      <DialogContent className="sm:max-w-[425px]">
         {scanState.isLoading ? (
           <InstagramScanAnimation 
             scanProgress={scanState.scanProgress} 
@@ -182,6 +180,8 @@ export function CreateInstagramContactDialog({
             isSuccess={scanState.isSuccess}
             onSubmit={handleSubmit}
             onCancel={() => onOpenChange(false)}
+            contactType={contactType}
+            setContactType={setContactType}
           />
         )}
       </DialogContent>

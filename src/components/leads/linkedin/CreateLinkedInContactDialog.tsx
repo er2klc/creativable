@@ -25,6 +25,7 @@ export function CreateLinkedInContactDialog({
   defaultPhase
 }: CreateLinkedInContactDialogProps) {
   const [username, setUsername] = useState("");
+  const [contactType, setContactType] = useState("");
   const scanState = useLinkedInScan();
   const { settings } = useSettings();
 
@@ -33,7 +34,7 @@ export function CreateLinkedInContactDialog({
     if (scanState.scanProgress === 100) {
       setTimeout(() => {
         onOpenChange(false);
-        toast.success("Contact successfully created");
+        toast.success("Kontakt erfolgreich erstellt");
       }, 500); // Small delay to show 100%
     }
   }, [scanState.scanProgress, onOpenChange]);
@@ -79,7 +80,12 @@ export function CreateLinkedInContactDialog({
 
   const handleSubmit = async () => {
     if (!username) {
-      toast.error("Please enter a LinkedIn username");
+      toast.error("Bitte gib einen LinkedIn Benutzernamen ein");
+      return;
+    }
+
+    if (!contactType) {
+      toast.error("Bitte wähle einen Kontakttyp aus");
       return;
     }
 
@@ -93,7 +99,7 @@ export function CreateLinkedInContactDialog({
       if (!user) throw new Error("No user found");
 
       if (!settings?.apify_api_key) {
-        toast.error("Please add an Apify API key in settings first");
+        toast.error("Bitte füge einen Apify API Key in den Einstellungen hinzu");
         return;
       }
 
@@ -101,7 +107,7 @@ export function CreateLinkedInContactDialog({
       const targetPhaseId = defaultPhase || firstPhase?.id;
 
       if (!targetPipelineId || !targetPhaseId) {
-        toast.error("No pipeline or phase found");
+        toast.error("Keine Pipeline oder Phase gefunden");
         return;
       }
 
@@ -114,6 +120,7 @@ export function CreateLinkedInContactDialog({
           social_media_username: username,
           pipeline_id: targetPipelineId,
           phase_id: targetPhaseId,
+          contact_type: contactType,
           industry: "Not Specified"
         })
         .select()
@@ -134,7 +141,7 @@ export function CreateLinkedInContactDialog({
 
     } catch (error) {
       console.error("Error adding LinkedIn contact:", error);
-      toast.error("Error adding LinkedIn contact");
+      toast.error("Fehler beim Hinzufügen des LinkedIn Kontakts");
       scanState.setIsLoading(false);
     }
   };
@@ -146,10 +153,10 @@ export function CreateLinkedInContactDialog({
         aria-describedby="linkedin-scan-description"
       >
         <DialogHeader>
-          <DialogTitle>Add LinkedIn Contact</DialogTitle>
+          <DialogTitle>LinkedIn Kontakt hinzufügen</DialogTitle>
         </DialogHeader>
         <div id="linkedin-scan-description" className="sr-only">
-          Dialog for adding a new LinkedIn contact. Enter the username to scan their profile.
+          Dialog für das Hinzufügen eines neuen LinkedIn Kontakts. Gib den Benutzernamen ein, um das Profil zu scannen.
         </div>
         {scanState.isLoading ? (
           <LinkedInScanAnimation 
@@ -164,6 +171,8 @@ export function CreateLinkedInContactDialog({
             isSuccess={scanState.isSuccess}
             onSubmit={handleSubmit}
             onCancel={() => onOpenChange(false)}
+            contactType={contactType}
+            setContactType={setContactType}
           />
         )}
       </DialogContent>
