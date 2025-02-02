@@ -1,14 +1,19 @@
-import { SocialMediaPost } from "./SocialMediaPost";
-import { SocialMediaPost as SocialMediaPostType } from "../../types/lead";
+import { SocialMediaPost } from "../../types/lead";
+import { SocialMediaPostComponent } from "./SocialMediaPost";
 
 interface SocialMediaTimelineProps {
-  posts: SocialMediaPostType[];
+  posts: SocialMediaPost[];
   linkedInPosts?: any[];
   platform?: string;
   kontaktIdFallback?: string;
 }
 
-export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdFallback }: SocialMediaTimelineProps) => {
+export const SocialMediaTimeline = ({ 
+  posts, 
+  linkedInPosts, 
+  platform, 
+  kontaktIdFallback 
+}: SocialMediaTimelineProps) => {
   const sortedPosts = [...posts]
     .filter(post => !post.id.startsWith('temp-'))
     .sort((a, b) => {
@@ -23,8 +28,8 @@ export const SocialMediaTimeline = ({ posts, linkedInPosts, platform, kontaktIdF
       <div className="space-y-6">
         {sortedPosts.length > 0 ? (
           sortedPosts.map((post) => (
-            <SocialMediaPost 
-              key={post.id} 
+            <SocialMediaPostComponent
+              key={post.id}
               post={post}
               kontaktIdFallback={kontaktIdFallback}
             />
