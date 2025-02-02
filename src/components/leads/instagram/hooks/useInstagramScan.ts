@@ -11,9 +11,6 @@ const initialState: ScanState = {
   isSuccess: false
 };
 
-const BATCH_SIZE = 2; // Process 2 posts at a time
-const BATCH_DELAY = 2000; // 2 second delay between batches
-
 export function useInstagramScan() {
   const [state, setState] = useState<ScanState>(initialState);
   const lastProgressRef = useRef<number>(0);
@@ -28,13 +25,11 @@ export function useInstagramScan() {
     
     const pollingState = {
       isActive: true,
-      lastProgress: 0,
-      simulationInterval: null as NodeJS.Timeout | null
+      lastProgress: 0
     };
     
     const interval = setInterval(async () => {
       if (!pollingState.isActive) {
-        if (pollingState.simulationInterval) clearInterval(pollingState.simulationInterval);
         clearInterval(interval);
         return;
       }
@@ -72,16 +67,18 @@ export function useInstagramScan() {
         }
         lastProgressRef.current = currentProgress;
 
-        updateState({ 
-          scanProgress: currentProgress,
-          currentFile: latestPost.current_file
-        });
+        if (latestPost.current_file) {
+          updateState({ currentFile: latestPost.current_file });
+        }
 
         if (currentProgress >= 100) {
-          updateState({ isSuccess: true });
+          updateState({ 
+            isSuccess: true,
+            scanProgress: 100
+          });
           pollingState.isActive = false;
           clearInterval(interval);
-          toast.success('Instagram scan completed successfully');
+          console.log('Instagram scan completed successfully');
         }
 
       } catch (err) {
@@ -94,9 +91,6 @@ export function useInstagramScan() {
       console.log('Cleaning up progress polling');
       pollingState.isActive = false;
       clearInterval(interval);
-      if (pollingState.simulationInterval) {
-        clearInterval(pollingState.simulationInterval);
-      }
     };
   };
 

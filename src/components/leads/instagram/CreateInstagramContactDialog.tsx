@@ -25,14 +25,14 @@ export function CreateInstagramContactDialog({
 
   // Close dialog when scan reaches 100%
   useEffect(() => {
-    if (scanState.scanProgress === 100) {
+    if (scanState.scanProgress === 100 && scanState.isSuccess) {
       const timer = setTimeout(() => {
         onOpenChange(false);
         toast.success("Contact successfully created");
-      }, 1000); // Slightly longer delay to show completion
+      }, 500);
       return () => clearTimeout(timer);
     }
-  }, [scanState.scanProgress, onOpenChange]);
+  }, [scanState.scanProgress, scanState.isSuccess, onOpenChange]);
 
   const { data: defaultPipeline } = useQuery({
     queryKey: ["default-pipeline"],
@@ -115,19 +115,19 @@ export function CreateInstagramContactDialog({
 
       if (leadError) throw leadError;
 
-      // Start progress simulation immediately
-      scanState.setScanProgress(5);
+      // Start progress simulation
       let progress = 5;
+      scanState.setScanProgress(progress);
+      
       const progressInterval = setInterval(() => {
-        progress += 2;
-        if (progress <= 95) {
-          scanState.setScanProgress(progress);
-        }
-      }, 300);
+        progress = Math.min(progress + 1, 90);
+        scanState.setScanProgress(progress);
+      }, 200);
 
+      // Start the actual scan process
       scanState.pollProgress(lead.id);
 
-      // First call scan-social-profile
+      // Call scan-social-profile
       const { error: scanError } = await supabase.functions.invoke('scan-social-profile', {
         body: {
           platform: 'instagram',
@@ -138,15 +138,17 @@ export function CreateInstagramContactDialog({
 
       if (scanError) throw scanError;
 
-      // Then call process-social-media
+      // Call process-social-media
       const { error: processError } = await supabase.functions.invoke('process-social-media', {
         body: { leadId: lead.id }
       });
 
       if (processError) throw processError;
 
+      // Clear simulation and set final progress
       clearInterval(progressInterval);
       scanState.setScanProgress(100);
+      scanState.setIsSuccess(true);
 
     } catch (error) {
       console.error("Error adding Instagram contact:", error);
