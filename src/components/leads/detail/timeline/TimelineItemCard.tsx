@@ -1,4 +1,4 @@
-import { CalendarDays, FileText, MessageCircle, Phone } from "lucide-react";
+import { Bot, CalendarDays, FileText, MessageCircle, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { TimelineItemType, TimelineItemStatus } from "../types/lead";
@@ -6,25 +6,6 @@ import { TaskCard } from "./components/TaskCard";
 import { AppointmentCard } from "./components/AppointmentCard";
 import { FileCard } from "./components/FileCard";
 import { formatDateTime } from "./utils/dateUtils";
-
-const getMeetingTypeLabel = (type: string): string => {
-  switch (type) {
-    case "phone_call":
-      return "Telefongespräch";
-    case "on_site":
-      return "Vor-Ort-Termin";
-    case "zoom":
-      return "Zoom Meeting";
-    case "initial_meeting":
-      return "Erstgespräch";
-    case "presentation":
-      return "Präsentation";
-    case "follow_up":
-      return "Folgetermin";
-    default:
-      return type;
-  }
-};
 
 export interface TimelineItemCardProps {
   type: TimelineItemType;
@@ -36,13 +17,18 @@ export interface TimelineItemCardProps {
     fileSize?: number;
     filePath?: string;
     status?: TimelineItemStatus;
-    meetingType?: string;
-    color?: string;
-    oldStatus?: string;
-    newStatus?: string;
+    completedAt?: string;
+    cancelledAt?: string;
+    updatedAt?: string;
+    oldDate?: string;
+    newDate?: string;
     oldPhase?: string;
     newPhase?: string;
+    color?: string;
+    meetingType?: string;
     type?: string;
+    oldStatus?: string;
+    newStatus?: string;
   };
   date: string;
   isCompleted: boolean;
@@ -92,16 +78,16 @@ export const TimelineItemCard = ({
         return (
           <TaskCard
             title={content}
+            date={metadata?.dueDate}
             status={metadata?.status}
             color={metadata?.color}
-            date={metadata?.dueDate}
           />
         );
       case "appointment":
         return (
           <AppointmentCard
             title={content}
-            type={metadata?.meetingType ? getMeetingTypeLabel(metadata.meetingType) : undefined}
+            type={metadata?.meetingType}
             date={metadata?.dueDate}
           />
         );

@@ -22,32 +22,31 @@ export type SocialMediaPost = {
   platform: string;
   post_type: PostType;
   content: string;
+  caption?: string;
   likes_count?: number;
   comments_count?: number;
   url: string;
   posted_at: string;
   created_at: string;
   media_urls: string[];
-  media_type?: string;
+  media_type: string;
   video_url?: string;
   engagement_count?: number;
   error_message?: string;
   first_comment?: string;
   hashtags?: string[];
   local_media_paths?: string[];
-  local_media_urls?: string[];
   local_video_path?: string;
   media_count?: number;
   media_processing_status?: string;
   processing_progress?: number;
   storage_status?: string;
   timestamp?: string;
-  caption?: string;
   location?: string;
 };
 
 // For backward compatibility
-export type SocialMediaPostRaw = SocialMediaPost;
+export type SocialMediaPostRaw = Partial<SocialMediaPost>;
 
 export type TimelineItemType = 
   | "task" 
