@@ -26,10 +26,11 @@ export function CreateInstagramContactDialog({
   // Close dialog when scan reaches 100%
   useEffect(() => {
     if (scanState.scanProgress === 100) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         onOpenChange(false);
         toast.success("Contact successfully created");
-      }, 500); // Small delay to show 100%
+      }, 1000); // Slightly longer delay to show completion
+      return () => clearTimeout(timer);
     }
   }, [scanState.scanProgress, onOpenChange]);
 
@@ -114,6 +115,16 @@ export function CreateInstagramContactDialog({
 
       if (leadError) throw leadError;
 
+      // Start progress simulation immediately
+      scanState.setScanProgress(5);
+      let progress = 5;
+      const progressInterval = setInterval(() => {
+        progress += 2;
+        if (progress <= 95) {
+          scanState.setScanProgress(progress);
+        }
+      }, 300);
+
       scanState.pollProgress(lead.id);
 
       // First call scan-social-profile
@@ -133,6 +144,9 @@ export function CreateInstagramContactDialog({
       });
 
       if (processError) throw processError;
+
+      clearInterval(progressInterval);
+      scanState.setScanProgress(100);
 
     } catch (error) {
       console.error("Error adding Instagram contact:", error);

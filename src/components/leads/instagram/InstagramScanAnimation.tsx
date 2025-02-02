@@ -56,7 +56,8 @@ export const InstagramScanAnimation = ({
     if (normalizedProgress > 60) return "📊 Analysiere Engagement & Statistiken...";
     if (normalizedProgress > 40) return "👥 Erfasse Follower & Following...";
     if (normalizedProgress > 20) return "🔍 Scanne Instagram Profil...";
-    return "🚀 Starte Instagram Scan...";
+    if (normalizedProgress > 5) return "🚀 Starte Instagram Scan...";
+    return "⚡ Initialisiere Scan...";
   };
 
   return (
