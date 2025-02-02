@@ -12,7 +12,6 @@ interface TimelineHeaderProps {
 }
 
 export const TimelineHeader = ({ 
-  title,
   showSocialTimeline, 
   activeTimeline,
   onTimelineChange,
@@ -30,8 +29,14 @@ export const TimelineHeader = ({
 
   return (
     <div className="flex items-center justify-between mb-4">
-      <h3 className="text-lg font-semibold">
-        {title}
+      <h3 
+        className={cn(
+          "text-lg font-semibold",
+          activeTimeline === 'social' && showSocialTimeline && "cursor-pointer hover:text-primary"
+        )}
+        onClick={() => activeTimeline === 'social' && handleClick('activities')}
+      >
+        {settings?.language === "en" ? "Activities" : "Aktivitäten"}
       </h3>
       
       {showSocialTimeline && (
