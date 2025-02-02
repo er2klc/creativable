@@ -27,11 +27,9 @@ export type SocialMediaPost = {
   url: string;
   posted_at: string;
   created_at: string;
-  media_urls?: string[];
+  media_urls: string[];
   media_type?: string;
   video_url?: string;
-  bucket_path?: string;
-  current_file?: string;
   engagement_count?: number;
   error_message?: string;
   first_comment?: string;
@@ -48,7 +46,7 @@ export type SocialMediaPost = {
   location?: string;
 };
 
-// Alias SocialMediaPostRaw to SocialMediaPost for backward compatibility
+// For backward compatibility
 export type SocialMediaPostRaw = SocialMediaPost;
 
 export type TimelineItemType = 
@@ -61,13 +59,16 @@ export type TimelineItemType =
   | "presentation" 
   | "upload" 
   | "contact_created"
-  | "message";
+  | "message"
+  | "file"
+  | "status_change";
 
 export type TimelineItemStatus = 
   | "completed" 
   | "pending" 
   | "cancelled" 
-  | "outdated";
+  | "outdated"
+  | "canceled";
 
 export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "social_media_posts"> {
   platform: Platform;

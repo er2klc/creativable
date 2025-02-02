@@ -26,7 +26,7 @@ const getMeetingTypeLabel = (type: string): string => {
   }
 };
 
-interface TimelineItemCardProps {
+export interface TimelineItemCardProps {
   type: TimelineItemType;
   content: string;
   metadata?: {
@@ -53,7 +53,7 @@ export const TimelineItemCard = ({
   content,
   metadata,
   date,
-  isCompleted,
+  isCompleted
 }: TimelineItemCardProps) => {
   const renderIcon = () => {
     switch (type) {
@@ -62,8 +62,10 @@ export const TimelineItemCard = ({
       case "appointment":
         return <Phone className="h-5 w-5" />;
       case "file_upload":
+      case "file":
         return <FileText className="h-5 w-5" />;
       case "phase_change":
+      case "status_change":
         return <MessageCircle className="h-5 w-5" />;
       default:
         return null;
@@ -77,6 +79,7 @@ export const TimelineItemCard = ({
       case "pending":
         return "bg-yellow-100 text-yellow-800";
       case "cancelled":
+      case "canceled":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -103,6 +106,7 @@ export const TimelineItemCard = ({
           />
         );
       case "file_upload":
+      case "file":
         return (
           <FileCard
             name={metadata?.fileName}
@@ -112,6 +116,7 @@ export const TimelineItemCard = ({
           />
         );
       case "phase_change":
+      case "status_change":
         return (
           <div className="mt-2">
             <Badge variant="outline">
