@@ -17,26 +17,26 @@ interface SocialMediaPostProps {
 const getPostTypeColor = (type: string) => {
   switch (type?.toLowerCase()) {
     case "video":
-      return "bg-cyan-50 border-cyan-200";
+      return "bg-cyan-50 border-2 border-cyan-300";
     case "image":
-      return "bg-purple-50 border-purple-200";
+      return "bg-purple-50 border-2 border-purple-300";
     case "sidecar":
-      return "bg-amber-50 border-amber-200";
+      return "bg-amber-50 border-2 border-amber-300";
     default:
-      return "bg-gray-50 border-gray-200";
+      return "bg-gray-50 border-2 border-gray-300";
   }
 };
 
 const getPostTypeIcon = (type: string) => {
   switch (type?.toLowerCase()) {
     case "video":
-      return <Video className="h-5 w-5 text-cyan-500 border-cyan-200" />;
+      return <Video className="h-5 w-5 text-cyan-500" />;
     case "image":
-      return <Image className="h-5 w-5 text-purple-500 border-purple-200" />;
+      return <Image className="h-5 w-5 text-purple-500" />;
     case "sidecar":
-      return <MessageCircle className="h-5 w-5 text-amber-500 border-amber-200" />;
+      return <MessageCircle className="h-5 w-5 text-amber-500" />;
     default:
-      return <MessageCircle className="h-5 w-5 text-gray-500 border-gray-200" />;
+      return <MessageCircle className="h-5 w-5 text-gray-500" />;
   }
 };
 
@@ -64,7 +64,7 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
 
       <div className="flex gap-4 items-start group relative">
         <div className="relative z-10">
-          <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", postTypeColor)}>
+          <div className={cn("w-8 h-8 rounded-full flex items-center justify-center border", postTypeColor)}>
             {getPostTypeIcon(post.post_type)}
           </div>
         </div>
