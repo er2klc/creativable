@@ -3,7 +3,21 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Check, Save, X, Trash2, Edit, Mic, Phone, MapPin, Video, Users, BarChart, RefreshCw } from "lucide-react";
+import { 
+  Check, 
+  Save, 
+  X, 
+  Trash2, 
+  Edit, 
+  Mic, 
+  Phone, 
+  MapPin, 
+  Video, 
+  Users, 
+  BarChart, 
+  RefreshCw,
+  Calendar 
+} from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +26,7 @@ import { AppointmentCard } from "./components/AppointmentCard";
 import { TaskCard } from "./components/TaskCard";
 import { FileCard } from "./components/FileCard";
 import { formatDateTime } from "./utils/dateUtils";
+import { TimelineItemType } from "./TimelineUtils";
 
 const getMeetingTypeLabel = (type: string) => {
   switch (type) {
@@ -35,19 +50,19 @@ const getMeetingTypeLabel = (type: string) => {
 const getMeetingTypeIcon = (type: string) => {
   switch (type) {
     case "phone_call":
-      return <Phone className="h-4 w-4 text-gray-600" />;
+      return <Phone className="h-4 w-4" />;
     case "on_site":
-      return <MapPin className="h-4 w-4 text-gray-600" />;
+      return <MapPin className="h-4 w-4" />;
     case "zoom":
-      return <Video className="h-4 w-4 text-gray-600" />;
+      return <Video className="h-4 w-4" />;
     case "initial_meeting":
-      return <Users className="h-4 w-4 text-gray-600" />;
+      return <Users className="h-4 w-4" />;
     case "presentation":
-      return <BarChart className="h-4 w-4 text-gray-600" />;
+      return <BarChart className="h-4 w-4" />;
     case "follow_up":
-      return <RefreshCw className="h-4 w-4 text-gray-600" />;
+      return <RefreshCw className="h-4 w-4" />;
     default:
-      return null;
+      return <Calendar className="h-4 w-4" />;
   }
 };
 
