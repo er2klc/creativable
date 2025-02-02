@@ -1,7 +1,6 @@
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
 import { BasicLeadFields } from "./form-fields/BasicLeadFields";
-import { NotesFields } from "./form-fields/NotesFields";
 import { ContactTypeField } from "./form-fields/ContactTypeField";
 import { type Platform } from "@/config/platforms";
 
@@ -15,7 +14,6 @@ export const formSchema = z.object({
   phone_number: z.string().optional().nullable(),
   email: z.string().optional().nullable(),
   company_name: z.string().optional().nullable(),
-  notes: z.string().optional().nullable(),
 });
 
 export type FormData = z.infer<typeof formSchema>;
@@ -30,7 +28,6 @@ export function AddLeadFormFields({ form }: AddLeadFormFieldsProps) {
       <div className="space-y-4">
         <BasicLeadFields form={form} />
         <ContactTypeField form={form} />
-        <NotesFields form={form} />
       </div>
     </>
   );

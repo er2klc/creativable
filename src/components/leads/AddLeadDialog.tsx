@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BasicLeadFields } from "./form-fields/BasicLeadFields";
 import { ContactTypeField } from "./form-fields/ContactTypeField";
-import { NotesFields } from "./form-fields/NotesFields";
 import { Platform } from "@/config/platforms";
 
 const formSchema = z.object({
@@ -22,7 +21,6 @@ const formSchema = z.object({
   phone_number: z.string().optional().nullable(),
   email: z.string().optional().nullable(),
   company_name: z.string().optional().nullable(),
-  notes: z.string().optional().nullable(),
 });
 
 interface AddLeadDialogProps {
@@ -48,7 +46,6 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
       phone_number: "",
       email: "",
       company_name: "",
-      notes: "",
     },
   });
 
@@ -70,7 +67,6 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
           phone_number: values.phone_number,
           email: values.email,
           company_name: values.company_name,
-          notes: values.notes,
           industry: "Not Specified"
         });
 
@@ -102,7 +98,6 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <BasicLeadFields form={form} />
             <ContactTypeField form={form} />
-            <NotesFields form={form} />
             <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"
