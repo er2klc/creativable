@@ -1,3 +1,5 @@
+import { Json } from '../base/json';
+
 export interface Setting {
   id: string;
   user_id: string;

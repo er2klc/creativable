@@ -32,3 +32,11 @@ export type {
 } from './pipeline';
 
 export type { Profile } from './profile';
+
+export type {
+  Message,
+  Task,
+  Note,
+  LeadFile,
+  UserDocument
+} from './core';
