@@ -1,6 +1,6 @@
 // Base types
-export { Json } from './json';
-export { PostType, RecurringPattern, ShortcutType, CommunicationChannel, GenderType } from './enums';
+export type { Json } from './database/base/json';
+export type { PostType, RecurringPattern, ShortcutType, CommunicationChannel, GenderType } from './database/base/enums';
 
 // Database types
 export * from './database/entities';
@@ -17,6 +17,3 @@ export * from './social-media';
 export * from './tasks';
 export * from './notes';
 export * from './files';
-export * from './team-members';
-export * from './team-posts';
-export * from './team-events';
