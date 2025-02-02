@@ -43,7 +43,6 @@ export type SocialMediaPost = {
   media_processing_status?: string;
   processing_progress?: number;
   storage_status?: string;
-  tagged_users?: any[];
   timestamp?: string;
   caption?: string;
   location?: string;
