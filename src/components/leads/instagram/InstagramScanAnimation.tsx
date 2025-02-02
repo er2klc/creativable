@@ -48,14 +48,15 @@ export const InstagramScanAnimation = ({
   // Ensure progress never exceeds 100%
   const normalizedProgress = Math.min(100, Math.max(0, scanProgress));
 
-  // Helper function to get status message
+  // Helper function to get status message with emojis
   const getStatusMessage = () => {
     if (currentFile) return currentFile;
-    if (normalizedProgress === 100) return "Scan abgeschlossen!";
-    if (normalizedProgress > 80) return "Verarbeite Medien...";
-    if (normalizedProgress > 50) return "Analysiere Profildaten...";
-    if (normalizedProgress > 20) return "Verbinde mit Instagram...";
-    return "Starte Instagram Scan...";
+    if (normalizedProgress === 100) return "✨ Scan erfolgreich abgeschlossen!";
+    if (normalizedProgress > 80) return "📸 Verarbeite Instagram Medien...";
+    if (normalizedProgress > 60) return "📊 Analysiere Engagement & Statistiken...";
+    if (normalizedProgress > 40) return "👥 Erfasse Follower & Following...";
+    if (normalizedProgress > 20) return "🔍 Scanne Instagram Profil...";
+    return "🚀 Starte Instagram Scan...";
   };
 
   return (
