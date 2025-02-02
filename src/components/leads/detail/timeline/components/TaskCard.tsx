@@ -1,7 +1,7 @@
 import { Check, Trash2, Edit } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { formatDateTime } from "../utils/dateUtils";
-import { MEETING_TYPES } from "../constants/meetingTypes";
+import { MEETING_TYPES } from "@/constants/meetingTypes";
 
 interface TaskCardProps {
   content: string;
