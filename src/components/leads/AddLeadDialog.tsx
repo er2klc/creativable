@@ -87,24 +87,14 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
       open={open ?? isOpen} 
       onOpenChange={onOpenChange ?? setIsOpen}
       modal={true}
-      forceMount={true}
     >
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
       <DialogContent 
         className="sm:max-w-[600px]"
-        onPointerDownOutside={(e) => {
-          // Prevent closing when clicking outside
+        onInteractOutside={(e) => {
           e.preventDefault();
-        }}
-        onEscapeKeyDown={(e) => {
-          // Allow closing with Escape key
-          if (onOpenChange) {
-            onOpenChange(false);
-          } else {
-            setIsOpen(false);
-          }
         }}
       >
         <DialogHeader>

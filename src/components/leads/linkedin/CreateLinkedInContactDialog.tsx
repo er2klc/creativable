@@ -151,11 +151,10 @@ export function CreateLinkedInContactDialog({
       open={open} 
       onOpenChange={onOpenChange}
       modal={true}
-      forceMount={true}
     >
       <DialogContent 
         className="sm:max-w-[425px]"
-        onPointerDownOutside={(e) => {
+        onInteractOutside={(e) => {
           e.preventDefault();
         }}
       >
