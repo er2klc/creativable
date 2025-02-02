@@ -121,7 +121,7 @@ export const LeadFilters = ({
   };
 
   const handleDeletePipeline = async () => {
-    if (!selectedPipelineId || pipelines.length === 0) return;
+    if (!selectedPipelineId || pipelines.length <= 1) return;
 
     try {
       // Get the first pipeline and its first phase as fallback
