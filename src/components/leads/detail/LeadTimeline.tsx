@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { TimelineHeader } from "../timeline/TimelineHeader";
-import { TimelineItem } from "../timeline/TimelineItem";
-import { SocialMediaTimeline } from "../timeline/social/SocialMediaTimeline";
-import { LinkedInTimeline } from "../timeline/social/LinkedInTimeline";
+import { TimelineHeader } from "./timeline/TimelineHeader";
+import { TimelineItem } from "./timeline/TimelineItem";
+import { SocialMediaTimeline } from "./timeline/social/SocialMediaTimeline";
+import { LinkedInTimeline } from "./timeline/social/LinkedInTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "@/types/leads";
-import { TimelineItem as TimelineItemType } from "../timeline/TimelineUtils";
-import { useSocialMediaPosts } from "../hooks/useSocialMediaPosts";
+import { TimelineItem as TimelineItemType } from "./timeline/TimelineUtils";
+import { useSocialMediaPosts } from "./hooks/useSocialMediaPosts";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
