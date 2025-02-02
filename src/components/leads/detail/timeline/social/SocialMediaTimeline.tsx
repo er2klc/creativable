@@ -1,4 +1,5 @@
 import { SocialMediaPost as SocialMediaPostType } from "../../types/lead";
+import { LeadWithRelations } from "@/types/leads";
 import { SocialMediaPost } from "./SocialMediaPost";
 
 interface SocialMediaTimelineProps {

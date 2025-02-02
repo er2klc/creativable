@@ -1,6 +1,7 @@
 import { Platform } from '@/config/platforms';
 import { Tables } from '@/integrations/supabase/types';
 import { SocialMediaPost } from '@/integrations/supabase/types/social-media';
+import { Json } from '@/integrations/supabase/types';
 
 /**
  * Base Lead type directly from the database table
@@ -22,7 +23,7 @@ export interface Note extends Omit<Tables<'notes'>, 'metadata'> {
  * Lead with all possible relations
  * This extends the base lead type and adds optional related records
  */
-export interface LeadWithRelations extends Omit<BaseLead, 'level'> {
+export interface LeadWithRelations extends Omit<BaseLead, 'level' | 'parent_id'> {
   // Platform information
   platform: Platform;
   

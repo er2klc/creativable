@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { useState } from "react";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
-import { LeadWithRelations } from "./types/lead";
+import { LeadWithRelations } from "@/types/leads";
 import { StatusButtons } from "./header/StatusButtons";
 import { DeleteLeadDialog } from "./header/DeleteLeadDialog";
 import { LeadName } from "./header/LeadName";

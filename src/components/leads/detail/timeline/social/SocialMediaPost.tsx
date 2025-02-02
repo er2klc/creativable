@@ -8,6 +8,7 @@ import { PostContent } from "./PostContent";
 import { PostMetadata } from "./PostMetadata";
 import { PostActions } from "./PostActions";
 import { SocialMediaPost } from "../../types/lead";
+import { LeadWithRelations } from "@/types/leads";
 
 interface SocialMediaPostProps {
   post: SocialMediaPost;
