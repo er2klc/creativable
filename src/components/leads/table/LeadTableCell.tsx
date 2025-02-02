@@ -3,31 +3,49 @@ import { Star, Instagram, Linkedin, Facebook, Video, Users } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 interface LeadTableCellProps {
   type: "favorite" | "name" | "platform" | "phase" | "lastAction" | "industry";
   value: any;
   onClick?: () => void;
+  lead?: any; // For accessing profile image
 }
 
 const getPlatformIcon = (platform: string) => {
   switch (platform?.toLowerCase()) {
     case "instagram":
-      return <Instagram className="h-4 w-4 mr-2" />;
+      return <Instagram className="h-4 w-4 text-white" />;
     case "linkedin":
-      return <Linkedin className="h-4 w-4 mr-2" />;
+      return <Linkedin className="h-4 w-4 text-white" />;
     case "facebook":
-      return <Facebook className="h-4 w-4 mr-2" />;
+      return <Facebook className="h-4 w-4 text-white" />;
     case "tiktok":
-      return <Video className="h-4 w-4 mr-2" />;
+      return <Video className="h-4 w-4 text-white" />;
     case "offline":
-      return <Users className="h-4 w-4 mr-2" />;
+      return <Users className="h-4 w-4 text-white" />;
     default:
       return null;
   }
 };
 
-export const LeadTableCell = ({ type, value, onClick }: LeadTableCellProps) => {
+const getPlatformColor = (platform: string) => {
+  switch (platform?.toLowerCase()) {
+    case "instagram":
+      return "bg-gradient-to-br from-purple-600 to-pink-500";
+    case "linkedin":
+      return "bg-blue-600";
+    case "facebook":
+      return "bg-blue-700";
+    case "tiktok":
+      return "bg-black";
+    default:
+      return "bg-gray-500";
+  }
+};
+
+export const LeadTableCell = ({ type, value, onClick, lead }: LeadTableCellProps) => {
   const { data: phaseInfo } = useQuery({
     queryKey: ["phase-info", value],
     queryFn: async () => {
@@ -73,7 +91,32 @@ export const LeadTableCell = ({ type, value, onClick }: LeadTableCellProps) => {
       );
     case "name":
       return (
-        <TableCell className="font-medium whitespace-nowrap">{value}</TableCell>
+        <TableCell className="font-medium whitespace-nowrap">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Avatar className="h-8 w-8">
+                {lead?.social_media_profile_image_url ? (
+                  <AvatarImage 
+                    src={lead.social_media_profile_image_url} 
+                    alt={value}
+                    className="object-cover"
+                  />
+                ) : (
+                  <AvatarFallback>
+                    {value?.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <div className={cn(
+                "absolute -right-1 -top-1 rounded-full w-5 h-5 border-2 border-white shadow-lg flex items-center justify-center",
+                getPlatformColor(lead?.platform)
+              )}>
+                {getPlatformIcon(lead?.platform)}
+              </div>
+            </div>
+            <span>{value}</span>
+          </div>
+        </TableCell>
       );
     case "lastAction":
       return (

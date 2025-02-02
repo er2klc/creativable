@@ -10,7 +10,6 @@ import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { LeadTableCell } from "./table/LeadTableCell";
 import { LeadTableActions } from "./table/LeadTableActions";
 import { getLeadsWithRelations } from "@/utils/query-helpers";
@@ -111,7 +110,7 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
                 onClick={() => onLeadClick(lead.id)}
               >
                 <LeadTableCell type="favorite" value={null} />
-                <LeadTableCell type="name" value={lead.name} />
+                <LeadTableCell type="name" value={lead.name} lead={lead} />
                 <LeadTableCell type="platform" value={lead.platform} />
                 <LeadTableCell type="phase" value={lead.phase_id} />
                 <LeadTableCell type="lastAction" value={lead.last_action_date} />
