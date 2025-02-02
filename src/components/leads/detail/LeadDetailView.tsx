@@ -7,7 +7,6 @@ import { useLeadSubscription } from "./hooks/useLeadSubscription";
 import { LeadWithRelations } from "./types/lead";
 import { LeadDetailContent } from "./components/LeadDetailContent";
 import { useLeadMutations } from "./hooks/useLeadMutations";
-import { Tables } from "@/integrations/supabase/types";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -33,11 +32,11 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         .from("leads")
         .select(`
           *,
-          messages(*),
-          tasks(*),
-          notes(*),
-          lead_files(*),
-          linkedin_posts(*)
+          messages (*),
+          tasks (*),
+          notes (*),
+          lead_files (*),
+          linkedin_posts (*)
         `)
         .eq("id", leadId)
         .maybeSingle();
@@ -51,49 +50,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         throw new Error("Lead not found");
       }
 
-      // Log LinkedIn specific information
-      if (data.platform === 'LinkedIn') {
-        console.log('LinkedIn Contact Found:', {
-          name: data.name,
-          linkedInId: data.linkedin_id,
-          position: data.position,
-          company: data.current_company_name,
-          experience: data.experience,
-          educationSummary: data.education_summary
-        });
-
-        // Get LinkedIn posts for this lead
-        const { data: linkedInPosts, error: postsError } = await supabase
-          .from('linkedin_posts')
-          .select('*')
-          .eq('lead_id', leadId)
-          .order('posted_at', { ascending: false });
-
-        if (postsError) {
-          console.error('Error fetching LinkedIn posts:', postsError);
-        } else {
-          console.log('LinkedIn Posts:', linkedInPosts);
-          
-          // Log timestamps for each post
-          linkedInPosts?.forEach(post => {
-            console.log('Post Time:', {
-              id: post.id,
-              postedAt: post.posted_at,
-              createdAt: post.created_at,
-              type: post.post_type,
-              content: post.content,
-              position: post.position,
-              company: post.company,
-              school: post.school,
-              degree: post.degree
-            });
-          });
-
-          // Assign the posts to data
-          data.linkedin_posts = linkedInPosts;
-        }
-      }
-
       return data as unknown as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
@@ -104,29 +60,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { updateLeadMutation, deleteLeadMutation } = useLeadMutations(leadId, onClose);
   useLeadSubscription(leadId);
 
-  // Handler for updating lead that checks if values have actually changed
-  const handleUpdateLead = (updates: Partial<Tables<"leads">>) => {
-    if (!lead) return;
-    
-    // Check if any values are actually different
-    const hasChanges = Object.entries(updates).some(([key, value]) => {
-      // Skip if the key doesn't exist in lead
-      if (!(key in lead)) return false;
-      // Compare the values, including special handling for phase_id
-      if (key === 'phase_id') {
-        // Only consider it a change if the phase_id is actually different
-        return lead.phase_id !== value;
-      }
-      // Compare other values
-      return lead[key as keyof typeof lead] !== value;
-    });
-
-    // Only trigger mutation if there are actual changes
-    if (hasChanges) {
-      updateLeadMutation.mutate(updates);
-    }
-  };
-
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg overflow-hidden">
@@ -134,7 +67,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           {lead && (
             <LeadDetailHeader
               lead={lead}
-              onUpdateLead={handleUpdateLead}
+              onUpdateLead={updateLeadMutation.mutate}
               onDeleteLead={() => deleteLeadMutation.mutate()}
             />
           )}
@@ -143,7 +76,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         {lead && (
           <LeadDetailContent 
             lead={lead}
-            onUpdateLead={handleUpdateLead}
+            onUpdateLead={updateLeadMutation.mutate}
             isLoading={isLoading}
           />
         )}

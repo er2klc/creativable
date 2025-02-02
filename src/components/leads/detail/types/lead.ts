@@ -40,10 +40,10 @@ export interface SocialMediaPost {
 
 export interface LeadWithRelations extends Omit<Tables<"leads">, "notes"> {
   platform: Platform;
-  notes: Note[];
   tasks?: Tables<"tasks">[];
   messages?: Tables<"messages">[];
   lead_files?: Tables<"lead_files">[];
   linkedin_posts?: Tables<"linkedin_posts">[];
   social_media_posts?: SocialMediaPost[];
+  notes: Note[];
 }

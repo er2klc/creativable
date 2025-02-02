@@ -789,7 +789,6 @@ export type Database = {
           name: string
           network_marketing_id: string | null
           next_steps: Json | null
-          notes: string | null
           onboarding_progress: Json | null
           parent_id: string | null
           phase_id: string
@@ -844,7 +843,6 @@ export type Database = {
           name: string
           network_marketing_id?: string | null
           next_steps?: Json | null
-          notes?: string | null
           onboarding_progress?: Json | null
           parent_id?: string | null
           phase_id: string
@@ -899,7 +897,6 @@ export type Database = {
           name?: string
           network_marketing_id?: string | null
           next_steps?: Json | null
-          notes?: string | null
           onboarding_progress?: Json | null
           parent_id?: string | null
           phase_id?: string
