@@ -71,11 +71,8 @@ export function useInstagramScan() {
           updateState({ currentFile: latestPost.current_file });
         }
 
+        // We don't update scanProgress here anymore since we're using the simulated progress
         if (currentProgress >= 100) {
-          updateState({ 
-            isSuccess: true,
-            scanProgress: 100
-          });
           pollingState.isActive = false;
           clearInterval(interval);
           console.log('Instagram scan completed successfully');

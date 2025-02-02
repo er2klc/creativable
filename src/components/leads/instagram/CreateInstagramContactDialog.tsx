@@ -115,16 +115,18 @@ export function CreateInstagramContactDialog({
 
       if (leadError) throw leadError;
 
-      // Start progress simulation
+      // Start progress simulation with slower progression at higher percentages
       let progress = 5;
       scanState.setScanProgress(progress);
       
       const progressInterval = setInterval(() => {
-        progress = Math.min(progress + 1, 90);
+        // Slower progression after 85%
+        const increment = progress > 85 ? 0.5 : 1;
+        progress = Math.min(progress + increment, 90);
         scanState.setScanProgress(progress);
       }, 200);
 
-      // Start the actual scan process
+      // Start the actual scan process in the background
       scanState.pollProgress(lead.id);
 
       // Call scan-social-profile
@@ -138,12 +140,10 @@ export function CreateInstagramContactDialog({
 
       if (scanError) throw scanError;
 
-      // Call process-social-media
-      const { error: processError } = await supabase.functions.invoke('process-social-media', {
+      // Call process-social-media and don't wait for completion
+      supabase.functions.invoke('process-social-media', {
         body: { leadId: lead.id }
       });
-
-      if (processError) throw processError;
 
       // Clear simulation and set final progress
       clearInterval(progressInterval);
