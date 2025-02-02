@@ -1,28 +1,25 @@
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
-import { FormData } from "../AddLeadFormFields";
+import * as z from "zod";
+import { formSchema } from "../AddLeadFormFields";
 
 interface ContactTypeFieldProps {
-  form: UseFormReturn<FormData>;
+  form: UseFormReturn<z.infer<typeof formSchema>>;
 }
 
 export function ContactTypeField({ form }: ContactTypeFieldProps) {
-  const currentValue = form.watch("contact_type") || "";
-  const currentTypes = currentValue ? currentValue.split(",") : [];
+  const currentTypes = form.watch('contact_type')?.split(',').filter(Boolean) || [];
 
-  const handleCheckboxChange = (type: string, checked: boolean) => {
-    let newTypes = [...currentTypes];
-    
+  const handleContactTypeChange = (type: string, checked: boolean) => {
+    const types = new Set(currentTypes);
     if (checked) {
-      if (!newTypes.includes(type)) {
-        newTypes.push(type);
-      }
+      types.add(type);
     } else {
-      newTypes = newTypes.filter(t => t !== type);
+      types.delete(type);
     }
-    
-    form.setValue("contact_type", newTypes.join(","), { shouldValidate: true });
+    const newValue = Array.from(types).join(',');
+    form.setValue('contact_type', newValue || null);
   };
 
   return (
@@ -36,28 +33,45 @@ export function ContactTypeField({ form }: ContactTypeFieldProps) {
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <div className={`p-2 rounded-lg transition-colors ${
-                  currentTypes.includes("Partner") ? "bg-[#60A5FA]/30" : ""
+                  currentTypes.includes("Partner") ? "bg-[#0EA5E9]/30" : ""
                 }`}>
                   <Checkbox
                     checked={currentTypes.includes("Partner")}
-                    onCheckedChange={(checked) => handleCheckboxChange("Partner", checked as boolean)}
+                    onCheckedChange={(checked) => 
+                      handleContactTypeChange("Partner", checked as boolean)
+                    }
+                    id="partner"
                   />
-                  <span className="ml-2">Likely Partner</span>
+                  <label 
+                    htmlFor="partner" 
+                    className="ml-2 text-sm font-medium cursor-pointer"
+                  >
+                    Likely Partner
+                  </label>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <div className={`p-2 rounded-lg transition-colors ${
-                  currentTypes.includes("Kunde") ? "bg-[#4ADE80]/30" : ""
+                  currentTypes.includes("Kunde") ? "bg-[#22C55E]/30" : ""
                 }`}>
                   <Checkbox
                     checked={currentTypes.includes("Kunde")}
-                    onCheckedChange={(checked) => handleCheckboxChange("Kunde", checked as boolean)}
+                    onCheckedChange={(checked) => 
+                      handleContactTypeChange("Kunde", checked as boolean)
+                    }
+                    id="kunde"
                   />
-                  <span className="ml-2">Likely Kunde</span>
+                  <label 
+                    htmlFor="kunde" 
+                    className="ml-2 text-sm font-medium cursor-pointer"
+                  >
+                    Likely Kunde
+                  </label>
                 </div>
               </div>
             </div>
           </FormControl>
+          <FormMessage />
         </FormItem>
       )}
     />

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { AddLeadDialog } from "../AddLeadDialog";
 import { CreateInstagramContactDialog } from "../instagram/CreateInstagramContactDialog";
 import { CreateLinkedInContactDialog } from "../linkedin/CreateLinkedInContactDialog";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
 
 interface AddLeadButtonProps {
@@ -37,14 +37,10 @@ export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadB
         </DialogTrigger>
         <DialogContent 
           className="sm:max-w-[425px]"
-          onPointerDownOutside={(e) => {
-            e.preventDefault();
-          }}
           onInteractOutside={(e) => {
             e.preventDefault();
           }}
         >
-          <DialogTitle>Kontakt hinzufügen</DialogTitle>
           <div className="grid grid-cols-3 gap-4 py-4">
             <Button
               variant="outline"
