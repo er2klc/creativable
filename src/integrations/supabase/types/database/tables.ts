@@ -1,12 +1,10 @@
-import { Json } from '../base/json';
+import { Json } from './base/json';
 import {
   Profile,
   Setting,
   SocialMediaPost,
   SocialMediaScanHistory,
   Team,
-  Pipeline,
-  PipelinePhase,
   Lead
 } from './entities';
 
@@ -17,8 +15,6 @@ export interface Database {
       teams: Team;
       profiles: Profile;
       settings: Setting;
-      pipeline_phases: PipelinePhase;
-      pipelines: Pipeline;
       social_media_posts: SocialMediaPost;
       social_media_scan_history: SocialMediaScanHistory;
     };
