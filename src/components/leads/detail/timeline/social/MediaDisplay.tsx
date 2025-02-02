@@ -7,9 +7,10 @@ interface MediaDisplayProps {
   mediaUrls: string[];
   hasVideo: boolean;
   isSidecar: boolean;
+  videoUrl?: string | null;
 }
 
-export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayProps) => {
+export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar, videoUrl }: MediaDisplayProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel();
   const [publicUrls, setPublicUrls] = useState<string[]>([]);
 
@@ -20,7 +21,19 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
     }
   }, [mediaUrls]);
 
-  if (!publicUrls.length) return null;
+  if (!publicUrls.length && !videoUrl) return null;
+
+  if (hasVideo && videoUrl) {
+    return (
+      <div className="relative rounded-lg overflow-hidden">
+        <video
+          controls
+          className="w-full h-auto object-contain max-h-[400px]"
+          src={videoUrl}
+        />
+      </div>
+    );
+  }
 
   if (isSidecar) {
     return (
@@ -72,19 +85,11 @@ export const MediaDisplay = ({ mediaUrls, hasVideo, isSidecar }: MediaDisplayPro
 
   return (
     <div className="relative rounded-lg overflow-hidden">
-      {hasVideo ? (
-        <video
-          controls
-          className="w-full h-auto object-contain max-h-[400px]"
-          src={publicUrls[0]}
-        />
-      ) : (
-        <img
-          src={publicUrls[0]}
-          alt="Post media"
-          className="w-full h-auto object-contain max-h-[400px]"
-        />
-      )}
+      <img
+        src={publicUrls[0]}
+        alt="Post media"
+        className="w-full h-auto object-contain max-h-[400px]"
+      />
     </div>
   );
 };

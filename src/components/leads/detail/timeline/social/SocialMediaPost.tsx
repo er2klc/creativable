@@ -7,10 +7,7 @@ import { PostContent } from "./components/PostContent";
 import { PostMetadata } from "./components/PostMetadata";
 import { MediaDisplay } from "./MediaDisplay";
 import { PostActions } from "./components/PostActions";
-import { Video, Image, MessageCircle, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import useEmblaCarousel from "embla-carousel-react";
-import { useState, useEffect } from "react";
+import { Video, Image, MessageCircle } from "lucide-react";
 
 interface SocialMediaPostProps {
   post: SocialMediaPostType;
@@ -33,34 +30,22 @@ const getPostTypeColor = (type: string) => {
 const getPostTypeIcon = (type: string) => {
   switch (type?.toLowerCase()) {
     case "video":
-      return <Video className="h-5 w-5 text-cyan-500 border-cyan-200" />;
+      return <Video className="h-5 w-5 text-cyan-500" />;
     case "image":
-      return <Image className="h-5 w-5 text-purple-500 border-purple-200" />;
+      return <Image className="h-5 w-5 text-purple-500" />;
     case "sidecar":
-      return <MessageCircle className="h-5 w-5 text-amber-500 border-amber-200" />;
+      return <MessageCircle className="h-5 w-5 text-amber-500" />;
     default:
-      return <MessageCircle className="h-5 w-5 text-gray-500 border-gray-200" />;
+      return <MessageCircle className="h-5 w-5 text-gray-500" />;
   }
 };
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
-  const [emblaRef, emblaApi] = useEmblaCarousel();
-  const [publicUrls, setPublicUrls] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (post.media_urls?.length > 0) {
-      setPublicUrls(post.media_urls);
-    }
-  }, [post.media_urls]);
-
   if (post.id.startsWith('temp-') || post.post_type?.toLowerCase() === 'post') {
     return null;
   }
 
-  const mediaUrls = post.post_type?.toLowerCase() === "video" && post.video_url 
-    ? [post.video_url]
-    : post.media_urls || [];
-
+  const mediaUrls = post.media_urls || [];
   const postType = post.post_type?.toLowerCase();
   const isSidecar = postType === "sidecar" && mediaUrls.length > 1;
   const hasVideo = postType === "video" && post.video_url !== null;
@@ -90,67 +75,12 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
         <Card className={cn("flex-1 p-4 text-sm overflow-hidden", postTypeColor)}>
           <div className="flex gap-6">
             <div className="w-1/3 min-w-[200px] relative">
-              {isSidecar ? (
-                <div className="relative rounded-lg overflow-hidden">
-                  <div className="overflow-hidden" ref={emblaRef}>
-                    <div className="flex">
-                      {publicUrls.map((url, index) => (
-                        <div key={index} className="flex-[0_0_100%] min-w-0">
-                          {url.includes('.mp4') ? (
-                            <video
-                              controls
-                              className="w-full h-auto object-contain max-h-[400px]"
-                              src={url}
-                            />
-                          ) : (
-                            <img
-                              src={url}
-                              alt={`Media ${index + 1}`}
-                              className="w-full h-auto object-contain max-h-[400px]"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  {publicUrls.length > 1 && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full"
-                        onClick={() => emblaApi?.scrollPrev()}
-                      >
-                        <ChevronLeft className="h-6 w-6" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full"
-                        onClick={() => emblaApi?.scrollNext()}
-                      >
-                        <ChevronRight className="h-6 w-6" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div className="relative rounded-lg overflow-hidden">
-                  {hasVideo ? (
-                    <video
-                      controls
-                      className="w-full h-auto object-contain max-h-[400px]"
-                      src={publicUrls[0]}
-                    />
-                  ) : (
-                    <img
-                      src={publicUrls[0]}
-                      alt="Post media"
-                      className="w-full h-auto object-contain max-h-[400px]"
-                    />
-                  )}
-                </div>
-              )}
+              <MediaDisplay 
+                mediaUrls={mediaUrls}
+                hasVideo={hasVideo}
+                isSidecar={isSidecar}
+                videoUrl={post.video_url}
+              />
             </div>
 
             <div className="flex-1 min-w-0">
