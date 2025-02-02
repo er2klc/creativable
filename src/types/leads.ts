@@ -10,7 +10,7 @@ export type BaseLead = Tables<'leads'>;
 /**
  * Note with metadata for phase changes
  */
-export interface Note extends Tables<'notes'> {
+export interface Note extends Omit<Tables<'notes'>, 'metadata'> {
   metadata?: {
     type?: string;
     oldStatus?: string;
@@ -22,7 +22,7 @@ export interface Note extends Tables<'notes'> {
  * Lead with all possible relations
  * This extends the base lead type and adds optional related records
  */
-export interface LeadWithRelations extends BaseLead {
+export interface LeadWithRelations extends Omit<BaseLead, 'level'> {
   // Platform information
   platform: Platform;
   

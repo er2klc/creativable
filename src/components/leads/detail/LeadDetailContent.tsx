@@ -1,14 +1,14 @@
 import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadInfoCard } from "../LeadInfoCard";
-import { TaskList } from "../TaskList";
-import { NoteList } from "../NoteList";
-import { LeadSummary } from "../LeadSummary";
-import { LeadMessages } from "../LeadMessages";
-import { CompactPhaseSelector } from "../CompactPhaseSelector";
-import { LeadTimeline } from "../LeadTimeline";
-import { ContactFieldManager } from "../contact-info/ContactFieldManager";
+import { LeadInfoCard } from "./LeadInfoCard";
+import { TaskList } from "./TaskList";
+import { NoteList } from "./NoteList";
+import { LeadSummary } from "./LeadSummary";
+import { LeadMessages } from "./LeadMessages";
+import { CompactPhaseSelector } from "./CompactPhaseSelector";
+import { LeadTimeline } from "./LeadTimeline";
+import { ContactFieldManager } from "./contact-info/ContactFieldManager";
 import { LeadWithRelations } from "@/types/leads";
 
 interface LeadDetailContentProps {
