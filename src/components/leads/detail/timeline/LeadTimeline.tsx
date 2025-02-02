@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { TimelineHeader } from "../timeline/TimelineHeader";
-import { TimelineItem } from "../timeline/TimelineItem";
-import { SocialMediaTimeline } from "../timeline/social/SocialMediaTimeline";
-import { LinkedInTimeline } from "../timeline/social/LinkedInTimeline";
+import { TimelineHeader } from "./TimelineHeader";
+import { TimelineItem } from "./TimelineItem";
+import { SocialMediaTimeline } from "./social/SocialMediaTimeline";
+import { LinkedInTimeline } from "./social/LinkedInTimeline";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "@/types/leads";
-import { TimelineItem as TimelineItemType } from "../timeline/TimelineUtils";
+import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 import { useSocialMediaPosts } from "../hooks/useSocialMediaPosts";
 
 interface LeadTimelineProps {
@@ -27,7 +27,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   });
 
   const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
-  const hasSocialPosts = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
+  const hasSocialPosts = Array.isArray(socialMediaPosts) && socialMediaPosts.length > 0;
   const showSocialTimeline = hasLinkedInPosts || hasSocialPosts;
 
   const mapNoteToTimelineItem = (note: any): TimelineItemType => ({
@@ -106,11 +106,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
 
   return (
     <div className="space-y-4">
-      {/* Debug output */}
-      <div className="text-xs text-gray-500 mb-2">
-        Debug: LinkedIn Posts Available: {hasLinkedInPosts ? 'Yes' : 'No'} ({lead.linkedin_posts?.length || 0})
-      </div>
-      
       <TimelineHeader 
         title={activeTimeline === 'activities' ? 
           (settings?.language === "en" ? "Activities" : "Aktivitäten") :

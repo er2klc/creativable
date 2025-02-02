@@ -35,4 +35,5 @@ export interface SocialMediaPost {
   tagged_users?: any[] | null;
   caption?: string | null;
   video_url?: string | null;
+  timestamp?: string | null;
 }
