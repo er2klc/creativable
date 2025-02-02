@@ -30,15 +30,15 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
   const getPlatformIcon = (platform: string) => {
     switch (platform?.toLowerCase()) {
       case "instagram":
-        return <Instagram className="h-4 w-4 text-white" />;
+        return <Instagram className="h-5 w-5 text-white" />;
       case "linkedin":
-        return <Linkedin className="h-4 w-4 text-white" />;
+        return <Linkedin className="h-5 w-5 text-white" />;
       case "facebook":
-        return <Facebook className="h-4 w-4 text-white" />;
+        return <Facebook className="h-5 w-5 text-white" />;
       case "tiktok":
-        return <Video className="h-4 w-4 text-white" />;
+        return <Video className="h-5 w-5 text-white" />;
       case "offline":
-        return <Users className="h-4 w-4 text-white" />;
+        return <Users className="h-5 w-5 text-white" />;
       default:
         return null;
     }
@@ -152,38 +152,46 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     >
       {/* Platform Icon in top right corner */}
       <div className={cn(
-        "absolute -right-1 -top-1 rounded-full w-5 h-5 border-2 border-white shadow-lg flex items-center justify-center",
+        "absolute -right-2 -top-2 rounded-full w-8 h-8 border-2 border-white shadow-lg flex items-center justify-center",
         getPlatformColor(lead.platform)
       )}>
         {getPlatformIcon(lead.platform)}
       </div>
 
-      <div className="space-y-1.5">
-        <div className="font-medium text-sm flex items-center gap-2">
-          <Avatar className="h-8 w-8">
+      <div className="flex gap-3">
+        {/* Profile Picture Column */}
+        <div className="flex-shrink-0">
+          <div className={cn(
+            "h-16 w-16 rounded-md overflow-hidden",
+            lead.platform.toLowerCase() === "offline" && "border border-gray-300"
+          )}>
             {lead.social_media_profile_image_url ? (
-              <AvatarImage 
+              <img 
                 src={lead.social_media_profile_image_url} 
                 alt={lead.name}
-                className="object-cover"
+                className="h-full w-full object-cover"
               />
             ) : (
-              <AvatarFallback>
+              <div className="h-full w-full bg-gray-100 flex items-center justify-center text-lg font-medium">
                 {getInitials(lead.name)}
-              </AvatarFallback>
-            )}
-          </Avatar>
-          <div className="flex flex-col">
-            <span>{lead.name}</span>
-            {lead.social_media_username && (
-              <span className="text-xs text-muted-foreground">
-                @{lead.social_media_username}
-              </span>
+              </div>
             )}
           </div>
         </div>
-        <div className="text-xs text-muted-foreground">
-          {lead.contact_type || "Nicht festgelegt"}
+
+        {/* Info Column */}
+        <div className="flex flex-col justify-center min-w-0">
+          <div className="font-medium text-sm truncate">
+            {lead.name}
+          </div>
+          {lead.social_media_username && (
+            <span className="text-xs text-muted-foreground truncate">
+              @{lead.social_media_username}
+            </span>
+          )}
+          <div className="text-xs text-muted-foreground mt-1">
+            {lead.contact_type || "Nicht festgelegt"}
+          </div>
         </div>
       </div>
     </div>
