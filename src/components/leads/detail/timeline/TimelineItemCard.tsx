@@ -14,7 +14,7 @@ import {
   MapPin, 
   Video, 
   Users, 
-  BarChart, 
+  BarChart,
   RefreshCw,
   Calendar 
 } from "lucide-react";
@@ -26,7 +26,6 @@ import { AppointmentCard } from "./components/AppointmentCard";
 import { TaskCard } from "./components/TaskCard";
 import { FileCard } from "./components/FileCard";
 import { formatDateTime } from "./utils/dateUtils";
-import { TimelineItemType } from "./TimelineUtils";
 
 const getMeetingTypeLabel = (type: string) => {
   switch (type) {
@@ -67,7 +66,7 @@ const getMeetingTypeIcon = (type: string) => {
 };
 
 interface TimelineItemCardProps {
-  type: TimelineItemType;
+  type: string;
   content: string;
   metadata?: {
     dueDate?: string;
