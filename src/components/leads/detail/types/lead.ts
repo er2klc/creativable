@@ -15,7 +15,7 @@ export type Note = {
 
 export type PostType = "image" | "video" | "carousel" | "text";
 
-export type SocialMediaPost = {
+export interface SocialMediaPost {
   id: string;
   user_id: string;
   lead_id: string;
@@ -47,9 +47,12 @@ export type SocialMediaPost = {
   timestamp?: string;
   caption?: string;
   location?: string;
-};
+}
+
+export type SocialMediaPostRaw = SocialMediaPost;
 
 export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "social_media_posts"> {
+  platform: Platform;
   notes: Note[];
   tasks?: Tables<"tasks">[];
   messages?: Tables<"messages">[];

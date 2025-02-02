@@ -9,7 +9,9 @@ interface TaskCardProps {
   metadata?: {
     dueDate?: string;
     meetingType?: string;
-    status?: 'completed' | 'cancelled' | 'outdated';
+    status?: string;
+    completedAt?: string;
+    color?: string;
   };
   isCompleted?: boolean;
   onDelete?: () => void;
@@ -22,6 +24,7 @@ const getMeetingTypeLabel = (meetingType?: string) => {
   if (!meetingType) return null;
   const meetingTypeObj = MEETING_TYPES.find(type => type.value === meetingType);
   if (!meetingTypeObj) return null;
+  
   return (
     <div className="flex items-center gap-2">
       <MeetingTypeIcon iconName={meetingTypeObj.iconName} />
@@ -56,6 +59,7 @@ export const TaskCard = ({
           </div>
         )}
       </div>
+
       <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         {!isCompleted && onComplete && (
           <button
