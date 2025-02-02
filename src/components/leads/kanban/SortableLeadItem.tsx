@@ -99,11 +99,11 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     const isKunde = types.includes("Kunde");
 
     if (isPartner && isKunde) {
-      return "bg-gradient-to-r from-[#E5DEFF]/30 to-[#F2FCE2]/30";
+      return "bg-gradient-to-r from-[#0EA5E9]/30 to-[#22C55E]/30";
     } else if (isPartner) {
-      return "bg-gradient-to-r from-[#E5DEFF]/30 to-[#F1F0FB]/30";
+      return "bg-gradient-to-r from-[#0EA5E9]/30 to-[#EFF6FF]/30";
     } else if (isKunde) {
-      return "bg-gradient-to-r from-[#F2FCE2]/30 to-[#E8F5D9]/30";
+      return "bg-gradient-to-r from-[#22C55E]/30 to-[#F0FDF4]/30";
     }
     return "bg-white";
   };
