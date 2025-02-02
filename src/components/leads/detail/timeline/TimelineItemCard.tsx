@@ -1,51 +1,30 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { 
-  Check, 
-  Save, 
-  X, 
-  Trash2, 
-  Edit, 
-  Mic, 
-  Phone, 
-  MapPin, 
-  Video, 
-  Users, 
+import { cn } from "@/lib/utils";
+import {
+  Clock,
+  User,
+  Video,
+  Calendar,
+  Phone,
+  MapPin,
+  Users,
   BarChart,
   RefreshCw,
-  Calendar 
+  Check,
+  X,
+  Edit,
+  Trash2,
+  Mic,
+  Save,
 } from "lucide-react";
-import { useSettings } from "@/hooks/use-settings";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { DocumentPreview } from "@/components/elevate/platform/detail/DocumentPreview";
-import { AppointmentCard } from "./components/AppointmentCard";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { TaskCard } from "./components/TaskCard";
 import { FileCard } from "./components/FileCard";
 import { formatDateTime } from "./utils/dateUtils";
 import { TimelineItemType } from "./TimelineUtils";
-
-const getMeetingTypeLabel = (type: string) => {
-  switch (type) {
-    case "phone_call":
-      return "Telefongespräch";
-    case "on_site":
-      return "Vor-Ort-Termin";
-    case "zoom":
-      return "Zoom Meeting";
-    case "initial_meeting":
-      return "Erstgespräch";
-    case "presentation":
-      return "Präsentation";
-    case "follow_up":
-      return "Folgetermin";
-    default:
-      return type;
-  }
-};
 
 const getMeetingTypeIcon = (type: string) => {
   switch (type) {
@@ -63,6 +42,25 @@ const getMeetingTypeIcon = (type: string) => {
       return <RefreshCw className="h-4 w-4" />;
     default:
       return <Calendar className="h-4 w-4" />;
+  }
+};
+
+const getMeetingTypeLabel = (type: string) => {
+  switch (type) {
+    case "phone_call":
+      return "Telefongespräch";
+    case "on_site":
+      return "Vor-Ort-Termin";
+    case "zoom":
+      return "Zoom Meeting";
+    case "initial_meeting":
+      return "Erstgespräch";
+    case "presentation":
+      return "Präsentation";
+    case "follow_up":
+      return "Folgetermin";
+    default:
+      return type;
   }
 };
 
@@ -105,7 +103,6 @@ export const TimelineItemCard = ({
   created_at,
   isCompleted
 }: TimelineItemCardProps) => {
-  const { settings } = useSettings();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
@@ -266,7 +263,7 @@ export const TimelineItemCard = ({
               }}
             >
               <X className="h-4 w-4 mr-1" />
-              {settings?.language === "en" ? "Cancel" : "Abbrechen"}
+              Abbrechen
             </Button>
             <Button
               size="sm"
@@ -274,7 +271,7 @@ export const TimelineItemCard = ({
               disabled={isSaving || editedContent.trim() === content.trim()}
             >
               <Save className="h-4 w-4 mr-1" />
-              {settings?.language === "en" ? "Save" : "Speichern"}
+              Speichern
             </Button>
             <Button
               size="sm"
