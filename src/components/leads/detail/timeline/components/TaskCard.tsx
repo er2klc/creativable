@@ -34,10 +34,8 @@ export const TaskCard = ({
       <div className={`space-y-2 ${isCompleted ? 'line-through text-gray-500' : ''}`}>
         <div className="font-medium">{content}</div>
         {metadata?.meetingType && (
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-          {
-            MEETING_TYPES.find(type => type.value === metadata.meetingType)?.label || metadata.meetingType
-          }
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              {getMeetingTypeLabel(metadata.meetingType)}
           </div>
         )}
         {metadata?.dueDate && (
