@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SocialMediaPost, PostType } from "@/types/leads";
+import type { SocialMediaPost, PostType } from "@/types/leads";
 
 export const useSocialMediaPosts = (leadId: string) => {
   return useQuery({
@@ -34,12 +34,14 @@ export const useSocialMediaPosts = (leadId: string) => {
         throw leadError;
       }
 
-      let leadSocialPosts = [];
+      let leadSocialPosts: any[] = [];
       if (leadData?.apify_instagram_data) {
         try {
           leadSocialPosts = typeof leadData.apify_instagram_data === "string"
             ? JSON.parse(leadData.apify_instagram_data)
-            : leadData.apify_instagram_data;
+            : Array.isArray(leadData.apify_instagram_data) 
+              ? leadData.apify_instagram_data 
+              : [];
         } catch (e) {
           console.error("⚠️ Fehler beim Parsen von apify_instagram_data:", e);
         }
@@ -71,7 +73,7 @@ export const useSocialMediaPosts = (leadId: string) => {
           media_urls: mediaUrls,
           video_url: videoUrl,
           platform: "Instagram",
-          post_type: post.post_type as PostType || "post",
+          post_type: (post.post_type || "post") as PostType,
           caption: post.content || null,
           likes_count: likesCount,
           comments_count: commentsCount,
@@ -86,28 +88,30 @@ export const useSocialMediaPosts = (leadId: string) => {
         };
       });
 
-      leadSocialPosts.forEach((leadPost) => {
-        const existsInMerged = mergedPosts.some((p) => p.id === leadPost.id);
-        if (!existsInMerged && leadPost.videoUrl) {
-          mergedPosts.push({
-            id: leadPost.id,
-            user_id: user.id,
-            lead_id: leadId,
-            platform: "Instagram",
-            post_type: "video" as PostType,
-            content: leadPost.caption || null,
-            caption: leadPost.caption || null,
-            url: leadPost.url || null,
-            posted_at: leadPost.timestamp || null,
-            timestamp: leadPost.timestamp || null,
-            media_urls: [],
-            media_type: "video",
-            video_url: leadPost.videoUrl,
-            likes_count: leadPost.likesCount || null,
-            comments_count: leadPost.commentsCount || null,
-          } as SocialMediaPost);
-        }
-      });
+      if (Array.isArray(leadSocialPosts)) {
+        leadSocialPosts.forEach((leadPost) => {
+          const existsInMerged = mergedPosts.some((p) => p.id === leadPost.id);
+          if (!existsInMerged && leadPost.videoUrl) {
+            mergedPosts.push({
+              id: leadPost.id,
+              user_id: user.id,
+              lead_id: leadId,
+              platform: "Instagram",
+              post_type: "video" as PostType,
+              content: leadPost.caption || null,
+              caption: leadPost.caption || null,
+              url: leadPost.url || null,
+              posted_at: leadPost.timestamp || null,
+              timestamp: leadPost.timestamp || null,
+              media_urls: [],
+              media_type: "video",
+              video_url: leadPost.videoUrl,
+              likes_count: leadPost.likesCount || null,
+              comments_count: leadPost.commentsCount || null,
+            } as SocialMediaPost);
+          }
+        });
+      }
 
       return mergedPosts;
     },

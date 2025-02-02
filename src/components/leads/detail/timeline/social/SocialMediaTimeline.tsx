@@ -1,9 +1,8 @@
-import { SocialMediaPost as SocialMediaPostType } from "@/types/leads";
-import { LeadWithRelations } from "@/types/leads";
-import { SocialMediaPost } from "./SocialMediaPost";
+import type { SocialMediaPost } from "@/types/leads";
+import { SocialMediaPost as SocialMediaPostComponent } from "./SocialMediaPost";
 
 interface SocialMediaTimelineProps {
-  posts: SocialMediaPostType[];
+  posts: SocialMediaPost[];
   linkedInPosts?: any[];
   platform?: string;
   kontaktIdFallback?: string;
@@ -16,7 +15,6 @@ export const SocialMediaTimeline = ({
   kontaktIdFallback 
 }: SocialMediaTimelineProps) => {
   const sortedPosts = [...posts]
-    .filter(post => !post.id.startsWith('temp-'))
     .sort((a, b) => {
       const dateA = a.posted_at ? new Date(a.posted_at) : new Date();
       const dateB = b.posted_at ? new Date(b.posted_at) : new Date();
@@ -29,7 +27,7 @@ export const SocialMediaTimeline = ({
       <div className="space-y-6">
         {sortedPosts.length > 0 ? (
           sortedPosts.map((post) => (
-            <SocialMediaPost
+            <SocialMediaPostComponent
               key={post.id}
               post={post}
               kontaktIdFallback={kontaktIdFallback}

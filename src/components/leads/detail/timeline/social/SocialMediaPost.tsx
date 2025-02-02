@@ -1,3 +1,4 @@
+import type { SocialMediaPost as SocialMediaPostType } from "@/types/leads";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -7,11 +8,9 @@ import { PostHeader } from "./PostHeader";
 import { PostContent } from "./PostContent";
 import { PostMetadata } from "./PostMetadata";
 import { PostActions } from "./PostActions";
-import { SocialMediaPost } from "../../types/lead";
-import { LeadWithRelations } from "@/types/leads";
 
 interface SocialMediaPostProps {
-  post: SocialMediaPost;
+  post: SocialMediaPostType;
   kontaktIdFallback?: string;
 }
 
