@@ -24,7 +24,7 @@ export const useSocialMediaPosts = (leadId: string) => {
         throw postsError;
       }
 
-      // ✅ Hole `apify_instagram_data` aus `leads` (updated from social_media_posts)
+      // ✅ Hole `apify_instagram_data` aus `leads`
       const { data: leadData, error: leadError } = await supabase
         .from("leads")
         .select("apify_instagram_data")
@@ -51,7 +51,7 @@ export const useSocialMediaPosts = (leadId: string) => {
         }
       }
 
-      // ✅ Kombiniere beide Datenquellen (social_media_posts + leads)
+      // ✅ Kombiniere beide Datenquellen
       const mergedPosts = socialMediaPosts.map((post): SocialMediaPost => {
         const matchingLeadPost = leadSocialPosts.find((leadPost) => leadPost.id === post.id);
 
@@ -76,29 +76,20 @@ export const useSocialMediaPosts = (leadId: string) => {
           ? matchingLeadPost.commentsCount 
           : post.comments_count || 0;
 
-        // ✅ Entferne `profile_pic_url` aus den `taggedUsers`
-        const taggedUsers = (matchingLeadPost?.taggedUsers || []).map((user) => {
-          const { profile_pic_url, ...rest } = user;
-          return rest;
-        });
-
-        console.log(`🏷️ DEBUG: Tagged Users für Post ID ${post.id}:`, taggedUsers);
-
         return {
           ...post,
           media_urls: mediaUrls,
           video_url: videoUrl,
           platform: "Instagram",
-          type: post.post_type || "post",
-          post_type: (post.post_type || "post") as PostType,
+          post_type: post.post_type || "post",
           caption: post.content || null,
-          likesCount: likesCount,
-          commentsCount: commentsCount,
+          likes_count: likesCount,
+          comments_count: commentsCount,
           location: post.location || null,
           mentioned_profiles: post.mentioned_profiles || null,
           tagged_profiles: post.tagged_profiles || null,
-          timestamp: post.posted_at || null,
-          taggedUsers: taggedUsers,
+          posted_at: post.posted_at || null,
+          taggedUsers: post.tagged_users || [],
           local_video_path: post.local_video_path || null,
           local_media_paths: post.local_media_paths || null,
         };
@@ -115,18 +106,16 @@ export const useSocialMediaPosts = (leadId: string) => {
             user_id: user.id,
             lead_id: leadId,
             platform: "Instagram",
-            type: "video",
             post_type: "video",
             content: leadPost.caption || null,
             caption: leadPost.caption || null,
             url: leadPost.url || null,
             posted_at: leadPost.timestamp || null,
-            timestamp: leadPost.timestamp || null,
             media_urls: [],
             media_type: "video",
             video_url: leadPost.videoUrl,
-            likesCount: leadPost.likesCount || null,
-            commentsCount: leadPost.commentsCount || null,
+            likes_count: leadPost.likesCount || null,
+            comments_count: leadPost.commentsCount || null,
           } as SocialMediaPost);
         }
       });
