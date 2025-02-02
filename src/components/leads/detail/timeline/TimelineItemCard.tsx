@@ -54,7 +54,7 @@ export const TimelineItemCard = ({
       case "status_change":
         return <MessageCircle className="h-5 w-5" />;
       default:
-        return null;
+        return <Bot className="h-5 w-5" />;
     }
   };
 
