@@ -189,7 +189,7 @@ serve(async (req) => {
     // Get the user ID from the lead
     const { data: lead, error: leadError } = await supabase
       .from('leads')
-      .select('user_id, social_media_posts')
+      .select('user_id, apify_instagram_data')  // Changed from social_media_posts to apify_instagram_data
       .eq('id', leadId)
       .single();
 
@@ -198,8 +198,8 @@ serve(async (req) => {
       throw leadError;
     }
 
-    if (!lead?.social_media_posts) {
-      console.log('No social media posts found for lead:', leadId);
+    if (!lead?.apify_instagram_data) {  // Changed from social_media_posts to apify_instagram_data
+      console.log('No Instagram data found for lead:', leadId);
       return new Response(
         JSON.stringify({ 
           success: true,
@@ -212,9 +212,9 @@ serve(async (req) => {
       );
     }
 
-    const posts = Array.isArray(lead.social_media_posts) ? 
-      lead.social_media_posts : 
-      [lead.social_media_posts];
+    const posts = Array.isArray(lead.apify_instagram_data) ?  // Changed from social_media_posts to apify_instagram_data
+      lead.apify_instagram_data : 
+      [lead.apify_instagram_data];
     
     console.log(`Found ${posts.length} posts to process`);
 
