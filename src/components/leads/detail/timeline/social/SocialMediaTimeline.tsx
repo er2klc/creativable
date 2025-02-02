@@ -1,5 +1,4 @@
 import { SocialMediaPost } from "../../types/lead";
-import { SocialMediaPostComponent } from "./SocialMediaPost";
 
 interface SocialMediaTimelineProps {
   posts: SocialMediaPost[];
@@ -28,7 +27,7 @@ export const SocialMediaTimeline = ({
       <div className="space-y-6">
         {sortedPosts.length > 0 ? (
           sortedPosts.map((post) => (
-            <SocialMediaPostComponent
+            <SocialMediaPost
               key={post.id}
               post={post}
               kontaktIdFallback={kontaktIdFallback}

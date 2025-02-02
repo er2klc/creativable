@@ -49,7 +49,7 @@ export interface SocialMediaPost {
   location: string | null;
 }
 
-export interface LeadWithRelations extends Omit<Tables<"leads">, "notes" | "social_media_posts"> {
+export interface LeadWithRelations extends Tables<"leads"> {
   platform: Platform;
   notes: Note[];
   tasks?: Tables<"tasks">[];
