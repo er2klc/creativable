@@ -3,8 +3,8 @@ export interface Pipeline {
   user_id: string;
   name: string;
   order_index: number;
-  created_at?: string | null;
-  updated_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface PipelinePhase {
@@ -12,6 +12,6 @@ export interface PipelinePhase {
   pipeline_id: string;
   name: string;
   order_index: number;
-  created_at?: string | null;
-  updated_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }

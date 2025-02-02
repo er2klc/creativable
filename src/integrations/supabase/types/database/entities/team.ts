@@ -1,5 +1,3 @@
-import { Json } from '../base/json';
-
 export interface Team {
   id: string;
   name: string;
