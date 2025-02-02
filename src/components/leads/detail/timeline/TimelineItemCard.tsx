@@ -26,6 +26,7 @@ import { AppointmentCard } from "./components/AppointmentCard";
 import { TaskCard } from "./components/TaskCard";
 import { FileCard } from "./components/FileCard";
 import { formatDateTime } from "./utils/dateUtils";
+import { TimelineItemType } from "./TimelineUtils";
 
 const getMeetingTypeLabel = (type: string) => {
   switch (type) {
