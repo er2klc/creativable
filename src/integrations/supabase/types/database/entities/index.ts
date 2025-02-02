@@ -1,11 +1,11 @@
-export type { Json } from './base/json';
+export type { Json } from '../base/json';
 export type { 
   PostType, 
   RecurringPattern, 
   ShortcutType, 
   CommunicationChannel, 
   GenderType 
-} from './base/enums';
+} from '../base/enums';
 
 export type {
   Team,
@@ -22,14 +22,7 @@ export type {
 } from './settings';
 
 export type {
-  Pipeline,
-  PipelinePhase,
-  Lead,
-  Message,
-  UserDocument,
-  Task,
-  Note,
-  LeadFile
-} from './core';
+  Lead
+} from './lead';
 
 export type { Profile } from './profile';

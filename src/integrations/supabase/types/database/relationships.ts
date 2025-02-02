@@ -1,4 +1,4 @@
-import { Json } from './base/json';
+import { Json } from '../base/json';
 import {
   Lead,
   Profile,
