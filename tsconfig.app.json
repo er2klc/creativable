@@ -6,8 +6,9 @@
     "module": "ESNext",
     "skipLibCheck": true,
 
-    /* Bundler mode */
-    "moduleResolution": "bundler",
+    /* 🔧 Fix: Sicherstellen, dass Module-Resolution richtig ist */
+    "moduleResolution": "NodeNext", 
+
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
@@ -21,6 +22,7 @@
     "noImplicitAny": false,
     "noFallthroughCasesInSwitch": false,
 
+    /* 🔧 Fix: Paths sicherstellen */
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
