@@ -24,6 +24,7 @@ export const InstagramScanAnimation = ({
         const x = Math.cos(angle) * radius;
         const y = Math.sin(angle) * radius;
         
+        // Adjust animation speed based on progress
         const duration = Math.max(0.5, 2 - (scanProgress / 100));
         
         await controls.start({
@@ -43,6 +44,19 @@ export const InstagramScanAnimation = ({
       controls.stop();
     };
   }, [controls, scanProgress]);
+
+  // Ensure progress never exceeds 100%
+  const normalizedProgress = Math.min(100, Math.max(0, scanProgress));
+
+  // Helper function to get status message
+  const getStatusMessage = () => {
+    if (currentFile) return currentFile;
+    if (normalizedProgress === 100) return "Scan abgeschlossen!";
+    if (normalizedProgress > 80) return "Verarbeite Medien...";
+    if (normalizedProgress > 50) return "Analysiere Profildaten...";
+    if (normalizedProgress > 20) return "Verbinde mit Instagram...";
+    return "Starte Instagram Scan...";
+  };
 
   return (
     <div className="relative w-full max-w-[300px] mx-auto py-8 space-y-6">
@@ -64,13 +78,13 @@ export const InstagramScanAnimation = ({
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-gray-600">
               <span>Instagram Scan</span>
-              <span>{scanProgress}%</span>
+              <span>{normalizedProgress}%</span>
             </div>
-            <Progress value={scanProgress} className="w-full h-2" />
+            <Progress value={normalizedProgress} className="w-full h-2" />
           </div>
 
           <div className="mt-4 text-sm text-gray-600 text-center">
-            <p className="font-medium">{currentFile}</p>
+            <p className="font-medium">{getStatusMessage()}</p>
           </div>
         </div>
       </div>
