@@ -1,11 +1,11 @@
-import { X } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { NoteCard } from "./cards/NoteCard";
 import { TaskCard } from "./cards/TaskCard";
 import { FileCard } from "./cards/FileCard";
 import { AppointmentCard } from "./cards/AppointmentCard";
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import { MetadataDisplay } from "./cards/MetadataDisplay";
+import { DeleteButton } from "./cards/DeleteButton";
+import { TimelineItemType } from "./TimelineUtils";
 
 interface TimelineItemCardProps {
   type: TimelineItemType;
@@ -47,19 +47,6 @@ export const TimelineItemCard = ({
   isCompleted
 }: TimelineItemCardProps) => {
   const { settings } = useSettings();
-
-  const renderMetadata = () => {
-    if (metadata?.last_edited_at) {
-      return (
-        <div className="text-xs text-gray-500 mt-2">
-          {settings?.language === "en" ? "Created" : "Erstellt"}: {format(new Date(created_at || ''), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
-          <br />
-          {settings?.language === "en" ? "Last edited" : "Zuletzt bearbeitet"}: {format(new Date(metadata.last_edited_at), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
-        </div>
-      );
-    }
-    return null;
-  };
 
   const getBorderColor = () => {
     if (status === 'completed') return 'border-green-500';
@@ -123,16 +110,7 @@ export const TimelineItemCard = ({
         <div className="whitespace-pre-wrap break-words">
           {content}
         </div>
-        {onDelete && (
-          <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={onDelete}
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              <X className="h-4 w-4 text-gray-500 hover:text-red-600" />
-            </button>
-          </div>
-        )}
+        {onDelete && <DeleteButton onDelete={onDelete} />}
       </div>
     );
   };
@@ -140,7 +118,10 @@ export const TimelineItemCard = ({
   return (
     <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}>
       {renderContent()}
-      {renderMetadata()}
+      <MetadataDisplay 
+        last_edited_at={metadata?.last_edited_at}
+        created_at={created_at}
+      />
     </div>
   );
 };
