@@ -1,4 +1,4 @@
-import { Settings } from "lucide-react";
+import { Activity, MessageCircle } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
 
@@ -29,28 +29,28 @@ export const TimelineHeader = ({
 
   return (
     <div className="flex items-center justify-between mb-4">
-      <h3 
+      <div 
         className={cn(
-          "text-lg font-semibold",
-          activeTimeline === 'social' && showSocialTimeline && "cursor-pointer hover:text-primary"
+          "flex items-center gap-2 cursor-pointer hover:text-primary transition-colors",
+          activeTimeline === 'activities' && "text-lg font-semibold"
         )}
-        onClick={() => activeTimeline === 'social' && handleClick('activities')}
+        onClick={() => handleClick('activities')}
       >
-        {activeTimeline === 'activities' ? 
-          (settings?.language === "en" ? "Activities" : "Aktivitäten") :
-          (settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten")
-        }
-      </h3>
+        <Activity className="h-5 w-5" />
+        <span>
+          {settings?.language === "en" ? "Activities" : "Aktivitäten"}
+        </span>
+      </div>
       
       {showSocialTimeline && (
         <div 
           className={cn(
-            "flex items-center gap-2 text-sm cursor-pointer hover:text-primary",
-            activeTimeline === 'activities' ? "text-gray-500" : "text-primary"
+            "flex items-center gap-2 cursor-pointer hover:text-primary transition-colors",
+            activeTimeline === 'social' && "text-lg font-semibold"
           )}
-          onClick={() => activeTimeline === 'activities' && handleClick('social')}
+          onClick={() => handleClick('social')}
         >
-          <Settings className="h-4 w-4" />
+          <MessageCircle className="h-5 w-5" />
           <span>
             {settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten"}
           </span>
