@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DocumentPreview } from "@/components/elevate/platform/detail/DocumentPreview";
-import { FileText, Image } from "lucide-react";
+import { FileText, Image, FilePdf, FileSpreadsheet } from "lucide-react";
 
 interface FileCardProps {
   content: string;
@@ -23,12 +23,22 @@ export const FileCard = ({ content, metadata }: FileCardProps) => {
     .from('documents')
     .getPublicUrl(metadata.filePath).data.publicUrl;
 
-  const isImage = metadata.fileType?.toLowerCase().match(/^(image\/jpeg|image\/png|image\/gif|image\/webp)$/);
+  const fileType = metadata.fileType?.toLowerCase() || metadata.fileName?.split('.').pop()?.toLowerCase();
+  const isImage = fileType?.match(/^(image\/jpeg|image\/png|image\/gif|image\/webp)$/);
+  const isPdf = fileType === 'application/pdf' || fileType === 'pdf';
+  const isSpreadsheet = fileType?.includes('sheet') || fileType?.match(/^(xlsx|xls|csv)$/);
+
+  const getFileIcon = () => {
+    if (isImage) return <Image className="h-4 w-4 text-blue-500" />;
+    if (isPdf) return <FilePdf className="h-4 w-4 text-red-500" />;
+    if (isSpreadsheet) return <FileSpreadsheet className="h-4 w-4 text-green-500" />;
+    return <FileText className="h-4 w-4 text-blue-500" />;
+  };
 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        {isImage ? <Image className="h-4 w-4 text-blue-500" /> : <FileText className="h-4 w-4 text-blue-500" />}
+        {getFileIcon()}
         <button 
           onClick={() => setShowPreview(true)} 
           className="text-left hover:text-blue-600 transition-colors"
@@ -52,17 +62,15 @@ export const FileCard = ({ content, metadata }: FileCardProps) => {
       )}
 
       {/* Preview dialog for all file types */}
-      {showPreview && (
-        <DocumentPreview
-          document={{
-            name: metadata.fileName || content,
-            url: fileUrl,
-            file_type: metadata.fileType,
-          }}
-          open={showPreview}
-          onOpenChange={setShowPreview}
-        />
-      )}
+      <DocumentPreview
+        document={{
+          name: metadata.fileName || content,
+          url: fileUrl,
+          file_type: metadata.fileType,
+        }}
+        open={showPreview}
+        onOpenChange={setShowPreview}
+      />
     </div>
   );
 };
