@@ -87,85 +87,86 @@ export const TimelineItemCard = ({
   };
 
   const renderContent = () => {
-    switch (type) {
-      case 'task':
-        return (
-          <TaskCard
-            id={id}
+    if (type === 'task' && id) {
+      return (
+        <TaskCard
+          id={id}
+          content={content}
+          metadata={metadata}
+          isCompleted={isCompleted}
+          onDelete={onDelete}
+        />
+      );
+    }
+
+    if (type === 'appointment' && id) {
+      return (
+        <>
+          <AppointmentCard
             content={content}
             metadata={metadata}
             isCompleted={isCompleted}
             onDelete={onDelete}
+            onEdit={() => setIsEditingAppointment(true)}
           />
-        );
-      
-      case 'appointment':
-        return (
-          <>
-            <AppointmentCard
-              content={content}
-              metadata={metadata}
-              isCompleted={isCompleted}
-              onDelete={onDelete}
-              onEdit={() => setIsEditingAppointment(true)}
+          {isEditingAppointment && (
+            <NewAppointmentDialog
+              open={isEditingAppointment}
+              onOpenChange={setIsEditingAppointment}
+              initialSelectedDate={metadata?.dueDate ? new Date(metadata.dueDate) : null}
+              appointmentToEdit={{
+                id,
+                leadId: '',
+                time: metadata?.dueDate ? format(new Date(metadata.dueDate), 'HH:mm') : '09:00',
+                title: content,
+                color: metadata?.color || '#40E0D0',
+                meeting_type: metadata?.meetingType || 'phone_call',
+                completed: isCompleted,
+                cancelled: status === 'cancelled',
+              }}
             />
-            {isEditingAppointment && (
-              <NewAppointmentDialog
-                open={isEditingAppointment}
-                onOpenChange={setIsEditingAppointment}
-                initialSelectedDate={metadata?.dueDate ? new Date(metadata.dueDate) : null}
-                appointmentToEdit={{
-                  id: id!,
-                  leadId: '',
-                  time: metadata?.dueDate ? format(new Date(metadata.dueDate), 'HH:mm') : '09:00',
-                  title: content,
-                  color: metadata?.color || '#40E0D0',
-                  meeting_type: metadata?.meetingType || 'phone_call',
-                  completed: isCompleted,
-                  cancelled: status === 'cancelled',
-                }}
-              />
-            )}
-          </>
-        );
-
-      case 'file_upload':
-        return (
-          <FileCard
-            content={content}
-            metadata={metadata}
-          />
-        );
-
-      case 'note':
-        return (
-          <NoteCard
-            id={id}
-            content={content}
-            metadata={metadata}
-            onDelete={onDelete}
-          />
-        );
-
-      default:
-        return (
-          <div className="relative group">
-            <div className="whitespace-pre-wrap break-words">
-              {content}
-            </div>
-            {onDelete && (
-              <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={onDelete}
-                  className="p-1 hover:bg-gray-100 rounded"
-                >
-                  <X className="h-4 w-4 text-gray-500 hover:text-red-600" />
-                </button>
-              </div>
-            )}
-          </div>
-        );
+          )}
+        </>
+      );
     }
+
+    if (type === 'file_upload') {
+      return (
+        <FileCard
+          content={content}
+          metadata={metadata}
+        />
+      );
+    }
+
+    if (type === 'note' && id) {
+      return (
+        <NoteCard
+          id={id}
+          content={content}
+          metadata={metadata}
+          onDelete={onDelete}
+        />
+      );
+    }
+
+    return (
+      <div className="relative group">
+        <div className="whitespace-pre-wrap break-words">
+          {content}
+        </div>
+        {onDelete && (
+          <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={onDelete}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <X className="h-4 w-4 text-gray-500 hover:text-red-600" />
+            </button>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
