@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, FileSpreadsheet, FileText, Image, FilePdf } from "lucide-react";
+import { Download, FileSpreadsheet, FileText, Image, File } from "lucide-react";
 
 interface DocumentPreviewProps {
   open: boolean;
@@ -23,7 +23,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
 
   const getFileIcon = () => {
     if (isImage) return <Image className="h-16 w-16 text-blue-600 mb-4" />;
-    if (isPdf) return <FilePdf className="h-16 w-16 text-red-600 mb-4" />;
+    if (isPdf) return <File className="h-16 w-16 text-red-600 mb-4" />;
     if (fileType?.includes('sheet') || fileType?.match(/^(xlsx|xls|csv)$/)) {
       return <FileSpreadsheet className="h-16 w-16 text-green-600 mb-4" />;
     }
