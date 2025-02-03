@@ -6,7 +6,7 @@ import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { Tables } from "@/integrations/supabase/types";
 import { PartnerTree } from "@/components/partners/PartnerTree";
 import { Button } from "@/components/ui/button";
-import { Users, Star, Clock, XCircle } from "lucide-react";
+import { Diamond, Trophy, Gem, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Pool() {
@@ -54,38 +54,70 @@ export default function Pool() {
   });
 
   const statusOptions = [
-    { id: 'partner', label: 'Partner', icon: Users, color: 'bg-green-500' },
-    { id: 'customer', label: 'Kunden', icon: Star, color: 'bg-blue-500' },
-    { id: 'not_for_now', label: 'Not For Now', icon: Clock, color: 'bg-yellow-500' },
-    { id: 'no_interest', label: 'Kein Interesse', icon: XCircle, color: 'bg-red-500' }
+    { 
+      id: 'partner', 
+      label: 'Partner', 
+      icon: Diamond, 
+      gradient: 'from-emerald-400 to-emerald-600',
+      hoverGradient: 'hover:from-emerald-500 hover:to-emerald-700'
+    },
+    { 
+      id: 'customer', 
+      label: 'Kunden', 
+      icon: Trophy, 
+      gradient: 'from-blue-400 to-blue-600',
+      hoverGradient: 'hover:from-blue-500 hover:to-blue-700'
+    },
+    { 
+      id: 'not_for_now', 
+      label: 'Not For Now', 
+      icon: Gem, 
+      gradient: 'from-amber-400 to-amber-600',
+      hoverGradient: 'hover:from-amber-500 hover:to-amber-700'
+    },
+    { 
+      id: 'no_interest', 
+      label: 'Kein Interesse', 
+      icon: Star, 
+      gradient: 'from-rose-400 to-rose-600',
+      hoverGradient: 'hover:from-rose-500 hover:to-rose-700'
+    }
   ];
 
   return (
     <div className="container mx-auto py-6">
-      {/* New Header Design */}
-      <div className="mb-8 space-y-6">
-        <div className="flex flex-wrap gap-3">
+      {/* Enhanced Header Design */}
+      <div className="mb-8">
+        <div className="flex flex-wrap gap-4 justify-center">
           {statusOptions.map((option) => {
             const Icon = option.icon;
+            const isActive = status === option.id;
+            
             return (
               <Button
                 key={option.id}
-                variant={status === option.id ? "default" : "outline"}
+                variant="ghost"
                 className={cn(
-                  "relative group transition-all duration-300 min-w-[140px]",
-                  status === option.id && "shadow-lg scale-105"
+                  "relative group min-w-[160px] h-[60px] transition-all duration-300",
+                  "bg-gradient-to-r shadow-lg border-0",
+                  isActive ? `${option.gradient} text-white scale-110` : "bg-background hover:scale-105",
+                  !isActive && "hover:bg-gradient-to-r",
+                  !isActive && option.hoverGradient,
+                  "hover:text-white"
                 )}
                 onClick={() => window.location.href = `/pool/${option.id}`}
               >
-                <div className="flex items-center gap-2">
+                <div className="absolute inset-0 bg-black/5 rounded-md" />
+                <div className="relative flex items-center justify-center gap-3 font-semibold">
                   <Icon className={cn(
-                    "h-4 w-4 transition-colors",
-                    status === option.id ? "text-white" : option.color
+                    "h-5 w-5 transition-all duration-300",
+                    isActive ? "scale-110" : "scale-100",
+                    !isActive && "group-hover:scale-110"
                   )} />
-                  <span>{option.label}</span>
+                  <span className="text-sm">{option.label}</span>
                 </div>
-                {status === option.id && (
-                  <div className="absolute bottom-0 left-0 w-full h-1 rounded-b-md bg-white/20" />
+                {isActive && (
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-lg" />
                 )}
               </Button>
             );
