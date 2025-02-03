@@ -8,8 +8,6 @@ import { usePhaseQuery } from "./kanban/usePhaseQuery";
 import { usePhaseMutations } from "./kanban/usePhaseMutations";
 import { useNavigate } from "react-router-dom";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
-import { AddPhaseButton } from "./kanban/AddPhaseButton";
-import { supabase } from "@/integrations/supabase/client";
 
 interface LeadKanbanViewProps {
   leads: Tables<"leads">[];
@@ -33,6 +31,14 @@ export const LeadKanbanView = ({
 
   useKanbanSubscription();
 
+  // Filter out "Aktive Partner" phase
+  const filteredPhases = phases.filter(phase => phase.name !== "Aktive Partner");
+  
+  // Split phases into two rows
+  const midPoint = Math.ceil(filteredPhases.length / 2);
+  const topRowPhases = filteredPhases.slice(0, midPoint);
+  const bottomRowPhases = filteredPhases.slice(midPoint);
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
@@ -43,11 +49,9 @@ export const LeadKanbanView = ({
     
     if (newPhaseId && !isEditMode) {
       try {
-        // Get the old and new phase names for the note
         const oldPhase = phases.find(p => p.id === leads.find(l => l.id === leadId)?.phase_id)?.name || '';
         const newPhase = phases.find(p => p.id === newPhaseId)?.name || '';
 
-        // Update the lead's phase
         await updateLeadPhase.mutateAsync({ 
           leadId, 
           phaseId: newPhaseId,
@@ -103,21 +107,20 @@ export const LeadKanbanView = ({
     }
   };
 
+  // Get active partners
+  const activePartners = leads.filter(lead => lead.status === 'partner');
+
   return (
     <DndContext 
       collisionDetection={closestCenter} 
       onDragEnd={handleDragEnd}
     >
       <div className="mt-6 border-t border-gray-200 shadow-sm pt-6">
-        <div className="flex-1 overflow-x-auto no-scrollbar relative h-[calc(100vh)]">
-          <div 
-            className="flex gap-4 px-4 h-full" 
-            style={{ minWidth: 'fit-content' }}
-          >
-            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
-
-            {phases.map((phase, index) => (
-              <div key={phase.id} className="flex-1" style={{ minWidth: '190px', width: `${100 / phases.length}%` }}>
+        <div className="flex-1 overflow-x-auto no-scrollbar relative">
+          {/* Top Row */}
+          <div className="flex gap-4 px-4 mb-4">
+            {topRowPhases.map((phase, index) => (
+              <div key={phase.id} className="flex-1" style={{ minWidth: '190px' }}>
                 <PhaseColumn
                   phase={phase}
                   leads={leads.filter((lead) => lead.phase_id === phase.id)}
@@ -127,7 +130,7 @@ export const LeadKanbanView = ({
                   onUpdatePhaseName={(newName) => updatePhaseName.mutate({ id: phase.id, name: newName })}
                   pipelineId={selectedPipelineId}
                   isFirst={index === 0}
-                  isLast={index === phases.length - 1}
+                  isLast={index === topRowPhases.length - 1}
                   onMovePhase={
                     isEditMode 
                       ? (direction) => handleMovePhase(phase.id, direction)
@@ -136,13 +139,67 @@ export const LeadKanbanView = ({
                 />
               </div>
             ))}
-
-            {isEditMode && (
-              <AddPhaseButton pipelineId={selectedPipelineId} />
-            )}
-
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
           </div>
+
+          {/* Bottom Row */}
+          <div className="flex gap-4 px-4">
+            {bottomRowPhases.map((phase, index) => (
+              <div key={phase.id} className="flex-1" style={{ minWidth: '190px' }}>
+                <PhaseColumn
+                  phase={phase}
+                  leads={leads.filter((lead) => lead.phase_id === phase.id)}
+                  onLeadClick={handleLeadClick}
+                  isEditMode={isEditMode}
+                  onDeletePhase={() => setPhaseToDelete(phase)}
+                  onUpdatePhaseName={(newName) => updatePhaseName.mutate({ id: phase.id, name: newName })}
+                  pipelineId={selectedPipelineId}
+                  isFirst={index === 0}
+                  isLast={index === bottomRowPhases.length - 1}
+                  onMovePhase={
+                    isEditMode 
+                      ? (direction) => handleMovePhase(phase.id, direction)
+                      : undefined
+                  }
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Active Partners Section */}
+          {activePartners.length > 0 && (
+            <div className="mt-8 px-4">
+              <h2 className="text-lg font-semibold mb-4">Aktive Partner ({activePartners.length})</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {activePartners.map((partner) => (
+                  <div 
+                    key={partner.id}
+                    className="bg-white p-4 rounded-lg shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => handleLeadClick(partner.id)}
+                  >
+                    <div className="flex items-center gap-3">
+                      {partner.social_media_profile_image_url ? (
+                        <img 
+                          src={partner.social_media_profile_image_url} 
+                          alt={partner.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                          <Users className="w-6 h-6 text-gray-400" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-medium">{partner.name}</h3>
+                        {partner.social_media_username && (
+                          <p className="text-sm text-gray-500">@{partner.social_media_username}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
