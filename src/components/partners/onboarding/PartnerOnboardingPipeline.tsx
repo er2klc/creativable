@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Presentation, UserCheck } from "lucide-react";
+import { Users, Presentation, UserCheck, CalendarCheck } from "lucide-react";
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { Tables } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const phaseIcons = {
   "Start & Setup": Users,
@@ -133,16 +134,27 @@ export function PartnerOnboardingPipeline() {
                         key={partner.id}
                         className="bg-white p-4 rounded-lg shadow-sm border border-green-100 hover:shadow-md transition-shadow"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-green-600" />
+                        <div className="flex items-start gap-3">
+                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                            {partner.social_media_profile_image_url ? (
+                              <img 
+                                src={partner.social_media_profile_image_url} 
+                                alt={partner.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-primary/10 text-lg font-semibold">
+                                {partner.name?.substring(0, 2).toUpperCase()}
+                              </div>
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-gray-900 truncate">
                               {partner.name}
                             </h4>
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                              {format(new Date(partner.created_at || ''), "dd. MMM yyyy", { locale: de })}
+                            <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                              <CalendarCheck className="w-4 h-4" />
+                              {format(new Date(partner.updated_at || ''), "dd. MMM yyyy", { locale: de })}
                             </div>
                           </div>
                         </div>
