@@ -16,12 +16,11 @@ serve(async (req) => {
     const { leadId, language } = await req.json();
     console.log('Generating summary for lead:', leadId, 'in language:', language);
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch lead data with related information
+    // Fetch comprehensive lead data
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .select(`
@@ -39,19 +38,26 @@ serve(async (req) => {
         notes (
           content,
           created_at
+        ),
+        social_media_posts (
+          content,
+          platform,
+          posted_at,
+          engagement_rate
+        ),
+        lead_files (
+          file_name,
+          created_at
         )
       `)
       .eq('id', leadId)
       .single();
 
-    if (leadError) {
-      throw leadError;
-    }
+    if (leadError) throw leadError;
 
-    // Format lead data for OpenAI
     const systemPrompt = language === "en" 
-      ? "You are a helpful assistant that creates summaries of leads and their communication history. Summarize the key information concisely in English."
-      : "Du bist ein hilfreicher Assistent, der Zusammenfassungen von Leads und deren Kommunikationsverlauf erstellt. Fasse die wichtigsten Informationen kurz und prägnant auf Deutsch zusammen.";
+      ? "You are a helpful AI assistant that analyzes lead data and provides actionable insights and recommendations. Focus on helping users convert leads into customers or partners."
+      : "Du bist ein hilfreicher KI-Assistent, der Kontaktdaten analysiert und umsetzbare Erkenntnisse und Empfehlungen gibt. Konzentriere dich darauf, Benutzern zu helfen, Leads in Kunden oder Partner umzuwandeln.";
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
@@ -65,7 +71,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
@@ -74,15 +80,26 @@ serve(async (req) => {
           {
             role: 'user',
             content: `
-              Erstelle eine Zusammenfassung für diesen Lead:
+              Analysiere diese Kontaktdaten und erstelle eine detaillierte Zusammenfassung mit Handlungsempfehlungen:
+              
+              Basis Informationen:
               Name: ${lead.name}
               Plattform: ${lead.platform}
               Kontakttyp: ${lead.contact_type || 'Nicht festgelegt'}
-              Firma: ${lead.company_name || 'Nicht angegeben'}
-              Phase: ${lead.phase}
-              Letzte Aktion: ${lead.last_action || 'Keine'}
+              Firma: ${lead.current_company_name || 'Nicht angegeben'}
+              Position: ${lead.position || 'Nicht angegeben'}
+              Phase: ${lead.phase_id}
               
-              Nachrichten:
+              Interessen/Skills:
+              ${lead.social_media_interests ? lead.social_media_interests.join(', ') : 'Keine angegeben'}
+              
+              Social Media Profil:
+              Follower: ${lead.social_media_followers || 'Nicht verfügbar'}
+              Following: ${lead.social_media_following || 'Nicht verfügbar'}
+              Engagement Rate: ${lead.social_media_engagement_rate || 'Nicht verfügbar'}
+              Bio: ${lead.social_media_bio || 'Nicht verfügbar'}
+              
+              Kommunikationsverlauf:
               ${lead.messages?.map((msg: any) => 
                 `- ${new Date(msg.sent_at).toLocaleDateString()}: ${msg.content}`
               ).join('\n') || 'Keine Nachrichten'}
@@ -97,16 +114,26 @@ serve(async (req) => {
                 `- ${new Date(note.created_at).toLocaleDateString()}: ${note.content}`
               ).join('\n') || 'Keine Notizen'}
               
+              Social Media Aktivitäten:
+              ${lead.social_media_posts?.map((post: any) => 
+                `- ${new Date(post.posted_at).toLocaleDateString()}: ${post.content} (Engagement: ${post.engagement_rate || 'N/A'})`
+              ).join('\n') || 'Keine Social Media Aktivitäten'}
+
               Formatiere die Zusammenfassung mit folgenden Kategorien:
-              **Kontaktstatus**: [Phase und letzte Interaktion]
-              **Geschäftsprofil**: [Wichtige Geschäftsinformationen]
-              **Kommunikationsverlauf**: [Zusammenfassung der Nachrichten]
-              **Nächste Schritte**: [Empfehlungen basierend auf dem aktuellen Status]
+              **Kontaktstatus**: [Aktuelle Phase und letzte Interaktionen]
+              **Geschäftsprofil**: [Wichtige geschäftliche Informationen]
+              **Kommunikationsverlauf**: [Zusammenfassung der bisherigen Kommunikation]
+              **Interessen & Engagement**: [Analyse der Interessen und Social Media Aktivitäten]
+              **Handlungsempfehlungen**: [Konkrete nächste Schritte basierend auf allen Daten]
+              ${lead.phase_id.includes('erstkontakt') || lead.phase_id.includes('neukontakt') ? 
+                '**Vorgeschlagene Erstnachricht**: [Personalisierter Vorschlag für die erste Kontaktaufnahme]' : 
+                ''
+              }
             `
           }
         ],
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 1500,
       }),
     });
 
