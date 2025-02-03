@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Trash2 } from "lucide-react";
+import { Trash2, Calendar } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { formatDateTime } from "../utils/dateUtils";
 import { MeetingTypeIcon } from "./MeetingTypeIcon";
@@ -60,14 +60,17 @@ export const AppointmentCard = ({
         </div>
         
         {metadata?.dueDate && (
-          <div className="text-right">
-            <div className="text-sm font-medium text-gray-900">
-              {format(new Date(metadata.dueDate), "dd. MMM yyyy", { 
-                locale: settings?.language === "en" ? undefined : de 
-              })}
-            </div>
-            <div className="text-sm text-blue-600 font-medium">
-              {getTimeDisplay()}
+          <div className="flex items-start gap-2 text-right">
+            <Calendar className="h-4 w-4 text-blue-600 mt-1" />
+            <div>
+              <div className="text-sm font-medium text-gray-900">
+                {format(new Date(metadata.dueDate), "dd. MMM yyyy", { 
+                  locale: settings?.language === "en" ? undefined : de 
+                })}
+              </div>
+              <div className="text-sm text-blue-600 font-medium">
+                {getTimeDisplay()}
+              </div>
             </div>
           </div>
         )}
