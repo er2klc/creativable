@@ -7,8 +7,6 @@ import { TaskCard } from "./cards/TaskCard";
 import { AppointmentCard } from "./cards/AppointmentCard";
 import { FileCard } from "./cards/FileCard";
 import { TimelineItemType } from "./TimelineUtils";
-import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
-import { useState } from "react";
 
 interface TimelineItemCardProps {
   type: TimelineItemType;
@@ -50,7 +48,6 @@ export const TimelineItemCard = ({
   isCompleted
 }: TimelineItemCardProps) => {
   const { settings } = useSettings();
-  const [isEditingAppointment, setIsEditingAppointment] = useState(false);
 
   const renderMetadata = () => {
     if (metadata?.last_edited_at) {
@@ -101,32 +98,13 @@ export const TimelineItemCard = ({
 
     if (type === 'appointment' && id) {
       return (
-        <>
-          <AppointmentCard
-            content={content}
-            metadata={metadata}
-            isCompleted={isCompleted}
-            onDelete={onDelete}
-            onEdit={() => setIsEditingAppointment(true)}
-          />
-          {isEditingAppointment && (
-            <NewAppointmentDialog
-              open={isEditingAppointment}
-              onOpenChange={setIsEditingAppointment}
-              initialSelectedDate={metadata?.dueDate ? new Date(metadata.dueDate) : null}
-              appointmentToEdit={{
-                id,
-                leadId: '',
-                time: metadata?.dueDate ? format(new Date(metadata.dueDate), 'HH:mm') : '09:00',
-                title: content,
-                color: metadata?.color || '#40E0D0',
-                meeting_type: metadata?.meetingType || 'phone_call',
-                completed: isCompleted,
-                cancelled: status === 'cancelled',
-              }}
-            />
-          )}
-        </>
+        <AppointmentCard
+          id={id}
+          content={content}
+          metadata={metadata}
+          isCompleted={isCompleted}
+          onDelete={onDelete}
+        />
       );
     }
 
