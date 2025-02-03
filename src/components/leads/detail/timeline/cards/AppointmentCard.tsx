@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Trash2, Calendar } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -41,7 +41,7 @@ export const AppointmentCard = ({
 
   return (
     <>
-      <div className="flex items-start justify-between group bg-white rounded-lg p-3 border border-gray-200 hover:border-blue-200 transition-colors">
+      <div className="flex items-start justify-between group bg-white rounded-lg p-3 border border-blue-200 hover:border-blue-300 transition-colors">
         <div className="flex items-start gap-2">
           {metadata?.meetingType && (
             <div className="mt-1">
@@ -66,7 +66,7 @@ export const AppointmentCard = ({
         <div className="flex items-start gap-4">
           {metadata?.dueDate && (
             <div className="flex items-start gap-2">
-              <Calendar className="h-4 w-4 text-gray-400 mt-1" />
+              <Calendar className="h-4 w-4 text-blue-500 mt-1" />
               <div>
                 <div className="text-sm text-gray-500">
                   {format(new Date(metadata.dueDate), "dd. MMM yyyy", { 
@@ -78,17 +78,6 @@ export const AppointmentCard = ({
                 </div>
               </div>
             </div>
-          )}
-          
-          {onDelete && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
-              onClick={onDelete}
-            >
-              <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
-            </Button>
           )}
         </div>
       </div>
