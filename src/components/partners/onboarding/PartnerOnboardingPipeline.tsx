@@ -1,22 +1,22 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users2, Presentation, UserCheck, Calendar } from "lucide-react";
+import { Users, Presentation, UserCheck } from "lucide-react";
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { Tables } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
 const phaseIcons = {
-  "Kontakte & Erste Einladungen": Users2,
-  "Präsentation & Erste Abschlüsse": Presentation,
-  "Training & Systemaufbau": UserCheck,
+  "Start & Setup": Users,
+  "Ziele & Kontakte": Presentation,
+  "Präsentation & Abschluss": UserCheck,
 };
 
 const phaseNumbers = {
-  "Kontakte & Erste Einladungen": 1,
-  "Präsentation & Erste Abschlüsse": 2,
-  "Training & Systemaufbau": 3,
+  "Start & Setup": 1,
+  "Ziele & Kontakte": 2,
+  "Präsentation & Abschluss": 3,
 };
 
 export function PartnerOnboardingPipeline() {
@@ -120,14 +120,13 @@ export function PartnerOnboardingPipeline() {
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                            <Users2 className="w-5 h-5 text-green-600" />
+                            <Users className="w-5 h-5 text-green-600" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-gray-900 truncate">
                               {partner.name}
                             </h4>
                             <div className="flex items-center gap-2 text-sm text-gray-500">
-                              <Calendar className="w-4 h-4" />
                               {format(new Date(partner.created_at || ''), "dd. MMM yyyy", { locale: de })}
                             </div>
                           </div>

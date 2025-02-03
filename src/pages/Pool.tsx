@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { Tables } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
-import { Diamond, Trophy, Gem, Star } from "lucide-react";
+import { Diamond, Trophy, Gem, Star, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PartnerOnboardingPipeline } from "@/components/partners/onboarding/PartnerOnboardingPipeline";
 
@@ -42,30 +42,38 @@ export default function Pool() {
     { 
       id: 'partner', 
       label: 'Partner', 
-      icon: Diamond, 
+      icon: Diamond,
+      iconBg: 'bg-emerald-500',
       gradient: 'from-emerald-400 to-emerald-600',
-      hoverGradient: 'hover:from-emerald-500 hover:to-emerald-700'
+      hoverGradient: 'hover:from-emerald-500 hover:to-emerald-700',
+      count: leads.filter(lead => lead.status === 'partner').length
     },
     { 
       id: 'customer', 
       label: 'Kunden', 
-      icon: Trophy, 
+      icon: Trophy,
+      iconBg: 'bg-blue-500',
       gradient: 'from-blue-400 to-blue-600',
-      hoverGradient: 'hover:from-blue-500 hover:to-blue-700'
+      hoverGradient: 'hover:from-blue-500 hover:to-blue-700',
+      count: leads.filter(lead => lead.status === 'customer').length
     },
     { 
       id: 'not_for_now', 
       label: 'Not For Now', 
-      icon: Gem, 
+      icon: Gem,
+      iconBg: 'bg-amber-500',
       gradient: 'from-amber-400 to-amber-600',
-      hoverGradient: 'hover:from-amber-500 hover:to-amber-700'
+      hoverGradient: 'hover:from-amber-500 hover:to-amber-700',
+      count: leads.filter(lead => lead.status === 'not_for_now').length
     },
     { 
       id: 'no_interest', 
       label: 'Kein Interesse', 
-      icon: Star, 
+      icon: Star,
+      iconBg: 'bg-rose-500',
       gradient: 'from-rose-400 to-rose-600',
-      hoverGradient: 'hover:from-rose-500 hover:to-rose-700'
+      hoverGradient: 'hover:from-rose-500 hover:to-rose-700',
+      count: leads.filter(lead => lead.status === 'no_interest').length
     }
   ];
 
@@ -82,7 +90,7 @@ export default function Pool() {
                 key={option.id}
                 variant="ghost"
                 className={cn(
-                  "relative min-w-[120px] h-[40px] transition-all duration-300",
+                  "relative min-w-[120px] h-[48px] transition-all duration-300",
                   "bg-gradient-to-r shadow-sm border-0",
                   isActive ? `${option.gradient} text-white opacity-90` : "bg-background hover:scale-102",
                   !isActive && "hover:bg-gradient-to-r",
@@ -92,13 +100,18 @@ export default function Pool() {
                 onClick={() => navigate(`/pool/${option.id}`)}
               >
                 <div className="absolute inset-0 bg-black/5 rounded-md" />
-                <div className="relative flex items-center justify-center gap-2 text-sm font-medium">
-                  <Icon className={cn(
-                    "h-4 w-4 transition-all duration-300",
-                    isActive ? "scale-105" : "scale-100",
-                    !isActive && "group-hover:scale-105"
-                  )} />
-                  {option.label}
+                <div className="relative flex flex-col items-center justify-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <Icon className={cn(
+                      "h-4 w-4 transition-all duration-300",
+                      isActive ? "scale-105" : "scale-100",
+                      !isActive && "group-hover:scale-105"
+                    )} />
+                    {option.label}
+                  </div>
+                  <div className="text-xs font-medium">
+                    {option.count} {option.count === 1 ? 'Kontakt' : 'Kontakte'}
+                  </div>
                 </div>
                 {isActive && (
                   <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full shadow-lg" />
