@@ -42,6 +42,10 @@ Schreibe die Nachricht so, dass sie auf den Kontakt abgestimmt ist und eine emot
     }),
   });
 
+  if (!response.ok) {
+    throw new Error(`OpenAI API error: ${await response.text()}`);
+  }
+
   const data = await response.json();
   return data.choices[0].text.trim();
 }
@@ -58,7 +62,7 @@ serve(async (req) => {
 
     const { leadId, userId } = await req.json() as LeadSummaryRequest;
 
-    // Holen des API-Keys aus der Settings-Tabelle
+    // API-Key abrufen
     const { data: settings, error: settingsError } = await supabase
       .from("settings")
       .select("openai_api_key")
@@ -71,7 +75,7 @@ serve(async (req) => {
 
     const openAiApiKey = settings.openai_api_key;
 
-    // Holen des Lead-Datensatzes
+    // Lead-Daten abrufen
     const { data: lead, error: leadError } = await supabase
       .from("leads")
       .select(`
@@ -89,7 +93,7 @@ serve(async (req) => {
       throw new Error("Lead nicht gefunden.");
     }
 
-    // Holen der Social-Media-Posts
+    // Social-Media-Posts abrufen
     const { data: posts, error: postsError } = await supabase
       .from("social_media_posts")
       .select("*")
@@ -99,6 +103,7 @@ serve(async (req) => {
       throw new Error("Fehler beim Abrufen der Social-Media-Posts.");
     }
 
+    // Engagement-Level berechnen
     const totalEngagement = posts.reduce(
       (sum, post) => sum + (post.likes_count || 0) + (post.comments_count || 0),
       0
@@ -114,8 +119,10 @@ Sie/Er interagiert regelmäßig auf Social Media mit einem Engagement-Level von 
       totalEngagement > 100 ? "hoch" : "moderat"
     }. Aktuelle Phase: ${lead.pipeline_phases?.name || "Unbekannt"}`;
 
+    // KI-generierte Nachricht
     const messageSuggestion = await generateUniqueMessage(lead, posts, openAiApiKey);
 
+    // Nächste Aktionen und Trigger
     let nextAction = "Schicke eine Nachricht";
     if (lead.messages.length === 0) nextAction = "Erstkontakt per Social Media (Like & Kommentar)";
     else if (lead.messages.length > 5) nextAction = "Ein Gespräch vorschlagen";
@@ -135,6 +142,8 @@ Sie/Er interagiert regelmäßig auf Social Media mit einem Engagement-Level von 
       phaseName: lead.pipeline_phases?.name || "Unbekannt",
       lastInteraction: lead.last_interaction_date,
     };
+
+    console.log("Summary:", summary);
 
     return new Response(JSON.stringify(summary), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
