@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { Tables } from "@/integrations/supabase/types";
-import { PartnerTree } from "@/components/partners/PartnerTree";
 import { Button } from "@/components/ui/button";
 import { Diamond, Trophy, Gem, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -36,22 +35,6 @@ export default function Pool() {
 
       if (error) throw error;
       return data as Tables<"leads">[];
-    },
-  });
-
-  const { data: currentUser } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      return profile as Tables<"profiles">;
     },
   });
 
@@ -128,14 +111,7 @@ export default function Pool() {
 
       {/* Content based on status */}
       {status === 'partner' && (
-        <>
-          <PartnerOnboardingPipeline />
-          <PartnerTree 
-            unassignedPartners={leads} 
-            currentUser={currentUser}
-            onContactClick={setSelectedLeadId}
-          />
-        </>
+        <PartnerOnboardingPipeline />
       )}
 
       {status === 'customer' && (
