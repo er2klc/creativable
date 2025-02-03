@@ -86,9 +86,9 @@ export default function Pool() {
 
   return (
     <div className="container mx-auto py-6">
-      {/* Enhanced Header Design */}
+      {/* Enhanced Header Design with Responsive Layout */}
       <div className="mb-8">
-        <div className="flex flex-wrap gap-4 justify-center">
+        <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2 md:gap-4 justify-center">
           {statusOptions.map((option) => {
             const Icon = option.icon;
             const isActive = status === option.id;
@@ -98,9 +98,9 @@ export default function Pool() {
                 key={option.id}
                 variant="ghost"
                 className={cn(
-                  "relative group min-w-[160px] h-[60px] transition-all duration-300",
+                  "relative group w-full md:min-w-[160px] h-[50px] md:h-[60px] transition-all duration-300",
                   "bg-gradient-to-r shadow-lg border-0",
-                  isActive ? `${option.gradient} text-white scale-110` : "bg-background hover:scale-105",
+                  isActive ? `${option.gradient} text-white md:scale-110` : "bg-background hover:scale-105",
                   !isActive && "hover:bg-gradient-to-r",
                   !isActive && option.hoverGradient,
                   "hover:text-white"
@@ -108,16 +108,16 @@ export default function Pool() {
                 onClick={() => window.location.href = `/pool/${option.id}`}
               >
                 <div className="absolute inset-0 bg-black/5 rounded-md" />
-                <div className="relative flex items-center justify-center gap-3 font-semibold">
+                <div className="relative flex items-center justify-center gap-2 md:gap-3 font-semibold">
                   <Icon className={cn(
-                    "h-5 w-5 transition-all duration-300",
+                    "h-4 w-4 md:h-5 md:w-5 transition-all duration-300",
                     isActive ? "scale-110" : "scale-100",
                     !isActive && "group-hover:scale-110"
                   )} />
-                  <span className="text-sm">{option.label}</span>
+                  <span className="text-xs md:text-sm">{option.label}</span>
                 </div>
                 {isActive && (
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-lg" />
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 md:w-2 md:h-2 bg-white rounded-full shadow-lg" />
                 )}
               </Button>
             );
