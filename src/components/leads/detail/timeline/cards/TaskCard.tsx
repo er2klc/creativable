@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Check, Trash2, Edit, Calendar } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
-import { formatDateTime } from "../utils/dateUtils";
-import { MEETING_TYPES } from "@/constants/meetingTypes";
 import { MeetingTypeIcon } from "./MeetingTypeIcon";
 import { TaskEditForm } from "./TaskEditForm";
 import { format } from "date-fns";
@@ -34,19 +32,6 @@ export const TaskCard = ({
   const { settings } = useSettings();
   const [isEditing, setIsEditing] = useState(false);
 
-  const getMeetingTypeLabel = (meetingType?: string) => {
-    if (!meetingType) return null;
-    const meetingTypeObj = MEETING_TYPES.find(type => type.value === meetingType);
-    if (!meetingTypeObj) return null;
-    
-    return (
-      <div className="flex items-center gap-2">
-        <MeetingTypeIcon iconName={meetingTypeObj.iconName} />
-        <span>{meetingTypeObj.label}</span>
-      </div>
-    );
-  };
-
   if (isEditing) {
     return (
       <TaskEditForm
@@ -64,7 +49,8 @@ export const TaskCard = ({
         <div className="font-medium">{content}</div>
         {metadata?.meetingType && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            {getMeetingTypeLabel(metadata.meetingType)}
+            <MeetingTypeIcon type={metadata.meetingType} className="h-4 w-4" />
+            <span>{metadata.meetingType}</span>
           </div>
         )}
         {metadata?.dueDate && (
