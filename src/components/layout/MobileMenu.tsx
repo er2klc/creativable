@@ -1,7 +1,23 @@
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LayoutGrid, Users, MessageSquare, Calendar, CheckSquare, BarChart, Settings, FileText, Shield, Globe2, Database, Wrench, Waves } from "lucide-react";
+import { 
+  Menu, 
+  X, 
+  LayoutGrid, 
+  Users, 
+  MessageSquare, 
+  Calendar, 
+  CheckSquare, 
+  BarChart, 
+  Settings, 
+  FileText, 
+  Shield, 
+  Globe2, 
+  Database,
+  Wrench,
+  Waves
+} from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
