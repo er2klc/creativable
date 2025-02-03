@@ -4,6 +4,8 @@ import { NoteCard } from "./cards/NoteCard";
 import { TaskCard } from "./cards/TaskCard";
 import { FileCard } from "./cards/FileCard";
 import { AppointmentCard } from "./cards/AppointmentCard";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
 
 interface TimelineItemCardProps {
   type: TimelineItemType;
