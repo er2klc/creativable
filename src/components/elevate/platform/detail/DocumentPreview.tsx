@@ -18,8 +18,8 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
   const previewUrl = document.preview_url || document.url;
 
   const isImage = fileType?.match(/^(jpg|jpeg|png|gif|webp)$/);
-  const isOfficeDoc = fileType?.match(/^(xlsx|xls|doc|docx)$/);
   const isPdf = fileType === 'pdf';
+  const isOfficeDoc = fileType?.match(/^(xlsx|xls|doc|docx)$/);
 
   const getFileIcon = () => {
     if (isImage) return <Image className="h-16 w-16 text-blue-600 mb-4" />;
@@ -43,6 +43,18 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
       );
     }
     
+    if (isPdf) {
+      return (
+        <div className="w-full h-[80vh]">
+          <iframe
+            src={previewUrl}
+            className="w-full h-full"
+            title={document.name}
+          />
+        </div>
+      );
+    }
+
     if (isOfficeDoc) {
       const encodedUrl = encodeURIComponent(previewUrl);
       const officePreviewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}`;
@@ -58,19 +70,8 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
         </div>
       );
     }
-    
-    if (isPdf) {
-      return (
-        <div className="w-full h-[80vh]">
-          <iframe
-            src={previewUrl}
-            className="w-full h-full"
-            title={document.name}
-          />
-        </div>
-      );
-    }
 
+    // For other file types, show download option
     return (
       <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
         {getFileIcon()}
