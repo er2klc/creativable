@@ -3,7 +3,6 @@ import { TimelineItemIcon } from "./TimelineItemIcon";
 import { TimelineItemCard } from "./TimelineItemCard";
 import { formatDate } from "./TimelineUtils";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
@@ -22,9 +21,6 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
   const isTaskCompleted = item.type === 'task' && item.metadata?.status === 'completed';
   const completedDate = item.metadata?.completedAt ? 
     format(new Date(item.metadata.completedAt), 'PPp', { locale: de }) : null;
-
-  const isImage = item.type === 'file_upload' && 
-    item.metadata?.fileType?.toLowerCase().match(/^(image\/jpeg|image\/png|image\/gif|image\/webp)$/);
 
   return (
     <motion.div

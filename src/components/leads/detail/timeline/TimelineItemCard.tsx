@@ -1,12 +1,9 @@
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
 import { X } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { NoteCard } from "./cards/NoteCard";
 import { TaskCard } from "./cards/TaskCard";
-import { AppointmentCard } from "./cards/AppointmentCard";
 import { FileCard } from "./cards/FileCard";
-import { TimelineItemType } from "./TimelineUtils";
+import { AppointmentCard } from "./cards/AppointmentCard";
 
 interface TimelineItemCardProps {
   type: TimelineItemType;
@@ -59,14 +56,6 @@ export const TimelineItemCard = ({
         </div>
       );
     }
-    
-    if (type === 'task' && isCompleted && metadata?.completedAt) {
-      return (
-        <div className="text-xs text-gray-500 mt-2">
-          {settings?.language === "en" ? "Completed" : "Erledigt"}: {format(new Date(metadata.completedAt), 'PPp', { locale: settings?.language === "en" ? undefined : de })}
-        </div>
-      );
-    }
     return null;
   };
 
@@ -102,7 +91,6 @@ export const TimelineItemCard = ({
           id={id}
           content={content}
           metadata={metadata}
-          isCompleted={isCompleted}
           onDelete={onDelete}
         />
       );
