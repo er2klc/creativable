@@ -1,4 +1,1 @@
 project_id = "agqaitxlmxztqyhpcjau"
-
-[functions]
-cors_allowed_origins = ["https://lovable.dev", "https://creativable.de"]
