@@ -1,12 +1,12 @@
-import { cn } from "@/lib/utils";
-import { TimelineItemType } from "./TimelineUtils";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
+import { X } from "lucide-react";
+import { useSettings } from "@/hooks/use-settings";
 import { NoteCard } from "./cards/NoteCard";
 import { TaskCard } from "./cards/TaskCard";
 import { AppointmentCard } from "./cards/AppointmentCard";
 import { FileCard } from "./cards/FileCard";
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
-import { useSettings } from "@/hooks/use-settings";
+import { TimelineItemType } from "./TimelineUtils";
 
 interface TimelineItemCardProps {
   type: TimelineItemType;
@@ -49,42 +49,6 @@ export const TimelineItemCard = ({
 }: TimelineItemCardProps) => {
   const { settings } = useSettings();
 
-  const getBorderColor = () => {
-    if (type === 'phase_change' && metadata?.type === 'status_change') {
-      switch(metadata.newStatus) {
-        case 'partner':
-          return 'border-[#8B5CF6]';
-        case 'customer':
-          return 'border-[#D946EF]';
-        case 'not_for_now':
-          return 'border-[#F2FCE2]';
-        case 'no_interest':
-          return 'border-[#ea384c]';
-        default:
-          return 'border-gray-500';
-      }
-    }
-
-    switch (type) {
-      case 'task':
-        return status === 'completed' ? 'border-green-500' : 'border-cyan-500';
-      case 'appointment':
-        return status === 'cancelled' ? 'border-red-500' : 'border-indigo-600';
-      case 'note':
-        return 'border-yellow-500';
-      case 'phase_change':
-        return 'border-purple-500';
-      case 'message':
-        return 'border-blue-500';
-      case 'file_upload':
-        return 'border-cyan-500';
-      case 'contact_created':
-        return 'border-emerald-500';
-      default:
-        return 'border-gray-200';
-    }
-  };
-
   const renderMetadata = () => {
     if (metadata?.last_edited_at) {
       return (
@@ -106,64 +70,89 @@ export const TimelineItemCard = ({
     return null;
   };
 
+  const getBorderColor = () => {
+    if (status === 'completed') return 'border-green-500';
+    if (status === 'cancelled') return 'border-red-500';
+    if (type === 'phase_change') return 'border-blue-500';
+    if (type === 'note') return 'border-yellow-400';
+    if (type === 'message') return 'border-purple-500';
+    if (type === 'task') {
+      if (metadata?.meetingType) return 'border-indigo-500';
+      return 'border-orange-500';
+    }
+    if (type === 'file_upload') return 'border-cyan-500';
+    if (type === 'contact_created') return 'border-emerald-500';
+    return 'border-gray-200';
+  };
+
   const renderContent = () => {
+    if (type === 'task' && id) {
+      return (
+        <TaskCard
+          id={id}
+          content={content}
+          metadata={metadata}
+          isCompleted={isCompleted}
+          onDelete={onDelete}
+          onComplete={onDelete}
+        />
+      );
+    }
+
+    if (type === 'appointment') {
+      return (
+        <AppointmentCard
+          content={content}
+          metadata={metadata}
+          isCompleted={isCompleted}
+          onDelete={onDelete}
+        />
+      );
+    }
+
+    if (type === 'file_upload') {
+      return (
+        <FileCard
+          content={content}
+          metadata={metadata}
+        />
+      );
+    }
+
+    if (type === 'note' && id) {
+      return (
+        <NoteCard
+          id={id}
+          content={content}
+          metadata={metadata}
+          onDelete={onDelete}
+        />
+      );
+    }
+
     return (
-      <>
+      <div className="relative group">
         <div className="whitespace-pre-wrap break-words">
           {content}
         </div>
-        {renderMetadata()}
-      </>
+        {onDelete && (
+          <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={onDelete}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <X className="h-4 w-4 text-gray-500 hover:text-red-600" />
+            </button>
+          </div>
+        )}
+      </div>
     );
   };
-
-  if (type === 'task' && id) {
-    return (
-      <TaskCard
-        id={id}
-        content={content}
-        metadata={metadata}
-        isCompleted={isCompleted}
-        onDelete={onDelete}
-        onComplete={onDelete}
-      />
-    );
-  }
-
-  if (type === 'appointment') {
-    return (
-      <AppointmentCard
-        content={content}
-        metadata={metadata}
-        isCompleted={isCompleted}
-        onDelete={onDelete}
-      />
-    );
-  }
-
-  if (type === 'file_upload') {
-    return (
-      <FileCard
-        content={content}
-        metadata={metadata}
-      />
-    );
-  }
-
-  if (type === 'note' && id) {
-    return (
-      <NoteCard
-        id={id}
-        content={content}
-        metadata={metadata}
-        onDelete={onDelete}
-      />
-    );
-  }
 
   return (
     <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}>
       {renderContent()}
+      {renderMetadata()}
     </div>
   );
 };
