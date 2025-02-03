@@ -27,7 +27,7 @@ interface AppointmentItemProps {
   isAdmin?: boolean;
 }
 
-const getMeetingTypeIcon = (type: string) => {
+export const getMeetingTypeIcon = (type: string) => {
   switch (type) {
     case "phone_call":
       return <Phone className="h-4 w-4" />;
@@ -46,7 +46,7 @@ const getMeetingTypeIcon = (type: string) => {
   }
 };
 
-const getMeetingTypeLabel = (type: string) => {
+export const getMeetingTypeLabel = (type: string) => {
   switch (type) {
     case "phone_call":
       return "Telefongespräch";
