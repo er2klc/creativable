@@ -15,6 +15,39 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
       if (!leadId) throw new Error("Invalid lead ID");
 
+      // If we're updating the status to 'partner', first check if there's an existing progress entry
+      if (updates.status === 'partner') {
+        const { data: existingProgress } = await supabase
+          .from('partner_onboarding_progress')
+          .select('*')
+          .eq('lead_id', leadId)
+          .single();
+
+        // If no existing progress, get the first phase and create progress
+        if (!existingProgress) {
+          const { data: firstPhase } = await supabase
+            .from('partner_onboarding_phases')
+            .select('id')
+            .eq('order_index', 0)
+            .single();
+
+          if (firstPhase) {
+            const { error: progressError } = await supabase
+              .from('partner_onboarding_progress')
+              .upsert({
+                lead_id: leadId,
+                phase_id: firstPhase.id,
+                status: 'in_progress'
+              });
+
+            if (progressError) {
+              console.error('Error creating partner progress:', progressError);
+              throw progressError;
+            }
+          }
+        }
+      }
+
       const { data, error } = await supabase
         .from("leads")
         .update(updates)
@@ -56,7 +89,8 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         'messages',
         'notes',
         'tasks',
-        'social_media_scan_history'
+        'social_media_scan_history',
+        'partner_onboarding_progress'
       ] as const;
 
       // Delete related records first
