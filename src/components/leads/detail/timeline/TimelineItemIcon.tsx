@@ -17,6 +17,7 @@ import {
   Check
 } from "lucide-react";
 import { TimelineItemType } from "./TimelineUtils";
+import { format } from "date-fns";
 
 interface TimelineItemIconProps {
   type: TimelineItemType;
@@ -27,6 +28,7 @@ interface TimelineItemIconProps {
     oldStatus?: string;
     newStatus?: string;
     meetingType?: string;
+    dueDate?: string;
   };
 }
 
@@ -60,7 +62,18 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
           <Check className="h-4 w-4 text-white" /> : 
           <ListTodo className="h-4 w-4 text-white" />;
       case 'appointment':
-        return <Calendar className="h-4 w-4 text-white" />;
+        if (metadata?.dueDate) {
+          const date = new Date(metadata.dueDate);
+          return (
+            <div className="relative">
+              <Calendar className="h-6 w-6 text-white" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-[8px] font-bold text-white mt-1">
+                {format(date, 'dd')}
+              </div>
+            </div>
+          );
+        }
+        return <Calendar className="h-5 w-5 text-white" />;
       case 'note':
         return <StickyNote className="h-4 w-4 text-white" />;
       case 'phase_change':
