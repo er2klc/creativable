@@ -4,7 +4,7 @@ import { SortableLeadItem } from "./SortableLeadItem";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, UserPlus, Users, Network, Presentation, GraduationCap, Scale } from "lucide-react";
+import { ArrowLeft, ArrowRight, UserPlus, Users, Network, Presentation, GraduationCap, Scale, Instagram as InstagramIcon, Video as VideoIcon, Linkedin, Facebook } from "lucide-react";
 import { useState } from "react";
 
 interface PhaseColumnProps {
@@ -74,13 +74,13 @@ export const PhaseColumn = ({
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
       case "instagram":
-        return <Instagram className="h-4 w-4" />;
+        return <InstagramIcon className="h-4 w-4" />;
       case "linkedin":
         return <Linkedin className="h-4 w-4" />;
       case "facebook":
         return <Facebook className="h-4 w-4" />;
       case "tiktok":
-        return <Video className="h-4 w-4" />;
+        return <VideoIcon className="h-4 w-4" />;
       case "offline":
         return <Users className="h-4 w-4" />;
       default:
