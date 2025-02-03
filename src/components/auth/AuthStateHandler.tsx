@@ -22,10 +22,12 @@ export const AuthStateHandler = () => {
     const setupAuth = async () => {
       try {
         console.log("[Auth] Setting up auth state handler...");
+        
+        // First check if we have a valid session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          console.error("[Auth] Session error:", sessionError);
+          console.error("[Auth] Initial session error:", sessionError);
           if (retryCount < MAX_RETRIES) {
             retryCount++;
             console.log(`[Auth] Retrying setup (${retryCount}/${MAX_RETRIES})`);
@@ -34,20 +36,24 @@ export const AuthStateHandler = () => {
           }
           throw sessionError;
         }
-        
+
         // Reset retry count on successful setup
         retryCount = 0;
+
+        // If no session and on protected route, redirect to auth
+        if (!session && !PUBLIC_ROUTES.includes(location.pathname)) {
+          navigate("/auth");
+          return;
+        }
         
         // Set up auth state listener
         const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
           async (event: AuthChangeEvent, currentSession) => {
             console.log("[Auth] State changed:", event, currentSession?.user?.id);
 
-            if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-              if (currentSession) {
-                if (location.pathname === "/auth") {
-                  navigate("/dashboard");
-                }
+            if (event === "SIGNED_IN") {
+              if (currentSession && location.pathname === "/auth") {
+                navigate("/dashboard");
               }
             } else if (event === "SIGNED_OUT") {
               if (!PUBLIC_ROUTES.includes(location.pathname)) {
@@ -61,15 +67,9 @@ export const AuthStateHandler = () => {
 
         subscription = authSubscription;
 
-        // Initial route check
-        if (!session && !PUBLIC_ROUTES.includes(location.pathname)) {
-          navigate("/auth");
-        }
-
         // Set up session refresh interval with exponential backoff
         const refreshWithRetry = async (attempt = 0) => {
           try {
-            console.log("[Auth] Attempting to refresh session...");
             const { error: refreshError } = await refreshSession();
             if (refreshError) {
               console.error("[Auth] Session refresh error:", refreshError);
