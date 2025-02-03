@@ -9,57 +9,100 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 
 const AppRoutes = () => {
-  const { isAuthenticated } = useAuth();
-  const publicPaths = publicRoutes.map(route => route.path);
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Debugging logs
+  console.log("Public Routes:", publicRoutes);
+  console.log("Protected Routes:", protectedRoutes);
+  console.log("Auth Status:", { isAuthenticated, isLoading });
+
+  // Get paths for chat visibility
+  const publicPaths = publicRoutes.map((route) => route.path);
   const showChat = useChatVisibility(publicPaths);
-  
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <>
       <Routes>
-        {/* Public Routes */}
-        {publicRoutes.map(route => (
+        {/* Dynamische öffentliche Routen */}
+        {publicRoutes.map((route) => (
           <Route key={route.path} path={route.path} element={route.element} />
         ))}
-        
-        {/* Protected Routes */}
-        <Route element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Outlet />
-            </AppLayout>
-          </ProtectedRoute>
-        }>
-          {protectedRoutes.map(route => (
-            <Route 
-              key={route.path} 
-              path={route.path} 
-              element={route.element}
-            />
+
+        {/* Dynamische geschützte Routen */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Outlet />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        >
+          {protectedRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
           ))}
         </Route>
 
-        {/* Root route */}
-        <Route 
-          path="/" 
-          element={<Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />} 
+        {/* Statische Fallback-Routen (nur für Debugging) */}
+        <Route
+          path="/contacts"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <div>Contacts Page (Fallback)</div>
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/contacts/:id"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <div>Contact Detail Page (Fallback)</div>
+              </AppLayout>
+            </ProtectedRoute>
+          }
         />
 
-        {/* Catch all route */}
-        <Route 
-          path="*" 
-          element={<Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />} 
+        {/* Root-Route */}
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to={isAuthenticated ? "/dashboard" : "/auth"}
+              replace
+            />
+          }
         />
 
-        {/* Legacy route redirects */}
-        <Route 
-          path="/leads" 
-          element={<Navigate to="/contacts" replace />} 
+        {/* Catch-all */}
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to={isAuthenticated ? "/dashboard" : "/auth"}
+              replace
+            />
+          }
         />
-        <Route 
-          path="/leads/:id" 
-          element={<Navigate to="/contacts/:id" replace />} 
+
+        {/* Legacy-Routen */}
+        <Route
+          path="/leads"
+          element={<Navigate to="/contacts" replace />}
+        />
+        <Route
+          path="/leads/:id"
+          element={<Navigate to="/contacts/:id" replace />}
         />
       </Routes>
+
+      {/* Chat Button */}
       {showChat && <ChatButton />}
     </>
   );
