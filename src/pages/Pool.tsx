@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadDetailView } from "@/components/leads/LeadDetailView";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 export default function Pool() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const { status = 'partner' } = useParams<{ status?: string }>();
+  const navigate = useNavigate();
 
   const { data: leads = [] } = useQuery({
     queryKey: ["pool-leads", status],
@@ -86,9 +87,8 @@ export default function Pool() {
 
   return (
     <div className="container mx-auto py-6">
-      {/* Enhanced Header Design with Responsive Layout */}
       <div className="mb-8">
-        <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2 md:gap-4 justify-center">
+        <div className="flex flex-wrap gap-2 justify-center">
           {statusOptions.map((option) => {
             const Icon = option.icon;
             const isActive = status === option.id;
@@ -98,26 +98,26 @@ export default function Pool() {
                 key={option.id}
                 variant="ghost"
                 className={cn(
-                  "relative group w-full md:min-w-[160px] h-[50px] md:h-[60px] transition-all duration-300",
-                  "bg-gradient-to-r shadow-lg border-0",
-                  isActive ? `${option.gradient} text-white md:scale-110` : "bg-background hover:scale-105",
+                  "relative min-w-[120px] h-[40px] transition-all duration-300",
+                  "bg-gradient-to-r shadow-sm border-0",
+                  isActive ? `${option.gradient} text-white opacity-90` : "bg-background hover:scale-102",
                   !isActive && "hover:bg-gradient-to-r",
                   !isActive && option.hoverGradient,
-                  "hover:text-white"
+                  "hover:text-white hover:opacity-90"
                 )}
-                onClick={() => window.location.href = `/pool/${option.id}`}
+                onClick={() => navigate(`/pool/${option.id}`)}
               >
                 <div className="absolute inset-0 bg-black/5 rounded-md" />
-                <div className="relative flex items-center justify-center gap-2 md:gap-3 font-semibold">
+                <div className="relative flex items-center justify-center gap-2 text-sm font-medium">
                   <Icon className={cn(
-                    "h-4 w-4 md:h-5 md:w-5 transition-all duration-300",
-                    isActive ? "scale-110" : "scale-100",
-                    !isActive && "group-hover:scale-110"
+                    "h-4 w-4 transition-all duration-300",
+                    isActive ? "scale-105" : "scale-100",
+                    !isActive && "group-hover:scale-105"
                   )} />
-                  <span className="text-xs md:text-sm">{option.label}</span>
+                  {option.label}
                 </div>
                 {isActive && (
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 md:w-2 md:h-2 bg-white rounded-full shadow-lg" />
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full shadow-lg" />
                 )}
               </Button>
             );

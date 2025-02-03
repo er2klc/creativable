@@ -1184,6 +1184,7 @@ export type Database = {
           id: string
           name: string
           order_index: number
+          status: string | null
           updated_at: string | null
           user_id: string
         }
@@ -1192,6 +1193,7 @@ export type Database = {
           id?: string
           name: string
           order_index?: number
+          status?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -1200,6 +1202,7 @@ export type Database = {
           id?: string
           name?: string
           order_index?: number
+          status?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -2612,6 +2615,12 @@ export type Database = {
             }
             Returns: unknown
           }
+      create_default_onboarding_pipeline: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: undefined
+      }
       generate_elevate_invite_code: {
         Args: Record<PropertyKey, never>
         Returns: string
