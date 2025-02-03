@@ -95,15 +95,15 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
 
   const getBackgroundStyle = () => {
     const types = lead.contact_type?.split(",") || [];
-    const isPartner = types.includes("Partner");
-    const isKunde = types.includes("Kunde");
+    const isPartner = types.includes("Likely Partner");
+    const isKunde = types.includes("Likely Kunde");
 
     if (isPartner && isKunde) {
-      return "bg-gradient-to-r from-[#0EA5E9]/30 to-[#22C55E]/30";
+      return "bg-gradient-to-r from-[#F0FAFF] to-[#F0FFF0]";
     } else if (isPartner) {
-      return "bg-gradient-to-r from-[#0EA5E9]/30 to-[#EFF6FF]/30";
+      return "bg-[#F0FAFF]";
     } else if (isKunde) {
-      return "bg-gradient-to-r from-[#22C55E]/30 to-[#F0FDF4]/30";
+      return "bg-[#F0FFF0]";
     }
     return "bg-white";
   };
