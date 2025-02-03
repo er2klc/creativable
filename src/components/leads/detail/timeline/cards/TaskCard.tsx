@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Check, Trash2, Edit } from "lucide-react";
+import { Check, Trash2, Edit, Calendar } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { formatDateTime } from "../utils/dateUtils";
 import { MEETING_TYPES } from "@/constants/meetingTypes";
 import { MeetingTypeIcon } from "./MeetingTypeIcon";
 import { TaskEditForm } from "./TaskEditForm";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
 
 interface TaskCardProps {
   id: string;
@@ -57,7 +59,7 @@ export const TaskCard = ({
   }
 
   return (
-    <div className="relative group">
+    <div className="relative group bg-white rounded-lg p-3 border border-gray-200 hover:border-gray-300 transition-colors">
       <div className={`space-y-2 ${isCompleted ? 'line-through text-gray-500' : ''}`}>
         <div className="font-medium">{content}</div>
         {metadata?.meetingType && (
@@ -66,13 +68,18 @@ export const TaskCard = ({
           </div>
         )}
         {metadata?.dueDate && (
-          <div className="text-sm text-gray-600">
-            {formatDateTime(metadata.dueDate, settings?.language)}
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Calendar className="h-4 w-4" />
+            <span>
+              {format(new Date(metadata.dueDate), "dd. MMM yyyy", {
+                locale: settings?.language === "en" ? undefined : de
+              })}
+            </span>
           </div>
         )}
       </div>
 
-      <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         {!isCompleted && onComplete && (
           <button
             onClick={onComplete}

@@ -2,12 +2,11 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Trash2, Calendar } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
-import { formatDateTime } from "../utils/dateUtils";
-import { MeetingTypeIcon } from "./MeetingTypeIcon";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AppointmentForm } from "@/components/calendar/appointment-dialog/AppointmentForm";
 import { useState } from "react";
+import { MeetingTypeIcon } from "./MeetingTypeIcon";
 
 interface AppointmentCardProps {
   content: string;
@@ -42,7 +41,7 @@ export const AppointmentCard = ({
 
   return (
     <>
-      <div className="flex items-start justify-between group">
+      <div className="flex items-start justify-between group bg-white rounded-lg p-3 border border-gray-200 hover:border-blue-200 transition-colors">
         <div className="flex items-start gap-2">
           {metadata?.meetingType && (
             <div className="mt-1">
@@ -98,7 +97,6 @@ export const AppointmentCard = ({
         <DialogContent>
           <AppointmentForm
             onSubmit={(values) => {
-              // Handle appointment update
               setIsEditDialogOpen(false);
             }}
             defaultValues={{
