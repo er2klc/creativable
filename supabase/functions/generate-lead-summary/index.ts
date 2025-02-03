@@ -20,7 +20,6 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch comprehensive lead data with better error handling
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .select(`
@@ -45,7 +44,6 @@ serve(async (req) => {
           posted_at,
           likes_count,
           comments_count,
-          engagement_count,
           hashtags,
           location
         ),
@@ -67,15 +65,14 @@ serve(async (req) => {
     }
 
     console.log('Successfully fetched lead data:', {
-      id: lead.id,
       name: lead.name,
       messageCount: lead.messages?.length,
       postsCount: lead.social_media_posts?.length
     });
 
     const systemPrompt = language === "en" 
-      ? "You are a helpful AI assistant that analyzes lead data and provides actionable insights and recommendations. Focus on helping users convert leads into customers or partners."
-      : "Du bist ein hilfreicher KI-Assistent, der Kontaktdaten analysiert und umsetzbare Erkenntnisse und Empfehlungen gibt. Konzentriere dich darauf, Benutzern zu helfen, Leads in Kunden oder Partner umzuwandeln.";
+      ? "You are a strategic AI sales assistant helping users convert leads into customers or partners. Focus on providing actionable strategies and personalized communication approaches. Be specific and practical in your recommendations."
+      : "Du bist ein strategischer KI-Vertriebsassistent, der Benutzern hilft, Leads in Kunden oder Partner zu verwandeln. Konzentriere dich auf umsetzbare Strategien und personalisierte Kommunikationsansätze. Sei spezifisch und praktisch in deinen Empfehlungen.";
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
@@ -98,7 +95,7 @@ serve(async (req) => {
           {
             role: 'user',
             content: `
-              Analysiere diese Kontaktdaten und erstelle eine detaillierte Zusammenfassung mit Handlungsempfehlungen:
+              Analysiere diese Kontaktdaten und erstelle eine strategische Zusammenfassung mit konkreten Handlungsempfehlungen für mich als Vertriebsmitarbeiter:
               
               Basis Informationen:
               Name: ${lead.name}
@@ -106,7 +103,7 @@ serve(async (req) => {
               Kontakttyp: ${lead.contact_type || 'Nicht festgelegt'}
               Firma: ${lead.current_company_name || 'Nicht angegeben'}
               Position: ${lead.position || 'Nicht angegeben'}
-              Phase: ${lead.phase_id}
+              Aktuelle Phase: ${lead.phase_id}
               
               Interessen/Skills:
               ${lead.social_media_interests ? lead.social_media_interests.join(', ') : 'Keine angegeben'}
@@ -114,10 +111,9 @@ serve(async (req) => {
               Social Media Profil:
               Follower: ${lead.social_media_followers || 'Nicht verfügbar'}
               Following: ${lead.social_media_following || 'Nicht verfügbar'}
-              Engagement Rate: ${lead.social_media_engagement_rate || 'Nicht verfügbar'}
               Bio: ${lead.social_media_bio || 'Nicht verfügbar'}
               
-              Kommunikationsverlauf:
+              Bisherige Kommunikation:
               ${lead.messages?.map((msg: any) => 
                 `- ${new Date(msg.sent_at).toLocaleDateString()}: ${msg.content}`
               ).join('\n') || 'Keine Nachrichten'}
@@ -139,15 +135,23 @@ serve(async (req) => {
               }).join('\n') || 'Keine Social Media Aktivitäten'}
 
               Formatiere die Zusammenfassung mit folgenden Kategorien:
-              **Kontaktstatus**: [Aktuelle Phase und letzte Interaktionen]
-              **Geschäftsprofil**: [Wichtige geschäftliche Informationen]
-              **Kommunikationsverlauf**: [Zusammenfassung der bisherigen Kommunikation]
+              **Kontaktstatus**: [Aktuelle Phase und Beziehungsanalyse]
+              **Geschäftsprofil**: [Relevante geschäftliche Informationen und Potenzial]
+              **Kommunikationsverlauf**: [Analyse der bisherigen Interaktionen]
               **Interessen & Engagement**: [Analyse der Interessen und Social Media Aktivitäten]
-              **Handlungsempfehlungen**: [Konkrete nächste Schritte basierend auf allen Daten]
-              ${lead.phase_id.includes('erstkontakt') || lead.phase_id.includes('neukontakt') ? 
-                '**Vorgeschlagene Erstnachricht**: [Personalisierter Vorschlag für die erste Kontaktaufnahme]' : 
+              **Handlungsempfehlungen**: [Konkrete nächste Schritte für mich als Vertriebsmitarbeiter]
+              ${(lead.phase_id.includes('erstkontakt') || lead.phase_id.includes('neukontakt')) ? 
+                '**Vorgeschlagene Erstnachricht**: [Personalisierter Vorschlag für die erste Kontaktaufnahme, der Interesse weckt und eine Antwort fördert]' : 
                 ''
               }
+
+              Wichtig: 
+              - Fokussiere dich darauf, wie ICH den Kontakt als Kunde/Partner gewinnen kann
+              - Gib konkrete, personalisierte Handlungsempfehlungen
+              - Berücksichtige die aktuelle Phase in der Kommunikation
+              - Nutze die Interessen und Social Media Aktivitäten für personalisierte Ansprache
+              - Keine technischen Details oder IDs erwähnen
+              - Sei präzise und handlungsorientiert
             `
           }
         ],
