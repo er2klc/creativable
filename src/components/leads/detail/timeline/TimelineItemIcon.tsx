@@ -59,16 +59,13 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
         if (platform === 'whatsapp') return <MessageCircle className="h-4 w-4 text-white" />;
         return <MessageSquare className="h-4 w-4 text-white" />;
       case 'task':
-        if (metadata?.meetingType) {
-          return <Calendar className="h-4 w-4 text-white" />;
-        }
         return status === 'completed' ? 
           <Check className="h-4 w-4 text-white" /> : 
           <ListTodo className="h-4 w-4 text-white" />;
       case 'appointment':
         return status === 'cancelled' ? 
           <X className="h-4 w-4 text-white" /> : 
-          <Calendar className="h-4 w-4 text-white" />;
+          <Calendar className="h-6 w-6 text-white" />;
       case 'note':
         return <StickyNote className="h-4 w-4 text-white" />;
       case 'phase_change':
@@ -113,7 +110,7 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
         }
         return status === 'completed' ? 'bg-green-500' : 'bg-cyan-500';
       case 'appointment':
-        return status === 'cancelled' ? 'bg-red-500' : 'bg-orange-500';
+        return status === 'cancelled' ? 'bg-red-500' : 'bg-indigo-600';
       case 'note':
         return 'bg-yellow-500';
       case 'phase_change':

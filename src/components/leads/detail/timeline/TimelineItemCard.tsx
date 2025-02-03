@@ -80,6 +80,7 @@ export const TimelineItemCard = ({
       if (metadata?.meetingType) return 'border-indigo-500';
       return 'border-orange-500';
     }
+    if (type === 'appointment') return 'border-indigo-600';
     if (type === 'file_upload') return 'border-cyan-500';
     if (type === 'contact_created') return 'border-emerald-500';
     return 'border-gray-200';

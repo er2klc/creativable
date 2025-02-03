@@ -27,7 +27,7 @@ export const AppointmentCard = ({
       <div className={`space-y-2 ${isCompleted ? 'line-through text-gray-500' : ''}`}>
         <div className="font-medium">{content}</div>
         {metadata?.dueDate && (
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-indigo-600 font-medium">
             {formatDateTime(metadata.dueDate, settings?.language)}
           </div>
         )}
