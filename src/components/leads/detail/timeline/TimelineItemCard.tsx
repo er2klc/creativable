@@ -76,10 +76,8 @@ export const TimelineItemCard = ({
     if (type === 'phase_change') return 'border-blue-500';
     if (type === 'note') return 'border-yellow-400';
     if (type === 'message') return 'border-purple-500';
-    if (type === 'task') {
-      if (metadata?.meetingType) return 'border-indigo-500';
-      return 'border-orange-500';
-    }
+    if (type === 'appointment') return 'border-indigo-500';
+    if (type === 'task') return 'border-orange-500';
     if (type === 'file_upload') return 'border-cyan-500';
     if (type === 'contact_created') return 'border-emerald-500';
     return 'border-gray-200';
@@ -94,12 +92,11 @@ export const TimelineItemCard = ({
           metadata={metadata}
           isCompleted={isCompleted}
           onDelete={onDelete}
-          onComplete={onDelete}
         />
       );
     }
 
-    if (type === 'appointment') {
+    if (type === 'appointment' && id) {
       return (
         <AppointmentCard
           content={content}
