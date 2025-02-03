@@ -4,6 +4,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Tables } from "@/integrations/supabase/types";
+import { handlePartnerOnboarding } from "./partner/usePartnerOnboarding";
 
 export const useLeadMutations = (leadId: string | null, onClose: () => void) => {
   const queryClient = useQueryClient();
@@ -14,57 +15,9 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
       if (!leadId) throw new Error("Invalid lead ID");
 
-      // If we're updating the status to 'partner', handle the onboarding progress
+      // Handle partner status change
       if (updates.status === 'partner') {
-        try {
-          // First check if there's any existing progress for this lead
-          const { data: existingProgress, error: progressCheckError } = await supabase
-            .from('partner_onboarding_progress')
-            .select('*')
-            .eq('lead_id', leadId)
-            .maybeSingle();
-
-          if (progressCheckError) {
-            console.error('Error checking partner progress:', progressCheckError);
-            throw progressCheckError;
-          }
-
-          // Only create new progress if none exists
-          if (!existingProgress) {
-            // Get the first phase
-            const { data: firstPhase, error: phaseError } = await supabase
-              .from('partner_onboarding_phases')
-              .select('id')
-              .eq('order_index', 0)
-              .single();
-
-            if (phaseError) {
-              console.error('Error getting first phase:', phaseError);
-              throw phaseError;
-            }
-
-            if (firstPhase) {
-              const { error: progressError } = await supabase
-                .from('partner_onboarding_progress')
-                .insert({
-                  lead_id: leadId,
-                  phase_id: firstPhase.id,
-                  status: 'in_progress'
-                });
-
-              if (progressError) {
-                // If it's a duplicate key error, we can ignore it as the progress already exists
-                if (progressError.code !== '23505') {
-                  console.error('Error creating partner progress:', progressError);
-                  throw progressError;
-                }
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error handling partner progress:', error);
-          throw error;
-        }
+        await handlePartnerOnboarding(leadId);
       }
 
       const { data, error } = await supabase
