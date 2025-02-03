@@ -4,6 +4,9 @@ import { NoteCard } from "./cards/NoteCard";
 import { TaskCard } from "./cards/TaskCard";
 import { AppointmentCard } from "./cards/AppointmentCard";
 import { FileCard } from "./cards/FileCard";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
+import { useSettings } from "@/hooks/use-settings";
 
 interface TimelineItemCardProps {
   type: TimelineItemType;
@@ -44,6 +47,8 @@ export const TimelineItemCard = ({
   created_at,
   isCompleted
 }: TimelineItemCardProps) => {
+  const { settings } = useSettings();
+
   const getBorderColor = () => {
     if (type === 'phase_change' && metadata?.type === 'status_change') {
       switch(metadata.newStatus) {
@@ -101,6 +106,17 @@ export const TimelineItemCard = ({
     return null;
   };
 
+  const renderContent = () => {
+    return (
+      <>
+        <div className="whitespace-pre-wrap break-words">
+          {content}
+        </div>
+        {renderMetadata()}
+      </>
+    );
+  };
+
   if (type === 'task' && id) {
     return (
       <TaskCard
@@ -148,7 +164,6 @@ export const TimelineItemCard = ({
   return (
     <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}>
       {renderContent()}
-      {renderMetadata()}
     </div>
   );
 };
