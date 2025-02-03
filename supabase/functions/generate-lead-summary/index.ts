@@ -20,7 +20,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch comprehensive lead data
+    // Fetch comprehensive lead data with better error handling
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .select(`
@@ -43,7 +43,11 @@ serve(async (req) => {
           content,
           platform,
           posted_at,
-          engagement_rate
+          likes_count,
+          comments_count,
+          engagement_count,
+          hashtags,
+          location
         ),
         lead_files (
           file_name,
@@ -53,7 +57,21 @@ serve(async (req) => {
       .eq('id', leadId)
       .single();
 
-    if (leadError) throw leadError;
+    if (leadError) {
+      console.error('Error fetching lead data:', leadError);
+      throw leadError;
+    }
+
+    if (!lead) {
+      throw new Error('Lead not found');
+    }
+
+    console.log('Successfully fetched lead data:', {
+      id: lead.id,
+      name: lead.name,
+      messageCount: lead.messages?.length,
+      postsCount: lead.social_media_posts?.length
+    });
 
     const systemPrompt = language === "en" 
       ? "You are a helpful AI assistant that analyzes lead data and provides actionable insights and recommendations. Focus on helping users convert leads into customers or partners."
@@ -115,9 +133,10 @@ serve(async (req) => {
               ).join('\n') || 'Keine Notizen'}
               
               Social Media Aktivitäten:
-              ${lead.social_media_posts?.map((post: any) => 
-                `- ${new Date(post.posted_at).toLocaleDateString()}: ${post.content} (Engagement: ${post.engagement_rate || 'N/A'})`
-              ).join('\n') || 'Keine Social Media Aktivitäten'}
+              ${lead.social_media_posts?.map((post: any) => {
+                const engagement = post.likes_count + (post.comments_count || 0);
+                return `- ${new Date(post.posted_at).toLocaleDateString()}: ${post.content} (Engagement: ${engagement})`
+              }).join('\n') || 'Keine Social Media Aktivitäten'}
 
               Formatiere die Zusammenfassung mit folgenden Kategorien:
               **Kontaktstatus**: [Aktuelle Phase und letzte Interaktionen]
