@@ -8,6 +8,7 @@ import { PartnerTree } from "@/components/partners/PartnerTree";
 import { Button } from "@/components/ui/button";
 import { Diamond, Trophy, Gem, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PartnerOnboardingPipeline } from "@/components/partners/onboarding/PartnerOnboardingPipeline";
 
 export default function Pool() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -127,11 +128,14 @@ export default function Pool() {
 
       {/* Content based on status */}
       {status === 'partner' && (
-        <PartnerTree 
-          unassignedPartners={leads} 
-          currentUser={currentUser}
-          onContactClick={setSelectedLeadId}
-        />
+        <>
+          <PartnerOnboardingPipeline />
+          <PartnerTree 
+            unassignedPartners={leads} 
+            currentUser={currentUser}
+            onContactClick={setSelectedLeadId}
+          />
+        </>
       )}
 
       {status === 'customer' && (

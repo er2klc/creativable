@@ -1143,6 +1143,117 @@ export type Database = {
           },
         ]
       }
+      partner_onboarding_phases: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          order_index: number
+          requirements: Json | null
+          resources: Json | null
+          tools: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          order_index: number
+          requirements?: Json | null
+          resources?: Json | null
+          tools?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          order_index?: number
+          requirements?: Json | null
+          resources?: Json | null
+          tools?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      partner_onboarding_pipeline: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      partner_onboarding_progress: {
+        Row: {
+          completed_at: string | null
+          completion_data: Json | null
+          created_at: string | null
+          id: string
+          lead_id: string
+          phase_id: string
+          started_at: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          completion_data?: Json | null
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          phase_id: string
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          completion_data?: Json | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          phase_id?: string
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_onboarding_progress_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_onboarding_progress_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "partner_onboarding_phases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipeline_phases: {
         Row: {
           created_at: string | null
