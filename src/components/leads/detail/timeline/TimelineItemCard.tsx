@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { X } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { NoteCard } from "./cards/NoteCard";
 import { TaskCard } from "./cards/TaskCard";
