@@ -30,15 +30,15 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
   const getPlatformIcon = (platform: string) => {
     switch (platform?.toLowerCase()) {
       case "instagram":
-        return <Instagram className="h-5 w-5 text-white" />;
+        return <Instagram className="h-4 w-4 text-white" />;
       case "linkedin":
-        return <Linkedin className="h-5 w-5 text-white" />;
+        return <Linkedin className="h-4 w-4 text-white" />;
       case "facebook":
-        return <Facebook className="h-5 w-5 text-white" />;
+        return <Facebook className="h-4 w-4 text-white" />;
       case "tiktok":
-        return <Video className="h-5 w-5 text-white" />;
+        return <Video className="h-4 w-4 text-white" />;
       case "offline":
-        return <Users className="h-5 w-5 text-white" />;
+        return <Users className="h-4 w-4 text-white" />;
       default:
         return null;
     }
@@ -94,7 +94,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
   };
 
   const getBackgroundStyle = () => {
-    const types = lead.contact_type?.split(",") || [];
+    const types = lead.contact_type?.split(",").map(type => type.trim()) || [];
     const isPartner = types.includes("Likely Partner");
     const isKunde = types.includes("Likely Kunde");
 
@@ -152,7 +152,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     >
       {/* Platform Icon in top right corner */}
       <div className={cn(
-        "absolute -right-2 -top-2 rounded-full w-8 h-8 border-2 border-white shadow-lg flex items-center justify-center",
+        "absolute -right-2 -top-2 rounded-full w-7 h-7 border-2 border-white shadow-lg flex items-center justify-center",
         getPlatformColor(lead.platform)
       )}>
         {getPlatformIcon(lead.platform)}
