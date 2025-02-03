@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { Tables } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
-import { Diamond, Trophy, Gem, Star, Users } from "lucide-react";
+import { Diamond, Trophy, Gem, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PartnerOnboardingPipeline } from "@/components/partners/onboarding/PartnerOnboardingPipeline";
 
@@ -36,6 +36,7 @@ export default function Pool() {
       if (error) throw error;
       return data as Tables<"leads">[];
     },
+    enabled: true,
   });
 
   const statusOptions = [
@@ -84,33 +85,33 @@ export default function Pool() {
           {statusOptions.map((option) => {
             const Icon = option.icon;
             const isActive = status === option.id;
+            const displayCount = option.count;
             
             return (
               <Button
                 key={option.id}
-                variant="ghost"
+                variant={isActive ? "default" : "ghost"}
                 className={cn(
-                  "relative min-w-[120px] h-[48px] transition-all duration-300",
-                  "bg-gradient-to-r shadow-sm border-0",
-                  isActive ? `${option.gradient} text-white opacity-90` : "bg-background hover:scale-102",
+                  "relative min-w-[200px] h-[80px] transition-all duration-300",
+                  "bg-gradient-to-r shadow-sm border border-dashed border-gray-300",
+                  isActive ? `${option.gradient} text-white border-none` : "bg-background hover:scale-102",
                   !isActive && "hover:bg-gradient-to-r",
                   !isActive && option.hoverGradient,
-                  "hover:text-white hover:opacity-90"
+                  "hover:text-white"
                 )}
                 onClick={() => navigate(`/pool/${option.id}`)}
               >
                 <div className="absolute inset-0 bg-black/5 rounded-md" />
                 <div className="relative flex flex-col items-center justify-center gap-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-lg font-semibold">
                     <Icon className={cn(
-                      "h-4 w-4 transition-all duration-300",
-                      isActive ? "scale-105" : "scale-100",
-                      !isActive && "group-hover:scale-105"
+                      "h-5 w-5 transition-all duration-300",
+                      isActive ? "scale-110" : "scale-100"
                     )} />
                     {option.label}
                   </div>
-                  <div className="text-xs font-medium">
-                    {option.count} {option.count === 1 ? 'Kontakt' : 'Kontakte'}
+                  <div className="text-sm font-medium">
+                    {displayCount} {displayCount === 1 ? 'Kontakt' : 'Kontakte'}
                   </div>
                 </div>
                 {isActive && (
@@ -122,7 +123,6 @@ export default function Pool() {
         </div>
       </div>
 
-      {/* Content based on status */}
       {status === 'partner' && (
         <PartnerOnboardingPipeline />
       )}
