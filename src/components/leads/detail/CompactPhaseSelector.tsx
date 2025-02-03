@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
 import { usePipelineManagement } from "./hooks/usePipelineManagement";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface CompactPhaseSelectorProps {
   lead: Tables<"leads">;
@@ -47,6 +48,10 @@ export function CompactPhaseSelector({
     });
   };
 
+  const handleContactTypeChange = (type: string) => {
+    onUpdateLead({ contact_type: type });
+  };
+
   const currentPipeline = pipelines.find(p => p.id === selectedPipelineId);
   const currentPhase = phases.find(p => p.id === lead.phase_id && selectedPipelineId === lead.pipeline_id);
 
@@ -84,27 +89,48 @@ export function CompactPhaseSelector({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        <Select
-          value={selectedPipelineId}
-          onValueChange={handlePipelineChange}
-        >
-          <SelectTrigger className="h-8 w-[200px] text-sm">
-            <SelectValue>
-              <div className="flex items-center gap-2">
-                {currentPipeline?.name}
-                <ChevronDown className="h-4 w-4" />
-              </div>
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {pipelines.map((pipeline) => (
-              <SelectItem key={pipeline.id} value={pipeline.id}>
-                {pipeline.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex items-center justify-between gap-2 text-sm text-gray-600">
+        <div className="flex items-center gap-2">
+          <Select
+            value={selectedPipelineId}
+            onValueChange={handlePipelineChange}
+          >
+            <SelectTrigger className="h-8 border-none p-0 text-sm hover:text-blue-600 transition-colors">
+              <SelectValue>
+                <span className="flex items-center gap-1">
+                  Pipeline: {currentPipeline?.name}
+                </span>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {pipelines.map((pipeline) => (
+                <SelectItem key={pipeline.id} value={pipeline.id}>
+                  {pipeline.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox
+              checked={lead.contact_type === 'Likely Partner'}
+              onCheckedChange={() => handleContactTypeChange('Likely Partner')}
+              className="h-4 w-4"
+            />
+            <span>Likely Partner</span>
+          </label>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox
+              checked={lead.contact_type === 'Likely Kunde'}
+              onCheckedChange={() => handleContactTypeChange('Likely Kunde')}
+              className="h-4 w-4"
+            />
+            <span>Likely Kunde</span>
+          </label>
+        </div>
       </div>
     </div>
   );
