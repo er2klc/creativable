@@ -3,16 +3,16 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadDetailView } from "@/components/leads/LeadDetailView";
-import { Tables } from "@/integrations/supabase/types";
-import { PartnerTree } from "@/components/partners/PartnerTree";
 import { Button } from "@/components/ui/button";
 import { Diamond, Trophy, Gem, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
 
 export default function Pool() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const { status = 'partner' } = useParams<{ status?: string }>();
   const navigate = useNavigate();
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
 
   const { data: leads = [] } = useQuery({
     queryKey: ["pool-leads", status],
@@ -34,25 +34,34 @@ export default function Pool() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Tables<"leads">[];
+      return data;
     },
   });
 
-  const { data: currentUser } = useQuery({
-    queryKey: ["current-user"],
+  // Fetch user's partner pipeline
+  const { data: pipeline } = useQuery({
+    queryKey: ["partner-pipeline"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!user) throw new Error("No user found");
 
-      const { data: profile } = await supabase
-        .from("profiles")
+      const { data, error } = await supabase
+        .from("pipelines")
         .select("*")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
+        .eq("status", "partner")
         .single();
 
-      return profile as Tables<"profiles">;
+      if (error) throw error;
+      return data;
     },
   });
+
+  useEffect(() => {
+    if (pipeline?.id) {
+      setSelectedPipelineId(pipeline.id);
+    }
+  }, [pipeline]);
 
   const statusOptions = [
     { 
@@ -126,11 +135,11 @@ export default function Pool() {
       </div>
 
       {/* Content based on status */}
-      {status === 'partner' && (
-        <PartnerTree 
-          unassignedPartners={leads} 
-          currentUser={currentUser}
-          onContactClick={setSelectedLeadId}
+      {status === 'partner' && selectedPipelineId && (
+        <LeadKanbanView 
+          leads={leads} 
+          selectedPipelineId={selectedPipelineId}
+          setSelectedPipelineId={setSelectedPipelineId}
         />
       )}
 
