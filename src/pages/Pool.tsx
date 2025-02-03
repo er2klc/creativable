@@ -15,7 +15,7 @@ export default function Pool() {
   const navigate = useNavigate();
 
   const { data: leads = [] } = useQuery({
-    queryKey: ["pool-leads", status],
+    queryKey: ["pool-leads"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
@@ -29,11 +29,13 @@ export default function Pool() {
       const { data, error } = await supabase
         .from("leads")
         .select("*")
-        .eq("status", status)
+        .eq("user_id", user.id)
         .or(`user_id.eq.${user.id},network_marketing_id.eq.${settings?.network_marketing_id}`)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+      
+      console.log("Fetched all leads:", data?.length);
       return data as Tables<"leads">[];
     },
     enabled: true,

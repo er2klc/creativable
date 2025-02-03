@@ -36,12 +36,16 @@ export function PartnerOnboardingPipeline() {
   const { data: partners = [] } = useQuery({
     queryKey: ["partners"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
       const { data, error } = await supabase
         .from("leads")
         .select("*, partner_onboarding_progress(*)")
         .eq("status", "partner");
       
       if (error) throw error;
+      console.log("Fetched partners:", data?.length);
       return data as Tables<"leads">[];
     },
   });
@@ -76,22 +80,34 @@ export function PartnerOnboardingPipeline() {
     ).length
   ));
 
+  // Get partners without any progress to show in first phase
+  const getPartnersForPhase = (phase: any) => {
+    if (phase.order_index === 0) {
+      return partners.filter(partner => 
+        !partner.partner_onboarding_progress?.length || 
+        partner.partner_onboarding_progress.some(progress => 
+          progress.phase_id === phase.id
+        )
+      );
+    }
+    return partners.filter(partner => 
+      partner.partner_onboarding_progress?.some(progress => 
+        progress.phase_id === phase.id
+      )
+    );
+  };
+
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="w-full overflow-x-auto no-scrollbar">
         <div className="flex gap-4 p-4 min-w-fit">
           {phases.map((phase) => {
             const Icon = phaseIcons[phase.name as keyof typeof phaseIcons];
-            const phasePartners = partners.filter(partner => 
-              partner.partner_onboarding_progress?.some(progress => 
-                progress.phase_id === phase.id
-              )
-            );
+            const phasePartners = getPartnersForPhase(phase);
 
             return (
               <div key={phase.id} className="relative flex-1 min-w-[300px]">
                 <div className="bg-green-50 rounded-lg border border-green-100 h-full">
-                  {/* Phase Header */}
                   <div className="p-4 border-b border-green-200">
                     <div className="flex items-center gap-2">
                       <div className="relative">
@@ -111,7 +127,6 @@ export function PartnerOnboardingPipeline() {
                     </div>
                   </div>
 
-                  {/* Partner Cards */}
                   <div className="p-4 space-y-3" style={{ minHeight: `${maxPartners * 100}px` }}>
                     {phasePartners.map((partner) => (
                       <div
