@@ -3,6 +3,8 @@ import { useSettings } from "@/hooks/use-settings";
 import { formatDateTime } from "../utils/dateUtils";
 import { MEETING_TYPES } from "@/constants/meetingTypes";
 import { MeetingTypeIcon } from "./MeetingTypeIcon";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
 
 interface TaskCardProps {
   content: string;
@@ -43,6 +45,34 @@ export const TaskCard = ({
   onEdit
 }: TaskCardProps) => {
   const { settings } = useSettings();
+  const [editedContent, setEditedContent] = useState(content);
+
+  const handleSave = () => {
+    // TODO: Implement save functionality
+    if (onEdit) {
+      onEdit();
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <div className="space-y-2">
+        <Input
+          value={editedContent}
+          onChange={(e) => setEditedContent(e.target.value)}
+          className="w-full"
+        />
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onEdit}
+            className="p-1 hover:bg-gray-100 rounded"
+          >
+            <Check className="h-4 w-4 text-green-500" />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative group">
