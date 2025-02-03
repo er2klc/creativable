@@ -14,10 +14,7 @@ import {
   ArrowUpCircle,
   Upload,
   X,
-  Check,
-  Heart,
-  Clock,
-  ThumbsDown
+  Check
 } from "lucide-react";
 import { TimelineItemType } from "./TimelineUtils";
 
@@ -38,13 +35,13 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
     if (type === 'phase_change' && metadata?.type === 'status_change') {
       switch(metadata.newStatus) {
         case 'partner':
-          return <Heart className="h-4 w-4 text-white" />;
+          return <UserPlus className="h-4 w-4 text-white" />;
         case 'customer':
           return <UserPlus className="h-4 w-4 text-white" />;
         case 'not_for_now':
-          return <Clock className="h-4 w-4 text-white" />;
+          return <Bell className="h-4 w-4 text-white" />;
         case 'no_interest':
-          return <ThumbsDown className="h-4 w-4 text-white" />;
+          return <X className="h-4 w-4 text-white" />;
         default:
           return <ArrowUpCircle className="h-4 w-4 text-white" />;
       }
@@ -63,9 +60,7 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
           <Check className="h-4 w-4 text-white" /> : 
           <ListTodo className="h-4 w-4 text-white" />;
       case 'appointment':
-        return status === 'cancelled' ? 
-          <X className="h-4 w-4 text-white" /> : 
-          <Calendar className="h-4 w-4 text-white" />;
+        return <Calendar className="h-4 w-4 text-white" />;
       case 'note':
         return <StickyNote className="h-4 w-4 text-white" />;
       case 'phase_change':
@@ -107,7 +102,7 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
       case 'task':
         return status === 'completed' ? 'bg-green-500' : 'bg-cyan-500';
       case 'appointment':
-        return status === 'cancelled' ? 'bg-red-500' : 'bg-blue-500';
+        return 'bg-indigo-500';
       case 'note':
         return 'bg-yellow-500';
       case 'phase_change':
