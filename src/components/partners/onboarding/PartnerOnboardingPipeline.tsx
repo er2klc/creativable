@@ -7,6 +7,8 @@ import { Tables } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useNavigate } from "react-router-dom";
+import { LeadDetailView } from "@/components/leads/LeadDetailView";
 
 const phaseIcons = {
   "Start & Setup": Users,
@@ -21,6 +23,9 @@ const phaseNumbers = {
 };
 
 export function PartnerOnboardingPipeline() {
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const navigate = useNavigate();
+
   const { data: phases = [] } = useQuery({
     queryKey: ["partner-onboarding-phases"],
     queryFn: async () => {
@@ -98,75 +103,90 @@ export function PartnerOnboardingPipeline() {
     );
   };
 
-  return (
-    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="w-full overflow-x-auto no-scrollbar">
-        <div className="flex gap-4 p-4 min-w-fit">
-          {phases.map((phase) => {
-            const Icon = phaseIcons[phase.name as keyof typeof phaseIcons];
-            const phasePartners = getPartnersForPhase(phase);
+  const handlePartnerClick = (partnerId: string) => {
+    setSelectedLeadId(partnerId);
+  };
 
-            return (
-              <div key={phase.id} className="relative flex-1 min-w-[300px]">
-                <div className="bg-green-50 rounded-lg border border-green-100 h-full">
-                  <div className="p-4 border-b border-green-200">
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-                          {Icon && <Icon className="w-5 h-5 text-green-600" />}
+  return (
+    <>
+      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <div className="w-full overflow-x-auto no-scrollbar">
+          <div className="flex gap-4 p-4 min-w-fit">
+            {phases.map((phase) => {
+              const Icon = phaseIcons[phase.name as keyof typeof phaseIcons];
+              const phasePartners = getPartnersForPhase(phase);
+
+              return (
+                <div key={phase.id} className="relative flex-1 min-w-[300px]">
+                  <div className="bg-green-50 rounded-lg border border-green-100 h-full">
+                    <div className="p-4 border-b border-green-200">
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+                            {Icon && <Icon className="w-5 h-5 text-green-600" />}
+                          </div>
+                          <div className="absolute -top-3 -left-3 w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-medium">
+                            {phaseNumbers[phase.name as keyof typeof phaseNumbers]}
+                          </div>
                         </div>
-                        <div className="absolute -top-3 -left-3 w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-medium">
-                          {phaseNumbers[phase.name as keyof typeof phaseNumbers]}
+                        <div>
+                          <h3 className="font-medium text-gray-900">{phase.name}</h3>
+                          <p className="text-sm text-gray-500">
+                            {phasePartners.length} Partner
+                          </p>
                         </div>
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900">{phase.name}</h3>
-                        <p className="text-sm text-gray-500">
-                          {phasePartners.length} Partner
-                        </p>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="p-4 space-y-3" style={{ minHeight: `${maxPartners * 100}px` }}>
-                    {phasePartners.map((partner) => (
-                      <div
-                        key={partner.id}
-                        className="bg-white p-4 rounded-lg shadow-sm border border-green-100 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                            {partner.social_media_profile_image_url ? (
-                              <img 
-                                src={partner.social_media_profile_image_url} 
-                                alt={partner.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-primary/10 text-lg font-semibold">
-                                {partner.name?.substring(0, 2).toUpperCase()}
+                    <div className="p-4 space-y-3" style={{ minHeight: `${maxPartners * 100}px` }}>
+                      {phasePartners.map((partner) => (
+                        <div
+                          key={partner.id}
+                          className="bg-white p-4 rounded-lg shadow-sm border border-green-100 hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => handlePartnerClick(partner.id)}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                              {partner.social_media_profile_image_url ? (
+                                <img 
+                                  src={partner.social_media_profile_image_url} 
+                                  alt={partner.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-primary/10 text-lg font-semibold">
+                                  {partner.name?.substring(0, 2).toUpperCase()}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-gray-900 truncate">
+                                {partner.name}
+                              </h4>
+                              <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                                <CalendarCheck className="w-4 h-4" />
+                                {format(new Date(partner.updated_at || ''), "dd. MMM yyyy", { locale: de })}
                               </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-gray-900 truncate">
-                              {partner.name}
-                            </h4>
-                            <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                              <CalendarCheck className="w-4 h-4" />
-                              {format(new Date(partner.updated_at || ''), "dd. MMM yyyy", { locale: de })}
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </DndContext>
+      </DndContext>
+
+      {/* Lead Detail Dialog */}
+      {selectedLeadId && (
+        <LeadDetailView
+          leadId={selectedLeadId}
+          onClose={() => setSelectedLeadId(null)}
+        />
+      )}
+    </>
   );
 }
