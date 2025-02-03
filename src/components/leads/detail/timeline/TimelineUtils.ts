@@ -2,56 +2,43 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
 export type TimelineItemType = 
-  | 'task' 
-  | 'note' 
-  | 'appointment' 
-  | 'phase_change' 
-  | 'message' 
+  | 'note'
+  | 'task'
+  | 'appointment'  // This needs to be explicitly defined
+  | 'phase_change'
+  | 'message'
   | 'file_upload'
-  | 'contact_created'
-  | 'reminder'
-  | 'upload'
-  | 'presentation';
-
-export type TimelineItemStatus = 'completed' | 'cancelled' | 'outdated';
+  | 'contact_created';
 
 export interface TimelineItem {
   id: string;
   type: TimelineItemType;
   content: string;
-  created_at: string;
   timestamp: string;
-  status?: string;
-  platform?: string;
+  created_at?: string;
   metadata?: {
     dueDate?: string;
     fileName?: string;
     fileType?: string;
     fileSize?: number;
     filePath?: string;
-    status?: TimelineItemStatus;
+    status?: 'completed' | 'cancelled' | 'outdated';
     completedAt?: string;
     cancelledAt?: string;
     updatedAt?: string;
     oldDate?: string;
     newDate?: string;
-    oldPhase?: string;
-    newPhase?: string;
-    color?: string;
-    meetingType?: string;
     type?: string;
+    oldStatus?: string;
+    newStatus?: string;
+    last_edited_at?: string;
+    meetingType?: string;
+    color?: string;
   };
+  platform?: string;
+  status?: string;
 }
 
-export const formatDate = (dateString: string) => {
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return "Ungültiges Datum";
-    }
-    const weekday = format(date, "EEE", { locale: de });
-    return `${weekday}. ${format(date, "dd.MM.yyyy | HH:mm 'Uhr'", { locale: de })}`;
-  } catch (error) {
-    return "Ungültiges Datum";
-  }
+export const formatDate = (date: string) => {
+  return format(new Date(date), 'PPp', { locale: de });
 };
