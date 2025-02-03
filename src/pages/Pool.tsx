@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { Tables } from "@/integrations/supabase/types";
 import { PartnerTree } from "@/components/partners/PartnerTree";
+import { Button } from "@/components/ui/button";
+import { Users, Star, Clock, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Pool() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -51,42 +53,72 @@ export default function Pool() {
     },
   });
 
+  const statusOptions = [
+    { id: 'partner', label: 'Partner', icon: Users, color: 'bg-green-500' },
+    { id: 'customer', label: 'Kunden', icon: Star, color: 'bg-blue-500' },
+    { id: 'not_for_now', label: 'Not For Now', icon: Clock, color: 'bg-yellow-500' },
+    { id: 'no_interest', label: 'Kein Interesse', icon: XCircle, color: 'bg-red-500' }
+  ];
+
   return (
     <div className="container mx-auto py-6">
-      <Tabs defaultValue={status} className="w-full">
-        <TabsList>
-          <TabsTrigger value="partner">Partner</TabsTrigger>
-          <TabsTrigger value="customer">Kunden</TabsTrigger>
-          <TabsTrigger value="not_for_now">Not For Now</TabsTrigger>
-          <TabsTrigger value="no_interest">Kein Interesse</TabsTrigger>
-        </TabsList>
+      {/* New Header Design */}
+      <div className="mb-8 space-y-6">
+        <div className="flex flex-wrap gap-3">
+          {statusOptions.map((option) => {
+            const Icon = option.icon;
+            return (
+              <Button
+                key={option.id}
+                variant={status === option.id ? "default" : "outline"}
+                className={cn(
+                  "relative group transition-all duration-300 min-w-[140px]",
+                  status === option.id && "shadow-lg scale-105"
+                )}
+                onClick={() => window.location.href = `/pool/${option.id}`}
+              >
+                <div className="flex items-center gap-2">
+                  <Icon className={cn(
+                    "h-4 w-4 transition-colors",
+                    status === option.id ? "text-white" : option.color
+                  )} />
+                  <span>{option.label}</span>
+                </div>
+                {status === option.id && (
+                  <div className="absolute bottom-0 left-0 w-full h-1 rounded-b-md bg-white/20" />
+                )}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
 
-        <TabsContent value="partner" className="mt-6">
-          <PartnerTree 
-            unassignedPartners={leads} 
-            currentUser={currentUser}
-            onContactClick={setSelectedLeadId}
-          />
-        </TabsContent>
+      {/* Content based on status */}
+      {status === 'partner' && (
+        <PartnerTree 
+          unassignedPartners={leads} 
+          currentUser={currentUser}
+          onContactClick={setSelectedLeadId}
+        />
+      )}
 
-        <TabsContent value="customer">
-          <div className="text-center p-4">
-            Kunden Kanban View kommt hier...
-          </div>
-        </TabsContent>
+      {status === 'customer' && (
+        <div className="text-center p-4">
+          Kunden Kanban View kommt hier...
+        </div>
+      )}
 
-        <TabsContent value="not_for_now">
-          <div className="text-center p-4">
-            Not For Now Liste kommt hier...
-          </div>
-        </TabsContent>
+      {status === 'not_for_now' && (
+        <div className="text-center p-4">
+          Not For Now Liste kommt hier...
+        </div>
+      )}
 
-        <TabsContent value="no_interest">
-          <div className="text-center p-4">
-            Kein Interesse Liste kommt hier...
-          </div>
-        </TabsContent>
-      </Tabs>
+      {status === 'no_interest' && (
+        <div className="text-center p-4">
+          Kein Interesse Liste kommt hier...
+        </div>
+      )}
 
       {selectedLeadId && (
         <LeadDetailView
