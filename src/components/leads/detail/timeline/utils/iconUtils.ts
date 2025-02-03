@@ -17,13 +17,12 @@ import {
   Check,
   Heart,
   Clock,
-  ThumbsDown,
-  LucideIcon
+  ThumbsDown
 } from "lucide-react";
 import { TimelineItemType } from "../TimelineUtils";
 
 interface IconConfig {
-  icon: LucideIcon;
+  icon: any;
   className?: string;
 }
 
