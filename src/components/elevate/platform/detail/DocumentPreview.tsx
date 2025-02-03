@@ -1,7 +1,6 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface DocumentPreviewProps {
   open: boolean;
@@ -19,6 +18,8 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
   const previewUrl = document.preview_url || document.url;
 
   const isImage = fileType?.match(/^(jpg|jpeg|png|gif|webp)$/);
+  const isOfficeDoc = fileType?.match(/^(xlsx|xls|doc|docx)$/);
+  const isPdf = fileType === 'pdf';
 
   const renderPreview = () => {
     // Handle images with direct preview
@@ -33,8 +34,8 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
         </div>
       );
     }
-    // Handle Office documents (xlsx and docx)
-    else if (fileType?.match(/^(xlsx|docx)$/)) {
+    // Handle Office documents (xlsx, docx, etc)
+    else if (isOfficeDoc) {
       const encodedUrl = encodeURIComponent(previewUrl);
       const officePreviewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}`;
       
@@ -50,7 +51,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
       );
     }
     // Handle PDFs
-    else if (fileType?.includes('pdf')) {
+    else if (isPdf) {
       return (
         <div className="w-full h-[80vh]">
           <iframe
