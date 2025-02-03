@@ -76,11 +76,13 @@ export const TimelineItemCard = ({
     if (type === 'phase_change') return 'border-blue-500';
     if (type === 'note') return 'border-yellow-400';
     if (type === 'message') return 'border-purple-500';
-    if (type === 'task') return '';
-    if (type === 'appointment') return 'border-l-4 border-indigo-500';
+    if (type === 'task') {
+      if (metadata?.meetingType) return 'border-indigo-500';
+      return 'border-orange-500';
+    }
     if (type === 'file_upload') return 'border-cyan-500';
     if (type === 'contact_created') return 'border-emerald-500';
-    return '';
+    return 'border-gray-200';
   };
 
   const renderContent = () => {
@@ -148,7 +150,7 @@ export const TimelineItemCard = ({
   };
 
   return (
-    <div className={`flex-1 min-w-0 ${getBorderColor()}`}>
+    <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}>
       {renderContent()}
       {renderMetadata()}
     </div>

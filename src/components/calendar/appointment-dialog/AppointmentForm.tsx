@@ -14,7 +14,6 @@ interface AppointmentFormProps {
     id?: string;
     leadId: string;
     time: string;
-    endTime?: string;
     title: string;
     color: string;
     meeting_type: string;
@@ -32,9 +31,8 @@ export const AppointmentForm = ({
     defaultValues: {
       leadId: defaultValues?.leadId || "",
       time: defaultValues?.time || "09:00",
-      endTime: defaultValues?.endTime || "",
       title: defaultValues?.title || "",
-      color: defaultValues?.color || "#40E0D0",
+      color: defaultValues?.color || "#40E0D0", // Turquoise for appointments
       meeting_type: defaultValues?.meeting_type || "phone_call",
     },
   });

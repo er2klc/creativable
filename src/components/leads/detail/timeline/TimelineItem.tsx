@@ -3,7 +3,7 @@ import { TimelineItemIcon } from "./TimelineItemIcon";
 import { TimelineItemCard } from "./TimelineItemCard";
 import { formatDate } from "./TimelineUtils";
 import { motion } from "framer-motion";
-import { Check, Calendar } from "lucide-react";
+import { Check } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
@@ -25,8 +25,6 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
 
   const isImage = item.type === 'file_upload' && 
     item.metadata?.fileType?.toLowerCase().match(/^(image\/jpeg|image\/png|image\/gif|image\/webp)$/);
-
-  const isAppointment = item.type === 'task' && item.metadata?.meetingType;
 
   return (
     <motion.div
@@ -50,7 +48,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
         {/* Circle with Icon */}
         <div className="relative">
           <TimelineItemIcon 
-            type={isAppointment ? 'appointment' : item.type}
+            type={item.type} 
             status={item.metadata?.status} 
             platform={item.platform} 
           />
@@ -74,7 +72,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
         
         {/* Event Card */}
         <TimelineItemCard 
-          type={isAppointment ? 'appointment' : item.type}
+          type={item.type}
           content={item.content}
           metadata={item.metadata}
           status={item.status}
