@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DocumentPreview } from "@/components/elevate/platform/detail/DocumentPreview";
-import { FileText, Image, FilePdf, FileSpreadsheet } from "lucide-react";
+import { FileText, Image, File, FileSpreadsheet } from "lucide-react";
 
 interface FileCardProps {
   content: string;
@@ -30,7 +30,7 @@ export const FileCard = ({ content, metadata }: FileCardProps) => {
 
   const getFileIcon = () => {
     if (isImage) return <Image className="h-4 w-4 text-blue-500" />;
-    if (isPdf) return <FilePdf className="h-4 w-4 text-red-500" />;
+    if (isPdf) return <File className="h-4 w-4 text-red-500" />;
     if (isSpreadsheet) return <FileSpreadsheet className="h-4 w-4 text-green-500" />;
     return <FileText className="h-4 w-4 text-blue-500" />;
   };
