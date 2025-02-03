@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LayoutGrid, Users, MessageSquare, Calendar, CheckSquare, BarChart, Settings, FileText, Shield, Globe2, Database, Wrench } from "lucide-react";
+import { Menu, X, LayoutGrid, Users, MessageSquare, Calendar, CheckSquare, BarChart, Settings, FileText, Shield, Globe2, Database, Wrench, Waves } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 const personalItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutGrid },
   { name: "Kontakte", path: "/leads", icon: Users },
+  { name: "Pool", path: "/pool", icon: Waves },
   { name: "Nachrichten", path: "/messages", icon: MessageSquare },
   { name: "Kalender", path: "/calendar", icon: Calendar },
   { name: "Todo Liste", path: "/todo", icon: CheckSquare },
