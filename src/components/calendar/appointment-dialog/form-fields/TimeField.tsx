@@ -29,7 +29,7 @@ export const TimeField = ({ form }: TimeFieldProps) => {
 
       <FormField
         control={form.control}
-        name="end_time"
+        name="endTime"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Endzeit (optional)</FormLabel>
