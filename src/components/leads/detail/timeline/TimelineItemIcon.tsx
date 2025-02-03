@@ -105,9 +105,6 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
       case 'message':
         return 'bg-blue-500';
       case 'task':
-        if (metadata?.meetingType) {
-          return 'bg-indigo-500';
-        }
         return status === 'completed' ? 'bg-green-500' : 'bg-cyan-500';
       case 'appointment':
         return status === 'cancelled' ? 'bg-red-500' : 'bg-indigo-600';
