@@ -48,12 +48,22 @@ export function CompactPhaseSelector({
     });
   };
 
-  const handleContactTypeChange = (type: string) => {
-    onUpdateLead({ contact_type: type });
+  const handleContactTypeChange = (type: string, checked: boolean) => {
+    const currentTypes = lead.contact_type?.split(',').map(t => t.trim()).filter(Boolean) || [];
+    let newTypes: string[];
+    
+    if (checked) {
+      newTypes = [...new Set([...currentTypes, type])];
+    } else {
+      newTypes = currentTypes.filter(t => t !== type);
+    }
+    
+    onUpdateLead({ contact_type: newTypes.join(', ') });
   };
 
   const currentPipeline = pipelines.find(p => p.id === selectedPipelineId);
   const currentPhase = phases.find(p => p.id === lead.phase_id && selectedPipelineId === lead.pipeline_id);
+  const currentTypes = lead.contact_type?.split(',').map(t => t.trim()) || [];
 
   return (
     <div className="w-full space-y-4">
@@ -89,7 +99,7 @@ export function CompactPhaseSelector({
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2 text-sm text-gray-600">
+      <div className="flex items-center justify-between gap-2 text-sm text-gray-400">
         <div className="flex items-center gap-2">
           <Select
             value={selectedPipelineId}
@@ -97,7 +107,7 @@ export function CompactPhaseSelector({
           >
             <SelectTrigger className="h-8 border-none p-0 text-sm hover:text-blue-600 transition-colors">
               <SelectValue>
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1 text-gray-400">
                   Pipeline: {currentPipeline?.name}
                 </span>
               </SelectValue>
@@ -115,20 +125,20 @@ export function CompactPhaseSelector({
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
             <Checkbox
-              checked={lead.contact_type === 'Likely Partner'}
-              onCheckedChange={() => handleContactTypeChange('Likely Partner')}
+              checked={currentTypes.includes('Likely Partner')}
+              onCheckedChange={(checked) => handleContactTypeChange('Likely Partner', checked as boolean)}
               className="h-4 w-4"
             />
-            <span>Likely Partner</span>
+            <span className="text-xs text-gray-400">Likely Partner</span>
           </label>
 
           <label className="flex items-center gap-2 cursor-pointer">
             <Checkbox
-              checked={lead.contact_type === 'Likely Kunde'}
-              onCheckedChange={() => handleContactTypeChange('Likely Kunde')}
+              checked={currentTypes.includes('Likely Kunde')}
+              onCheckedChange={(checked) => handleContactTypeChange('Likely Kunde', checked as boolean)}
               className="h-4 w-4"
             />
-            <span>Likely Kunde</span>
+            <span className="text-xs text-gray-400">Likely Kunde</span>
           </label>
         </div>
       </div>
