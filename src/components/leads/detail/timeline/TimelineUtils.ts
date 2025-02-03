@@ -4,11 +4,12 @@ import { de } from "date-fns/locale";
 export type TimelineItemType = 
   | 'note'
   | 'task'
-  | 'appointment'  // This needs to be explicitly defined
+  | 'appointment'
   | 'phase_change'
   | 'message'
   | 'file_upload'
-  | 'contact_created';
+  | 'contact_created'
+  | 'status_change';  // Added this type
 
 export interface TimelineItem {
   id: string;
@@ -34,6 +35,7 @@ export interface TimelineItem {
     last_edited_at?: string;
     meetingType?: string;
     color?: string;
+    phase?: string;  // Added for partner phase info
   };
   platform?: string;
   status?: string;

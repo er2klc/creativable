@@ -28,6 +28,7 @@ interface TimelineItemCardProps {
     last_edited_at?: string;
     meetingType?: string;
     color?: string;
+    phase?: string;
   };
   status?: string;
   onDelete?: () => void;
@@ -49,6 +50,21 @@ export const TimelineItemCard = ({
   const { settings } = useSettings();
 
   const getBorderColor = () => {
+    if (type === 'status_change' && metadata?.newStatus) {
+      switch(metadata.newStatus) {
+        case 'partner':
+          return 'border-[#8B5CF6]';
+        case 'customer':
+          return 'border-[#FEC6A1]';
+        case 'not_for_now':
+          return 'border-[#8E9196]';
+        case 'no_interest':
+          return 'border-[#ea384c]';
+        default:
+          return 'border-gray-200';
+      }
+    }
+
     if (status === 'completed') return 'border-green-500';
     if (status === 'cancelled') return 'border-red-500';
     if (type === 'phase_change') return 'border-blue-500';
@@ -61,7 +77,39 @@ export const TimelineItemCard = ({
     return 'border-gray-200';
   };
 
+  const renderStatusChangeContent = () => {
+    if (type === 'status_change' && metadata?.newStatus) {
+      let statusText = '';
+      switch(metadata.newStatus) {
+        case 'partner':
+          statusText = `Status zu Partner geändert${metadata.phase ? ` - Phase: ${metadata.phase}` : ''}`;
+          break;
+        case 'customer':
+          statusText = 'Status zu Kunde geändert';
+          break;
+        case 'not_for_now':
+          statusText = 'Status zu Not For Now geändert';
+          break;
+        case 'no_interest':
+          statusText = 'Status zu Kein Interesse geändert';
+          break;
+      }
+      return (
+        <div className="relative group">
+          <div className="whitespace-pre-wrap break-words">
+            {statusText}
+          </div>
+          {onDelete && <DeleteButton onDelete={onDelete} />}
+        </div>
+      );
+    }
+    return null;
+  };
+
   const renderContent = () => {
+    const statusChangeContent = renderStatusChangeContent();
+    if (statusChangeContent) return statusChangeContent;
+
     if (type === 'task' && id) {
       return (
         <TaskCard

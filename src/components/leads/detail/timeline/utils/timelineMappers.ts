@@ -2,7 +2,8 @@ import { TimelineItem } from "../TimelineUtils";
 
 export const mapNoteToTimelineItem = (note: any): TimelineItem => ({
   id: note.id,
-  type: note.metadata?.type === 'phase_change' ? 'phase_change' : 'note',
+  type: note.metadata?.type === 'status_change' ? 'status_change' : 
+        note.metadata?.type === 'phase_change' ? 'phase_change' : 'note',
   content: note.content,
   created_at: note.created_at,
   timestamp: note.created_at,
