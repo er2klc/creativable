@@ -47,7 +47,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
       return (
         <div className="w-full h-[80vh]">
           <iframe
-            src={previewUrl}
+            src={`${previewUrl}#toolbar=0&navpanes=0`}
             className="w-full h-full"
             title={document.name}
           />
