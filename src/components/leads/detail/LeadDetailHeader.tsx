@@ -28,42 +28,75 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
       // If clicking the same status button, reset to normal state
       const status = lead.status === newStatus ? 'lead' : newStatus;
       
-      // Get default pipeline and phase
-      const { data: defaultPipeline } = await supabase
-        .from('pipelines')
-        .select('id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .order('order_index')
-        .limit(1)
-        .single();
+      let updates: Partial<Tables<"leads">> = { status };
 
-      if (!defaultPipeline) throw new Error('No default pipeline found');
+      if (status === 'partner') {
+        // Get partner pipeline
+        const { data: partnerPipeline } = await supabase
+          .from('pipelines')
+          .select('id')
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+          .eq('status', 'partner')
+          .single();
 
-      const { data: defaultPhase } = await supabase
-        .from('pipeline_phases')
-        .select('id')
-        .eq('pipeline_id', defaultPipeline.id)
-        .order('order_index')
-        .limit(1)
-        .single();
+        if (!partnerPipeline) {
+          toast.error('Kein Partner Pipeline gefunden');
+          return;
+        }
 
-      if (!defaultPhase) throw new Error('No default phase found');
+        // Get first phase of partner pipeline
+        const { data: firstPhase } = await supabase
+          .from('pipeline_phases')
+          .select('id')
+          .eq('pipeline_id', partnerPipeline.id)
+          .order('order_index')
+          .limit(1)
+          .single();
 
-      const updates: Partial<Tables<"leads">> = {
-        status,
-        ...(status === 'lead' ? {
-          pipeline_id: defaultPipeline.id,
-          phase_id: defaultPhase.id
-        } : {}),
-        ...(status === 'partner' ? {
+        if (!firstPhase) {
+          toast.error('Keine Phasen in der Partner Pipeline gefunden');
+          return;
+        }
+
+        updates = {
+          ...updates,
+          pipeline_id: partnerPipeline.id,
+          phase_id: firstPhase.id,
           onboarding_progress: {
             message_sent: false,
             team_invited: false,
             training_provided: false,
             intro_meeting_scheduled: false
           }
-        } : {})
-      };
+        };
+      } else if (status === 'lead') {
+        // Get default pipeline and phase for leads
+        const { data: defaultPipeline } = await supabase
+          .from('pipelines')
+          .select('id')
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+          .order('order_index')
+          .limit(1)
+          .single();
+
+        if (!defaultPipeline) throw new Error('No default pipeline found');
+
+        const { data: defaultPhase } = await supabase
+          .from('pipeline_phases')
+          .select('id')
+          .eq('pipeline_id', defaultPipeline.id)
+          .order('order_index')
+          .limit(1)
+          .single();
+
+        if (!defaultPhase) throw new Error('No default phase found');
+
+        updates = {
+          ...updates,
+          pipeline_id: defaultPipeline.id,
+          phase_id: defaultPhase.id
+        };
+      }
 
       await onUpdateLead(updates);
 
