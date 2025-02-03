@@ -57,12 +57,12 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
 
     if (isOfficeDoc) {
       const encodedUrl = encodeURIComponent(previewUrl);
-      const officePreviewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}`;
+      const googleDocsViewerUrl = `https://docs.google.com/gview?url=${encodedUrl}&embedded=true`;
       
       return (
         <div className="w-full h-[80vh]">
           <iframe
-            src={officePreviewUrl}
+            src={googleDocsViewerUrl}
             className="w-full h-full"
             title={document.name}
             frameBorder="0"
