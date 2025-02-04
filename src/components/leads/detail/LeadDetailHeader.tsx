@@ -67,7 +67,7 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
 
       await onUpdateLead(updates);
 
-      // Create timeline entry
+      // Create timeline entry with matching styling from Pool page
       const { error: noteError } = await supabase
         .from('notes')
         .insert({
