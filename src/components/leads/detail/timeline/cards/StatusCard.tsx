@@ -1,29 +1,29 @@
 import { Card } from "@/components/ui/card";
-import { TimelineItem } from "../utils/TimelineUtils";
 import { TimelineItemIcon } from "../TimelineItemIcon";
 import { formatDateTime } from "../../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 
 interface StatusCardProps {
-  item: TimelineItem;
+  status: string;
+  updatedAt: string;
 }
 
-export const StatusCard = ({ item }: StatusCardProps) => {
+export const StatusCard = ({ status, updatedAt }: StatusCardProps) => {
   const { settings } = useSettings();
+
   return (
     <Card className="p-4 flex flex-col gap-2">
-      {/* Status Icon */}
+      {/* Status-Icon + Änderungsdatum */}
       <div className="flex items-center gap-2">
         <TimelineItemIcon type="status_change" />
         <span className="text-gray-600 text-sm">
-          {formatDateTime(item.timestamp, settings?.language)}
+          {formatDateTime(updatedAt, settings?.language)}
         </span>
       </div>
 
-      {/* Statusänderungstext */}
+      {/* Zeigt den aktuellen Status */}
       <div className="text-sm text-gray-800">
-        Status geändert auf:{" "}
-        <span className="font-semibold">{item.metadata?.newStatus}</span>
+        Status geändert zu: <span className="font-semibold">{status}</span>
       </div>
     </Card>
   );
