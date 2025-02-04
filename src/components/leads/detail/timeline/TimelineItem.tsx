@@ -4,6 +4,7 @@ import { TimelineItemCard } from "./TimelineItemCard";
 import { formatDateTime } from "./utils/dateUtils";
 import { motion } from "framer-motion";
 import { useSettings } from "@/hooks/use-settings";
+import { StatusCard } from "./cards/StatusCard";
 
 interface TimelineItemProps {
   item: TimelineItemType;
@@ -14,9 +15,6 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
   const { settings } = useSettings();
   const isOutdated = item.type === 'appointment' && 
     (item.status === 'cancelled' || item.metadata?.status === 'outdated');
-
-  // Only allow deletion of phase changes
-  const canDelete = onDelete && item.type === 'phase_change';
 
   const isTaskCompleted = item.type === 'task' && item.metadata?.status === 'completed';
   const completedDate = item.metadata?.completedAt ? 
@@ -47,6 +45,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
             type={item.type} 
             status={item.metadata?.status} 
             platform={item.platform} 
+            metadata={item.metadata}
           />
           {isOutdated && (
             <div className="absolute -top-1 -right-1 bg-gray-400 rounded-full p-0.5">
@@ -67,16 +66,24 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
         <div className="absolute left-8 top-[1.1rem] w-4 h-0.5 bg-gray-400" />
         
         {/* Event Card */}
-        <TimelineItemCard 
-          type={item.type}
-          content={item.content}
-          metadata={item.metadata}
-          status={item.status}
-          onDelete={canDelete ? () => onDelete(item.id) : undefined}
-          id={item.id}
-          created_at={item.created_at}
-          isCompleted={isTaskCompleted}
-        />
+        {item.type === 'status_change' ? (
+          <StatusCard 
+            content={item.content}
+            timestamp={item.timestamp}
+            metadata={item.metadata}
+          />
+        ) : (
+          <TimelineItemCard 
+            type={item.type}
+            content={item.content}
+            metadata={item.metadata}
+            status={item.status}
+            onDelete={onDelete}
+            id={item.id}
+            created_at={item.created_at}
+            isCompleted={isTaskCompleted}
+          />
+        )}
       </div>
     </motion.div>
   );
