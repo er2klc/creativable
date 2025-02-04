@@ -40,12 +40,24 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const showSocialTimeline = hasLinkedInPosts || hasSocialPosts || hasInstagramData;
 
   const allActivities = [
-    ...(lead.notes || []).map(mapNoteToTimelineItem),
-    ...(lead.tasks || []).map(mapTaskToTimelineItem),
-    ...(lead.messages || []).map(mapMessageToTimelineItem),
-    ...(lead.lead_files || []).map(mapFileToTimelineItem),
-    createContactCreationItem(lead.name, lead.created_at)
-  ];
+  ...(lead.notes || []).map(mapNoteToTimelineItem),
+  ...(lead.tasks || []).map(mapTaskToTimelineItem),
+  ...(lead.messages || []).map(mapMessageToTimelineItem),
+  ...(lead.lead_files || []).map(mapFileToTimelineItem),
+  createContactCreationItem(lead.name, lead.created_at),
+
+  // 🚀 Statusänderung in die Timeline aufnehmen
+  {
+    id: `status-${lead.id}`,
+    type: "status_change",
+    content: `Status geändert zu ${lead.status}`,
+    timestamp: lead.updated_at || lead.created_at, // Nutze updated_at für Änderungen
+    metadata: {
+      newStatus: lead.status,
+    }
+  }
+];
+
 
   const timelineItems = allActivities.sort((a, b) => 
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
