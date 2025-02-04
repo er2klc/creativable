@@ -138,8 +138,8 @@ export const TimelineItemCard = ({
       return (
         <StatusCard 
           content={content}
+          timestamp={metadata?.timestamp || new Date().toISOString()}
           metadata={metadata}
-          onDelete={onDelete}
         />
       );
     }
