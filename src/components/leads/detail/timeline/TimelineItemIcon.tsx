@@ -4,6 +4,8 @@ import {
   StickyNote, 
   Calendar,
   FileText,
+  FileSpreadsheet,
+  Image,
   Bell,
   Instagram,
   Linkedin,
@@ -30,6 +32,7 @@ interface TimelineItemIconProps {
     oldStatus?: string;
     newStatus?: string;
     meetingType?: string;
+    fileType?: string; // Erweitert für Dateityp-Logik
   };
 }
 
@@ -40,6 +43,11 @@ export const TimelineItemIcon = ({
   metadata 
 }: TimelineItemIconProps) => {
   const getIconComponent = () => {
+    // Handle file type logic
+    if (type === 'file_upload') {
+      return getFileIcon(metadata?.fileType);
+    }
+
     // Handle status changes first
     if (type === 'status_change') {
       switch(metadata?.newStatus) {
@@ -71,8 +79,6 @@ export const TimelineItemIcon = ({
         return ArrowUpCircle;
       case 'reminder':
         return Bell;
-      case 'file_upload':
-        return FileText;
       case 'presentation':
         return Send;
       case 'upload':
@@ -80,6 +86,13 @@ export const TimelineItemIcon = ({
       default:
         return MessageSquare;
     }
+  };
+
+  const getFileIcon = (fileType?: string) => {
+    if (fileType?.includes('image')) return Image;
+    if (fileType === 'pdf') return FileText; // PDF Icon
+    if (fileType?.includes('spreadsheet')) return FileSpreadsheet;
+    return FileText; // Default file icon
   };
 
   const getIconColor = () => {
@@ -108,6 +121,8 @@ export const TimelineItemIcon = ({
         return 'bg-blue-500';
       case 'contact_created':
         return 'bg-emerald-500';
+      case 'file_upload':
+        return 'bg-blue-500'; // Default color for file uploads
       default:
         return 'bg-gray-500';
     }
