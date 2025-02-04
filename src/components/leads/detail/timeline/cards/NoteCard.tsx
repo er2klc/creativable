@@ -176,7 +176,6 @@ export const NoteCard = ({ id, content, metadata, onDelete }: NoteCardProps) => 
       <NoteCardView
         content={content}
         onEdit={() => setIsEditing(true)}
-        onDelete={() => setShowDeleteDialog(true)}
       />
       <DeleteNoteDialog
         open={showDeleteDialog}

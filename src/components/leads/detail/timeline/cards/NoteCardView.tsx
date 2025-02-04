@@ -1,12 +1,11 @@
-import { Edit, Trash2 } from "lucide-react";
+import { Edit } from "lucide-react";
 
 interface NoteCardViewProps {
   content: string;
   onEdit: () => void;
-  onDelete: () => void;
 }
 
-export const NoteCardView = ({ content, onEdit, onDelete }: NoteCardViewProps) => {
+export const NoteCardView = ({ content, onEdit }: NoteCardViewProps) => {
   return (
     <div className="relative group">
       <div className="whitespace-pre-wrap break-words">
@@ -18,12 +17,6 @@ export const NoteCardView = ({ content, onEdit, onDelete }: NoteCardViewProps) =
           className="p-1 hover:bg-gray-100 rounded"
         >
           <Edit className="h-4 w-4 text-gray-500 hover:text-blue-600" />
-        </button>
-        <button
-          onClick={onDelete}
-          className="p-1 hover:bg-gray-100 rounded"
-        >
-          <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
         </button>
       </div>
     </div>
