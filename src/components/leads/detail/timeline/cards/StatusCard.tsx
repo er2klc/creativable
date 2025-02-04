@@ -2,6 +2,7 @@ import { Heart, ThumbsDown, Clock, UserPlus } from "lucide-react";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
+import { DeleteButton } from "./DeleteButton";
 
 interface StatusCardProps {
   content: string;
@@ -9,9 +10,10 @@ interface StatusCardProps {
   metadata?: {
     newStatus?: string;
   };
+  onDelete?: () => void;
 }
 
-export const StatusCard = ({ content, timestamp, metadata }: StatusCardProps) => {
+export const StatusCard = ({ content, timestamp, metadata, onDelete }: StatusCardProps) => {
   const { settings } = useSettings();
   
   const getStatusIcon = () => {
@@ -26,11 +28,11 @@ export const StatusCard = ({ content, timestamp, metadata }: StatusCardProps) =>
 
   const getStatusColor = () => {
     switch(metadata?.newStatus) {
-      case 'partner': return 'bg-pink-100 text-pink-800';
-      case 'customer': return 'bg-green-100 text-green-800';
-      case 'not_for_now': return 'bg-yellow-100 text-yellow-800';
-      case 'no_interest': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'partner': return 'bg-pink-100 text-pink-800 border-pink-200';
+      case 'customer': return 'bg-green-100 text-green-800 border-green-200';
+      case 'not_for_now': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'no_interest': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -42,7 +44,7 @@ export const StatusCard = ({ content, timestamp, metadata }: StatusCardProps) =>
   };
 
   return (
-    <div className="flex flex-col gap-2 p-4 rounded-lg bg-white border">
+    <div className="flex flex-col gap-2 p-4 rounded-lg bg-white border relative w-full group">
       <div className="flex items-center gap-2">
         <div className={cn("p-2 rounded-full", getStatusColor())}>
           {getStatusIcon()}
@@ -52,6 +54,7 @@ export const StatusCard = ({ content, timestamp, metadata }: StatusCardProps) =>
       <div className="text-sm text-gray-500">
         {formatDateTime(timestamp, settings?.language)}
       </div>
+      {onDelete && <DeleteButton onDelete={onDelete} />}
     </div>
   );
 };

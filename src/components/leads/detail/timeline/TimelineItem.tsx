@@ -71,6 +71,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
             content={item.content}
             timestamp={item.timestamp}
             metadata={item.metadata}
+            onDelete={onDelete ? () => onDelete(item.id) : undefined}
           />
         ) : (
           <TimelineItemCard 
