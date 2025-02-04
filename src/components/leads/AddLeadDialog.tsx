@@ -1,29 +1,15 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { BasicLeadFields } from "./form-fields/BasicLeadFields";
-import { ContactTypeField } from "./form-fields/ContactTypeField";
-import { Platform } from "@/config/platforms";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-
-const formSchema = z.object({
-  name: z.string().min(1, "Name ist erforderlich"),
-  platform: z.custom<Platform>(),
-  social_media_username: z.string().optional(),
-  phase_id: z.string().min(1, "Phase ist erforderlich"),
-  pipeline_id: z.string().min(1, "Pipeline ist erforderlich"),
-  contact_type: z.string().nullable(),
-  phone_number: z.string().optional().nullable(),
-  email: z.string().optional().nullable(),
-  company_name: z.string().optional().nullable(),
-});
+import { AddLeadFormFields, formSchema, type FormData } from "./form-fields/AddLeadFormFields";
+import { type Platform } from "@/config/platforms";
 
 interface AddLeadDialogProps {
   trigger?: React.ReactNode;
@@ -37,7 +23,7 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
   const [isOpen, setIsOpen] = useState(false);
   const [existingLead, setExistingLead] = useState<any>(null);
   
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -72,7 +58,7 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
     }
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormData) => {
     try {
       const existingLead = await checkExistingLead(values.name);
       
@@ -162,8 +148,7 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <BasicLeadFields form={form} />
-            <ContactTypeField form={form} />
+            <AddLeadFormFields form={form} />
             <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"
