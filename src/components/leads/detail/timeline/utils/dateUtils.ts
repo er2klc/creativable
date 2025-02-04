@@ -7,16 +7,8 @@ export const getMeetingTypeLabel = (meetingTypeValue: string) => {
 };
 
 export const formatDateTime = (dateString: string, language: string = 'de') => {
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return language === 'en' ? 'Unknown date' : 'Datum unbekannt';
-    }
-    return format(date, "dd.MM.yyyy", { 
-      locale: language === 'en' ? undefined : de 
-    });
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return language === 'en' ? 'Unknown date' : 'Datum unbekannt';
-  }
+  const date = new Date(dateString);
+  return format(date, "EEEE', den' d. MMM yyyy '|' HH:mm 'Uhr'", { 
+    locale: language === 'en' ? undefined : de 
+  });
 };
