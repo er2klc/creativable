@@ -48,27 +48,39 @@ export const TimelineItemCard = ({
 }: TimelineItemCardProps) => {
   const { settings } = useSettings();
 
-  const getBorderColor = () => {
-    if (status === 'completed') return 'border-green-500';
-    if (status === 'cancelled') return 'border-red-500';
-    if (type === 'phase_change') return 'border-blue-500';
-    if (type === 'note') return 'border-yellow-400';
-    if (type === 'message') return 'border-purple-500';
-    if (type === 'appointment') return 'border-indigo-500';
-    if (type === 'task') return 'border-orange-500';
-    if (type === 'file_upload') return 'border-cyan-500';
-    if (type === 'contact_created') return 'border-emerald-500';
-      if (type === 'status_change') {
-      switch(metadata?.newStatus) {
-        case 'partner': return 'border-pink-500';
-        case 'customer': return 'border-sky-500';
-        case 'not_for_now': return 'border-stone-500';
-        case 'no_interest': return 'border-rose-500';
-        default: return 'border-neutral-500';
-      }
+  const getBorderColor = (type: string, status?: string, metadata?: { newStatus?: string }) => {
+  if (type === "status_change") {
+    switch (metadata?.newStatus) {
+      case "partner":
+        return "border-pink-500";
+      case "customer":
+        return "border-sky-500";
+      case "not_for_now":
+        return "border-stone-500";
+      case "no_interest":
+        return "border-rose-500";
+      default:
+        return "border-gray-500"; // Standard-Farbe
     }
-    return 'border-gray-200';
-  };
+  }
+
+  switch (type) {
+    case "contact_created":
+      return "border-emerald-500";
+    case "message":
+      return "border-blue-500";
+    case "task":
+      return status === "completed" ? "border-green-500" : "border-orange-500";
+    case "appointment":
+      return status === "cancelled" ? "border-gray-400" : "border-indigo-500";
+    case "note":
+      return "border-yellow-400";
+    case "file_upload":
+      return "border-cyan-500";
+    default:
+      return "border-gray-200"; // Standard-Farbe
+  }
+};
 
   const renderContent = () => {
     if (type === 'task' && id) {
