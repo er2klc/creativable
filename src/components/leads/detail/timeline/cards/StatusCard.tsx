@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { TimelineItemIcon } from "../TimelineItemIcon";
-import { formatDateTime } from "./utils/dateUtils";
+import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 
 interface StatusCardProps {
