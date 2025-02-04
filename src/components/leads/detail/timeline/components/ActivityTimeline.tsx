@@ -8,7 +8,7 @@ import { useSettings } from "@/hooks/use-settings";
 
 interface ActivityTimelineProps {
   items: TimelineItemType[];
-  onDeletePhaseChange?: (noteId: string) => void;
+  onDeletePhaseChange?: (id: string) => void;
 }
 
 export const ActivityTimeline = ({ items, onDeletePhaseChange }: ActivityTimelineProps) => {
@@ -60,10 +60,19 @@ export const ActivityTimeline = ({ items, onDeletePhaseChange }: ActivityTimelin
     }
   });
 
+  const handleEdit = (item: TimelineItemType) => {
+    if (item.type === 'note') {
+      // Handle note edit
+      console.log('Edit note:', item.id);
+      // You'll need to implement the actual edit functionality here
+      // This could involve opening a modal or navigating to an edit page
+    }
+  };
+
   return (
     <div className="relative space-y-6">
       <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400" />
-      {items.map((item) => (
+      {items.map(item => (
         <TimelineItem 
           key={item.id} 
           item={item} 
@@ -71,10 +80,7 @@ export const ActivityTimeline = ({ items, onDeletePhaseChange }: ActivityTimelin
             () => deleteItemMutation.mutate(item) : 
             undefined
           }
-          onEdit={item.type === 'note' ? () => {
-            // Handle note edit
-            console.log('Edit note:', item.id);
-          } : undefined}
+          onEdit={() => handleEdit(item)}
         />
       ))}
     </div>
