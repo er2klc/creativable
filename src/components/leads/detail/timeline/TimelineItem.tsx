@@ -1,8 +1,8 @@
-import { TimelineItem as TimelineItemType } from "./TimelineUtils";
+import { TimelineItemType } from "./TimelineUtils";
 import { TimelineItemIcon } from "./TimelineItemIcon";
 import { TimelineItemCard } from "./TimelineItemCard";
-import { formatDateTime } from "./utils/dateUtils";
 import { motion } from "framer-motion";
+import { formatDateTime } from "./utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { StatusCard } from "./cards/StatusCard";
 
@@ -71,6 +71,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
             content={item.content}
             timestamp={item.timestamp}
             metadata={item.metadata}
+            onDelete={onDelete ? () => onDelete(item.id) : undefined}
           />
         ) : (
           <TimelineItemCard 
