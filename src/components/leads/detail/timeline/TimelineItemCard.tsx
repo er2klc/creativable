@@ -49,16 +49,34 @@ export const TimelineItemCard = ({
   const { settings } = useSettings();
 
   const getBorderColor = () => {
-    if (status === 'completed') return 'border-green-500';
-    if (status === 'cancelled') return 'border-red-500';
-    if (type === 'phase_change') return 'border-purple-500';
-    if (type === 'note') return 'border-yellow-400';
-    if (type === 'message') return 'border-blue-500';
-    if (type === 'appointment') return 'border-indigo-500';
-    if (type === 'task') return 'border-orange-500';
-    if (type === 'file_upload') return 'border-cyan-500';
-    if (type === 'contact_created') return 'border-emerald-500';
-    return 'border-gray-200';
+    if (type === 'status_change') {
+      switch(metadata?.newStatus) {
+        case 'partner': return 'border-pink-500';
+        case 'customer': return 'border-sky-500';
+        case 'not_for_now': return 'border-stone-500';
+        case 'no_interest': return 'border-rose-500';
+        case 'lead': return 'border-blue-500';
+        default: return 'border-gray-500';
+      }
+    }
+
+    switch (type) {
+      case 'task':
+        return status === 'completed' ? 'border-green-500' : 'border-cyan-500';
+      case 'appointment':
+        if (status === 'cancelled') return 'border-gray-400';
+        return 'border-orange-500';
+      case 'note':
+        return 'border-yellow-500';
+      case 'phase_change':
+        return 'border-purple-500';
+      case 'message':
+        return 'border-blue-500';
+      case 'contact_created':
+        return 'border-emerald-500';
+      default:
+        return 'border-gray-500';
+    }
   };
 
   const renderContent = () => {
