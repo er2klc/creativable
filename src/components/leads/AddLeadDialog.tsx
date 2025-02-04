@@ -129,6 +129,9 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
       </DialogTrigger>
       <DialogContent 
         className="sm:max-w-[600px]"
+        onPointerDownOutside={(e) => {
+          e.preventDefault();
+        }}
         onInteractOutside={(e) => {
           e.preventDefault();
         }}
