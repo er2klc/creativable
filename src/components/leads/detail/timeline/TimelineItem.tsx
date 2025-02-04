@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Trash2, MessageCircle, Calendar, FileText, User, Diamond, Trophy, Gem, Star } from "lucide-react";
+import { Trash2, MessageCircle, Calendar, FileText, User, Diamond, Trophy, Gem, Star, Edit } from "lucide-react";
 import { de } from "date-fns/locale";
 import { useSettings } from "@/hooks/use-settings";
 
@@ -17,32 +17,51 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
 
   const getIcon = () => {
     if (item.metadata?.type === 'status_change') {
+      const color = getIconColor();
       switch (item.metadata?.icon) {
         case 'Diamond':
-          return <Diamond className="h-4 w-4" />;
+          return <Diamond className={`h-4 w-4 ${color}`} />;
         case 'Trophy':
-          return <Trophy className="h-4 w-4" />;
+          return <Trophy className={`h-4 w-4 ${color}`} />;
         case 'Gem':
-          return <Gem className="h-4 w-4" />;
+          return <Gem className={`h-4 w-4 ${color}`} />;
         case 'Star':
-          return <Star className="h-4 w-4" />;
+          return <Star className={`h-4 w-4 ${color}`} />;
         default:
-          return <User className="h-4 w-4" />;
+          return <User className={`h-4 w-4 ${color}`} />;
       }
     }
 
     switch (item.type) {
       case 'message':
-        return <MessageCircle className="h-4 w-4" />;
+        return <MessageCircle className="h-4 w-4 text-blue-500" />;
       case 'task':
-        return <Calendar className="h-4 w-4" />;
+        return <Calendar className={`h-4 w-4 ${item.status === 'completed' ? 'text-green-500' : 'text-cyan-500'}`} />;
       case 'file_upload':
-        return <FileText className="h-4 w-4" />;
+        return <FileText className="h-4 w-4 text-cyan-500" />;
       case 'contact_created':
-        return <User className="h-4 w-4" />;
+        return <User className="h-4 w-4 text-emerald-500" />;
       default:
-        return <User className="h-4 w-4" />;
+        return <User className="h-4 w-4 text-gray-500" />;
     }
+  };
+
+  const getIconColor = () => {
+    if (item.metadata?.type === 'status_change') {
+      switch(item.metadata.newStatus) {
+        case 'partner':
+          return 'text-[#4CAF50]';
+        case 'customer':
+          return 'text-[#2196F3]';
+        case 'not_for_now':
+          return 'text-[#FFC107]';
+        case 'no_interest':
+          return 'text-[#F44336]';
+        default:
+          return 'text-gray-500';
+      }
+    }
+    return '';
   };
 
   const getBorderColor = () => {
@@ -82,7 +101,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
       <div
         className={cn(
           "absolute left-0 p-2 rounded-full",
-          item.metadata?.type === 'status_change' ? item.color : 'bg-gray-100'
+          item.metadata?.type === 'status_change' ? 'bg-gray-100' : 'bg-gray-100'
         )}
       >
         {getIcon()}
@@ -94,19 +113,30 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
               locale: isGerman ? de : undefined
             })}
           </span>
-          {onDelete && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-red-600 hover:bg-red-50 hover:text-red-700"
-              onClick={onDelete}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
         </div>
-        <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()}`}>
-          <p className="text-sm">{item.content}</p>
+        <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} relative group`}>
+          <p className="text-sm pr-16">{item.content}</p>
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+            {item.type === 'note' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <Edit className="h-4 w-4 text-gray-500 hover:text-blue-600" />
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onDelete}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
