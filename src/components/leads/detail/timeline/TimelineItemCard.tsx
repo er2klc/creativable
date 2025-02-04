@@ -6,6 +6,7 @@ import { AppointmentCard } from "./cards/AppointmentCard";
 import { MetadataDisplay } from "./cards/MetadataDisplay";
 import { DeleteButton } from "./cards/DeleteButton";
 import { TimelineItemType } from "./TimelineUtils";
+import { StatusCard } from "./cards/StatusCard"; // ✅ StatusCard importiert
 
 interface TimelineItemCardProps {
   type: TimelineItemType;
@@ -58,6 +59,7 @@ export const TimelineItemCard = ({
     if (type === 'task') return 'border-orange-500';
     if (type === 'file_upload') return 'border-cyan-500';
     if (type === 'contact_created') return 'border-emerald-500';
+    if (type === 'status_change') return 'border-teal-500';
     return 'border-gray-200';
   };
 
@@ -104,6 +106,22 @@ export const TimelineItemCard = ({
         />
       );
     }
+
+  // ✅ NEU: Falls es eine Statusänderung ist, StatusCard anzeigen
+  if (type === 'status_change') {
+    return (
+      <StatusCard 
+        item={{ 
+          id, 
+          type, 
+          content, 
+          metadata, 
+          status, 
+          created_at 
+        }} 
+      />
+    );
+  }
 
     return (
       <div className="relative group">
