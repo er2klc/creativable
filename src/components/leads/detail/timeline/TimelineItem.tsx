@@ -21,7 +21,6 @@ export const TimelineItem = ({ item, onDelete, onEdit }: TimelineItemProps) => {
 
   const getIcon = () => {
     if (item.metadata?.type === 'status_change') {
-      const bgColor = getIconBackgroundColor();
       switch (item.metadata?.icon) {
         case 'Diamond':
           return <Diamond className="h-4 w-4 text-white" />;
@@ -161,7 +160,7 @@ export const TimelineItem = ({ item, onDelete, onEdit }: TimelineItemProps) => {
             </div>
           )}
           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-            {item.type === 'note' && onEdit && (
+            {(item.type === 'note' || item.type === 'task' || item.type === 'appointment') && onEdit && (
               <Button
                 variant="ghost"
                 size="sm"
