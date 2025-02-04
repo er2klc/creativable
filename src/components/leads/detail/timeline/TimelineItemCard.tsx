@@ -155,7 +155,7 @@ export const TimelineItemCard = ({
   };
 
   return (
-    <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border-2 ${getBorderColor()} group relative`}>
+    <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}>
       {renderContent()}
       <MetadataDisplay 
         last_edited_at={metadata?.last_edited_at}
