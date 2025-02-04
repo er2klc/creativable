@@ -59,10 +59,10 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       transition={{ duration: 0.3 }}
       className="flex flex-col gap-1"
     >
-       {/* Date above the card */}
-      <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
-        {formatDateTime(item.timestamp, settings?.language)}
-      </div>
+      {/* Date above the card */}
+<div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
+  {formatDateTime(post.timestamp, settings?.language)}
+</div>
 
       <div className="flex gap-4 items-start group relative">
         <div className="relative z-10">
