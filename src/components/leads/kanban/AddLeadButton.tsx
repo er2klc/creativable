@@ -35,33 +35,16 @@ export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadB
             Neuer Kontakt
           </Button>
         </DialogTrigger>
-        <DialogContent 
-          className="sm:max-w-[425px]"
-          onPointerDownOutside={(e) => {
-            // Prevent closing when clicking autofill suggestions
-            if (e.target instanceof Element) {
-              const isAutofillElement = e.target.matches('input:-webkit-autofill') || 
-                                      e.target.closest('input:-webkit-autofill');
-              if (isAutofillElement) {
-                e.preventDefault();
-                return;
-              }
-            }
-            e.preventDefault();
-          }}
+       <DialogContent
+        className="sm:max-w-[425px]"
           onInteractOutside={(e) => {
-            // Prevent closing when interacting with autofill suggestions
-            if (e.target instanceof Element) {
-              const isAutofillElement = e.target.matches('input:-webkit-autofill') || 
-                                      e.target.closest('input:-webkit-autofill');
-              if (isAutofillElement) {
-                e.preventDefault();
-                return;
-              }
+          // Überprüfen, ob das Ereignis von einem Autofill-Vorschlag stammt
+            if (e.target instanceof Element && e.target.matches('input:-webkit-autofill, input:-webkit-autofill *')) {
+              e.preventDefault();
             }
-            e.preventDefault();
           }}
         >
+
           <div className="grid grid-cols-3 gap-4 py-4">
             <Button
               variant="outline"
