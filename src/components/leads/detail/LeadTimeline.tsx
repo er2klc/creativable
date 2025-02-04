@@ -47,15 +47,17 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   createContactCreationItem(lead.name, lead.created_at),
 
   // 🚀 Statusänderung in die Timeline aufnehmen
-  {
-    id: `status-${lead.id}`,
-    type: "status_change",
-    content: `Status geändert zu ${lead.status}`,
-    timestamp: lead.updated_at || lead.created_at, // Nutze updated_at für Änderungen
-    metadata: {
-      newStatus: lead.status,
-    }
+ {
+  id: `status-${lead.id}`,
+  type: "status_change",
+  content: `Status geändert zu ${lead.status}`,
+  timestamp: lead.updated_at ? new Date(lead.updated_at).toISOString() : 
+             lead.created_at ? new Date(lead.created_at).toISOString() : new Date().toISOString(), // ✅ Sicherstellen, dass es ein valides Datum ist
+  metadata: {
+    newStatus: lead.status,
   }
+}
+
 ];
 
 
