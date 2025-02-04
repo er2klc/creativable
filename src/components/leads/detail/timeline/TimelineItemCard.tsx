@@ -5,10 +5,10 @@ import { FileCard } from "./cards/FileCard";
 import { AppointmentCard } from "./cards/AppointmentCard";
 import { MetadataDisplay } from "./cards/MetadataDisplay";
 import { DeleteButton } from "./cards/DeleteButton";
-import { TimelineItemType } from "./TimelineUtils";
+import { StatusCard } from "./cards/StatusCard";
 
 interface TimelineItemCardProps {
-  type: TimelineItemType;
+  type: string;
   content: string;
   metadata?: {
     dueDate?: string;
@@ -83,6 +83,8 @@ export const TimelineItemCard = ({
         return 'border-blue-500';
       case 'contact_created':
         return 'border-emerald-500';
+      case 'file_upload':
+        return 'border-blue-500';
       default:
         return 'border-gray-500';
     }
@@ -125,6 +127,16 @@ export const TimelineItemCard = ({
       return (
         <NoteCard
           id={id}
+          content={content}
+          metadata={metadata}
+          onDelete={onDelete}
+        />
+      );
+    }
+
+    if (type === 'status_change') {
+      return (
+        <StatusCard 
           content={content}
           metadata={metadata}
           onDelete={onDelete}
