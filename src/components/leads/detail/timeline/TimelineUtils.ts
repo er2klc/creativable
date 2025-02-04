@@ -6,6 +6,7 @@ export type TimelineItemType =
   | 'task'
   | 'appointment'  // This needs to be explicitly defined
   | 'phase_change'
+  | 'status_change'  // <--- NEU! Für Statusänderungen (z. B. Partner, Kunde, etc.)
   | 'message'
   | 'file_upload'
   | 'contact_created';
