@@ -16,7 +16,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
   const isGerman = settings?.language !== "en";
 
   const getIcon = () => {
-    if (item.type === 'status_change') {
+    if (item.metadata?.type === 'status_change') {
       switch (item.metadata?.icon) {
         case 'Diamond':
           return <Diamond className="h-4 w-4" />;
@@ -42,6 +42,38 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
         return <User className="h-4 w-4" />;
       default:
         return <User className="h-4 w-4" />;
+    }
+  };
+
+  const getBorderColor = () => {
+    if (item.metadata?.type === 'status_change') {
+      switch(item.metadata.newStatus) {
+        case 'partner':
+          return 'border-[#4CAF50]';
+        case 'customer':
+          return 'border-[#2196F3]';
+        case 'not_for_now':
+          return 'border-[#FFC107]';
+        case 'no_interest':
+          return 'border-[#F44336]';
+        default:
+          return 'border-gray-500';
+      }
+    }
+
+    switch (item.type) {
+      case 'task':
+        return item.status === 'completed' ? 'border-green-500' : 'border-cyan-500';
+      case 'appointment':
+        return 'border-orange-500';
+      case 'note':
+        return 'border-yellow-500';
+      case 'phase_change':
+        return 'border-purple-500';
+      case 'message':
+        return 'border-blue-500';
+      default:
+        return 'border-gray-500';
     }
   };
 
@@ -73,7 +105,9 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
             </Button>
           )}
         </div>
-        <p className="text-sm">{item.content}</p>
+        <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()}`}>
+          <p className="text-sm">{item.content}</p>
+        </div>
       </div>
     </div>
   );
