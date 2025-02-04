@@ -1,6 +1,6 @@
 import { DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2, Diamond, Trophy, Gem, Star } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { useState } from "react";
@@ -28,12 +28,8 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
       // If clicking the same status button, reset to normal state
       const status = lead.status === newStatus ? 'lead' : newStatus;
       
-      // Get default pipeline and phase for resetting when going back to lead status
-      let pipelineId: string;
-      let phaseId: string | null;
-
-      // First try to get existing pipeline
-      let { data: existingPipeline } = await supabase
+      // Get default pipeline and phase
+      const { data: defaultPipeline } = await supabase
         .from('pipelines')
         .select('id')
         .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
@@ -41,53 +37,24 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
         .limit(1)
         .single();
 
-      if (!existingPipeline) {
-        // Create a default pipeline if none exists
-        const { data: newPipeline, error: pipelineError } = await supabase
-          .from('pipelines')
-          .insert({
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-            name: "Pipeline",
-            order_index: 0
-          })
-          .select()
-          .single();
+      if (!defaultPipeline) throw new Error('No default pipeline found');
 
-        if (pipelineError) throw pipelineError;
-        pipelineId = newPipeline.id;
+      const { data: defaultPhase } = await supabase
+        .from('pipeline_phases')
+        .select('id')
+        .eq('pipeline_id', defaultPipeline.id)
+        .order('order_index')
+        .limit(1)
+        .single();
 
-        // Create default phase
-        const { data: newPhase, error: phaseError } = await supabase
-          .from('pipeline_phases')
-          .insert({
-            pipeline_id: pipelineId,
-            name: "Neue Kontakte",
-            order_index: 0
-          })
-          .select()
-          .single();
-
-        if (phaseError) throw phaseError;
-        phaseId = newPhase.id;
-      } else {
-        pipelineId = existingPipeline.id;
-        // Get default phase
-        const { data: defaultPhase } = await supabase
-          .from('pipeline_phases')
-          .select('id')
-          .eq('pipeline_id', pipelineId)
-          .order('order_index')
-          .limit(1)
-          .single();
-
-        if (!defaultPhase) throw new Error('No default phase found');
-        phaseId = defaultPhase.id;
-      }
+      if (!defaultPhase) throw new Error('No default phase found');
 
       const updates: Partial<Tables<"leads">> = {
         status,
-        pipeline_id: pipelineId,
-        phase_id: status === 'lead' ? phaseId : null,
+        ...(status === 'lead' ? {
+          pipeline_id: defaultPipeline.id,
+          phase_id: defaultPhase.id
+        } : {}),
         ...(status === 'partner' ? {
           onboarding_progress: {
             message_sent: false,
@@ -100,8 +67,8 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
 
       await onUpdateLead(updates);
 
-      // Create timeline entry with matching styling from Pool page
-      const { error: timelineError } = await supabase
+      // Create timeline entry
+      const { error: noteError } = await supabase
         .from('notes')
         .insert({
           lead_id: lead.id,
@@ -113,14 +80,11 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
           metadata: {
             type: 'status_change',
             oldStatus: lead.status,
-            newStatus: status,
-            icon: status === 'partner' ? 'Diamond' :
-                  status === 'customer' ? 'Trophy' :
-                  status === 'not_for_now' ? 'Gem' : 'Star'
+            newStatus: status
           }
         });
 
-      if (timelineError) throw timelineError;
+      if (noteError) throw noteError;
       
       toast.success(
         settings?.language === "en"
@@ -169,13 +133,10 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
               </Button>
             </div>
           </div>
-          {/* Only show phase selector for leads */}
-          {(!lead.status || lead.status === 'lead') && (
-            <CompactPhaseSelector
-              lead={lead}
-              onUpdateLead={onUpdateLead}
-            />
-          )}
+          <CompactPhaseSelector
+            lead={lead}
+            onUpdateLead={onUpdateLead}
+          />
         </div>
       </DialogHeader>
 
