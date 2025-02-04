@@ -37,7 +37,34 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
         .limit(1)
         .single();
 
-      if (!defaultPipeline) throw new Error('No default pipeline found');
+      if (!defaultPipeline) {
+        // Create a default pipeline if none exists
+        const { data: newPipeline, error: pipelineError } = await supabase
+          .from('pipelines')
+          .insert({
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            name: "Pipeline",
+            order_index: 0
+          })
+          .select()
+          .single();
+
+        if (pipelineError) throw pipelineError;
+        defaultPipeline = newPipeline;
+
+        // Create default phase
+        const { data: defaultPhase, error: phaseError } = await supabase
+          .from('pipeline_phases')
+          .insert({
+            pipeline_id: defaultPipeline.id,
+            name: "Neue Kontakte",
+            order_index: 0
+          })
+          .select()
+          .single();
+
+        if (phaseError) throw phaseError;
+      }
 
       const { data: defaultPhase } = await supabase
         .from('pipeline_phases')
@@ -53,13 +80,8 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
         status,
         // When changing to partner/customer/etc, remove from pipeline
         // When changing back to lead, put in default pipeline/phase
-        ...(status !== 'lead' ? {
-          pipeline_id: null,
-          phase_id: null
-        } : {
-          pipeline_id: defaultPipeline.id,
-          phase_id: defaultPhase.id
-        }),
+        pipeline_id: defaultPipeline.id,
+        phase_id: status === 'lead' ? defaultPhase.id : null,
         ...(status === 'partner' ? {
           onboarding_progress: {
             message_sent: false,
