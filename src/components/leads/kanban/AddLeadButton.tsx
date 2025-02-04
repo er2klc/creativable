@@ -38,9 +38,19 @@ export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadB
           </Button>
         </DialogTrigger>
         <DialogContent
-          className="sm:max-w-[425px]"
-          onInteractOutside={handleInteractOutside}
-        >
+  className="sm:max-w-[425px]"
+  onInteractOutside={(e) => {
+    // Überprüfen, ob das Ereignis von einem Autofill-Vorschlag stammt
+    if (
+      e.target instanceof Element &&
+      (e.target.matches('input:-webkit-autofill') || 
+       e.target.matches('input:-webkit-autofill *'))
+    ) {
+      // Autofill-Ereignisse ignorieren
+      e.preventDefault();
+    }
+  }}
+>
           <div className="grid grid-cols-3 gap-4 py-4">
             {/* Manuell Button */}
             <Button
