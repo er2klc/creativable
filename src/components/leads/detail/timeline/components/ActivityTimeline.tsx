@@ -1,5 +1,6 @@
 import { TimelineItem } from "../TimelineItem";
 import { TimelineItem as TimelineItemType } from "../TimelineUtils";
+import { motion } from "framer-motion";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -59,8 +60,18 @@ export const ActivityTimeline = ({ items, onDeletePhaseChange }: ActivityTimelin
     }
   });
 
+  const handleEdit = (item: TimelineItemType) => {
+    if (item.type === 'note') {
+      // Handle note edit
+      console.log('Edit note:', item.id);
+      // You'll need to implement the actual edit functionality here
+      // This could involve opening a modal or navigating to an edit page
+    }
+  };
+
   return (
-    <div className="relative space-y-6 pb-6">
+    <div className="relative space-y-6">
+      <div className="absolute left-4 top-2 bottom-2 w-[2px] bg-gray-400" />
       {items.map(item => (
         <TimelineItem 
           key={item.id} 
@@ -69,9 +80,7 @@ export const ActivityTimeline = ({ items, onDeletePhaseChange }: ActivityTimelin
             () => deleteItemMutation.mutate(item) : 
             undefined
           }
-          onEdit={item.type === 'note' ? () => {
-            console.log('Edit note:', item.id);
-          } : undefined}
+          onEdit={() => handleEdit(item)}
         />
       ))}
     </div>
