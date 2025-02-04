@@ -16,7 +16,7 @@ interface TimelineItemCardProps {
     fileType?: string;
     fileSize?: number;
     filePath?: string;
-    status?: "completed" | "cancelled" | "outdated";
+    status?: 'completed' | 'cancelled' | 'outdated';
     completedAt?: string;
     cancelledAt?: string;
     updatedAt?: string;
@@ -36,7 +36,7 @@ interface TimelineItemCardProps {
   isCompleted?: boolean;
 }
 
-export const TimelineItemCard = ({
+export const TimelineItemCard = ({ 
   type,
   content,
   metadata,
@@ -44,52 +44,25 @@ export const TimelineItemCard = ({
   onDelete,
   id,
   created_at,
-  isCompleted,
+  isCompleted
 }: TimelineItemCardProps) => {
   const { settings } = useSettings();
 
-  // Funktion zur Auswahl der Randfarbe
-  const getBorderColor = (type: string, status?: string, metadata?: { newStatus?: string }) => {
-    console.log("Type:", type); // Debugging
-    console.log("Status:", status); // Debugging
-    console.log("Metadata New Status:", metadata?.newStatus); // Debugging
-
-    if (type === "status_change") {
-      switch (metadata?.newStatus) {
-        case "partner":
-          return "border-pink-500";
-        case "customer":
-          return "border-sky-500";
-        case "not_for_now":
-          return "border-stone-500";
-        case "no_interest":
-          return "border-rose-500";
-        default:
-          return "border-gray-500"; // Standard-Farbe
-      }
-    }
-
-    switch (type) {
-      case "contact_created":
-        return "border-emerald-500";
-      case "message":
-        return "border-blue-500";
-      case "task":
-        return status === "completed" ? "border-green-500" : "border-orange-500";
-      case "appointment":
-        return status === "cancelled" ? "border-gray-400" : "border-indigo-500";
-      case "note":
-        return "border-yellow-400";
-      case "file_upload":
-        return "border-cyan-500";
-      default:
-        return "border-gray-200"; // Standard-Farbe
-    }
+  const getBorderColor = () => {
+    if (status === 'completed') return 'border-green-500';
+    if (status === 'cancelled') return 'border-red-500';
+    if (type === 'phase_change') return 'border-blue-500';
+    if (type === 'note') return 'border-yellow-400';
+    if (type === 'message') return 'border-purple-500';
+    if (type === 'appointment') return 'border-indigo-500';
+    if (type === 'task') return 'border-orange-500';
+    if (type === 'file_upload') return 'border-cyan-500';
+    if (type === 'contact_created') return 'border-emerald-500';
+    return 'border-gray-200';
   };
 
-  // Funktion zur Auswahl des Inhalts der Karte
   const renderContent = () => {
-    if (type === "task" && id) {
+    if (type === 'task' && id) {
       return (
         <TaskCard
           id={id}
@@ -101,7 +74,7 @@ export const TimelineItemCard = ({
       );
     }
 
-    if (type === "appointment" && id) {
+    if (type === 'appointment' && id) {
       return (
         <AppointmentCard
           id={id}
@@ -112,11 +85,16 @@ export const TimelineItemCard = ({
       );
     }
 
-    if (type === "file_upload") {
-      return <FileCard content={content} metadata={metadata} />;
+    if (type === 'file_upload') {
+      return (
+        <FileCard
+          content={content}
+          metadata={metadata}
+        />
+      );
     }
 
-    if (type === "note" && id) {
+    if (type === 'note' && id) {
       return (
         <NoteCard
           id={id}
@@ -129,22 +107,18 @@ export const TimelineItemCard = ({
 
     return (
       <div className="relative group">
-        <div className="whitespace-pre-wrap break-words">{content}</div>
+        <div className="whitespace-pre-wrap break-words">
+          {content}
+        </div>
         {onDelete && <DeleteButton onDelete={onDelete} />}
       </div>
     );
   };
 
   return (
-    <div
-      className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor(
-        type,
-        status,
-        metadata
-      )} group relative`}
-    >
+    <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}>
       {renderContent()}
-      <MetadataDisplay
+      <MetadataDisplay 
         last_edited_at={metadata?.last_edited_at}
         created_at={created_at}
       />
