@@ -1,6 +1,6 @@
 import { DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Diamond, Trophy, Gem, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { useState } from "react";
@@ -28,7 +28,7 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
       // If clicking the same status button, reset to normal state
       const status = lead.status === newStatus ? 'lead' : newStatus;
       
-      // Get default pipeline and phase
+      // Get default pipeline and phase for resetting when going back to lead status
       const { data: defaultPipeline } = await supabase
         .from('pipelines')
         .select('id')
@@ -51,10 +51,15 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
 
       const updates: Partial<Tables<"leads">> = {
         status,
-        ...(status === 'lead' ? {
+        // When changing to partner/customer/etc, remove from pipeline
+        // When changing back to lead, put in default pipeline/phase
+        ...(status !== 'lead' ? {
+          pipeline_id: null,
+          phase_id: null
+        } : {
           pipeline_id: defaultPipeline.id,
           phase_id: defaultPhase.id
-        } : {}),
+        }),
         ...(status === 'partner' ? {
           onboarding_progress: {
             message_sent: false,
@@ -68,7 +73,7 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
       await onUpdateLead(updates);
 
       // Create timeline entry with matching styling from Pool page
-      const { error: noteError } = await supabase
+      const { error: timelineError } = await supabase
         .from('notes')
         .insert({
           lead_id: lead.id,
@@ -80,11 +85,14 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
           metadata: {
             type: 'status_change',
             oldStatus: lead.status,
-            newStatus: status
+            newStatus: status,
+            icon: status === 'partner' ? 'Diamond' :
+                  status === 'customer' ? 'Trophy' :
+                  status === 'not_for_now' ? 'Gem' : 'Star'
           }
         });
 
-      if (noteError) throw noteError;
+      if (timelineError) throw timelineError;
       
       toast.success(
         settings?.language === "en"
@@ -133,10 +141,13 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
               </Button>
             </div>
           </div>
-          <CompactPhaseSelector
-            lead={lead}
-            onUpdateLead={onUpdateLead}
-          />
+          {/* Only show phase selector for leads */}
+          {(!lead.status || lead.status === 'lead') && (
+            <CompactPhaseSelector
+              lead={lead}
+              onUpdateLead={onUpdateLead}
+            />
+          )}
         </div>
       </DialogHeader>
 

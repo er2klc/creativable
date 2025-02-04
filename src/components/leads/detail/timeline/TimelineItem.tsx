@@ -1,83 +1,80 @@
+import { cn } from "@/lib/utils";
 import { TimelineItem as TimelineItemType } from "./TimelineUtils";
-import { TimelineItemIcon } from "./TimelineItemIcon";
-import { TimelineItemCard } from "./TimelineItemCard";
-import { formatDate } from "./TimelineUtils";
-import { motion } from "framer-motion";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Trash2, MessageCircle, Calendar, FileText, User, Diamond, Trophy, Gem, Star } from "lucide-react";
 import { de } from "date-fns/locale";
+import { useSettings } from "@/hooks/use-settings";
 
 interface TimelineItemProps {
   item: TimelineItemType;
-  onDelete?: (noteId: string) => void;
+  onDelete?: () => void;
 }
 
 export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
-  const isOutdated = item.type === 'appointment' && 
-    (item.status === 'cancelled' || item.metadata?.status === 'outdated');
+  const { settings } = useSettings();
+  const isGerman = settings?.language !== "en";
 
-  // Only allow deletion of phase changes
-  const canDelete = onDelete && item.type === 'phase_change';
+  const getIcon = () => {
+    if (item.type === 'status_change') {
+      switch (item.metadata?.icon) {
+        case 'Diamond':
+          return <Diamond className="h-4 w-4" />;
+        case 'Trophy':
+          return <Trophy className="h-4 w-4" />;
+        case 'Gem':
+          return <Gem className="h-4 w-4" />;
+        case 'Star':
+          return <Star className="h-4 w-4" />;
+        default:
+          return <User className="h-4 w-4" />;
+      }
+    }
 
-  const isTaskCompleted = item.type === 'task' && item.metadata?.status === 'completed';
-  const completedDate = item.metadata?.completedAt ? 
-    format(new Date(item.metadata.completedAt), 'PPp', { locale: de }) : null;
+    switch (item.type) {
+      case 'message':
+        return <MessageCircle className="h-4 w-4" />;
+      case 'task':
+        return <Calendar className="h-4 w-4" />;
+      case 'file_upload':
+        return <FileText className="h-4 w-4" />;
+      case 'contact_created':
+        return <User className="h-4 w-4" />;
+      default:
+        return <User className="h-4 w-4" />;
+    }
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      key={item.id} 
-      className="flex flex-col gap-1"
-    >
-      {/* Date above the card */}
-      <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
-        {formatDate(item.timestamp)}
-        {isTaskCompleted && completedDate && (
-          <span className="text-green-600">
-            (Erledigt am {completedDate})
-          </span>
+    <div className="relative pl-8">
+      <div
+        className={cn(
+          "absolute left-0 p-2 rounded-full",
+          item.metadata?.type === 'status_change' ? item.color : 'bg-gray-100'
         )}
+      >
+        {getIcon()}
       </div>
-      
-      <div className="flex gap-4 items-start group relative">
-        {/* Circle with Icon */}
-        <div className="relative">
-          <TimelineItemIcon 
-            type={item.type} 
-            status={item.metadata?.status} 
-            platform={item.platform} 
-          />
-          {isOutdated && (
-            <div className="absolute -top-1 -right-1 bg-gray-400 rounded-full p-0.5">
-              <svg 
-                className="h-3 w-3 text-white" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2"
-              >
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </div>
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-500">
+            {format(new Date(item.timestamp), isGerman ? "dd.MM.yyyy HH:mm" : "MMM d, yyyy HH:mm", {
+              locale: isGerman ? de : undefined
+            })}
+          </span>
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+              onClick={onDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           )}
         </div>
-        
-        {/* Connecting Line to Card */}
-        <div className="absolute left-8 top-[1.1rem] w-4 h-0.5 bg-gray-400" />
-        
-        {/* Event Card */}
-        <TimelineItemCard 
-          type={item.type}
-          content={item.content}
-          metadata={item.metadata}
-          status={item.status}
-          onDelete={canDelete ? () => onDelete(item.id) : undefined}
-          id={item.id}
-          created_at={item.created_at}
-          isCompleted={isTaskCompleted}
-        />
+        <p className="text-sm">{item.content}</p>
       </div>
-    </motion.div>
+    </div>
   );
 };
