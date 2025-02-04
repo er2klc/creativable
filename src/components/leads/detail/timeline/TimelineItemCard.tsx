@@ -51,9 +51,9 @@ export const TimelineItemCard = ({
   const getBorderColor = () => {
     if (status === 'completed') return 'border-green-500';
     if (status === 'cancelled') return 'border-red-500';
-    if (type === 'phase_change') return 'border-blue-500';
+    if (type === 'phase_change') return 'border-purple-500';
     if (type === 'note') return 'border-yellow-400';
-    if (type === 'message') return 'border-purple-500';
+    if (type === 'message') return 'border-blue-500';
     if (type === 'appointment') return 'border-indigo-500';
     if (type === 'task') return 'border-orange-500';
     if (type === 'file_upload') return 'border-cyan-500';
