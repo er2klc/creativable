@@ -1,4 +1,5 @@
 import { TimelineItem } from "../TimelineUtils";
+import { Tables } from "@/integrations/supabase/types";
 
 export const mapNoteToTimelineItem = (note: any): TimelineItem => ({
   id: note.id,
@@ -62,18 +63,35 @@ export const createContactCreationItem = (name: string, created_at: string): Tim
   }
 });
 
-export const createStatusChangeItem = (status: string, timestamp: string, oldStatus?: string): TimelineItem | null => {
+export const createStatusChangeItem = (status: string, timestamp: string, name?: string): TimelineItem | null => {
   // Don't create timeline item for 'lead' status
   if (status === 'lead') return null;
+
+  let content = '';
+  switch (status) {
+    case 'partner':
+      content = `${name || 'Kontakt'} ist jetzt dein neuer Partner! 🚀`;
+      break;
+    case 'customer':
+      content = `${name || 'Kontakt'} ist jetzt Kunde – viel Erfolg! 🎉`;
+      break;
+    case 'not_for_now':
+      content = `${name || 'Kontakt'} ist aktuell nicht bereit – bleib dran! ⏳`;
+      break;
+    case 'no_interest':
+      content = `${name || 'Kontakt'} hat kein Interesse – weiter geht's! 🚀`;
+      break;
+    default:
+      content = `Status geändert zu ${status}`;
+  }
 
   return {
     id: `status-${timestamp}`,
     type: 'status_change',
-    content: `Status geändert zu ${status}`,
-    timestamp: timestamp,
+    content,
+    timestamp,
     metadata: {
       type: 'status_change',
-      oldStatus,
       newStatus: status,
       timestamp
     }
