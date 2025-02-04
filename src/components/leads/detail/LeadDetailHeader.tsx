@@ -23,50 +23,89 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
   const { settings } = useSettings();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  /**
-   * Statusänderung für einen Lead verwalten.
-   * - Speichert den Status direkt in der `leads`-Tabelle.
-   * - Keine Speicherung mehr in `notes` oder `timeline`.
-   * - Timeline zeigt den aktuellen `status` aus `leads`.
-   */
   const handleStatusChange = async (newStatus: string) => {
     try {
-      // Falls derselbe Status gewählt wurde, wird er zurück auf 'lead' gesetzt
-      const status = lead.status === newStatus ? "lead" : newStatus;
+      // If clicking the same status button, reset to normal state
+      const status = lead.status === newStatus ? 'lead' : newStatus;
+      
+      // Get default pipeline and phase
+      const { data: defaultPipeline } = await supabase
+        .from('pipelines')
+        .select('id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .order('order_index')
+        .limit(1)
+        .single();
 
-      // Aktualisierung des Status direkt in der `leads`-Tabelle
+      if (!defaultPipeline) throw new Error('No default pipeline found');
+
+      const { data: defaultPhase } = await supabase
+        .from('pipeline_phases')
+        .select('id')
+        .eq('pipeline_id', defaultPipeline.id)
+        .order('order_index')
+        .limit(1)
+        .single();
+
+      if (!defaultPhase) throw new Error('No default phase found');
+
       const updates: Partial<Tables<"leads">> = {
         status,
+        ...(status === 'lead' ? {
+          pipeline_id: defaultPipeline.id,
+          phase_id: defaultPhase.id
+        } : {}),
+        ...(status === 'partner' ? {
+          onboarding_progress: {
+            message_sent: false,
+            team_invited: false,
+            training_provided: false,
+            intro_meeting_scheduled: false
+          }
+        } : {})
       };
 
       await onUpdateLead(updates);
 
-      // Erfolgreiche Statusänderung bestätigen
+      // Create timeline entry
+      const { error: noteError } = await supabase
+        .from('notes')
+        .insert({
+          lead_id: lead.id,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          content: `Status geändert zu ${status}`,
+          color: status === 'partner' ? '#4CAF50' : 
+                 status === 'customer' ? '#2196F3' : 
+                 status === 'not_for_now' ? '#FFC107' : '#F44336',
+          metadata: {
+            type: 'status_change',
+            oldStatus: lead.status,
+            newStatus: status
+          }
+        });
+
+      if (noteError) throw noteError;
+      
       toast.success(
         settings?.language === "en"
-          ? "Status erfolgreich aktualisiert"
+          ? "Status updated successfully"
           : "Status erfolgreich aktualisiert"
       );
+      
     } catch (error) {
-      console.error("Fehler beim Aktualisieren des Status:", error);
+      console.error('Error updating status:', error);
       toast.error(
         settings?.language === "en"
-          ? "Fehler beim Aktualisieren des Status"
+          ? "Error updating status"
           : "Fehler beim Aktualisieren des Status"
       );
     }
   };
 
-  /**
-   * Öffnet den Bestätigungsdialog für das Löschen eines Leads.
-   */
   const handleDelete = () => {
     setShowDeleteDialog(true);
   };
 
-  /**
-   * Bestätigt das Löschen eines Leads und schließt den Dialog.
-   */
   const handleDeleteConfirm = () => {
     setShowDeleteDialog(false);
     onDeleteLead();
@@ -74,17 +113,15 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
 
   return (
     <>
-      {/* DialogHeader für die Lead-Details */}
       <DialogHeader className="p-6 bg-card border-b">
         <div className="flex flex-col space-y-4">
           <div className="flex justify-between items-start border-b">
-            {/* Lead-Name und Plattform anzeigen */}
             <LeadName name={lead.name} platform={lead.platform as Platform} />
-
-            {/* StatusButtons für die Statusänderung + Lösch-Button */}
             <div className="flex gap-2">
-              <StatusButtons status={lead.status || "lead"} onStatusChange={handleStatusChange} />
-
+              <StatusButtons 
+                status={lead.status || 'lead'} 
+                onStatusChange={handleStatusChange}
+              />
               <Button
                 variant="outline"
                 size="sm"
@@ -96,14 +133,14 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
               </Button>
             </div>
           </div>
-
-          {/* Kompakte Phasen-Auswahl */}
-          <CompactPhaseSelector lead={lead} onUpdateLead={onUpdateLead} />
+          <CompactPhaseSelector
+            lead={lead}
+            onUpdateLead={onUpdateLead}
+          />
         </div>
       </DialogHeader>
 
-      {/* Bestätigungsdialog für das Löschen eines Leads */}
-      <DeleteLeadDialog
+      <DeleteLeadDialog 
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
         onConfirm={handleDeleteConfirm}

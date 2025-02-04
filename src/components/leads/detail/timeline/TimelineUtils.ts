@@ -4,9 +4,8 @@ import { de } from "date-fns/locale";
 export type TimelineItemType = 
   | 'note'
   | 'task'
-  | 'appointment'
+  | 'appointment'  // This needs to be explicitly defined
   | 'phase_change'
-  | 'status_change'
   | 'message'
   | 'file_upload'
   | 'contact_created';

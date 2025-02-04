@@ -41,11 +41,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
         .eq("id", leadId)
         .maybeSingle();
 
-      // 🚀 Filtere Statusänderungen aus `notes`
-      if (data && data.notes) {
-        data.notes = data.notes.filter((note) => note.metadata?.type !== "status_change");
-      }
-
       if (error) {
         console.error("Error fetching lead:", error);
         throw error;
