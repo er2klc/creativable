@@ -9,6 +9,8 @@ import { MediaDisplay } from "./MediaDisplay";
 import { PostActions } from "./components/PostActions";
 import { Video, Image, MessageCircle } from "lucide-react";
 import { formatDateTime } from "../utils/dateUtils";
+import { useSettings } from "@/hooks/use-settings"; // ✅ Import für `settings` hinzugefügt
+
 
 interface SocialMediaPostProps {
   post: SocialMediaPostType;
@@ -42,6 +44,8 @@ const getPostTypeIcon = (type: string) => {
 };
 
 export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
+  const { settings } = useSettings(); // ✅ settings initialisieren
+
   if (post.id.startsWith('temp-') || post.post_type?.toLowerCase() === 'post') {
     return null;
   }
