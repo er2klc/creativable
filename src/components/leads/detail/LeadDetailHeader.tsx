@@ -67,31 +67,45 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
 
       await onUpdateLead(updates);
 
-      // Create timeline entry
-      const { error: noteError } = await supabase
-        .from('notes')
-        .insert({
-          lead_id: lead.id,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          content: `Status geändert zu ${status}`,
-          color: status === 'partner' ? '#4CAF50' : 
-                 status === 'customer' ? '#2196F3' : 
-                 status === 'not_for_now' ? '#FFC107' : '#F44336',
-          metadata: {
-            type: 'status_change',
-            oldStatus: lead.status,
-            newStatus: status
-          }
-        });
+     // 💡 **Jetzt trennen wir Notizen & Statusänderungen**
+      if (newStatus === 'partner' || newStatus === 'customer' || newStatus === 'not_for_now' || newStatus === 'no_interest') {
+        // 🚀 **Statusänderung in die Timeline-Tabelle speichern**
+        const { error: timelineError } = await supabase
+          .from('timeline')
+          .insert({
+            lead_id: lead.id,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            type: 'status_change', // ✅ Richtiger Typ für Statusänderung
+            content: `Status geändert zu ${status}`,
+            metadata: {
+              oldStatus: lead.status,
+              newStatus: status
+            }
+          });
 
-      if (noteError) throw noteError;
-      
+        if (timelineError) throw timelineError;
+      } else {
+        // ✏️ **Notiz speichern, wenn es sich NICHT um eine Statusänderung handelt**
+        const { error: noteError } = await supabase
+          .from('notes')
+          .insert({
+            lead_id: lead.id,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            content: `Notiz hinzugefügt: ${status}`, // 👈 Hier evtl. einen anderen Text nehmen?
+            metadata: {
+              type: 'note'
+            }
+          });
+
+        if (noteError) throw noteError;
+      }
+
       toast.success(
         settings?.language === "en"
           ? "Status updated successfully"
           : "Status erfolgreich aktualisiert"
       );
-      
+
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error(
