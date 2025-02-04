@@ -51,13 +51,31 @@ export const mapFileToTimelineItem = (file: any): TimelineItem => ({
   }
 });
 
-export const createContactCreationItem = (leadName: string, createdAt: string): TimelineItem => ({
-  id: 'contact-creation',
+export const createContactCreationItem = (name: string, created_at: string): TimelineItem => ({
+  id: `contact-creation-${created_at}`,
   type: 'contact_created',
-  content: `Kontakt ${leadName} wurde erstellt`,
-  created_at: createdAt,
-  timestamp: createdAt,
+  content: `Kontakt ${name} wurde erstellt`,
+  created_at: created_at,
+  timestamp: created_at,
   metadata: {
     type: 'contact_created'
   }
 });
+
+export const createStatusChangeItem = (status: string, timestamp: string, oldStatus?: string): TimelineItem | null => {
+  // Don't create timeline item for 'lead' status
+  if (status === 'lead') return null;
+
+  return {
+    id: `status-${timestamp}`,
+    type: 'status_change',
+    content: `Status geändert zu ${status}`,
+    timestamp: timestamp,
+    metadata: {
+      type: 'status_change',
+      oldStatus,
+      newStatus: status,
+      timestamp
+    }
+  };
+};

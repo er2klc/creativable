@@ -10,7 +10,8 @@ import {
   mapTaskToTimelineItem, 
   mapMessageToTimelineItem, 
   mapFileToTimelineItem,
-  createContactCreationItem 
+  createContactCreationItem,
+  createStatusChangeItem 
 } from "./timeline/utils/timelineMappers";
 
 interface LeadTimelineProps {
@@ -39,18 +40,13 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
      Array.isArray(JSON.parse(typeof lead.apify_instagram_data === 'string' ? lead.apify_instagram_data : '[]')));
   const showSocialTimeline = hasLinkedInPosts || hasSocialPosts || hasInstagramData;
 
-  const statusChangeItem = {
-    id: `status-${lead.id}`,
-    type: 'status_change' as const,
-    content: `Status geändert zu ${lead.status}`,
-    timestamp: lead.updated_at || lead.created_at || new Date().toISOString(),
-    metadata: {
-      newStatus: lead.status
-    }
-  };
+  const statusChangeItem = createStatusChangeItem(
+    lead.status || 'lead',
+    lead.updated_at || lead.created_at || new Date().toISOString()
+  );
 
   const allActivities = [
-    statusChangeItem,
+    ...(statusChangeItem ? [statusChangeItem] : []),
     ...(lead.notes || []).map(mapNoteToTimelineItem),
     ...(lead.tasks || []).map(mapTaskToTimelineItem),
     ...(lead.messages || []).map(mapMessageToTimelineItem),
