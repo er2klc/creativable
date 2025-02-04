@@ -8,7 +8,7 @@ export const getMeetingTypeLabel = (meetingTypeValue: string) => {
 
 export const formatDateTime = (dateString: string, language: string = 'de') => {
   const date = new Date(dateString);
-  return format(date, "EEE'.' dd'.' MMM'.' yyyy HH:mm 'Uhr'", { 
+  return format(date, "EEEE', den' d. MMM yyyy '|' HH:mm 'Uhr'", { 
     locale: language === 'en' ? undefined : de 
   });
 };

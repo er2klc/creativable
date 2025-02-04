@@ -1,10 +1,9 @@
 import { TimelineItem as TimelineItemType } from "./TimelineUtils";
 import { TimelineItemIcon } from "./TimelineItemIcon";
 import { TimelineItemCard } from "./TimelineItemCard";
-import { formatDate } from "./TimelineUtils";
+import { formatDateTime } from "./utils/dateUtils";
 import { motion } from "framer-motion";
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import { useSettings } from "@/hooks/use-settings";
 
 interface TimelineItemProps {
   item: TimelineItemType;
@@ -12,6 +11,7 @@ interface TimelineItemProps {
 }
 
 export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
+  const { settings } = useSettings();
   const isOutdated = item.type === 'appointment' && 
     (item.status === 'cancelled' || item.metadata?.status === 'outdated');
 
@@ -20,7 +20,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
 
   const isTaskCompleted = item.type === 'task' && item.metadata?.status === 'completed';
   const completedDate = item.metadata?.completedAt ? 
-    format(new Date(item.metadata.completedAt), 'PPp', { locale: de }) : null;
+    formatDateTime(item.metadata.completedAt, settings?.language) : null;
 
   return (
     <motion.div
@@ -32,7 +32,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
     >
       {/* Date above the card */}
       <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
-        {formatDate(item.timestamp)}
+        {formatDateTime(item.timestamp, settings?.language)}
         {isTaskCompleted && completedDate && (
           <span className="text-green-600">
             (Erledigt am {completedDate})
