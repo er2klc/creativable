@@ -18,56 +18,30 @@ export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadB
   const [isLinkedInDialogOpen, setIsLinkedInDialogOpen] = useState(false);
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
 
-  const handleInteractOutside = (e: Event) => {
-    if (
-      e.target instanceof Element &&
-      (e.target.matches('input:-webkit-autofill') ||
-        e.target.matches('input:-webkit-autofill *'))
-    ) {
-      // Autofill-Ereignisse ignorieren
-      e.preventDefault();
-    }
-  };
-
   return (
     <>
-      <Dialog open={isMainDialogOpen} onOpenChange={setIsMainDialogOpen} modal={true}>
+      <Dialog 
+        open={isMainDialogOpen} 
+        onOpenChange={setIsMainDialogOpen}
+        modal={true}
+      >
         <DialogTrigger asChild>
-          <Button
-            variant={variant}
-            size="sm"
+          <Button 
+            variant="ghost" 
+            size="sm" 
             className="w-full text-muted-foreground hover:text-foreground bg-transparent hover:bg-transparent"
           >
             <UserPlus className="h-4 w-4 mr-2" />
             Neuer Kontakt
           </Button>
         </DialogTrigger>
-
-        <DialogContent
-  className="sm:max-w-[425px]"
-  onInteractOutside={(e) => {
-    // Überprüfen, ob das Ereignis von einem Autofill-Vorschlag stammt
-    if (
-      e.target instanceof Element &&
-      (e.target.matches('input:-webkit-autofill') ||
-        e.target.matches('input:-webkit-autofill *'))
-    ) {
-      e.preventDefault(); // Autofill-Ereignisse ignorieren
-      return;
-    }
-
-    // Mausverlassen des Fensters ignorieren
-    if (e.detail.source === "pointer" && e.relatedTarget === null) {
-      e.preventDefault(); // Fenster verlassen wird nicht als "Outside" betrachtet
-      return;
-    }
-  }}
->
-  {/* Dialoginhalt */}
-</DialogContent>
-
+        <DialogContent 
+          className="sm:max-w-[425px]"
+          onInteractOutside={(e) => {
+            e.preventDefault();
+          }}
+        >
           <div className="grid grid-cols-3 gap-4 py-4">
-            {/* Manuell Button */}
             <Button
               variant="outline"
               className="flex flex-col items-center gap-2 h-auto py-4"
@@ -82,8 +56,7 @@ export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadB
               </div>
               <span className="text-sm">Manuell</span>
             </Button>
-
-            {/* Instagram Button */}
+            
             <Button
               variant="outline"
               className="flex flex-col items-center gap-2 h-auto py-4"
@@ -104,7 +77,6 @@ export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadB
               <span className="text-sm">Instagram</span>
             </Button>
 
-            {/* LinkedIn Button */}
             <Button
               variant="outline"
               className="flex flex-col items-center gap-2 h-auto py-4"
@@ -128,7 +100,6 @@ export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadB
         </DialogContent>
       </Dialog>
 
-      {/* Manuell hinzufügen */}
       <AddLeadDialog
         open={isManualDialogOpen}
         onOpenChange={setIsManualDialogOpen}
@@ -136,7 +107,6 @@ export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadB
         pipelineId={pipelineId}
       />
 
-      {/* Instagram-Kontakt hinzufügen */}
       <CreateInstagramContactDialog
         open={isInstagramDialogOpen}
         onOpenChange={setIsInstagramDialogOpen}
@@ -144,7 +114,6 @@ export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadB
         defaultPhase={phase}
       />
 
-      {/* LinkedIn-Kontakt hinzufügen */}
       <CreateLinkedInContactDialog
         open={isLinkedInDialogOpen}
         onOpenChange={setIsLinkedInDialogOpen}
