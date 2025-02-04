@@ -8,6 +8,7 @@ import { PostMetadata } from "./components/PostMetadata";
 import { MediaDisplay } from "./MediaDisplay";
 import { PostActions } from "./components/PostActions";
 import { Video, Image, MessageCircle } from "lucide-react";
+import { formatDateTime } from "../utils/dateUtils";
 
 interface SocialMediaPostProps {
   post: SocialMediaPostType;
@@ -58,8 +59,9 @@ export const SocialMediaPost = ({ post }: SocialMediaPostProps) => {
       transition={{ duration: 0.3 }}
       className="flex flex-col gap-1"
     >
+       {/* Date above the card */}
       <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
-        {post.timestamp || post.posted_at || ""}
+        {formatDateTime(item.timestamp, settings?.language)}
       </div>
 
       <div className="flex gap-4 items-start group relative">
