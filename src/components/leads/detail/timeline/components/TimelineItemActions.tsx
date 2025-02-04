@@ -11,7 +11,7 @@ export const TimelineItemActions = ({ onEdit, onDelete, type }: TimelineItemActi
   const showEdit = ['note', 'task', 'appointment'].includes(type);
   
   return (
-    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 z-20">
       {showEdit && onEdit && (
         <Button
           variant="ghost"
