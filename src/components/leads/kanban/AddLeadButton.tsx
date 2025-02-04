@@ -38,22 +38,12 @@ export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadB
         <DialogContent 
           className="sm:max-w-[425px]"
           onPointerDownOutside={(e) => {
-            // Check if the event target is related to autofill
-            const target = e.target as HTMLElement;
-            if (target.closest('[data-autofill], .autofill, [autocomplete]')) {
-              e.preventDefault();
-            }
+            // Prevent closing when clicking outside
+            e.preventDefault();
           }}
           onInteractOutside={(e) => {
-            // Prevent closing when interacting with autofill suggestions
-            const target = e.target as HTMLElement;
-            if (
-              target.closest('[data-autofill], .autofill, [autocomplete]') ||
-              // Additional check for Chrome's autofill popup
-              target.matches('input:-webkit-autofill, input:-internal-autofill-selected')
-            ) {
-              e.preventDefault();
-            }
+            // Prevent closing when interacting outside
+            e.preventDefault();
           }}
         >
           <div className="grid grid-cols-3 gap-4 py-4">
