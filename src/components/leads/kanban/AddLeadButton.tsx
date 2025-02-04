@@ -38,11 +38,12 @@ export function AddLeadButton({ phase, pipelineId, variant = "ghost" }: AddLeadB
         <DialogContent 
           className="sm:max-w-[425px]"
           onPointerDownOutside={(e) => {
-            // Prevent closing when clicking outside
             e.preventDefault();
           }}
           onInteractOutside={(e) => {
-            // Prevent closing when interacting outside
+            e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
             e.preventDefault();
           }}
         >
