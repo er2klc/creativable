@@ -1,11 +1,13 @@
-import { ListTodo, StickyNote, MessageCircle, User, Calendar, FileText, ArrowUpCircle } from "lucide-react";
+import { Calendar, ListTodo, StickyNote, MessageCircle, User, FileText, ArrowUpCircle } from "lucide-react";
 import { TimelineItemType } from "../TimelineUtils";
 
 interface TimelineItemIconProps {
   type: TimelineItemType;
   metadata?: {
     type?: string;
-    icon?: string;
+    oldStatus?: string;
+    newStatus?: string;
+    meetingType?: string;
   };
 }
 

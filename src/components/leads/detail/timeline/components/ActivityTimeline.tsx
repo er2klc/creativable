@@ -61,8 +61,6 @@ export const ActivityTimeline = ({ items, onDeletePhaseChange }: ActivityTimelin
 
   return (
     <div className="relative space-y-6">
-      {/* Timeline line with higher z-index */}
-      <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-400 z-0" />
       {items.map(item => (
         <TimelineItem 
           key={item.id} 

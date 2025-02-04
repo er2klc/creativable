@@ -12,7 +12,10 @@ interface TimelineItemProps {
 
 export const TimelineItem = ({ item, onDelete, onEdit }: TimelineItemProps) => {
   return (
-    <div className="relative pl-8">
+    <div className="relative pl-12">
+      {/* Timeline line with higher z-index */}
+      <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-400 z-0" />
+      
       {/* Icon container with z-index to stay above the line */}
       <div className="absolute left-0 p-2 rounded-full z-10 bg-white">
         <TimelineItemIcon type={item.type} metadata={item.metadata} />
