@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Linkedin } from "lucide-react";
 
 interface LinkedInScanFormProps {
@@ -21,9 +20,7 @@ export function LinkedInScanForm({
   isLoading,
   isSuccess,
   onSubmit,
-  onCancel,
-  contactType,
-  setContactType
+  onCancel
 }: LinkedInScanFormProps) {
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-6">
@@ -50,28 +47,6 @@ export function LinkedInScanForm({
             disabled={isLoading}
           />
         </div>
-
-        <div className="space-y-2">
-          <Label>Kontakttyp</Label>
-          <RadioGroup
-            value={contactType}
-            onValueChange={setContactType}
-            className="flex gap-4"
-          >
-            <div className={`flex items-center space-x-2 rounded-lg p-2 transition-colors ${
-              contactType === "Partner" ? "bg-[#E5DEFF]/30" : ""
-            }`}>
-              <RadioGroupItem value="Partner" id="partner" />
-              <Label htmlFor="partner" className="cursor-pointer">Likely Partner</Label>
-            </div>
-            <div className={`flex items-center space-x-2 rounded-lg p-2 transition-colors ${
-              contactType === "Kunde" ? "bg-[#F2FCE2]/30" : ""
-            }`}>
-              <RadioGroupItem value="Kunde" id="kunde" />
-              <Label htmlFor="kunde" className="cursor-pointer">Likely Kunde</Label>
-            </div>
-          </RadioGroup>
-        </div>
       </div>
 
       <div className="flex justify-end space-x-2 pt-4">
@@ -83,7 +58,7 @@ export function LinkedInScanForm({
         >
           Abbrechen
         </Button>
-        <Button type="submit" disabled={isLoading || !username || !contactType}>
+        <Button type="submit" disabled={isLoading || !username}>
           {isLoading ? "Wird geladen..." : "Kontakt hinzufügen"}
         </Button>
       </div>

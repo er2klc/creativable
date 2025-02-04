@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,6 @@ export function CreateInstagramContactDialog({
   defaultPhase 
 }: CreateInstagramContactDialogProps) {
   const [username, setUsername] = useState("");
-  const [contactType, setContactType] = useState("");
   const scanState = useInstagramScan();
 
   // Close dialog when scan reaches 100%
@@ -78,11 +77,6 @@ export function CreateInstagramContactDialog({
       return;
     }
 
-    if (!contactType) {
-      toast.error("Bitte wähle einen Kontakttyp aus");
-      return;
-    }
-
     try {
       scanState.setIsLoading(true);
       scanState.setScanProgress(0);
@@ -114,7 +108,6 @@ export function CreateInstagramContactDialog({
           social_media_username: username,
           pipeline_id: targetPipelineId,
           phase_id: targetPhaseId,
-          contact_type: contactType,
           industry: "Not Specified"
         })
         .select()
@@ -189,8 +182,8 @@ export function CreateInstagramContactDialog({
             isSuccess={scanState.isSuccess}
             onSubmit={handleSubmit}
             onCancel={() => onOpenChange(false)}
-            contactType={contactType}
-            setContactType={setContactType}
+            contactType=""
+            setContactType={() => {}}
           />
         )}
       </DialogContent>

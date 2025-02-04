@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useSettings } from "@/hooks/use-settings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -25,7 +22,6 @@ export function CreateLinkedInContactDialog({
   defaultPhase
 }: CreateLinkedInContactDialogProps) {
   const [username, setUsername] = useState("");
-  const [contactType, setContactType] = useState("");
   const scanState = useLinkedInScan();
   const { settings } = useSettings();
 
@@ -84,11 +80,6 @@ export function CreateLinkedInContactDialog({
       return;
     }
 
-    if (!contactType) {
-      toast.error("Bitte wähle einen Kontakttyp aus");
-      return;
-    }
-
     try {
       scanState.setIsLoading(true);
       scanState.setScanProgress(0);
@@ -120,7 +111,6 @@ export function CreateLinkedInContactDialog({
           social_media_username: username,
           pipeline_id: targetPipelineId,
           phase_id: targetPhaseId,
-          contact_type: contactType,
           industry: "Not Specified"
         })
         .select()
@@ -177,8 +167,8 @@ export function CreateLinkedInContactDialog({
             isSuccess={scanState.isSuccess}
             onSubmit={handleSubmit}
             onCancel={() => onOpenChange(false)}
-            contactType={contactType}
-            setContactType={setContactType}
+            contactType=""
+            setContactType={() => {}}
           />
         )}
       </DialogContent>

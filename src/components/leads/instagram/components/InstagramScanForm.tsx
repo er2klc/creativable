@@ -3,7 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, Instagram } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface InstagramScanFormProps {
   username: string;
@@ -22,9 +21,7 @@ export function InstagramScanForm({
   isLoading,
   isSuccess,
   onSubmit,
-  onCancel,
-  contactType,
-  setContactType
+  onCancel
 }: InstagramScanFormProps) {
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-6">
@@ -55,28 +52,6 @@ export function InstagramScanForm({
             />
           </div>
         </div>
-
-        <div className="space-y-2">
-          <Label>Kontakttyp</Label>
-          <RadioGroup
-            value={contactType}
-            onValueChange={setContactType}
-            className="flex gap-4"
-          >
-            <div className={`flex items-center space-x-2 rounded-lg p-2 transition-colors ${
-              contactType === "Partner" ? "bg-[#E5DEFF]/30" : ""
-            }`}>
-              <RadioGroupItem value="Partner" id="partner" />
-              <Label htmlFor="partner" className="cursor-pointer">Likely Partner</Label>
-            </div>
-            <div className={`flex items-center space-x-2 rounded-lg p-2 transition-colors ${
-              contactType === "Kunde" ? "bg-[#F2FCE2]/30" : ""
-            }`}>
-              <RadioGroupItem value="Kunde" id="kunde" />
-              <Label htmlFor="kunde" className="cursor-pointer">Likely Kunde</Label>
-            </div>
-          </RadioGroup>
-        </div>
       </div>
       
       {isSuccess && (
@@ -97,7 +72,7 @@ export function InstagramScanForm({
         >
           Abbrechen
         </Button>
-        <Button type="submit" disabled={isLoading || !username || !contactType}>
+        <Button type="submit" disabled={isLoading || !username}>
           {isLoading ? "Wird geladen..." : "Kontakt hinzufügen"}
         </Button>
       </div>
