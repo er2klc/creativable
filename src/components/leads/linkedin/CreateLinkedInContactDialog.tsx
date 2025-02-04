@@ -159,7 +159,7 @@ export function CreateLinkedInContactDialog({
         }}
       >
         <DialogHeader>
-         
+          <DialogTitle>LinkedIn Kontakt hinzufügen</DialogTitle>
         </DialogHeader>
         <div id="linkedin-scan-description" className="sr-only">
           Dialog für das Hinzufügen eines neuen LinkedIn Kontakts. Gib den Benutzernamen ein, um das Profil zu scannen.
