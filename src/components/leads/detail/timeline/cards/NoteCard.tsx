@@ -71,7 +71,12 @@ export const NoteCard = ({ id, content, metadata, onDelete }: NoteCardProps) => 
     }
   };
 
-  const startRecording = () => {
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditedContent(content);
+  };
+
+  const handleStartRecording = () => {
     if (!('webkitSpeechRecognition' in window)) {
       toast.error(
         settings?.language === "en"
@@ -96,17 +101,12 @@ export const NoteCard = ({ id, content, metadata, onDelete }: NoteCardProps) => 
     };
 
     recognition.onresult = (event: any) => {
-      let interimTranscript = '';
       let finalTranscript = '';
-
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
           finalTranscript += event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
         }
       }
-
       if (finalTranscript) {
         setEditedContent(prev => prev + (prev ? ' ' : '') + finalTranscript);
       }
@@ -135,16 +135,11 @@ export const NoteCard = ({ id, content, metadata, onDelete }: NoteCardProps) => 
     return recognition;
   };
 
-  const stopRecording = () => {
+  const handleStopRecording = () => {
     if ((window as any).recognition) {
       (window as any).recognition.stop();
     }
     setIsRecording(false);
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditedContent(content);
   };
 
   if (isEditing) {
@@ -158,9 +153,8 @@ export const NoteCard = ({ id, content, metadata, onDelete }: NoteCardProps) => 
           onDelete={() => setShowDeleteDialog(true)}
           isRecording={isRecording}
           isSaving={isSaving}
-          onStartRecording={startRecording}
-          onStopRecording={stopRecording}
-          content={content}
+          onStartRecording={handleStartRecording}
+          onStopRecording={handleStopRecording}
         />
         <DeleteNoteDialog
           open={showDeleteDialog}

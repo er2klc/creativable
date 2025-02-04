@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useSettings } from "@/hooks/use-settings";
-import { X, Save, Mic, Trash2 } from "lucide-react";
+import { Save, X, Mic, Trash2 } from "lucide-react";
 
 interface NoteCardEditProps {
   editedContent: string;
@@ -13,7 +13,6 @@ interface NoteCardEditProps {
   isSaving: boolean;
   onStartRecording: () => void;
   onStopRecording: () => void;
-  content: string;
 }
 
 export const NoteCardEdit = ({
@@ -26,7 +25,6 @@ export const NoteCardEdit = ({
   isSaving,
   onStartRecording,
   onStopRecording,
-  content,
 }: NoteCardEditProps) => {
   const { settings } = useSettings();
 
@@ -49,7 +47,7 @@ export const NoteCardEdit = ({
         <Button
           size="sm"
           onClick={onSave}
-          disabled={isSaving || editedContent.trim() === content.trim()}
+          disabled={isSaving}
         >
           <Save className="h-4 w-4 mr-1" />
           {settings?.language === "en" ? "Save" : "Speichern"}
