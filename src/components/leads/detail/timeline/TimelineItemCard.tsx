@@ -16,7 +16,7 @@ interface TimelineItemCardProps {
     fileType?: string;
     fileSize?: number;
     filePath?: string;
-    status?: 'completed' | 'cancelled' | 'outdated';
+    status?: "completed" | "cancelled" | "outdated";
     completedAt?: string;
     cancelledAt?: string;
     updatedAt?: string;
@@ -28,6 +28,7 @@ interface TimelineItemCardProps {
     last_edited_at?: string;
     meetingType?: string;
     color?: string;
+    timestamp?: string;
   };
   status?: string;
   onDelete?: () => void;
@@ -36,7 +37,7 @@ interface TimelineItemCardProps {
   isCompleted?: boolean;
 }
 
-export const TimelineItemCard = ({ 
+export const TimelineItemCard = ({
   type,
   content,
   metadata,
@@ -44,54 +45,53 @@ export const TimelineItemCard = ({
   onDelete,
   id,
   created_at,
-  isCompleted
+  isCompleted,
 }: TimelineItemCardProps) => {
   const { settings } = useSettings();
 
-  console.log("DEBUG - TimelineItemCard render:", {
-    type,
-    metadata,
-    status,
-    id,
-    timestamp: new Date().toISOString()
-  });
-
   const getBorderColor = () => {
-    if (type === 'status_change') {
+    // Debugging für Statusänderungen
+    if (type === "status_change") {
       console.log("Status change metadata:", metadata);
-      switch(metadata?.type === 'status_change' ? metadata?.newStatus : status) {
-        case 'partner': return 'border-pink-500';
-        case 'customer': return 'border-sky-500';
-        case 'not_for_now': return 'border-stone-500';
-        case 'no_interest': return 'border-rose-500';
-        case 'lead': return 'border-blue-500';
-        default: return 'border-gray-500';
+      switch (metadata?.newStatus) {
+        case "partner":
+          return "border-pink-500";
+        case "customer":
+          return "border-sky-500";
+        case "not_for_now":
+          return "border-stone-500";
+        case "no_interest":
+          return "border-rose-500";
+        case "lead":
+          return "border-blue-500";
+        default:
+          return "border-gray-500"; // Standardfarbe
       }
     }
 
+    // Fallback-Farben für andere Typen
     switch (type) {
-      case 'task':
-        return status === 'completed' ? 'border-green-500' : 'border-cyan-500';
-      case 'appointment':
-        if (status === 'cancelled') return 'border-gray-400';
-        return 'border-orange-500';
-      case 'note':
-        return 'border-yellow-500';
-      case 'phase_change':
-        return 'border-purple-500';
-      case 'message':
-        return 'border-blue-500';
-      case 'contact_created':
-        return 'border-emerald-500';
-      case 'file_upload':
-        return 'border-blue-500';
+      case "task":
+        return status === "completed" ? "border-green-500" : "border-cyan-500";
+      case "appointment":
+        return status === "cancelled" ? "border-gray-400" : "border-orange-500";
+      case "note":
+        return "border-yellow-500";
+      case "phase_change":
+        return "border-purple-500";
+      case "message":
+        return "border-blue-500";
+      case "contact_created":
+        return "border-emerald-500";
+      case "file_upload":
+        return "border-blue-500";
       default:
-        return 'border-gray-500';
+        return "border-gray-500";
     }
   };
 
   const renderContent = () => {
-    if (type === 'task' && id) {
+    if (type === "task" && id) {
       return (
         <TaskCard
           id={id}
@@ -103,7 +103,7 @@ export const TimelineItemCard = ({
       );
     }
 
-    if (type === 'appointment' && id) {
+    if (type === "appointment" && id) {
       return (
         <AppointmentCard
           id={id}
@@ -114,16 +114,11 @@ export const TimelineItemCard = ({
       );
     }
 
-    if (type === 'file_upload') {
-      return (
-        <FileCard
-          content={content}
-          metadata={metadata}
-        />
-      );
+    if (type === "file_upload") {
+      return <FileCard content={content} metadata={metadata} />;
     }
 
-    if (type === 'note' && id) {
+    if (type === "note" && id) {
       return (
         <NoteCard
           id={id}
@@ -134,9 +129,9 @@ export const TimelineItemCard = ({
       );
     }
 
-    if (type === 'status_change') {
+    if (type === "status_change") {
       return (
-        <StatusCard 
+        <StatusCard
           content={content}
           timestamp={metadata?.timestamp || new Date().toISOString()}
           metadata={metadata}
@@ -146,18 +141,18 @@ export const TimelineItemCard = ({
 
     return (
       <div className="relative group">
-        <div className="whitespace-pre-wrap break-words">
-          {content}
-        </div>
+        <div className="whitespace-pre-wrap break-words">{content}</div>
         {onDelete && <DeleteButton onDelete={onDelete} />}
       </div>
     );
   };
 
   return (
-    <div className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}>
+    <div
+      className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}
+    >
       {renderContent()}
-      <MetadataDisplay 
+      <MetadataDisplay
         last_edited_at={metadata?.last_edited_at}
         created_at={created_at}
       />
