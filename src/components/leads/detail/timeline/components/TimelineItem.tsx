@@ -13,16 +13,16 @@ interface TimelineItemProps {
 export const TimelineItem = ({ item, onDelete, onEdit }: TimelineItemProps) => {
   return (
     <div className="relative pl-12">
-      {/* Timeline line with higher z-index */}
-      <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-400 z-0" />
+      {/* Main vertical timeline line that runs through all items */}
+      <div className="absolute left-4 top-0 -bottom-8 w-[2px] bg-gray-400" />
       
-      {/* Icon container with z-index to stay above the line */}
-      <div className="absolute left-0 p-2 rounded-full z-10 bg-white">
+      {/* Icon container with white background to create a break in the line */}
+      <div className="absolute left-[0.6rem] p-2 rounded-full bg-white z-20">
         <TimelineItemIcon type={item.type} metadata={item.metadata} />
       </div>
-      
-      {/* Content container with margin to not cover the line */}
-      <div className="flex flex-col gap-1 ml-2">
+
+      {/* Content container */}
+      <div className="flex flex-col gap-1">
         <div 
           className={cn(
             "flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border relative group",

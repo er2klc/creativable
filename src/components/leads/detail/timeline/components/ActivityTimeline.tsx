@@ -60,7 +60,7 @@ export const ActivityTimeline = ({ items, onDeletePhaseChange }: ActivityTimelin
   });
 
   return (
-    <div className="relative space-y-6">
+    <div className="relative space-y-6 pb-6">
       {items.map(item => (
         <TimelineItem 
           key={item.id} 
