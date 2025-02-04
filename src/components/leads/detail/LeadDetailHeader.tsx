@@ -29,7 +29,11 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
       const status = lead.status === newStatus ? 'lead' : newStatus;
       
       // Get default pipeline and phase for resetting when going back to lead status
-      const { data: defaultPipeline } = await supabase
+      let pipelineId: string;
+      let phaseId: string | null;
+
+      // First try to get existing pipeline
+      let { data: existingPipeline } = await supabase
         .from('pipelines')
         .select('id')
         .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
@@ -37,7 +41,7 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
         .limit(1)
         .single();
 
-      if (!defaultPipeline) {
+      if (!existingPipeline) {
         // Create a default pipeline if none exists
         const { data: newPipeline, error: pipelineError } = await supabase
           .from('pipelines')
@@ -50,13 +54,13 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
           .single();
 
         if (pipelineError) throw pipelineError;
-        defaultPipeline = newPipeline;
+        pipelineId = newPipeline.id;
 
         // Create default phase
-        const { data: defaultPhase, error: phaseError } = await supabase
+        const { data: newPhase, error: phaseError } = await supabase
           .from('pipeline_phases')
           .insert({
-            pipeline_id: defaultPipeline.id,
+            pipeline_id: pipelineId,
             name: "Neue Kontakte",
             order_index: 0
           })
@@ -64,24 +68,26 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
           .single();
 
         if (phaseError) throw phaseError;
+        phaseId = newPhase.id;
+      } else {
+        pipelineId = existingPipeline.id;
+        // Get default phase
+        const { data: defaultPhase } = await supabase
+          .from('pipeline_phases')
+          .select('id')
+          .eq('pipeline_id', pipelineId)
+          .order('order_index')
+          .limit(1)
+          .single();
+
+        if (!defaultPhase) throw new Error('No default phase found');
+        phaseId = defaultPhase.id;
       }
-
-      const { data: defaultPhase } = await supabase
-        .from('pipeline_phases')
-        .select('id')
-        .eq('pipeline_id', defaultPipeline.id)
-        .order('order_index')
-        .limit(1)
-        .single();
-
-      if (!defaultPhase) throw new Error('No default phase found');
 
       const updates: Partial<Tables<"leads">> = {
         status,
-        // When changing to partner/customer/etc, remove from pipeline
-        // When changing back to lead, put in default pipeline/phase
-        pipeline_id: defaultPipeline.id,
-        phase_id: status === 'lead' ? defaultPhase.id : null,
+        pipeline_id: pipelineId,
+        phase_id: status === 'lead' ? phaseId : null,
         ...(status === 'partner' ? {
           onboarding_progress: {
             message_sent: false,
