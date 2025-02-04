@@ -24,97 +24,83 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleStatusChange = async (newStatus: string) => {
-    try {
-      // If clicking the same status button, reset to normal state
-      const status = lead.status === newStatus ? 'lead' : newStatus;
-      
-      // Get default pipeline and phase
-      const { data: defaultPipeline } = await supabase
-        .from('pipelines')
-        .select('id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .order('order_index')
-        .limit(1)
-        .single();
+  try {
+    // Wenn derselbe Status geklickt wird, setze ihn zurück auf 'lead'
+    const status = lead.status === newStatus ? 'lead' : newStatus;
 
-      if (!defaultPipeline) throw new Error('No default pipeline found');
+    // Hole Standard-Pipeline und Phase
+    const { data: defaultPipeline } = await supabase
+      .from('pipelines')
+      .select('id')
+      .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+      .order('order_index')
+      .limit(1)
+      .single();
 
-      const { data: defaultPhase } = await supabase
-        .from('pipeline_phases')
-        .select('id')
-        .eq('pipeline_id', defaultPipeline.id)
-        .order('order_index')
-        .limit(1)
-        .single();
+    if (!defaultPipeline) throw new Error('No default pipeline found');
 
-      if (!defaultPhase) throw new Error('No default phase found');
+    const { data: defaultPhase } = await supabase
+      .from('pipeline_phases')
+      .select('id')
+      .eq('pipeline_id', defaultPipeline.id)
+      .order('order_index')
+      .limit(1)
+      .single();
 
-      const updates: Partial<Tables<"leads">> = {
-        status,
-        ...(status === 'lead' ? {
-          pipeline_id: defaultPipeline.id,
-          phase_id: defaultPhase.id
-        } : {}),
-        ...(status === 'partner' ? {
-          onboarding_progress: {
-            message_sent: false,
-            team_invited: false,
-            training_provided: false,
-            intro_meeting_scheduled: false
+    if (!defaultPhase) throw new Error('No default phase found');
+
+    const updates: Partial<Tables<"leads">> = {
+      status,
+      ...(status === 'lead' ? {
+        pipeline_id: defaultPipeline.id,
+        phase_id: defaultPhase.id
+      } : {}),
+      ...(status === 'partner' ? {
+        onboarding_progress: {
+          message_sent: false,
+          team_invited: false,
+          training_provided: false,
+          intro_meeting_scheduled: false
+        }
+      } : {})
+    };
+
+    await onUpdateLead(updates);
+
+    // **🚀 NUR Statusänderungen in Timeline speichern**
+    if (['partner', 'customer', 'not_for_now', 'no_interest'].includes(newStatus)) {
+      const { error: timelineError } = await supabase
+        .from('timeline')
+        .insert({
+          lead_id: lead.id,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          type: 'status_change', // ✅ Richtiger Typ für Statusänderung
+          content: `Status geändert zu ${status}`,
+          metadata: {
+            oldStatus: lead.status,
+            newStatus: status
           }
-        } : {})
-      };
+        });
 
-      await onUpdateLead(updates);
+      if (timelineError) throw timelineError;
+    } 
 
-     // 💡 **Jetzt trennen wir Notizen & Statusänderungen**
-      if (newStatus === 'partner' || newStatus === 'customer' || newStatus === 'not_for_now' || newStatus === 'no_interest') {
-        // 🚀 **Statusänderung in die Timeline-Tabelle speichern**
-        const { error: timelineError } = await supabase
-          .from('timeline')
-          .insert({
-            lead_id: lead.id,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-            type: 'status_change', // ✅ Richtiger Typ für Statusänderung
-            content: `Status geändert zu ${status}`,
-            metadata: {
-              oldStatus: lead.status,
-              newStatus: status
-            }
-          });
+    toast.success(
+      settings?.language === "en"
+        ? "Status erfolgreich aktualisiert"
+        : "Status erfolgreich aktualisiert"
+    );
 
-        if (timelineError) throw timelineError;
-      } else {
-        // ✏️ **Notiz speichern, wenn es sich NICHT um eine Statusänderung handelt**
-        const { error: noteError } = await supabase
-          .from('notes')
-          .insert({
-            lead_id: lead.id,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-            content: `Notiz hinzugefügt: ${status}`, // 👈 Hier evtl. einen anderen Text nehmen?
-            metadata: {
-              type: 'note'
-            }
-          });
+  } catch (error) {
+    console.error('Error updating status:', error);
+    toast.error(
+      settings?.language === "en"
+        ? "Fehler beim Aktualisieren des Status"
+        : "Fehler beim Aktualisieren des Status"
+    );
+  }
+};
 
-        if (noteError) throw noteError;
-      }
-
-      toast.success(
-        settings?.language === "en"
-          ? "Status updated successfully"
-          : "Status erfolgreich aktualisiert"
-      );
-
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error(
-        settings?.language === "en"
-          ? "Error updating status"
-          : "Fehler beim Aktualisieren des Status"
-      );
-    }
-  };
 
   const handleDelete = () => {
     setShowDeleteDialog(true);
