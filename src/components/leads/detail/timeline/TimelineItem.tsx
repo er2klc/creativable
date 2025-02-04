@@ -22,16 +22,6 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
 
   const handleDelete = () => {
     if (!onDelete) return;
-    
-    // For status changes, we don't want to delete from the notes table
-    if (item.type === 'status_change') {
-      // Extract the actual lead ID from the status change ID
-      const leadId = item.id.replace('status-', '');
-      onDelete(leadId);
-      return;
-    }
-    
-    // For all other types, proceed with normal deletion
     onDelete(item.id);
   };
 
@@ -94,7 +84,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
             content={item.content}
             metadata={item.metadata}
             status={item.status}
-            onDelete={onDelete}
+            onDelete={onDelete ? () => onDelete(item.id) : undefined}
             id={item.id}
             created_at={item.created_at}
             isCompleted={isTaskCompleted}
