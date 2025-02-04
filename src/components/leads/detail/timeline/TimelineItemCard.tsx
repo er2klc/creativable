@@ -59,7 +59,7 @@ export const TimelineItemCard = ({
   const getBorderColor = () => {
     if (type === 'status_change') {
       console.log("Status change metadata:", metadata);
-      switch(metadata?.newStatus) {
+      switch(metadata?.type === 'status_change' ? metadata?.newStatus : status) {
         case 'partner': return 'border-pink-500';
         case 'customer': return 'border-sky-500';
         case 'not_for_now': return 'border-stone-500';
