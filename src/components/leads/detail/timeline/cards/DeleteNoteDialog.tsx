@@ -1,4 +1,13 @@
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useSettings } from "@/hooks/use-settings";
 
 interface DeleteNoteDialogProps {
@@ -7,7 +16,11 @@ interface DeleteNoteDialogProps {
   onConfirm: () => void;
 }
 
-export const DeleteNoteDialog = ({ open, onOpenChange, onConfirm }: DeleteNoteDialogProps) => {
+export const DeleteNoteDialog = ({
+  open,
+  onOpenChange,
+  onConfirm,
+}: DeleteNoteDialogProps) => {
   const { settings } = useSettings();
 
   return (
@@ -15,8 +28,8 @@ export const DeleteNoteDialog = ({ open, onOpenChange, onConfirm }: DeleteNoteDi
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {settings?.language === "en" 
-              ? "Delete Note" 
+            {settings?.language === "en"
+              ? "Delete Note"
               : "Notiz löschen"}
           </AlertDialogTitle>
           <AlertDialogDescription>
@@ -29,10 +42,7 @@ export const DeleteNoteDialog = ({ open, onOpenChange, onConfirm }: DeleteNoteDi
           <AlertDialogCancel>
             {settings?.language === "en" ? "Cancel" : "Abbrechen"}
           </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            className="bg-red-600 hover:bg-red-700"
-          >
+          <AlertDialogAction onClick={onConfirm} className="bg-red-600 hover:bg-red-700">
             {settings?.language === "en" ? "Delete" : "Löschen"}
           </AlertDialogAction>
         </AlertDialogFooter>

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { NoteCardEdit } from "./NoteCardEdit";
 import { NoteCardView } from "./NoteCardView";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 
 interface NoteCardProps {
   id: string;
@@ -12,16 +13,44 @@ interface NoteCardProps {
   metadata?: {
     last_edited_at?: string;
   };
-  onDelete?: () => void;
 }
 
-export const NoteCard = ({ id, content, metadata, onDelete }: NoteCardProps) => {
+export const NoteCard = ({ id, content, metadata }: NoteCardProps) => {
   const { settings } = useSettings();
+  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const deleteNoteMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('notes')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead"] });
+      toast.success(
+        settings?.language === "en"
+          ? "Note deleted successfully"
+          : "Notiz erfolgreich gelöscht"
+      );
+      setShowDeleteDialog(false);
+    },
+    onError: (error) => {
+      console.error('Error deleting note:', error);
+      toast.error(
+        settings?.language === "en"
+          ? "Error deleting note"
+          : "Fehler beim Löschen der Notiz"
+      );
+    },
+  });
 
   const handleSave = async () => {
     if (!id) return;
@@ -60,15 +89,7 @@ export const NoteCard = ({ id, content, metadata, onDelete }: NoteCardProps) => 
   };
 
   const handleDelete = () => {
-    if (onDelete) {
-      onDelete();
-      setShowDeleteDialog(false);
-      toast.success(
-        settings?.language === "en"
-          ? "Note deleted successfully"
-          : "Notiz erfolgreich gelöscht"
-      );
-    }
+    deleteNoteMutation.mutate();
   };
 
   const handleCancel = () => {
