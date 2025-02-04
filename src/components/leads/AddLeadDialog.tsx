@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { BasicLeadFields } from "./form-fields/BasicLeadFields";
 import { ContactTypeField } from "./form-fields/ContactTypeField";
 import { Platform } from "@/config/platforms";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name ist erforderlich"),
@@ -33,6 +35,7 @@ interface AddLeadDialogProps {
 
 export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipelineId }: AddLeadDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [existingLead, setExistingLead] = useState<any>(null);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,8 +52,35 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
     },
   });
 
+  const checkExistingLead = async (name: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data: existingLeads, error } = await supabase
+        .from("leads")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("name", name)
+        .maybeSingle();
+
+      if (error) throw error;
+      return existingLeads;
+    } catch (error) {
+      console.error("Error checking existing lead:", error);
+      return null;
+    }
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      const existingLead = await checkExistingLead(values.name);
+      
+      if (existingLead) {
+        setExistingLead(existingLead);
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
@@ -76,6 +106,7 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
       setIsOpen(false);
       onOpenChange?.(false);
       form.reset();
+      setExistingLead(null);
     } catch (error) {
       console.error("Error adding contact:", error);
       toast.error("Fehler beim Hinzufügen des Kontakts");
@@ -85,7 +116,12 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
   return (
     <Dialog 
       open={open ?? isOpen} 
-      onOpenChange={onOpenChange ?? setIsOpen}
+      onOpenChange={(newOpen) => {
+        if (!newOpen) {
+          setExistingLead(null);
+        }
+        onOpenChange ? onOpenChange(newOpen) : setIsOpen(newOpen);
+      }}
       modal={true}
     >
       <DialogTrigger asChild>
@@ -103,6 +139,24 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
             Fügen Sie hier die Details Ihres neuen Kontakts hinzu. Füllen Sie alle erforderlichen Felder aus.
           </DialogDescription>
         </DialogHeader>
+
+        {existingLead && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Ein Kontakt mit diesem Namen existiert bereits!
+              <div className="mt-2">
+                <strong>Details:</strong>
+                <p>Name: {existingLead.name}</p>
+                <p>Platform: {existingLead.platform}</p>
+                {existingLead.contact_type && <p>Kontakttyp: {existingLead.contact_type}</p>}
+                {existingLead.email && <p>Email: {existingLead.email}</p>}
+                {existingLead.phone_number && <p>Telefon: {existingLead.phone_number}</p>}
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <BasicLeadFields form={form} />
@@ -114,6 +168,7 @@ export function AddLeadDialog({ trigger, defaultPhase, open, onOpenChange, pipel
                 onClick={() => {
                   setIsOpen(false);
                   onOpenChange?.(false);
+                  setExistingLead(null);
                 }}
               >
                 Abbrechen ❌
