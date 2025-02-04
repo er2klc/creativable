@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { PlatformIndicator } from "./detail/card/PlatformIndicator";
 
 interface LeadSearchProps {
   value: string;
@@ -25,7 +27,7 @@ export const LeadSearch = ({ value, onChange }: LeadSearchProps) => {
       
       const { data, error } = await supabase
         .from("leads")
-        .select("id, name, platform")
+        .select("id, name, platform, social_media_profile_image_url")
         .ilike("name", `%${value}%`)
         .limit(5);
 
@@ -70,13 +72,28 @@ export const LeadSearch = ({ value, onChange }: LeadSearchProps) => {
             {searchResults.map((lead) => (
               <div
                 key={lead.id}
-                className="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer"
+                className="flex items-center justify-between p-2 hover:bg-gray-100 rounded cursor-pointer"
                 onClick={() => handleResultClick(lead.id)}
               >
-                <span>{lead.name}</span>
-                <span className="ml-2 text-sm text-gray-500">
-                  ({lead.platform})
-                </span>
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8">
+                    {lead.social_media_profile_image_url ? (
+                      <AvatarImage 
+                        src={lead.social_media_profile_image_url} 
+                        alt={lead.name}
+                        className="object-cover"
+                      />
+                    ) : (
+                      <AvatarFallback>
+                        {lead.name?.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <span>{lead.name}</span>
+                </div>
+                <div className="relative w-8 h-8">
+                  <PlatformIndicator platform={lead.platform} />
+                </div>
               </div>
             ))}
           </div>
