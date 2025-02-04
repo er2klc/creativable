@@ -83,7 +83,7 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
               type: 'status_change',
               oldStatus: lead.status,
               newStatus: status,
-              timestamp: new Date().toISOString() // Add current timestamp
+              timestamp: new Date().toISOString()
             }
           });
 
