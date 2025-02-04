@@ -48,8 +48,17 @@ export const TimelineItemCard = ({
 }: TimelineItemCardProps) => {
   const { settings } = useSettings();
 
+  console.log("DEBUG - TimelineItemCard render:", {
+    type,
+    metadata,
+    status,
+    id,
+    timestamp: new Date().toISOString()
+  });
+
   const getBorderColor = () => {
     if (type === 'status_change') {
+      console.log("Status change metadata:", metadata);
       switch(metadata?.newStatus) {
         case 'partner': return 'border-pink-500';
         case 'customer': return 'border-sky-500';

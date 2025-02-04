@@ -30,6 +30,13 @@ export const AppointmentCard = ({
 
   const MeetingIcon = metadata?.meetingType ? getMeetingTypeIcon(metadata.meetingType) : Calendar;
 
+  console.log("DEBUG - AppointmentCard render:", {
+    id,
+    metadata,
+    hasOnDelete: !!onDelete,
+    timestamp: new Date().toISOString()
+  });
+
   return (
     <>
       <div className="relative group">
