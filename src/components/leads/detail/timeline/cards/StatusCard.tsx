@@ -17,7 +17,7 @@ export const StatusCard = ({ status, updatedAt }: StatusCardProps) => {
       <div className="flex items-center gap-2">
         <TimelineItemIcon type="status_change" />
         <span className="text-gray-600 text-sm">
-          {formatDateTime(updatedAt, settings?.language)}
+          {updatedAt ? formatDateTime(updatedAt, settings?.language) : "Datum unbekannt"}
         </span>
       </div>
 
