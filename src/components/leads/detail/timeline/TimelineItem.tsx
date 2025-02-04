@@ -22,11 +22,17 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
 
   const handleDelete = () => {
     if (!onDelete) return;
-    // For status changes, remove the "status-" prefix before deletion
-    const idToDelete = item.type === 'status_change' ? 
-      item.id.replace('status-', '') : 
-      item.id;
-    onDelete(idToDelete);
+    
+    // For status changes, we don't want to delete from the notes table
+    if (item.type === 'status_change') {
+      // Extract the actual lead ID from the status change ID
+      const leadId = item.id.replace('status-', '');
+      onDelete(leadId);
+      return;
+    }
+    
+    // For all other types, proceed with normal deletion
+    onDelete(item.id);
   };
 
   return (
