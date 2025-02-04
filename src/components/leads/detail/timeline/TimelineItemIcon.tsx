@@ -106,6 +106,8 @@ export const TimelineItemIcon = ({
         return 'bg-purple-500';
       case 'message':
         return 'bg-blue-500';
+      case 'contact_created':
+        return 'bg-emerald-500';
       default:
         return 'bg-gray-500';
     }
