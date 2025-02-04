@@ -25,6 +25,11 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
     onDelete(item.id);
   };
 
+  // Use metadata timestamp for status changes if available, otherwise use item timestamp
+  const displayTimestamp = item.type === 'status_change' && item.metadata?.timestamp 
+    ? item.metadata.timestamp 
+    : item.timestamp;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -35,7 +40,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
     >
       {/* Date above the card */}
       <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
-        {formatDateTime(item.timestamp, settings?.language)}
+        {formatDateTime(displayTimestamp, settings?.language)}
         {isTaskCompleted && completedDate && (
           <span className="text-green-600">
             (Erledigt am {completedDate})
@@ -74,9 +79,9 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
         {item.type === 'status_change' ? (
           <StatusCard 
             content={item.content}
-            timestamp={item.timestamp}
+            timestamp={displayTimestamp}
             metadata={item.metadata}
-            onDelete={handleDelete}
+            onDelete={onDelete ? handleDelete : undefined}
           />
         ) : (
           <TimelineItemCard 
@@ -84,7 +89,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
             content={item.content}
             metadata={item.metadata}
             status={item.status}
-            onDelete={onDelete ? () => onDelete(item.id) : undefined}
+            onDelete={onDelete ? handleDelete : undefined}
             id={item.id}
             created_at={item.created_at}
             isCompleted={isTaskCompleted}

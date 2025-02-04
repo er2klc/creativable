@@ -67,24 +67,28 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
 
       await onUpdateLead(updates);
 
-      // Create timeline entry
-      const { error: noteError } = await supabase
-        .from('notes')
-        .insert({
-          lead_id: lead.id,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          content: `Status geändert zu ${status}`,
-          color: status === 'partner' ? '#4CAF50' : 
-                 status === 'customer' ? '#2196F3' : 
-                 status === 'not_for_now' ? '#FFC107' : '#F44336',
-          metadata: {
-            type: 'status_change',
-            oldStatus: lead.status,
-            newStatus: status
-          }
-        });
+      // Only create timeline entry if status is not 'lead'
+      if (status !== 'lead') {
+        // Create timeline entry with current timestamp
+        const { error: noteError } = await supabase
+          .from('notes')
+          .insert({
+            lead_id: lead.id,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            content: `Status geändert zu ${status}`,
+            color: status === 'partner' ? '#4CAF50' : 
+                   status === 'customer' ? '#2196F3' : 
+                   status === 'not_for_now' ? '#FFC107' : '#F44336',
+            metadata: {
+              type: 'status_change',
+              oldStatus: lead.status,
+              newStatus: status,
+              timestamp: new Date().toISOString() // Add current timestamp
+            }
+          });
 
-      if (noteError) throw noteError;
+        if (noteError) throw noteError;
+      }
       
       toast.success(
         settings?.language === "en"
