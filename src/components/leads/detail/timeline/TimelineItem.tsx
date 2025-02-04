@@ -20,6 +20,15 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
   const completedDate = item.metadata?.completedAt ? 
     formatDateTime(item.metadata.completedAt, settings?.language) : null;
 
+  const handleDelete = () => {
+    if (!onDelete) return;
+    // For status changes, remove the "status-" prefix before deletion
+    const idToDelete = item.type === 'status_change' ? 
+      item.id.replace('status-', '') : 
+      item.id;
+    onDelete(idToDelete);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -71,7 +80,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
             content={item.content}
             timestamp={item.timestamp}
             metadata={item.metadata}
-            onDelete={onDelete ? () => onDelete(item.id) : undefined}
+            onDelete={handleDelete}
           />
         ) : (
           <TimelineItemCard 
