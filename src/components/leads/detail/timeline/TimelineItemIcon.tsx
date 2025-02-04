@@ -44,7 +44,7 @@ export const TimelineItemIcon = ({
     if (type === 'status_change') {
       switch(metadata?.newStatus) {
         case 'partner': return Heart;
-        case 'customer': return UserPlus;
+        case 'customer': return Heart;
         case 'not_for_now': return Clock;
         case 'no_interest': return ThumbsDown;
         case 'lead': return UserPlus;
@@ -86,9 +86,9 @@ export const TimelineItemIcon = ({
     if (type === 'status_change') {
       switch(metadata?.newStatus) {
         case 'partner': return 'bg-pink-500';
-        case 'customer': return 'bg-green-500';
-        case 'not_for_now': return 'bg-yellow-500';
-        case 'no_interest': return 'bg-red-500';
+        case 'customer': return 'bg-sky-500';
+        case 'not_for_now': return 'bg-stone-500';
+        case 'no_interest': return 'bg-rose-500';
         case 'lead': return 'bg-blue-500';
         default: return 'bg-gray-500';
       }
