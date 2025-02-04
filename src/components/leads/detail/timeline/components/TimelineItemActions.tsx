@@ -1,57 +1,41 @@
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { Edit, Trash2 } from "lucide-react";
 
 interface TimelineItemActionsProps {
-  filePath?: string;
-  fileName?: string;
+  onEdit?: () => void;
   onDelete?: () => void;
+  type: string;
 }
 
-export const TimelineItemActions = ({ filePath, fileName, onDelete }: TimelineItemActionsProps) => {
-  const handleDownload = async () => {
-    if (!filePath) return;
-
-    try {
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .download(filePath);
-
-      if (error) throw error;
-
-      const url = window.URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName || 'download';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('Error downloading file:', error);
-      toast.error('Fehler beim Herunterladen der Datei');
-    }
-  };
-
+export const TimelineItemActions = ({ onEdit, onDelete, type }: TimelineItemActionsProps) => {
+  const showEdit = ['note', 'task', 'appointment'].includes(type);
+  
   return (
-    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-      {filePath && (
+    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+      {showEdit && onEdit && (
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleDownload}
-          className="mr-2"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className="p-1 hover:bg-gray-100 rounded"
         >
-          Download
+          <Edit className="h-4 w-4 text-gray-500 hover:text-blue-600" />
         </Button>
       )}
       {onDelete && (
         <Button
           variant="ghost"
           size="sm"
-          onClick={onDelete}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="p-1 hover:bg-gray-100 rounded"
         >
-          Löschen
+          <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
         </Button>
       )}
     </div>
