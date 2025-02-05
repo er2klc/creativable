@@ -35,4 +35,3 @@ export function SummarySection({ section }: SummarySectionProps) {
     </div>
   );
 }
-

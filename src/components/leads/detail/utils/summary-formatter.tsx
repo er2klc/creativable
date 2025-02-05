@@ -27,4 +27,3 @@ export const getIconForSection = (title: string) => {
   }
   return <Bot className="h-5 w-5 text-gray-500" />;
 };
-

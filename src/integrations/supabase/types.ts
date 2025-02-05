@@ -737,25 +737,49 @@ export type Database = {
       }
       lead_summaries: {
         Row: {
+          analysis_date: string | null
+          business_profile: string | null
+          commonalities: string | null
+          communication_history: string | null
+          contact_status: string | null
           created_at: string | null
           id: string
           lead_id: string
+          metadata: Json | null
+          recommendations: string | null
+          relevant_topics: string | null
           strategy: string
           summary: string
           updated_at: string | null
         }
         Insert: {
+          analysis_date?: string | null
+          business_profile?: string | null
+          commonalities?: string | null
+          communication_history?: string | null
+          contact_status?: string | null
           created_at?: string | null
           id?: string
           lead_id: string
+          metadata?: Json | null
+          recommendations?: string | null
+          relevant_topics?: string | null
           strategy: string
           summary: string
           updated_at?: string | null
         }
         Update: {
+          analysis_date?: string | null
+          business_profile?: string | null
+          commonalities?: string | null
+          communication_history?: string | null
+          contact_status?: string | null
           created_at?: string | null
           id?: string
           lead_id?: string
+          metadata?: Json | null
+          recommendations?: string | null
+          relevant_topics?: string | null
           strategy?: string
           summary?: string
           updated_at?: string | null

@@ -7,4 +7,3 @@ export interface LeadSummaryProps {
     tasks: Tables<"tasks">[];
   };
 }
-

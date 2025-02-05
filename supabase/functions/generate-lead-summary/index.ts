@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -17,11 +18,7 @@ async function generateActionableInsights(lead, posts, openAiApiKey) {
   }).join("\n");
 
   const prompt = `
-Du bist ein KI-Berater für Vertrieb und Kommunikation. Basierend auf den folgenden Informationen über einen Kontakt, analysiere und liefere:
-
-1. Eine Einschätzung der aktuellen Situation (Stärken und Schwächen).
-2. Drei konkrete Handlungsempfehlungen, um den Kontakt effektiv in die nächste Pipeline-Phase zu bringen.
-3. Erkenne relevante Themen oder Interessen basierend auf den Social-Media-Daten.
+Du bist ein KI-Berater für Vertrieb und Kommunikation. Analysiere die folgenden Daten:
 
 Kontaktinformationen:
 - Name: ${lead.name}
@@ -30,6 +27,28 @@ Kontaktinformationen:
 - Letzte Interaktion: ${lead.last_interaction_date || "Unbekannt"}
 - Social-Media-Daten:
 ${postDetails}
+
+Erstelle eine strukturierte Analyse mit folgenden Abschnitten:
+
+1. **Kontaktstatus**
+- Aktuelle Phase und Engagement-Level
+- Letzte Aktivitäten und Interaktionen
+
+2. **Geschäftsprofil**
+- Branchenspezifische Informationen
+- Hauptinteressen und Fokusgebiete
+
+3. **Kommunikation**
+- Bisherige Interaktionen
+- Bevorzugte Kommunikationskanäle
+
+4. **Relevante Themen**
+- Häufig diskutierte Themen
+- Aktuelle Interessen und Trends
+
+5. **Nächste Schritte**
+- 3 konkrete Handlungsempfehlungen
+- Zeitrahmen für Follow-ups
 
 Antwort im klaren, strukturierten Format:`;
 
@@ -41,7 +60,7 @@ Antwort im klaren, strukturierten Format:`;
         Authorization: `Bearer ${openAiApiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4",
         messages: [
           { role: "system", content: "Du bist ein KI-Experte für Lead-Analyse." },
           { role: "user", content: prompt },
@@ -105,21 +124,22 @@ serve(async (req) => {
 
     const insights = await generateActionableInsights(lead, posts, settings.openai_api_key);
 
-    const summary = `
-**Kontaktanalyse:**
-${insights}
-
-**Nächste Schritte:**
-1. Überprüfen Sie die Handlungsempfehlungen der KI.
-2. Planen Sie gezielte Follow-Ups basierend auf den vorgeschlagenen Aktionen.
-`;
-
+    // Store the structured summary
     await supabase
       .from("lead_summaries")
-      .upsert({ lead_id: leadId, summary });
+      .upsert({
+        lead_id: leadId,
+        summary: insights,
+        analysis_date: new Date().toISOString(),
+        metadata: {
+          version: "2.0",
+          language,
+          post_count: posts?.length || 0
+        }
+      });
 
     return new Response(
-      JSON.stringify({ summary }),
+      JSON.stringify({ summary: insights }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
