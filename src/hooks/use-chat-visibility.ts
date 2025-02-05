@@ -12,7 +12,10 @@ export const useChatVisibility = (publicRoutes: string[]) => {
     const handleAuthChange = (event: string, session: any) => {
       if (mounted) {
         const isAuth = !!session;
-        const shouldShow = isAuth && !publicRoutes.includes(location.pathname);
+        // Hide chat on presentation pages and public routes
+        const isPresentation = location.pathname.startsWith('/presentation/');
+        const shouldShow = isAuth && !publicRoutes.includes(location.pathname) && !isPresentation;
+        
         console.log("[App] Auth state changed:", {
           event,
           isAuthenticated: isAuth,
@@ -32,7 +35,8 @@ export const useChatVisibility = (publicRoutes: string[]) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (mounted) {
         const isAuth = !!session;
-        const shouldShow = isAuth && !publicRoutes.includes(location.pathname);
+        const isPresentation = location.pathname.startsWith('/presentation/');
+        const shouldShow = isAuth && !publicRoutes.includes(location.pathname) && !isPresentation;
         setShowChat(shouldShow);
       }
     };
