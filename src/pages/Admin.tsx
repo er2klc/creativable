@@ -122,7 +122,7 @@ const Admin = () => {
 
         {/* First Row: User Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-[#F2FCE2]/50 to-[#E5DEFF]/50 border-white/10 shadow-lg backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-[#F2FCE2]/10 to-[#E5DEFF]/10 border-none shadow-lg backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Users className="h-5 w-5" />
@@ -134,7 +134,7 @@ const Admin = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-[#FDE1D3]/50 to-[#D3E4FD]/50 border-white/10 shadow-lg backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-[#FDE1D3]/10 to-[#D3E4FD]/10 border-none shadow-lg backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Users className="h-5 w-5 text-green-400" />
@@ -147,7 +147,7 @@ const Admin = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-[#E5DEFF]/50 to-[#FDE1D3]/50 border-white/10 shadow-lg backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-[#E5DEFF]/10 to-[#FDE1D3]/10 border-none shadow-lg backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-white">Letzte Aktivität</CardTitle>
             </CardHeader>
@@ -159,7 +159,7 @@ const Admin = () => {
 
         {/* Second Row: Teams & Platforms */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-[#D3E4FD]/50 to-[#F2FCE2]/50 border-white/10 shadow-lg backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-[#D3E4FD]/10 to-[#F2FCE2]/10 border-none shadow-lg backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-blue-400" />
@@ -171,7 +171,7 @@ const Admin = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-[#F2FCE2]/50 to-[#E5DEFF]/50 border-white/10 shadow-lg backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-[#F2FCE2]/10 to-[#E5DEFF]/10 border-none shadow-lg backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <GraduationCap className="h-5 w-5 text-purple-400" />
@@ -185,7 +185,7 @@ const Admin = () => {
         </div>
 
         {/* Recent Users Table */}
-        <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm mb-8">
+        <Card className="bg-[#1A1F2C]/60 border-none shadow-lg backdrop-blur-sm mb-8">
           <CardHeader>
             <CardTitle className="text-white">Neue Benutzer</CardTitle>
             <CardDescription className="text-gray-300">
@@ -220,7 +220,7 @@ const Admin = () => {
 
         {/* Admin Tools */}
         <Tabs defaultValue="changelog" className="space-y-4">
-          <TabsList className="bg-[#1A1F2C]/60 border-white/10">
+          <TabsList className="bg-[#1A1F2C]/60 border-none">
             <TabsTrigger value="changelog" className="text-white data-[state=active]:bg-white/10">
               <List className="h-4 w-4 mr-2" />
               Changelog
@@ -236,7 +236,7 @@ const Admin = () => {
           </TabsList>
 
           <TabsContent value="changelog">
-            <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
+            <Card className="bg-[#1A1F2C]/60 border-none shadow-lg backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-white">Changelog Eintrag erstellen</CardTitle>
                 <CardDescription className="text-gray-300">
@@ -306,7 +306,7 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="newsletter">
-            <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
+            <Card className="bg-[#1A1F2C]/60 border-none shadow-lg backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-white">Newsletter</CardTitle>
                 <CardDescription className="text-gray-300">
@@ -317,7 +317,7 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="notifications">
-            <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
+            <Card className="bg-[#1A1F2C]/60 border-none shadow-lg backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-white">Benachrichtigungen</CardTitle>
                 <CardDescription className="text-gray-300">
