@@ -2612,6 +2612,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_links: {
+        Row: {
+          created_at: string | null
+          custom_group_name: string | null
+          group_type: Database["public"]["Enums"]["link_group_type"] | null
+          id: string
+          is_favorite: boolean | null
+          metadata: Json | null
+          order_index: number | null
+          title: string
+          updated_at: string | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          custom_group_name?: string | null
+          group_type?: Database["public"]["Enums"]["link_group_type"] | null
+          id?: string
+          is_favorite?: boolean | null
+          metadata?: Json | null
+          order_index?: number | null
+          title: string
+          updated_at?: string | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          custom_group_name?: string | null
+          group_type?: Database["public"]["Enums"]["link_group_type"] | null
+          id?: string
+          is_favorite?: boolean | null
+          metadata?: Json | null
+          order_index?: number | null
+          title?: string
+          updated_at?: string | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_signatures: {
         Row: {
           company: string | null
@@ -3015,6 +3057,7 @@ export type Database = {
         | "whatsapp"
         | "social_media"
       gender_type: "male" | "female" | "other" | "prefer_not_to_say"
+      link_group_type: "partner" | "customer" | "zoom" | "other"
       post_type:
         | "post"
         | "video"
