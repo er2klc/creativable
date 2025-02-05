@@ -107,9 +107,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
         
         <div className="absolute left-8 top-[1.1rem] w-4 h-0.5 bg-gray-400" />
         
-        <div className="flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border border-gray-200">
-          {renderContent()}
-        </div>
+        {renderContent()}
       </div>
     </motion.div>
   );
