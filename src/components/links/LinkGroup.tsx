@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink, Star, StarOff, Trash2, GripVertical, Edit2, Youtube, Video, FileText, File } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Dialog,
   DialogContent,
@@ -56,6 +57,7 @@ const getLinkIcon = (url: string) => {
 
 const SortableLink = ({ link, onUpdate }: { link: UserLink; onUpdate: () => void }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(link.title);
   const [editedUrl, setEditedUrl] = useState(link.url);
@@ -76,9 +78,21 @@ const SortableLink = ({ link, onUpdate }: { link: UserLink; onUpdate: () => void
   };
 
   const toggleFavorite = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to manage links",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('user_links')
-      .update({ is_favorite: !link.is_favorite })
+      .update({ 
+        is_favorite: !link.is_favorite,
+        user_id: user.id 
+      })
       .eq('id', link.id);
 
     if (error) {
@@ -93,10 +107,20 @@ const SortableLink = ({ link, onUpdate }: { link: UserLink; onUpdate: () => void
   };
 
   const deleteLink = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to manage links",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('user_links')
       .delete()
-      .eq('id', link.id);
+      .eq('id', link.id)
+      .eq('user_id', user.id);
 
     if (error) {
       toast({
@@ -110,11 +134,21 @@ const SortableLink = ({ link, onUpdate }: { link: UserLink; onUpdate: () => void
   };
 
   const handleSave = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to manage links",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('user_links')
       .update({ 
         title: editedTitle,
-        url: editedUrl 
+        url: editedUrl,
+        user_id: user.id 
       })
       .eq('id', link.id);
 
@@ -263,6 +297,7 @@ const SortableLink = ({ link, onUpdate }: { link: UserLink; onUpdate: () => void
 export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
   const [items, setItems] = useState(links);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -272,6 +307,15 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
   );
 
   const handleDragEnd = async (event: any) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to manage links",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { active, over } = event;
     
     if (active.id !== over.id) {
@@ -284,6 +328,7 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
       const updates = newItems.map((item, index) => ({
         id: item.id,
         order_index: index,
+        user_id: user.id
       }));
 
       const { error } = await supabase
