@@ -1,13 +1,13 @@
 export const DEFAULT_PLAYER_VARS = {
-  autoplay: 1,
+  autoplay: 0,
   controls: 1,
   modestbranding: 1,
   rel: 0,
   origin: window.location.origin,
   showinfo: 0,
-  fs: 0,
+  fs: 1,
   iv_load_policy: 3,
-  disablekb: 1
+  disablekb: 0
 };
 
 export const CONTAINER_STYLES = {

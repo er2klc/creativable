@@ -3,11 +3,21 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { VideoPlayer } from '@/components/elevate/platform/detail/video/VideoPlayer';
 import { Card } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { ArrowRight } from 'lucide-react';
 
 interface PresentationPageData {
   title: string;
   video_url: string;
   lead_id: string;
+  user: {
+    display_name: string;
+    avatar_url: string;
+  };
+  lead: {
+    name: string;
+    social_media_profile_image_url: string;
+  };
 }
 
 export default function PresentationPage() {
@@ -21,7 +31,6 @@ export default function PresentationPage() {
   useEffect(() => {
     loadPresentationPage();
     
-    // Add window unload event listener
     const handleUnload = () => {
       if (viewId) {
         navigator.sendBeacon(
@@ -43,11 +52,19 @@ export default function PresentationPage() {
     }
 
     try {
-      console.log('Loading presentation page with ID:', pageId);
-      
       const { data: pageData, error: pageError } = await supabase
         .from('presentation_pages')
-        .select('*')
+        .select(`
+          *,
+          user:user_id (
+            display_name,
+            avatar_url
+          ),
+          lead:lead_id (
+            name,
+            social_media_profile_image_url
+          )
+        `)
         .eq('slug', pageId)
         .maybeSingle();
 
@@ -150,21 +167,29 @@ export default function PresentationPage() {
     <div className="min-h-screen w-full flex items-center justify-center bg-[#0A0A0A]">
       <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30" />
       
-      <div className="absolute inset-0 flex items-center justify-center opacity-20">
-        <img 
-          src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
-          alt="Background Logo" 
-          className="w-[800px] h-[800px] blur-xl"
-        />
-      </div>
-
       <Card className="relative w-full max-w-[900px] mx-auto bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm p-6">
         <div className="flex flex-col items-center space-y-6">
-          <img 
-            src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
-            alt="Creativable Logo" 
-            className="h-16 w-16"
-          />
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center space-x-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={pageData.user?.avatar_url} alt={pageData.user?.display_name} />
+                <AvatarFallback>{pageData.user?.display_name?.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <span className="text-white font-medium">{pageData.user?.display_name}</span>
+            </div>
+            
+            <div className="flex items-center space-x-3 text-white/50">
+              <ArrowRight className="h-5 w-5" />
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={pageData.lead?.social_media_profile_image_url} alt={pageData.lead?.name} />
+                <AvatarFallback>{pageData.lead?.name?.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <span className="text-white font-medium">{pageData.lead?.name}</span>
+            </div>
+          </div>
           
           <div className="text-center space-y-4">
             <h1 className="text-2xl font-bold text-white">{pageData.title}</h1>
@@ -176,6 +201,7 @@ export default function PresentationPage() {
               videoUrl={pageData.video_url}
               onProgress={handleProgress}
               onDuration={console.log}
+              autoplay={true}
             />
           </div>
         </div>

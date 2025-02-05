@@ -7,13 +7,15 @@ interface VideoPlayerProps {
   onProgress?: (progress: number) => void;
   savedProgress?: number;
   onDuration?: (duration: number) => void;
+  autoplay?: boolean;
 }
 
 export const VideoPlayer = ({ 
   videoUrl, 
   onProgress, 
   savedProgress,
-  onDuration 
+  onDuration,
+  autoplay = false
 }: VideoPlayerProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { isAPILoaded, initializePlayer } = useYouTubePlayer({
@@ -21,7 +23,7 @@ export const VideoPlayer = ({
     onProgress,
     savedProgress,
     onDuration,
-    autoplay: true,
+    autoplay,
   });
 
   useEffect(() => {
