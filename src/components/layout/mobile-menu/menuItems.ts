@@ -11,7 +11,8 @@ import {
   Globe2, 
   Database,
   Wrench,
-  Waves
+  Waves,
+  Link2
 } from "lucide-react";
 
 export const personalItems = [
@@ -21,6 +22,7 @@ export const personalItems = [
   { name: "Nachrichten", path: "/messages", icon: MessageSquare },
   { name: "Kalender", path: "/calendar", icon: Calendar },
   { name: "Todo Liste", path: "/todo", icon: CheckSquare },
+  { name: "Links", path: "/links", icon: Link2 },
 ];
 
 export const teamItems = [

@@ -1,3 +1,4 @@
+
 import { 
   LayoutGrid, 
   Users, 
@@ -13,7 +14,8 @@ import {
   Database,
   Waves,
   Wrench,
-  MessageSquare
+  MessageSquare,
+  Link2
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -143,6 +145,11 @@ export const usePersonalItems = () => {
       title: "Nachrichten",
       icon: MessageSquare,
       url: "/messages"
+    },
+    {
+      title: "Links",
+      icon: Link2,
+      url: "/links"
     },
   ];
 };
