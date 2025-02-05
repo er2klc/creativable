@@ -17,7 +17,7 @@ async function generateUniqueMessage(lead, posts, openAiApiKey) {
   }).join("\n");
 
   const prompt = `
-Du bist ein KI-Experte im Vertrieb. Analysiere die folgenden Informationen über einen Lead und erstelle eine personalisierte Nachricht, die eine emotionale Verbindung herstellt und den Lead zu einem Gespräch motiviert:
+Analysiere die folgenden Lead-Informationen und erstelle eine kurze, prägnante Zusammenfassung mit konkreten nächsten Schritten:
 
 Lead-Informationen:
 - Name: ${lead.name}
@@ -28,7 +28,7 @@ Lead-Informationen:
 - Social-Media-Posts:
 ${postDetails}
 
-Erstelle eine freundliche, einladende und professionelle Nachricht, die individuell auf diesen Lead abgestimmt ist.`;
+Erstelle eine kurze, präzise Zusammenfassung (max. 2-3 Sätze) und einen konkreten Vorschlag für den nächsten Schritt.`;
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -39,7 +39,7 @@ Erstelle eine freundliche, einladende und professionelle Nachricht, die individu
     body: JSON.stringify({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "Du bist ein erfahrener Vertriebsexperte, der Leads analysiert und personalisierte Strategien entwickelt." },
+        { role: "system", content: "Du bist ein erfahrener Vertriebsexperte, der Leads analysiert und präzise, umsetzbare Strategien entwickelt." },
         { role: "user", content: prompt }
       ],
       temperature: 0.7,
@@ -146,7 +146,7 @@ Letzte Interaktion: ${new Date(lead.last_interaction_date || lead.created_at).to
 **Nächste Schritte:**
 ${messageSuggestion}`;
 
-    // Store the summary in the database
+    // Upsert the summary in the database
     const { error: upsertError } = await supabase
       .from("lead_summaries")
       .upsert({
