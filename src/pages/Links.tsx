@@ -2,9 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, FileDown } from "lucide-react";
 import { LinkGroup } from "@/components/links/LinkGroup";
 import { AddLinkDialog } from "@/components/links/AddLinkDialog";
+import { BulkAddLinksDialog } from "@/components/links/BulkAddLinksDialog";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,6 +21,7 @@ export type UserLink = {
 
 const Links = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isBulkAddDialogOpen, setIsBulkAddDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const { data: links = [], isLoading, refetch } = useQuery({
@@ -57,10 +59,16 @@ const Links = () => {
     <div className="container mx-auto p-4">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Meine Links</h1>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Link hinzufügen
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsBulkAddDialogOpen(true)} variant="outline">
+            <FileDown className="h-4 w-4 mr-2" />
+            Bulk Import
+          </Button>
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Link hinzufügen
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -127,10 +135,16 @@ const Links = () => {
         {links.length === 0 && !isLoading && (
           <Card className="p-8 text-center">
             <p className="text-muted-foreground mb-4">Noch keine Links vorhanden</p>
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Ersten Link hinzufügen
-            </Button>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => setIsBulkAddDialogOpen(true)} variant="outline">
+                <FileDown className="h-4 w-4 mr-2" />
+                Bulk Import
+              </Button>
+              <Button onClick={() => setIsAddDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Ersten Link hinzufügen
+              </Button>
+            </div>
           </Card>
         )}
       </div>
@@ -138,6 +152,12 @@ const Links = () => {
       <AddLinkDialog 
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
+        onSuccess={refetch}
+      />
+
+      <BulkAddLinksDialog
+        open={isBulkAddDialogOpen}
+        onOpenChange={setIsBulkAddDialogOpen}
         onSuccess={refetch}
       />
     </div>
