@@ -56,10 +56,15 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
       const newItems = arrayMove(items, oldIndex, newIndex);
       setItems(newItems);
 
+      // Include all required fields in the update
       const updates = newItems.map((item, index) => ({
         id: item.id,
+        title: item.title,
+        url: item.url,
         order_index: index,
-        user_id: user.id
+        user_id: user.id,
+        group_type: item.group_type,
+        is_favorite: item.is_favorite
       }));
 
       const { error } = await supabase
