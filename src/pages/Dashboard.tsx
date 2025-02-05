@@ -6,6 +6,7 @@ import { QuickActions } from "@/components/dashboard/QuickActions";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { DashboardCards } from "@/components/dashboard/DashboardCards";
 import { useDefaultPipeline } from "@/hooks/use-default-pipeline";
+import { EmbeddingsManager } from "@/components/dashboard/EmbeddingsManager";
 
 const Dashboard = () => {
   const navigate = useNavigate();
