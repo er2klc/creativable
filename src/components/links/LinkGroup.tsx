@@ -118,15 +118,18 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
                     allowFullScreen
                   />
                 </div>
-                <div className="flex items-center justify-between">
-                  <h3 className="font-medium truncate flex-1">{link.title}</h3>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <LinkActions
-                      link={link}
-                      onUpdate={onUpdate}
-                      onEdit={() => setEditingLink(link)}
-                    />
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium truncate flex-1">{link.title}</h3>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <LinkActions
+                        link={link}
+                        onUpdate={onUpdate}
+                        onEdit={() => setEditingLink(link)}
+                      />
+                    </div>
                   </div>
+                  <p className="text-sm text-muted-foreground truncate">{link.url}</p>
                 </div>
               </Card>
             );
