@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { Card } from "@/components/ui/card";
+import { Youtube } from "lucide-react";
 
 interface PresentationTabProps {
   leadId: string;
@@ -13,6 +16,12 @@ interface PresentationTabProps {
   tabColors: Record<string, string>;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+interface UserLink {
+  id: string;
+  title: string;
+  url: string;
 }
 
 export const PresentationTab = ({
@@ -23,8 +32,24 @@ export const PresentationTab = ({
 }: PresentationTabProps) => {
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
-  const [expiresIn, setExpiresIn] = useState("never"); // never, 1day, 7days, 30days
+  const [expiresIn, setExpiresIn] = useState("never");
+  const [isManualInput, setIsManualInput] = useState(true);
   const { user } = useAuth();
+
+  // Fetch user's links based on type
+  const { data: userLinks = [] } = useQuery({
+    queryKey: ['user-links', type],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_links')
+        .select('*')
+        .eq('group_type', type)
+        .order('is_favorite', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const getVideoId = (url: string) => {
     const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
@@ -105,28 +130,73 @@ export const PresentationTab = ({
     }
   };
 
+  const handleLinkSelect = (link: UserLink) => {
+    setUrl(link.url);
+    setTitle(link.title);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[600px]">
         <div className="space-y-4 p-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Titel (optional)</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Video Titel"
-            />
+          <div className="flex gap-2 mb-4">
+            <Button
+              variant={isManualInput ? "default" : "outline"}
+              onClick={() => setIsManualInput(true)}
+            >
+              Manuell eingeben
+            </Button>
+            <Button
+              variant={!isManualInput ? "default" : "outline"}
+              onClick={() => setIsManualInput(false)}
+            >
+              Aus Links auswählen
+            </Button>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="url">URL</Label>
-            <Input
-              id="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder={`${type === "youtube" ? "YouTube" : type} URL`}
-            />
-          </div>
+
+          {isManualInput ? (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="title">Titel (optional)</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Video Titel"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="url">URL</Label>
+                <Input
+                  id="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder={`${type === "youtube" ? "YouTube" : type} URL`}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              {userLinks.map((link) => (
+                <Card
+                  key={link.id}
+                  className={`p-3 cursor-pointer hover:bg-gray-100 ${
+                    url === link.url ? "border-2 border-primary" : ""
+                  }`}
+                  onClick={() => handleLinkSelect(link)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Youtube className="h-4 w-4 text-red-600" />
+                    <div>
+                      <p className="font-medium">{link.title}</p>
+                      <p className="text-sm text-muted-foreground">{link.url}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="expires">URL gültig für</Label>
             <select
