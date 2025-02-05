@@ -2,35 +2,14 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
-import { Tables } from "@/integrations/supabase/types";
-import { 
-  Bot, 
-  Calendar, 
-  Building2, 
-  MessageSquare, 
-  ListTodo, 
-  RefreshCw, 
-  Loader2,
-  Target,
-  Lightbulb,
-  MessageCircle,
-  Users,
-  Info,
-  Clock,
-  ArrowRight,
-  ChevronUp
-} from "lucide-react";
+import { Bot, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-
-interface LeadSummaryProps {
-  lead: Tables<"leads"> & {
-    messages: Tables<"messages">[];
-    tasks: Tables<"tasks">[];
-  };
-}
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import { LeadSummaryProps } from "./types/summary";
+import { SummarySection } from "./components/SummarySection";
+import { SummaryControls } from "./components/SummaryControls";
 
 export function LeadSummary({ lead }: LeadSummaryProps) {
   const { settings } = useSettings();
@@ -114,96 +93,25 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     return settings?.language === "en" ? "Generate New Summary" : "KI Zusammenfassung neu generieren";
   };
 
-  const formatSummarySection = (section: string) => {
-    // Split by numbered sections (1., 2., etc.)
-    const lines = section.trim().split('\n');
-    const title = lines[0].replace(/\*\*/g, '').trim();
-    const content = lines.slice(1).filter(line => line.trim()).join('\n');
-
-    const icon = getIconForSection(title);
-
-    return (
-      <div className="bg-gradient-to-r from-white to-gray-50 rounded-lg p-4 shadow-sm mb-4 border border-gray-100">
-        <div className="flex items-center gap-2 mb-3">
-          {icon}
-          <h3 className="font-medium text-lg text-gray-900">{title}</h3>
-        </div>
-        <div className="space-y-2 ml-7">
-          {content.split('\n').map((line, i) => {
-            if (line.startsWith('-') || line.startsWith('•')) {
-              return (
-                <div key={i} className="flex items-start gap-2">
-                  <ArrowRight className="h-4 w-4 mt-1 text-gray-400 flex-shrink-0" />
-                  <p className="text-gray-700 leading-relaxed">{line.replace(/^[-•]/, '').trim()}</p>
-                </div>
-              );
-            }
-            return <p key={i} className="text-gray-700 leading-relaxed">{line}</p>;
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  const getIconForSection = (title: string) => {
-    const titleLower = title.toLowerCase();
-    if (titleLower.includes('kontakt')) {
-      return <Info className="h-5 w-5 text-blue-500" />;
-    }
-    if (titleLower.includes('status')) {
-      return <Clock className="h-5 w-5 text-orange-500" />;
-    }
-    if (titleLower.includes('kommunikation')) {
-      return <MessageSquare className="h-5 w-5 text-purple-500" />;
-    }
-    if (titleLower.includes('profil') || titleLower.includes('geschäft')) {
-      return <Building2 className="h-5 w-5 text-green-500" />;
-    }
-    if (titleLower.includes('nächste') || titleLower.includes('schritte')) {
-      return <Target className="h-5 w-5 text-red-500" />;
-    }
-    return <Bot className="h-5 w-5 text-gray-500" />;
-  };
-
-  // Function to format the summary text into sections
   const formatSummary = (text: string) => {
-    // Split by empty lines to separate major sections
     const sections = text.split(/\n\s*\n/).filter(Boolean);
-    return sections.map((section, index) => formatSummarySection(section));
+    return sections.map((section, index) => (
+      <SummarySection key={index} section={section} />
+    ));
   };
 
   return (
     <Card>
       <CardContent className="pt-6">
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-          <div className="flex items-center justify-between mb-4">
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start text-left font-normal"
-                onClick={() => {
-                  if (hasGenerated && isOpen) {
-                    generateSummary();
-                  }
-                }}
-                disabled={isLoading}
-              >
-                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bot className="h-4 w-4 mr-2" />}
-                {getButtonText()}
-              </Button>
-            </CollapsibleTrigger>
-            {hasGenerated && isOpen && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-2"
-                onClick={() => setIsOpen(false)}
-              >
-                <ChevronUp className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
+          <SummaryControls
+            isLoading={isLoading}
+            hasGenerated={hasGenerated}
+            isOpen={isOpen}
+            buttonText={getButtonText()}
+            onCollapse={() => setIsOpen(false)}
+            onGenerateClick={generateSummary}
+          />
 
           <CollapsibleContent>
             {hasGenerated ? (
