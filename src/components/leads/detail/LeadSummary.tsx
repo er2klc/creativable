@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
@@ -25,20 +26,24 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   // Load existing summary on mount
   useEffect(() => {
     const loadExistingSummary = async () => {
-      const { data, error } = await supabase
-        .from("lead_summaries")
-        .select("*")
-        .eq("lead_id", lead.id)
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from("lead_summaries")
+          .select("*")
+          .eq("lead_id", lead.id)
+          .maybeSingle();
 
-      if (error) {
-        console.error("Error loading summary:", error);
-        return;
-      }
+        if (error) {
+          console.error("Error loading summary:", error);
+          return;
+        }
 
-      if (data) {
-        setSummary(data.summary);
-        setHasGenerated(true);
+        if (data) {
+          setSummary(data.summary);
+          setHasGenerated(true);
+        }
+      } catch (error) {
+        console.error("Error in loadExistingSummary:", error);
       }
     };
 
@@ -57,7 +62,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
 
       if (error) throw error;
 
-      if (!data.summary) {
+      if (!data?.summary) {
         throw new Error("Keine Zusammenfassung generiert");
       }
 
