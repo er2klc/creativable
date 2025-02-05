@@ -28,6 +28,7 @@ export const QuickActions = () => {
   const [showLinkedInDialog, setShowLinkedInDialog] = useState(false);
   const [showNewAppointmentDialog, setShowNewAppointmentDialog] = useState(false);
   const [showAddTaskDialog, setShowAddTaskDialog] = useState(false);
+  const [showTeamDialog, setShowTeamDialog] = useState(false);
 
   const { data: teams } = useQuery({
     queryKey: ['user-teams'],
