@@ -3,7 +3,19 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
-import { Bot, Calendar, Building2, MessageSquare, ListTodo, RefreshCw, Loader2 } from "lucide-react";
+import { 
+  Bot, 
+  Calendar, 
+  Building2, 
+  MessageSquare, 
+  ListTodo, 
+  RefreshCw, 
+  Loader2,
+  Target,
+  Lightbulb,
+  MessageCircle,
+  Users
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,7 +35,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Load existing summary on mount
   useEffect(() => {
     const loadExistingSummary = async () => {
       try {
@@ -86,46 +97,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
   };
 
-  const formatSummary = (text: string) => {
-    const sections = text.split('**').filter(Boolean);
-    return sections.map((section, index) => {
-      const [title, content] = section.split(':').map(s => s.trim());
-      if (!content) return null;
-
-      let icon;
-      switch (title) {
-        case 'Kontaktstatus':
-        case 'Contact Status':
-          icon = <Calendar className="h-5 w-5 text-blue-500" />;
-          break;
-        case 'Geschäftsprofil':
-        case 'Business Profile':
-          icon = <Building2 className="h-5 w-5 text-green-500" />;
-          break;
-        case 'Kommunikationsverlauf':
-        case 'Communication History':
-          icon = <MessageSquare className="h-5 w-5 text-purple-500" />;
-          break;
-        case 'Nächste Schritte':
-        case 'Next Steps':
-          icon = <ListTodo className="h-5 w-5 text-orange-500" />;
-          break;
-        default:
-          icon = <Bot className="h-5 w-5" />;
-      }
-
-      return (
-        <div key={index} className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm mb-4 border border-gray-100">
-          <div className="flex items-center gap-2 mb-2">
-            {icon}
-            <h3 className="font-semibold text-lg antialiased text-black">{title}</h3>
-          </div>
-          <p className="text-gray-700 ml-7 leading-relaxed antialiased">{content}</p>
-        </div>
-      );
-    });
-  };
-
   const getButtonText = () => {
     if (isLoading) {
       return settings?.language === "en" ? "Generating..." : "Generiere...";
@@ -137,6 +108,69 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       return settings?.language === "en" ? "View AI Summary" : "KI Zusammenfassung ansehen";
     }
     return settings?.language === "en" ? "Generate New Summary" : "KI Zusammenfassung neu generieren";
+  };
+
+  const getIconForSection = (title: string) => {
+    switch (title) {
+      case "KONTAKT-ANALYSE":
+      case "CONTACT ANALYSIS":
+        return <Target className="h-5 w-5 text-blue-500" />;
+      case "STRATEGISCHE EMPFEHLUNG":
+      case "STRATEGIC RECOMMENDATION":
+        return <Lightbulb className="h-5 w-5 text-green-500" />;
+      case "NACHRICHTENVORSCHLÄGE":
+      case "MESSAGE SUGGESTIONS":
+        return <MessageCircle className="h-5 w-5 text-purple-500" />;
+      case "GEMEINSAMKEITEN & GESPRÄCHSAUFHÄNGER":
+      case "COMMONALITIES & CONVERSATION STARTERS":
+        return <Users className="h-5 w-5 text-orange-500" />;
+      default:
+        return <Bot className="h-5 w-5" />;
+    }
+  };
+
+  const formatSummary = (text: string) => {
+    // Split by numbered sections (1., 2., etc.)
+    const sections = text.split(/\d+\.\s+/).filter(Boolean);
+    
+    return sections.map((section, index) => {
+      // Get the section title (text before the first newline)
+      const [title, ...contentLines] = section.split("\n").map(s => s.trim()).filter(Boolean);
+      
+      if (!contentLines.length) return null;
+
+      const content = contentLines.join("\n");
+      const icon = getIconForSection(title);
+
+      return (
+        <div key={index} className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm mb-4 border border-gray-100">
+          <div className="flex items-center gap-2 mb-2">
+            {icon}
+            <h3 className="font-semibold text-lg antialiased text-black">{title}</h3>
+          </div>
+          <div className="ml-7">
+            {content.split("\n").map((line, i) => {
+              // Handle different types of lines
+              if (line.startsWith("A)") || line.startsWith("B)") || line.startsWith("C)")) {
+                return (
+                  <div key={i} className="mb-2 p-2 bg-white rounded border border-gray-100">
+                    <p className="text-gray-700 leading-relaxed antialiased">{line}</p>
+                  </div>
+                );
+              }
+              if (line.startsWith("-")) {
+                return (
+                  <p key={i} className="text-gray-700 leading-relaxed antialiased ml-4">{line}</p>
+                );
+              }
+              return (
+                <p key={i} className="text-gray-700 leading-relaxed antialiased">{line}</p>
+              );
+            })}
+          </div>
+        </div>
+      );
+    });
   };
 
   return (
@@ -156,7 +190,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
                 }}
                 disabled={isLoading}
               >
-                <Bot className="h-4 w-4 mr-2" />
+                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bot className="h-4 w-4 mr-2" />}
                 {getButtonText()}
               </Button>
             </CollapsibleTrigger>
@@ -173,7 +207,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
                 disabled={isLoading}
                 className="w-full mb-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white antialiased"
               >
-                <Bot className="h-4 w-4 mr-2" />
+                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bot className="h-4 w-4 mr-2" />}
                 {getButtonText()}
               </Button>
             )}

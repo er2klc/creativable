@@ -12,24 +12,70 @@ interface LeadSummaryRequest {
   language?: string;
 }
 
-async function generateUniqueMessage(lead, posts, openAiApiKey) {
+async function generateUniqueMessage(lead, posts, settings, openAiApiKey) {
+  console.log('Generating message for lead:', lead.name);
+  
   const postDetails = posts.map((post) => {
-    return `Plattform: ${post.platform}, Typ: ${post.post_type}, Inhalt: "${post.content}", Likes: ${post.likes_count}, Kommentare: ${post.comments_count}, Hashtags: ${(post.hashtags || []).join(", ")}`;
+    return `Platform: ${post.platform}, Art: ${post.post_type}, Inhalt: "${post.content}", Likes: ${post.likes_count || 0}, Kommentare: ${post.comments_count || 0}, Hashtags: ${(post.hashtags || []).join(", ")}`;
   }).join("\n");
 
+  const languageStr = settings?.language === 'en' ? 'English' : 'German';
+  const businessContext = `
+Dein Business-Kontext:
+- Dein Name/Marke: ${settings?.company_name || "Nicht angegeben"}
+- Deine Produkte/Services: ${settings?.products_services || "Nicht angegeben"}
+- Deine Zielgruppe: ${settings?.target_audience || "Nicht angegeben"}
+- Dein USP: ${settings?.usp || "Nicht angegeben"}
+- Deine Geschäftsbeschreibung: ${settings?.business_description || "Nicht angegeben"}
+`;
+
   const prompt = `
-Analysiere die folgenden Lead-Informationen und erstelle eine kurze, prägnante Zusammenfassung mit konkreten nächsten Schritten:
+Du bist ein erfahrener KI-Vertriebsexperte. Analysiere die folgenden Daten und erstelle eine präzise, strategische Zusammenfassung mit Gesprächsvorschlägen.
+
+${businessContext}
 
 Lead-Informationen:
+🎯 Basis-Daten:
 - Name: ${lead.name}
 - Branche: ${lead.industry || "Unbekannt"}
+- Aktuelle Position: ${lead.position || "Unbekannt"}
+- Firma: ${lead.company_name || "Unbekannt"}
+- Lead Status: ${lead.status || "Neu"}
+- Pipeline Phase: ${lead.pipeline_phases?.name || "Unbekannt"}
+
+👥 Social Media Profil:
 - Interessen: ${(lead.social_media_interests || []).join(", ")}
-- Letzte Interaktion: ${lead.last_interaction_date || "Unbekannt"}
-- Engagement-Level: ${posts.length > 0 ? "Aktiv" : "Wenig aktiv"}
-- Social-Media-Posts:
+- Bio: ${lead.social_media_bio || "Keine Bio verfügbar"}
+- Follower: ${lead.social_media_followers || "Unbekannt"}
+- Following: ${lead.social_media_following || "Unbekannt"}
+- Engagement Rate: ${lead.social_media_engagement_rate ? (lead.social_media_engagement_rate * 100).toFixed(2) + "%" : "Unbekannt"}
+
+📊 Engagement Historie:
+- Letzte Interaktion: ${lead.last_interaction_date ? new Date(lead.last_interaction_date).toLocaleDateString() : "Keine"}
+- Anzahl Posts: ${posts.length}
+- Social Media Posts:
 ${postDetails}
 
-Erstelle eine kurze, präzise Zusammenfassung (max. 2-3 Sätze) und einen konkreten Vorschlag für den nächsten Schritt.`;
+Erstelle eine strukturierte Analyse mit den folgenden Abschnitten in ${languageStr}:
+
+1. 🧠 KONTAKT-ANALYSE (2-3 Sätze)
+- Wichtigste Erkenntnisse über den Lead
+- Aktuelle Situation und Potenzial
+
+2. 💡 STRATEGISCHE EMPFEHLUNG (2-3 konkrete Punkte)
+- Basierend auf der Analyse
+- Spezifische nächste Schritte
+
+3. 💬 NACHRICHTENVORSCHLÄGE (3 verschiedene Stile)
+A) Professionell & Business-Fokussiert
+B) Persönlich & Vertrauensaufbauend
+C) Direkt & Abschlussorientiert
+
+4. 🎯 GEMEINSAMKEITEN & GESPRÄCHSAUFHÄNGER (2-3 Punkte)
+- Verbindungspunkte zwischen Lead und Business
+- Konkrete Gesprächseinstiege
+
+Halte die Antwort prägnant und handlungsorientiert.`;
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -41,7 +87,10 @@ Erstelle eine kurze, präzise Zusammenfassung (max. 2-3 Sätze) und einen konkre
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: "Du bist ein erfahrener Vertriebsexperte, der Leads analysiert und präzise, umsetzbare Strategien entwickelt." },
+          { 
+            role: "system", 
+            content: "Du bist ein erfahrener Vertriebsexperte, der präzise, umsetzbare Strategien entwickelt. Fokussiere dich auf praktische, personalisierte Empfehlungen." 
+          },
           { role: "user", content: prompt }
         ],
         temperature: 0.7,
@@ -102,15 +151,10 @@ serve(async (req) => {
       throw new Error("Social-Media-Posts konnten nicht abgerufen werden.");
     }
 
-    const totalEngagement = posts.reduce(
-      (sum, post) => sum + (post.likes_count || 0) + (post.comments_count || 0),
-      0
-    );
-
-    // Get user's OpenAI API key from settings
+    // Get user's settings for business context and OpenAI API key
     const { data: settings, error: settingsError } = await supabase
       .from("settings")
-      .select("openai_api_key")
+      .select("*")
       .eq("user_id", lead.user_id)
       .single();
 
@@ -119,28 +163,11 @@ serve(async (req) => {
     }
 
     // Generate personalized message with OpenAI
-    const messageSuggestion = await generateUniqueMessage(lead, posts, settings.openai_api_key);
+    const summary = await generateUniqueMessage(lead, posts, settings, settings.openai_api_key);
 
-    if (!messageSuggestion) {
+    if (!summary) {
       throw new Error("Fehler bei der Generierung der KI-Nachricht.");
     }
-
-    const summary = `
-**Kontaktstatus:**
-Aktuell in Phase "${lead.pipeline_phases?.name || 'Unbekannt'}" mit ${totalEngagement} Interaktionen in den letzten 30 Tagen.
-
-**Geschäftsprofil:**
-${lead.industry ? `Tätig in der Branche ${lead.industry}` : "Branche noch nicht erfasst"}
-${lead.company_name ? `\nFirma: ${lead.company_name}` : ""}
-${lead.social_media_bio ? `\nSelbstbeschreibung: ${lead.social_media_bio}` : ""}
-
-**Kommunikationsverlauf:**
-${lead.messages?.length || 0} Nachrichten ausgetauscht
-${lead.notes?.length || 0} Notizen erfasst
-Letzte Interaktion: ${new Date(lead.last_interaction_date || lead.created_at).toLocaleDateString()}
-
-**Nächste Schritte:**
-${messageSuggestion}`;
 
     // Upsert the summary in the database
     const { error: upsertError } = await supabase
@@ -148,7 +175,8 @@ ${messageSuggestion}`;
       .upsert({
         lead_id: leadId,
         summary: summary,
-        strategy: messageSuggestion
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }, {
         onConflict: 'lead_id'
       });
@@ -159,12 +187,7 @@ ${messageSuggestion}`;
     }
 
     return new Response(
-      JSON.stringify({ 
-        summary, 
-        strategy: messageSuggestion,
-        totalEngagement, 
-        lastInteraction: lead.last_interaction_date 
-      }),
+      JSON.stringify({ summary }),
       {
         headers: {
           ...corsHeaders,
