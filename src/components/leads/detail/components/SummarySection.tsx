@@ -9,7 +9,7 @@ interface SummarySectionProps {
 export function SummarySection({ section }: SummarySectionProps) {
   // Split by numbered sections
   const lines = section.trim().split('\n');
-  const title = lines[0].replace(/\*\*/g, '').trim();
+  const title = lines[0].replace(/<li>(.*?)<\/li>/, '$1').trim();
   const content = lines.slice(1).filter(line => line.trim()).join('\n');
   const icon = getIconForSection(title);
 
@@ -25,11 +25,22 @@ export function SummarySection({ section }: SummarySectionProps) {
             return (
               <div key={i} className="flex items-start gap-2">
                 <ArrowRight className="h-4 w-4 mt-1 text-gray-400 flex-shrink-0" />
-                <p className="text-gray-700 leading-relaxed">{line.replace(/^[-•]/, '').trim()}</p>
+                <div 
+                  className="text-gray-700 leading-relaxed"
+                  dangerouslySetInnerHTML={{ 
+                    __html: line.replace(/^[-•]/, '').trim() 
+                  }}
+                />
               </div>
             );
           }
-          return <p key={i} className="text-gray-700 leading-relaxed">{line}</p>;
+          return (
+            <div 
+              key={i} 
+              className="text-gray-700 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: line }}
+            />
+          );
         })}
       </div>
     </div>
