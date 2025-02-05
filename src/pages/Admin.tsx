@@ -120,9 +120,9 @@ const Admin = () => {
           Admin Dashboard
         </h1>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
+        {/* First Row: User Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-[#F2FCE2]/50 to-[#E5DEFF]/50 border-white/10 shadow-lg backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Users className="h-5 w-5" />
@@ -134,7 +134,7 @@ const Admin = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-[#FDE1D3]/50 to-[#D3E4FD]/50 border-white/10 shadow-lg backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Users className="h-5 w-5 text-green-400" />
@@ -143,10 +143,23 @@ const Admin = () => {
             </CardHeader>
             <CardContent>
               <p className="text-4xl font-bold text-white">{onlineUsers}</p>
+              <p className="text-sm text-gray-300">Aktive Sitzungen der letzten 30 Minuten</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-[#E5DEFF]/50 to-[#FDE1D3]/50 border-white/10 shadow-lg backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-white">Letzte Aktivität</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-300">Aktive Sitzungen in Echtzeit</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Second Row: Teams & Platforms */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-[#D3E4FD]/50 to-[#F2FCE2]/50 border-white/10 shadow-lg backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-blue-400" />
@@ -158,7 +171,7 @@ const Admin = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-[#F2FCE2]/50 to-[#E5DEFF]/50 border-white/10 shadow-lg backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <GraduationCap className="h-5 w-5 text-purple-400" />
@@ -169,22 +182,13 @@ const Admin = () => {
               <p className="text-4xl font-bold text-white">{totalPlatforms}</p>
             </CardContent>
           </Card>
-
-          <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-white">Letzte Aktivität</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-400">Aktive Sitzungen in Echtzeit</p>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Recent Users Table */}
         <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm mb-8">
           <CardHeader>
             <CardTitle className="text-white">Neue Benutzer</CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-gray-300">
               Die letzten 5 registrierten Benutzer
             </CardDescription>
           </CardHeader>
@@ -193,9 +197,9 @@ const Admin = () => {
               <table className="w-full">
                 <thead>
                   <tr className="text-left border-b border-white/10">
-                    <th className="p-4 text-gray-400">Name</th>
-                    <th className="p-4 text-gray-400">Email</th>
-                    <th className="p-4 text-gray-400">Registriert am</th>
+                    <th className="p-4 text-gray-300">Name</th>
+                    <th className="p-4 text-gray-300">Email</th>
+                    <th className="p-4 text-gray-300">Registriert am</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -235,14 +239,14 @@ const Admin = () => {
             <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-white">Changelog Eintrag erstellen</CardTitle>
-                <CardDescription className="text-gray-400">
+                <CardDescription className="text-gray-300">
                   Erstelle einen neuen Changelog Eintrag für die Benutzer
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleChangelogSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1 text-gray-400">Version</label>
+                    <label className="block text-sm font-medium mb-1 text-gray-300">Version</label>
                     <Input
                       value={changelogData.version}
                       onChange={(e) => setChangelogData(prev => ({ ...prev, version: e.target.value }))}
@@ -252,7 +256,7 @@ const Admin = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1 text-gray-400">Titel</label>
+                    <label className="block text-sm font-medium mb-1 text-gray-300">Titel</label>
                     <Input
                       value={changelogData.title}
                       onChange={(e) => setChangelogData(prev => ({ ...prev, title: e.target.value }))}
@@ -262,7 +266,7 @@ const Admin = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1 text-gray-400">Status</label>
+                    <label className="block text-sm font-medium mb-1 text-gray-300">Status</label>
                     <Select
                       value={changelogData.status}
                       onValueChange={(value: "planned" | "in-progress" | "completed") => 
@@ -272,15 +276,15 @@ const Admin = () => {
                       <SelectTrigger className="bg-[#1A1F2C]/60 border-white/10 text-white">
                         <SelectValue placeholder="Wähle einen Status" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="planned">📅 Geplant</SelectItem>
-                        <SelectItem value="in-progress">⚡ In Arbeit</SelectItem>
-                        <SelectItem value="completed">✓ Abgeschlossen</SelectItem>
+                      <SelectContent className="bg-[#1A1F2C] border-white/10">
+                        <SelectItem value="planned" className="text-white">📅 Geplant</SelectItem>
+                        <SelectItem value="in-progress" className="text-white">⚡ In Arbeit</SelectItem>
+                        <SelectItem value="completed" className="text-white">✓ Abgeschlossen</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1 text-gray-400">Beschreibung</label>
+                    <label className="block text-sm font-medium mb-1 text-gray-300">Beschreibung</label>
                     <Textarea
                       value={changelogData.description}
                       onChange={(e) => setChangelogData(prev => ({ ...prev, description: e.target.value }))}
@@ -305,7 +309,7 @@ const Admin = () => {
             <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-white">Newsletter</CardTitle>
-                <CardDescription className="text-gray-400">
+                <CardDescription className="text-gray-300">
                   Diese Funktion wird in Kürze verfügbar sein
                 </CardDescription>
               </CardHeader>
@@ -316,7 +320,7 @@ const Admin = () => {
             <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-white">Benachrichtigungen</CardTitle>
-                <CardDescription className="text-gray-400">
+                <CardDescription className="text-gray-300">
                   Diese Funktion wird in Kürze verfügbar sein
                 </CardDescription>
               </CardHeader>
