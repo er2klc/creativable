@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -52,37 +53,74 @@ export function PresentationTab({ leadId, type, tabColors, isOpen, onOpenChange 
     setLinks(data || []);
   };
 
-  const addToTimeline = async (link: UserLink) => {
-    const { error } = await supabase
-      .from('notes')
-      .insert([
-        {
-          lead_id: leadId,
-          content: link.url,
-          metadata: {
-            type: 'presentation',
-            presentationType: type,
-            title: link.title,
-            url: link.url
-          }
-        }
-      ]);
+  const createPresentationPage = async (link: UserLink) => {
+    try {
+      const slug = link.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
 
-    if (error) {
+      const { data, error } = await supabase
+        .from('presentation_pages')
+        .insert([
+          {
+            lead_id: leadId,
+            title: link.title,
+            video_url: link.url,
+            slug: slug
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const baseUrl = window.location.origin;
+      const presentationUrl = `${baseUrl}/presentation/${leadId}/${data.id}`;
+
+      // Add to timeline
+      const { error: noteError } = await supabase
+        .from('notes')
+        .insert([
+          {
+            lead_id: leadId,
+            content: link.url,
+            metadata: {
+              type: 'presentation',
+              presentationType: type,
+              title: link.title,
+              url: presentationUrl
+            }
+          }
+        ]);
+
+      if (noteError) throw noteError;
+
       toast({
-        title: "Error adding to timeline",
-        description: error.message,
-        variant: "destructive",
+        title: settings?.language === "en" ? "Added to timeline" : "Zur Timeline hinzugefügt",
+        description: settings?.language === "en" ? 
+          "The presentation page has been created" : 
+          "Die Präsentationsseite wurde erstellt"
       });
-      return;
+      
+      // Copy URL to clipboard
+      await navigator.clipboard.writeText(presentationUrl);
+      toast({
+        title: settings?.language === "en" ? "URL copied" : "URL kopiert",
+        description: settings?.language === "en" ? 
+          "The presentation URL has been copied to your clipboard" : 
+          "Die Präsentations-URL wurde in die Zwischenablage kopiert"
+      });
+
+    } catch (error: any) {
+      console.error('Error creating presentation page:', error);
+      toast({
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description: error.message,
+        variant: "destructive"
+      });
     }
 
-    toast({
-      title: settings?.language === "en" ? "Added to timeline" : "Zur Timeline hinzugefügt",
-      description: settings?.language === "en" ? 
-        "The link has been added to the timeline" : 
-        "Der Link wurde zur Timeline hinzugefügt"
-    });
     onOpenChange(false);
   };
 
@@ -139,7 +177,7 @@ export function PresentationTab({ leadId, type, tabColors, isOpen, onOpenChange 
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => addToTimeline(link)}
+                  onClick={() => createPresentationPage(link)}
                   className="shrink-0"
                 >
                   <Plus className="w-4 h-4 mr-2" />

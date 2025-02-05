@@ -1414,6 +1414,89 @@ export type Database = {
         }
         Relationships: []
       }
+      presentation_pages: {
+        Row: {
+          created_at: string | null
+          id: string
+          lead_id: string
+          slug: string
+          title: string
+          user_id: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          slug: string
+          title: string
+          user_id: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          slug?: string
+          title?: string
+          user_id?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_pages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presentation_views: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          id: string
+          lead_id: string
+          page_id: string
+          video_progress: number | null
+          viewed_at: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          page_id: string
+          video_progress?: number | null
+          viewed_at?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          page_id?: string
+          video_progress?: number | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_views_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "presentation_views_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
