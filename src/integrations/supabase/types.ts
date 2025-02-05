@@ -3057,7 +3057,12 @@ export type Database = {
         | "whatsapp"
         | "social_media"
       gender_type: "male" | "female" | "other" | "prefer_not_to_say"
-      link_group_type: "partner" | "customer" | "zoom" | "other"
+      link_group_type:
+        | "partner"
+        | "customer"
+        | "zoom"
+        | "other"
+        | "presentation"
       post_type:
         | "post"
         | "video"
