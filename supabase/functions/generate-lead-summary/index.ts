@@ -17,47 +17,44 @@ async function generateActionableInsights(lead, posts, openAiApiKey) {
     return `Platform: ${post.platform}, Typ: ${post.post_type}, Inhalt: "${post.content}", Likes: ${post.likes_count || 0}, Kommentare: ${post.comments_count || 0}`;
   }).join("\n");
 
+  const engagementRateText = lead.platform === 'Instagram' ? 
+    `\nEngagement-Rate: ${lead.social_media_engagement_rate || "Unbekannt"}` : '';
+
   const prompt = `
-Du bist ein KI-Vertriebsexperte für Lead-Analyse und Empfehlungen. Analysiere die folgenden Daten:
+Als KI-Vertriebsexperte analysiere diese Lead-Daten:
 
-Kontaktinformationen:
-- Name: ${lead.name}
-- Branche: ${lead.industry || "Unbekannt"}
-- Interessen: ${(lead.social_media_interests || []).join(", ")}
-- Letzte Interaktion: ${lead.last_interaction_date || "Unbekannt"}
-- Pipeline-Phase: ${lead.phase_id || "Unbekannt"}
-- Social-Media-Daten:
+<info>
+Name: ${lead.name}
+Branche: ${lead.industry || "Unbekannt"}
+Interessen: ${(lead.social_media_interests || []).join(", ")}
+Letzte Interaktion: ${lead.last_interaction_date || "Unbekannt"}
+Pipeline-Phase: ${lead.phase_id || "Unbekannt"}
+Platform: ${lead.platform}
+Follower: ${lead.social_media_followers || "Unbekannt"}
+Following: ${lead.social_media_following || "Unbekannt"}${engagementRateText}
+</info>
+
+Social-Media-Beiträge:
 ${postDetails}
-- Follower: ${lead.social_media_followers || "Unbekannt"}
-- Following: ${lead.social_media_following || "Unbekannt"}
-- Engagement-Rate: ${lead.social_media_engagement_rate || "Unbekannt"}
 
-Erstelle eine tiefgehende Analyse in diesem Format:
+Erstelle diese Analyse:
 
-**Kontaktstatus**
-- Detaillierte Einschätzung der aktuellen Phase
-- Konkrete Engagement-Bewertung basierend auf Interaktionen
+<li>KURZANALYSE</li>
+- Aktuelle Situation und Potenzial in 2-3 Sätzen
+- Hauptinteressen und relevante Themen als Aufzählung
 
-**Geschäftsprofil**
-- Branchenspezifische Erkenntnisse und Potenziale
-- Identifizierte Schmerzpunkte oder Bedürfnisse
+<li>KONTAKTVORSCHLÄGE</li>
+Formuliere 2 unterschiedliche Nachrichtenvorschläge für ${lead.platform}, die:
+- Persönlich und authentisch sind
+- Auf gemeinsame Interessen/Themen eingehen
+- Eine klare nächste Aktion enthalten
+- Maximal 2-3 Sätze lang sind
 
-**Kommunikation**
-- Analyse des Kommunikationsverhaltens
-- Bevorzugte Kanäle und Ansprechzeiten
-- Tonalität und Stil der Kommunikation
+<li>NÄCHSTE SCHRITTE</li>
+- 3 konkrete, priorisierte Handlungsempfehlungen mit Zeitangabe
+- Bester Zeitpunkt für Kontaktaufnahme
 
-**Relevante Themen**
-- Hauptthemen aus Social Media (mit Engagement-Raten)
-- Emotionale Verbindung zu Themen
-- Aktuelle Trends im Content
-
-**Nächste Schritte**
-- 3 spezifische, zeitlich priorisierte Handlungsempfehlungen
-- Konkrete Vorschläge für Content oder Angebote
-- Optimaler Zeitpunkt für nächste Kontaktaufnahme
-
-Antwort im klaren, strukturierten Format mit kurzen, prägnanten Bulletpoints.`;
+Bitte verwende HTML-Tags für Formatierung (<b>, <li>, etc.) und halte die Antwort kurz und prägnant.`;
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
