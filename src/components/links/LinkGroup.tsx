@@ -18,6 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import { UserLink } from "@/pages/Links";
 import { SortableLink } from "./components/SortableLink";
+import { Card } from "@/components/ui/card";
 
 interface LinkGroupProps {
   title: string;
@@ -29,6 +30,7 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
   const [items, setItems] = useState(links);
   const { toast } = useToast();
   const { user } = useAuth();
+  const isPresentationGroup = links.length > 0 && links[0].group_type === 'presentation';
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -56,7 +58,6 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
       const newItems = arrayMove(items, oldIndex, newIndex);
       setItems(newItems);
 
-      // Include all required fields in the update
       const updates = newItems.map((item, index) => ({
         id: item.id,
         title: item.title,
@@ -83,6 +84,43 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
       onUpdate();
     }
   };
+
+  const getYoutubeVideoId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
+
+  if (isPresentationGroup) {
+    return (
+      <div>
+        <h2 className="text-lg font-semibold mb-4">{title}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.map((link) => {
+            const videoId = getYoutubeVideoId(link.url);
+            if (!videoId) return null;
+
+            return (
+              <Card key={link.id} className="p-4">
+                <div className="aspect-video mb-2">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={`https://www.youtube.com/embed/${videoId}`}
+                    title={link.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+                <h3 className="font-medium truncate">{link.title}</h3>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
