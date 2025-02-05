@@ -136,6 +136,39 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
     );
   }
 
+  if (isZoomGroup || isDocumentsGroup) {
+    return (
+      <div>
+        <h2 className="text-lg font-semibold mb-4">{title}</h2>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={items.map(link => link.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-2">
+              {items.map((link) => (
+                <SortableLink key={link.id} link={link} onUpdate={onUpdate} />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+
+        {editingLink && (
+          <LinkEditDialog
+            link={editingLink}
+            isOpen={!!editingLink}
+            onOpenChange={(open) => !open && setEditingLink(null)}
+            onUpdate={onUpdate}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
       <h2 className="text-lg font-semibold mb-4">{title}</h2>

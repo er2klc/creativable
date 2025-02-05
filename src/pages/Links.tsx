@@ -13,7 +13,7 @@ export type UserLink = {
   id: string;
   title: string;
   url: string;
-  group_type: 'partner' | 'customer' | 'meeting' | 'other' | 'presentation';
+  group_type: 'youtube' | 'zoom' | 'documents' | 'partner' | 'customer' | 'meeting' | 'other' | 'presentation';
   is_favorite: boolean;
   order_index: number;
   custom_group_name?: string;
@@ -49,6 +49,9 @@ const Links = () => {
   });
 
   const favoriteLinks = links.filter(link => link.is_favorite);
+  const youtubeLinks = links.filter(link => link.group_type === 'youtube');
+  const zoomLinks = links.filter(link => link.group_type === 'zoom');
+  const documentLinks = links.filter(link => link.group_type === 'documents');
   const partnerLinks = links.filter(link => link.group_type === 'partner');
   const customerLinks = links.filter(link => link.group_type === 'customer');
   const meetingLinks = links.filter(link => link.group_type === 'meeting');
@@ -77,6 +80,36 @@ const Links = () => {
             <LinkGroup 
               title="Favoriten" 
               links={favoriteLinks} 
+              onUpdate={refetch}
+            />
+          </Card>
+        )}
+
+        {youtubeLinks.length > 0 && (
+          <Card className="p-4">
+            <LinkGroup 
+              title="YouTube Links" 
+              links={youtubeLinks} 
+              onUpdate={refetch}
+            />
+          </Card>
+        )}
+
+        {zoomLinks.length > 0 && (
+          <Card className="p-4">
+            <LinkGroup 
+              title="Zoom Links" 
+              links={zoomLinks} 
+              onUpdate={refetch}
+            />
+          </Card>
+        )}
+
+        {documentLinks.length > 0 && (
+          <Card className="p-4">
+            <LinkGroup 
+              title="Dokumente" 
+              links={documentLinks} 
               onUpdate={refetch}
             />
           </Card>
