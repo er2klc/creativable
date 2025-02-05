@@ -31,6 +31,8 @@ export default function PresentationPage() {
     }
 
     try {
+      console.log('Loading presentation page with ID:', pageId);
+      
       // Load page data
       const { data: pageData, error: pageError } = await supabase
         .from('presentation_pages')
