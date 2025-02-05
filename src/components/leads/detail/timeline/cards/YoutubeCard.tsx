@@ -8,11 +8,13 @@ interface YoutubeCardProps {
     title?: string;
     url?: string;
     presentationUrl?: string;
+    videoId?: string;
   };
 }
 
 export const YoutubeCard = ({ content, metadata }: YoutubeCardProps) => {
   const { settings } = useSettings();
+  const videoId = metadata?.videoId || metadata?.url?.split('v=')[1] || '';
 
   const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
     try {
@@ -32,11 +34,20 @@ export const YoutubeCard = ({ content, metadata }: YoutubeCardProps) => {
   };
 
   return (
-    <div className="relative group bg-white border border-red-500 rounded-lg p-4">
+    <div className="relative group bg-white border border-red-500 rounded-lg p-4 w-full">
       <div className="flex items-start gap-4">
         <Youtube className="h-5 w-5 text-red-500 flex-shrink-0 mt-1" />
         <div className="flex-1 min-w-0">
-          <div className="font-medium mb-1">{metadata?.title || content}</div>
+          <div className="font-medium mb-2">{metadata?.title || content}</div>
+          {videoId && (
+            <div className="mb-4 w-48 h-27 rounded overflow-hidden">
+              <img 
+                src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+                alt="Video thumbnail"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
           <div className="flex gap-4 mt-2">
             {metadata?.url && (
               <button

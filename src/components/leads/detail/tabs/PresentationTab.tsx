@@ -33,7 +33,7 @@ export const PresentationTab = ({
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const [expiresIn, setExpiresIn] = useState("never");
-  const [isManualInput, setIsManualInput] = useState(true);
+  const [isManualInput, setIsManualInput] = useState(false); // Changed to false by default
   const { user } = useAuth();
 
   // Fetch user's links based on type
