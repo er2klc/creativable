@@ -29,7 +29,7 @@ export const YoutubeCard = ({ content, metadata }: YoutubeCardProps) => {
         {metadata?.url && (
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground break-all">
-              <Youtube className="h-4 w-4 flex-shrink-0" />
+              <Youtube className="h-4 w-4 flex-shrink-0 text-[#ea384c]" />
               {metadata.url}
             </div>
             <Button 

@@ -6,7 +6,6 @@ import { formatDateTime } from "./utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { StatusCard } from "./cards/StatusCard";
 import { YoutubeCard } from "./cards/YoutubeCard";
-import { PresentationCard } from "./cards/PresentationCard";
 
 interface TimelineItemProps {
   item: TimelineItemType;
@@ -34,10 +33,6 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
   const renderContent = () => {
     if (item.metadata?.type === 'youtube') {
       return <YoutubeCard content={item.content} metadata={item.metadata} />;
-    }
-
-    if (item.metadata?.type === 'presentation') {
-      return <PresentationCard content={item.content} metadata={item.metadata} />;
     }
 
     if (item.type === 'status_change') {
