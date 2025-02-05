@@ -11,7 +11,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const user = useUser();
   
-  // Verwende den Hook um sicherzustellen, dass der Benutzer eine Pipeline hat
   useDefaultPipeline();
 
   useEffect(() => {
@@ -23,11 +22,20 @@ const Dashboard = () => {
   if (!user) return null;
 
   return (
-    <div className="mx-auto">
-      <DashboardHeader userEmail={user.email} />
-      <QuickActions />
-      <SearchBar />
-      <DashboardCards />
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-6">
+        <SearchBar />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <DashboardHeader userEmail={user.email} />
+            <QuickActions />
+          </div>
+          <div className="lg:col-span-1">
+            <EmbeddingsManager />
+          </div>
+        </div>
+        <DashboardCards />
+      </div>
     </div>
   );
 };

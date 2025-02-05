@@ -32,7 +32,6 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
     }
   });
 
-  // Fetch daily quote
   useEffect(() => {
     const fetchDailyQuote = async () => {
       try {
@@ -99,7 +98,7 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-            Willkommen, {displayName}
+            Willkommen zurück, {displayName}! 👋
           </h1>
           <p className="text-sm md:text-base text-muted-foreground mt-1">
             Hier ist Ihr aktueller Überblick
@@ -112,7 +111,7 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
         </div>
       </div>
       {dailyQuote && (
-        <div className="bg-primary/5 p-3 md:p-4 rounded-lg">
+        <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-4 rounded-lg border border-primary/10">
           <p className="text-base md:text-lg text-primary italic text-center">
             "{dailyQuote}"
           </p>

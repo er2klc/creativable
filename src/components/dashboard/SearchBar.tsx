@@ -40,50 +40,52 @@ export const SearchBar = () => {
   };
 
   return (
-    <div className="relative mb-8">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      <input
-        type="text"
-        placeholder="Lead suchen..."
-        className="w-full pl-10 pr-4 py-2 border rounded-md bg-background"
-        onChange={(e) => handleSearch(e.target.value)}
-        onFocus={() => searchResults.length > 0 && setShowResults(true)}
-        onBlur={() => setTimeout(() => setShowResults(false), 200)}
-      />
-      
-      {showResults && searchResults.length > 0 && (
-        <Card className="absolute w-full mt-1 p-2 bg-background shadow-lg z-50">
-          <div className="space-y-1">
-            {searchResults.map((lead) => (
-              <div
-                key={lead.id}
-                className="flex items-center justify-between p-2 hover:bg-gray-100 rounded cursor-pointer"
-                onClick={() => handleResultClick(lead.id)}
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
-                    {lead.social_media_profile_image_url ? (
-                      <AvatarImage 
-                        src={lead.social_media_profile_image_url} 
-                        alt={lead.name}
-                        className="object-cover"
-                      />
-                    ) : (
-                      <AvatarFallback>
-                        {lead.name?.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <span>{lead.name}</span>
+    <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Globale Suche..."
+          className="w-full pl-10 pr-4 py-3 border rounded-lg bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm hover:shadow-md transition-shadow duration-200"
+          onChange={(e) => handleSearch(e.target.value)}
+          onFocus={() => searchResults.length > 0 && setShowResults(true)}
+          onBlur={() => setTimeout(() => setShowResults(false), 200)}
+        />
+        
+        {showResults && searchResults.length > 0 && (
+          <Card className="absolute w-full mt-1 p-2 bg-background shadow-lg z-50">
+            <div className="space-y-1">
+              {searchResults.map((lead) => (
+                <div
+                  key={lead.id}
+                  className="flex items-center justify-between p-2 hover:bg-gray-100 rounded cursor-pointer"
+                  onClick={() => handleResultClick(lead.id)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      {lead.social_media_profile_image_url ? (
+                        <AvatarImage 
+                          src={lead.social_media_profile_image_url} 
+                          alt={lead.name}
+                          className="object-cover"
+                        />
+                      ) : (
+                        <AvatarFallback>
+                          {lead.name?.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <span>{lead.name}</span>
+                  </div>
+                  <div className="relative w-8 h-8">
+                    <PlatformIndicator platform={lead.platform} />
+                  </div>
                 </div>
-                <div className="relative w-8 h-8">
-                  <PlatformIndicator platform={lead.platform} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
+              ))}
+            </div>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };
