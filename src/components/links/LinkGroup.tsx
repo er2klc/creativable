@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +34,9 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
   const [editingLink, setEditingLink] = useState<UserLink | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
-  const isPresentationGroup = links.length > 0 && links[0].group_type === 'presentation';
+  const isYoutubeGroup = links.length > 0 && links[0].group_type === 'youtube';
+  const isZoomGroup = links.length > 0 && links[0].group_type === 'zoom';
+  const isDocumentsGroup = links.length > 0 && links[0].group_type === 'documents';
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -88,80 +91,48 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
     }
   };
 
-  const handleEditSuccess = (updatedLink: UserLink) => {
-    // Update the local state with the edited link
-    const newItems = items.map(item => 
-      item.id === updatedLink.id ? updatedLink : item
-    );
-    setItems(newItems);
-    setEditingLink(null);
-  };
-
   const getYoutubeVideoId = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return match && match[2].length === 11 ? match[2] : null;
   };
 
-  if (isPresentationGroup) {
+  if (isYoutubeGroup) {
     return (
       <div>
         <h2 className="text-lg font-semibold mb-4">{title}</h2>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={items.map(link => link.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {items.map((link) => {
-                const videoId = getYoutubeVideoId(link.url);
-                if (!videoId) return null;
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.map((link) => {
+            const videoId = getYoutubeVideoId(link.url);
+            if (!videoId) return null;
 
-                return (
-                  <Card key={link.id} className="p-4 group relative">
-                    <div className="aspect-video mb-2">
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        src={`https://www.youtube.com/embed/${videoId}`}
-                        title={link.title}
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium truncate flex-1">{link.title}</h3>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <LinkActions
-                          link={link}
-                          onUpdate={onUpdate}
-                          onEdit={() => setEditingLink(link)}
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          </SortableContext>
-        </DndContext>
-
-        {editingLink && (
-          <LinkEditDialog
-            link={editingLink}
-            isOpen={!!editingLink}
-            onOpenChange={(open) => !open && setEditingLink(null)}
-            onUpdate={() => {
-              onUpdate();
-              handleEditSuccess(editingLink);
-            }}
-          />
-        )}
+            return (
+              <Card key={link.id} className="p-4 group relative">
+                <div className="aspect-video mb-2">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={`https://www.youtube.com/embed/${videoId}`}
+                    title={link.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium truncate flex-1">{link.title}</h3>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <LinkActions
+                      link={link}
+                      onUpdate={onUpdate}
+                      onEdit={() => setEditingLink(link)}
+                    />
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -185,6 +156,15 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
           </div>
         </SortableContext>
       </DndContext>
+
+      {editingLink && (
+        <LinkEditDialog
+          link={editingLink}
+          isOpen={!!editingLink}
+          onOpenChange={(open) => !open && setEditingLink(null)}
+          onUpdate={onUpdate}
+        />
+      )}
     </div>
   );
 };

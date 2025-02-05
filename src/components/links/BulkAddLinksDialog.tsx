@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,7 +29,7 @@ export const BulkAddLinksDialog = ({
         const meetingId = urlObj.pathname.split('/').pop() || '';
         return {
           title: `Zoom Meeting (ID: ${meetingId})`,
-          group_type: 'meeting'
+          group_type: 'zoom'
         };
       }
       
@@ -36,7 +37,16 @@ export const BulkAddLinksDialog = ({
       if (urlObj.hostname.includes('youtube.') || urlObj.hostname.includes('youtu.be')) {
         return {
           title: 'YouTube Video',
-          group_type: 'presentation'
+          group_type: 'youtube'
+        };
+      }
+
+      // Detect document links
+      const documentExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'];
+      if (documentExtensions.some(ext => urlObj.pathname.toLowerCase().endsWith(ext))) {
+        return {
+          title: 'Document',
+          group_type: 'documents'
         };
       }
       

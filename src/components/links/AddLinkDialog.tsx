@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
@@ -27,7 +28,6 @@ export const AddLinkDialog = ({
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [groupType, setGroupType] = useState<string>("other");
-  const [customGroup, setCustomGroup] = useState("");
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,8 +61,7 @@ export const AddLinkDialog = ({
       .insert({
         title,
         url: formattedUrl,
-        group_type: groupType === 'custom' ? 'custom' : groupType,
-        custom_group_name: groupType === 'custom' ? customGroup : null,
+        group_type: groupType,
         user_id: session.user.id,
       });
 
@@ -83,7 +82,6 @@ export const AddLinkDialog = ({
     setTitle("");
     setUrl("");
     setGroupType("other");
-    setCustomGroup("");
     onSuccess();
     onOpenChange(false);
   };
@@ -123,27 +121,13 @@ export const AddLinkDialog = ({
                 <SelectValue placeholder="Wähle eine Gruppe" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="partner">Partner</SelectItem>
-                <SelectItem value="customer">Kunden</SelectItem>
-                <SelectItem value="meeting">Meeting</SelectItem>
-                <SelectItem value="presentation">Präsentation</SelectItem>
-                <SelectItem value="custom">Eigene Gruppe</SelectItem>
+                <SelectItem value="youtube">YouTube</SelectItem>
+                <SelectItem value="zoom">Zoom</SelectItem>
+                <SelectItem value="documents">Dokumente</SelectItem>
                 <SelectItem value="other">Sonstige</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
-          {groupType === 'custom' && (
-            <div className="space-y-2">
-              <Label htmlFor="customGroup">Eigene Gruppe</Label>
-              <Input
-                id="customGroup"
-                value={customGroup}
-                onChange={(e) => setCustomGroup(e.target.value)}
-                placeholder="Name der eigenen Gruppe"
-              />
-            </div>
-          )}
 
           <Button type="submit" className="w-full">
             Link speichern
