@@ -30,14 +30,16 @@ export function LinkEditDialog({ link, isOpen, onOpenChange, onUpdate }: LinkEdi
       return;
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('user_links')
       .update({ 
         title: editedTitle,
         url: editedUrl,
         user_id: user.id 
       })
-      .eq('id', link.id);
+      .eq('id', link.id)
+      .select()
+      .single();
 
     if (error) {
       toast({

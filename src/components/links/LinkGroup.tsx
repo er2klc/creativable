@@ -88,6 +88,15 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
     }
   };
 
+  const handleEditSuccess = (updatedLink: UserLink) => {
+    // Update the local state with the edited link
+    const newItems = items.map(item => 
+      item.id === updatedLink.id ? updatedLink : item
+    );
+    setItems(newItems);
+    setEditingLink(null);
+  };
+
   const getYoutubeVideoId = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
@@ -147,7 +156,10 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
             link={editingLink}
             isOpen={!!editingLink}
             onOpenChange={(open) => !open && setEditingLink(null)}
-            onUpdate={onUpdate}
+            onUpdate={() => {
+              onUpdate();
+              handleEditSuccess(editingLink);
+            }}
           />
         )}
       </div>
@@ -163,7 +175,7 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={items.map(link => link.id)}
+          items={items
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-2">
