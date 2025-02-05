@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { VideoPlayer } from '@/components/elevate/platform/detail/video/VideoPlayer';
 import { Card } from '@/components/ui/card';
-import { toast } from "sonner";
 
 interface PresentationPageData {
   title: string;
@@ -33,11 +32,11 @@ export default function PresentationPage() {
     try {
       console.log('Loading presentation page with ID:', pageId);
       
-      // Load page data
+      // Load page data by slug
       const { data: pageData, error: pageError } = await supabase
         .from('presentation_pages')
         .select('*')
-        .eq('id', pageId)
+        .eq('slug', pageId)
         .maybeSingle();
 
       if (pageError) {
@@ -73,7 +72,7 @@ export default function PresentationPage() {
         .from('presentation_views')
         .insert([
           {
-            page_id: pageId,
+            page_id: pageData.id,
             lead_id: leadId,
             video_progress: 0,
             completed: false
