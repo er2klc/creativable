@@ -1,61 +1,96 @@
-
-import { useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useSettings } from "@/hooks/use-settings";
-import { PresentationLinkCard } from "./presentation/PresentationLinkCard";
-import { usePresentationPage } from "./presentation/usePresentationPage";
+import { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 interface PresentationTabProps {
   leadId: string;
-  type: "zoom" | "youtube" | "documents";
+  type: string;
   tabColors: Record<string, string>;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function PresentationTab({ leadId, type, tabColors, isOpen, onOpenChange }: PresentationTabProps) {
-  const { settings } = useSettings();
-  const { links, loadLinks, createPresentationPage } = usePresentationPage(leadId, () => onOpenChange(false));
+export const PresentationTab = ({
+  leadId,
+  type,
+  isOpen,
+  onOpenChange,
+}: PresentationTabProps) => {
+  const [url, setUrl] = useState("");
+  const [title, setTitle] = useState("");
+  const { user } = useAuth();
 
-  useEffect(() => {
-    if (isOpen) {
-      loadLinks(type);
+  const handleSubmit = async () => {
+    try {
+      if (!url) {
+        toast.error("Bitte geben Sie eine URL ein");
+        return;
+      }
+
+      if (type === "youtube") {
+        const { error } = await supabase.from("notes").insert([
+          {
+            lead_id: leadId,
+            user_id: user?.id,
+            content: url,
+            metadata: {
+              type: "youtube",
+              title: title || url,
+              url: url,
+              presentationUrl: `/presentation/${leadId}/${url}`
+            }
+          }
+        ]);
+
+        if (error) throw error;
+
+        toast.success("YouTube Video erfolgreich hinzugefügt");
+      }
+
+      setUrl("");
+      setTitle("");
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error adding presentation:", error);
+      toast.error("Fehler beim Hinzufügen der Präsentation");
     }
-  }, [type, isOpen]);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            {settings?.language === "en" ? "Select Link" : "Link auswählen"}
-          </DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="h-[60vh] pr-4">
-          <div className="space-y-4">
-            {links.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                {settings?.language === "en" ? 
-                  "No links available. Add some links in the Links section." : 
-                  "Keine Links verfügbar. Fügen Sie Links im Bereich Links hinzu."}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {links.map((link) => (
-                  <PresentationLinkCard
-                    key={link.id}
-                    link={link}
-                    type={type}
-                    tabColors={tabColors}
-                    onAddClick={createPresentationPage}
-                  />
-                ))}
-              </div>
-            )}
+      <DialogContent>
+        <div className="space-y-4 p-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Titel (optional)</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Video Titel"
+            />
           </div>
-        </ScrollArea>
+          <div className="space-y-2">
+            <Label htmlFor="url">URL</Label>
+            <Input
+              id="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder={`${type === "youtube" ? "YouTube" : type} URL`}
+            />
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Abbrechen
+            </Button>
+            <Button onClick={handleSubmit}>Hinzufügen</Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
-}
+};
