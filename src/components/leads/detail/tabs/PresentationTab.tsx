@@ -64,6 +64,23 @@ export const PresentationTab = ({
       }
 
       if (type === "youtube") {
+        const slug = generateSlug(title || url, videoId);
+        
+        const { error: pageError } = await supabase
+          .from('presentation_pages')
+          .insert([
+            {
+              lead_id: leadId,
+              user_id: user?.id,
+              title: title || url,
+              video_url: url,
+              slug: slug,
+              expires_at: calculateExpiryDate(expiresIn)
+            }
+          ]);
+
+        if (pageError) throw pageError;
+
         const { error } = await supabase.from("notes").insert([
           {
             lead_id: leadId,
@@ -74,28 +91,12 @@ export const PresentationTab = ({
               title: title || url,
               url: url,
               videoId: videoId,
-              presentationUrl: `${window.location.origin}/presentation/${leadId}/${videoId}`
+              presentationUrl: `${window.location.origin}/presentation/${leadId}/${slug}`
             }
           }
         ]);
 
         if (error) throw error;
-
-        // Create presentation page
-        const { error: pageError } = await supabase
-          .from('presentation_pages')
-          .insert([
-            {
-              lead_id: leadId,
-              user_id: user?.id,
-              title: title || url,
-              video_url: url,
-              slug: generateSlug(title || url, videoId),
-              expires_at: calculateExpiryDate(expiresIn)
-            }
-          ]);
-
-        if (pageError) throw pageError;
 
         toast.success("YouTube Video erfolgreich hinzugefügt");
       }
