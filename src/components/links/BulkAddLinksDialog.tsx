@@ -25,8 +25,9 @@ export const BulkAddLinksDialog = ({
       
       // Detect Zoom links
       if (urlObj.hostname.includes('zoom.')) {
+        const meetingId = urlObj.pathname.split('/').pop() || '';
         return {
-          title: 'Zoom Meeting',
+          title: `Zoom Meeting (ID: ${meetingId})`,
           group_type: 'meeting'
         };
       }
@@ -131,7 +132,7 @@ export const BulkAddLinksDialog = ({
               className="min-h-[200px]"
             />
             <p className="text-sm text-muted-foreground">
-              Tipp: Zoom-Links werden automatisch als Meetings erkannt, YouTube-Links als Präsentationen
+              Tipp: Zoom-Links werden automatisch als Meetings erkannt (mit Meeting-ID), YouTube-Links als Präsentationen
             </p>
           </div>
 
