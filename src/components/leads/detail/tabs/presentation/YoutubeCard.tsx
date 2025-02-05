@@ -1,4 +1,3 @@
-import { Youtube } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 
@@ -36,7 +35,6 @@ export const YoutubeCard = ({ content, metadata }: YoutubeCardProps) => {
   return (
     <div className="relative group bg-white border border-red-500 rounded-lg p-4 w-full">
       <div className="flex items-start gap-4">
-        <Youtube className="h-5 w-5 text-red-500 flex-shrink-0 mt-1" />
         <div className="flex-1 min-w-0">
           <div className="font-medium mb-2">{metadata?.title || content}</div>
           {videoId && (

@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { Youtube } from "lucide-react";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
@@ -83,7 +82,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           </div>
         </div>
         <div className="flex flex-col items-end">
-          <Youtube className="h-5 w-5 text-red-500 mb-2" />
           {videoId && (
             <div className="w-48 h-27 rounded overflow-hidden">
               <img 
