@@ -3065,6 +3065,8 @@ export type Database = {
         | "presentation"
         | "custom"
         | "meeting"
+        | "youtube"
+        | "documents"
       post_type:
         | "post"
         | "video"
