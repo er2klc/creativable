@@ -36,10 +36,16 @@ export default function PresentationPage() {
         .from('presentation_pages')
         .select('*')
         .eq('id', pageId)
-        .single();
+        .maybeSingle();
 
       if (pageError) {
         console.error('Error loading presentation page:', pageError);
+        setError("Presentation not found");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!pageData) {
         setError("Presentation not found");
         setIsLoading(false);
         return;
@@ -135,11 +141,11 @@ export default function PresentationPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30" />
       
       {/* Logo Background Blur */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-5">
+      <div className="absolute inset-0 flex items-center justify-center opacity-20">
         <img 
           src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
           alt="Background Logo" 
-          className="w-[800px] h-[800px] blur-3xl"
+          className="w-[800px] h-[800px] blur-xl"
         />
       </div>
 
@@ -155,11 +161,6 @@ export default function PresentationPage() {
           <div className="text-center space-y-4">
             <h1 className="text-2xl font-bold text-white">{pageData.title}</h1>
             <div className="h-[1px] w-32 mx-auto bg-gradient-to-r from-transparent via-white/50 to-transparent" />
-            
-            {/* Display URL */}
-            <p className="text-sm text-gray-400 break-all">
-              {window.location.href}
-            </p>
           </div>
           
           {/* Video Player */}
