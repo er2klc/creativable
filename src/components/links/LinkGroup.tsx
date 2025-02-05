@@ -19,6 +19,8 @@ import {
 import { UserLink } from "@/pages/Links";
 import { SortableLink } from "./components/SortableLink";
 import { Card } from "@/components/ui/card";
+import { LinkActions } from "./components/LinkActions";
+import { LinkEditDialog } from "./components/LinkEditDialog";
 
 interface LinkGroupProps {
   title: string;
@@ -28,6 +30,7 @@ interface LinkGroupProps {
 
 export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
   const [items, setItems] = useState(links);
+  const [editingLink, setEditingLink] = useState<UserLink | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const isPresentationGroup = links.length > 0 && links[0].group_type === 'presentation';
@@ -95,29 +98,58 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
     return (
       <div>
         <h2 className="text-lg font-semibold mb-4">{title}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {items.map((link) => {
-            const videoId = getYoutubeVideoId(link.url);
-            if (!videoId) return null;
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={items.map(link => link.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {items.map((link) => {
+                const videoId = getYoutubeVideoId(link.url);
+                if (!videoId) return null;
 
-            return (
-              <Card key={link.id} className="p-4">
-                <div className="aspect-video mb-2">
-                  <iframe
-                    width="100%"
-                    height="100%"
-                    src={`https://www.youtube.com/embed/${videoId}`}
-                    title={link.title}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-                <h3 className="font-medium truncate">{link.title}</h3>
-              </Card>
-            );
-          })}
-        </div>
+                return (
+                  <Card key={link.id} className="p-4 group relative">
+                    <div className="aspect-video mb-2">
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        src={`https://www.youtube.com/embed/${videoId}`}
+                        title={link.title}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium truncate flex-1">{link.title}</h3>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <LinkActions
+                          link={link}
+                          onUpdate={onUpdate}
+                          onEdit={() => setEditingLink(link)}
+                        />
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
+
+        {editingLink && (
+          <LinkEditDialog
+            link={editingLink}
+            isOpen={!!editingLink}
+            onOpenChange={(open) => !open && setEditingLink(null)}
+            onUpdate={onUpdate}
+          />
+        )}
       </div>
     );
   }
