@@ -14,7 +14,7 @@ interface YoutubeCardProps {
     event_type?: string;
     presentationUrl?: string;
   };
-  timestamp: string;
+  timestamp?: string;
 }
 
 export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) => {
@@ -36,9 +36,11 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <div className="font-medium">{getEventMessage()}</div>
-          <div className="text-xs text-gray-500">
-            {formatDateTime(timestamp, settings?.language)}
-          </div>
+          {timestamp && (
+            <div className="text-xs text-gray-500">
+              {formatDateTime(timestamp, settings?.language)}
+            </div>
+          )}
         </div>
         <div className="text-red-500">
           <Youtube className="h-5 w-5" />
