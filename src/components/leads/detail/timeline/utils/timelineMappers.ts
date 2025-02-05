@@ -63,8 +63,11 @@ export const createContactCreationItem = (name: string, created_at: string): Tim
   }
 });
 
-export const createStatusChangeItem = (status: string, timestamp: string, name?: string): TimelineItem | null => {
-  // Don't create timeline item for 'lead' status
+export const createStatusChangeItem = (
+  status: string, 
+  timestamp: string,
+  name?: string
+): TimelineItem | null => {
   if (status === 'lead') return null;
 
   let content = '';
