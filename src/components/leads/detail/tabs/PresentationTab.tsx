@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { Card } from "@/components/ui/card";
-import { Youtube } from "lucide-react";
+import { ManualInputForm } from "./presentation/ManualInputForm";
+import { LinkSelectionForm } from "./presentation/LinkSelectionForm";
+import { ExpirySelect } from "./presentation/ExpirySelect";
+import { getVideoId, generateSlug, calculateExpiryDate } from "./presentation/presentationUtils";
+import { UserLink } from "@/pages/Links";
 
 interface PresentationTabProps {
   leadId: string;
@@ -16,12 +17,6 @@ interface PresentationTabProps {
   tabColors: Record<string, string>;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-}
-
-interface UserLink {
-  id: string;
-  title: string;
-  url: string;
 }
 
 export const PresentationTab = ({
@@ -36,7 +31,6 @@ export const PresentationTab = ({
   const [isManualInput, setIsManualInput] = useState(false);
   const { user } = useAuth();
 
-  // Fetch user's links based on type
   const { data: userLinks = [] } = useQuery({
     queryKey: ['user-links', type],
     queryFn: async () => {
@@ -51,32 +45,9 @@ export const PresentationTab = ({
     },
   });
 
-  const getVideoId = (url: string) => {
-    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[7].length === 11) ? match[7] : false;
-  };
-
-  const generateSlug = (baseTitle: string, videoId: string) => {
-    const timestamp = new Date().getTime();
-    const sanitizedTitle = baseTitle
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-    return `${sanitizedTitle}-${videoId}-${timestamp}`;
-  };
-
-  const calculateExpiryDate = () => {
-    if (expiresIn === 'never') return null;
-    
-    const now = new Date();
-    const days = {
-      '1day': 1,
-      '7days': 7,
-      '30days': 30
-    }[expiresIn] || 0;
-    
-    return new Date(now.setDate(now.getDate() + days));
+  const handleLinkSelect = (link: UserLink) => {
+    setUrl(link.url);
+    setTitle(link.title);
   };
 
   const handleSubmit = async () => {
@@ -120,7 +91,7 @@ export const PresentationTab = ({
               title: title || url,
               video_url: url,
               slug: generateSlug(title || url, videoId),
-              expires_at: calculateExpiryDate()
+              expires_at: calculateExpiryDate(expiresIn)
             }
           ]);
 
@@ -137,11 +108,6 @@ export const PresentationTab = ({
       console.error("Error adding presentation:", error);
       toast.error("Fehler beim Hinzufügen der Präsentation");
     }
-  };
-
-  const handleLinkSelect = (link: UserLink) => {
-    setUrl(link.url);
-    setTitle(link.title);
   };
 
   return (
@@ -164,62 +130,26 @@ export const PresentationTab = ({
           </div>
 
           {isManualInput ? (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="title">Titel (optional)</Label>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Video Titel"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="url">URL</Label>
-                <Input
-                  id="url"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder={`${type === "youtube" ? "YouTube" : type} URL`}
-                />
-              </div>
-            </>
+            <ManualInputForm
+              title={title}
+              url={url}
+              onTitleChange={setTitle}
+              onUrlChange={setUrl}
+              type={type}
+            />
           ) : (
-            <div className="space-y-2 max-h-[300px] overflow-y-auto">
-              {userLinks.map((link) => (
-                <Card
-                  key={link.id}
-                  className={`p-3 cursor-pointer hover:bg-gray-100 ${
-                    url === link.url ? "border-2 border-primary" : ""
-                  }`}
-                  onClick={() => handleLinkSelect(link)}
-                >
-                  <div className="flex items-center gap-2">
-                    <Youtube className="h-4 w-4 text-red-600" />
-                    <div>
-                      <p className="font-medium">{link.title}</p>
-                      <p className="text-sm text-muted-foreground">{link.url}</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
+            <LinkSelectionForm
+              userLinks={userLinks}
+              selectedUrl={url}
+              onLinkSelect={handleLinkSelect}
+            />
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="expires">URL gültig für</Label>
-            <select
-              id="expires"
-              value={expiresIn}
-              onChange={(e) => setExpiresIn(e.target.value)}
-              className="w-full p-2 border rounded-md"
-            >
-              <option value="never">Unbegrenzt</option>
-              <option value="1day">1 Tag</option>
-              <option value="7days">7 Tage</option>
-              <option value="30days">30 Tage</option>
-            </select>
-          </div>
+          <ExpirySelect 
+            expiresIn={expiresIn}
+            onChange={setExpiresIn}
+          />
+
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Abbrechen
