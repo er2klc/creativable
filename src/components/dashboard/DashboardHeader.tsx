@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { SearchBar } from "./SearchBar";
 
 interface DashboardHeaderProps {
   userEmail: string | undefined;
@@ -105,6 +106,7 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <SearchBar />
           <Button onClick={handleSignOut} variant="outline" size="sm" className="w-full md:w-auto">
             Abmelden
           </Button>
