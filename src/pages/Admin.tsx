@@ -114,7 +114,7 @@ const Admin = () => {
       {/* Background Gradient Effect */}
       <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30" />
       
-      <div className="container mx-auto p-6 relative">
+      <div className="container mx-auto p-6 relative bg-black/40 backdrop-blur-sm">
         <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
           <LayoutDashboard className="h-8 w-8" />
           Admin Dashboard
@@ -122,64 +122,64 @@ const Admin = () => {
 
         {/* First Row: User Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-none shadow-lg backdrop-blur-md">
+          <Card className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-none shadow-lg backdrop-blur-md">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
+              <CardTitle className="text-black flex items-center gap-2">
                 <Users className="h-5 w-5" />
                 Registrierte Benutzer
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-white">{totalUsers}</p>
+              <p className="text-4xl font-bold text-black">{totalUsers}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-none shadow-lg backdrop-blur-md">
+          <Card className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border-none shadow-lg backdrop-blur-md">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Users className="h-5 w-5 text-cyan-400" />
+              <CardTitle className="text-black flex items-center gap-2">
+                <Users className="h-5 w-5" />
                 Online Benutzer
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-white">{onlineUsers}</p>
-              <p className="text-sm text-gray-300">Aktive Sitzungen der letzten 30 Minuten</p>
+              <p className="text-4xl font-bold text-black">{onlineUsers}</p>
+              <p className="text-sm text-black">Aktive Sitzungen der letzten 30 Minuten</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-none shadow-lg backdrop-blur-md">
+          <Card className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border-none shadow-lg backdrop-blur-md">
             <CardHeader>
-              <CardTitle className="text-white">Letzte Aktivität</CardTitle>
+              <CardTitle className="text-black">Letzte Aktivität</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-300">Aktive Sitzungen in Echtzeit</p>
+              <p className="text-sm text-black">Aktive Sitzungen in Echtzeit</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Second Row: Teams & Platforms */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-none shadow-lg backdrop-blur-md">
+          <Card className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-none shadow-lg backdrop-blur-md">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-orange-400" />
+              <CardTitle className="text-black flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
                 Teams
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-white">{totalTeams}</p>
+              <p className="text-4xl font-bold text-black">{totalTeams}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-rose-500/10 to-pink-500/10 border-none shadow-lg backdrop-blur-md">
+          <Card className="bg-gradient-to-br from-rose-500/20 to-pink-500/20 border-none shadow-lg backdrop-blur-md">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <GraduationCap className="h-5 w-5 text-pink-400" />
+              <CardTitle className="text-black flex items-center gap-2">
+                <GraduationCap className="h-5 w-5" />
                 Ausbildungsplattformen
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-white">{totalPlatforms}</p>
+              <p className="text-4xl font-bold text-black">{totalPlatforms}</p>
             </CardContent>
           </Card>
         </div>
