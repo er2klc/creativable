@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Video } from "lucide-react";
+import { Youtube } from "lucide-react";
 
 interface YoutubeCardProps {
   content: string;
@@ -23,23 +23,25 @@ export const YoutubeCard = ({ content, metadata }: YoutubeCardProps) => {
   };
 
   return (
-    <div className="space-y-2">
-      <div className="font-medium">{metadata?.title}</div>
-      {metadata?.url && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground break-all">
-            <Video className="h-4 w-4 flex-shrink-0" />
-            {metadata.url}
+    <div className="flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border border-[#ea384c]">
+      <div className="space-y-2">
+        <div className="font-medium">{metadata?.title}</div>
+        {metadata?.url && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground break-all">
+              <Youtube className="h-4 w-4 flex-shrink-0" />
+              {metadata.url}
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleCopyUrl}
+            >
+              URL kopieren
+            </Button>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleCopyUrl}
-          >
-            URL kopieren
-          </Button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
