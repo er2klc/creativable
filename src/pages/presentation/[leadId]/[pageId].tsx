@@ -79,9 +79,9 @@ export default function PresentationPage() {
         .from('presentation_pages')
         .select(`
           *,
-          user:user_id (
-            display_name:profiles!profiles_id_fkey(display_name),
-            avatar_url:profiles!profiles_id_fkey(avatar_url)
+          user:profiles!presentation_pages_user_id_fkey(
+            display_name,
+            avatar_url
           ),
           lead:leads!presentation_pages_lead_id_fkey (
             name,
