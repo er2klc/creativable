@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ManualInputForm } from "./presentation/ManualInputForm";
 import { LinkSelectionForm } from "./presentation/LinkSelectionForm";
 import { ExpirySelect } from "./presentation/ExpirySelect";
-import { getVideoId, generateSlug, calculateExpiryDate } from "./presentation/presentationUtils";
+import { getVideoId, generateSlug } from "./presentation/presentationUtils";
 import { UserLink } from "@/pages/Links";
 
 interface PresentationTabProps {
@@ -66,7 +66,7 @@ export const PresentationTab = ({
       if (type === "youtube") {
         const slug = generateSlug(title || url, videoId);
         
-        const { error: pageError } = await supabase
+        const { data: pageData, error: pageError } = await supabase
           .from('presentation_pages')
           .insert([
             {
@@ -77,26 +77,30 @@ export const PresentationTab = ({
               slug: slug,
               expires_at: calculateExpiryDate(expiresIn)
             }
-          ]);
+          ])
+          .select()
+          .single();
 
         if (pageError) throw pageError;
 
-        const { error } = await supabase.from("notes").insert([
-          {
-            lead_id: leadId,
-            user_id: user?.id,
-            content: url,
-            metadata: {
-              type: "youtube",
-              title: title || url,
-              url: url,
-              videoId: videoId,
-              presentationUrl: `${window.location.origin}/presentation/${leadId}/${slug}`
+        const { error: noteError } = await supabase
+          .from("notes")
+          .insert([
+            {
+              lead_id: leadId,
+              user_id: user?.id,
+              content: url,
+              metadata: {
+                type: "youtube",
+                title: title || url,
+                url: url,
+                videoId: videoId,
+                presentationUrl: `${window.location.origin}/presentation/${leadId}/${slug}`
+              }
             }
-          }
-        ]);
+          ]);
 
-        if (error) throw error;
+        if (noteError) throw noteError;
 
         toast.success("YouTube Video erfolgreich hinzugefügt");
       }

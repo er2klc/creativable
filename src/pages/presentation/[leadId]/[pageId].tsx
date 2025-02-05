@@ -20,6 +20,19 @@ export default function PresentationPage() {
 
   useEffect(() => {
     loadPresentationPage();
+    
+    // Add window unload event listener
+    const handleUnload = () => {
+      if (viewId) {
+        navigator.sendBeacon(
+          `${window.location.origin}/api/presentation-view/${viewId}`,
+          JSON.stringify({ completed: false })
+        );
+      }
+    };
+    
+    window.addEventListener('unload', handleUnload);
+    return () => window.removeEventListener('unload', handleUnload);
   }, [leadId, pageId]);
 
   const loadPresentationPage = async () => {
@@ -32,7 +45,6 @@ export default function PresentationPage() {
     try {
       console.log('Loading presentation page with ID:', pageId);
       
-      // Load page data by slug
       const { data: pageData, error: pageError } = await supabase
         .from('presentation_pages')
         .select('*')
@@ -52,7 +64,6 @@ export default function PresentationPage() {
         return;
       }
 
-      // Check if URL is expired or inactive
       if (pageData.expires_at && new Date(pageData.expires_at) < new Date()) {
         setError("This presentation has expired");
         setIsLoading(false);
@@ -67,7 +78,6 @@ export default function PresentationPage() {
 
       setPageData(pageData);
 
-      // Create view record
       const { data: viewData, error: viewError } = await supabase
         .from('presentation_views')
         .insert([
@@ -97,7 +107,7 @@ export default function PresentationPage() {
   const handleProgress = async (progress: number) => {
     if (!viewId) return;
 
-    const isCompleted = progress >= 95; // Consider video completed at 95%
+    const isCompleted = progress >= 95;
 
     const { error } = await supabase
       .from('presentation_views')
@@ -138,10 +148,8 @@ export default function PresentationPage() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-[#0A0A0A]">
-      {/* Background Gradient Effect */}
       <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30" />
       
-      {/* Logo Background Blur */}
       <div className="absolute inset-0 flex items-center justify-center opacity-20">
         <img 
           src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
@@ -152,7 +160,6 @@ export default function PresentationPage() {
 
       <Card className="relative w-full max-w-[900px] mx-auto bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm p-6">
         <div className="flex flex-col items-center space-y-6">
-          {/* Logo */}
           <img 
             src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
             alt="Creativable Logo" 
@@ -164,7 +171,6 @@ export default function PresentationPage() {
             <div className="h-[1px] w-32 mx-auto bg-gradient-to-r from-transparent via-white/50 to-transparent" />
           </div>
           
-          {/* Video Player */}
           <div className="w-full aspect-video rounded-lg overflow-hidden">
             <VideoPlayer
               videoUrl={pageData.video_url}
