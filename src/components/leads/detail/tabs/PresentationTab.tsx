@@ -33,7 +33,7 @@ export const PresentationTab = ({
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const [expiresIn, setExpiresIn] = useState("never");
-  const [isManualInput, setIsManualInput] = useState(false); // Changed to false by default
+  const [isManualInput, setIsManualInput] = useState(false);
   const { user } = useAuth();
 
   // Fetch user's links based on type
@@ -94,7 +94,7 @@ export const PresentationTab = ({
               title: title || url,
               url: url,
               videoId: videoId,
-              presentationUrl: `/presentation/${leadId}/${videoId}`
+              presentationUrl: `${window.location.origin}/presentation/${leadId}/${videoId}`
             }
           }
         ]);
