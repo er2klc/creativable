@@ -14,21 +14,6 @@ interface TimelineItemProps {
 
 export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
   const { settings } = useSettings();
-  const isOutdated = item.type === 'appointment' && 
-    (item.status === 'cancelled' || item.metadata?.status === 'outdated');
-
-  const isTaskCompleted = item.type === 'task' && item.metadata?.status === 'completed';
-  const completedDate = item.metadata?.completedAt ? 
-    formatDateTime(item.metadata.completedAt, settings?.language) : null;
-
-  const handleDelete = () => {
-    if (!onDelete) return;
-    onDelete(item.id);
-  };
-
-  const displayTimestamp = item.type === 'status_change' && item.metadata?.timestamp 
-    ? item.metadata.timestamp 
-    : item.timestamp;
 
   const renderContent = () => {
     if (item.metadata?.type === 'youtube') {
@@ -39,9 +24,9 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
       return (
         <StatusCard
           content={item.content}
-          timestamp={displayTimestamp}
+          timestamp={item.timestamp}
           metadata={item.metadata}
-          onDelete={onDelete ? handleDelete : undefined}
+          onDelete={onDelete ? () => onDelete(item.id) : undefined}
         />
       );
     }
@@ -52,10 +37,9 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
         content={item.content}
         metadata={item.metadata}
         status={item.status}
-        onDelete={onDelete ? handleDelete : undefined}
+        onDelete={onDelete ? () => onDelete(item.id) : undefined}
         id={item.id}
         created_at={item.created_at}
-        isCompleted={isTaskCompleted}
       />
     );
   };
@@ -69,39 +53,17 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
       className="flex flex-col gap-1"
     >
       <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
-        {formatDateTime(displayTimestamp, settings?.language)}
-        {isTaskCompleted && completedDate && (
-          <span className="text-green-600">
-            (Erledigt am {completedDate})
-          </span>
-        )}
+        {formatDateTime(item.timestamp, settings?.language)}
       </div>
       
       <div className="flex gap-4 items-start group relative">
-        <div className="relative">
-          <TimelineItemIcon 
-            type={item.type} 
-            status={item.metadata?.status} 
-            platform={item.platform} 
-            metadata={item.metadata}
-          />
-          {isOutdated && (
-            <div className="absolute -top-1 -right-1 bg-gray-400 rounded-full p-0.5">
-              <svg 
-                className="h-3 w-3 text-white" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2"
-              >
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </div>
-          )}
-        </div>
-        
+        <TimelineItemIcon 
+          type={item.type} 
+          status={item.metadata?.status} 
+          platform={item.platform}
+          metadata={item.metadata}
+        />
         <div className="absolute left-8 top-[1.1rem] w-4 h-0.5 bg-gray-400" />
-        
         {renderContent()}
       </div>
     </motion.div>

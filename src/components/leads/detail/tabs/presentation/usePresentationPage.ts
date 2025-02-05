@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -58,57 +57,85 @@ export function usePresentationPage(leadId: string, onClose: () => void) {
         .replace(/(^-|-$)/g, '');
 
       const uniqueSlug = generateUniqueSlug(baseSlug);
+      const presentationUrl = generatePresentationUrl(leadId, uniqueSlug);
 
-      const { data, error } = await supabase
-        .from('presentation_pages')
-        .insert([
-          {
-            lead_id: leadId,
-            user_id: user.id,
-            title: link.title,
-            video_url: link.url,
-            slug: uniqueSlug
-          }
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const presentationUrl = generatePresentationUrl(leadId, data.id);
-
-      const { error: noteError } = await supabase
-        .from('notes')
-        .insert([
-          {
-            lead_id: leadId,
-            user_id: user.id,
-            content: link.url,
-            metadata: {
-              type: 'presentation',
-              presentationType: link.group_type,
-              title: link.title,
-              url: presentationUrl
+      if (link.group_type === 'youtube') {
+        // For YouTube links, create a note with YouTube metadata
+        const { error: noteError } = await supabase
+          .from('notes')
+          .insert([
+            {
+              lead_id: leadId,
+              user_id: user.id,
+              content: link.url,
+              metadata: {
+                type: 'youtube',
+                title: link.title,
+                url: link.url,
+                presentationUrl
+              }
             }
-          }
-        ]);
+          ]);
 
-      if (noteError) throw noteError;
+        if (noteError) throw noteError;
 
-      toast({
-        title: settings?.language === "en" ? "Added to timeline" : "Zur Timeline hinzugefügt",
-        description: settings?.language === "en" ? 
-          "The presentation page has been created" : 
-          "Die Präsentationsseite wurde erstellt"
-      });
+        toast({
+          title: settings?.language === "en" ? "Added to timeline" : "Zur Timeline hinzugefügt",
+          description: settings?.language === "en" ? 
+            "The YouTube video has been added" : 
+            "Das YouTube-Video wurde hinzugefügt"
+        });
+      } else {
+        // For other types, create a presentation page
+        const { data, error } = await supabase
+          .from('presentation_pages')
+          .insert([
+            {
+              lead_id: leadId,
+              user_id: user.id,
+              title: link.title,
+              video_url: link.url,
+              slug: uniqueSlug
+            }
+          ])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        const { error: noteError } = await supabase
+          .from('notes')
+          .insert([
+            {
+              lead_id: leadId,
+              user_id: user.id,
+              content: link.url,
+              metadata: {
+                type: 'presentation',
+                presentationType: link.group_type,
+                title: link.title,
+                url: presentationUrl
+              }
+            }
+          ]);
+
+        if (noteError) throw noteError;
+
+        toast({
+          title: settings?.language === "en" ? "Added to timeline" : "Zur Timeline hinzugefügt",
+          description: settings?.language === "en" ? 
+            "The presentation page has been created" : 
+            "Die Präsentationsseite wurde erstellt"
+        });
+      }
       
       const copied = await copyToClipboard(presentationUrl);
       if (copied) {
         toast({
           title: settings?.language === "en" ? "URL copied" : "URL kopiert",
           description: settings?.language === "en" ? 
-            "The presentation URL has been copied to your clipboard" : 
-            "Die Präsentations-URL wurde in die Zwischenablage kopiert"
+            "The URL has been copied to your clipboard" : 
+            "Die URL wurde in die Zwischenablage kopiert"
         });
       }
 
