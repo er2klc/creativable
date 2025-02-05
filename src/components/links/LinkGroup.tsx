@@ -135,6 +135,15 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
             );
           })}
         </div>
+
+        {editingLink && (
+          <LinkEditDialog
+            link={editingLink}
+            isOpen={!!editingLink}
+            onOpenChange={(open) => !open && setEditingLink(null)}
+            onUpdate={onUpdate}
+          />
+        )}
       </div>
     );
   }
