@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
@@ -16,7 +17,8 @@ import {
   Users,
   Info,
   Clock,
-  ArrowRight
+  ArrowRight,
+  ChevronUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -191,6 +193,16 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
                 {getButtonText()}
               </Button>
             </CollapsibleTrigger>
+            {hasGenerated && isOpen && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-2"
+                onClick={() => setIsOpen(false)}
+              >
+                <ChevronUp className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           <CollapsibleContent>
@@ -214,3 +226,4 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     </Card>
   );
 }
+
