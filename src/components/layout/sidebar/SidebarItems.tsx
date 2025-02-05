@@ -12,7 +12,8 @@ import {
   GraduationCap,
   Database,
   Waves,
-  Wrench
+  Wrench,
+  MessageSquare
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -137,6 +138,11 @@ export const usePersonalItems = () => {
       icon: CheckSquare, 
       url: "/todo",
       badge: taskCount > 0 ? taskCount : undefined
+    },
+    {
+      title: "Nachrichten",
+      icon: MessageSquare,
+      url: "/messages"
     },
   ];
 };
