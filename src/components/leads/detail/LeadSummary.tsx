@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
@@ -14,7 +13,10 @@ import {
   Target,
   Lightbulb,
   MessageCircle,
-  Users
+  Users,
+  Info,
+  Clock,
+  ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -110,67 +112,62 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     return settings?.language === "en" ? "Generate New Summary" : "KI Zusammenfassung neu generieren";
   };
 
-  const getIconForSection = (title: string) => {
-    switch (title) {
-      case "KONTAKT-ANALYSE":
-      case "CONTACT ANALYSIS":
-        return <Target className="h-5 w-5 text-blue-500" />;
-      case "STRATEGISCHE EMPFEHLUNG":
-      case "STRATEGIC RECOMMENDATION":
-        return <Lightbulb className="h-5 w-5 text-green-500" />;
-      case "NACHRICHTENVORSCHLÄGE":
-      case "MESSAGE SUGGESTIONS":
-        return <MessageCircle className="h-5 w-5 text-purple-500" />;
-      case "GEMEINSAMKEITEN & GESPRÄCHSAUFHÄNGER":
-      case "COMMONALITIES & CONVERSATION STARTERS":
-        return <Users className="h-5 w-5 text-orange-500" />;
-      default:
-        return <Bot className="h-5 w-5" />;
-    }
+  const formatSummarySection = (section: string) => {
+    // Split by numbered sections (1., 2., etc.)
+    const lines = section.trim().split('\n');
+    const title = lines[0].replace(/\*\*/g, '').trim();
+    const content = lines.slice(1).filter(line => line.trim()).join('\n');
+
+    const icon = getIconForSection(title);
+
+    return (
+      <div className="bg-gradient-to-r from-white to-gray-50 rounded-lg p-4 shadow-sm mb-4 border border-gray-100">
+        <div className="flex items-center gap-2 mb-3">
+          {icon}
+          <h3 className="font-medium text-lg text-gray-900">{title}</h3>
+        </div>
+        <div className="space-y-2 ml-7">
+          {content.split('\n').map((line, i) => {
+            if (line.startsWith('-') || line.startsWith('•')) {
+              return (
+                <div key={i} className="flex items-start gap-2">
+                  <ArrowRight className="h-4 w-4 mt-1 text-gray-400 flex-shrink-0" />
+                  <p className="text-gray-700 leading-relaxed">{line.replace(/^[-•]/, '').trim()}</p>
+                </div>
+              );
+            }
+            return <p key={i} className="text-gray-700 leading-relaxed">{line}</p>;
+          })}
+        </div>
+      </div>
+    );
   };
 
+  const getIconForSection = (title: string) => {
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes('kontakt')) {
+      return <Info className="h-5 w-5 text-blue-500" />;
+    }
+    if (titleLower.includes('status')) {
+      return <Clock className="h-5 w-5 text-orange-500" />;
+    }
+    if (titleLower.includes('kommunikation')) {
+      return <MessageSquare className="h-5 w-5 text-purple-500" />;
+    }
+    if (titleLower.includes('profil') || titleLower.includes('geschäft')) {
+      return <Building2 className="h-5 w-5 text-green-500" />;
+    }
+    if (titleLower.includes('nächste') || titleLower.includes('schritte')) {
+      return <Target className="h-5 w-5 text-red-500" />;
+    }
+    return <Bot className="h-5 w-5 text-gray-500" />;
+  };
+
+  // Function to format the summary text into sections
   const formatSummary = (text: string) => {
-    // Split by numbered sections (1., 2., etc.)
-    const sections = text.split(/\d+\.\s+/).filter(Boolean);
-    
-    return sections.map((section, index) => {
-      // Get the section title (text before the first newline)
-      const [title, ...contentLines] = section.split("\n").map(s => s.trim()).filter(Boolean);
-      
-      if (!contentLines.length) return null;
-
-      const content = contentLines.join("\n");
-      const icon = getIconForSection(title);
-
-      return (
-        <div key={index} className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm mb-4 border border-gray-100">
-          <div className="flex items-center gap-2 mb-2">
-            {icon}
-            <h3 className="font-semibold text-lg antialiased text-black">{title}</h3>
-          </div>
-          <div className="ml-7">
-            {content.split("\n").map((line, i) => {
-              // Handle different types of lines
-              if (line.startsWith("A)") || line.startsWith("B)") || line.startsWith("C)")) {
-                return (
-                  <div key={i} className="mb-2 p-2 bg-white rounded border border-gray-100">
-                    <p className="text-gray-700 leading-relaxed antialiased">{line}</p>
-                  </div>
-                );
-              }
-              if (line.startsWith("-")) {
-                return (
-                  <p key={i} className="text-gray-700 leading-relaxed antialiased ml-4">{line}</p>
-                );
-              }
-              return (
-                <p key={i} className="text-gray-700 leading-relaxed antialiased">{line}</p>
-              );
-            })}
-          </div>
-        </div>
-      );
-    });
+    // Split by empty lines to separate major sections
+    const sections = text.split(/\n\s*\n/).filter(Boolean);
+    return sections.map((section, index) => formatSummarySection(section));
   };
 
   return (
@@ -205,7 +202,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
               <Button
                 onClick={generateSummary}
                 disabled={isLoading}
-                className="w-full mb-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white antialiased"
+                className="w-full mb-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
               >
                 {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bot className="h-4 w-4 mr-2" />}
                 {getButtonText()}
