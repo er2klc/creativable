@@ -8,6 +8,7 @@ import { Video, Youtube, FileText, Plus } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/use-auth";
 
 interface PresentationTabProps {
   leadId: string;
@@ -29,6 +30,7 @@ export function PresentationTab({ leadId, type, tabColors, isOpen, onOpenChange 
   const [links, setLinks] = useState<UserLink[]>([]);
   const { toast } = useToast();
   const { settings } = useSettings();
+  const { user } = useAuth();
 
   useEffect(() => {
     loadLinks();
@@ -54,6 +56,17 @@ export function PresentationTab({ leadId, type, tabColors, isOpen, onOpenChange 
   };
 
   const createPresentationPage = async (link: UserLink) => {
+    if (!user) {
+      toast({
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description: settings?.language === "en" ? 
+          "You must be logged in" : 
+          "Sie müssen angemeldet sein",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       const slug = link.title
         .toLowerCase()
@@ -65,6 +78,7 @@ export function PresentationTab({ leadId, type, tabColors, isOpen, onOpenChange 
         .insert([
           {
             lead_id: leadId,
+            user_id: user.id,  // Add the user_id here
             title: link.title,
             video_url: link.url,
             slug: slug
@@ -84,6 +98,7 @@ export function PresentationTab({ leadId, type, tabColors, isOpen, onOpenChange 
         .insert([
           {
             lead_id: leadId,
+            user_id: user.id,  // Add the user_id here for notes as well
             content: link.url,
             metadata: {
               type: 'presentation',
