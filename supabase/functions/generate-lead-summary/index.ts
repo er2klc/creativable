@@ -128,8 +128,8 @@ serve(async (req) => {
 
     const insights = await generateActionableInsights(lead, posts, settings.openai_api_key);
 
-    // Store the structured summary
-    await supabase
+    // Store the summary with error handling
+    const { error: summaryError } = await supabase
       .from("lead_summaries")
       .upsert({
         lead_id: leadId,
@@ -140,13 +140,21 @@ serve(async (req) => {
           language,
           post_count: posts?.length || 0
         }
+      }, { 
+        onConflict: 'lead_id'  // This ensures we update if a summary already exists
       });
+
+    if (summaryError) {
+      console.error("Error saving summary:", summaryError);
+      throw new Error("Fehler beim Speichern der Zusammenfassung.");
+    }
 
     return new Response(
       JSON.stringify({ summary: insights }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    console.error("Error in generate-lead-summary:", error);
     return new Response(
       JSON.stringify({ error: error.message || "Ein unerwarteter Fehler ist aufgetreten." }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
