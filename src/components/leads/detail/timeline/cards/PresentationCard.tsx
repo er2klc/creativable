@@ -6,12 +6,12 @@ import { useSettings } from "@/hooks/use-settings";
 import { useToast } from "@/hooks/use-toast";
 
 interface PresentationCardProps {
-  content: string;
+  content: string;  // This will be the YouTube URL
   metadata: {
     type: string;
     presentationType: "zoom" | "youtube" | "documents";
     title: string;
-    url: string;
+    url: string;  // This will be the presentation URL
   };
   onDelete?: () => void;
 }
@@ -53,9 +53,16 @@ export function PresentationCard({ content, metadata, onDelete }: PresentationCa
         {getIcon()}
         <div className="flex-1 min-w-0">
           <p className="font-medium">{metadata.title}</p>
-          <p className="text-sm text-muted-foreground truncate">
-            {metadata.url}
-          </p>
+          <div className="space-y-1 mt-2">
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium">{settings?.language === "en" ? "Original URL: " : "Original-URL: "}</span>
+              <span className="truncate">{content}</span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium">{settings?.language === "en" ? "Presentation URL: " : "Präsentations-URL: "}</span>
+              <span className="truncate">{metadata.url}</span>
+            </p>
+          </div>
         </div>
         <div className="flex space-x-2">
           <Button
