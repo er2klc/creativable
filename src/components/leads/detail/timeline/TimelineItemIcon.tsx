@@ -19,7 +19,8 @@ import {
   Check,
   Heart,
   Clock,
-  ThumbsDown
+  ThumbsDown,
+  Youtube
 } from "lucide-react";
 import { TimelineItemType } from "./TimelineUtils";
 
@@ -32,7 +33,7 @@ interface TimelineItemIconProps {
     oldStatus?: string;
     newStatus?: string;
     meetingType?: string;
-    fileType?: string; // Erweitert für Dateityp-Logik
+    fileType?: string;
   };
 }
 
@@ -43,6 +44,11 @@ export const TimelineItemIcon = ({
   metadata 
 }: TimelineItemIconProps) => {
   const getIconComponent = () => {
+    // Handle YouTube type first
+    if (metadata?.type === 'youtube') {
+      return Youtube;
+    }
+
     // Handle file type logic
     if (type === 'file_upload') {
       return getFileIcon(metadata?.fileType);
@@ -90,12 +96,17 @@ export const TimelineItemIcon = ({
 
   const getFileIcon = (fileType?: string) => {
     if (fileType?.includes('image')) return Image;
-    if (fileType === 'pdf') return FileText; // PDF Icon
+    if (fileType === 'pdf') return FileText;
     if (fileType?.includes('spreadsheet')) return FileSpreadsheet;
-    return FileText; // Default file icon
+    return FileText;
   };
 
   const getIconColor = () => {
+    // Handle YouTube type first
+    if (metadata?.type === 'youtube') {
+      return 'bg-[#ea384c]';
+    }
+
     if (type === 'status_change') {
       switch(metadata?.newStatus) {
         case 'partner': return 'bg-pink-500';
@@ -122,7 +133,7 @@ export const TimelineItemIcon = ({
       case 'contact_created':
         return 'bg-emerald-500';
       case 'file_upload':
-        return 'bg-blue-500'; // Default color for file uploads
+        return 'bg-blue-500';
       default:
         return 'bg-gray-500';
     }
