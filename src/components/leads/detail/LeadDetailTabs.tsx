@@ -8,7 +8,8 @@ import { MessageTab } from "./tabs/MessageTab";
 import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
 import { LeadFileUpload } from "./files/LeadFileUpload";
 import { useState } from "react";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Video, Youtube, FileText } from "lucide-react";
+import { PresentationTab } from "./tabs/PresentationTab";
 
 interface LeadDetailTabsProps {
   lead: Tables<"leads"> & {
@@ -26,12 +27,16 @@ const tabColors = {
   messages: "#BFDBFE",
   uploads: "#E5E7EB",
   presentations: "#A5B4FC",
+  zoom: "#2D8CFF",
+  youtube: "#FF0000",
+  documents: "#34D399"
 };
 
 export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const { settings } = useSettings();
   const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("notes");
+  const [selectedPresentationType, setSelectedPresentationType] = useState<"zoom" | "youtube" | "documents">("zoom");
 
   const handleTabChange = (value: string) => {
     if (value === "appointments") {
@@ -96,30 +101,29 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
         <TaskTab leadId={lead.id} />
       </TabsContent>
 
-     {/* Der Dialog muss außerhalb von Tabs sein, damit er nicht von Tabs versteckt wird */}
-<NewAppointmentDialog
-  open={appointmentDialogOpen}
-  onOpenChange={(open) => {
-    setAppointmentDialogOpen(open);
-    if (!open) {
-      setSelectedTab("notes");
-    }
-  }}
-  initialSelectedDate={new Date()}
-  defaultValues={{
-    leadId: lead.id,
-    time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false }),
-    title: "",
-    color: "#40E0D0",
-    meeting_type: "phone_call"
-  }}
-/>
+      <NewAppointmentDialog
+        open={appointmentDialogOpen}
+        onOpenChange={(open) => {
+          setAppointmentDialogOpen(open);
+          if (!open) {
+            setSelectedTab("notes");
+          }
+        }}
+        initialSelectedDate={new Date()}
+        defaultValues={{
+          leadId: lead.id,
+          time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          title: "",
+          color: "#40E0D0",
+          meeting_type: "phone_call"
+        }}
+      />
 
-<TabsContent value="appointments" className="mt-4">
-  <div className="space-y-4">
-    {settings?.language === "en" ? "Manage Appointments Here" : "Hier Termine verwalten"}
-  </div>
-</TabsContent>
+      <TabsContent value="appointments" className="mt-4">
+        <div className="space-y-4">
+          {settings?.language === "en" ? "Manage Appointments Here" : "Hier Termine verwalten"}
+        </div>
+      </TabsContent>
 
       <TabsContent value="messages" className="mt-4">
         <MessageTab leadId={lead.id} platform={lead.platform} />
@@ -130,10 +134,41 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
       </TabsContent>
 
       <TabsContent value="presentations" className="mt-4">
-        <div className="p-4 text-center text-muted-foreground">
-          {settings?.language === "en" 
-            ? "Presentations feature coming soon" 
-            : "Präsentationen-Funktion kommt bald"}
+        <div className="space-y-4">
+          <TabsList className="w-full mb-4">
+            <TabsTrigger
+              value="zoom"
+              onClick={() => setSelectedPresentationType("zoom")}
+              className={`flex-1 ${selectedPresentationType === "zoom" ? "bg-blue-100" : ""}`}
+              style={{ borderBottom: `2px solid ${tabColors.zoom}` }}
+            >
+              <Video className="w-4 h-4 mr-2" />
+              Zoom
+            </TabsTrigger>
+            <TabsTrigger
+              value="youtube"
+              onClick={() => setSelectedPresentationType("youtube")}
+              className={`flex-1 ${selectedPresentationType === "youtube" ? "bg-red-100" : ""}`}
+              style={{ borderBottom: `2px solid ${tabColors.youtube}` }}
+            >
+              <Youtube className="w-4 h-4 mr-2" />
+              YouTube
+            </TabsTrigger>
+            <TabsTrigger
+              value="documents"
+              onClick={() => setSelectedPresentationType("documents")}
+              className={`flex-1 ${selectedPresentationType === "documents" ? "bg-green-100" : ""}`}
+              style={{ borderBottom: `2px solid ${tabColors.documents}` }}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              {settings?.language === "en" ? "Documents" : "Dokumente"}
+            </TabsTrigger>
+          </TabsList>
+          <PresentationTab 
+            leadId={lead.id} 
+            type={selectedPresentationType}
+            tabColors={tabColors}
+          />
         </div>
       </TabsContent>
     </Tabs>
