@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Link2 } from "lucide-react";
 
 interface PresentationCardProps {
   content: string;
   metadata?: {
-    type?: string;
     presentationType?: string;
     title?: string;
     url?: string;
@@ -41,8 +39,7 @@ export const PresentationCard = ({ content, metadata }: PresentationCardProps) =
       <div className="font-medium">{metadata?.title}</div>
       {presentationUrl && (
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground break-all">
-            <Link2 className="h-4 w-4 flex-shrink-0" />
+          <div className="text-sm text-muted-foreground break-all">
             {presentationUrl}
           </div>
           <Button 

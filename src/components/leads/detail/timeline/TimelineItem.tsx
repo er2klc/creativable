@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { formatDateTime } from "./utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { StatusCard } from "./cards/StatusCard";
+import { YoutubeCard } from "./cards/YoutubeCard";
+import { PresentationCard } from "./cards/PresentationCard";
 
 interface TimelineItemProps {
   item: TimelineItemType;
@@ -25,10 +27,43 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
     onDelete(item.id);
   };
 
-  // Use metadata timestamp for status changes if available, otherwise use item timestamp
   const displayTimestamp = item.type === 'status_change' && item.metadata?.timestamp 
     ? item.metadata.timestamp 
     : item.timestamp;
+
+  const renderContent = () => {
+    if (item.metadata?.type === 'youtube') {
+      return <YoutubeCard content={item.content} metadata={item.metadata} />;
+    }
+
+    if (item.metadata?.type === 'presentation') {
+      return <PresentationCard content={item.content} metadata={item.metadata} />;
+    }
+
+    if (item.type === 'status_change') {
+      return (
+        <StatusCard
+          content={item.content}
+          timestamp={displayTimestamp}
+          metadata={item.metadata}
+          onDelete={onDelete ? handleDelete : undefined}
+        />
+      );
+    }
+
+    return (
+      <TimelineItemCard 
+        type={item.type}
+        content={item.content}
+        metadata={item.metadata}
+        status={item.status}
+        onDelete={onDelete ? handleDelete : undefined}
+        id={item.id}
+        created_at={item.created_at}
+        isCompleted={isTaskCompleted}
+      />
+    );
+  };
 
   return (
     <motion.div
@@ -38,7 +73,6 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
       key={item.id} 
       className="flex flex-col gap-1"
     >
-      {/* Date above the card */}
       <div className="flex items-center gap-2 ml-16 text-sm text-gray-600">
         {formatDateTime(displayTimestamp, settings?.language)}
         {isTaskCompleted && completedDate && (
@@ -49,7 +83,6 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
       </div>
       
       <div className="flex gap-4 items-start group relative">
-        {/* Circle with Icon */}
         <div className="relative">
           <TimelineItemIcon 
             type={item.type} 
@@ -72,29 +105,11 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
           )}
         </div>
         
-        {/* Connecting Line to Card */}
         <div className="absolute left-8 top-[1.1rem] w-4 h-0.5 bg-gray-400" />
         
-        {/* Event Card */}
-        {item.type === 'status_change' ? (
-          <StatusCard 
-            content={item.content}
-            timestamp={displayTimestamp}
-            metadata={item.metadata}
-            onDelete={onDelete ? handleDelete : undefined}
-          />
-        ) : (
-          <TimelineItemCard 
-            type={item.type}
-            content={item.content}
-            metadata={item.metadata}
-            status={item.status}
-            onDelete={onDelete ? handleDelete : undefined}
-            id={item.id}
-            created_at={item.created_at}
-            isCompleted={isTaskCompleted}
-          />
-        )}
+        <div className="flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border border-gray-200">
+          {renderContent()}
+        </div>
       </div>
     </motion.div>
   );
