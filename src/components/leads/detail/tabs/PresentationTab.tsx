@@ -57,6 +57,15 @@ export const PresentationTab = ({
     return (match && match[7].length === 11) ? match[7] : false;
   };
 
+  const generateSlug = (baseTitle: string, videoId: string) => {
+    const timestamp = new Date().getTime();
+    const sanitizedTitle = baseTitle
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    return `${sanitizedTitle}-${videoId}-${timestamp}`;
+  };
+
   const calculateExpiryDate = () => {
     if (expiresIn === 'never') return null;
     
@@ -110,7 +119,7 @@ export const PresentationTab = ({
               user_id: user?.id,
               title: title || url,
               video_url: url,
-              slug: videoId,
+              slug: generateSlug(title || url, videoId),
               expires_at: calculateExpiryDate()
             }
           ]);
