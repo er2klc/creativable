@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
 import { useAuth } from "@/hooks/use-auth";
+import { generateUniqueSlug, generatePresentationUrl, copyToClipboard } from "@/utils/presentationUtils";
 
 interface UserLink {
   id: string;
@@ -36,11 +37,6 @@ export function usePresentationPage(leadId: string, onClose: () => void) {
     }
 
     setLinks(data || []);
-  };
-
-  const generateUniqueSlug = (baseSlug: string): string => {
-    const timestamp = new Date().getTime();
-    return `${baseSlug}-${timestamp}`;
   };
 
   const createPresentationPage = async (link: UserLink) => {
@@ -79,8 +75,7 @@ export function usePresentationPage(leadId: string, onClose: () => void) {
 
       if (error) throw error;
 
-      const baseUrl = window.location.origin;
-      const presentationUrl = `${baseUrl}/presentation/${leadId}/${data.id}`;
+      const presentationUrl = generatePresentationUrl(leadId, data.id);
 
       const { error: noteError } = await supabase
         .from('notes')
@@ -107,13 +102,15 @@ export function usePresentationPage(leadId: string, onClose: () => void) {
           "Die Präsentationsseite wurde erstellt"
       });
       
-      await navigator.clipboard.writeText(presentationUrl);
-      toast({
-        title: settings?.language === "en" ? "URL copied" : "URL kopiert",
-        description: settings?.language === "en" ? 
-          "The presentation URL has been copied to your clipboard" : 
-          "Die Präsentations-URL wurde in die Zwischenablage kopiert"
-      });
+      const copied = await copyToClipboard(presentationUrl);
+      if (copied) {
+        toast({
+          title: settings?.language === "en" ? "URL copied" : "URL kopiert",
+          description: settings?.language === "en" ? 
+            "The presentation URL has been copied to your clipboard" : 
+            "Die Präsentations-URL wurde in die Zwischenablage kopiert"
+        });
+      }
 
       onClose();
     } catch (error: any) {
