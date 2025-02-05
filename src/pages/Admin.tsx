@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, Mail, Bell, List, LayoutDashboard } from "lucide-react";
+import { Users, Mail, Bell, List, LayoutDashboard, Building2, GraduationCap } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface UserProfile {
   id: string;
@@ -22,15 +23,18 @@ const Admin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<number>(0);
   const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [totalTeams, setTotalTeams] = useState<number>(0);
+  const [totalPlatforms, setTotalPlatforms] = useState<number>(0);
   const [recentUsers, setRecentUsers] = useState<UserProfile[]>([]);
   const [changelogData, setChangelogData] = useState({
     version: "",
     title: "",
     description: "",
+    status: "planned" as "planned" | "in-progress" | "completed"
   });
 
   useEffect(() => {
-    const fetchUserStats = async () => {
+    const fetchStats = async () => {
       try {
         // Get total users count
         const { count: totalCount } = await supabase
@@ -38,6 +42,20 @@ const Admin = () => {
           .select('*', { count: 'exact', head: true });
 
         setTotalUsers(totalCount || 0);
+
+        // Get total teams count
+        const { count: teamsCount } = await supabase
+          .from('teams')
+          .select('*', { count: 'exact', head: true });
+
+        setTotalTeams(teamsCount || 0);
+
+        // Get total platforms count
+        const { count: platformsCount } = await supabase
+          .from('elevate_platforms')
+          .select('*', { count: 'exact', head: true });
+
+        setTotalPlatforms(platformsCount || 0);
 
         // Get recent users
         const { data: recentUsersData } = await supabase
@@ -51,16 +69,15 @@ const Admin = () => {
         }
 
         // For demo purposes, set a random number of online users
-        // In production, this should be implemented with Supabase Realtime
         setOnlineUsers(Math.floor(Math.random() * (totalCount || 10)));
       } catch (error) {
-        console.error('Error fetching user stats:', error);
-        toast.error("Fehler beim Laden der Benutzerstatistiken");
+        console.error('Error fetching stats:', error);
+        toast.error("Fehler beim Laden der Statistiken");
       }
     };
 
-    fetchUserStats();
-    const interval = setInterval(fetchUserStats, 30000); // Update every 30 seconds
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000); // Update every 30 seconds
 
     return () => clearInterval(interval);
   }, []);
@@ -77,13 +94,13 @@ const Admin = () => {
           title: changelogData.title,
           description: changelogData.description,
           created_by: session?.user?.id,
-          status: 'published'
+          status: changelogData.status
         });
 
       if (error) throw error;
 
       toast.success("Changelog Eintrag erfolgreich erstellt");
-      setChangelogData({ version: "", title: "", description: "" });
+      setChangelogData({ version: "", title: "", description: "", status: "planned" });
     } catch (error: any) {
       console.error('Error creating changelog:', error);
       toast.error(error.message || "Fehler beim Erstellen des Changelog Eintrags");
@@ -104,7 +121,7 @@ const Admin = () => {
         </h1>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
@@ -129,7 +146,31 @@ const Admin = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm md:col-span-2 lg:col-span-1">
+          <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-blue-400" />
+                Teams
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-4xl font-bold text-white">{totalTeams}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-purple-400" />
+                Ausbildungsplattformen
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-4xl font-bold text-white">{totalPlatforms}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-white">Letzte Aktivität</CardTitle>
             </CardHeader>
@@ -160,9 +201,9 @@ const Admin = () => {
                 <tbody>
                   {recentUsers.map((user) => (
                     <tr key={user.id} className="border-b border-white/10">
-                      <td className="p-4">{user.display_name || 'N/A'}</td>
-                      <td className="p-4">{user.email}</td>
-                      <td className="p-4">
+                      <td className="p-4 text-gray-200">{user.display_name || 'N/A'}</td>
+                      <td className="p-4 text-gray-200">{user.email}</td>
+                      <td className="p-4 text-gray-200">
                         {new Date(user.created_at).toLocaleDateString()}
                       </td>
                     </tr>
@@ -176,15 +217,15 @@ const Admin = () => {
         {/* Admin Tools */}
         <Tabs defaultValue="changelog" className="space-y-4">
           <TabsList className="bg-[#1A1F2C]/60 border-white/10">
-            <TabsTrigger value="changelog" className="data-[state=active]:bg-white/10">
+            <TabsTrigger value="changelog" className="text-white data-[state=active]:bg-white/10">
               <List className="h-4 w-4 mr-2" />
               Changelog
             </TabsTrigger>
-            <TabsTrigger value="newsletter" className="data-[state=active]:bg-white/10">
+            <TabsTrigger value="newsletter" className="text-white data-[state=active]:bg-white/10">
               <Mail className="h-4 w-4 mr-2" />
               Newsletter
             </TabsTrigger>
-            <TabsTrigger value="notifications" className="data-[state=active]:bg-white/10">
+            <TabsTrigger value="notifications" className="text-white data-[state=active]:bg-white/10">
               <Bell className="h-4 w-4 mr-2" />
               Benachrichtigungen
             </TabsTrigger>
@@ -206,7 +247,7 @@ const Admin = () => {
                       value={changelogData.version}
                       onChange={(e) => setChangelogData(prev => ({ ...prev, version: e.target.value }))}
                       placeholder="z.B. 1.0.0"
-                      className="bg-[#1A1F2C]/60 border-white/10"
+                      className="bg-[#1A1F2C]/60 border-white/10 text-white"
                       required
                     />
                   </div>
@@ -216,9 +257,27 @@ const Admin = () => {
                       value={changelogData.title}
                       onChange={(e) => setChangelogData(prev => ({ ...prev, title: e.target.value }))}
                       placeholder="Titel des Updates"
-                      className="bg-[#1A1F2C]/60 border-white/10"
+                      className="bg-[#1A1F2C]/60 border-white/10 text-white"
                       required
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-gray-400">Status</label>
+                    <Select
+                      value={changelogData.status}
+                      onValueChange={(value: "planned" | "in-progress" | "completed") => 
+                        setChangelogData(prev => ({ ...prev, status: value }))
+                      }
+                    >
+                      <SelectTrigger className="bg-[#1A1F2C]/60 border-white/10 text-white">
+                        <SelectValue placeholder="Wähle einen Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="planned">📅 Geplant</SelectItem>
+                        <SelectItem value="in-progress">⚡ In Arbeit</SelectItem>
+                        <SelectItem value="completed">✓ Abgeschlossen</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1 text-gray-400">Beschreibung</label>
@@ -226,14 +285,14 @@ const Admin = () => {
                       value={changelogData.description}
                       onChange={(e) => setChangelogData(prev => ({ ...prev, description: e.target.value }))}
                       placeholder="Beschreibung der Änderungen"
-                      className="bg-[#1A1F2C]/60 border-white/10"
+                      className="bg-[#1A1F2C]/60 border-white/10 text-white"
                       required
                     />
                   </div>
                   <Button 
                     type="submit" 
                     disabled={isLoading}
-                    className="bg-white/10 hover:bg-white/20"
+                    className="bg-white/10 hover:bg-white/20 text-white"
                   >
                     {isLoading ? "Wird gespeichert..." : "Changelog Eintrag erstellen"}
                   </Button>
