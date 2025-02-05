@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -5,19 +6,22 @@ import {
   Calendar, 
   MessageSquare, 
   CheckSquare,
-  Users
+  Users,
+  Building2
 } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
+import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
 
 export const QuickActions = () => {
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const [showAddLeadDialog, setShowAddLeadDialog] = useState(false);
 
   const actions = [
     {
       icon: UserPlus,
       label: settings?.language === "en" ? "New Contact" : "Neuer Kontakt",
-      onClick: () => navigate("/contacts?action=new"),
+      onClick: () => setShowAddLeadDialog(true),
     },
     {
       icon: Calendar,
@@ -35,25 +39,32 @@ export const QuickActions = () => {
       onClick: () => navigate("/todo?action=new"),
     },
     {
-      icon: Users,
-      label: settings?.language === "en" ? "View Contacts" : "Kontakte anzeigen",
-      onClick: () => navigate("/contacts"),
+      icon: Building2,
+      label: settings?.language === "en" ? "My Teams" : "Meine Teams",
+      onClick: () => navigate("/unity"),
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-      {actions.map((action, index) => (
-        <Button
-          key={index}
-          variant="outline"
-          className="w-full h-24 flex flex-col gap-2 items-center justify-center hover:bg-primary/5"
-          onClick={action.onClick}
-        >
-          <action.icon className="h-6 w-6" />
-          <span className="text-sm text-center">{action.label}</span>
-        </Button>
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {actions.map((action, index) => (
+          <Button
+            key={index}
+            variant="outline"
+            className="w-full h-24 flex flex-col gap-2 items-center justify-center hover:bg-primary/5 transition-all duration-200 hover:scale-105"
+            onClick={action.onClick}
+          >
+            <action.icon className="h-6 w-6" />
+            <span className="text-sm text-center">{action.label}</span>
+          </Button>
+        ))}
+      </div>
+
+      <AddLeadDialog 
+        open={showAddLeadDialog} 
+        onOpenChange={setShowAddLeadDialog}
+      />
+    </>
   );
 };
