@@ -42,6 +42,17 @@ export const AddLinkDialog = ({
       return;
     }
 
+    // Get the currently authenticated user
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to add links",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Ensure URL has protocol
     const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
 
@@ -51,6 +62,7 @@ export const AddLinkDialog = ({
         title,
         url: formattedUrl,
         group_type: groupType,
+        user_id: session.user.id, // Add the user_id field
       });
 
     if (error) {
@@ -112,6 +124,7 @@ export const AddLinkDialog = ({
                 <SelectItem value="partner">Partner</SelectItem>
                 <SelectItem value="customer">Kunden</SelectItem>
                 <SelectItem value="meeting">Meeting</SelectItem>
+                <SelectItem value="presentation">Präsentation</SelectItem>
                 <SelectItem value="other">Sonstige</SelectItem>
               </SelectContent>
             </Select>
