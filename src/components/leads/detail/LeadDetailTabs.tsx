@@ -88,21 +88,21 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
         </TabsTrigger>
         <TabsTrigger
           value="zoom"
-          className="flex-1"
+          className="flex-2"
           style={{ borderBottom: `2px solid ${tabColors.zoom}` }}
         >
           <Video className="w-4 h-4" />
         </TabsTrigger>
         <TabsTrigger
           value="youtube"
-          className="flex-1"
+          className="flex-2"
           style={{ borderBottom: `2px solid ${tabColors.youtube}` }}
         >
           <Youtube className="w-4 h-4" />
         </TabsTrigger>
         <TabsTrigger
           value="documents"
-          className="flex-1"
+          className="flex-2"
           style={{ borderBottom: `2px solid ${tabColors.documents}` }}
         >
           <FileText className="w-4 h-4" />
