@@ -35,6 +35,12 @@ interface LinkGroupProps {
   onUpdate: () => void;
 }
 
+const getYoutubeVideoId = (url: string) => {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? match[2] : null;
+};
+
 const getLinkIcon = (url: string) => {
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
     return <Youtube className="h-4 w-4 text-red-500" />;
@@ -46,12 +52,6 @@ const getLinkIcon = (url: string) => {
     return <FileText className="h-4 w-4 text-orange-500" />;
   }
   return <File className="h-4 w-4 text-gray-500" />;
-};
-
-const getYoutubeVideoId = (url: string) => {
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
-  return match && match[2].length === 11 ? match[2] : null;
 };
 
 const SortableLink = ({ link, onUpdate }: { link: UserLink; onUpdate: () => void }) => {
@@ -142,24 +142,30 @@ const SortableLink = ({ link, onUpdate }: { link: UserLink; onUpdate: () => void
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
         
-        <div className="flex-1 flex items-center gap-2">
-          {getLinkIcon(link.url)}
+        <div className="flex-1 flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            {getLinkIcon(link.url)}
+            
+            <a
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center"
+              onClick={(e) => {
+                if (videoId) {
+                  e.preventDefault();
+                  setShowPreview(true);
+                }
+              }}
+            >
+              {link.title}
+              <ExternalLink className="h-4 w-4 ml-2 inline-block opacity-50" />
+            </a>
+          </div>
           
-          <a
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 flex items-center"
-            onClick={(e) => {
-              if (videoId) {
-                e.preventDefault();
-                setShowPreview(true);
-              }
-            }}
-          >
-            {link.title}
-            <ExternalLink className="h-4 w-4 ml-2 inline-block opacity-50" />
-          </a>
+          <div className="text-sm text-muted-foreground pl-6">
+            {link.url}
+          </div>
         </div>
         
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
