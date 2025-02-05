@@ -3064,6 +3064,7 @@ export type Database = {
         | "other"
         | "presentation"
         | "custom"
+        | "meeting"
       post_type:
         | "post"
         | "video"
