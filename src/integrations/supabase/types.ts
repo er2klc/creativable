@@ -3063,6 +3063,7 @@ export type Database = {
         | "zoom"
         | "other"
         | "presentation"
+        | "custom"
       post_type:
         | "post"
         | "video"

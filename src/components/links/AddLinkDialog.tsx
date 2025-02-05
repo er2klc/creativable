@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -28,6 +27,7 @@ export const AddLinkDialog = ({
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [groupType, setGroupType] = useState<string>("other");
+  const [customGroup, setCustomGroup] = useState("");
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,8 +61,9 @@ export const AddLinkDialog = ({
       .insert({
         title,
         url: formattedUrl,
-        group_type: groupType,
-        user_id: session.user.id, // Add the user_id field
+        group_type: groupType === 'custom' ? 'custom' : groupType,
+        custom_group_name: groupType === 'custom' ? customGroup : null,
+        user_id: session.user.id,
       });
 
     if (error) {
@@ -82,6 +83,7 @@ export const AddLinkDialog = ({
     setTitle("");
     setUrl("");
     setGroupType("other");
+    setCustomGroup("");
     onSuccess();
     onOpenChange(false);
   };
@@ -125,10 +127,23 @@ export const AddLinkDialog = ({
                 <SelectItem value="customer">Kunden</SelectItem>
                 <SelectItem value="meeting">Meeting</SelectItem>
                 <SelectItem value="presentation">Präsentation</SelectItem>
+                <SelectItem value="custom">Eigene Gruppe</SelectItem>
                 <SelectItem value="other">Sonstige</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {groupType === 'custom' && (
+            <div className="space-y-2">
+              <Label htmlFor="customGroup">Eigene Gruppe</Label>
+              <Input
+                id="customGroup"
+                value={customGroup}
+                onChange={(e) => setCustomGroup(e.target.value)}
+                placeholder="Name der eigenen Gruppe"
+              />
+            </div>
+          )}
 
           <Button type="submit" className="w-full">
             Link speichern
