@@ -19,6 +19,24 @@ interface PresentationTabProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const calculateExpiryDate = (expiresIn: string): Date | null => {
+  if (expiresIn === "never") return null;
+  
+  const now = new Date();
+  switch (expiresIn) {
+    case "1hour":
+      return new Date(now.getTime() + 60 * 60 * 1000);
+    case "1day":
+      return new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    case "1week":
+      return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    case "1month":
+      return new Date(now.setMonth(now.getMonth() + 1));
+    default:
+      return null;
+  }
+};
+
 export const PresentationTab = ({
   leadId,
   type,
@@ -65,6 +83,7 @@ export const PresentationTab = ({
 
       if (type === "youtube") {
         const slug = generateSlug(title || url, videoId);
+        const expiryDate = calculateExpiryDate(expiresIn);
         
         const { data: pageData, error: pageError } = await supabase
           .from('presentation_pages')
@@ -75,7 +94,8 @@ export const PresentationTab = ({
               title: title || url,
               video_url: url,
               slug: slug,
-              expires_at: calculateExpiryDate(expiresIn)
+              expires_at: expiryDate,
+              is_url_active: true
             }
           ])
           .select()
