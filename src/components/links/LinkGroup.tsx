@@ -175,7 +175,7 @@ export const LinkGroup = ({ title, links, onUpdate }: LinkGroupProps) => {
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={items
+          items={items.map(link => link.id)}
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-2">
