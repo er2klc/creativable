@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
-import { Bot, Calendar, Building2, MessageSquare, ListTodo } from "lucide-react";
+import { Bot, Calendar, Building2, MessageSquare, ListTodo, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface LeadSummaryProps {
   lead: Tables<"leads"> & {
@@ -19,6 +20,30 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   const [summary, setSummary] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Load existing summary on mount
+  useEffect(() => {
+    const loadExistingSummary = async () => {
+      const { data, error } = await supabase
+        .from("lead_summaries")
+        .select("*")
+        .eq("lead_id", lead.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error loading summary:", error);
+        return;
+      }
+
+      if (data) {
+        setSummary(data.summary);
+        setHasGenerated(true);
+      }
+    };
+
+    loadExistingSummary();
+  }, [lead.id]);
 
   const generateSummary = async () => {
     setIsLoading(true);
@@ -32,8 +57,20 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
 
       if (error) throw error;
 
+      // Store the summary in the database
+      const { error: upsertError } = await supabase
+        .from("lead_summaries")
+        .upsert({
+          lead_id: lead.id,
+          summary: data.summary,
+          strategy: data.strategy
+        });
+
+      if (upsertError) throw upsertError;
+
       setSummary(data.summary);
       setHasGenerated(true);
+      setIsOpen(true);
       toast.success(
         settings?.language === "en"
           ? "Summary generated successfully"
@@ -50,11 +87,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    setSummary("");
-    setHasGenerated(false);
-  }, [lead.id]);
 
   const formatSummary = (text: string) => {
     const sections = text.split('**').filter(Boolean);
@@ -88,7 +120,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         <div key={index} className="p-4 bg-gradient-to-r from-white to-gray-50 rounded-lg shadow-sm mb-4 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
             {icon}
-            <h3 className="font-semibold text-lg antialiased">{title}</h3>
+            <h3 className="font-semibold text-lg antialiased text-black">{title}</h3>
           </div>
           <p className="text-gray-700 ml-7 leading-relaxed antialiased">{content}</p>
         </div>
@@ -99,42 +131,63 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   return (
     <Card>
       <CardContent className="pt-6">
-        {!hasGenerated && (
-          <Button
-            onClick={generateSummary}
-            disabled={isLoading}
-            className="w-full mb-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white antialiased"
-          >
-            <Bot className="h-4 w-4 mr-2" />
-            {isLoading
-              ? settings?.language === "en"
-                ? "Generating..."
-                : "Generiere..."
-              : settings?.language === "en"
-              ? "Generate AI Summary"
-              : "KI Zusammenfassung generieren"}
-          </Button>
-        )}
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-6 bg-gray-200 rounded-full w-1/4 mb-2"></div>
-                <div className="h-20 bg-gray-200 rounded-lg"></div>
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <div className="flex items-center justify-between mb-4">
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-left font-normal"
+              >
+                <Bot className="h-4 w-4 mr-2" />
+                {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
+                {hasGenerated && !isOpen && (
+                  <span className="text-xs text-muted-foreground ml-2">
+                    (Click to expand)
+                  </span>
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            {hasGenerated && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={generateSummary}
+                disabled={isLoading}
+                className="shrink-0"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+              </Button>
+            )}
+          </div>
+
+          <CollapsibleContent>
+            {hasGenerated ? (
+              <div className="space-y-4">
+                {formatSummary(summary)}
               </div>
-            ))}
-          </div>
-        ) : summary ? (
-          <div className="space-y-4">
-            {formatSummary(summary)}
-          </div>
-        ) : !hasGenerated ? (
-          <div className="text-center text-muted-foreground antialiased">
-            {settings?.language === "en"
-              ? "Click the button above to generate an AI summary"
-              : "Klicken Sie auf den Button oben, um eine KI-Zusammenfassung zu generieren"}
-          </div>
-        ) : null}
+            ) : (
+              <Button
+                onClick={generateSummary}
+                disabled={isLoading}
+                className="w-full mb-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white antialiased"
+              >
+                <Bot className="h-4 w-4 mr-2" />
+                {isLoading
+                  ? settings?.language === "en"
+                    ? "Generating..."
+                    : "Generiere..."
+                  : settings?.language === "en"
+                  ? "Generate AI Summary"
+                  : "KI Zusammenfassung generieren"}
+              </Button>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
       </CardContent>
     </Card>
   );
