@@ -155,26 +155,6 @@ export const DashboardMetrics = () => {
                 );
               })}
             </div>
-            <div className="mt-4 pt-4 border-t">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Partner</span>
-                  <span>{contactsByPlatform.statuses?.partner || 0}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Kunde</span>
-                  <span>{contactsByPlatform.statuses?.customer || 0}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Not for now</span>
-                  <span>{contactsByPlatform.statuses?.not_for_now || 0}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Kein Interesse</span>
-                  <span>{contactsByPlatform.statuses?.no_interest || 0}</span>
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
@@ -253,6 +233,76 @@ export const DashboardMetrics = () => {
                     : "Keine anstehenden Termine"}
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Contact Status Statistics */}
+        <Card className="bg-gradient-to-br from-white to-yellow-50 dark:from-gray-900 dark:to-gray-800 md:col-span-2 lg:col-span-3">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {settings?.language === "en" ? "Contact Status Overview" : "Kontaktstatus Übersicht"}
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">Partner</h3>
+                <div className="flex justify-between text-sm">
+                  <span>Gesamt</span>
+                  <span>{contactsByPlatform.statuses?.partner || 0}</span>
+                </div>
+                <Progress 
+                  value={contactsByPlatform.statuses?.partner 
+                    ? (contactsByPlatform.statuses.partner / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
+                    : 0
+                  } 
+                  className="h-2" 
+                />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">Kunde</h3>
+                <div className="flex justify-between text-sm">
+                  <span>Gesamt</span>
+                  <span>{contactsByPlatform.statuses?.customer || 0}</span>
+                </div>
+                <Progress 
+                  value={contactsByPlatform.statuses?.customer 
+                    ? (contactsByPlatform.statuses.customer / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
+                    : 0
+                  } 
+                  className="h-2" 
+                />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">Not for now</h3>
+                <div className="flex justify-between text-sm">
+                  <span>Gesamt</span>
+                  <span>{contactsByPlatform.statuses?.not_for_now || 0}</span>
+                </div>
+                <Progress 
+                  value={contactsByPlatform.statuses?.not_for_now 
+                    ? (contactsByPlatform.statuses.not_for_now / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
+                    : 0
+                  } 
+                  className="h-2" 
+                />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">Kein Interesse</h3>
+                <div className="flex justify-between text-sm">
+                  <span>Gesamt</span>
+                  <span>{contactsByPlatform.statuses?.no_interest || 0}</span>
+                </div>
+                <Progress 
+                  value={contactsByPlatform.statuses?.no_interest 
+                    ? (contactsByPlatform.statuses.no_interest / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
+                    : 0
+                  } 
+                  className="h-2" 
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

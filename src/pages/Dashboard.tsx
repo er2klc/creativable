@@ -22,17 +22,17 @@ const Dashboard = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[#F6F6F7]">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-6 py-6">
-          <div className="space-y-6 backdrop-blur-sm bg-white/50 rounded-lg p-6 shadow-sm">
+          <div className="space-y-6 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg p-6 shadow-sm border border-gray-200/20">
             <DashboardHeader userEmail={user.email} />
             <SearchBar />
           </div>
-          <div className="backdrop-blur-sm bg-white/50 rounded-lg p-6 shadow-sm">
+          <div className="backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg p-6 shadow-sm border border-gray-200/20">
             <QuickActions />
           </div>
-          <div className="backdrop-blur-sm bg-white/50 rounded-lg p-6 shadow-sm">
+          <div className="backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg p-6 shadow-sm border border-gray-200/20">
             <DashboardCards />
           </div>
         </div>
