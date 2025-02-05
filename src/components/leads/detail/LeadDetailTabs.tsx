@@ -26,7 +26,6 @@ const tabColors = {
   appointments: "#FDBA74",
   messages: "#BFDBFE",
   uploads: "#E5E7EB",
-  presentations: "#A5B4FC",
   zoom: "#2D8CFF",
   youtube: "#FF0000",
   documents: "#34D399"
@@ -36,7 +35,6 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const { settings } = useSettings();
   const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("notes");
-  const [selectedPresentationType, setSelectedPresentationType] = useState<"zoom" | "youtube" | "documents">("zoom");
 
   const handleTabChange = (value: string) => {
     if (value === "appointments") {
@@ -85,11 +83,25 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
           {settings?.language === "en" ? "Upload File" : "Datei hochladen"}
         </TabsTrigger>
         <TabsTrigger
-          value="presentations"
+          value="zoom"
           className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.presentations}` }}
+          style={{ borderBottom: `2px solid ${tabColors.zoom}` }}
         >
-          {settings?.language === "en" ? "Presentations" : "Präsentationen"}
+          <Video className="w-4 h-4" />
+        </TabsTrigger>
+        <TabsTrigger
+          value="youtube"
+          className="flex-1"
+          style={{ borderBottom: `2px solid ${tabColors.youtube}` }}
+        >
+          <Youtube className="w-4 h-4" />
+        </TabsTrigger>
+        <TabsTrigger
+          value="documents"
+          className="flex-1"
+          style={{ borderBottom: `2px solid ${tabColors.documents}` }}
+        >
+          <FileText className="w-4 h-4" />
         </TabsTrigger>
       </TabsList>
 
@@ -133,43 +145,28 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
         <LeadFileUpload leadId={lead.id} />
       </TabsContent>
 
-      <TabsContent value="presentations" className="mt-4">
-        <div className="space-y-4">
-          <TabsList className="w-full mb-4">
-            <TabsTrigger
-              value="zoom"
-              onClick={() => setSelectedPresentationType("zoom")}
-              className={`flex-1 ${selectedPresentationType === "zoom" ? "bg-blue-100" : ""}`}
-              style={{ borderBottom: `2px solid ${tabColors.zoom}` }}
-            >
-              <Video className="w-4 h-4 mr-2" />
-              Zoom
-            </TabsTrigger>
-            <TabsTrigger
-              value="youtube"
-              onClick={() => setSelectedPresentationType("youtube")}
-              className={`flex-1 ${selectedPresentationType === "youtube" ? "bg-red-100" : ""}`}
-              style={{ borderBottom: `2px solid ${tabColors.youtube}` }}
-            >
-              <Youtube className="w-4 h-4 mr-2" />
-              YouTube
-            </TabsTrigger>
-            <TabsTrigger
-              value="documents"
-              onClick={() => setSelectedPresentationType("documents")}
-              className={`flex-1 ${selectedPresentationType === "documents" ? "bg-green-100" : ""}`}
-              style={{ borderBottom: `2px solid ${tabColors.documents}` }}
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              {settings?.language === "en" ? "Documents" : "Dokumente"}
-            </TabsTrigger>
-          </TabsList>
-          <PresentationTab 
-            leadId={lead.id} 
-            type={selectedPresentationType}
-            tabColors={tabColors}
-          />
-        </div>
+      <TabsContent value="zoom" className="mt-4">
+        <PresentationTab 
+          leadId={lead.id} 
+          type="zoom"
+          tabColors={tabColors}
+        />
+      </TabsContent>
+
+      <TabsContent value="youtube" className="mt-4">
+        <PresentationTab 
+          leadId={lead.id} 
+          type="youtube"
+          tabColors={tabColors}
+        />
+      </TabsContent>
+
+      <TabsContent value="documents" className="mt-4">
+        <PresentationTab 
+          leadId={lead.id} 
+          type="documents"
+          tabColors={tabColors}
+        />
       </TabsContent>
     </Tabs>
   );
