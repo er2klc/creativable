@@ -53,7 +53,6 @@ export default function PresentationPage() {
           event_type: 'video_closed'
         };
 
-        // Use sendBeacon for reliable data sending when page closes
         navigator.sendBeacon(
           `${window.location.origin}/api/presentation-view/${viewId}`,
           JSON.stringify({ 
@@ -80,11 +79,11 @@ export default function PresentationPage() {
         .from('presentation_pages')
         .select(`
           *,
-          user:user_id (
+          user:profiles!presentation_pages_user_id_fkey (
             display_name,
             avatar_url
           ),
-          lead:lead_id (
+          lead:leads!presentation_pages_lead_id_fkey (
             name,
             social_media_profile_image_url
           )
@@ -204,45 +203,57 @@ export default function PresentationPage() {
     <div className="min-h-screen w-full flex items-center justify-center bg-[#0A0A0A]">
       <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30" />
       
-      <Card className="relative w-full max-w-[900px] mx-auto bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm p-6">
-        <div className="flex flex-col items-center space-y-6">
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center space-x-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={pageData?.user?.avatar_url} alt={pageData?.user?.display_name} />
-                <AvatarFallback>{pageData?.user?.display_name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <span className="text-white font-medium">{pageData?.user?.display_name}</span>
+      {isLoading ? (
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      ) : error ? (
+        <Card className="relative bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm p-6">
+          <div className="text-center text-white">
+            <h1 className="text-xl font-bold mb-4">
+              {error}
+            </h1>
+          </div>
+        </Card>
+      ) : pageData && (
+        <Card className="relative w-full max-w-[900px] mx-auto bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm p-6">
+          <div className="flex flex-col items-center space-y-6">
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center space-x-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={pageData?.user?.avatar_url} alt={pageData?.user?.display_name} />
+                  <AvatarFallback>{pageData?.user?.display_name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="text-white font-medium">{pageData?.user?.display_name}</span>
+              </div>
+              
+              <div className="flex items-center space-x-3 text-white/50">
+                <ArrowRight className="h-5 w-5" />
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={pageData?.lead?.social_media_profile_image_url} alt={pageData?.lead?.name} />
+                  <AvatarFallback>{pageData?.lead?.name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="text-white font-medium">{pageData?.lead?.name}</span>
+              </div>
             </div>
             
-            <div className="flex items-center space-x-3 text-white/50">
-              <ArrowRight className="h-5 w-5" />
+            <div className="text-center space-y-4">
+              <h1 className="text-2xl font-bold text-white">{pageData?.title}</h1>
+              <div className="h-[1px] w-32 mx-auto bg-gradient-to-r from-transparent via-white/50 to-transparent" />
             </div>
             
-            <div className="flex items-center space-x-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={pageData?.lead?.social_media_profile_image_url} alt={pageData?.lead?.name} />
-                <AvatarFallback>{pageData?.lead?.name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <span className="text-white font-medium">{pageData?.lead?.name}</span>
+            <div className="w-full aspect-video rounded-lg overflow-hidden">
+              <VideoPlayer
+                videoUrl={pageData?.video_url || ''}
+                onProgress={handleProgress}
+                onDuration={console.log}
+                autoplay={true}
+              />
             </div>
           </div>
-          
-          <div className="text-center space-y-4">
-            <h1 className="text-2xl font-bold text-white">{pageData?.title}</h1>
-            <div className="h-[1px] w-32 mx-auto bg-gradient-to-r from-transparent via-white/50 to-transparent" />
-          </div>
-          
-          <div className="w-full aspect-video rounded-lg overflow-hidden">
-            <VideoPlayer
-              videoUrl={pageData?.video_url || ''}
-              onProgress={handleProgress}
-              onDuration={console.log}
-              autoplay={true}
-            />
-          </div>
-        </div>
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }
