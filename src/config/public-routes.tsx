@@ -1,25 +1,30 @@
-import Index from "@/pages/Index";
-import Auth from "@/pages/Auth";
-import Register from "@/pages/Register";
-import News from "@/pages/News";
-import Support from "@/pages/Support";
-import PrivacyPolicy from "@/pages/legal/PrivacyPolicy";
-import InstagramDataDeletion from "@/pages/legal/InstagramDataDeletion";
-import LinkedInCallback from "@/pages/auth/callback/LinkedIn";
-import InstagramCallback from "@/pages/auth/callback/Instagram";
-import TreeProfile from "@/pages/TreeProfile";
-import Changelog from "@/pages/Changelog";
+import { lazy } from "react";
+
+const PresentationPage = lazy(() => import("@/pages/presentation/[leadId]/[pageId]"));
+const Auth = lazy(() => import("@/pages/Auth"));
+const Register = lazy(() => import("@/pages/Register"));
+const PrivacyPolicy = lazy(() => import("@/pages/legal/PrivacyPolicy"));
+const InstagramDataDeletion = lazy(() => import("@/pages/legal/InstagramDataDeletion"));
 
 export const publicRoutes = [
-  { path: "/", element: <Index /> },
-  { path: "/auth", element: <Auth /> },
-  { path: "/register", element: <Register /> },
-  { path: "/news", element: <News /> },
-  { path: "/support", element: <Support /> },
-  { path: "/privacy-policy", element: <PrivacyPolicy /> },
-  { path: "/auth/data-deletion/instagram", element: <InstagramDataDeletion /> },
-  { path: "/auth/callback/linkedin", element: <LinkedInCallback /> },
-  { path: "/auth/callback/instagram", element: <InstagramCallback /> },
-  { path: "/tree/:slug", element: <TreeProfile /> },
-  { path: "/changelog", element: <Changelog /> },
+  {
+    path: "/auth",
+    element: <Auth />,
+  },
+  {
+    path: "/register",
+    element: <Register />,
+  },
+  {
+    path: "/privacy-policy",
+    element: <PrivacyPolicy />,
+  },
+  {
+    path: "/auth/data-deletion/instagram",
+    element: <InstagramDataDeletion />,
+  },
+  {
+    path: "/presentation/:leadId/:pageId",
+    element: <PresentationPage />,
+  },
 ];
