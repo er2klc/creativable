@@ -41,6 +41,13 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               {formatDateTime(timestamp, settings?.language)}
             </div>
           )}
+          {metadata.presentationUrl && (
+            <div className="text-xs text-blue-500 hover:underline">
+              <a href={metadata.presentationUrl} target="_blank" rel="noopener noreferrer">
+                {metadata.presentationUrl}
+              </a>
+            </div>
+          )}
         </div>
         <div className="text-red-500">
           <Youtube className="h-5 w-5" />
