@@ -7,6 +7,7 @@ import Calendar from "@/pages/Calendar";
 import Settings from "@/pages/Settings";
 import Pool from "@/pages/Pool";
 import Admin from "@/pages/Admin";
+import Links from "@/pages/Links";
 
 export const mainRoutes = [
   {
@@ -53,5 +54,10 @@ export const mainRoutes = [
     path: "/admin",
     element: <Admin />,
     label: "Admin",
+  },
+  {
+    path: "/links",
+    element: <Links />,
+    label: "Links",
   },
 ];
