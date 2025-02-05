@@ -27,22 +27,46 @@ export default function PresentationPage() {
   const [viewId, setViewId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userIp, setUserIp] = useState<string>('');
+  const [userLocation, setUserLocation] = useState<string>('');
+
+  useEffect(() => {
+    // Get user's IP and location
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => setUserIp(data.ip));
+
+    fetch('https://ipapi.co/json/')
+      .then(res => res.json())
+      .then(data => setUserLocation(`${data.city}, ${data.country_name}`));
+  }, []);
 
   useEffect(() => {
     loadPresentationPage();
     
     const handleUnload = () => {
       if (viewId) {
+        const metadata = {
+          ip: userIp,
+          location: userLocation,
+          type: 'youtube',
+          event_type: 'video_closed'
+        };
+
+        // Use sendBeacon for reliable data sending when page closes
         navigator.sendBeacon(
           `${window.location.origin}/api/presentation-view/${viewId}`,
-          JSON.stringify({ completed: false })
+          JSON.stringify({ 
+            completed: false,
+            metadata 
+          })
         );
       }
     };
     
     window.addEventListener('unload', handleUnload);
     return () => window.removeEventListener('unload', handleUnload);
-  }, [leadId, pageId]);
+  }, [leadId, pageId, userIp, userLocation]);
 
   const loadPresentationPage = async () => {
     if (!leadId || !pageId) {
@@ -102,7 +126,13 @@ export default function PresentationPage() {
             page_id: pageData.id,
             lead_id: leadId,
             video_progress: 0,
-            completed: false
+            completed: false,
+            metadata: {
+              ip: userIp,
+              location: userLocation,
+              type: 'youtube',
+              event_type: 'video_opened'
+            }
           }
         ])
         .select()
@@ -125,12 +155,19 @@ export default function PresentationPage() {
     if (!viewId) return;
 
     const isCompleted = progress >= 95;
+    const metadata = {
+      ip: userIp,
+      location: userLocation,
+      type: 'youtube',
+      event_type: isCompleted ? 'video_completed' : 'video_progress'
+    };
 
     const { error } = await supabase
       .from('presentation_views')
       .update({
         video_progress: progress,
-        completed: isCompleted
+        completed: isCompleted,
+        metadata
       })
       .eq('id', viewId);
 
@@ -172,10 +209,10 @@ export default function PresentationPage() {
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center space-x-3">
               <Avatar className="h-12 w-12">
-                <AvatarImage src={pageData.user?.avatar_url} alt={pageData.user?.display_name} />
-                <AvatarFallback>{pageData.user?.display_name?.charAt(0)}</AvatarFallback>
+                <AvatarImage src={pageData?.user?.avatar_url} alt={pageData?.user?.display_name} />
+                <AvatarFallback>{pageData?.user?.display_name?.charAt(0)}</AvatarFallback>
               </Avatar>
-              <span className="text-white font-medium">{pageData.user?.display_name}</span>
+              <span className="text-white font-medium">{pageData?.user?.display_name}</span>
             </div>
             
             <div className="flex items-center space-x-3 text-white/50">
@@ -184,21 +221,21 @@ export default function PresentationPage() {
             
             <div className="flex items-center space-x-3">
               <Avatar className="h-12 w-12">
-                <AvatarImage src={pageData.lead?.social_media_profile_image_url} alt={pageData.lead?.name} />
-                <AvatarFallback>{pageData.lead?.name?.charAt(0)}</AvatarFallback>
+                <AvatarImage src={pageData?.lead?.social_media_profile_image_url} alt={pageData?.lead?.name} />
+                <AvatarFallback>{pageData?.lead?.name?.charAt(0)}</AvatarFallback>
               </Avatar>
-              <span className="text-white font-medium">{pageData.lead?.name}</span>
+              <span className="text-white font-medium">{pageData?.lead?.name}</span>
             </div>
           </div>
           
           <div className="text-center space-y-4">
-            <h1 className="text-2xl font-bold text-white">{pageData.title}</h1>
+            <h1 className="text-2xl font-bold text-white">{pageData?.title}</h1>
             <div className="h-[1px] w-32 mx-auto bg-gradient-to-r from-transparent via-white/50 to-transparent" />
           </div>
           
           <div className="w-full aspect-video rounded-lg overflow-hidden">
             <VideoPlayer
-              videoUrl={pageData.video_url}
+              videoUrl={pageData?.video_url || ''}
               onProgress={handleProgress}
               onDuration={console.log}
               autoplay={true}

@@ -1,73 +1,49 @@
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 import { Youtube } from "lucide-react";
+import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
-import { toast } from "sonner";
 
 interface YoutubeCardProps {
   content: string;
-  metadata?: {
-    title?: string;
-    url?: string;
+  metadata: {
+    type: string;
+    video_progress?: number;
+    ip?: string;
+    location?: string;
+    event_type?: string;
     presentationUrl?: string;
-    videoId?: string;
   };
+  timestamp: string;
 }
 
-export const YoutubeCard = ({ content, metadata }: YoutubeCardProps) => {
+export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) => {
   const { settings } = useSettings();
-  const videoId = metadata?.videoId || metadata?.url?.split('v=')[1] || '';
 
-  const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(
-        settings?.language === "en"
-          ? `${type === 'youtube' ? 'YouTube' : 'Presentation'} URL copied to clipboard`
-          : `${type === 'youtube' ? 'YouTube' : 'Präsentations'}-URL in die Zwischenablage kopiert`
-      );
-    } catch (err) {
-      toast.error(
-        settings?.language === "en"
-          ? "Failed to copy URL"
-          : "URL konnte nicht kopiert werden"
-      );
+  const getEventMessage = () => {
+    if (metadata.event_type === 'video_opened') {
+      return `Video wurde geöffnet von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
+    } else if (metadata.event_type === 'video_closed') {
+      return `Video wurde beendet bei ${Math.round(metadata.video_progress || 0)}% von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
+    } else if (metadata.event_type === 'video_completed') {
+      return `Video wurde vollständig angesehen von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
     }
+    return content;
   };
 
   return (
-    <div className="relative group bg-white border border-red-500 rounded-lg p-4 w-full">
-      <div className="flex items-start gap-4">
-        <Youtube className="h-5 w-5 text-red-500 flex-shrink-0 mt-1" />
-        <div className="flex-1 min-w-0">
-          <div className="font-medium mb-2">{metadata?.title || content}</div>
-          {videoId && (
-            <div className="mb-4 w-48 h-27 rounded overflow-hidden">
-              <img 
-                src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
-                alt="Video thumbnail"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-          <div className="flex gap-4 mt-2">
-            {metadata?.url && (
-              <button
-                onClick={() => copyToClipboard(metadata.url!, 'youtube')}
-                className="text-sm text-blue-500 hover:underline"
-              >
-                {settings?.language === "en" ? "Copy YouTube URL" : "YouTube URL kopieren"}
-              </button>
-            )}
-            {metadata?.presentationUrl && (
-              <button
-                onClick={() => copyToClipboard(metadata.presentationUrl!, 'presentation')}
-                className="text-sm text-blue-500 hover:underline"
-              >
-                {settings?.language === "en" ? "Copy Presentation URL" : "Präsentations-URL kopieren"}
-              </button>
-            )}
+    <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-red-50 border-red-200")}>
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <div className="font-medium">{getEventMessage()}</div>
+          <div className="text-xs text-gray-500">
+            {formatDateTime(timestamp, settings?.language)}
           </div>
         </div>
+        <div className="text-red-500">
+          <Youtube className="h-5 w-5" />
+        </div>
       </div>
-    </div>
+    </Card>
   );
 };
