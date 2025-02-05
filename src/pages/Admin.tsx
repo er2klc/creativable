@@ -122,7 +122,7 @@ const Admin = () => {
 
         {/* First Row: User Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-[#F2FCE2]/10 to-[#E5DEFF]/10 border-none shadow-lg backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-none shadow-lg backdrop-blur-md">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Users className="h-5 w-5" />
@@ -134,10 +134,10 @@ const Admin = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-[#FDE1D3]/10 to-[#D3E4FD]/10 border-none shadow-lg backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-none shadow-lg backdrop-blur-md">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
-                <Users className="h-5 w-5 text-green-400" />
+                <Users className="h-5 w-5 text-cyan-400" />
                 Online Benutzer
               </CardTitle>
             </CardHeader>
@@ -147,7 +147,7 @@ const Admin = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-[#E5DEFF]/10 to-[#FDE1D3]/10 border-none shadow-lg backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-none shadow-lg backdrop-blur-md">
             <CardHeader>
               <CardTitle className="text-white">Letzte Aktivität</CardTitle>
             </CardHeader>
@@ -159,10 +159,10 @@ const Admin = () => {
 
         {/* Second Row: Teams & Platforms */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-[#D3E4FD]/10 to-[#F2FCE2]/10 border-none shadow-lg backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-none shadow-lg backdrop-blur-md">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-blue-400" />
+                <Building2 className="h-5 w-5 text-orange-400" />
                 Teams
               </CardTitle>
             </CardHeader>
@@ -171,10 +171,10 @@ const Admin = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-[#F2FCE2]/10 to-[#E5DEFF]/10 border-none shadow-lg backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-rose-500/10 to-pink-500/10 border-none shadow-lg backdrop-blur-md">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
-                <GraduationCap className="h-5 w-5 text-purple-400" />
+                <GraduationCap className="h-5 w-5 text-pink-400" />
                 Ausbildungsplattformen
               </CardTitle>
             </CardHeader>
@@ -185,7 +185,7 @@ const Admin = () => {
         </div>
 
         {/* Recent Users Table */}
-        <Card className="bg-[#1A1F2C]/60 border-none shadow-lg backdrop-blur-sm mb-8">
+        <Card className="bg-black/40 border-none shadow-lg backdrop-blur-md mb-8">
           <CardHeader>
             <CardTitle className="text-white">Neue Benutzer</CardTitle>
             <CardDescription className="text-gray-300">
@@ -220,7 +220,7 @@ const Admin = () => {
 
         {/* Admin Tools */}
         <Tabs defaultValue="changelog" className="space-y-4">
-          <TabsList className="bg-[#1A1F2C]/60 border-none">
+          <TabsList className="bg-black/40 border-none backdrop-blur-md">
             <TabsTrigger value="changelog" className="text-white data-[state=active]:bg-white/10">
               <List className="h-4 w-4 mr-2" />
               Changelog
@@ -236,7 +236,7 @@ const Admin = () => {
           </TabsList>
 
           <TabsContent value="changelog">
-            <Card className="bg-[#1A1F2C]/60 border-none shadow-lg backdrop-blur-sm">
+            <Card className="bg-black/40 border-none shadow-lg backdrop-blur-md">
               <CardHeader>
                 <CardTitle className="text-white">Changelog Eintrag erstellen</CardTitle>
                 <CardDescription className="text-gray-300">
@@ -251,7 +251,7 @@ const Admin = () => {
                       value={changelogData.version}
                       onChange={(e) => setChangelogData(prev => ({ ...prev, version: e.target.value }))}
                       placeholder="z.B. 1.0.0"
-                      className="bg-[#1A1F2C]/60 border-white/10 text-white"
+                      className="bg-black/20 border-white/10 text-white"
                       required
                     />
                   </div>
@@ -261,7 +261,7 @@ const Admin = () => {
                       value={changelogData.title}
                       onChange={(e) => setChangelogData(prev => ({ ...prev, title: e.target.value }))}
                       placeholder="Titel des Updates"
-                      className="bg-[#1A1F2C]/60 border-white/10 text-white"
+                      className="bg-black/20 border-white/10 text-white"
                       required
                     />
                   </div>
@@ -273,10 +273,10 @@ const Admin = () => {
                         setChangelogData(prev => ({ ...prev, status: value }))
                       }
                     >
-                      <SelectTrigger className="bg-[#1A1F2C]/60 border-white/10 text-white">
+                      <SelectTrigger className="bg-black/20 border-white/10 text-white">
                         <SelectValue placeholder="Wähle einen Status" />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#1A1F2C] border-white/10">
+                      <SelectContent className="bg-black/90 border-white/10">
                         <SelectItem value="planned" className="text-white">📅 Geplant</SelectItem>
                         <SelectItem value="in-progress" className="text-white">⚡ In Arbeit</SelectItem>
                         <SelectItem value="completed" className="text-white">✓ Abgeschlossen</SelectItem>
@@ -289,7 +289,7 @@ const Admin = () => {
                       value={changelogData.description}
                       onChange={(e) => setChangelogData(prev => ({ ...prev, description: e.target.value }))}
                       placeholder="Beschreibung der Änderungen"
-                      className="bg-[#1A1F2C]/60 border-white/10 text-white"
+                      className="bg-black/20 border-white/10 text-white"
                       required
                     />
                   </div>
@@ -306,7 +306,7 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="newsletter">
-            <Card className="bg-[#1A1F2C]/60 border-none shadow-lg backdrop-blur-sm">
+            <Card className="bg-black/40 border-none shadow-lg backdrop-blur-md">
               <CardHeader>
                 <CardTitle className="text-white">Newsletter</CardTitle>
                 <CardDescription className="text-gray-300">
@@ -317,7 +317,7 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="notifications">
-            <Card className="bg-[#1A1F2C]/60 border-none shadow-lg backdrop-blur-sm">
+            <Card className="bg-black/40 border-none shadow-lg backdrop-blur-md">
               <CardHeader>
                 <CardTitle className="text-white">Benachrichtigungen</CardTitle>
                 <CardDescription className="text-gray-300">
