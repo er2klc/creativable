@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Video, Youtube, FileText, Plus } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface PresentationTabProps {
   leadId: string;
@@ -21,6 +23,7 @@ interface UserLink {
 
 export function PresentationTab({ leadId, type, tabColors }: PresentationTabProps) {
   const [links, setLinks] = useState<UserLink[]>([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
   const { settings } = useSettings();
 
@@ -77,6 +80,7 @@ export function PresentationTab({ leadId, type, tabColors }: PresentationTabProp
         "The link has been added to the timeline" : 
         "Der Link wurde zur Timeline hinzugefügt"
     });
+    setDialogOpen(false);
   };
 
   const getIcon = () => {
@@ -90,7 +94,13 @@ export function PresentationTab({ leadId, type, tabColors }: PresentationTabProp
     }
   };
 
-  return (
+  const getYoutubeVideoId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
+
+  const renderContent = () => (
     <div className="space-y-4">
       {links.length === 0 ? (
         <div className="text-center text-muted-foreground py-8">
@@ -99,14 +109,27 @@ export function PresentationTab({ leadId, type, tabColors }: PresentationTabProp
             "Keine Links verfügbar. Fügen Sie Links im Bereich Links hinzu."}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {links.map((link) => (
             <Card key={link.id} className="p-4">
               <div className="flex items-start space-x-4">
                 {getIcon()}
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{link.title}</p>
-                  <p className="text-sm text-muted-foreground truncate">
+                  <p className="font-medium">{link.title}</p>
+                  {type === 'youtube' && getYoutubeVideoId(link.url) && (
+                    <div className="aspect-video w-full max-w-[200px] my-2">
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        src={`https://www.youtube.com/embed/${getYoutubeVideoId(link.url)}`}
+                        title={link.title}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground break-all">
                     {link.url}
                   </p>
                 </div>
@@ -125,5 +148,33 @@ export function PresentationTab({ leadId, type, tabColors }: PresentationTabProp
         </div>
       )}
     </div>
+  );
+
+  return (
+    <>
+      <Button 
+        variant="outline" 
+        className="w-full mb-4"
+        onClick={() => setDialogOpen(true)}
+      >
+        {getIcon()}
+        <span className="ml-2">
+          {settings?.language === "en" ? "Select Link" : "Link auswählen"}
+        </span>
+      </Button>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {settings?.language === "en" ? "Select Link" : "Link auswählen"}
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[60vh] pr-4">
+            {renderContent()}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
