@@ -57,6 +57,10 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
 
       if (error) throw error;
 
+      if (!data.summary) {
+        throw new Error("Keine Zusammenfassung generiert");
+      }
+
       // Store the summary in the database
       const { error: upsertError } = await supabase
         .from("lead_summaries")

@@ -8,6 +8,7 @@ const corsHeaders = {
 
 interface LeadSummaryRequest {
   leadId: string;
+  language?: string;
 }
 
 async function generateUniqueMessage(lead, posts, openAiApiKey) {
@@ -63,7 +64,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { leadId } = await req.json() as LeadSummaryRequest;
+    const { leadId, language = 'de' } = await req.json() as LeadSummaryRequest;
 
     console.log("Generating summary for lead:", leadId);
 
@@ -124,6 +125,10 @@ serve(async (req) => {
     // Generate personalized message with OpenAI
     const messageSuggestion = await generateUniqueMessage(lead, posts, settings.openai_api_key);
 
+    if (!messageSuggestion) {
+      throw new Error("Fehler bei der Generierung der KI-Nachricht.");
+    }
+
     const summary = `
 **Kontaktstatus:**
 Aktuell in Phase "${phaseName}" mit ${totalEngagement} Interaktionen in den letzten 30 Tagen.
@@ -141,8 +146,28 @@ Letzte Interaktion: ${new Date(lead.last_interaction_date || lead.created_at).to
 **Nächste Schritte:**
 ${messageSuggestion}`;
 
+    // Store the summary in the database
+    const { error: upsertError } = await supabase
+      .from("lead_summaries")
+      .upsert({
+        lead_id: leadId,
+        summary: summary,
+        strategy: messageSuggestion
+      });
+
+    if (upsertError) {
+      console.error("Error upserting summary:", upsertError);
+      throw new Error("Fehler beim Speichern der Zusammenfassung");
+    }
+
     return new Response(
-      JSON.stringify({ summary, phaseName, totalEngagement, lastInteraction: lead.last_interaction_date }),
+      JSON.stringify({ 
+        summary, 
+        strategy: messageSuggestion,
+        phaseName, 
+        totalEngagement, 
+        lastInteraction: lead.last_interaction_date 
+      }),
       {
         headers: {
           ...corsHeaders,
@@ -154,7 +179,9 @@ ${messageSuggestion}`;
     console.error("Error in generate-lead-summary:", error);
 
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || "Ein unerwarteter Fehler ist aufgetreten" 
+      }),
       {
         status: 400,
         headers: {
