@@ -4,187 +4,172 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSettings } from "@/hooks/use-settings";
 import { Progress } from "@/components/ui/progress";
-import { Users, CheckSquare } from "lucide-react";
+import { Users, CheckSquare, Calendar } from "lucide-react";
+import { format, isToday, isTomorrow } from "date-fns";
 
 export const DashboardMetrics = () => {
   const session = useSession();
   const { settings } = useSettings();
 
-  // Get all pipelines
-  const { data: pipelines } = useQuery({
-    queryKey: ["pipelines"],
+  // Get contacts by platform
+  const { data: contactsByPlatform = [] } = useQuery({
+    queryKey: ["contacts-by-platform"],
     queryFn: async () => {
       if (!session?.user?.id) return [];
 
       const { data, error } = await supabase
-        .from("pipelines")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .order("order_index");
+        .from("leads")
+        .select("platform")
+        .eq("user_id", session.user.id);
 
       if (error) {
-        console.error("Error fetching pipelines:", error);
+        console.error("Error fetching contacts:", error);
         return [];
       }
 
-      return data;
+      const platforms = data.reduce((acc, curr) => {
+        acc[curr.platform] = (acc[curr.platform] || 0) + 1;
+        return acc;
+      }, {});
+
+      return Object.entries(platforms).map(([platform, count]) => ({
+        platform,
+        count,
+      }));
     },
     enabled: !!session?.user?.id,
   });
 
-  // Get total leads count
-  const { data: totalLeads = 0 } = useQuery({
-    queryKey: ["total-leads"],
+  // Get task completion stats
+  const { data: taskStats = { total: 0, completed: 0 } } = useQuery({
+    queryKey: ["task-stats"],
     queryFn: async () => {
-      if (!session?.user?.id) return 0;
+      if (!session?.user?.id) return { total: 0, completed: 0 };
 
-      const { count, error } = await supabase
-        .from("leads")
-        .select("*", { count: 'exact', head: true })
-        .eq("user_id", session.user.id);
-
-      if (error) {
-        console.error("Error fetching total leads:", error);
-        return 0;
-      }
-
-      return count || 0;
-    },
-    enabled: !!session?.user?.id,
-  });
-
-  // Get total tasks count
-  const { data: totalTasks = 0 } = useQuery({
-    queryKey: ["total-tasks"],
-    queryFn: async () => {
-      if (!session?.user?.id) return 0;
-
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from("tasks")
-        .select("*", { count: 'exact', head: true })
+        .select("*")
         .eq("user_id", session.user.id);
 
       if (error) {
-        console.error("Error fetching total tasks:", error);
-        return 0;
+        console.error("Error fetching tasks:", error);
+        return { total: 0, completed: 0 };
       }
 
-      return count || 0;
+      const total = data.length;
+      const completed = data.filter(task => task.completed).length;
+      return { total, completed };
     },
     enabled: !!session?.user?.id,
   });
 
-  // Get phases and lead counts for each pipeline
-  const { data: pipelineStats } = useQuery({
-    queryKey: ["pipeline-stats"],
+  // Get upcoming appointments
+  const { data: upcomingAppointments = [] } = useQuery({
+    queryKey: ["upcoming-appointments"],
     queryFn: async () => {
-      if (!session?.user?.id || !pipelines) return [];
+      if (!session?.user?.id) return [];
 
-      const stats = await Promise.all(
-        pipelines.map(async (pipeline) => {
-          // Get phases for this pipeline
-          const { data: phases } = await supabase
-            .from("pipeline_phases")
-            .select("*")
-            .eq("pipeline_id", pipeline.id)
-            .order("order_index");
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*, leads(name)")
+        .eq("user_id", session.user.id)
+        .not("due_date", "is", null)
+        .order("due_date", { ascending: true });
 
-          // Get leads for this pipeline
-          const { data: leads } = await supabase
-            .from("leads")
-            .select(`
-              phase_id,
-              pipeline_phases (
-                name
-              )
-            `)
-            .eq("pipeline_id", pipeline.id)
-            .eq("user_id", session.user.id);
+      if (error) {
+        console.error("Error fetching appointments:", error);
+        return [];
+      }
 
-          // Calculate percentages
-          const total = leads?.length || 0;
-          const phaseStats = {};
-          
-          leads?.forEach(lead => {
-            const phaseName = lead.pipeline_phases?.name;
-            if (phaseName) {
-              phaseStats[phaseName] = (phaseStats[phaseName] || 0) + 1;
-            }
-          });
-
-          // Convert to percentages
-          const phasePercentages = {};
-          Object.keys(phaseStats).forEach(phase => {
-            phasePercentages[phase] = total > 0 
-              ? Math.round((phaseStats[phase] / total) * 100) 
-              : 0;
-          });
-
-          return {
-            pipeline,
-            phases,
-            stats: phasePercentages
-          };
-        })
+      return data.filter(task => 
+        isToday(new Date(task.due_date)) || 
+        isTomorrow(new Date(task.due_date))
       );
-
-      return stats;
     },
-    enabled: !!session?.user?.id && !!pipelines,
+    enabled: !!session?.user?.id,
   });
+
+  const completionRate = taskStats.total > 0 
+    ? Math.round((taskStats.completed / taskStats.total) * 100) 
+    : 0;
 
   return (
     <div className="space-y-6 w-full mb-8">
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Platform-specific contact counts */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {settings?.language === "en" ? "Total Contacts" : "Gesamtkontakte"}
+              {settings?.language === "en" ? "Contacts by Platform" : "Kontakte nach Plattform"}
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalLeads}</div>
+            <div className="space-y-2">
+              {contactsByPlatform.map(({ platform, count }) => (
+                <div key={platform} className="flex justify-between items-center">
+                  <span className="text-sm">{platform}</span>
+                  <span className="font-bold">{count}</span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
+        {/* Task completion stats */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {settings?.language === "en" ? "Total Tasks" : "Gesamtaufgaben"}
+              {settings?.language === "en" ? "Task Progress" : "Aufgabenfortschritt"}
             </CardTitle>
             <CheckSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalTasks}</div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>{settings?.language === "en" ? "Completed" : "Erledigt"}</span>
+                <span>{taskStats.completed} / {taskStats.total}</span>
+              </div>
+              <Progress value={completionRate} className="h-2" />
+            </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Pipeline Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {pipelineStats?.map(({ pipeline, phases, stats }) => (
-          <Card key={pipeline.id}>
-            <CardHeader>
-              <CardTitle className="text-lg font-medium flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                {pipeline.name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {phases?.map(phase => (
-                <div key={phase.id}>
-                  <div className="flex justify-between mb-1 text-sm">
-                    <span>{phase.name}</span>
-                    <span>{stats[phase.name] || 0}%</span>
+        {/* Upcoming appointments */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {settings?.language === "en" ? "Upcoming Appointments" : "Anstehende Termine"}
+            </CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {upcomingAppointments.map(appointment => (
+                <div key={appointment.id} className="flex justify-between items-center text-sm">
+                  <div className="flex flex-col">
+                    <span className="font-medium">{appointment.leads?.name}</span>
+                    <span className="text-muted-foreground">
+                      {format(new Date(appointment.due_date), "HH:mm")}
+                    </span>
                   </div>
-                  <Progress value={stats[phase.name] || 0} className="h-2" />
+                  <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+                    {isToday(new Date(appointment.due_date)) 
+                      ? (settings?.language === "en" ? "Today" : "Heute")
+                      : (settings?.language === "en" ? "Tomorrow" : "Morgen")}
+                  </span>
                 </div>
               ))}
-            </CardContent>
-          </Card>
-        ))}
+              {upcomingAppointments.length === 0 && (
+                <div className="text-sm text-muted-foreground text-center py-2">
+                  {settings?.language === "en" 
+                    ? "No upcoming appointments" 
+                    : "Keine anstehenden Termine"}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

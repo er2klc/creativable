@@ -6,7 +6,6 @@ import { QuickActions } from "@/components/dashboard/QuickActions";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { DashboardCards } from "@/components/dashboard/DashboardCards";
 import { useDefaultPipeline } from "@/hooks/use-default-pipeline";
-import { EmbeddingsManager } from "@/components/dashboard/EmbeddingsManager";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -25,16 +24,11 @@ const Dashboard = () => {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-6">
-        <SearchBar />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <DashboardHeader userEmail={user.email} />
-            <QuickActions />
-          </div>
-          <div className="lg:col-span-1">
-            <EmbeddingsManager />
-          </div>
+        <div className="space-y-6">
+          <DashboardHeader userEmail={user.email} />
+          <SearchBar />
         </div>
+        <QuickActions />
         <DashboardCards />
       </div>
     </div>
