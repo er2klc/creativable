@@ -18,39 +18,46 @@ async function generateActionableInsights(lead, posts, openAiApiKey) {
   }).join("\n");
 
   const prompt = `
-Du bist ein KI-Berater für Vertrieb und Kommunikation. Analysiere die folgenden Daten:
+Du bist ein KI-Vertriebsexperte für Lead-Analyse und Empfehlungen. Analysiere die folgenden Daten:
 
 Kontaktinformationen:
 - Name: ${lead.name}
 - Branche: ${lead.industry || "Unbekannt"}
 - Interessen: ${(lead.social_media_interests || []).join(", ")}
 - Letzte Interaktion: ${lead.last_interaction_date || "Unbekannt"}
+- Pipeline-Phase: ${lead.phase_id || "Unbekannt"}
 - Social-Media-Daten:
 ${postDetails}
+- Follower: ${lead.social_media_followers || "Unbekannt"}
+- Following: ${lead.social_media_following || "Unbekannt"}
+- Engagement-Rate: ${lead.social_media_engagement_rate || "Unbekannt"}
 
-Erstelle eine strukturierte Analyse mit folgenden Abschnitten:
+Erstelle eine tiefgehende Analyse in diesem Format:
 
-1. **Kontaktstatus**
-- Aktuelle Phase und Engagement-Level
-- Letzte Aktivitäten und Interaktionen
+**Kontaktstatus**
+- Detaillierte Einschätzung der aktuellen Phase
+- Konkrete Engagement-Bewertung basierend auf Interaktionen
 
-2. **Geschäftsprofil**
-- Branchenspezifische Informationen
-- Hauptinteressen und Fokusgebiete
+**Geschäftsprofil**
+- Branchenspezifische Erkenntnisse und Potenziale
+- Identifizierte Schmerzpunkte oder Bedürfnisse
 
-3. **Kommunikation**
-- Bisherige Interaktionen
-- Bevorzugte Kommunikationskanäle
+**Kommunikation**
+- Analyse des Kommunikationsverhaltens
+- Bevorzugte Kanäle und Ansprechzeiten
+- Tonalität und Stil der Kommunikation
 
-4. **Relevante Themen**
-- Häufig diskutierte Themen
-- Aktuelle Interessen und Trends
+**Relevante Themen**
+- Hauptthemen aus Social Media (mit Engagement-Raten)
+- Emotionale Verbindung zu Themen
+- Aktuelle Trends im Content
 
-5. **Nächste Schritte**
-- 3 konkrete Handlungsempfehlungen
-- Zeitrahmen für Follow-ups
+**Nächste Schritte**
+- 3 spezifische, zeitlich priorisierte Handlungsempfehlungen
+- Konkrete Vorschläge für Content oder Angebote
+- Optimaler Zeitpunkt für nächste Kontaktaufnahme
 
-Antwort im klaren, strukturierten Format:`;
+Antwort im klaren, strukturierten Format mit kurzen, prägnanten Bulletpoints.`;
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -60,7 +67,7 @@ Antwort im klaren, strukturierten Format:`;
         Authorization: `Bearer ${openAiApiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: "Du bist ein KI-Experte für Lead-Analyse." },
           { role: "user", content: prompt },
