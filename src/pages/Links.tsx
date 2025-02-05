@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
@@ -13,7 +12,7 @@ export type UserLink = {
   id: string;
   title: string;
   url: string;
-  group_type: 'partner' | 'customer' | 'meeting' | 'other';
+  group_type: 'partner' | 'customer' | 'meeting' | 'other' | 'presentation';
   is_favorite: boolean;
   order_index: number;
   custom_group_name?: string;
@@ -26,6 +25,7 @@ const Links = () => {
   const { data: links = [], isLoading, refetch } = useQuery({
     queryKey: ['user-links'],
     queryFn: async () => {
+      console.log("Fetching links...");
       const { data, error } = await supabase
         .from('user_links')
         .select('*')
@@ -41,6 +41,7 @@ const Links = () => {
         return [];
       }
 
+      console.log("Fetched links:", data);
       return data as UserLink[];
     },
   });
@@ -49,6 +50,7 @@ const Links = () => {
   const partnerLinks = links.filter(link => link.group_type === 'partner');
   const customerLinks = links.filter(link => link.group_type === 'customer');
   const meetingLinks = links.filter(link => link.group_type === 'meeting');
+  const presentationLinks = links.filter(link => link.group_type === 'presentation');
   const otherLinks = links.filter(link => link.group_type === 'other');
 
   return (
@@ -97,6 +99,16 @@ const Links = () => {
             <LinkGroup 
               title="Meeting Links" 
               links={meetingLinks} 
+              onUpdate={refetch}
+            />
+          </Card>
+        )}
+
+        {presentationLinks.length > 0 && (
+          <Card className="p-4">
+            <LinkGroup 
+              title="Präsentation Links" 
+              links={presentationLinks} 
               onUpdate={refetch}
             />
           </Card>
