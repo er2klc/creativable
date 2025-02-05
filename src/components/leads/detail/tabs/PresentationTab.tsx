@@ -12,6 +12,8 @@ interface PresentationTabProps {
   leadId: string;
   type: "zoom" | "youtube" | "documents";
   tabColors: Record<string, string>;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 interface UserLink {
@@ -19,11 +21,11 @@ interface UserLink {
   title: string;
   url: string;
   group_type: string;
+  is_favorite: boolean;
 }
 
-export function PresentationTab({ leadId, type, tabColors }: PresentationTabProps) {
+export function PresentationTab({ leadId, type, tabColors, isOpen, onOpenChange }: PresentationTabProps) {
   const [links, setLinks] = useState<UserLink[]>([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
   const { settings } = useSettings();
 
@@ -35,7 +37,8 @@ export function PresentationTab({ leadId, type, tabColors }: PresentationTabProp
     const { data, error } = await supabase
       .from('user_links')
       .select('*')
-      .eq('group_type', type);
+      .eq('group_type', type)
+      .order('is_favorite', { ascending: false });
 
     if (error) {
       toast({
@@ -80,7 +83,7 @@ export function PresentationTab({ leadId, type, tabColors }: PresentationTabProp
         "The link has been added to the timeline" : 
         "Der Link wurde zur Timeline hinzugefügt"
     });
-    setDialogOpen(false);
+    onOpenChange(false);
   };
 
   const getIcon = () => {
@@ -151,30 +154,17 @@ export function PresentationTab({ leadId, type, tabColors }: PresentationTabProp
   );
 
   return (
-    <>
-      <Button 
-        variant="outline" 
-        className="w-full mb-4"
-        onClick={() => setDialogOpen(true)}
-      >
-        {getIcon()}
-        <span className="ml-2">
-          {settings?.language === "en" ? "Select Link" : "Link auswählen"}
-        </span>
-      </Button>
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {settings?.language === "en" ? "Select Link" : "Link auswählen"}
-            </DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="h-[60vh] pr-4">
-            {renderContent()}
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-    </>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            {settings?.language === "en" ? "Select Link" : "Link auswählen"}
+          </DialogTitle>
+        </DialogHeader>
+        <ScrollArea className="h-[60vh] pr-4">
+          {renderContent()}
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
   );
 }

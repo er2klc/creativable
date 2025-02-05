@@ -35,11 +35,15 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const { settings } = useSettings();
   const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("notes");
+  const [presentationDialogOpen, setPresentationDialogOpen] = useState(false);
 
   const handleTabChange = (value: string) => {
     if (value === "appointments") {
       setAppointmentDialogOpen(true);
       return;
+    }
+    if (["zoom", "youtube", "documents"].includes(value)) {
+      setPresentationDialogOpen(true);
     }
     setSelectedTab(value);
   };
@@ -150,6 +154,8 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
           leadId={lead.id} 
           type="zoom"
           tabColors={tabColors}
+          isOpen={presentationDialogOpen && selectedTab === "zoom"}
+          onOpenChange={setPresentationDialogOpen}
         />
       </TabsContent>
 
@@ -158,6 +164,8 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
           leadId={lead.id} 
           type="youtube"
           tabColors={tabColors}
+          isOpen={presentationDialogOpen && selectedTab === "youtube"}
+          onOpenChange={setPresentationDialogOpen}
         />
       </TabsContent>
 
@@ -166,6 +174,8 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
           leadId={lead.id} 
           type="documents"
           tabColors={tabColors}
+          isOpen={presentationDialogOpen && selectedTab === "documents"}
+          onOpenChange={setPresentationDialogOpen}
         />
       </TabsContent>
     </Tabs>
