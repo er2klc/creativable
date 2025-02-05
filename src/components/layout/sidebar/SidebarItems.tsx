@@ -1,7 +1,6 @@
 import { 
   LayoutGrid, 
   Users, 
-  MessageSquare, 
   Calendar,
   CheckSquare,
   BarChart, 
@@ -127,12 +126,6 @@ export const usePersonalItems = () => {
     { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
     { title: "Kontakte", icon: Users, url: "/contacts" },
     { title: "Pool", icon: Waves, url: "/pool" },
-    { 
-      title: "Nachrichten", 
-      icon: MessageSquare, 
-      url: "/messages",
-      badge: true 
-    },
     { 
       title: "Kalender", 
       icon: Calendar, 
