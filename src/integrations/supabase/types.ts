@@ -1417,7 +1417,9 @@ export type Database = {
       presentation_pages: {
         Row: {
           created_at: string | null
+          expires_at: string | null
           id: string
+          is_url_active: boolean | null
           lead_id: string
           slug: string
           title: string
@@ -1426,7 +1428,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          expires_at?: string | null
           id?: string
+          is_url_active?: boolean | null
           lead_id: string
           slug: string
           title: string
@@ -1435,7 +1439,9 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          expires_at?: string | null
           id?: string
+          is_url_active?: boolean | null
           lead_id?: string
           slug?: string
           title?: string

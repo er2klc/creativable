@@ -45,6 +45,19 @@ export default function PresentationPage() {
         return;
       }
 
+      // Check if URL is expired or inactive
+      if (pageData.expires_at && new Date(pageData.expires_at) < new Date()) {
+        setError("This presentation has expired");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!pageData.is_url_active) {
+        setError("This presentation is no longer available");
+        setIsLoading(false);
+        return;
+      }
+
       setPageData(pageData);
 
       // Create view record
@@ -161,4 +174,4 @@ export default function PresentationPage() {
       </Card>
     </div>
   );
-}
+};
