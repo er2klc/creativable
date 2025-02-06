@@ -1,4 +1,3 @@
-
 import { DialogHeader } from "@/components/ui/dialog";
 import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
@@ -34,7 +33,7 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
   return (
     <>
       <DialogHeader className="p-6 bg-card border-b">
-        <div className="flex flex-col space-y-4 h-[180px]">
+        <div className="flex flex-col space-y-4">
           <div className="flex justify-between items-start border-b">
             <LeadName name={lead.name} platform={lead.platform as Platform} />
             <HeaderActions 

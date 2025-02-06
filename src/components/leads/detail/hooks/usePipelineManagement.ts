@@ -1,13 +1,10 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 
 export function usePipelineManagement(initialPipelineId: string | null) {
-  const session = useSession();
   const { settings } = useSettings();
   const queryClient = useQueryClient();
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(initialPipelineId);
@@ -44,8 +41,6 @@ export function usePipelineManagement(initialPipelineId: string | null) {
 
   const updateLeadPipeline = useMutation({
     mutationFn: async ({ leadId, pipelineId, phaseId }: { leadId: string; pipelineId: string; phaseId: string }) => {
-      if (!session?.user?.id) throw new Error("No user found");
-
       // First get the current lead data to check if phase actually changed
       const { data: currentLead, error: fetchError } = await supabase
         .from("leads")
@@ -79,7 +74,7 @@ export function usePipelineManagement(initialPipelineId: string | null) {
           .from("notes")
           .insert({
             lead_id: leadId,
-            user_id: session.user.id,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
             content: `Phase wurde zu "${newPhase.name}" geändert`,
             metadata: {
               type: 'phase_change',
@@ -97,10 +92,13 @@ export function usePipelineManagement(initialPipelineId: string | null) {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["lead", variables.leadId] });
-    },
-    onError: (error) => {
-      console.error("Error updating lead pipeline:", error);
-      toast.error(settings?.language === "en" ? "Failed to update phase" : "Fehler beim Aktualisieren der Phase");
+      
+      // Only show toast if this was triggered by a user action, not initial load
+      if (variables.phaseId !== data.phase_id) {
+        toast.success(
+          settings?.language === "en" ? "Phase updated" : "Phase aktualisiert"
+        );
+      }
     },
   });
 
@@ -108,9 +106,7 @@ export function usePipelineManagement(initialPipelineId: string | null) {
     if (initialPipelineId) {
       setSelectedPipelineId(initialPipelineId);
     } else if (pipelines.length > 0) {
-      // Wähle die letzte Pipeline aus der Liste
-      const lastPipeline = pipelines[pipelines.length - 1];
-      setSelectedPipelineId(lastPipeline.id);
+      setSelectedPipelineId(pipelines[0].id);
     }
   }, [initialPipelineId, pipelines]);
 
