@@ -42,7 +42,9 @@ export const PresentationContent = ({ pageData, onProgress }: PresentationConten
         
         <div className="w-full aspect-video rounded-lg overflow-hidden">
           <VideoPlayer
-            videoUrl={pageData?.video_url || ''}
+            videoUrl={
+              `${pageData?.video_url || ""}?controls=0&showinfo=0&rel=0&modestbranding=1`
+            }
             onProgress={onProgress}
             onDuration={console.log}
             autoplay={true}
