@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CreditCard, LogOut, Settings, User } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 
 interface SidebarFooterProps {
   isExpanded: boolean;
