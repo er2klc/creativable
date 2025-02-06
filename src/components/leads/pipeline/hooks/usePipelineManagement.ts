@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 export function usePipelineManagement(initialPipelineId: string | null) {
   const { settings } = useSettings();
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(initialPipelineId);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data: pipelines = [] } = useQuery({
@@ -46,34 +46,30 @@ export function usePipelineManagement(initialPipelineId: string | null) {
     const initializePipeline = async () => {
       if (!pipelines.length) return;
 
-      // Skip if we already have a selection
+      // Wenn bereits eine Pipeline ausgewählt ist und diese existiert, behalte sie
       if (selectedPipelineId && pipelines.some(p => p.id === selectedPipelineId)) {
-        console.log("Keeping current pipeline selection:", selectedPipelineId);
+        console.log("Keeping existing pipeline selection:", selectedPipelineId);
         return;
       }
 
-      // Get saved pipeline from settings
+      // Gespeicherte Pipeline aus den Settings holen
       const savedPipelineId = settings?.last_selected_pipeline_id;
       console.log("Saved pipeline from settings:", savedPipelineId);
 
-      let pipelineToSelect: string | null = null;
-
+      // Prioritätsreihenfolge für Pipeline-Auswahl:
+      // 1. Gespeicherte Pipeline aus Settings
+      // 2. Erste verfügbare Pipeline
       if (savedPipelineId && pipelines.some(p => p.id === savedPipelineId)) {
         console.log("Using saved pipeline:", savedPipelineId);
-        pipelineToSelect = savedPipelineId;
-      } else if (initialPipelineId && pipelines.some(p => p.id === initialPipelineId)) {
-        console.log("Using initial pipeline:", initialPipelineId);
-        pipelineToSelect = initialPipelineId;
+        setSelectedPipelineId(savedPipelineId);
       } else {
         console.log("Using first available pipeline:", pipelines[0].id);
-        pipelineToSelect = pipelines[0].id;
+        setSelectedPipelineId(pipelines[0].id);
       }
-
-      setSelectedPipelineId(pipelineToSelect);
     };
 
     initializePipeline();
-  }, [pipelines, settings?.last_selected_pipeline_id, initialPipelineId, selectedPipelineId]);
+  }, [pipelines, settings?.last_selected_pipeline_id, selectedPipelineId]);
 
   // Persist pipeline selection to settings
   useEffect(() => {
