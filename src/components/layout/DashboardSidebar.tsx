@@ -91,7 +91,7 @@ export const DashboardSidebar = () => {
         isExpanded={isExpanded}
         unreadCount={unreadCount}
       />
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <div class="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
 
       {/* Teams & Gruppen */}
       <SidebarMenuSection
@@ -99,7 +99,7 @@ export const DashboardSidebar = () => {
         items={teamItems}
         isExpanded={isExpanded}
       />
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <div class="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
 
       {/* Analyse & Tools */}
       <SidebarMenuSection
@@ -107,7 +107,7 @@ export const DashboardSidebar = () => {
         items={analysisItems}
         isExpanded={isExpanded}
       />
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <div class="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
 
       {/* Rechtliches */}
       <SidebarMenuSection
@@ -115,18 +115,18 @@ export const DashboardSidebar = () => {
         items={legalItems}
         isExpanded={isExpanded}
       />
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <div class="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
 
       {/* Super Admin */}
       <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
     </div>
 
     {/* Footer fixiert */}
-    <div className="sticky bottom-0 z-10 bg-[#111111] border-t border-white/10">
+    <div className="sticky bottom-0 z-10 bg-[#111111] h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent">
       <SidebarFooter isExpanded={isExpanded} currentVersion={versionData || "0.1"} />
 
       {/* Changelog */}
-      <div className="flex items-center z-10 justify-between px-3 py-2 bg-[#111111] border-t border-white/10">
+      <div className="flex items-center z-10 justify-between px-3 py-2 bg-[#111111] h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent">
         <span className="text-white/70">{versionData || "0.1"}</span>
         {isExpanded && (
           <a
