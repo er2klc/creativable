@@ -37,26 +37,21 @@ export const PipelineSelector = ({
   });
 
   useEffect(() => {
-    // Wenn wir Pipelines haben und keine ausgewählt ist
-    if (pipelines.length > 0 && !selectedPipelineId) {
-      // Wenn es nur eine Pipeline gibt, wähle diese direkt aus
-      if (pipelines.length === 1) {
-        console.log("Selecting single pipeline:", pipelines[0].id);
-        onPipelineSelect(pipelines[0].id);
-      } else {
-        // Bei mehreren Pipelines versuche die zuletzt ausgewählte zu verwenden
-        const lastSelectedPipelineId = settings?.last_selected_pipeline_id;
-        const pipelineExists = lastSelectedPipelineId && 
-          pipelines.some(p => p.id === lastSelectedPipelineId);
+    if (pipelines.length > 0) {
+      // Keine Pipeline ausgewählt oder ausgewählte Pipeline existiert nicht mehr
+      if (!selectedPipelineId || !pipelines.some(p => p.id === selectedPipelineId)) {
+        const lastSelectedId = settings?.last_selected_pipeline_id;
         
-        if (pipelineExists) {
-          onPipelineSelect(lastSelectedPipelineId);
+        // Prüfe ob die zuletzt ausgewählte Pipeline noch existiert
+        if (lastSelectedId && pipelines.some(p => p.id === lastSelectedId)) {
+          onPipelineSelect(lastSelectedId);
         } else {
+          // Fallback auf die erste Pipeline
           onPipelineSelect(pipelines[0].id);
         }
       }
     }
-  }, [pipelines, settings?.last_selected_pipeline_id, onPipelineSelect, selectedPipelineId]);
+  }, [pipelines, settings?.last_selected_pipeline_id, selectedPipelineId, onPipelineSelect]);
 
   const selectedPipeline = pipelines.find((p) => p.id === selectedPipelineId);
 

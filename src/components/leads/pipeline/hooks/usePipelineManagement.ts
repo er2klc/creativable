@@ -98,22 +98,21 @@ export function usePipelineManagement(initialPipelineId: string | null) {
   });
 
   useEffect(() => {
-    // Wenn wir Pipelines haben und keine ausgewählt ist
-    if (pipelines.length > 0 && !selectedPipelineId) {
-      console.log("Setting initial pipeline. Available pipelines:", pipelines.length);
-      // Wenn es nur eine Pipeline gibt, wähle diese direkt aus
-      if (pipelines.length === 1) {
-        console.log("Setting single pipeline:", pipelines[0].id);
-        setSelectedPipelineId(pipelines[0].id);
-      } else {
-        // Bei mehreren Pipelines versuche die zuletzt ausgewählte zu verwenden
+    if (pipelines.length > 0) {
+      if (!selectedPipelineId || !pipelines.some(p => p.id === selectedPipelineId)) {
+        const storedPipelineId = localStorage.getItem('lastUsedPipelineId');
         const lastSelectedPipelineId = settings?.last_selected_pipeline_id;
-        const pipelineExists = lastSelectedPipelineId && 
-          pipelines.some(p => p.id === lastSelectedPipelineId);
-        
-        if (pipelineExists) {
+
+        // Versuche zuerst die zuletzt ausgewählte Pipeline aus den Settings zu verwenden
+        if (lastSelectedPipelineId && pipelines.some(p => p.id === lastSelectedPipelineId)) {
           setSelectedPipelineId(lastSelectedPipelineId);
-        } else {
+        }
+        // Dann versuche die Pipeline aus dem localStorage
+        else if (storedPipelineId && pipelines.some(p => p.id === storedPipelineId)) {
+          setSelectedPipelineId(storedPipelineId);
+        }
+        // Fallback auf die erste verfügbare Pipeline
+        else {
           setSelectedPipelineId(pipelines[0].id);
         }
       }
