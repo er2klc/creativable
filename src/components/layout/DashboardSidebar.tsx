@@ -126,12 +126,12 @@ export const DashboardSidebar = () => {
       <SidebarFooter isExpanded={isExpanded} currentVersion={versionData || "0.1"} />
 
       {/* Changelog */}
-      <div className="flex items-center z-10 justify-between px-3 py-2 bg-[#111111] h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent">
-        <span className="text-white/70">{versionData || "0.1"}</span>
+      <div className="flex items-center z-10 justify-between px-3 py bg-[#111111] h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent">
+        <span className="text-white/70 text-xs">{versionData || "0.1"}</span>
         {isExpanded && (
           <a
             href="/changelog"
-            className="whitespace-nowrap text-gray-400 hover:text-white transition-opacity duration-300"
+            className="whitespace-nowrap text-xs text-gray-400 hover:text-white transition-opacity duration-300"
           >
             Changelog
           </a>
