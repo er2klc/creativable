@@ -17,7 +17,7 @@ export const DashboardSidebar = () => {
   const unreadCount = useUnreadCount();
 
   // Fetch latest version from changelog_entries
-  const { data: versionData, error } = useQuery({
+  const { data: versionData } = useQuery({
     queryKey: ['latest-version'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -103,16 +103,17 @@ export const DashboardSidebar = () => {
             isExpanded={isExpanded} 
             currentVersion={versionData || '0.1'}
           />
+        </div>
 
-          {/* Changelog unterhalb des Footers */}
-          <div className="flex items-center gap-2">
-        <span className="text-white">{currentVersion}</span>
-        {isExpanded && (
-          <a href="/changelog" className="whitespace-nowrap text-gray-400 hover:text-white transition-opacity duration-300">
-            Changelog
-          </a>
-        )}
-      </div>
+        {/* Changelog unterhalb des Footers */}
+        <div className="flex items-center gap-2 px-3 py-2 bg-[#111111] border-t border-white/10">
+          <span className="text-white">{versionData || "0.1"}</span>
+          {isExpanded && (
+            <a href="/changelog" className="whitespace-nowrap text-gray-400 hover:text-white transition-opacity duration-300">
+              Changelog
+            </a>
+          )}
+        </div>
       </SidebarContent>
     </Sidebar>
   );
