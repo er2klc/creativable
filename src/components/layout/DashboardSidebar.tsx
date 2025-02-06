@@ -69,10 +69,10 @@ export const DashboardSidebar = () => {
       {...handlers}
     >
       <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[72px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
-      <SidebarContent className="flex flex-col h-full relative overflow-x-hidden">
+      <SidebarContent className="flex flex-col h-full relative">
         <SidebarHeader isExpanded={isExpanded} />
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pt-6">
+        <div className="flex-1 overflow-hidden">
           <SidebarMenuSection 
             title="Persönlich" 
             items={personalItems} 
