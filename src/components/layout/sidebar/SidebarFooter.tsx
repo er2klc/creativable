@@ -1,101 +1,97 @@
-import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LogOut, Settings, User } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useSettings } from "@/hooks/use-settings";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CreditCard, LogOut, Settings, User } from "lucide-react";
-import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface SidebarFooterProps {
   isExpanded: boolean;
   currentVersion: string;
 }
 
-export const SidebarFooter = ({ isExpanded }: SidebarFooterProps) => {
-  const { user } = useAuth();
+export const SidebarFooter = ({ isExpanded, currentVersion }: SidebarFooterProps) => {
   const navigate = useNavigate();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { signOut } = useAuth();
+  const { settings } = useSettings();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     navigate("/auth");
   };
 
   return (
     <>
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
-      <div className="bg-[#111111] p-1">
-        <DropdownMenu 
-          open={isMenuOpen} 
-          onOpenChange={setIsMenuOpen}
-          modal={false}
-        >
-          <DropdownMenuTrigger 
-            className="w-full focus:outline-none group-hover:!bg-transparent"
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
-          >
-            <div
-              className={`flex items-center gap-3 p-2 rounded-md transition-colors group cursor-pointer hover:bg-white/10 ${
-                isExpanded ? "justify-start" : "justify-center"
-              }`}
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
+      <div className="px-3 py-2">
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors relative"
+              onClick={(e) => e.stopPropagation()}
             >
-              <Avatar className="h-8 w-8 shrink-0">
-                <AvatarImage src={user?.user_metadata?.avatar_url || "/placeholder.svg"} />
-                <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
+              <Avatar className="h-8 w-8">
+                <AvatarImage
+                  src={settings?.avatar_url || "/placeholder.svg"}
+                  alt="Avatar"
+                />
+                <AvatarFallback>
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
               </Avatar>
               {isExpanded && (
-                <span className="text-sm text-white/80">
-                  {user?.user_metadata?.display_name || user?.email}
-                </span>
+                <div className="flex-1 overflow-hidden">
+                  <p className="text-sm font-medium leading-none text-white truncate">
+                    {settings?.display_name || settings?.email}
+                  </p>
+                  <p className="text-xs text-white/50 truncate">
+                    {settings?.email}
+                  </p>
+                </div>
               )}
-            </div>
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            align="end"
+            align="start"
             side="top"
-            className="w-[200px] bg-[#222222] border border-white/10 shadow-lg rounded-md overflow-hidden z-[100]"
+            sideOffset={5}
+            className="w-[200px] bg-[#222222] border border-white/10 shadow-lg rounded-md overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <DropdownMenuItem
               onClick={() => navigate("/settings")}
-              className="text-white"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-white hover:bg-white/5 cursor-pointer"
             >
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Profil</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => navigate("/plan")}
-              className="text-white"
-            >
-              <User className="mr-2 h-4 w-4" />
-              <span>Plan</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => navigate("/billing")}
-              className="text-white"
-            >
-              <CreditCard className="mr-2 h-4 w-4" />
-              <span>Rechnung</span>
+              <Settings className="h-4 w-4" />
+              <span>Einstellungen</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleSignOut}
-              className="text-white"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-white hover:bg-white/5 cursor-pointer"
             >
-              <LogOut className="mr-2 h-4 w-4" />
+              <LogOut className="h-4 w-4" />
               <span>Abmelden</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+      </div>
+
+      {/* Changelog */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
+      <div className="flex items-center justify-center px-3 py-2 space-x-2">
+        <span className="text-white/70 text-xs">{currentVersion}</span>
+        {isExpanded && (
+          <a
+            href="/changelog"
+            className="whitespace-nowrap text-xs text-gray-400 hover:text-white transition-opacity duration-300"
+          >
+            Changelog
+          </a>
+        )}
       </div>
     </>
   );
