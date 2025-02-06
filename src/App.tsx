@@ -11,11 +11,6 @@ import { AppLayout } from "@/components/layout/AppLayout";
 const AppRoutes = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
-  // Debugging logs
-  console.log("Public Routes:", publicRoutes);
-  console.log("Protected Routes:", protectedRoutes);
-  console.log("Auth Status:", { isAuthenticated, isLoading });
-
   // Get paths for chat visibility
   const publicPaths = publicRoutes.map((route) => route.path);
   const showChat = useChatVisibility(publicPaths);
