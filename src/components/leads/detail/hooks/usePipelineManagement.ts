@@ -103,12 +103,39 @@ export function usePipelineManagement(initialPipelineId: string | null) {
   });
 
   useEffect(() => {
+    // If an initial pipeline ID is provided, use that
     if (initialPipelineId) {
       setSelectedPipelineId(initialPipelineId);
-    } else if (pipelines.length > 0) {
-      setSelectedPipelineId(pipelines[0].id);
+      localStorage.setItem('lastUsedPipelineId', initialPipelineId);
+      return;
+    }
+
+    // If we have pipelines loaded
+    if (pipelines.length > 0) {
+      // Try to get the last used pipeline ID from localStorage
+      const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
+      
+      // Check if the last used pipeline still exists
+      const lastUsedPipelineExists = lastUsedPipelineId && 
+        pipelines.some(p => p.id === lastUsedPipelineId);
+
+      if (lastUsedPipelineExists) {
+        // Use the last used pipeline if it exists
+        setSelectedPipelineId(lastUsedPipelineId);
+      } else {
+        // Otherwise use the first pipeline
+        setSelectedPipelineId(pipelines[0].id);
+        localStorage.setItem('lastUsedPipelineId', pipelines[0].id);
+      }
     }
   }, [initialPipelineId, pipelines]);
+
+  // Update localStorage whenever selected pipeline changes
+  useEffect(() => {
+    if (selectedPipelineId) {
+      localStorage.setItem('lastUsedPipelineId', selectedPipelineId);
+    }
+  }, [selectedPipelineId]);
 
   return {
     selectedPipelineId,
