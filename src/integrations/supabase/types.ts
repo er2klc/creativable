@@ -1450,6 +1450,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_presentation_pages_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "presentation_pages_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
@@ -1464,6 +1471,7 @@ export type Database = {
           created_at: string | null
           id: string
           lead_id: string
+          metadata: Json | null
           page_id: string
           video_progress: number | null
           viewed_at: string | null
@@ -1473,6 +1481,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           lead_id: string
+          metadata?: Json | null
           page_id: string
           video_progress?: number | null
           viewed_at?: string | null
@@ -1482,6 +1491,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           lead_id?: string
+          metadata?: Json | null
           page_id?: string
           video_progress?: number | null
           viewed_at?: string | null
