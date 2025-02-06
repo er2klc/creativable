@@ -27,24 +27,22 @@ export const SidebarFooter = ({ isExpanded }: SidebarFooterProps) => {
   };
 
   return (
-    <div className="absolute bottom-0 w-full p-3 bg-[#111111] border-t border-white/10">
+    <div className="bg-[#111111] p-3">
       <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
         <DropdownMenuTrigger className="w-full focus:outline-none">
           <div
-            className={`flex items-center gap-3 p-2 rounded-md transition-colors cursor-pointer ${
+            className={`flex items-center gap-3 p-2 rounded-md transition-colors group cursor-pointer hover:bg-white/10 ${
               isExpanded ? "justify-start" : "justify-center"
-            } hover:bg-white/10`}
+            }`}
           >
             <Avatar className="h-8 w-8 shrink-0">
               <AvatarImage src={user?.user_metadata?.avatar_url || "/placeholder.svg"} />
               <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
             {isExpanded && (
-              <div className="flex flex-col items-start">
-                <span className="text-sm text-white/80">
-                  {user?.user_metadata?.display_name || user?.email}
-                </span>
-              </div>
+              <span className="text-sm text-white/80">
+                {user?.user_metadata?.display_name || user?.email}
+              </span>
             )}
           </div>
         </DropdownMenuTrigger>
@@ -52,9 +50,6 @@ export const SidebarFooter = ({ isExpanded }: SidebarFooterProps) => {
           align="end"
           side="top"
           className="w-[200px] bg-[#222222] border border-white/10 shadow-lg rounded-md overflow-hidden"
-          style={{
-            zIndex: 999,
-          }}
         >
           <DropdownMenuItem
             onClick={() => navigate("/settings")}
