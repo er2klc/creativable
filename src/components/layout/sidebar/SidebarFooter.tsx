@@ -37,6 +37,13 @@ export const SidebarFooter = ({ isExpanded, currentVersion }: SidebarFooterProps
                   <AvatarImage src={user?.user_metadata?.avatar_url || "/placeholder.svg"} />
                   <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
+                {isExpanded && (
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm font-medium text-white">
+                      {user?.user_metadata?.display_name || user?.email}
+                    </span>
+                  </div>
+                )}
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent 
