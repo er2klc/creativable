@@ -1,20 +1,14 @@
 
-import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 
-export const usePipelineManagement = (
-  selectedPipelineId: string | null,
-  setSelectedPipelineId: (id: string | null) => void,
-  onEditModeChange?: (isEditMode: boolean) => void
-) => {
+export function usePipelineManagement(initialPipelineId: string | null) {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editingPipelineName, setEditingPipelineName] = useState("");
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(initialPipelineId);
 
   const { data: pipelines = [] } = useQuery({
     queryKey: ["pipelines"],
@@ -29,116 +23,118 @@ export const usePipelineManagement = (
     },
   });
 
-  const handleEditModeToggle = () => {
-    const newEditMode = !isEditMode;
-    setIsEditMode(newEditMode);
-    onEditModeChange?.(newEditMode);
-    const currentPipeline = pipelines.find(p => p.id === selectedPipelineId);
-    setEditingPipelineName(currentPipeline?.name || "");
-  };
+  const { data: phases = [] } = useQuery({
+    queryKey: ["phases", selectedPipelineId],
+    queryFn: async () => {
+      if (!selectedPipelineId) return [];
 
-  const handleSaveChanges = async () => {
-    if (!selectedPipelineId || !editingPipelineName.trim()) return;
-
-    try {
-      const { error } = await supabase
-        .from("pipelines")
-        .update({ name: editingPipelineName })
-        .eq("id", selectedPipelineId);
+      const { data, error } = await supabase
+        .from("pipeline_phases")
+        .select("*")
+        .eq("pipeline_id", selectedPipelineId)
+        .order("order_index");
 
       if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedPipelineId,
+  });
 
-      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
-      toast.success(
-        settings?.language === "en" 
-          ? "Pipeline name updated successfully" 
-          : "Pipeline-Name erfolgreich aktualisiert"
-      );
-      setIsEditMode(false);
-      onEditModeChange?.(false);
-    } catch (error) {
-      console.error("Error updating pipeline name:", error);
-      toast.error(
-        settings?.language === "en"
-          ? "Failed to update pipeline name"
-          : "Fehler beim Aktualisieren des Pipeline-Namens"
-      );
-    }
-  };
-
-  const handleDeletePipeline = async () => {
-    if (!selectedPipelineId || pipelines.length <= 1) return;
-
-    try {
-      const fallbackPipeline = pipelines.find(p => p.id !== selectedPipelineId);
-      if (!fallbackPipeline) return;
-
-      const { data: fallbackPhase } = await supabase
-        .from("pipeline_phases")
-        .select("id")
-        .eq("pipeline_id", fallbackPipeline.id)
-        .order("order_index")
-        .limit(1)
+  const updateLeadPipeline = useMutation({
+    mutationFn: async ({ leadId, pipelineId, phaseId }: { leadId: string; pipelineId: string; phaseId: string }) => {
+      // First get the current lead data to check if phase actually changed
+      const { data: currentLead, error: fetchError } = await supabase
+        .from("leads")
+        .select("phase_id")
+        .eq("id", leadId)
         .single();
 
-      if (fallbackPhase) {
-        await supabase
+      if (fetchError) throw fetchError;
+
+      // Only proceed with update if phase actually changed
+      if (currentLead.phase_id !== phaseId) {
+        // Update the lead's pipeline and phase
+        const { data: updatedLead, error: updateError } = await supabase
           .from("leads")
           .update({
-            pipeline_id: fallbackPipeline.id,
-            phase_id: fallbackPhase.id
+            pipeline_id: pipelineId,
+            phase_id: phaseId,
           })
-          .eq("pipeline_id", selectedPipelineId);
+          .eq("id", leadId)
+          .select()
+          .single();
+
+        if (updateError) throw updateError;
+
+        // Get the new phase name
+        const newPhase = phases.find(p => p.id === phaseId);
+        if (!newPhase) throw new Error("Phase not found");
+
+        // Create a note for the phase change
+        const { error: noteError } = await supabase
+          .from("notes")
+          .insert({
+            lead_id: leadId,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            content: `Phase wurde zu "${newPhase.name}" geändert`,
+            metadata: {
+              type: 'phase_change',
+              phase_id: phaseId,
+              phase_name: newPhase.name
+            }
+          });
+
+        if (noteError) throw noteError;
+
+        return updatedLead;
       }
 
-      const { error: phasesError } = await supabase
-        .from("pipeline_phases")
-        .delete()
-        .eq("pipeline_id", selectedPipelineId);
-
-      if (phasesError) throw phasesError;
-
-      const { error: pipelineError } = await supabase
-        .from("pipelines")
-        .delete()
-        .eq("id", selectedPipelineId);
-
-      if (pipelineError) throw pipelineError;
-
-      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
-      localStorage.removeItem('lastUsedPipelineId');
+      return currentLead;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["lead", variables.leadId] });
       
-      const remainingPipelines = pipelines.filter(p => p.id !== selectedPipelineId);
-      setSelectedPipelineId(remainingPipelines[0]?.id || null);
-      
-      toast.success(
-        settings?.language === "en"
-          ? "Pipeline deleted successfully"
-          : "Pipeline erfolgreich gelöscht"
-      );
-      setShowDeleteDialog(false);
-      setIsEditMode(false);
-      onEditModeChange?.(false);
-    } catch (error) {
-      console.error("Error deleting pipeline:", error);
-      toast.error(
-        settings?.language === "en"
-          ? "Failed to delete pipeline"
-          : "Fehler beim Löschen der Pipeline"
-      );
+      // Only show toast if this was triggered by a user action, not initial load
+      if (variables.phaseId !== data.phase_id) {
+        toast.success(
+          settings?.language === "en" ? "Phase updated" : "Phase aktualisiert"
+        );
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (pipelines.length > 0) {
+      if (initialPipelineId && pipelines.some(p => p.id === initialPipelineId)) {
+        setSelectedPipelineId(initialPipelineId);
+      } else {
+        // Get last used pipeline from localStorage
+        const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
+        const validPipeline = lastUsedPipelineId && pipelines.some(p => p.id === lastUsedPipelineId);
+        
+        if (validPipeline) {
+          setSelectedPipelineId(lastUsedPipelineId);
+        } else {
+          // If no valid last used pipeline, use the first one
+          setSelectedPipelineId(pipelines[0].id);
+          localStorage.setItem('lastUsedPipelineId', pipelines[0].id);
+        }
+      }
     }
-  };
+  }, [initialPipelineId, pipelines]);
+
+  // Update localStorage whenever selected pipeline changes
+  useEffect(() => {
+    if (selectedPipelineId) {
+      localStorage.setItem('lastUsedPipelineId', selectedPipelineId);
+    }
+  }, [selectedPipelineId]);
 
   return {
+    selectedPipelineId,
+    setSelectedPipelineId,
     pipelines,
-    isEditMode,
-    setIsEditMode,
-    editingPipelineName,
-    setEditingPipelineName,
-    showDeleteDialog,
-    setShowDeleteDialog,
-    handleEditModeToggle,
-    handleSaveChanges,
-    handleDeletePipeline,
+    phases,
+    updateLeadPipeline,
   };
-};
+}

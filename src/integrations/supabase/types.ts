@@ -1522,6 +1522,7 @@ export type Database = {
           id: string
           is_admin: boolean | null
           is_super_admin: boolean | null
+          last_selected_pipeline_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1532,6 +1533,7 @@ export type Database = {
           id: string
           is_admin?: boolean | null
           is_super_admin?: boolean | null
+          last_selected_pipeline_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1542,9 +1544,18 @@ export type Database = {
           id?: string
           is_admin?: boolean | null
           is_super_admin?: boolean | null
+          last_selected_pipeline_id?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_last_selected_pipeline_id_fkey"
+            columns: ["last_selected_pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "pipelines"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       secrets: {
         Row: {
