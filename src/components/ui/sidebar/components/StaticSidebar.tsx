@@ -1,6 +1,7 @@
 
 import { cn } from "@/lib/utils"
 import * as React from "react"
+import { NavigationMenu } from "../navigation/NavigationMenu"
 
 interface StaticSidebarProps extends React.ComponentProps<"div"> {
   className?: string;
@@ -18,6 +19,7 @@ export const StaticSidebar = React.forwardRef<HTMLDivElement, StaticSidebarProps
         ref={ref}
         {...props}
       >
+        <NavigationMenu />
         {children}
       </div>
     )
