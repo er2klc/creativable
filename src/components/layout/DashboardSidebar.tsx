@@ -64,7 +64,7 @@ export const DashboardSidebar = () => {
   }, []);
 
   return (
- <Sidebar 
+<Sidebar 
   className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out h-screen`}
   {...handlers}
 >
@@ -95,12 +95,14 @@ export const DashboardSidebar = () => {
     </div>
 
     {/* Admin-Bereich */}
-    <div className="mt-2">
-      <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
-    </div>
+    {isSuperAdmin && (
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent">
+        <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
+      </div>
+    )}
 
     {/* Footer fixiert */}
-    <div className="sticky bottom-0 z-10">
+    <div className="sticky bottom-0 z-10 bg-[#111111]/80">
       <SidebarFooter 
         isExpanded={isExpanded} 
         currentVersion={versionData || '0.1'}
@@ -108,6 +110,7 @@ export const DashboardSidebar = () => {
     </div>
   </SidebarContent>
 </Sidebar>
+
 
   );
 };
