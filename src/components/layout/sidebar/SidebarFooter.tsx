@@ -29,7 +29,7 @@ export const SidebarFooter = ({ isExpanded }: SidebarFooterProps) => {
   return (
     <div className="bg-[#111111] p-3">
       <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-        <DropdownMenuTrigger className="w-full focus:outline-none">
+        <DropdownMenuTrigger className="w-full focus:outline-none group-hover:!bg-transparent">
           <div
             className={`flex items-center gap-3 p-2 rounded-md transition-colors group cursor-pointer hover:bg-white/10 ${
               isExpanded ? "justify-start" : "justify-center"
@@ -53,28 +53,28 @@ export const SidebarFooter = ({ isExpanded }: SidebarFooterProps) => {
         >
           <DropdownMenuItem
             onClick={() => navigate("/settings")}
-            className="text-white hover:bg-white/10"
+            className="text-white hover:bg-transparent"
           >
             <Settings className="mr-2 h-4 w-4" />
             <span>Profil</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => navigate("/plan")}
-            className="text-white hover:bg-white/10"
+            className="text-white hover:bg-transparent"
           >
             <User className="mr-2 h-4 w-4" />
             <span>Plan</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => navigate("/billing")}
-            className="text-white hover:bg-white/10"
+            className="text-white hover:bg-transparent"
           >
             <CreditCard className="mr-2 h-4 w-4" />
             <span>Rechnung</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={handleSignOut}
-            className="text-white hover:bg-white/10"
+            className="text-white hover:bg-transparent"
           >
             <LogOut className="mr-2 h-4 w-4" />
             <span>Abmelden</span>
