@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -61,13 +62,12 @@ export const LeadSearch = ({ value, onChange }: LeadSearchProps) => {
         className="pl-8"
         onFocus={() => value.length >= 2 && setShowResults(true)}
         onBlur={() => {
-          // Delay hiding results to allow click handlers to fire
           setTimeout(() => setShowResults(false), 200);
         }}
       />
       
       {showResults && searchResults.length > 0 && (
-        <Card className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-white shadow-lg rounded-md">
+        <Card className="absolute z-[100] w-full mt-1 max-h-60 overflow-y-auto bg-white shadow-lg rounded-md">
           <div className="p-2 space-y-1">
             {searchResults.map((lead) => (
               <div
