@@ -64,7 +64,7 @@ export const DashboardSidebar = () => {
   }, []);
 
   return (
-  <Sidebar 
+<Sidebar 
   className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out h-screen`}
   {...handlers}
 >
@@ -87,16 +87,12 @@ export const DashboardSidebar = () => {
         unreadCount={unreadCount}
       />
       <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      
       <SidebarMenuSection title="Teams & Gruppen" items={teamItems} isExpanded={isExpanded} />
       <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      
       <SidebarMenuSection title="Analyse & Tools" items={analysisItems} isExpanded={isExpanded} />
       <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      
       <SidebarMenuSection title="Rechtliches" items={legalItems} isExpanded={isExpanded} />
       <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      
       <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
     </div>
 
@@ -108,8 +104,8 @@ export const DashboardSidebar = () => {
       />
     </div>
 
-    {/* Changelog unterhalb des Footers */}
-    <div className={`flex items-center z-10 px-3 py-2 bg-[#111111] border-t border-white/10 ${isExpanded ? "justify-start" : "justify-center"} mt-0`}>
+    {/* Changelog bündig positioniert */}
+    <div className={`flex items-center z-10 gap-2 px-3 py-2 bg-[#111111] border-t border-white/10`}>
       <span className="text-white">{versionData || "0.1"}</span>
       {isExpanded && (
         <a href="/changelog" className="whitespace-nowrap text-gray-400 hover:text-white transition-opacity duration-300">
