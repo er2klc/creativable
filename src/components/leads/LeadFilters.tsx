@@ -34,6 +34,7 @@ export const LeadFilters = ({
   const { settings } = useSettings();
   const {
     pipelines,
+    invalidatePipelines,
   } = usePipelineManagement(selectedPipelineId);
 
   const selectedPipeline = pipelines.find(p => p.id === selectedPipelineId);
@@ -59,6 +60,7 @@ export const LeadFilters = ({
       if (error) throw error;
       
       toast.success(settings?.language === "en" ? "Pipeline updated successfully" : "Pipeline erfolgreich aktualisiert");
+      invalidatePipelines(); // Aktualisiere die Pipeline-Liste
       setIsEditMode(false);
     } catch (error) {
       console.error("Error updating pipeline:", error);
@@ -84,6 +86,7 @@ export const LeadFilters = ({
       setSelectedPipelineId(remainingPipelines[0]?.id || null);
       setShowDeleteDialog(false);
       setIsEditMode(false); // Beende den Edit-Modus
+      invalidatePipelines(); // Aktualisiere die Pipeline-Liste
     } catch (error) {
       console.error("Error deleting pipeline:", error);
       toast.error(settings?.language === "en" ? "Failed to delete pipeline" : "Pipeline konnte nicht gelöscht werden");
