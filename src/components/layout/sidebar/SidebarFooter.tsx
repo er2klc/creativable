@@ -9,6 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CreditCard, LogOut, Settings, User } from "lucide-react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface SidebarFooterProps {
   isExpanded: boolean;
@@ -18,6 +20,7 @@ interface SidebarFooterProps {
 export const SidebarFooter = ({ isExpanded, currentVersion }: SidebarFooterProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -28,8 +31,8 @@ export const SidebarFooter = ({ isExpanded, currentVersion }: SidebarFooterProps
     <div className="p-2 border-t border-sidebar-border">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger className="w-full focus:outline-none">
+          <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+            <DropdownMenuTrigger className="w-full focus:outline-none" onClick={(e) => e.stopPropagation()}>
               <div className={`flex items-center gap-3 p-2 rounded-md transition-colors hover:bg-sidebar-accent group cursor-pointer ${isExpanded ? 'justify-start' : 'justify-center'}`}>
                 <Avatar className="h-8 w-8 shrink-0">
                   <AvatarImage src={user?.user_metadata?.avatar_url || "/placeholder.svg"} />
@@ -45,20 +48,24 @@ export const SidebarFooter = ({ isExpanded, currentVersion }: SidebarFooterProps
                 )}
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={() => navigate("/settings")}>
+            <DropdownMenuContent 
+              align="end" 
+              className="w-56 bg-sidebar-background border border-sidebar-border"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <DropdownMenuItem onClick={() => navigate("/settings")} className="text-white hover:bg-sidebar-accent focus:bg-sidebar-accent">
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Profil</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/plan")}>
+              <DropdownMenuItem onClick={() => navigate("/plan")} className="text-white hover:bg-sidebar-accent focus:bg-sidebar-accent">
                 <User className="mr-2 h-4 w-4" />
                 <span>Plan</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/billing")}>
+              <DropdownMenuItem onClick={() => navigate("/billing")} className="text-white hover:bg-sidebar-accent focus:bg-sidebar-accent">
                 <CreditCard className="mr-2 h-4 w-4" />
                 <span>Rechnung</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleSignOut}>
+              <DropdownMenuItem onClick={handleSignOut} className="text-white hover:bg-sidebar-accent focus:bg-sidebar-accent">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Abmelden</span>
               </DropdownMenuItem>
