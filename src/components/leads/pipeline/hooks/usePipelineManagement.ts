@@ -44,20 +44,22 @@ export function usePipelineManagement(initialPipelineId: string | null) {
   // Initialize pipeline selection with better logic
   useEffect(() => {
     if (pipelines.length > 0 && !selectedPipelineId) {
+      // Only select a pipeline if we don't have one selected yet
       let pipelineToSelect: string | null = null;
 
       // Priority 1: Last selected pipeline from settings
       if (settings?.last_selected_pipeline_id && 
           pipelines.some(p => p.id === settings.last_selected_pipeline_id)) {
+        console.log("Using last selected pipeline from settings:", settings.last_selected_pipeline_id);
         pipelineToSelect = settings.last_selected_pipeline_id;
       } 
-      // Priority 2: First available pipeline (base pipeline)
-      else if (pipelines[0]) {
+      // Priority 2: First available pipeline (base pipeline) - only if no saved selection
+      else if (!settings?.last_selected_pipeline_id && pipelines[0]) {
+        console.log("No saved pipeline selection, using first pipeline:", pipelines[0].id);
         pipelineToSelect = pipelines[0].id;
       }
 
       if (pipelineToSelect) {
-        console.log("Setting initial pipeline:", pipelineToSelect);
         setSelectedPipelineId(pipelineToSelect);
       }
     }
@@ -70,6 +72,8 @@ export function usePipelineManagement(initialPipelineId: string | null) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        console.log("Updating last selected pipeline in settings to:", selectedPipelineId);
+        
         const { error } = await supabase
           .from('settings')
           .upsert({ 
@@ -84,12 +88,14 @@ export function usePipelineManagement(initialPipelineId: string | null) {
           toast.error("Failed to save pipeline selection");
         } else {
           console.log("Successfully updated last selected pipeline:", selectedPipelineId);
+          // Invalidate settings query to ensure it's reloaded
+          queryClient.invalidateQueries({ queryKey: ["settings"] });
         }
       }
     };
 
     updateSettings();
-  }, [selectedPipelineId]);
+  }, [selectedPipelineId, queryClient]);
 
   const invalidatePipelines = () => {
     queryClient.invalidateQueries({ queryKey: ["pipelines"] });
