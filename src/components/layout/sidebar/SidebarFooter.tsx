@@ -27,7 +27,8 @@ export const SidebarFooter = ({ isExpanded }: SidebarFooterProps) => {
   };
 
   return (
-    <div className="bg-[#111111] p-1">
+     <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
+      <div className="bg-[#111111] p-1">
       <DropdownMenu 
         open={isMenuOpen} 
         onOpenChange={setIsMenuOpen}
