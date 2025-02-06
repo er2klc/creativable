@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 
+// Konstante für den localStorage Key
+const LAST_PIPELINE_KEY = 'lastSelectedPipelineId';
+
 export function usePipelineManagement(initialPipelineId: string | null) {
   const { settings } = useSettings();
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
@@ -46,40 +49,62 @@ export function usePipelineManagement(initialPipelineId: string | null) {
     const initializePipeline = async () => {
       if (!pipelines.length) return;
 
-      // Wenn bereits eine Pipeline ausgewählt ist und diese existiert, behalte sie
+      // Prioritätsreihenfolge:
+      // 1. Aktuelle Session (localStorage)
+      // 2. Gespeicherte Pipeline aus Settings
+      // 3. Erste verfügbare Pipeline
+      
+      const sessionPipelineId = localStorage.getItem(LAST_PIPELINE_KEY);
+      const savedPipelineId = settings?.last_selected_pipeline_id;
+      
+      console.log("Current state:", {
+        sessionPipeline: sessionPipelineId,
+        savedPipeline: savedPipelineId,
+        currentSelection: selectedPipelineId
+      });
+
+      // Wenn bereits eine gültige Pipeline ausgewählt ist, behalte sie
       if (selectedPipelineId && pipelines.some(p => p.id === selectedPipelineId)) {
-        console.log("Keeping existing pipeline selection:", selectedPipelineId);
+        console.log("Keeping current selection:", selectedPipelineId);
         return;
       }
 
-      // Gespeicherte Pipeline aus den Settings holen
-      const savedPipelineId = settings?.last_selected_pipeline_id;
-      console.log("Saved pipeline from settings:", savedPipelineId);
+      // Versuche die Pipeline aus der Session zu laden
+      if (sessionPipelineId && pipelines.some(p => p.id === sessionPipelineId)) {
+        console.log("Using session pipeline:", sessionPipelineId);
+        setSelectedPipelineId(sessionPipelineId);
+        return;
+      }
 
-      // Prioritätsreihenfolge für Pipeline-Auswahl:
-      // 1. Gespeicherte Pipeline aus Settings
-      // 2. Erste verfügbare Pipeline
+      // Versuche die gespeicherte Pipeline aus den Settings
       if (savedPipelineId && pipelines.some(p => p.id === savedPipelineId)) {
         console.log("Using saved pipeline:", savedPipelineId);
         setSelectedPipelineId(savedPipelineId);
-      } else {
-        console.log("Using first available pipeline:", pipelines[0].id);
-        setSelectedPipelineId(pipelines[0].id);
+        return;
       }
+
+      // Fallback: Erste verfügbare Pipeline
+      console.log("Using first available pipeline:", pipelines[0].id);
+      setSelectedPipelineId(pipelines[0].id);
     };
 
     initializePipeline();
   }, [pipelines, settings?.last_selected_pipeline_id, selectedPipelineId]);
 
-  // Persist pipeline selection to settings
+  // Update localStorage and settings when pipeline changes
   useEffect(() => {
-    const updateSettings = async () => {
+    const updatePipelineSelection = async () => {
       if (!selectedPipelineId) return;
 
+      // Session Storage aktualisieren
+      localStorage.setItem(LAST_PIPELINE_KEY, selectedPipelineId);
+      console.log("Updated session storage:", selectedPipelineId);
+
+      // Settings in der Datenbank aktualisieren
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      console.log("Saving pipeline selection to settings:", selectedPipelineId);
+      console.log("Updating settings with pipeline:", selectedPipelineId);
       
       const { error } = await supabase
         .from('settings')
@@ -92,14 +117,14 @@ export function usePipelineManagement(initialPipelineId: string | null) {
       
       if (error) {
         console.error("Error saving pipeline selection:", error);
-        toast.error("Failed to save pipeline selection");
+        toast.error("Pipeline-Auswahl konnte nicht gespeichert werden");
       } else {
         console.log("Successfully saved pipeline selection:", selectedPipelineId);
         queryClient.invalidateQueries({ queryKey: ["settings"] });
       }
     };
 
-    updateSettings();
+    updatePipelineSelection();
   }, [selectedPipelineId, queryClient]);
 
   const invalidatePipelines = () => {
