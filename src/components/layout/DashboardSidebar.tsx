@@ -29,7 +29,7 @@ export const DashboardSidebar = () => {
 
       if (error) throw error;
       return data?.version || '0.1';
-    },
+    }
   });
 
   useEffect(() => {
@@ -64,79 +64,54 @@ export const DashboardSidebar = () => {
   }, []);
 
   return (
-<Sidebar
-  className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out h-screen`}
-  {...handlers}
->
-  {/* Hintergrund */}
-  <div
-    className={`absolute inset-0 pointer-events-none ${
-      isExpanded ? "w-[240px]" : "w-[72px]"
-    } bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`}
-  />
+    <Sidebar 
+      className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out ${isExpanded ? 'w-[240px] z-[999]' : 'z-[10]'}`}
+      {...handlers}
+    >
+      <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[72px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
+      <SidebarContent className="flex flex-col h-full relative overflow-x-hidden">
+        <SidebarHeader isExpanded={isExpanded} />
 
-  {/* Sidebar-Inhalt */}
-  <SidebarContent className="flex flex-col h-full overflow-hidden">
-    {/* Header fixiert */}
-    <div className="sticky top-0 z-10">
-      <SidebarHeader isExpanded={isExpanded} />
-    </div>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pt-6">
+          <SidebarMenuSection 
+            title="Persönlich" 
+            items={personalItems} 
+            isExpanded={isExpanded}
+            unreadCount={unreadCount}
+          />
 
-    {/* Mittlerer Bereich scrollbar */}
-    <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
-      {/* Persönlich */}
-      <SidebarMenuSection
-        title="Persönlich"
-        items={personalItems}
-        isExpanded={isExpanded}
-        unreadCount={unreadCount}
-      />
-    
-      {/* Teams & Gruppen */}
-      <SidebarMenuSection
-        title="Teams & Gruppen"
-        items={teamItems}
-        isExpanded={isExpanded}
-      />
-     
-      {/* Analyse & Tools */}
-      <SidebarMenuSection
-        title="Analyse & Tools"
-        items={analysisItems}
-        isExpanded={isExpanded}
-      />
-     
-      {/* Rechtliches */}
-      <SidebarMenuSection
-        title="Rechtliches"
-        items={legalItems}
-        isExpanded={isExpanded}
-      />
-    
-      {/* Super Admin */}
-      <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
-    </div>
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
 
-    {/* Footer fixiert */}
-   <div className="sticky bottom-0 z-10 bg-[#111111]">
-  <SidebarFooter isExpanded={isExpanded} currentVersion={versionData || "0.1"} />
+          <SidebarMenuSection 
+            title="Teams & Gruppen" 
+            items={teamItems} 
+            isExpanded={isExpanded}
+          />
 
-  {/* Changelog */}
-   {/* Trennlinie */}
-    <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
-    <div className="flex items-center justify-center px-3 py-2 space-x-2">
-    <span className="text-white/70 text-xs">{versionData || "0.1"}</span>
-    {isExpanded && (
-      <a
-        href="/changelog"
-        className="whitespace-nowrap text-xs text-gray-400 hover:text-white transition-opacity duration-300"
-      >
-        Changelog
-      </a>
-    )}
-  </div>
-</div>
-  </SidebarContent>
-</Sidebar>
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
+
+          <SidebarMenuSection 
+            title="Analyse & Tools" 
+            items={analysisItems} 
+            isExpanded={isExpanded}
+          />
+
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
+
+          <SidebarMenuSection 
+            title="Rechtliches" 
+            items={legalItems} 
+            isExpanded={isExpanded}
+          />
+        </div>
+
+        <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
+
+        <SidebarFooter 
+          isExpanded={isExpanded} 
+          currentVersion={versionData || '0.1'}
+        />
+      </SidebarContent>
+    </Sidebar>
   );
 };

@@ -1,70 +1,63 @@
-import { Route } from "react-router-dom";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+
 import Dashboard from "@/pages/Dashboard";
-import Settings from "@/pages/Settings";
-import Plan from "@/pages/Plan";
-import Billing from "@/pages/Billing";
-import Contacts from "@/pages/Contacts";
-import Pool from "@/pages/Pool";
-import Calendar from "@/pages/Calendar";
-import Todo from "@/pages/Todo";
+import Leads from "@/pages/Leads";
+import LeadDetail from "@/pages/LeadDetail";
 import Messages from "@/pages/Messages";
-import Links from "@/pages/Links";
-import Unity from "@/pages/Unity";
-import Elevate from "@/pages/Elevate";
+import Calendar from "@/pages/Calendar";
+import Settings from "@/pages/Settings";
+import Pool from "@/pages/Pool";
 import Admin from "@/pages/Admin";
+import Links from "@/pages/Links";
 
 export const mainRoutes = [
   {
     path: "/dashboard",
-    element: <Dashboard />
-  },
-  {
-    path: "/settings",
-    element: <Settings />
-  },
-  {
-    path: "/plan",
-    element: <Plan />
-  },
-  {
-    path: "/billing",
-    element: <Billing />
+    element: <Dashboard />,
+    label: "Dashboard",
   },
   {
     path: "/contacts",
-    element: <Contacts />
+    element: <Leads />,
+    label: "Contacts",
+  },
+  {
+    path: "/contacts/:leadId",
+    element: <LeadDetail />,
+    label: "Contact Detail",
   },
   {
     path: "/pool",
-    element: <Pool />
+    element: <Pool />,
+    label: "Pool",
   },
   {
-    path: "/calendar",
-    element: <Calendar />
-  },
-  {
-    path: "/todo",
-    element: <Todo />
+    path: "/pool/:status",
+    element: <Pool />,
+    label: "Pool Status",
   },
   {
     path: "/messages",
-    element: <Messages />
+    element: <Messages />,
+    label: "Messages",
   },
   {
-    path: "/links",
-    element: <Links />
+    path: "/calendar",
+    element: <Calendar />,
+    label: "Calendar",
   },
   {
-    path: "/unity",
-    element: <Unity />
-  },
-  {
-    path: "/elevate",
-    element: <Elevate />
+    path: "/settings",
+    element: <Settings />,
+    label: "Settings",
   },
   {
     path: "/admin",
-    element: <Admin />
-  }
+    element: <Admin />,
+    label: "Admin",
+  },
+  {
+    path: "/links",
+    element: <Links />,
+    label: "Links",
+  },
 ];
