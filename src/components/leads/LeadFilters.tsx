@@ -5,7 +5,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -27,21 +26,59 @@ export const LeadFilters = ({
   onEditModeChange,
 }: LeadFiltersProps) => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingPipelineName, setEditingPipelineName] = useState("");
   const { settings } = useSettings();
-
   const {
     pipelines,
-    isEditMode,
-    editingPipelineName,
-    setEditingPipelineName,
-    showDeleteDialog,
-    setShowDeleteDialog,
-    handleEditModeToggle,
-    handleSaveChanges,
-    handleDeletePipeline,
-  } = usePipelineManagement(selectedPipelineId, setSelectedPipelineId, onEditModeChange);
+  } = usePipelineManagement(selectedPipelineId);
 
   const selectedPipeline = pipelines.find(p => p.id === selectedPipelineId);
+
+  const handleEditModeToggle = () => {
+    const newEditMode = !isEditMode;
+    setIsEditMode(newEditMode);
+    if (newEditMode) {
+      setEditingPipelineName(selectedPipeline?.name || "");
+    }
+    onEditModeChange?.(newEditMode);
+  };
+
+  const handleSaveChanges = async () => {
+    if (!selectedPipelineId || !editingPipelineName.trim()) return;
+
+    const { error } = await supabase
+      .from("pipelines")
+      .update({ name: editingPipelineName })
+      .eq("id", selectedPipelineId);
+
+    if (error) {
+      toast.error(settings?.language === "en" ? "Failed to update pipeline" : "Pipeline konnte nicht aktualisiert werden");
+      console.error("Error updating pipeline:", error);
+    } else {
+      toast.success(settings?.language === "en" ? "Pipeline updated successfully" : "Pipeline erfolgreich aktualisiert");
+      setIsEditMode(false);
+    }
+  };
+
+  const handleDeletePipeline = async () => {
+    if (!selectedPipelineId) return;
+
+    const { error } = await supabase
+      .from("pipelines")
+      .delete()
+      .eq("id", selectedPipelineId);
+
+    if (error) {
+      toast.error(settings?.language === "en" ? "Failed to delete pipeline" : "Pipeline konnte nicht gelöscht werden");
+      console.error("Error deleting pipeline:", error);
+    } else {
+      toast.success(settings?.language === "en" ? "Pipeline deleted successfully" : "Pipeline erfolgreich gelöscht");
+      setSelectedPipelineId(pipelines[0]?.id || null);
+      setShowDeleteDialog(false);
+    }
+  };
 
   return (
     <div className="flex items-center gap-2">
@@ -67,7 +104,6 @@ export const LeadFilters = ({
               <span>{pipeline.name}</span>
             </DropdownMenuItem>
           ))}
-          <DropdownMenuSeparator />
           <DropdownMenuItem 
             onClick={() => setShowCreateDialog(true)}
             className="gap-2"
