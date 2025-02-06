@@ -17,9 +17,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
-// Debugging-Log hinzufügen
-console.log("AppointmentItem.tsx version 1.4 geladen");
-
 interface AppointmentItemProps {
   appointment: any;
   onClick: (e: React.MouseEvent) => void;
