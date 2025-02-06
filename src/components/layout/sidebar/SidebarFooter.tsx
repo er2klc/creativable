@@ -63,7 +63,8 @@ export const SidebarFooter = ({ isExpanded }: SidebarFooterProps) => {
           <DropdownMenuContent
             align="end"
             side="top"
-            className="w-[200px] bg-[#222222] border border-white/10 shadow-lg rounded-md overflow-hidden"
+            className="w-[200px] bg-[#222222] border border-white/10 shadow-lg rounded-md overflow-hidden z-[100]"
+            onClick={(e) => e.stopPropagation()}
           >
             <DropdownMenuItem
               onClick={() => navigate("/settings")}
