@@ -30,14 +30,16 @@ const Leads = () => {
         setIsEditMode={setIsEditMode}
       />
 
-      <div className="flex-1 overflow-hidden mt-[84px]"> {/* Offset für den fixed Header */}
+      <div className="flex-1 overflow-auto mt-[84px] relative">
         {viewMode === "kanban" ? (
-          <LeadKanbanView
-            leads={leads}
-            selectedPipelineId={selectedPipelineId}
-            setSelectedPipelineId={setSelectedPipelineId}
-            isEditMode={isEditMode}
-          />
+          <div className="h-full overflow-x-auto">
+            <LeadKanbanView
+              leads={leads}
+              selectedPipelineId={selectedPipelineId}
+              setSelectedPipelineId={setSelectedPipelineId}
+              isEditMode={isEditMode}
+            />
+          </div>
         ) : (
           <LeadTableView
             leads={leads}
