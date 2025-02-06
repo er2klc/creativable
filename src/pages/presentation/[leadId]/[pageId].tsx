@@ -46,22 +46,23 @@ export default function PresentationPage() {
 
     try {
       const { data: pageData, error: pageError } = await supabase
-        .from('presentation_pages')
-        .select(`
-          *,
-          user:user_id (
-            profiles:profiles (
-              display_name,
-              avatar_url
-            )
-          ),
-          lead:lead_id (
-            name,
-            social_media_profile_image_url
-          )
-        `)
-        .eq('slug', pageId)
-        .maybeSingle();
+  .from('presentation_pages')
+  .select(`
+    *,
+    user:user_id (
+      profiles (
+        display_name,
+        avatar_url
+      )
+    ),
+    lead:lead_id (
+      name,
+      social_media_profile_image_url
+    )
+  `)
+  .eq('slug', pageId)
+  .maybeSingle();
+
 
       if (pageError) {
         console.error('Error loading presentation page:', pageError);
