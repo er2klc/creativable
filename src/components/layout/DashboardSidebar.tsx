@@ -93,7 +93,7 @@ export const DashboardSidebar = () => {
       />
      {/* Trennlinie */}
 <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
+ <div className="border-t border-white/10 my-2"></div>
       {/* Teams & Gruppen */}
       <SidebarMenuSection
         title="Teams & Gruppen"
