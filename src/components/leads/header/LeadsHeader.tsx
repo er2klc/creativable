@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { LeadSearch } from "../LeadSearch";
 import { LayoutGrid, List, ChevronDown, Instagram, Linkedin, Users } from "lucide-react";
@@ -33,7 +32,7 @@ export const LeadsHeader = ({
   const [showLinkedInDialog, setShowLinkedInDialog] = useState(false);
 
   return (
-    <div className="fixed top-0 left-[60px] right-0 z-50 bg-background border-b md:left-[72px] group-hover:left-[240px] transition-[left] duration-300 ease-in-out">
+    <div className="fixed top-0 left-[60px] right-0 z-[10] bg-background border-b md:left-[72px] group-hover:left-[240px] transition-[left] duration-300 ease-in-out">
       <div className="max-w-[100vw] px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4 w-full">
           <div className="flex items-center gap-4 flex-shrink-0">
