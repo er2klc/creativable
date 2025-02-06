@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,7 +31,14 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
       const { data, error } = await supabase
         .from("leads")
-        .select("*, messages(*), tasks(*), notes(*), lead_files(*)")
+        .select(`
+          *,
+          messages (*),
+          tasks (*),
+          notes (*),
+          lead_files (*),
+          linkedin_posts (*)
+        `)
         .eq("id", leadId)
         .maybeSingle();
 
@@ -71,6 +79,11 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
             lead={lead}
             onUpdateLead={updateLeadMutation.mutate}
             isLoading={isLoading}
+            onDeleteClick={() => deleteLeadMutation.mutate()}
+            onDeletePhaseChange={(noteId) => {
+              // Handle phase change deletion
+              console.log("Delete phase change:", noteId);
+            }}
           />
         )}
       </DialogContent>
