@@ -34,7 +34,7 @@ export const LeadsHeader = ({
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b">
-      <div className="max-w-[100vw] px-4 py-4">
+      <div className="pl-[60px] md:pl-[72px] max-w-[100vw] px-4 py-4 transition-all duration-300 ease-in-out group-hover:pl-[240px]">
         <div className="flex flex-wrap items-center justify-between gap-4 w-full">
           <div className="flex items-center gap-4 flex-shrink-0">
             {/* Page Title */}
