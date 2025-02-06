@@ -10,11 +10,13 @@ interface PresentationContentProps {
 }
 
 export const PresentationContent = ({ pageData, onProgress }: PresentationContentProps) => {
-  // Fallback-Werte für Benutzer und Lead
-  const userDisplayName = pageData?.user?.profiles?.display_name || "Benutzername";
-  const userAvatar = pageData?.user?.profiles?.avatar_url || "/path/to/default/avatar.png";
-  const leadName = pageData?.lead?.name || "Lead Name";
-  const leadAvatar = pageData?.lead?.social_media_profile_image_url || "/path/to/default/lead-avatar.png";
+  // Sicherstellung von Fallback-Werten
+  const userDisplayName = pageData?.user?.profiles?.display_name || "Unbekannter Benutzer";
+  const userAvatar =
+    pageData?.user?.profiles?.avatar_url || "/images/placeholder-user-avatar.png";
+  const leadName = pageData?.lead?.name || "Unbekannter Lead";
+  const leadAvatar =
+    pageData?.lead?.social_media_profile_image_url || "/images/placeholder-lead-avatar.png";
 
   return (
     <Card className="relative w-full max-w-[900px] mx-auto bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm p-6">
@@ -47,7 +49,9 @@ export const PresentationContent = ({ pageData, onProgress }: PresentationConten
         
         {/* Titel */}
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-white">{pageData?.title || "Keine Präsentation verfügbar"}</h1>
+          <h1 className="text-2xl font-bold text-white">
+            {pageData?.title || "Keine Präsentation verfügbar"}
+          </h1>
           <div className="h-[1px] w-32 mx-auto bg-gradient-to-r from-transparent via-white/50 to-transparent" />
         </div>
         
@@ -58,7 +62,7 @@ export const PresentationContent = ({ pageData, onProgress }: PresentationConten
               `${pageData?.video_url || ""}?controls=0&showinfo=0&rel=0&modestbranding=1`
             }
             onProgress={onProgress}
-            onDuration={console.log}
+            onDuration={(duration) => console.log("Video-Dauer:", duration)}
             autoplay={true}
           />
         </div>
