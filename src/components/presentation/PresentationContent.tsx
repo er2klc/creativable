@@ -10,7 +10,6 @@ interface PresentationContentProps {
 }
 
 export const PresentationContent = ({ pageData, onProgress }: PresentationContentProps) => {
-  // Fallback-Werte für Benutzer und Lead
   const userDisplayName = pageData?.user?.profiles?.display_name || "Benutzername";
   const userAvatar = pageData?.user?.profiles?.avatar_url || "/path/to/default/avatar.png";
   const leadName = pageData?.lead?.name || "Lead Name";
@@ -19,9 +18,9 @@ export const PresentationContent = ({ pageData, onProgress }: PresentationConten
   return (
     <Card className="relative w-full max-w-[900px] mx-auto bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm p-6">
       <div className="flex flex-col items-center space-y-6">
-        {/* Benutzer- und Lead-Informationen */}
+        {/* User and Lead Information */}
         <div className="flex items-center justify-between w-full">
-          {/* Benutzer-Avatar und Name */}
+          {/* User Avatar and Name */}
           <div className="flex items-center space-x-3">
             <Avatar className="h-12 w-12">
               <AvatarImage src={userAvatar} alt={userDisplayName} />
@@ -30,12 +29,12 @@ export const PresentationContent = ({ pageData, onProgress }: PresentationConten
             <span className="text-white font-medium">{userDisplayName}</span>
           </div>
           
-          {/* Pfeil */}
+          {/* Arrow */}
           <div className="flex items-center space-x-3 text-white/50">
             <ArrowRight className="h-5 w-5" />
           </div>
           
-          {/* Lead-Avatar und Name */}
+          {/* Lead Avatar and Name */}
           <div className="flex items-center space-x-3">
             <Avatar className="h-12 w-12">
               <AvatarImage src={leadAvatar} alt={leadName} />
@@ -45,13 +44,13 @@ export const PresentationContent = ({ pageData, onProgress }: PresentationConten
           </div>
         </div>
         
-        {/* Titel */}
+        {/* Title and Divider */}
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold text-white">{pageData?.title || "Keine Präsentation verfügbar"}</h1>
-          <div className="h-[1px] w-32 mx-auto bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+          <div className="h-[1px] w-96 mx-auto bg-gradient-to-r from-transparent via-white/50 to-transparent" />
         </div>
         
-        {/* Video-Player */}
+        {/* Video Player */}
         <div className="w-full aspect-video rounded-lg overflow-hidden">
           <VideoPlayer
             videoUrl={
