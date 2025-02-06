@@ -1,3 +1,4 @@
+
 import { useSession } from "@supabase/auth-helpers-react";
 import { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
@@ -67,9 +68,9 @@ export function CompactPhaseSelector({
 
   return (
     <div className="w-full space-y-4">
-      <div className="relative flex items-center w-full">
+      <div className="relative w-full overflow-x-auto">
         <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 rounded-full" />
-        <div className="relative z-10 flex justify-between w-full">
+        <div className="relative z-10 flex justify-between w-max min-w-full px-4">
           {phases.map((phase, index) => {
             const isActive = phase.id === lead.phase_id && selectedPipelineId === lead.pipeline_id;
             const isPast = phase.order_index < (currentPhase?.order_index || 0) && selectedPipelineId === lead.pipeline_id;
@@ -77,7 +78,7 @@ export function CompactPhaseSelector({
             return (
               <div 
                 key={phase.id}
-                className="flex flex-col items-center"
+                className="flex flex-col items-center min-w-[120px]"
               >
                 <button
                   onClick={() => handlePhaseChange(phase.id)}
@@ -90,7 +91,7 @@ export function CompactPhaseSelector({
                 >
                   {index + 1}
                 </button>
-                <span className="text-xs font-medium">
+                <span className="text-xs font-medium whitespace-nowrap">
                   {phase.name}
                 </span>
               </div>
