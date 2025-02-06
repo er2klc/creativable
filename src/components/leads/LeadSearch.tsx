@@ -67,7 +67,7 @@ export const LeadSearch = ({ value, onChange }: LeadSearchProps) => {
       />
       
       {showResults && searchResults.length > 0 && (
-        <Card className="absolute z-[9999] w-full mt-1 max-h-60 overflow-y-auto bg-white shadow-lg rounded-md">
+        <Card className="absolute z-[999999] w-full mt-1 max-h-60 overflow-y-auto bg-white shadow-lg rounded-md">
           <div className="p-2 space-y-1">
             {searchResults.map((lead) => (
               <div
@@ -102,3 +102,4 @@ export const LeadSearch = ({ value, onChange }: LeadSearchProps) => {
     </div>
   );
 };
+
