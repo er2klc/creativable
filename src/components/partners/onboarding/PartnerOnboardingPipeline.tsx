@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -104,16 +105,35 @@ export function PartnerOnboardingPipeline() {
     navigate(`/contacts/${partnerId}`);
   };
 
+  // Calculate dynamic width for each phase based on total number of phases
+  const getPhaseWidth = () => {
+    const minWidth = 300; // Minimum width for each phase in pixels
+    const maxPhases = 6; // Maximum number before scrolling
+    const totalPhases = phases.length;
+    
+    if (totalPhases <= maxPhases) {
+      // If we have 6 or fewer phases, distribute space evenly
+      return `calc((100% - 2rem) / ${totalPhases})`; // 2rem accounts for gap-4
+    }
+    
+    // If more than 6 phases, fix width to minimum
+    return `${minWidth}px`;
+  };
+
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="w-full overflow-x-auto no-scrollbar">
-        <div className="flex gap-4 p-4 min-w-fit">
+      <div className="w-full">
+        <div className="flex gap-4 overflow-x-auto hide-scrollbar">
           {phases.map((phase) => {
             const Icon = phaseIcons[phase.name as keyof typeof phaseIcons];
             const phasePartners = getPartnersForPhase(phase);
 
             return (
-              <div key={phase.id} className="relative flex-1 min-w-[300px]">
+              <div 
+                key={phase.id} 
+                className="flex-shrink-0"
+                style={{ width: getPhaseWidth() }}
+              >
                 <div className="bg-green-50 rounded-lg border border-green-100 h-full">
                   <div className="p-4 border-b border-green-200">
                     <div className="flex items-center gap-2">
