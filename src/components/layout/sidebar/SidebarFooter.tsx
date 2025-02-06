@@ -29,11 +29,21 @@ export const SidebarFooter = ({ isExpanded }: SidebarFooterProps) => {
   return (
     <div className="bg-[#111111] p-3">
       <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-        <DropdownMenuTrigger className="w-full focus:outline-none group-hover:!bg-transparent">
+        <DropdownMenuTrigger 
+          className="w-full focus:outline-none group-hover:!bg-transparent"
+          onMouseEnter={(e) => {
+            // Prevent event propagation to stop sidebar from expanding
+            e.stopPropagation();
+          }}
+        >
           <div
             className={`flex items-center gap-3 p-2 rounded-md transition-colors group cursor-pointer hover:bg-white/10 ${
               isExpanded ? "justify-start" : "justify-center"
             }`}
+            onMouseEnter={(e) => {
+              // Prevent event propagation to stop sidebar from expanding
+              e.stopPropagation();
+            }}
           >
             <Avatar className="h-8 w-8 shrink-0">
               <AvatarImage src={user?.user_metadata?.avatar_url || "/placeholder.svg"} />
