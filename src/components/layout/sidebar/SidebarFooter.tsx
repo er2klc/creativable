@@ -27,7 +27,7 @@ export const SidebarFooter = ({ isExpanded }: SidebarFooterProps) => {
   };
 
   return (
-    <div className="bg-[#111111] p-3">
+    <div className="bg-[#111111] p-1">
       <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
         <DropdownMenuTrigger 
           className="w-full focus:outline-none group-hover:!bg-transparent"
