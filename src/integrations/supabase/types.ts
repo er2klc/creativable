@@ -1522,7 +1522,6 @@ export type Database = {
           id: string
           is_admin: boolean | null
           is_super_admin: boolean | null
-          last_selected_pipeline_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1533,7 +1532,6 @@ export type Database = {
           id: string
           is_admin?: boolean | null
           is_super_admin?: boolean | null
-          last_selected_pipeline_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1544,18 +1542,9 @@ export type Database = {
           id?: string
           is_admin?: boolean | null
           is_super_admin?: boolean | null
-          last_selected_pipeline_id?: string | null
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_last_selected_pipeline_id_fkey"
-            columns: ["last_selected_pipeline_id"]
-            isOneToOne: false
-            referencedRelation: "pipelines"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       secrets: {
         Row: {
@@ -1597,7 +1586,6 @@ export type Database = {
           instagram_auth_token: string | null
           instagram_connected: boolean | null
           language: string | null
-          last_selected_pipeline_id: string | null
           linkedin_auth_token: string | null
           linkedin_connected: boolean | null
           network_marketing_id: string | null
@@ -1631,7 +1619,6 @@ export type Database = {
           instagram_auth_token?: string | null
           instagram_connected?: boolean | null
           language?: string | null
-          last_selected_pipeline_id?: string | null
           linkedin_auth_token?: string | null
           linkedin_connected?: boolean | null
           network_marketing_id?: string | null
@@ -1665,7 +1652,6 @@ export type Database = {
           instagram_auth_token?: string | null
           instagram_connected?: boolean | null
           language?: string | null
-          last_selected_pipeline_id?: string | null
           linkedin_auth_token?: string | null
           linkedin_connected?: boolean | null
           network_marketing_id?: string | null
@@ -1684,15 +1670,7 @@ export type Database = {
           whatsapp_number?: string | null
           whatsapp_verified?: boolean | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "settings_last_selected_pipeline_id_fkey"
-            columns: ["last_selected_pipeline_id"]
-            isOneToOne: false
-            referencedRelation: "pipelines"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       social_media_posts: {
         Row: {
