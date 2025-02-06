@@ -92,7 +92,6 @@ export const DashboardSidebar = () => {
         unreadCount={unreadCount}
       />
      {/* Trennlinie */}
-<div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
 
  <div className="border-t border-white/10 my-2"></div>
       {/* Teams & Gruppen */}
@@ -101,44 +100,33 @@ export const DashboardSidebar = () => {
         items={teamItems}
         isExpanded={isExpanded}
       />
-     {/* Trennlinie */}
-<div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
-
-
+     
       {/* Analyse & Tools */}
       <SidebarMenuSection
         title="Analyse & Tools"
         items={analysisItems}
         isExpanded={isExpanded}
       />
-      {/* Trennlinie */}
-<div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
-
-
+     
       {/* Rechtliches */}
       <SidebarMenuSection
         title="Rechtliches"
         items={legalItems}
         isExpanded={isExpanded}
       />
-      {/* Trennlinie */}
-<div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
-
-
+    
       {/* Super Admin */}
       <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
     </div>
-
-    {/* Trennlinie */}
-    <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
-
 
     {/* Footer fixiert */}
    <div className="sticky bottom-0 z-10 bg-[#111111]">
   <SidebarFooter isExpanded={isExpanded} currentVersion={versionData || "0.1"} />
 
   {/* Changelog */}
-  <div className="flex items-center justify-center px-3 py-2 space-x-2">
+   {/* Trennlinie */}
+    <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
+    <div className="flex items-center justify-center px-3 py-2 space-x-2">
     <span className="text-white/70 text-xs">{versionData || "0.1"}</span>
     {isExpanded && (
       <a
