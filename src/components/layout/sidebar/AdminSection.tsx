@@ -11,7 +11,7 @@ export const AdminSection = ({ isExpanded, isSuperAdmin }: AdminSectionProps) =>
 
   return (
     <>
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
+      <div className="h-px w-full bg-gradient-to-r from-sidebar-border via-sidebar-border to-transparent my-2" />
       <SidebarMenuSection 
         title="Super Admin" 
         items={adminItems} 
