@@ -38,14 +38,20 @@ export const PipelineSelector = ({
 
   useEffect(() => {
     if (pipelines.length > 0 && !selectedPipelineId) {
-      const lastSelectedPipelineId = settings?.last_selected_pipeline_id;
-      const pipelineExists = lastSelectedPipelineId && 
-        pipelines.some(p => p.id === lastSelectedPipelineId);
-      
-      if (pipelineExists) {
-        onPipelineSelect(lastSelectedPipelineId);
-      } else {
+      if (pipelines.length === 1) {
+        // If there's only one pipeline, select it immediately
         onPipelineSelect(pipelines[0].id);
+      } else {
+        // If there are multiple pipelines, try to use the last selected one
+        const lastSelectedPipelineId = settings?.last_selected_pipeline_id;
+        const pipelineExists = lastSelectedPipelineId && 
+          pipelines.some(p => p.id === lastSelectedPipelineId);
+        
+        if (pipelineExists) {
+          onPipelineSelect(lastSelectedPipelineId);
+        } else {
+          onPipelineSelect(pipelines[0].id);
+        }
       }
     }
   }, [pipelines, settings?.last_selected_pipeline_id, onPipelineSelect, selectedPipelineId]);

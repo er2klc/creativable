@@ -99,14 +99,20 @@ export function usePipelineManagement(initialPipelineId: string | null) {
 
   useEffect(() => {
     if (pipelines.length > 0 && !selectedPipelineId) {
-      const lastSelectedPipelineId = settings?.last_selected_pipeline_id;
-      const pipelineExists = lastSelectedPipelineId && 
-        pipelines.some(p => p.id === lastSelectedPipelineId);
-      
-      if (pipelineExists) {
-        setSelectedPipelineId(lastSelectedPipelineId);
-      } else {
+      if (pipelines.length === 1) {
+        // If there's only one pipeline, select it immediately
         setSelectedPipelineId(pipelines[0].id);
+      } else {
+        // If there are multiple pipelines, try to use the last selected one
+        const lastSelectedPipelineId = settings?.last_selected_pipeline_id;
+        const pipelineExists = lastSelectedPipelineId && 
+          pipelines.some(p => p.id === lastSelectedPipelineId);
+        
+        if (pipelineExists) {
+          setSelectedPipelineId(lastSelectedPipelineId);
+        } else {
+          setSelectedPipelineId(pipelines[0].id);
+        }
       }
     }
   }, [pipelines, settings?.last_selected_pipeline_id, selectedPipelineId]);
