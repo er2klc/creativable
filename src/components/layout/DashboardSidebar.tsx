@@ -70,22 +70,15 @@ export const DashboardSidebar = () => {
 >
   {/* Hintergrund und Stile */}
   <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[72px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
-
+  
   {/* Sidebar-Inhalt */}
-  <SidebarContent className="flex flex-col h-full relative overflow-hidden">
+  <SidebarContent className="flex flex-col h-full relative">
     {/* Header fixiert */}
-    <div className="sticky top-0 z-10">
-      <SidebarHeader isExpanded={isExpanded} />
-    </div>
+    <SidebarHeader isExpanded={isExpanded} />
 
     {/* Mittlerer Bereich mit Scrollfunktion */}
     <div className="flex-1 overflow-y-auto no-scrollbar">
-      <SidebarMenuSection 
-        title="Persönlich" 
-        items={personalItems} 
-        isExpanded={isExpanded}
-        unreadCount={unreadCount}
-      />
+      <SidebarMenuSection title="Persönlich" items={personalItems} isExpanded={isExpanded} unreadCount={unreadCount} />
       <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       <SidebarMenuSection title="Teams & Gruppen" items={teamItems} isExpanded={isExpanded} />
       <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
@@ -94,20 +87,16 @@ export const DashboardSidebar = () => {
       <SidebarMenuSection title="Rechtliches" items={legalItems} isExpanded={isExpanded} />
     </div>
 
-    {/* Admin-Bereich */}
-    <div className="mt-2">
-      <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
-    </div>
+    {/* Super-Admin-Bereich */}
+    {isSuperAdmin && (
+      <div className="border-t border-white/10 pt-4">
+        <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
+      </div>
+    )}
 
     {/* Footer fixiert */}
-    <div className="sticky bottom-0 z-10">
-      <SidebarFooter 
-        isExpanded={isExpanded} 
-        currentVersion={versionData || '0.1'}
-      />
-    </div>
+    <SidebarFooter isExpanded={isExpanded} currentVersion={versionData || '0.1'} />
   </SidebarContent>
 </Sidebar>
-
   );
 };
