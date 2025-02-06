@@ -14,22 +14,24 @@ import Unity from "@/pages/Unity";
 import Elevate from "@/pages/Elevate";
 import Admin from "@/pages/Admin";
 
-export const mainRoutes = (
-  <>
-    <Route path="/" element={<ProtectedRoute />}>
-      <Route index element={<Dashboard />} />
-      <Route path="settings" element={<Settings />} />
-      <Route path="plan" element={<Plan />} />
-      <Route path="billing" element={<Billing />} />
-      <Route path="contacts" element={<Contacts />} />
-      <Route path="pool" element={<Pool />} />
-      <Route path="calendar" element={<Calendar />} />
-      <Route path="todo" element={<Todo />} />
-      <Route path="messages" element={<Messages />} />
-      <Route path="links" element={<Links />} />
-      <Route path="unity" element={<Unity />} />
-      <Route path="elevate" element={<Elevate />} />
-      <Route path="admin" element={<Admin />} />
-    </Route>
-  </>
-);
+export const mainRoutes = [
+  {
+    path: "/",
+    element: <ProtectedRoute />,
+    children: [
+      { index: true, element: <Dashboard /> },
+      { path: "settings", element: <Settings /> },
+      { path: "plan", element: <Plan /> },
+      { path: "billing", element: <Billing /> },
+      { path: "contacts", element: <Contacts /> },
+      { path: "pool", element: <Pool /> },
+      { path: "calendar", element: <Calendar /> },
+      { path: "todo", element: <Todo /> },
+      { path: "messages", element: <Messages /> },
+      { path: "links", element: <Links /> },
+      { path: "unity", element: <Unity /> },
+      { path: "elevate", element: <Elevate /> },
+      { path: "admin", element: <Admin /> }
+    ]
+  }
+];
