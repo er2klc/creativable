@@ -63,11 +63,13 @@ export default function PresentationPage() {
         .from('presentation_pages')
         .select(`
           *,
-          user:profiles!presentation_pages_user_id_fkey(
-            display_name,
-            avatar_url
+          user:user_id (
+            profiles (
+              display_name,
+              avatar_url
+            )
           ),
-          lead:leads!presentation_pages_lead_id_fkey(
+          lead:leads (
             name,
             social_media_profile_image_url
           )
@@ -100,7 +102,24 @@ export default function PresentationPage() {
         return;
       }
 
-      setPageData(pageData);
+      // Transform the nested data structure to match PresentationPageData
+      const transformedData: PresentationPageData = {
+        title: pageData.title,
+        video_url: pageData.video_url,
+        lead_id: pageData.lead_id,
+        user: {
+          profiles: {
+            display_name: pageData.user?.profiles?.[0]?.display_name || '',
+            avatar_url: pageData.user?.profiles?.[0]?.avatar_url || '',
+          }
+        },
+        lead: {
+          name: pageData.lead?.name || '',
+          social_media_profile_image_url: pageData.lead?.social_media_profile_image_url || '',
+        }
+      };
+
+      setPageData(transformedData);
 
       const { data: viewData, error: viewError } = await supabase
         .from('presentation_views')
