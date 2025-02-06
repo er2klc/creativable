@@ -16,22 +16,55 @@ import Admin from "@/pages/Admin";
 
 export const mainRoutes = [
   {
-    path: "/",
-    element: <ProtectedRoute />,
-    children: [
-      { index: true, element: <Dashboard /> },
-      { path: "settings", element: <Settings /> },
-      { path: "plan", element: <Plan /> },
-      { path: "billing", element: <Billing /> },
-      { path: "contacts", element: <Contacts /> },
-      { path: "pool", element: <Pool /> },
-      { path: "calendar", element: <Calendar /> },
-      { path: "todo", element: <Todo /> },
-      { path: "messages", element: <Messages /> },
-      { path: "links", element: <Links /> },
-      { path: "unity", element: <Unity /> },
-      { path: "elevate", element: <Elevate /> },
-      { path: "admin", element: <Admin /> }
-    ]
+    path: "/dashboard",
+    element: <Dashboard />
+  },
+  {
+    path: "/settings",
+    element: <Settings />
+  },
+  {
+    path: "/plan",
+    element: <Plan />
+  },
+  {
+    path: "/billing",
+    element: <Billing />
+  },
+  {
+    path: "/contacts",
+    element: <Contacts />
+  },
+  {
+    path: "/pool",
+    element: <Pool />
+  },
+  {
+    path: "/calendar",
+    element: <Calendar />
+  },
+  {
+    path: "/todo",
+    element: <Todo />
+  },
+  {
+    path: "/messages",
+    element: <Messages />
+  },
+  {
+    path: "/links",
+    element: <Links />
+  },
+  {
+    path: "/unity",
+    element: <Unity />
+  },
+  {
+    path: "/elevate",
+    element: <Elevate />
+  },
+  {
+    path: "/admin",
+    element: <Admin />
   }
 ];
