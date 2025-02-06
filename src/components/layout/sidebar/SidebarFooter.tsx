@@ -27,75 +27,75 @@ export const SidebarFooter = ({ isExpanded }: SidebarFooterProps) => {
   };
 
   return (
-     <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
+    <>
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
       <div className="bg-[#111111] p-1">
-      <DropdownMenu 
-        open={isMenuOpen} 
-        onOpenChange={setIsMenuOpen}
-        modal={true}
-      >
-        <DropdownMenuTrigger 
-          className="w-full focus:outline-none group-hover:!bg-transparent"
-          onClick={(e) => {
-            // Prevent event propagation to stop sidebar from expanding
-            e.stopPropagation();
-          }}
+        <DropdownMenu 
+          open={isMenuOpen} 
+          onOpenChange={setIsMenuOpen}
+          modal={false}
         >
-          <div
-            className={`flex items-center gap-3 p-2 rounded-md transition-colors group cursor-pointer hover:bg-white/10 ${
-              isExpanded ? "justify-start" : "justify-center"
-            }`}
+          <DropdownMenuTrigger 
+            className="w-full focus:outline-none group-hover:!bg-transparent"
             onClick={(e) => {
-              // Prevent event propagation to stop sidebar from expanding
               e.stopPropagation();
             }}
           >
-            <Avatar className="h-8 w-8 shrink-0">
-              <AvatarImage src={user?.user_metadata?.avatar_url || "/placeholder.svg"} />
-              <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            {isExpanded && (
-              <span className="text-sm text-white/80">
-                {user?.user_metadata?.display_name || user?.email}
-              </span>
-            )}
-          </div>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          side="top"
-          className="w-[200px] bg-[#222222] border border-white/10 shadow-lg rounded-md overflow-hidden"
-        >
-          <DropdownMenuItem
-            onClick={() => navigate("/settings")}
-            className="text-white"
+            <div
+              className={`flex items-center gap-3 p-2 rounded-md transition-colors group cursor-pointer hover:bg-white/10 ${
+                isExpanded ? "justify-start" : "justify-center"
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarImage src={user?.user_metadata?.avatar_url || "/placeholder.svg"} />
+                <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              {isExpanded && (
+                <span className="text-sm text-white/80">
+                  {user?.user_metadata?.display_name || user?.email}
+                </span>
+              )}
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            side="top"
+            className="w-[200px] bg-[#222222] border border-white/10 shadow-lg rounded-md overflow-hidden"
           >
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Profil</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => navigate("/plan")}
-            className="text-white"
-          >
-            <User className="mr-2 h-4 w-4" />
-            <span>Plan</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => navigate("/billing")}
-            className="text-white"
-          >
-            <CreditCard className="mr-2 h-4 w-4" />
-            <span>Rechnung</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={handleSignOut}
-            className="text-white"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Abmelden</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+            <DropdownMenuItem
+              onClick={() => navigate("/settings")}
+              className="text-white"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Profil</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => navigate("/plan")}
+              className="text-white"
+            >
+              <User className="mr-2 h-4 w-4" />
+              <span>Plan</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => navigate("/billing")}
+              className="text-white"
+            >
+              <CreditCard className="mr-2 h-4 w-4" />
+              <span>Rechnung</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={handleSignOut}
+              className="text-white"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Abmelden</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </>
   );
 };
