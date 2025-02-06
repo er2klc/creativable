@@ -11,8 +11,7 @@ export const useAuthState = (
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("[Auth] Auth state changed:", event, session?.user?.id);
-
+      
       if (event === "SIGNED_IN") {
         if (session?.user) {
           setUser(session.user);
