@@ -113,7 +113,6 @@ export const DashboardSidebar = () => {
           </a>
         )}
       </div>
-        </div>
       </SidebarContent>
     </Sidebar>
   );
