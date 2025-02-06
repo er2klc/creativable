@@ -64,57 +64,57 @@ export const DashboardSidebar = () => {
   }, []);
 
   return (
-    <Sidebar 
-      className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out h-screen`}
-      {...handlers}
-    >
-      {/* Hintergrund */}
-      <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[72px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
+   <Sidebar 
+  className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out h-screen`}
+  {...handlers}
+>
+  {/* Hintergrund */}
+  <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[72px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
 
-      {/* Sidebar-Inhalt */}
-      <SidebarContent className="flex flex-col h-full">
-        {/* Header fixiert */}
-        <div className="sticky top-0 z-10">
-          <SidebarHeader isExpanded={isExpanded} />
-        </div>
+  {/* Sidebar-Inhalt */}
+  <SidebarContent className="flex flex-col h-full">
+    {/* Header fixiert */}
+    <div className="sticky top-0 z-10">
+      <SidebarHeader isExpanded={isExpanded} />
+    </div>
 
-        {/* Mittlerer Bereich scrollbar */}
-        <div className="flex-1 overflow-y-auto no-scrollbar">
-          <SidebarMenuSection 
-            title="Persönlich" 
-            items={personalItems} 
-            isExpanded={isExpanded}
-            unreadCount={unreadCount}
-          />
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          <SidebarMenuSection title="Teams & Gruppen" items={teamItems} isExpanded={isExpanded} />
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          <SidebarMenuSection title="Analyse & Tools" items={analysisItems} isExpanded={isExpanded} />
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          <SidebarMenuSection title="Rechtliches" items={legalItems} isExpanded={isExpanded} />
-          <div className="mt-2">
-            <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
-          </div>
-        </div>
+    {/* Mittlerer Bereich scrollbar */}
+    <div className="flex-1 overflow-y-auto no-scrollbar">
+      <SidebarMenuSection 
+        title="Persönlich" 
+        items={personalItems} 
+        isExpanded={isExpanded}
+        unreadCount={unreadCount}
+      />
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <SidebarMenuSection title="Teams & Gruppen" items={teamItems} isExpanded={isExpanded} />
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <SidebarMenuSection title="Analyse & Tools" items={analysisItems} isExpanded={isExpanded} />
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <SidebarMenuSection title="Rechtliches" items={legalItems} isExpanded={isExpanded} />
+      <div className="mt-2">
+        <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
+      </div>
+    </div>
 
-        {/* Footer fixiert */}
-        <div className="sticky bottom-0 z-10">
-          <SidebarFooter 
-            isExpanded={isExpanded} 
-            currentVersion={versionData || '0.1'}
-          />
-        </div>
+    {/* Footer fixiert */}
+    <div className="sticky bottom-0 z-10">
+      <SidebarFooter 
+        isExpanded={isExpanded} 
+        currentVersion={versionData || '0.1'}
+      />
+    </div>
 
-        {/* Changelog unterhalb des Footers */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-[#111111] border-t border-white/10">
-          <span className="text-white">{versionData || "0.1"}</span>
-          {isExpanded && (
-            <a href="/changelog" className="whitespace-nowrap text-gray-400 hover:text-white transition-opacity duration-300">
-              Changelog
-            </a>
-          )}
-        </div>
-      </SidebarContent>
-    </Sidebar>
+    {/* Changelog unterhalb des Footers */}
+    <div className={`flex items-center gap-2 px-3 py-2 bg-[#111111] border-t border-white/10 ${isExpanded ? "justify-start" : "justify-center"} mt-0`}>
+      <span className="text-white">{versionData || "0.1"}</span>
+      {isExpanded && (
+        <a href="/changelog" className="whitespace-nowrap text-gray-400 hover:text-white transition-opacity duration-300">
+          Changelog
+        </a>
+      )}
+    </div>
+  </SidebarContent>
+</Sidebar>
   );
 };
