@@ -15,7 +15,7 @@ export default function PresentationPage() {
 
   useEffect(() => {
     loadPresentationPage();
-    
+
     const handleUnload = () => {
       if (viewId) {
         const metadata = {
@@ -45,24 +45,28 @@ export default function PresentationPage() {
     }
 
     try {
+      // Präsentationsseite abrufen
       const { data: pageData, error: pageError } = await supabase
-  .from('presentation_pages')
-  .select(`
-    *,
-    user:user_id (
-      profiles (
-        display_name,
-        avatar_url
-      )
-    ),
-    lead:lead_id (
-      name,
-      social_media_profile_image_url
-    )
-  `)
-  .eq('slug', pageId)
-  .maybeSingle();
-
+        .from('presentation_pages')
+        .select(`
+          id,
+          title,
+          video_url,
+          expires_at,
+          is_url_active,
+          lead:lead_id (
+            name,
+            social_media_profile_image_url
+          ),
+          user:user_id (
+            profiles (
+              display_name,
+              avatar_url
+            )
+          )
+        `)
+        .eq('slug', pageId)
+        .maybeSingle();
 
       if (pageError) {
         console.error('Error loading presentation page:', pageError);
@@ -77,36 +81,24 @@ export default function PresentationPage() {
         return;
       }
 
+      // Ablaufdatum prüfen
       if (pageData.expires_at && new Date(pageData.expires_at) < new Date()) {
         setError("This presentation has expired");
         setIsLoading(false);
         return;
       }
 
+      // Falls URL deaktiviert ist
       if (!pageData.is_url_active) {
         setError("This presentation is no longer available");
         setIsLoading(false);
         return;
       }
 
-      const transformedData: PresentationPageData = {
-        title: pageData.title,
-        video_url: pageData.video_url,
-        lead_id: pageData.lead_id,
-        user: {
-          profiles: {
-            display_name: pageData.user?.profiles?.display_name || '',
-            avatar_url: pageData.user?.profiles?.avatar_url || '',
-          }
-        },
-        lead: {
-          name: pageData.lead?.name || '',
-          social_media_profile_image_url: pageData.lead?.social_media_profile_image_url || '',
-        }
-      };
+      // Daten in den State setzen
+      setPageData(pageData);
 
-      setPageData(transformedData);
-
+      // Tracking-View speichern
       const { data: viewData, error: viewError } = await supabase
         .from('presentation_views')
         .insert([
