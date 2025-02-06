@@ -126,7 +126,7 @@ export const DashboardSidebar = () => {
       <SidebarFooter isExpanded={isExpanded} currentVersion={versionData || "0.1"} />
 
       {/* Changelog */}
-      <div className="flex items-center justify-between px-3 py-2 bg-[#111111] border-t border-white/10">
+      <div className="flex items-center z-10 justify-between px-3 py-2 bg-[#111111] border-t border-white/10">
         <span className="text-white">{versionData || "0.1"}</span>
         {isExpanded && (
           <a
