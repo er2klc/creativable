@@ -97,7 +97,7 @@ export const PhaseColumn = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <CardHeader className="p-2 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-20 border-b shadow-sm">
+      <CardHeader className="p-2 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-[10] border-b shadow-sm">
         <div className="flex items-center justify-between gap-2">
           {isEditMode ? (
             <>
@@ -177,3 +177,4 @@ export const PhaseColumn = ({
     </Card>
   );
 };
+
