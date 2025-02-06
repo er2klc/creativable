@@ -47,26 +47,27 @@ export default function PresentationPage() {
     try {
       // Präsentationsseite abrufen
       const { data: pageData, error: pageError } = await supabase
-        .from('presentation_pages')
-        .select(`
-          id,
-          title,
-          video_url,
-          expires_at,
-          is_url_active,
-          lead:lead_id (
-            name,
-            social_media_profile_image_url
-          ),
-          user:user_id (
-            profiles (
-              display_name,
-              avatar_url
-            )
-          )
-        `)
-        .eq('slug', pageId)
-        .maybeSingle();
+  .from('presentation_pages')
+  .select(`
+    id,
+    title,
+    video_url,
+    expires_at,
+    is_url_active,
+    lead:lead_id (
+      name,
+      social_media_profile_image_url
+    ),
+    user:user_id (
+      profiles (
+        display_name,
+        avatar_url
+      )
+    )
+  `)
+  .eq('slug', pageId)
+  .maybeSingle();
+
 
       if (pageError) {
         console.error('Error loading presentation page:', pageError);
