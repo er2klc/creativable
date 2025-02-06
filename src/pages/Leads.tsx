@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { LeadsHeader } from "@/components/leads/header/LeadsHeader";
 import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
@@ -29,23 +30,23 @@ const Leads = () => {
         setIsEditMode={setIsEditMode}
       />
 
-      <div className="flex-1 overflow-hidden">
-      {viewMode === "kanban" ? (
-        <LeadKanbanView
-          leads={leads}
-          selectedPipelineId={selectedPipelineId}
-          setSelectedPipelineId={setSelectedPipelineId}
-          isEditMode={isEditMode}
-        />
-      ) : (
-        <LeadTableView
-          leads={leads}
-          onLeadClick={handleLeadClick}
-          selectedPipelineId={selectedPipelineId}
-        />
-      )}
+      <div className="flex-1 overflow-hidden mt-[84px]"> {/* Offset für den fixed Header */}
+        {viewMode === "kanban" ? (
+          <LeadKanbanView
+            leads={leads}
+            selectedPipelineId={selectedPipelineId}
+            setSelectedPipelineId={setSelectedPipelineId}
+            isEditMode={isEditMode}
+          />
+        ) : (
+          <LeadTableView
+            leads={leads}
+            onLeadClick={handleLeadClick}
+            selectedPipelineId={selectedPipelineId}
+          />
+        )}
+      </div>
     </div>
-  </div>
   );
 };
 

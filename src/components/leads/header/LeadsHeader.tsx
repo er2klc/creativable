@@ -33,83 +33,85 @@ export const LeadsHeader = ({
   const [showLinkedInDialog, setShowLinkedInDialog] = useState(false);
 
   return (
-    <div className="space-y-4 w-full px-4">
-      <div className="flex flex-wrap items-center justify-between gap-4 w-full max-w-[100vw] overflow-x-hidden">
-        <div className="flex items-center gap-4 flex-shrink-0">
-          {/* Page Title */}
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            <h1 className="text-xl font-semibold">Kontakte</h1>
+    <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b">
+      <div className="max-w-[100vw] px-4 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 w-full">
+          <div className="flex items-center gap-4 flex-shrink-0">
+            {/* Page Title */}
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              <h1 className="text-xl font-semibold">Kontakte</h1>
+            </div>
+
+            {/* Add Contact and Dropdown Buttons */}
+            <div className="flex items-center gap-0">
+              {/* Kontakt hinzufügen Button */}
+              <Button
+                variant="default"
+                className="bg-black text-white hover:bg-black/90 rounded-r-none"
+                onClick={() => setShowAddLead(true)}
+              >
+                ✨ Kontakt hinzufügen
+              </Button>
+
+              {/* Dropdown Button */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="default"
+                    size="icon"
+                    className="bg-black text-white hover:bg-black/90 rounded-l-none"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setShowInstagramDialog(true)}>
+                    <Instagram className="h-4 w-4 mr-2" />
+                    <span>Instagram</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowLinkedInDialog(true)}>
+                    <Linkedin className="h-4 w-4 mr-2" />
+                    <span>LinkedIn</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
-          {/* Add Contact and Dropdown Buttons */}
-          <div className="flex items-center gap-0">
-            {/* Kontakt hinzufügen Button */}
+          {/* Search Field */}
+          <div className="flex-1 min-w-[200px] max-w-xl">
+            <LeadSearch value={searchQuery} onChange={setSearchQuery} />
+          </div>
+
+          {/* Pipeline Selection */}
+          <div className="flex-shrink-0">
+            <LeadFilters
+              selectedPipelineId={selectedPipelineId}
+              setSelectedPipelineId={setSelectedPipelineId}
+              onEditModeChange={setIsEditMode}
+            />
+          </div>
+
+          {/* View Mode Buttons */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Button
-              variant="default"
-              className="bg-black text-white hover:bg-black/90 rounded-r-none"
-              onClick={() => setShowAddLead(true)}
+              variant={viewMode === "kanban" ? "default" : "outline"}
+              size="icon"
+              onClick={() => setViewMode("kanban")}
+              className="h-9 w-9"
             >
-              ✨ Kontakt hinzufügen
+              <LayoutGrid className="h-4 w-4" />
             </Button>
-
-            {/* Dropdown Button */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="default"
-                  size="icon"
-                  className="bg-black text-white hover:bg-black/90 rounded-l-none"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setShowInstagramDialog(true)}>
-                  <Instagram className="h-4 w-4 mr-2" />
-                  <span>Instagram</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShowLinkedInDialog(true)}>
-                  <Linkedin className="h-4 w-4 mr-2" />
-                  <span>LinkedIn</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              variant={viewMode === "list" ? "default" : "outline"}
+              size="icon"
+              onClick={() => setViewMode("list")}
+              className="h-9 w-9"
+            >
+              <List className="h-4 w-4" />
+            </Button>
           </div>
-        </div>
-
-        {/* Search Field */}
-        <div className="flex-1 min-w-[200px] max-w-xl">
-          <LeadSearch value={searchQuery} onChange={setSearchQuery} />
-        </div>
-
-        {/* Pipeline Selection */}
-        <div className="flex-shrink-0">
-          <LeadFilters
-            selectedPipelineId={selectedPipelineId}
-            setSelectedPipelineId={setSelectedPipelineId}
-            onEditModeChange={setIsEditMode}
-          />
-        </div>
-
-        {/* View Mode Buttons */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Button
-            variant={viewMode === "kanban" ? "default" : "outline"}
-            size="icon"
-            onClick={() => setViewMode("kanban")}
-            className="h-9 w-9"
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "default" : "outline"}
-            size="icon"
-            onClick={() => setViewMode("list")}
-            className="h-9 w-9"
-          >
-            <List className="h-4 w-4" />
-          </Button>
         </div>
       </div>
 

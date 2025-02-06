@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -103,29 +104,21 @@ export function usePipelineManagement(initialPipelineId: string | null) {
   });
 
   useEffect(() => {
-    // If an initial pipeline ID is provided, use that
-    if (initialPipelineId) {
-      setSelectedPipelineId(initialPipelineId);
-      localStorage.setItem('lastUsedPipelineId', initialPipelineId);
-      return;
-    }
-
-    // If we have pipelines loaded
     if (pipelines.length > 0) {
-      // Try to get the last used pipeline ID from localStorage
-      const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
-      
-      // Check if the last used pipeline still exists
-      const lastUsedPipelineExists = lastUsedPipelineId && 
-        pipelines.some(p => p.id === lastUsedPipelineId);
-
-      if (lastUsedPipelineExists) {
-        // Use the last used pipeline if it exists
-        setSelectedPipelineId(lastUsedPipelineId);
+      if (initialPipelineId && pipelines.some(p => p.id === initialPipelineId)) {
+        setSelectedPipelineId(initialPipelineId);
       } else {
-        // Otherwise use the first pipeline
-        setSelectedPipelineId(pipelines[0].id);
-        localStorage.setItem('lastUsedPipelineId', pipelines[0].id);
+        // Get last used pipeline from localStorage
+        const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
+        const validPipeline = lastUsedPipelineId && pipelines.some(p => p.id === lastUsedPipelineId);
+        
+        if (validPipeline) {
+          setSelectedPipelineId(lastUsedPipelineId);
+        } else {
+          // If no valid last used pipeline, use the first one
+          setSelectedPipelineId(pipelines[0].id);
+          localStorage.setItem('lastUsedPipelineId', pipelines[0].id);
+        }
       }
     }
   }, [initialPipelineId, pipelines]);
