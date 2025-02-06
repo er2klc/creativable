@@ -39,7 +39,7 @@ export const SidebarFooter = ({ isExpanded, currentVersion }: SidebarFooterProps
                 </Avatar>
                 {isExpanded && (
                   <div className="flex flex-col items-start">
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-sm text-white/80">
                       {user?.user_metadata?.display_name || user?.email}
                     </span>
                   </div>
