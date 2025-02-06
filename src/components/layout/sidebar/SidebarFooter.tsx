@@ -80,7 +80,6 @@ export const SidebarFooter = ({ isExpanded, currentVersion }: SidebarFooterProps
         </DropdownMenu>
       </div>
 
-      {/* Changelog */}
       <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
       <div className="flex items-center justify-center px-3 py-2 space-x-2">
         <span className="text-white/70 text-xs">{currentVersion}</span>
