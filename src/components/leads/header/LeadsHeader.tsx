@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { LeadSearch } from "../LeadSearch";
 import { LayoutGrid, List, ChevronDown, Instagram, Linkedin, Users } from "lucide-react";
@@ -32,9 +33,9 @@ export const LeadsHeader = ({
   const [showLinkedInDialog, setShowLinkedInDialog] = useState(false);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+    <div className="space-y-4 w-full">
+      <div className="flex flex-wrap items-center gap-4 w-full">
+        <div className="flex items-center gap-4 flex-shrink-0">
           {/* Page Title */}
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5" />
@@ -78,19 +79,21 @@ export const LeadsHeader = ({
         </div>
 
         {/* Search Field */}
-        <div className="flex-1 max-w-md">
+        <div className="flex-1 min-w-[200px]">
           <LeadSearch value={searchQuery} onChange={setSearchQuery} />
         </div>
 
         {/* Pipeline Selection */}
-        <LeadFilters
-          selectedPipelineId={selectedPipelineId}
-          setSelectedPipelineId={setSelectedPipelineId}
-          onEditModeChange={setIsEditMode}
-        />
+        <div className="flex-shrink-0">
+          <LeadFilters
+            selectedPipelineId={selectedPipelineId}
+            setSelectedPipelineId={setSelectedPipelineId}
+            onEditModeChange={setIsEditMode}
+          />
+        </div>
 
         {/* View Mode Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Button
             variant={viewMode === "kanban" ? "default" : "outline"}
             size="icon"
