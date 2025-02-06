@@ -64,7 +64,7 @@ export const DashboardSidebar = () => {
   }, []);
 
   return (
-   <Sidebar 
+ <Sidebar 
   className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out h-screen`}
   {...handlers}
 >
@@ -94,6 +94,11 @@ export const DashboardSidebar = () => {
       <SidebarMenuSection title="Rechtliches" items={legalItems} isExpanded={isExpanded} />
     </div>
 
+    {/* Admin-Bereich */}
+    <div className="mt-2">
+      <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
+    </div>
+
     {/* Footer fixiert */}
     <div className="sticky bottom-0 z-10">
       <SidebarFooter 
@@ -103,5 +108,6 @@ export const DashboardSidebar = () => {
     </div>
   </SidebarContent>
 </Sidebar>
+
   );
 };
