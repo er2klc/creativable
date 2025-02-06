@@ -98,12 +98,15 @@ export function usePipelineManagement(initialPipelineId: string | null) {
   });
 
   useEffect(() => {
+    // Wenn wir Pipelines haben und keine ausgewählt ist
     if (pipelines.length > 0 && !selectedPipelineId) {
+      console.log("Setting initial pipeline. Available pipelines:", pipelines.length);
+      // Wenn es nur eine Pipeline gibt, wähle diese direkt aus
       if (pipelines.length === 1) {
-        // If there's only one pipeline, select it immediately
+        console.log("Setting single pipeline:", pipelines[0].id);
         setSelectedPipelineId(pipelines[0].id);
       } else {
-        // If there are multiple pipelines, try to use the last selected one
+        // Bei mehreren Pipelines versuche die zuletzt ausgewählte zu verwenden
         const lastSelectedPipelineId = settings?.last_selected_pipeline_id;
         const pipelineExists = lastSelectedPipelineId && 
           pipelines.some(p => p.id === lastSelectedPipelineId);
