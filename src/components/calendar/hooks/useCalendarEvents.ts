@@ -3,9 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamEvent, Appointment } from "../types/calendar";
 
-// Debugging-Log hinzufügen
-console.log("useCalendarEvents.ts version 1.3 geladen");
-
 const expandRecurringEvent = (event: TeamEvent, currentDate: Date): TeamEvent[] => {
   if (!event.isRecurring || event.recurring_pattern === 'none') {
     return [event];
