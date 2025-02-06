@@ -65,6 +65,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     zIndex: isDragging ? 1000 : 1,
     position: isDragging ? 'fixed' : 'relative',
     width: '100%',
+    height: '100px', // Fixed height for all cards
     transition: 'transform 0.1s ease, box-shadow 0.1s ease',
     cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
   } : undefined;
@@ -132,7 +133,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       ref={setNodeRef}
       style={style}
       className={cn(
-        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative border-l-2 w-full",
+        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative border-l-2 w-full h-[100px]",
         getBackgroundStyle(),
         getPlatformBorderColor(lead.platform),
         isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing",
