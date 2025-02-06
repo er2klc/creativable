@@ -13,6 +13,8 @@ import { CreatePipelineDialog } from "./pipeline/CreatePipelineDialog";
 import { DeletePipelineDialog } from "./pipeline/DeletePipelineDialog";
 import { usePipelineManagement } from "./pipeline/hooks/usePipelineManagement";
 import { useSettings } from "@/hooks/use-settings";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface LeadFiltersProps {
   selectedPipelineId: string | null;
@@ -48,35 +50,43 @@ export const LeadFilters = ({
   const handleSaveChanges = async () => {
     if (!selectedPipelineId || !editingPipelineName.trim()) return;
 
-    const { error } = await supabase
-      .from("pipelines")
-      .update({ name: editingPipelineName })
-      .eq("id", selectedPipelineId);
+    try {
+      const { error } = await supabase
+        .from("pipelines")
+        .update({ name: editingPipelineName })
+        .eq("id", selectedPipelineId);
 
-    if (error) {
-      toast.error(settings?.language === "en" ? "Failed to update pipeline" : "Pipeline konnte nicht aktualisiert werden");
-      console.error("Error updating pipeline:", error);
-    } else {
+      if (error) throw error;
+      
       toast.success(settings?.language === "en" ? "Pipeline updated successfully" : "Pipeline erfolgreich aktualisiert");
       setIsEditMode(false);
+    } catch (error) {
+      console.error("Error updating pipeline:", error);
+      toast.error(settings?.language === "en" ? "Failed to update pipeline" : "Pipeline konnte nicht aktualisiert werden");
     }
   };
 
   const handleDeletePipeline = async () => {
     if (!selectedPipelineId) return;
 
-    const { error } = await supabase
-      .from("pipelines")
-      .delete()
-      .eq("id", selectedPipelineId);
+    try {
+      const { error } = await supabase
+        .from("pipelines")
+        .delete()
+        .eq("id", selectedPipelineId);
 
-    if (error) {
-      toast.error(settings?.language === "en" ? "Failed to delete pipeline" : "Pipeline konnte nicht gelöscht werden");
-      console.error("Error deleting pipeline:", error);
-    } else {
+      if (error) throw error;
+
       toast.success(settings?.language === "en" ? "Pipeline deleted successfully" : "Pipeline erfolgreich gelöscht");
-      setSelectedPipelineId(pipelines[0]?.id || null);
+      
+      // Wähle die erste verfügbare Pipeline nach dem Löschen
+      const remainingPipelines = pipelines.filter(p => p.id !== selectedPipelineId);
+      setSelectedPipelineId(remainingPipelines[0]?.id || null);
       setShowDeleteDialog(false);
+      setIsEditMode(false); // Beende den Edit-Modus
+    } catch (error) {
+      console.error("Error deleting pipeline:", error);
+      toast.error(settings?.language === "en" ? "Failed to delete pipeline" : "Pipeline konnte nicht gelöscht werden");
     }
   };
 
@@ -98,7 +108,12 @@ export const LeadFilters = ({
           {pipelines.map(pipeline => (
             <DropdownMenuItem 
               key={pipeline.id}
-              onClick={() => setSelectedPipelineId(pipeline.id)}
+              onClick={() => {
+                setSelectedPipelineId(pipeline.id);
+                if (isEditMode) {
+                  setEditingPipelineName(pipeline.name);
+                }
+              }}
               className="flex items-center justify-between"
             >
               <span>{pipeline.name}</span>
@@ -152,6 +167,7 @@ export const LeadFilters = ({
             size="icon"
             className="h-9 w-9"
             title={settings?.language === "en" ? "Save Pipeline Name" : "Pipeline-Name speichern"}
+            disabled={!editingPipelineName.trim() || editingPipelineName === selectedPipeline?.name}
           >
             <Save className="h-4 w-4" />
           </Button>
