@@ -64,12 +64,16 @@ export const DashboardSidebar = () => {
   }, []);
 
   return (
-<Sidebar 
+<Sidebar
   className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out h-screen`}
   {...handlers}
 >
   {/* Hintergrund */}
-  <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[72px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
+  <div
+    className={`absolute inset-0 pointer-events-none ${
+      isExpanded ? "w-[240px]" : "w-[72px]"
+    } bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`}
+  />
 
   {/* Sidebar-Inhalt */}
   <SidebarContent className="flex flex-col h-full">
@@ -80,38 +84,59 @@ export const DashboardSidebar = () => {
 
     {/* Mittlerer Bereich scrollbar */}
     <div className="flex-1 overflow-y-auto no-scrollbar">
-      <SidebarMenuSection 
-        title="Persönlich" 
-        items={personalItems} 
+      {/* Persönlich */}
+      <SidebarMenuSection
+        title="Persönlich"
+        items={personalItems}
         isExpanded={isExpanded}
         unreadCount={unreadCount}
       />
       <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      <SidebarMenuSection title="Teams & Gruppen" items={teamItems} isExpanded={isExpanded} />
+
+      {/* Teams & Gruppen */}
+      <SidebarMenuSection
+        title="Teams & Gruppen"
+        items={teamItems}
+        isExpanded={isExpanded}
+      />
       <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      <SidebarMenuSection title="Analyse & Tools" items={analysisItems} isExpanded={isExpanded} />
+
+      {/* Analyse & Tools */}
+      <SidebarMenuSection
+        title="Analyse & Tools"
+        items={analysisItems}
+        isExpanded={isExpanded}
+      />
       <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      <SidebarMenuSection title="Rechtliches" items={legalItems} isExpanded={isExpanded} />
+
+      {/* Rechtliches */}
+      <SidebarMenuSection
+        title="Rechtliches"
+        items={legalItems}
+        isExpanded={isExpanded}
+      />
       <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
+      {/* Super Admin */}
       <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
     </div>
 
     {/* Footer fixiert */}
-    <div className="sticky bottom-0 z-10">
-      <SidebarFooter 
-        isExpanded={isExpanded} 
-        currentVersion={versionData || '0.1'}
-      />
-    </div>
+    <div className="sticky bottom-0 z-10 bg-[#111111] border-t border-white/10">
+      <SidebarFooter isExpanded={isExpanded} currentVersion={versionData || "0.1"} />
 
-    {/* Changelog bündig positioniert */}
-    <div className={`flex items-center z-10 gap-2 px-3 py-2 bg-[#111111] border-t border-white/10`}>
-      <span className="text-white">{versionData || "0.1"}</span>
-      {isExpanded && (
-        <a href="/changelog" className="whitespace-nowrap text-gray-400 hover:text-white transition-opacity duration-300">
-          Changelog
-        </a>
-      )}
+      {/* Changelog */}
+      <div className="flex items-center justify-between px-3 py-2 bg-[#111111] border-t border-white/10">
+        <span className="text-white">{versionData || "0.1"}</span>
+        {isExpanded && (
+          <a
+            href="/changelog"
+            className="whitespace-nowrap text-gray-400 hover:text-white transition-opacity duration-300"
+          >
+            Changelog
+          </a>
+        )}
+      </div>
     </div>
   </SidebarContent>
 </Sidebar>
