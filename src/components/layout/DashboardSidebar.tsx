@@ -92,14 +92,15 @@ export const DashboardSidebar = () => {
       <SidebarMenuSection title="Analyse & Tools" items={analysisItems} isExpanded={isExpanded} />
       <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       <SidebarMenuSection title="Rechtliches" items={legalItems} isExpanded={isExpanded} />
-    </div>
 
-    {/* Admin-Bereich */}
-    {isSuperAdmin && (
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent">
-        <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
-      </div>
-    )}
+      {/* Super Admin Bereich in den scrollbaren Bereich integriert */}
+      {isSuperAdmin && (
+        <>
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
+        </>
+      )}
+    </div>
 
     {/* Footer fixiert */}
     <div className="sticky bottom-0 z-10 bg-[#111111]/80">
@@ -110,7 +111,5 @@ export const DashboardSidebar = () => {
     </div>
   </SidebarContent>
 </Sidebar>
-
-
   );
 };
