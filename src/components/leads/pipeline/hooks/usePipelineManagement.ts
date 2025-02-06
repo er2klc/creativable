@@ -71,11 +71,18 @@ export function usePipelineManagement(initialPipelineId: string | null) {
 
         const { error } = await supabase
           .from('settings')
-          .update({ last_selected_pipeline_id: selectedPipelineId })
-          .eq('user_id', user.id);
+          .upsert({ 
+            user_id: user.id,
+            last_selected_pipeline_id: selectedPipelineId 
+          }, {
+            onConflict: 'user_id'
+          });
         
         if (error) {
           console.error("Error updating last selected pipeline:", error);
+          toast.error("Failed to save pipeline selection");
+        } else {
+          console.log("Successfully updated last selected pipeline:", selectedPipelineId);
         }
       }
     };
