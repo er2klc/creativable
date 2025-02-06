@@ -1,3 +1,4 @@
+
 import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,7 +66,7 @@ export const DashboardSidebar = () => {
 
   return (
     <Sidebar 
-      className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out ${isExpanded ? 'w-[240px] z-[999]' : 'z-[10]'}`}
+      className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out ${isExpanded ? 'w-[240px] z-[999]' : 'z-[999]'}`}
       {...handlers}
     >
       <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[72px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
