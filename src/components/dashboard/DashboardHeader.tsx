@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { SearchBar } from "./SearchBar";
 
 interface DashboardHeaderProps {
-  userEmail: string | undefined;
+  userEmail?: string;
 }
 
 export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
@@ -25,7 +25,7 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;

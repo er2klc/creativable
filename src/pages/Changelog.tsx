@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChangelogEntry } from "@/components/changelog/ChangelogEntry";
 import { ChangelogItem } from "@/components/changelog/types";
+import { AdminHeader } from "@/components/admin/AdminHeader";
 
 export default function Changelog() {
   const [isAdmin, setIsAdmin] = React.useState(false);
@@ -129,23 +130,25 @@ export default function Changelog() {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Changelog</h1>
-      <p className="text-muted-foreground mb-8">
-        Hier finden Sie alle Änderungen und geplanten Features unserer Anwendung.
-      </p>
+    <div className="min-h-screen w-full bg-[#0A0A0A] text-white">
+      {/* Background Gradient Effect */}
+      <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30" />
       
-      <div className="space-y-6">
-        {changelogEntries?.map((entry) => (
-          <ChangelogEntry
-            key={entry.version}
-            entry={entry}
-            isAdmin={isAdmin}
-            onStatusChange={handleStatusChange}
-            onDelete={handleDelete}
-            onEdit={handleEdit}
-          />
-        ))}
+      <div className="container mx-auto p-6 relative bg-black/40 backdrop-blur-sm">
+        <AdminHeader />
+        
+        <div className="space-y-6">
+          {changelogEntries?.map((entry) => (
+            <ChangelogEntry
+              key={entry.version}
+              entry={entry}
+              isAdmin={isAdmin}
+              onStatusChange={handleStatusChange}
+              onDelete={handleDelete}
+              onEdit={handleEdit}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
