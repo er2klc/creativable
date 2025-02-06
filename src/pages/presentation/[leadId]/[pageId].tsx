@@ -58,11 +58,9 @@ export default function PresentationPage() {
       name,
       social_media_profile_image_url
     ),
-    user:user_id (
-      profiles (
-        display_name,
-        avatar_url
-      )
+    profiles:user_id (
+      display_name,
+      avatar_url
     )
   `)
   .eq('slug', pageId)
