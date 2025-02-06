@@ -1,4 +1,3 @@
-
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Tables } from "@/integrations/supabase/types";
@@ -27,6 +26,16 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     data: lead,
     disabled,
   });
+
+  const style: CSSProperties | undefined = transform ? {
+    transform: CSS.Transform.toString(transform),
+    zIndex: isDragging ? 1000 : 1,
+    position: isDragging ? 'fixed' : 'relative',
+    width: isDragging ? 'var(--dragging-width, 300px)' : '100%',
+    height: '100px',
+    transition: 'box-shadow 0.1s ease',
+    cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
+  } : undefined;
 
   const getPlatformIcon = (platform: string) => {
     switch (platform?.toLowerCase()) {
@@ -60,18 +69,12 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     }
   };
 
-  const style: CSSProperties | undefined = transform ? {
-    transform: CSS.Transform.toString(transform),
-    zIndex: isDragging ? 1000 : 1,
-    position: isDragging ? 'fixed' : 'relative',
-    width: '100%',
-    height: '100px', // Fixed height for all cards
-    transition: 'transform 0.1s ease, box-shadow 0.1s ease',
-    cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
-  } : undefined;
-
-  const handleMouseDown = () => {
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (disabled) return;
+    
+    // Store the initial width of the card before dragging
+    const rect = e.currentTarget.getBoundingClientRect();
+    document.documentElement.style.setProperty('--dragging-width', `${rect.width}px`);
     
     dragTimeoutRef.current = window.setTimeout(() => {
       setIsDragging(true);
