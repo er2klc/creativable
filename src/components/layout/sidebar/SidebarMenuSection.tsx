@@ -42,9 +42,6 @@ export const SidebarMenuSection = ({
         </SidebarGroupLabel>
       </div>
 
-      {/* Trennlinie unterhalb des Titels */}
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
-
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
