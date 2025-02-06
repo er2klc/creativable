@@ -10,23 +10,23 @@ export const useLeadsQuery = (pipelineId: string | null) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      let query = supabase
-        .from("leads")
-        .select("*")
-        .eq("user_id", user.id);
-
-      // Only apply pipeline filter if we have a pipeline ID
-      if (pipelineId) {
-        query = query.eq("pipeline_id", pipelineId);
+      // Only proceed with query if we have a pipeline ID
+      if (!pipelineId) {
+        console.log("No pipeline ID provided, skipping leads fetch");
+        return [];
       }
 
-      const { data, error } = await query;
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("pipeline_id", pipelineId);
+
       if (error) throw error;
       
-      // Enhanced logging
       console.log(`Fetched ${data?.length} leads for pipeline:`, pipelineId);
       return data as Tables<"leads">[];
     },
-    enabled: true, // Always enabled, but will refetch when pipelineId changes
+    enabled: !!pipelineId, // Only run query when we have a pipeline ID
   });
 };

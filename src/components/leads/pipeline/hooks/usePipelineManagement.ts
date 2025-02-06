@@ -1,13 +1,12 @@
 
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 
 export function usePipelineManagement(initialPipelineId: string | null) {
   const { settings } = useSettings();
-  const queryClient = useQueryClient();
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(initialPipelineId);
 
   const { data: pipelines = [] } = useQuery({
@@ -41,7 +40,7 @@ export function usePipelineManagement(initialPipelineId: string | null) {
     enabled: !!selectedPipelineId,
   });
 
-  // Initialize pipeline selection when data is available
+  // Initialize pipeline selection with better logic
   useEffect(() => {
     if (pipelines.length > 0 && !selectedPipelineId) {
       let pipelineToSelect: string | null = null;
@@ -51,7 +50,7 @@ export function usePipelineManagement(initialPipelineId: string | null) {
           pipelines.some(p => p.id === settings.last_selected_pipeline_id)) {
         pipelineToSelect = settings.last_selected_pipeline_id;
       } 
-      // Priority 2: First available pipeline
+      // Priority 2: First available pipeline (base pipeline)
       else if (pipelines[0]) {
         pipelineToSelect = pipelines[0].id;
       }
@@ -65,8 +64,8 @@ export function usePipelineManagement(initialPipelineId: string | null) {
 
   // Update settings when pipeline changes
   useEffect(() => {
-    if (selectedPipelineId) {
-      const updateSettings = async () => {
+    const updateSettings = async () => {
+      if (selectedPipelineId) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
@@ -78,10 +77,10 @@ export function usePipelineManagement(initialPipelineId: string | null) {
         if (error) {
           console.error("Error updating last selected pipeline:", error);
         }
-      };
+      }
+    };
 
-      updateSettings();
-    }
+    updateSettings();
   }, [selectedPipelineId]);
 
   return {
