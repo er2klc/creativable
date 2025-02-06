@@ -76,7 +76,7 @@ export const DashboardSidebar = () => {
   />
 
   {/* Sidebar-Inhalt */}
-  <SidebarContent className="flex flex-col h-full">
+  <SidebarContent className="flex flex-col h-full overflow-hidden">
     {/* Header fixiert */}
     <div className="sticky top-0 z-10">
       <SidebarHeader isExpanded={isExpanded} />
