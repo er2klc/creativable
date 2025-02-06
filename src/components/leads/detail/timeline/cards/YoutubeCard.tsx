@@ -52,7 +52,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   };
 
   return (
-    <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-red-50 border-red-200")}>
+    <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500")}>
       <div className="flex items-start justify-between">
         <div className="space-y-1 flex-1">
           <div className="font-medium">{metadata.title || content}</div>
