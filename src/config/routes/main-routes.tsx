@@ -1,12 +1,63 @@
-import { Route } from "react-router-dom";
+
 import Dashboard from "@/pages/Dashboard";
+import Leads from "@/pages/Leads";
+import LeadDetail from "@/pages/LeadDetail";
+import Messages from "@/pages/Messages";
+import Calendar from "@/pages/Calendar";
 import Settings from "@/pages/Settings";
-import Plan from "@/pages/Plan";
-import Billing from "@/pages/Billing";
+import Pool from "@/pages/Pool";
+import Admin from "@/pages/Admin";
+import Links from "@/pages/Links";
 
 export const mainRoutes = [
-  <Route path="/dashboard" element={<Dashboard />} />,
-  <Route path="/settings" element={<Settings />} />,
-  <Route path="/plan" element={<Plan />} />,
-  <Route path="/billing" element={<Billing />} />,
+  {
+    path: "/dashboard",
+    element: <Dashboard />,
+    label: "Dashboard",
+  },
+  {
+    path: "/contacts",
+    element: <Leads />,
+    label: "Contacts",
+  },
+  {
+    path: "/contacts/:leadId",
+    element: <LeadDetail />,
+    label: "Contact Detail",
+  },
+  {
+    path: "/pool",
+    element: <Pool />,
+    label: "Pool",
+  },
+  {
+    path: "/pool/:status",
+    element: <Pool />,
+    label: "Pool Status",
+  },
+  {
+    path: "/messages",
+    element: <Messages />,
+    label: "Messages",
+  },
+  {
+    path: "/calendar",
+    element: <Calendar />,
+    label: "Calendar",
+  },
+  {
+    path: "/settings",
+    element: <Settings />,
+    label: "Settings",
+  },
+  {
+    path: "/admin",
+    element: <Admin />,
+    label: "Admin",
+  },
+  {
+    path: "/links",
+    element: <Links />,
+    label: "Links",
+  },
 ];
