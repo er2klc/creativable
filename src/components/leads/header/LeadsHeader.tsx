@@ -33,8 +33,8 @@ export const LeadsHeader = ({
   const [showLinkedInDialog, setShowLinkedInDialog] = useState(false);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b">
-      <div className="pl-[60px] md:pl-[72px] max-w-[100vw] px-4 py-4 transition-all duration-300 ease-in-out group-hover:pl-[240px]">
+    <div className="fixed top-0 left-[60px] right-0 z-50 bg-background border-b md:left-[72px] group-hover:left-[240px] transition-all duration-300 ease-in-out">
+      <div className="max-w-[100vw] px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4 w-full">
           <div className="flex items-center gap-4 flex-shrink-0">
             {/* Page Title */}
