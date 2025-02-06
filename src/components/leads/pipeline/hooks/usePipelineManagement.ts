@@ -8,7 +8,7 @@ import { toast } from "sonner";
 export function usePipelineManagement(initialPipelineId: string | null) {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(initialPipelineId);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
 
   const { data: pipelines = [] } = useQuery({
     queryKey: ["pipelines"],
@@ -19,6 +19,7 @@ export function usePipelineManagement(initialPipelineId: string | null) {
         .order("order_index");
 
       if (error) throw error;
+      console.log("Fetched pipelines in hook:", data?.length);
       return data;
     },
   });
@@ -97,34 +98,36 @@ export function usePipelineManagement(initialPipelineId: string | null) {
     },
   });
 
+  // Pipeline-Initialisierung
   useEffect(() => {
     if (pipelines.length > 0) {
+      console.log("Pipeline initialization effect running");
+      console.log("Current selectedPipelineId:", selectedPipelineId);
+      console.log("Settings last_selected_pipeline_id:", settings?.last_selected_pipeline_id);
+      
       if (!selectedPipelineId || !pipelines.some(p => p.id === selectedPipelineId)) {
-        const storedPipelineId = localStorage.getItem('lastUsedPipelineId');
-        const lastSelectedPipelineId = settings?.last_selected_pipeline_id;
+        let pipelineToSelect: string | null = null;
 
-        // Versuche zuerst die zuletzt ausgewählte Pipeline aus den Settings zu verwenden
-        if (lastSelectedPipelineId && pipelines.some(p => p.id === lastSelectedPipelineId)) {
-          setSelectedPipelineId(lastSelectedPipelineId);
+        // Priorität 1: Zuletzt ausgewählte Pipeline aus den Settings
+        if (settings?.last_selected_pipeline_id && 
+            pipelines.some(p => p.id === settings.last_selected_pipeline_id)) {
+          pipelineToSelect = settings.last_selected_pipeline_id;
+          console.log("Using pipeline from settings:", pipelineToSelect);
         }
-        // Dann versuche die Pipeline aus dem localStorage
-        else if (storedPipelineId && pipelines.some(p => p.id === storedPipelineId)) {
-          setSelectedPipelineId(storedPipelineId);
-        }
-        // Fallback auf die erste verfügbare Pipeline
+        // Priorität 2: Erste verfügbare Pipeline
         else {
-          setSelectedPipelineId(pipelines[0].id);
+          pipelineToSelect = pipelines[0].id;
+          console.log("Using first available pipeline:", pipelineToSelect);
+        }
+
+        if (pipelineToSelect) {
+          console.log("Setting selected pipeline to:", pipelineToSelect);
+          setSelectedPipelineId(pipelineToSelect);
+          localStorage.setItem('lastUsedPipelineId', pipelineToSelect);
         }
       }
     }
   }, [pipelines, settings?.last_selected_pipeline_id, selectedPipelineId]);
-
-  // Update localStorage whenever selected pipeline changes
-  useEffect(() => {
-    if (selectedPipelineId) {
-      localStorage.setItem('lastUsedPipelineId', selectedPipelineId);
-    }
-  }, [selectedPipelineId]);
 
   return {
     selectedPipelineId,

@@ -32,23 +32,23 @@ export const PipelineSelector = ({
         .select("*")
         .order("order_index");
       if (error) throw error;
+      console.log("Fetched pipelines:", data?.length);
       return data;
     },
   });
 
+  // Initialisierung der Pipeline-Auswahl
   useEffect(() => {
-    if (pipelines.length > 0) {
-      // Keine Pipeline ausgewählt oder ausgewählte Pipeline existiert nicht mehr
-      if (!selectedPipelineId || !pipelines.some(p => p.id === selectedPipelineId)) {
-        const lastSelectedId = settings?.last_selected_pipeline_id;
-        
-        // Prüfe ob die zuletzt ausgewählte Pipeline noch existiert
-        if (lastSelectedId && pipelines.some(p => p.id === lastSelectedId)) {
-          onPipelineSelect(lastSelectedId);
-        } else {
-          // Fallback auf die erste Pipeline
-          onPipelineSelect(pipelines[0].id);
-        }
+    if (pipelines.length > 0 && (!selectedPipelineId || !pipelines.some(p => p.id === selectedPipelineId))) {
+      console.log("Initializing pipeline selection");
+      const lastSelectedId = settings?.last_selected_pipeline_id;
+      
+      if (lastSelectedId && pipelines.some(p => p.id === lastSelectedId)) {
+        console.log("Using last selected pipeline:", lastSelectedId);
+        onPipelineSelect(lastSelectedId);
+      } else {
+        console.log("Using first pipeline:", pipelines[0].id);
+        onPipelineSelect(pipelines[0].id);
       }
     }
   }, [pipelines, settings?.last_selected_pipeline_id, selectedPipelineId, onPipelineSelect]);

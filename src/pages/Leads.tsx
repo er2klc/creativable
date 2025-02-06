@@ -18,24 +18,29 @@ const Leads = () => {
     navigate(`/contacts/${id}`);
   };
 
+  const handlePipelineSelect = (id: string) => {
+    console.log("Pipeline selected:", id);
+    setSelectedPipelineId(id);
+  };
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <LeadsHeader
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         selectedPipelineId={selectedPipelineId}
-        setSelectedPipelineId={setSelectedPipelineId}
+        setSelectedPipelineId={handlePipelineSelect}
         viewMode={viewMode}
         setViewMode={setViewMode}
         setIsEditMode={setIsEditMode}
       />
 
-      <div className="flex-1 overflow-hidden mt-[84px]"> {/* Offset für den fixed Header */}
+      <div className="flex-1 overflow-hidden mt-[84px]">
         {viewMode === "kanban" ? (
           <LeadKanbanView
             leads={leads}
             selectedPipelineId={selectedPipelineId}
-            setSelectedPipelineId={setSelectedPipelineId}
+            setSelectedPipelineId={handlePipelineSelect}
             isEditMode={isEditMode}
           />
         ) : (
