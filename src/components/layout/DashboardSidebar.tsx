@@ -83,7 +83,7 @@ export const DashboardSidebar = () => {
     </div>
 
     {/* Mittlerer Bereich scrollbar */}
-    <div className="flex-1 overflow-y-auto no-scrollbar">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
       {/* Persönlich */}
       <SidebarMenuSection
         title="Persönlich"
@@ -91,7 +91,7 @@ export const DashboardSidebar = () => {
         isExpanded={isExpanded}
         unreadCount={unreadCount}
       />
-      <div class="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
 
       {/* Teams & Gruppen */}
       <SidebarMenuSection
@@ -99,7 +99,7 @@ export const DashboardSidebar = () => {
         items={teamItems}
         isExpanded={isExpanded}
       />
-      <div class="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
 
       {/* Analyse & Tools */}
       <SidebarMenuSection
@@ -107,7 +107,7 @@ export const DashboardSidebar = () => {
         items={analysisItems}
         isExpanded={isExpanded}
       />
-      <div class="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
 
       {/* Rechtliches */}
       <SidebarMenuSection
@@ -115,18 +115,24 @@ export const DashboardSidebar = () => {
         items={legalItems}
         isExpanded={isExpanded}
       />
-      <div class="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
 
       {/* Super Admin */}
       <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
     </div>
 
+    {/* Trennlinie oberhalb des Footers */}
+    <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+
     {/* Footer fixiert */}
-    <div className="sticky bottom-0 z-10 bg-[#111111] h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent">
-      <SidebarFooter isExpanded={isExpanded} currentVersion={versionData || "0.1"} />
+    <div className="sticky bottom-0 z-10 bg-[#111111]">
+      <SidebarFooter
+        isExpanded={isExpanded}
+        currentVersion={versionData || "0.1"}
+      />
 
       {/* Changelog */}
-      <div className="flex items-center z-10 justify-between px-3 py bg-[#111111] h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent">
+      <div className="flex items-center justify-between px-3 py-2">
         <span className="text-white/70 text-xs">{versionData || "0.1"}</span>
         {isExpanded && (
           <a
