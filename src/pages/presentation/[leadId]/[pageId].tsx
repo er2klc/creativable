@@ -98,21 +98,21 @@ export default function PresentationPage() {
 
       // Tracking-View speichern
       const { data: viewData, error: viewError } = await supabase
-        .from('presentation_views')
-        .insert([
-          {
-            page_id: pageData.id,
-            lead_id: leadId,
-            video_progress: 0,
-            completed: false,
-            metadata: {
-              type: 'youtube',
-              event_type: 'video_opened'
-            }
-          }
-        ])
-        .select()
-        .single();
+  .from('presentation_views')
+  .insert([
+    {
+      page_id: pageData.id,
+      lead_id: leadId,
+      video_progress: 0,
+      completed: false,
+      metadata: JSON.stringify({
+        type: 'youtube',
+        event_type: 'video_opened'
+      })
+    }
+  ])
+  .select()
+  .single();
 
       if (viewError) {
         console.error('Error creating view record:', viewError);
