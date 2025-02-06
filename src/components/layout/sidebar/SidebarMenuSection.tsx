@@ -122,7 +122,7 @@ export const SidebarMenuSection = ({
       </SidebarGroupContent>
 
       {/* Trennlinie unterhalb der Gruppe */}
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent mt-4 mb-2"></div>
     </SidebarGroup>
   );
 };
