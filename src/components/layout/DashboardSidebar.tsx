@@ -105,17 +105,14 @@ export const DashboardSidebar = () => {
           />
 
           {/* Changelog unterhalb des Footers */}
-          <div 
-            className="flex items-center justify-between px-3 py-2 bg-[#111111] border-t border-white/10 cursor-pointer hover:bg-white/10"
-            onClick={() => window.location.href = "/changelog"}
-          >
-            <span className={`text-sm text-white ${isExpanded ? "block" : "hidden"}`}>
-              Changelog
-            </span>
-            <span className="text-xs text-gray-400">
-              v{versionData || "0.1"}
-            </span>
-          </div>
+          <div className="flex items-center gap-2">
+        <span className="text-white">{currentVersion}</span>
+        {isExpanded && (
+          <a href="/changelog" className="whitespace-nowrap text-gray-400 hover:text-white transition-opacity duration-300">
+            Changelog
+          </a>
+        )}
+      </div>
         </div>
       </SidebarContent>
     </Sidebar>
