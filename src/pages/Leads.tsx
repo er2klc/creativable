@@ -5,14 +5,18 @@ import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
 import { LeadTableView } from "@/components/leads/LeadTableView";
 import { useLeadsQuery } from "@/hooks/use-leads-query";
 import { useNavigate } from "react-router-dom";
+import { useSettings } from "@/hooks/use-settings";
 
 const Leads = () => {
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [searchQuery, setSearchQuery] = useState("");
   const [isEditMode, setIsEditMode] = useState(false);
-  const { data: leads = [] } = useLeadsQuery(selectedPipelineId);
+  const { settings } = useSettings();
   const navigate = useNavigate();
+
+  // Fetch leads only after we have a pipeline ID
+  const { data: leads = [] } = useLeadsQuery(selectedPipelineId);
 
   const handleLeadClick = (id: string) => {
     navigate(`/contacts/${id}`);

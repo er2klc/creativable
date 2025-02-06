@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
@@ -14,6 +15,7 @@ export const useLeadsQuery = (pipelineId: string | null) => {
         .select("*")
         .eq("user_id", user.id);
 
+      // Only apply pipeline filter if we have a pipeline ID
       if (pipelineId) {
         query = query.eq("pipeline_id", pipelineId);
       }
@@ -21,10 +23,10 @@ export const useLeadsQuery = (pipelineId: string | null) => {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Ensure we're returning the correct data
-      console.log("Fetched leads:", data?.length, "for pipeline:", pipelineId);
+      // Enhanced logging
+      console.log(`Fetched ${data?.length} leads for pipeline:`, pipelineId);
       return data as Tables<"leads">[];
     },
-    enabled: true,
+    enabled: true, // Always enabled, but will refetch when pipelineId changes
   });
 };

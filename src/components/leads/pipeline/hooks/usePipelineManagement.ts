@@ -8,7 +8,7 @@ import { toast } from "sonner";
 export function usePipelineManagement(initialPipelineId: string | null) {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(initialPipelineId);
 
   const { data: pipelines = [] } = useQuery({
     queryKey: ["pipelines"],
@@ -41,63 +41,6 @@ export function usePipelineManagement(initialPipelineId: string | null) {
     enabled: !!selectedPipelineId,
   });
 
-  const updateLeadPipeline = useMutation({
-    mutationFn: async ({ leadId, pipelineId, phaseId }: { leadId: string; pipelineId: string; phaseId: string }) => {
-      const { data: currentLead, error: fetchError } = await supabase
-        .from("leads")
-        .select("phase_id")
-        .eq("id", leadId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      if (currentLead.phase_id !== phaseId) {
-        const { data: updatedLead, error: updateError } = await supabase
-          .from("leads")
-          .update({
-            pipeline_id: pipelineId,
-            phase_id: phaseId,
-          })
-          .eq("id", leadId)
-          .select()
-          .single();
-
-        if (updateError) throw updateError;
-
-        const newPhase = phases.find(p => p.id === phaseId);
-        if (!newPhase) throw new Error("Phase not found");
-
-        const { error: noteError } = await supabase
-          .from("notes")
-          .insert({
-            lead_id: leadId,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-            content: `Phase wurde zu "${newPhase.name}" geändert`,
-            metadata: {
-              type: 'phase_change',
-              phase_id: phaseId,
-              phase_name: newPhase.name
-            }
-          });
-
-        if (noteError) throw noteError;
-
-        return updatedLead;
-      }
-
-      return currentLead;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["lead", variables.leadId] });
-      
-      if (variables.phaseId !== data.phase_id) {
-        toast.success(
-          settings?.language === "en" ? "Phase updated" : "Phase aktualisiert"
-        );
-      }
-    },
-  });
-
   // Initialize pipeline selection when data is available
   useEffect(() => {
     if (pipelines.length > 0 && !selectedPipelineId) {
@@ -107,7 +50,7 @@ export function usePipelineManagement(initialPipelineId: string | null) {
       if (settings?.last_selected_pipeline_id && 
           pipelines.some(p => p.id === settings.last_selected_pipeline_id)) {
         pipelineToSelect = settings.last_selected_pipeline_id;
-      }
+      } 
       // Priority 2: First available pipeline
       else if (pipelines[0]) {
         pipelineToSelect = pipelines[0].id;
@@ -124,10 +67,13 @@ export function usePipelineManagement(initialPipelineId: string | null) {
   useEffect(() => {
     if (selectedPipelineId) {
       const updateSettings = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
         const { error } = await supabase
           .from('settings')
           .update({ last_selected_pipeline_id: selectedPipelineId })
-          .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+          .eq('user_id', user.id);
         
         if (error) {
           console.error("Error updating last selected pipeline:", error);
@@ -143,6 +89,5 @@ export function usePipelineManagement(initialPipelineId: string | null) {
     setSelectedPipelineId,
     pipelines,
     phases,
-    updateLeadPipeline,
   };
 }
