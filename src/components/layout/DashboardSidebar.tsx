@@ -109,7 +109,7 @@ export const DashboardSidebar = () => {
     </div>
 
     {/* Changelog unterhalb des Footers */}
-    <div className={`flex items-center z-10 gap-2 px-3 py-2 bg-[#111111] border-t border-white/10 ${isExpanded ? "justify-start" : "justify-center"} mt-0`}>
+    <div className={`flex items-center z-10 px-3 py-2 bg-[#111111] border-t border-white/10 ${isExpanded ? "justify-start" : "justify-center"} mt-0`}>
       <span className="text-white">{versionData || "0.1"}</span>
       {isExpanded && (
         <a href="/changelog" className="whitespace-nowrap text-gray-400 hover:text-white transition-opacity duration-300">
