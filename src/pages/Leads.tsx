@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LeadsHeader } from "@/components/leads/header/LeadsHeader";
 import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
 import { LeadTableView } from "@/components/leads/LeadTableView";

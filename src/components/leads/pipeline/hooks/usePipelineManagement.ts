@@ -19,7 +19,7 @@ export function usePipelineManagement(initialPipelineId: string | null) {
         .order("order_index");
 
       if (error) throw error;
-      console.log("Fetched pipelines in hook:", data?.length);
+      console.log("Fetched pipelines:", data?.length);
       return data;
     },
   });
@@ -98,36 +98,45 @@ export function usePipelineManagement(initialPipelineId: string | null) {
     },
   });
 
-  // Pipeline-Initialisierung
+  // Initialize pipeline selection when data is available
   useEffect(() => {
-    if (pipelines.length > 0) {
-      console.log("Pipeline initialization effect running");
-      console.log("Current selectedPipelineId:", selectedPipelineId);
-      console.log("Settings last_selected_pipeline_id:", settings?.last_selected_pipeline_id);
-      
-      if (!selectedPipelineId || !pipelines.some(p => p.id === selectedPipelineId)) {
-        let pipelineToSelect: string | null = null;
+    if (pipelines.length > 0 && !selectedPipelineId) {
+      let pipelineToSelect: string | null = null;
 
-        // Priorität 1: Zuletzt ausgewählte Pipeline aus den Settings
-        if (settings?.last_selected_pipeline_id && 
-            pipelines.some(p => p.id === settings.last_selected_pipeline_id)) {
-          pipelineToSelect = settings.last_selected_pipeline_id;
-          console.log("Using pipeline from settings:", pipelineToSelect);
-        }
-        // Priorität 2: Erste verfügbare Pipeline
-        else {
-          pipelineToSelect = pipelines[0].id;
-          console.log("Using first available pipeline:", pipelineToSelect);
-        }
+      // Priority 1: Last selected pipeline from settings
+      if (settings?.last_selected_pipeline_id && 
+          pipelines.some(p => p.id === settings.last_selected_pipeline_id)) {
+        pipelineToSelect = settings.last_selected_pipeline_id;
+      }
+      // Priority 2: First available pipeline
+      else if (pipelines[0]) {
+        pipelineToSelect = pipelines[0].id;
+      }
 
-        if (pipelineToSelect) {
-          console.log("Setting selected pipeline to:", pipelineToSelect);
-          setSelectedPipelineId(pipelineToSelect);
-          localStorage.setItem('lastUsedPipelineId', pipelineToSelect);
-        }
+      if (pipelineToSelect) {
+        console.log("Setting initial pipeline:", pipelineToSelect);
+        setSelectedPipelineId(pipelineToSelect);
       }
     }
   }, [pipelines, settings?.last_selected_pipeline_id, selectedPipelineId]);
+
+  // Update settings when pipeline changes
+  useEffect(() => {
+    if (selectedPipelineId) {
+      const updateSettings = async () => {
+        const { error } = await supabase
+          .from('settings')
+          .update({ last_selected_pipeline_id: selectedPipelineId })
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+        
+        if (error) {
+          console.error("Error updating last selected pipeline:", error);
+        }
+      };
+
+      updateSettings();
+    }
+  }, [selectedPipelineId]);
 
   return {
     selectedPipelineId,
