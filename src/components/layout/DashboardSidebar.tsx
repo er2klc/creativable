@@ -64,54 +64,44 @@ export const DashboardSidebar = () => {
   }, []);
 
   return (
-    <Sidebar 
-      className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out ${isExpanded ? 'w-[240px] z-[999]' : 'z-[10]'}`}
-      {...handlers}
-    >
-      <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[72px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
-      <SidebarContent className="flex flex-col h-full relative overflow-x-hidden">
-        <SidebarHeader isExpanded={isExpanded} />
+   <Sidebar 
+  className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out h-screen`}
+  {...handlers}
+>
+  {/* Hintergrund und Stile */}
+  <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[72px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pt-6">
-          <SidebarMenuSection 
-            title="Persönlich" 
-            items={personalItems} 
-            isExpanded={isExpanded}
-            unreadCount={unreadCount}
-          />
+  {/* Sidebar-Inhalt */}
+  <SidebarContent className="flex flex-col h-full relative overflow-hidden">
+    {/* Header fixiert */}
+    <div className="sticky top-0 z-10">
+      <SidebarHeader isExpanded={isExpanded} />
+    </div>
 
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+    {/* Mittlerer Bereich mit Scrollfunktion */}
+    <div className="flex-1 overflow-y-auto no-scrollbar">
+      <SidebarMenuSection 
+        title="Persönlich" 
+        items={personalItems} 
+        isExpanded={isExpanded}
+        unreadCount={unreadCount}
+      />
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <SidebarMenuSection title="Teams & Gruppen" items={teamItems} isExpanded={isExpanded} />
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <SidebarMenuSection title="Analyse & Tools" items={analysisItems} isExpanded={isExpanded} />
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <SidebarMenuSection title="Rechtliches" items={legalItems} isExpanded={isExpanded} />
+    </div>
 
-          <SidebarMenuSection 
-            title="Teams & Gruppen" 
-            items={teamItems} 
-            isExpanded={isExpanded}
-          />
-
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
-          <SidebarMenuSection 
-            title="Analyse & Tools" 
-            items={analysisItems} 
-            isExpanded={isExpanded}
-          />
-
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
-          <SidebarMenuSection 
-            title="Rechtliches" 
-            items={legalItems} 
-            isExpanded={isExpanded}
-          />
-        </div>
-
-        <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
-
-        <SidebarFooter 
-          isExpanded={isExpanded} 
-          currentVersion={versionData || '0.1'}
-        />
-      </SidebarContent>
-    </Sidebar>
+    {/* Footer fixiert */}
+    <div className="sticky bottom-0 z-10">
+      <SidebarFooter 
+        isExpanded={isExpanded} 
+        currentVersion={versionData || '0.1'}
+      />
+    </div>
+  </SidebarContent>
+</Sidebar>
   );
 };
