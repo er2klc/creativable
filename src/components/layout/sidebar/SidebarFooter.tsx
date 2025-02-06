@@ -49,9 +49,12 @@ export const SidebarFooter = ({ isExpanded }: SidebarFooterProps) => {
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          align="start"
+          align="end"
           side="top"
-          className="w-full bg-[#222222] border border-white/10 shadow-lg rounded-md"
+          className="w-[200px] bg-[#222222] border border-white/10 shadow-lg rounded-md overflow-hidden"
+          style={{
+            zIndex: 999,
+          }}
         >
           <DropdownMenuItem
             onClick={() => navigate("/settings")}
