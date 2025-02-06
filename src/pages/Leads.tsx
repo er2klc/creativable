@@ -5,7 +5,6 @@ import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
 import { LeadTableView } from "@/components/leads/LeadTableView";
 import { useLeadsQuery } from "@/hooks/use-leads-query";
 import { useNavigate } from "react-router-dom";
-import { SidebarProvider } from "@/components/ui/sidebar";
 
 const Leads = () => {
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
@@ -20,38 +19,36 @@ const Leads = () => {
   };
 
   return (
-    <SidebarProvider>
-      <div className="flex flex-col h-screen overflow-hidden">
-        <LeadsHeader
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          selectedPipelineId={selectedPipelineId}
-          setSelectedPipelineId={setSelectedPipelineId}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          setIsEditMode={setIsEditMode}
-        />
+    <div className="flex flex-col h-screen overflow-hidden">
+      <LeadsHeader
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedPipelineId={selectedPipelineId}
+        setSelectedPipelineId={setSelectedPipelineId}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        setIsEditMode={setIsEditMode}
+      />
 
-        <div className="flex-1 overflow-auto mt-[84px] relative">
-          {viewMode === "kanban" ? (
-            <div className="h-full overflow-x-auto">
-              <LeadKanbanView
-                leads={leads}
-                selectedPipelineId={selectedPipelineId}
-                setSelectedPipelineId={setSelectedPipelineId}
-                isEditMode={isEditMode}
-              />
-            </div>
-          ) : (
-            <LeadTableView
+      <div className="flex-1 overflow-auto mt-[84px] relative">
+        {viewMode === "kanban" ? (
+          <div className="h-full overflow-x-auto">
+            <LeadKanbanView
               leads={leads}
-              onLeadClick={handleLeadClick}
               selectedPipelineId={selectedPipelineId}
+              setSelectedPipelineId={setSelectedPipelineId}
+              isEditMode={isEditMode}
             />
-          )}
-        </div>
+          </div>
+        ) : (
+          <LeadTableView
+            leads={leads}
+            onLeadClick={handleLeadClick}
+            selectedPipelineId={selectedPipelineId}
+          />
+        )}
       </div>
-    </SidebarProvider>
+    </div>
   );
 };
 
