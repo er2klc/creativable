@@ -1,63 +1,35 @@
-
+import { Route } from "react-router-dom";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Dashboard from "@/pages/Dashboard";
-import Leads from "@/pages/Leads";
-import LeadDetail from "@/pages/LeadDetail";
-import Messages from "@/pages/Messages";
-import Calendar from "@/pages/Calendar";
 import Settings from "@/pages/Settings";
+import Plan from "@/pages/Plan";
+import Billing from "@/pages/Billing";
+import Contacts from "@/pages/Contacts";
 import Pool from "@/pages/Pool";
-import Admin from "@/pages/Admin";
+import Calendar from "@/pages/Calendar";
+import Todo from "@/pages/Todo";
+import Messages from "@/pages/Messages";
 import Links from "@/pages/Links";
+import Unity from "@/pages/Unity";
+import Elevate from "@/pages/Elevate";
+import Admin from "@/pages/Admin";
 
-export const mainRoutes = [
-  {
-    path: "/dashboard",
-    element: <Dashboard />,
-    label: "Dashboard",
-  },
-  {
-    path: "/contacts",
-    element: <Leads />,
-    label: "Contacts",
-  },
-  {
-    path: "/contacts/:leadId",
-    element: <LeadDetail />,
-    label: "Contact Detail",
-  },
-  {
-    path: "/pool",
-    element: <Pool />,
-    label: "Pool",
-  },
-  {
-    path: "/pool/:status",
-    element: <Pool />,
-    label: "Pool Status",
-  },
-  {
-    path: "/messages",
-    element: <Messages />,
-    label: "Messages",
-  },
-  {
-    path: "/calendar",
-    element: <Calendar />,
-    label: "Calendar",
-  },
-  {
-    path: "/settings",
-    element: <Settings />,
-    label: "Settings",
-  },
-  {
-    path: "/admin",
-    element: <Admin />,
-    label: "Admin",
-  },
-  {
-    path: "/links",
-    element: <Links />,
-    label: "Links",
-  },
-];
+export const mainRoutes = (
+  <>
+    <Route path="/" element={<ProtectedRoute />}>
+      <Route index element={<Dashboard />} />
+      <Route path="settings" element={<Settings />} />
+      <Route path="plan" element={<Plan />} />
+      <Route path="billing" element={<Billing />} />
+      <Route path="contacts" element={<Contacts />} />
+      <Route path="pool" element={<Pool />} />
+      <Route path="calendar" element={<Calendar />} />
+      <Route path="todo" element={<Todo />} />
+      <Route path="messages" element={<Messages />} />
+      <Route path="links" element={<Links />} />
+      <Route path="unity" element={<Unity />} />
+      <Route path="elevate" element={<Elevate />} />
+      <Route path="admin" element={<Admin />} />
+    </Route>
+  </>
+);
