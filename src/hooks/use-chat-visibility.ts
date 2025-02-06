@@ -15,6 +15,8 @@ export const useChatVisibility = (publicRoutes: string[]) => {
         // Hide chat on presentation pages and public routes
         const isPresentation = location.pathname.startsWith('/presentation/');
         const shouldShow = isAuth && !publicRoutes.includes(location.pathname) && !isPresentation;
+        setShowChat(shouldShow);
+      }
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
