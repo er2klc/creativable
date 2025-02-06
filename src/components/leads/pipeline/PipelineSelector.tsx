@@ -37,7 +37,7 @@ export const PipelineSelector = ({
   });
 
   useEffect(() => {
-    if (pipelines.length > 0) {
+    if (pipelines.length > 0 && !selectedPipelineId) {
       const lastSelectedPipelineId = settings?.last_selected_pipeline_id;
       const pipelineExists = lastSelectedPipelineId && 
         pipelines.some(p => p.id === lastSelectedPipelineId);
@@ -48,7 +48,7 @@ export const PipelineSelector = ({
         onPipelineSelect(pipelines[0].id);
       }
     }
-  }, [pipelines, settings?.last_selected_pipeline_id, onPipelineSelect]);
+  }, [pipelines, settings?.last_selected_pipeline_id, onPipelineSelect, selectedPipelineId]);
 
   const selectedPipeline = pipelines.find((p) => p.id === selectedPipelineId);
 

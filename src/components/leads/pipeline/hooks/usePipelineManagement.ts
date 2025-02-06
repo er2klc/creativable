@@ -42,7 +42,6 @@ export function usePipelineManagement(initialPipelineId: string | null) {
 
   const updateLeadPipeline = useMutation({
     mutationFn: async ({ leadId, pipelineId, phaseId }: { leadId: string; pipelineId: string; phaseId: string }) => {
-      // First get the current lead data to check if phase actually changed
       const { data: currentLead, error: fetchError } = await supabase
         .from("leads")
         .select("phase_id")
@@ -51,9 +50,7 @@ export function usePipelineManagement(initialPipelineId: string | null) {
 
       if (fetchError) throw fetchError;
 
-      // Only proceed with update if phase actually changed
       if (currentLead.phase_id !== phaseId) {
-        // Update the lead's pipeline and phase
         const { data: updatedLead, error: updateError } = await supabase
           .from("leads")
           .update({
@@ -66,11 +63,9 @@ export function usePipelineManagement(initialPipelineId: string | null) {
 
         if (updateError) throw updateError;
 
-        // Get the new phase name
         const newPhase = phases.find(p => p.id === phaseId);
         if (!newPhase) throw new Error("Phase not found");
 
-        // Create a note for the phase change
         const { error: noteError } = await supabase
           .from("notes")
           .insert({
@@ -94,7 +89,6 @@ export function usePipelineManagement(initialPipelineId: string | null) {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["lead", variables.leadId] });
       
-      // Only show toast if this was triggered by a user action, not initial load
       if (variables.phaseId !== data.phase_id) {
         toast.success(
           settings?.language === "en" ? "Phase updated" : "Phase aktualisiert"
@@ -104,24 +98,18 @@ export function usePipelineManagement(initialPipelineId: string | null) {
   });
 
   useEffect(() => {
-    if (pipelines.length > 0) {
-      if (initialPipelineId && pipelines.some(p => p.id === initialPipelineId)) {
-        setSelectedPipelineId(initialPipelineId);
+    if (pipelines.length > 0 && !selectedPipelineId) {
+      const lastSelectedPipelineId = settings?.last_selected_pipeline_id;
+      const pipelineExists = lastSelectedPipelineId && 
+        pipelines.some(p => p.id === lastSelectedPipelineId);
+      
+      if (pipelineExists) {
+        setSelectedPipelineId(lastSelectedPipelineId);
       } else {
-        // Get last used pipeline from localStorage
-        const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
-        const validPipeline = lastUsedPipelineId && pipelines.some(p => p.id === lastUsedPipelineId);
-        
-        if (validPipeline) {
-          setSelectedPipelineId(lastUsedPipelineId);
-        } else {
-          // If no valid last used pipeline, use the first one
-          setSelectedPipelineId(pipelines[0].id);
-          localStorage.setItem('lastUsedPipelineId', pipelines[0].id);
-        }
+        setSelectedPipelineId(pipelines[0].id);
       }
     }
-  }, [initialPipelineId, pipelines]);
+  }, [pipelines, settings?.last_selected_pipeline_id, selectedPipelineId]);
 
   // Update localStorage whenever selected pipeline changes
   useEffect(() => {
