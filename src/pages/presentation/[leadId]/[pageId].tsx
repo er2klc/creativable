@@ -11,8 +11,10 @@ interface PresentationPageData {
   video_url: string;
   lead_id: string;
   user: {
-    display_name: string;
-    avatar_url: string;
+    profiles: {
+      display_name: string;
+      avatar_url: string;
+    };
   };
   lead: {
     name: string;
@@ -83,7 +85,7 @@ export default function PresentationPage() {
             display_name,
             avatar_url
           ),
-          lead:leads!presentation_pages_lead_id_fkey (
+          lead:leads!presentation_pages_lead_id_fkey(
             name,
             social_media_profile_image_url
           )

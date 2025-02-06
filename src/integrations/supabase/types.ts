@@ -2921,6 +2921,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      generate_presentation_slug: {
+        Args: {
+          title: string
+          video_id: string
+        }
+        Returns: string
+      }
       generate_unique_slug: {
         Args: {
           base_slug: string
