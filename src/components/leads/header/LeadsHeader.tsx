@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { LeadSearch } from "../LeadSearch";
 import { LayoutGrid, List, ChevronDown, Instagram, Linkedin, Users } from "lucide-react";
@@ -7,6 +8,8 @@ import { CreateLinkedInContactDialog } from "../linkedin/CreateLinkedInContactDi
 import { LeadFilters } from "../LeadFilters";
 import { useState } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/use-auth";
 
 interface LeadsHeaderProps {
   searchQuery: string;
@@ -30,6 +33,7 @@ export const LeadsHeader = ({
   const [showAddLead, setShowAddLead] = useState(false);
   const [showInstagramDialog, setShowInstagramDialog] = useState(false);
   const [showLinkedInDialog, setShowLinkedInDialog] = useState(false);
+  const { user } = useAuth();
 
   return (
     <div className="fixed top-0 left-[60px] right-0 z-[10] bg-background border-b md:left-[72px] group-hover:left-[240px] transition-[left] duration-300 ease-in-out">
@@ -83,33 +87,41 @@ export const LeadsHeader = ({
             <LeadSearch value={searchQuery} onChange={setSearchQuery} />
           </div>
 
-          {/* Pipeline Selection */}
-          <div className="flex-shrink-0">
+          {/* Pipeline Selection and User Avatar */}
+          <div className="flex items-center gap-4">
             <LeadFilters
               selectedPipelineId={selectedPipelineId}
               setSelectedPipelineId={setSelectedPipelineId}
               onEditModeChange={setIsEditMode}
             />
-          </div>
 
-          {/* View Mode Buttons */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Button
-              variant={viewMode === "kanban" ? "default" : "outline"}
-              size="icon"
-              onClick={() => setViewMode("kanban")}
-              className="h-9 w-9"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "outline"}
-              size="icon"
-              onClick={() => setViewMode("list")}
-              className="h-9 w-9"
-            >
-              <List className="h-4 w-4" />
-            </Button>
+            {/* View Mode Buttons */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Button
+                variant={viewMode === "kanban" ? "default" : "outline"}
+                size="icon"
+                onClick={() => setViewMode("kanban")}
+                className="h-9 w-9"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "outline"}
+                size="icon"
+                onClick={() => setViewMode("list")}
+                className="h-9 w-9"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* User Avatar */}
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={user?.user_metadata?.avatar_url} />
+              <AvatarFallback>
+                {user?.email?.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
           </div>
         </div>
       </div>
