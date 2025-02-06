@@ -53,28 +53,28 @@ export const SidebarFooter = ({ isExpanded }: SidebarFooterProps) => {
         >
           <DropdownMenuItem
             onClick={() => navigate("/settings")}
-            className="text-white hover:bg-transparent"
+            className="text-white"
           >
             <Settings className="mr-2 h-4 w-4" />
             <span>Profil</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => navigate("/plan")}
-            className="text-white hover:bg-transparent"
+            className="text-white"
           >
             <User className="mr-2 h-4 w-4" />
             <span>Plan</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => navigate("/billing")}
-            className="text-white hover:bg-transparent"
+            className="text-white"
           >
             <CreditCard className="mr-2 h-4 w-4" />
             <span>Rechnung</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={handleSignOut}
-            className="text-white hover:bg-transparent"
+            className="text-white"
           >
             <LogOut className="mr-2 h-4 w-4" />
             <span>Abmelden</span>
