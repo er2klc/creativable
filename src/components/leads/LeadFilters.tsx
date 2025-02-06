@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -6,25 +7,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PlusCircle, GitBranch, Pencil, Save, Trash2 } from "lucide-react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { CreatePipelineDialog } from "./pipeline/CreatePipelineDialog";
-import { useState, useEffect } from "react";
-import { useSettings } from "@/hooks/use-settings";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { PlusCircle, GitBranch, Pencil, Save, Trash2 } from "lucide-react";
+import { CreatePipelineDialog } from "./pipeline/CreatePipelineDialog";
+import { DeletePipelineDialog } from "./pipeline/DeletePipelineDialog";
+import { usePipelineManagement } from "./pipeline/hooks/usePipelineManagement";
+import { useSettings } from "@/hooks/use-settings";
 
 interface LeadFiltersProps {
   selectedPipelineId: string | null;
@@ -37,156 +25,20 @@ export const LeadFilters = ({
   setSelectedPipelineId,
   onEditModeChange,
 }: LeadFiltersProps) => {
-  const session = useSession();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [hoveredPipeline, setHoveredPipeline] = useState<string | null>(null);
-  const { settings, updateSettings } = useSettings();
-  const queryClient = useQueryClient();
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editingPipelineName, setEditingPipelineName] = useState("");
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { settings } = useSettings();
 
-  const { data: pipelines = [] } = useQuery({
-    queryKey: ["pipelines"],
-    queryFn: async () => {
-      if (!session?.user?.id) return [];
-      
-      const { data, error } = await supabase
-        .from("pipelines")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .order("order_index");
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!session?.user?.id,
-  });
-
-  useEffect(() => {
-    if (settings?.last_selected_pipeline_id && !selectedPipelineId) {
-      setSelectedPipelineId(settings.last_selected_pipeline_id);
-    } else if (pipelines.length > 0 && !selectedPipelineId) {
-      setSelectedPipelineId(pipelines[0].id);
-    }
-  }, [settings?.last_selected_pipeline_id, pipelines, selectedPipelineId, setSelectedPipelineId]);
-
-  const handlePipelineSelect = async (pipelineId: string) => {
-    setSelectedPipelineId(pipelineId);
-    try {
-      await updateSettings.mutateAsync({
-        last_selected_pipeline_id: pipelineId
-      });
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
-    } catch (error) {
-      console.error("Error saving selected pipeline:", error);
-    }
-  };
-
-  const handleEditModeToggle = () => {
-    const newEditMode = !isEditMode;
-    setIsEditMode(newEditMode);
-    onEditModeChange?.(newEditMode);
-    const currentPipeline = pipelines.find(p => p.id === selectedPipelineId);
-    setEditingPipelineName(currentPipeline?.name || "");
-  };
-
-  const handleSaveChanges = async () => {
-    if (!selectedPipelineId || !editingPipelineName.trim()) return;
-
-    try {
-      const { error } = await supabase
-        .from("pipelines")
-        .update({ name: editingPipelineName })
-        .eq("id", selectedPipelineId);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
-      toast.success(
-        settings?.language === "en" 
-          ? "Pipeline name updated successfully" 
-          : "Pipeline-Name erfolgreich aktualisiert"
-      );
-      setIsEditMode(false);
-      onEditModeChange?.(false);
-    } catch (error) {
-      console.error("Error updating pipeline name:", error);
-      toast.error(
-        settings?.language === "en"
-          ? "Failed to update pipeline name"
-          : "Fehler beim Aktualisieren des Pipeline-Namens"
-      );
-    }
-  };
-
-  const handleDeletePipeline = async () => {
-    if (!selectedPipelineId || pipelines.length <= 1) return;
-
-    try {
-      // Get the first pipeline and its first phase as fallback
-      const fallbackPipeline = pipelines.find(p => p.id !== selectedPipelineId);
-      if (!fallbackPipeline) return;
-
-      const { data: fallbackPhase } = await supabase
-        .from("pipeline_phases")
-        .select("id")
-        .eq("pipeline_id", fallbackPipeline.id)
-        .order("order_index")
-        .limit(1)
-        .single();
-
-      if (fallbackPhase) {
-        // Move all leads to the first phase of the first pipeline
-        await supabase
-          .from("leads")
-          .update({
-            pipeline_id: fallbackPipeline.id,
-            phase_id: fallbackPhase.id
-          })
-          .eq("pipeline_id", selectedPipelineId);
-      }
-
-      // First delete all phases
-      const { error: phasesError } = await supabase
-        .from("pipeline_phases")
-        .delete()
-        .eq("pipeline_id", selectedPipelineId);
-
-      if (phasesError) throw phasesError;
-
-      // Then delete the pipeline
-      const { error: pipelineError } = await supabase
-        .from("pipelines")
-        .delete()
-        .eq("id", selectedPipelineId);
-
-      if (pipelineError) throw pipelineError;
-
-      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
-      localStorage.removeItem('lastUsedPipelineId');
-      
-      // Select first available pipeline
-      const remainingPipelines = pipelines.filter(p => p.id !== selectedPipelineId);
-      setSelectedPipelineId(remainingPipelines[0]?.id || null);
-      
-      toast.success(
-        settings?.language === "en"
-          ? "Pipeline deleted successfully"
-          : "Pipeline erfolgreich gelöscht"
-      );
-      setShowDeleteDialog(false);
-      setIsEditMode(false);
-      onEditModeChange?.(false);
-    } catch (error) {
-      console.error("Error deleting pipeline:", error);
-      toast.error(
-        settings?.language === "en"
-          ? "Failed to delete pipeline"
-          : "Fehler beim Löschen der Pipeline"
-      );
-    }
-  };
+  const {
+    pipelines,
+    isEditMode,
+    editingPipelineName,
+    setEditingPipelineName,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    handleEditModeToggle,
+    handleSaveChanges,
+    handleDeletePipeline,
+  } = usePipelineManagement(selectedPipelineId, setSelectedPipelineId, onEditModeChange);
 
   const selectedPipeline = pipelines.find(p => p.id === selectedPipelineId);
 
@@ -208,9 +60,7 @@ export const LeadFilters = ({
           {pipelines.map(pipeline => (
             <DropdownMenuItem 
               key={pipeline.id}
-              onMouseEnter={() => setHoveredPipeline(pipeline.id)}
-              onMouseLeave={() => setHoveredPipeline(null)}
-              onClick={() => handlePipelineSelect(pipeline.id)}
+              onClick={() => setSelectedPipelineId(pipeline.id)}
               className="flex items-center justify-between"
             >
               <span>{pipeline.name}</span>
@@ -276,28 +126,11 @@ export const LeadFilters = ({
         onOpenChange={setShowCreateDialog} 
       />
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {settings?.language === "en" ? "Delete Pipeline" : "Pipeline löschen"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {settings?.language === "en" 
-                ? "Are you sure you want to delete this pipeline? This action cannot be undone."
-                : "Sind Sie sicher, dass Sie diese Pipeline löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              {settings?.language === "en" ? "Cancel" : "Abbrechen"}
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeletePipeline}>
-              {settings?.language === "en" ? "Delete" : "Löschen"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeletePipelineDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleDeletePipeline}
+      />
     </div>
   );
 };
