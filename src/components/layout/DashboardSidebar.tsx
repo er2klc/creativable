@@ -80,7 +80,7 @@ export const DashboardSidebar = () => {
             unreadCount={unreadCount}
           />
 
-          <div className="h-px w-full bg-gradient-to-r from-sidebar-border via-sidebar-border to-transparent my-2" />
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
 
           <SidebarMenuSection 
             title="Teams & Gruppen" 
@@ -88,7 +88,7 @@ export const DashboardSidebar = () => {
             isExpanded={isExpanded}
           />
 
-          <div className="h-px w-full bg-gradient-to-r from-sidebar-border via-sidebar-border to-transparent my-2" />
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
 
           <SidebarMenuSection 
             title="Analyse & Tools" 
@@ -96,7 +96,7 @@ export const DashboardSidebar = () => {
             isExpanded={isExpanded}
           />
 
-          <div className="h-px w-full bg-gradient-to-r from-sidebar-border via-sidebar-border to-transparent my-2" />
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
 
           <SidebarMenuSection 
             title="Rechtliches" 

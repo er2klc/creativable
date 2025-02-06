@@ -1,4 +1,5 @@
-import { LayoutGrid, Users, Calendar, CheckSquare, MessageSquare, Waves, Link2, FileText } from "lucide-react";
+
+import { LayoutGrid, Users, Calendar, CheckSquare, MessageSquare, Waves, Link2 } from "lucide-react";
 import { useTaskCount } from "../hooks/useTaskCount";
 import { useAppointmentCount } from "../hooks/useAppointmentCount";
 import { useElevateProgress } from "../hooks/useElevateProgress";
@@ -33,11 +34,6 @@ export const usePersonalItems = () => {
       title: "Links",
       icon: Link2,
       url: "/links"
-    },
-    {
-      title: "Changelog",
-      icon: FileText,
-      url: "/changelog"
     },
   ];
 };
