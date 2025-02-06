@@ -41,56 +41,65 @@ export function usePipelineManagement(initialPipelineId: string | null) {
     enabled: !!selectedPipelineId,
   });
 
-  // Initialize pipeline selection with better logic
+  // Pipeline selection initialization
   useEffect(() => {
-    if (pipelines.length > 0 && !selectedPipelineId) {
-      // Only select a pipeline if we don't have one selected yet
+    const initializePipeline = async () => {
+      if (!pipelines.length) return;
+
+      // Skip if we already have a selection
+      if (selectedPipelineId && pipelines.some(p => p.id === selectedPipelineId)) {
+        console.log("Keeping current pipeline selection:", selectedPipelineId);
+        return;
+      }
+
+      // Get saved pipeline from settings
+      const savedPipelineId = settings?.last_selected_pipeline_id;
+      console.log("Saved pipeline from settings:", savedPipelineId);
+
       let pipelineToSelect: string | null = null;
 
-      // Priority 1: Last selected pipeline from settings
-      if (settings?.last_selected_pipeline_id && 
-          pipelines.some(p => p.id === settings.last_selected_pipeline_id)) {
-        console.log("Using last selected pipeline from settings:", settings.last_selected_pipeline_id);
-        pipelineToSelect = settings.last_selected_pipeline_id;
-      } 
-      // Priority 2: First available pipeline (base pipeline) - only if no saved selection
-      else if (!settings?.last_selected_pipeline_id && pipelines[0]) {
-        console.log("No saved pipeline selection, using first pipeline:", pipelines[0].id);
+      if (savedPipelineId && pipelines.some(p => p.id === savedPipelineId)) {
+        console.log("Using saved pipeline:", savedPipelineId);
+        pipelineToSelect = savedPipelineId;
+      } else if (initialPipelineId && pipelines.some(p => p.id === initialPipelineId)) {
+        console.log("Using initial pipeline:", initialPipelineId);
+        pipelineToSelect = initialPipelineId;
+      } else {
+        console.log("Using first available pipeline:", pipelines[0].id);
         pipelineToSelect = pipelines[0].id;
       }
 
-      if (pipelineToSelect) {
-        setSelectedPipelineId(pipelineToSelect);
-      }
-    }
-  }, [pipelines, settings?.last_selected_pipeline_id, selectedPipelineId]);
+      setSelectedPipelineId(pipelineToSelect);
+    };
 
-  // Update settings when pipeline changes
+    initializePipeline();
+  }, [pipelines, settings?.last_selected_pipeline_id, initialPipelineId, selectedPipelineId]);
+
+  // Persist pipeline selection to settings
   useEffect(() => {
     const updateSettings = async () => {
-      if (selectedPipelineId) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+      if (!selectedPipelineId) return;
 
-        console.log("Updating last selected pipeline in settings to:", selectedPipelineId);
-        
-        const { error } = await supabase
-          .from('settings')
-          .upsert({ 
-            user_id: user.id,
-            last_selected_pipeline_id: selectedPipelineId 
-          }, {
-            onConflict: 'user_id'
-          });
-        
-        if (error) {
-          console.error("Error updating last selected pipeline:", error);
-          toast.error("Failed to save pipeline selection");
-        } else {
-          console.log("Successfully updated last selected pipeline:", selectedPipelineId);
-          // Invalidate settings query to ensure it's reloaded
-          queryClient.invalidateQueries({ queryKey: ["settings"] });
-        }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      console.log("Saving pipeline selection to settings:", selectedPipelineId);
+      
+      const { error } = await supabase
+        .from('settings')
+        .upsert({ 
+          user_id: user.id,
+          last_selected_pipeline_id: selectedPipelineId 
+        }, {
+          onConflict: 'user_id'
+        });
+      
+      if (error) {
+        console.error("Error saving pipeline selection:", error);
+        toast.error("Failed to save pipeline selection");
+      } else {
+        console.log("Successfully saved pipeline selection:", selectedPipelineId);
+        queryClient.invalidateQueries({ queryKey: ["settings"] });
       }
     };
 
