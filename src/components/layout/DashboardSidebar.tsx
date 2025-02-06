@@ -91,9 +91,7 @@ export const DashboardSidebar = () => {
         isExpanded={isExpanded}
         unreadCount={unreadCount}
       />
-     {/* Trennlinie */}
-
- <div className="border-t border-white/10 my-2"></div>
+    
       {/* Teams & Gruppen */}
       <SidebarMenuSection
         title="Teams & Gruppen"
