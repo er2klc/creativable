@@ -28,10 +28,14 @@ export const SidebarFooter = ({ isExpanded }: SidebarFooterProps) => {
 
   return (
     <div className="bg-[#111111] p-1">
-      <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+      <DropdownMenu 
+        open={isMenuOpen} 
+        onOpenChange={setIsMenuOpen}
+        modal={true}
+      >
         <DropdownMenuTrigger 
           className="w-full focus:outline-none group-hover:!bg-transparent"
-          onMouseEnter={(e) => {
+          onClick={(e) => {
             // Prevent event propagation to stop sidebar from expanding
             e.stopPropagation();
           }}
@@ -40,7 +44,7 @@ export const SidebarFooter = ({ isExpanded }: SidebarFooterProps) => {
             className={`flex items-center gap-3 p-2 rounded-md transition-colors group cursor-pointer hover:bg-white/10 ${
               isExpanded ? "justify-start" : "justify-center"
             }`}
-            onMouseEnter={(e) => {
+            onClick={(e) => {
               // Prevent event propagation to stop sidebar from expanding
               e.stopPropagation();
             }}
