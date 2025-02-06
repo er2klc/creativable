@@ -92,7 +92,8 @@ export const DashboardSidebar = () => {
         unreadCount={unreadCount}
       />
      {/* Trennlinie */}
-<div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+<div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
+
  <div className="border-t border-white/10 my-2"></div>
       {/* Teams & Gruppen */}
       <SidebarMenuSection
@@ -101,7 +102,8 @@ export const DashboardSidebar = () => {
         isExpanded={isExpanded}
       />
      {/* Trennlinie */}
-<div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+<div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
+
 
       {/* Analyse & Tools */}
       <SidebarMenuSection
@@ -110,7 +112,8 @@ export const DashboardSidebar = () => {
         isExpanded={isExpanded}
       />
       {/* Trennlinie */}
-<div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+<div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
+
 
       {/* Rechtliches */}
       <SidebarMenuSection
@@ -119,14 +122,16 @@ export const DashboardSidebar = () => {
         isExpanded={isExpanded}
       />
       {/* Trennlinie */}
-<div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+<div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
+
 
       {/* Super Admin */}
       <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
     </div>
 
     {/* Trennlinie */}
-    <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+    <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
+
 
     {/* Footer fixiert */}
    <div className="sticky bottom-0 z-10 bg-[#111111]">
