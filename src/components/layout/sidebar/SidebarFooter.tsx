@@ -27,7 +27,7 @@ export const SidebarFooter = ({ isExpanded, currentVersion }: SidebarFooterProps
   };
 
   return (
-    <div className="p-2 border-t border-sidebar-border">
+    <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent">
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
