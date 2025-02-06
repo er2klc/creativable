@@ -33,8 +33,8 @@ export const LeadsHeader = ({
   const [showLinkedInDialog, setShowLinkedInDialog] = useState(false);
 
   return (
-    <div className="space-y-4 w-full">
-      <div className="flex flex-wrap items-center gap-4 w-full">
+    <div className="space-y-4 w-full px-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 w-full max-w-[100vw] overflow-x-hidden">
         <div className="flex items-center gap-4 flex-shrink-0">
           {/* Page Title */}
           <div className="flex items-center gap-2">
@@ -79,7 +79,7 @@ export const LeadsHeader = ({
         </div>
 
         {/* Search Field */}
-        <div className="flex-1 min-w-[200px]">
+        <div className="flex-1 min-w-[200px] max-w-xl">
           <LeadSearch value={searchQuery} onChange={setSearchQuery} />
         </div>
 
