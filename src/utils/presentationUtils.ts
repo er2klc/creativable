@@ -1,4 +1,3 @@
-
 export const generateUniqueSlug = (baseSlug: string): string => {
   const timestamp = new Date().getTime();
   return `${baseSlug}-${timestamp}`;

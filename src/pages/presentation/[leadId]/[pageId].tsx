@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { PresentationLoading } from '@/components/presentation/PresentationLoading';
 import { PresentationError } from '@/components/presentation/PresentationError';
@@ -12,18 +12,6 @@ export default function PresentationPage() {
   const [viewId, setViewId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userIp, setUserIp] = useState<string>('');
-  const [userLocation, setUserLocation] = useState<string>('');
-
-  useEffect(() => {
-    fetch('https://api.ipify.org?format=json')
-      .then(res => res.json())
-      .then(data => setUserIp(data.ip));
-
-    fetch('https://ipapi.co/json/')
-      .then(res => res.json())
-      .then(data => setUserLocation(`${data.city}, ${data.country_name}`));
-  }, []);
 
   useEffect(() => {
     loadPresentationPage();
@@ -31,8 +19,6 @@ export default function PresentationPage() {
     const handleUnload = () => {
       if (viewId) {
         const metadata = {
-          ip: userIp,
-          location: userLocation,
           type: 'youtube',
           event_type: 'video_closed'
         };
@@ -49,7 +35,7 @@ export default function PresentationPage() {
     
     window.addEventListener('unload', handleUnload);
     return () => window.removeEventListener('unload', handleUnload);
-  }, [leadId, pageId, userIp, userLocation]);
+  }, [leadId, pageId]);
 
   const loadPresentationPage = async () => {
     if (!leadId || !pageId) {
@@ -64,12 +50,12 @@ export default function PresentationPage() {
         .select(`
           *,
           user:user_id (
-            profiles (
+            profiles:profiles (
               display_name,
               avatar_url
             )
           ),
-          lead:leads (
+          lead:lead_id (
             name,
             social_media_profile_image_url
           )
@@ -102,15 +88,14 @@ export default function PresentationPage() {
         return;
       }
 
-      // Transform the nested data structure to match PresentationPageData
       const transformedData: PresentationPageData = {
         title: pageData.title,
         video_url: pageData.video_url,
         lead_id: pageData.lead_id,
         user: {
           profiles: {
-            display_name: pageData.user?.profiles?.[0]?.display_name || '',
-            avatar_url: pageData.user?.profiles?.[0]?.avatar_url || '',
+            display_name: pageData.user?.profiles?.display_name || '',
+            avatar_url: pageData.user?.profiles?.avatar_url || '',
           }
         },
         lead: {
@@ -130,8 +115,6 @@ export default function PresentationPage() {
             video_progress: 0,
             completed: false,
             metadata: {
-              ip: userIp,
-              location: userLocation,
               type: 'youtube',
               event_type: 'video_opened'
             }
@@ -158,8 +141,6 @@ export default function PresentationPage() {
 
     const isCompleted = progress >= 95;
     const metadata = {
-      ip: userIp,
-      location: userLocation,
       type: 'youtube',
       event_type: isCompleted ? 'video_completed' : 'video_progress'
     };
