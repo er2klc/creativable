@@ -35,11 +35,16 @@ export const SidebarMenuSection = ({
 
   return (
     <SidebarGroup>
+      {/* Titel der Gruppe */}
       <div className="flex items-center px-4 py-1.5">
         <SidebarGroupLabel className={`transition-opacity duration-300 text-white/70 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
           {title}
         </SidebarGroupLabel>
       </div>
+
+      {/* Trennlinie unterhalb des Titels */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
+
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
@@ -49,39 +54,39 @@ export const SidebarMenuSection = ({
                   <div className="relative">
                     {item.showProgress ? (
                     <div className="relative pr-4 flex items-center justify-center w-8 h-8">
-  <svg 
-    className="absolute w-full h-full" viewBox="0 0 36 36">
-    <path
-      d="M18 2.0845
-        a 15.9155 15.9155 0 0 1 0 31.831
-        a 15.9155 15.9155 0 0 1 0 -31.831"
-      fill="none"
-      stroke="#444"
-      strokeWidth="2"
-      strokeDasharray="100, 100"
-    />
-    <path
-      d="M18 2.0845
-        a 15.9155 15.9155 0 0 1 0 31.831
-        a 15.9155 15.9155 0 0 1 0 -31.831"
-      fill="none"
-      stroke="#F1C232"
-      strokeWidth="2"
-      strokeDasharray={`${elevateProgress}, 100`}
-    />
-  </svg>
-  <item.icon
-    className="absolute top-1/2 transform -translate-x-[calc(50%-11px)] -translate-y-1/2 h-5 w-5"
-  />
-  {elevateProgress > 0 && (
-    <Badge 
-      variant="outline" 
-      className="absolute -top-2 -right-1 text-[11px] min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-[#161616] text-[#F1C232] border-none"
-    >
-      {elevateProgress}%
-    </Badge>
-  )}
-</div>
+                      <svg 
+                        className="absolute w-full h-full" viewBox="0 0 36 36">
+                        <path
+                          d="M18 2.0845
+                            a 15.9155 15.9155 0 0 1 0 31.831
+                            a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="#444"
+                          strokeWidth="2"
+                          strokeDasharray="100, 100"
+                        />
+                        <path
+                          d="M18 2.0845
+                            a 15.9155 15.9155 0 0 1 0 31.831
+                            a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="#F1C232"
+                          strokeWidth="2"
+                          strokeDasharray={`${elevateProgress}, 100`}
+                        />
+                      </svg>
+                      <item.icon
+                        className="absolute top-1/2 transform -translate-x-[calc(50%-11px)] -translate-y-1/2 h-5 w-5"
+                      />
+                      {elevateProgress > 0 && (
+                        <Badge 
+                          variant="outline" 
+                          className="absolute -top-2 -right-1 text-[11px] min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-[#161616] text-[#F1C232] border-none"
+                        >
+                          {elevateProgress}%
+                        </Badge>
+                      )}
+                    </div>
                     ) : (
                       <div className="relative">
                         <item.icon className={`shrink-0 transition-all duration-300 ${isExpanded ? 'h-[21px] w-[21px]' : 'h-[21px] w-[21px]'} group-hover/item:h-[28px] group-hover/item:w-[28px]`} /> 
@@ -118,6 +123,9 @@ export const SidebarMenuSection = ({
           ))}
         </SidebarMenu>
       </SidebarGroupContent>
+
+      {/* Trennlinie unterhalb der Gruppe */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
     </SidebarGroup>
   );
 };
