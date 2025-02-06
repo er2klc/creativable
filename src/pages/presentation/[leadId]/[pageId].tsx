@@ -68,7 +68,6 @@ export default function PresentationPage() {
   .eq('slug', pageId)
   .maybeSingle();
 
-
       if (pageError) {
         console.error('Error loading presentation page:', pageError);
         setError("Presentation not found");
