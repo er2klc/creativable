@@ -17,7 +17,7 @@ export const DashboardSidebar = () => {
   const unreadCount = useUnreadCount();
 
   // Fetch latest version from changelog_entries
-  const { data: versionData } = useQuery({
+  const { data: versionData, error } = useQuery({
     queryKey: ['latest-version'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -29,7 +29,7 @@ export const DashboardSidebar = () => {
 
       if (error) throw error;
       return data?.version || '0.1';
-    }
+    },
   });
 
   useEffect(() => {
@@ -64,52 +64,60 @@ export const DashboardSidebar = () => {
   }, []);
 
   return (
-<Sidebar 
-  className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out h-screen`}
-  {...handlers}
->
-  {/* Hintergrund und Stile */}
-  <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[72px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
+    <Sidebar 
+      className={`fixed group w-[72px] hover:w-[240px] transition-all no-scrollbar duration-300 ease-in-out h-screen`}
+      {...handlers}
+    >
+      {/* Hintergrund */}
+      <div className={`absolute inset-0 pointer-events-none ${isExpanded ? 'w-[240px]' : 'w-[72px]'} bg-[#0A0A0A]/95 backdrop-blur-xl shadow-2xl transition-all duration-300`} />
 
-  {/* Sidebar-Inhalt */}
-  <SidebarContent className="flex flex-col h-full relative overflow-hidden">
-    {/* Header fixiert */}
-    <div className="sticky top-0 z-10">
-      <SidebarHeader isExpanded={isExpanded} />
-    </div>
+      {/* Sidebar-Inhalt */}
+      <SidebarContent className="flex flex-col h-full">
+        {/* Header fixiert */}
+        <div className="sticky top-0 z-10">
+          <SidebarHeader isExpanded={isExpanded} />
+        </div>
 
-    {/* Mittlerer Bereich mit Scrollfunktion */}
-    <div className="flex-1 overflow-y-auto no-scrollbar">
-      <SidebarMenuSection 
-        title="Persönlich" 
-        items={personalItems} 
-        isExpanded={isExpanded}
-        unreadCount={unreadCount}
-      />
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      <SidebarMenuSection title="Teams & Gruppen" items={teamItems} isExpanded={isExpanded} />
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      <SidebarMenuSection title="Analyse & Tools" items={analysisItems} isExpanded={isExpanded} />
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      <SidebarMenuSection title="Rechtliches" items={legalItems} isExpanded={isExpanded} />
-
-      {/* Super Admin Bereich in den scrollbaren Bereich integriert */}
-      {isSuperAdmin && (
-        <>
+        {/* Mittlerer Bereich scrollbar */}
+        <div className="flex-1 overflow-y-auto no-scrollbar">
+          <SidebarMenuSection 
+            title="Persönlich" 
+            items={personalItems} 
+            isExpanded={isExpanded}
+            unreadCount={unreadCount}
+          />
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
-        </>
-      )}
-    </div>
+          <SidebarMenuSection title="Teams & Gruppen" items={teamItems} isExpanded={isExpanded} />
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <SidebarMenuSection title="Analyse & Tools" items={analysisItems} isExpanded={isExpanded} />
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <SidebarMenuSection title="Rechtliches" items={legalItems} isExpanded={isExpanded} />
+          <div className="mt-2">
+            <AdminSection isExpanded={isExpanded} isSuperAdmin={isSuperAdmin} />
+          </div>
+        </div>
 
-    {/* Footer fixiert */}
-    <div className="sticky bottom-0 z-10 bg-[#111111]/80">
-      <SidebarFooter 
-        isExpanded={isExpanded} 
-        currentVersion={versionData || '0.1'}
-      />
-    </div>
-  </SidebarContent>
-</Sidebar>
+        {/* Footer fixiert */}
+        <div className="sticky bottom-0 z-10">
+          <SidebarFooter 
+            isExpanded={isExpanded} 
+            currentVersion={versionData || '0.1'}
+          />
+
+          {/* Changelog unterhalb des Footers */}
+          <div 
+            className="flex items-center justify-between px-3 py-2 bg-[#111111] border-t border-white/10 cursor-pointer hover:bg-white/10"
+            onClick={() => window.location.href = "/changelog"}
+          >
+            <span className={`text-sm text-white ${isExpanded ? "block" : "hidden"}`}>
+              Changelog
+            </span>
+            <span className="text-xs text-gray-400">
+              v{versionData || "0.1"}
+            </span>
+          </div>
+        </div>
+      </SidebarContent>
+    </Sidebar>
   );
 };
