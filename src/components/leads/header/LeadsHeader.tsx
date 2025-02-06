@@ -6,8 +6,7 @@ import { AddLeadDialog } from "../AddLeadDialog";
 import { CreateInstagramContactDialog } from "../instagram/CreateInstagramContactDialog";
 import { CreateLinkedInContactDialog } from "../linkedin/CreateLinkedInContactDialog";
 import { LeadFilters } from "../LeadFilters";
-import { useState, useEffect } from "react";
-import { useSidebar } from "@/components/ui/sidebar/SidebarContext";
+import { useState } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface LeadsHeaderProps {
@@ -32,17 +31,10 @@ export const LeadsHeader = ({
   const [showAddLead, setShowAddLead] = useState(false);
   const [showInstagramDialog, setShowInstagramDialog] = useState(false);
   const [showLinkedInDialog, setShowLinkedInDialog] = useState(false);
-  const { open: isSidebarExpanded } = useSidebar();
 
   return (
-    <div 
-      className="fixed top-0 left-0 right-0 bg-background border-b z-10 transition-[padding-left] duration-300"
-      style={{ 
-        paddingLeft: isSidebarExpanded ? "240px" : "72px",
-        width: "100%"
-      }}
-    >
-      <div className="px-4 py-4">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b">
+      <div className="max-w-[100vw] px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4 w-full">
           <div className="flex items-center gap-4 flex-shrink-0">
             {/* Page Title */}
