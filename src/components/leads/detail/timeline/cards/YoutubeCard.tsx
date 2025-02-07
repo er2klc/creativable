@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { CheckCircle2, X, Copy, Zap } from "lucide-react";
+import { CheckCircle2, X, Copy } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 
@@ -45,7 +45,14 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                      metadata?.event_type === 'video_closed' || 
                      metadata?.event_type === 'video_completed';
 
-  const isLiveWatching = metadata?.event_type === 'video_progress';
+  console.log("DEBUG YoutubeCard:", {
+    latestProgress,
+    metadata: metadata,
+    isViewCard,
+    hasMilestones: metadata?.progress_milestones?.length,
+    hasViewHistory: metadata?.view_history?.length,
+    timestamp: new Date().toISOString()
+  });
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -69,6 +76,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     return `${metadata.ip || 'Unknown IP'} | ${metadata.location || 'Unknown Location'}`;
   };
 
+  // Group milestones by viewing session and get max progress for each
   const getSessionMilestones = () => {
     if (!metadata.view_history) return [];
     
@@ -79,12 +87,14 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       lastTimestamp: new Date().getTime()
     };
 
-    const history = [...metadata.view_history]
-      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-      .filter(entry => entry.progress > 5); // Filter out entries with progress ≤ 5%
+    // Sort view history by timestamp
+    const history = [...metadata.view_history].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
 
     history.forEach(entry => {
       const timestamp = new Date(entry.timestamp).getTime();
+      // If more than 30 minutes have passed, consider it a new session
       if (timestamp - currentSession.lastTimestamp > 30 * 60 * 1000) {
         if (currentSession.timestamp) {
           sessions.push({
@@ -98,11 +108,13 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           lastTimestamp: timestamp
         };
       } else {
+        // Update progress if it's higher
         currentSession.progress = Math.max(currentSession.progress, entry.progress);
         currentSession.lastTimestamp = timestamp;
       }
     });
 
+    // Add the last session
     if (currentSession.timestamp) {
       sessions.push({
         timestamp: currentSession.timestamp,
@@ -125,26 +137,13 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       )}
       <div className="flex items-start justify-between mt-2">
         <div className="space-y-1 flex-1">
-          <div className="font-medium text-base flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {!isViewCard ? (
-                settings?.language === "en" 
-                  ? "Presentation URL created"
-                  : "Präsentation URL wurde erstellt"
-              ) : (
-                metadata.title || content
-              )}
-              {isLiveWatching && (
-                <span className="flex items-center gap-1 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
-                  <Zap className="h-3 w-3" />
-                  Live
-                </span>
-              )}
-            </div>
-            {isLiveWatching && (
-              <span className="text-xs text-gray-600">
-                {Math.round(latestProgress)}%
-              </span>
+          <div className="font-medium text-base">
+            {!isViewCard ? (
+              settings?.language === "en" 
+                ? "Presentation URL created"
+                : "Präsentation URL wurde erstellt"
+            ) : (
+              metadata.title || content
             )}
           </div>
           {isViewCard && (
@@ -166,15 +165,17 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
             <div className="space-y-4 mt-4">
               {sessionMilestones.map((session, index) => (
                 <div key={index} className="space-y-1">
-                  <div className="text-sm flex items-center justify-between text-gray-600">
-                    <span>{formatDateTime(session.timestamp, settings?.language)}</span>
-                    <span>{Math.round(session.progress)}%</span>
+                  <div className="text-sm text-gray-600">
+                    {formatDateTime(session.timestamp, settings?.language)}
                   </div>
                   <div className="relative h-2 bg-gray-200 rounded">
                     <div 
                       className="absolute left-0 top-0 h-full bg-green-500 rounded"
                       style={{ width: `${session.progress}%` }}
                     />
+                    <div className="absolute -right-6 top-1/2 -translate-y-1/2 text-xs text-gray-600">
+                      {Math.round(session.progress)}%
+                    </div>
                   </div>
                 </div>
               ))}
