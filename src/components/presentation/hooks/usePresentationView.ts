@@ -72,7 +72,13 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           .update({
             metadata: {
               ...viewData.metadata,
-              id: viewData.id
+              id: viewData.id,
+              type: 'youtube',
+              event_type: 'video_opened',
+              title: pageData.title,
+              url: pageData.video_url,
+              ip: ipLocationData?.ipAddress || 'unknown',
+              location: ipLocationData?.location || 'Unknown Location'
             }
           })
           .eq('id', viewData.id);
@@ -132,4 +138,3 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     isCreatingView
   };
 };
-
