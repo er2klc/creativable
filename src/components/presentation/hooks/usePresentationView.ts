@@ -150,21 +150,18 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         id: viewId
       };
 
-      const { error } = await supabase.rpc('jsonb_array_append', {
-        arr: currentView.view_history || '[]',
-        elem: newHistoryEntry
-      }).then(async () => {
-        return await supabase
-          .from('presentation_views')
-          .update({
-            video_progress: progress,
-            completed: isCompleted,
-            ip_address: ipLocationData?.ipAddress || 'unknown',
-            location: ipLocationData?.location || 'Unknown Location',
-            metadata: updatedMetadata
-          })
-          .eq('id', viewId);
-      });
+      // Update the view history directly in the update query
+      const { error } = await supabase
+        .from('presentation_views')
+        .update({
+          video_progress: progress,
+          completed: isCompleted,
+          ip_address: ipLocationData?.ipAddress || 'unknown',
+          location: ipLocationData?.location || 'Unknown Location',
+          metadata: updatedMetadata,
+          view_history: [...(currentView.view_history || []), newHistoryEntry]
+        })
+        .eq('id', viewId);
 
       if (error) {
         console.error('Error updating progress:', error);
