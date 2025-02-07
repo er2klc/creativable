@@ -1,10 +1,10 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Tables } from "@/integrations/supabase/types";
-import { handlePartnerOnboarding } from "./partner/usePartnerOnboarding";
 
 export const useLeadMutations = (leadId: string | null, onClose: () => void) => {
   const queryClient = useQueryClient();
@@ -14,11 +14,6 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
   const updateLeadMutation = useMutation({
     mutationFn: async (updates: Partial<Tables<"leads">>) => {
       if (!leadId) throw new Error("Invalid lead ID");
-
-      // Handle partner status change
-      if (updates.status === 'partner') {
-        await handlePartnerOnboarding(leadId);
-      }
 
       const { data, error } = await supabase
         .from("leads")
@@ -55,14 +50,18 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
       console.log('Starting deletion process for lead:', leadId);
 
       const relatedTables = [
+        'presentation_pages',
+        'presentation_views',
         'contact_group_states',
+        'social_media_scan_history',
         'lead_files',
         'lead_subscriptions',
         'messages',
         'notes',
         'tasks',
-        'social_media_scan_history',
-        'partner_onboarding_progress'
+        'lead_tags',
+        'lead_summaries',
+        'social_media_posts'
       ] as const;
 
       // Delete related records first
@@ -86,9 +85,13 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         .delete()
         .eq('id', leadId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting lead:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast.success(
         settings?.language === "en"
           ? "Contact deleted successfully"
