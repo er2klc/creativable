@@ -119,16 +119,14 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     const isCompleted = progress >= 95;
 
     try {
-      const { data: currentView, error: fetchError } = await supabase
+      const { data: currentView } = await supabase
         .from('presentation_views')
         .select('*')
         .eq('id', viewId)
-        .maybeSingle();
+        .single();
 
-      if (fetchError || !currentView) {
-        console.error('Could not find view record, recreating...');
-        setViewId(null); // Reset viewId to trigger recreation
-        createView(pageData); // Recreate the view
+      if (!currentView) {
+        console.error('Could not find view record');
         return;
       }
 
@@ -152,7 +150,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         id: viewId
       };
 
-      // Update the view history directly in the update query
       const { error } = await supabase
         .from('presentation_views')
         .update({
@@ -184,3 +181,4 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     isCreatingView
   };
 };
+
