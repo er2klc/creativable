@@ -65,10 +65,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
             {settings?.language === "en" ? "Presentation opened" : "Präsentation wurde geöffnet"}
           </div>
           <div className="text-gray-500 text-sm flex items-center gap-2">
-            {metadata.ip || 'Unknown'} | {metadata.location || 'Unknown'} 
-            {metadata?.id && (
-              <span>| View #{metadata.id}</span>
-            )}
+            {metadata.ip || 'Unknown'} | {metadata.location || 'Unknown'} | View #{metadata.id}
           </div>
           {isViewCard && (
             <div className="text-sm text-gray-600">
