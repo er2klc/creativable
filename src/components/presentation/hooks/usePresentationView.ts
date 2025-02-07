@@ -54,7 +54,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
               title: pageData.title,
               url: pageData.video_url,
               ip: ipLocationData?.ipAddress || 'unknown',
-              location: ipLocationData?.location || 'Unknown Location'
+              location: ipLocationData?.location || 'Unknown Location',
+              id: null // This will be updated with the actual ID after insert
             }
           }
         ])
@@ -65,6 +66,20 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         toast.error('Failed to create view record');
       } else {
         setViewId(viewData.id);
+        // Update metadata with the actual ID
+        const { error: updateError } = await supabase
+          .from('presentation_views')
+          .update({
+            metadata: {
+              ...viewData.metadata,
+              id: viewData.id
+            }
+          })
+          .eq('id', viewData.id);
+
+        if (updateError) {
+          console.error('Failed to update view metadata with ID:', updateError);
+        }
       }
     } catch (error) {
       toast.error('Failed to create presentation view');

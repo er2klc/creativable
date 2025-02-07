@@ -18,6 +18,7 @@ interface YoutubeCardProps {
     presentationUrl?: string;
     title?: string;
     url?: string;
+    id?: string; // The actual presentation_views ID
   };
   timestamp?: string;
 }
@@ -63,6 +64,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
 
   return (
     <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500")}>
+      <Progress value={progress} className="h-2 w-full -mt-4 -ml-4 mb-4" style={{ width: 'calc(100% + 2rem)' }} />
       <div className="flex items-start justify-between">
         <div className="space-y-1 flex-1">
           <div className="flex items-center gap-2">
@@ -76,13 +78,12 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
             </div>
           )}
           <div className="mt-2 w-full">
-            <Progress value={progress} className="h-2 w-full" />
-            <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center justify-between">
               <span className="text-xs text-gray-500">
                 {Math.round(progress)}%
               </span>
               <span className="text-xs text-gray-400">
-                ID: {metadata.view_id || 'N/A'}
+                ID: {metadata.id || 'N/A'}
               </span>
             </div>
           </div>
@@ -130,4 +131,3 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
-
