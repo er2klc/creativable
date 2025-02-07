@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { Eye, CheckCircle2, X } from "lucide-react";
+import { Eye, CheckCircle2, X, Info } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface YoutubeCardProps {
@@ -27,8 +27,9 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const { settings } = useSettings();
   const videoId = metadata?.url?.split('v=')[1] || '';
   const progress = metadata?.video_progress || 0;
-
-  console.log('YoutubeCard metadata:', metadata); // Debug log
+  const isViewCard = metadata?.event_type === 'video_opened' || 
+                     metadata?.event_type === 'video_closed' || 
+                     metadata?.event_type === 'video_completed';
 
   const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
     try {
@@ -66,10 +67,12 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
 
   return (
     <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500 relative")}>
-      <Progress 
-        value={progress} 
-        className="absolute top-0 left-0 right-0 h-2" 
-      />
+      {isViewCard && (
+        <Progress 
+          value={progress} 
+          className="absolute top-0 left-0 right-0 h-2" 
+        />
+      )}
       <div className="flex items-start justify-between mt-2">
         <div className="space-y-1 flex-1">
           <div className="flex items-center gap-2">
@@ -82,22 +85,27 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               {formatDateTime(timestamp, settings?.language)}
             </div>
           )}
-          <div className="mt-2 w-full">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">
-                {Math.round(progress)}%
-              </span>
-            </div>
-            {metadata?.id && (
-              <div className="mt-1 text-sm font-medium text-blue-600">
-                ID: {metadata.id}
+          {isViewCard && (
+            <div className="mt-2 w-full">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">
+                  {Math.round(progress)}%
+                </span>
+                {metadata?.id && (
+                  <div className="flex items-center gap-1">
+                    <Info className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm font-medium text-blue-600">
+                      View ID: {metadata.id}
+                    </span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
           <div className="flex gap-4 mt-2">
-            {metadata.presentationUrl && (
+            {!isViewCard && metadata.presentationUrl && (
               <button
-                onClick={() => copyToClipboard(metadata.presentationUrl, 'presentation')}
+                onClick={() => copyToClipboard(metadata.presentationUrl!, 'presentation')}
                 className="text-sm text-blue-500 hover:underline"
               >
                 {settings?.language === "en" ? "Copy Presentation URL" : "Präsentations-URL kopieren"}
