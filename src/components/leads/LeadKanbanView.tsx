@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
@@ -34,14 +34,8 @@ export const LeadKanbanView = ({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  useKanbanSubscription();
-
-  const handleLeadClick = (id: string) => {
-    navigate(`/contacts/${id}`);
-  };
-
-  // Subscribe to lead deletions
-  const subscribeToLeadDeletions = async () => {
+  useEffect(() => {
+    // Subscribe to lead deletions
     const channel = supabase
       .channel('lead-deletions')
       .on(
@@ -52,14 +46,17 @@ export const LeadKanbanView = ({
           table: 'leads',
         },
         (payload) => {
-          // Update the cache to remove the deleted lead
+          // Immediately update the cache to remove the deleted lead
           queryClient.setQueryData(
             ["leads", selectedPipelineId],
-            (oldData: Tables<"leads">[]) => {
+            (oldData: Tables<"leads">[] | undefined) => {
               if (!oldData) return [];
               return oldData.filter(lead => lead.id !== payload.old.id);
             }
           );
+          
+          // Also invalidate the query to ensure data consistency
+          queryClient.invalidateQueries({ queryKey: ["leads", selectedPipelineId] });
         }
       )
       .subscribe();
@@ -67,15 +64,11 @@ export const LeadKanbanView = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [selectedPipelineId, queryClient]);
 
-  // Set up the subscription when the component mounts
-  useState(() => {
-    const unsubscribe = subscribeToLeadDeletions();
-    return () => {
-      unsubscribe.then(cleanup => cleanup());
-    };
-  }, [selectedPipelineId]);
+  const handleLeadClick = (id: string) => {
+    navigate(`/contacts/${id}`);
+  };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
