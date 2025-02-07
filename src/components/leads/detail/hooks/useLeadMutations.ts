@@ -105,30 +105,26 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
       return { pipelineId: lead.pipeline_id };
     },
     onSuccess: async (data) => {
-      // Immediately remove from all caches
+      // First close the dialog to prevent any UI issues
+      onClose();
+
+      // Clear all relevant caches
       queryClient.removeQueries({ queryKey: ["leads"] });
       queryClient.removeQueries({ queryKey: ["lead", leadId] });
-      
-      // Clear all pipeline-specific caches
       queryClient.removeQueries({ queryKey: ["leads", data?.pipelineId] });
+      
+      // Force a complete cache clear
+      queryClient.clear();
 
-      // Show success message
+      // Show success toast
       toast.success(
         settings?.language === "en"
           ? "Contact deleted successfully"
           : "Kontakt erfolgreich gelöscht"
       );
-      
-      // Close dialog first
-      onClose();
-      
-      // Clear cache and reload before navigation
-      await queryClient.invalidateQueries();
-      queryClient.clear();
-      
-      // Navigate and force reload
-      navigate('/contacts', { replace: true });
-      window.location.reload();
+
+      // Navigate and force hard reload
+      window.location.href = '/contacts';
     },
     onError: (error) => {
       console.error("Error deleting lead:", error);
