@@ -119,14 +119,16 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     const isCompleted = progress >= 95;
 
     try {
-      const { data: currentView } = await supabase
+      const { data: currentView, error: fetchError } = await supabase
         .from('presentation_views')
         .select('*')
         .eq('id', viewId)
-        .single();
+        .maybeSingle();
 
-      if (!currentView) {
-        console.error('Could not find view record');
+      if (fetchError || !currentView) {
+        console.error('Could not find view record, recreating...');
+        setViewId(null); // Reset viewId to trigger recreation
+        createView(pageData); // Recreate the view
         return;
       }
 
