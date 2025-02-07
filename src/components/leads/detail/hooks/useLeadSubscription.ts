@@ -36,7 +36,7 @@ export const useLeadSubscription = (leadId: string | null) => {
         },
         handleLeadChange
       )
-      // Notes changes
+      // Notes changes (including presentation view updates)
       .on(
         'postgres_changes',
         {
@@ -45,7 +45,10 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'notes',
           filter: `lead_id=eq.${leadId}`
         },
-        handleNotesChange
+        (payload) => {
+          console.log('Notes change detected:', payload);
+          handleNotesChange(payload);
+        }
       )
       // Tasks changes
       .on(

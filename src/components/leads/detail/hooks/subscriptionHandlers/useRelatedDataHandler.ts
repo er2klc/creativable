@@ -24,7 +24,7 @@ export const useRelatedDataHandler = (
           return {
             ...old,
             platform: old.platform,
-            notes: data.notes,
+            notes: data.notes || [],
           };
         }
       );
