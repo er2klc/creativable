@@ -130,9 +130,10 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
           : "Kontakt erfolgreich gelöscht"
       );
       
-      // Navigate first, then close the dialog
+      // Zuerst navigieren, dann einen kompletten Seiten-Reload durchführen
       navigate('/contacts', { replace: true });
       onClose();
+      window.location.reload();
     },
     onError: (error) => {
       console.error("Error deleting lead:", error);
