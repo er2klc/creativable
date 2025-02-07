@@ -1,6 +1,6 @@
 
 import { useSettings } from "@/hooks/use-settings";
-import { formatDateTime } from "../../../utils/dateUtils";
+import { formatDateTime } from "../../utils/dateUtils";
 
 interface CardHeaderProps {
   title: string;
