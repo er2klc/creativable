@@ -57,7 +57,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     return `${metadata.ip || 'Unknown IP'} | ${metadata.location || 'Unknown Location'}`;
   };
 
-  // Create milestone segments
   const milestoneSegments = Array.from({ length: 20 }, (_, i) => i * 5);
 
   return (
@@ -98,6 +97,9 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
             <>
               <div className="text-sm text-gray-600">
                 {settings?.language === "en" ? "Progress" : "Fortschritt"}: {Math.round(latestProgress)}%
+              </div>
+              <div className="text-xs text-gray-500 mb-1">
+                {settings?.language === "en" ? "Started" : "Gestartet"}: {formatDateTime(timestamp, settings?.language)}
               </div>
               <div className="flex gap-0.5 mt-2 h-1.5">
                 {milestoneSegments.map((milestone) => (
@@ -162,3 +164,4 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
+
