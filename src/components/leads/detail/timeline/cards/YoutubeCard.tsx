@@ -4,7 +4,8 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { Eye } from "lucide-react";
+import { Eye, CheckCircle2, X } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 interface YoutubeCardProps {
   content: string;
@@ -24,6 +25,7 @@ interface YoutubeCardProps {
 export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) => {
   const { settings } = useSettings();
   const videoId = metadata?.url?.split('v=')[1] || '';
+  const progress = metadata?.video_progress || 0;
 
   const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
     try {
@@ -73,6 +75,12 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               {formatDateTime(timestamp, settings?.language)}
             </div>
           )}
+          <div className="mt-2 w-full">
+            <Progress value={progress} className="h-2 w-full" />
+            <span className="text-xs text-gray-500 mt-1">
+              {Math.round(progress)}%
+            </span>
+          </div>
           <div className="flex gap-4 mt-2">
             {metadata.url && (
               <button
@@ -94,12 +102,22 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
         </div>
         <div className="flex flex-col items-end">
           {videoId && (
-            <div className="w-48 h-27 rounded overflow-hidden">
+            <div className="w-48 h-27 rounded overflow-hidden relative">
               <img 
                 src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
                 alt="Video thumbnail"
                 className="w-full h-full object-cover"
               />
+              {progress >= 95 && (
+                <div className="absolute top-2 right-2">
+                  <CheckCircle2 className="h-6 w-6 text-green-500" />
+                </div>
+              )}
+              {progress === 0 && (
+                <div className="absolute top-2 right-2">
+                  <X className="h-6 w-6 text-red-500" />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -107,3 +125,4 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
+
