@@ -1477,7 +1477,7 @@ export type Database = {
           page_id: string
           progress_milestones: Json | null
           video_progress: number | null
-          view_history: Json[] | null
+          view_history: Json | null
           viewed_at: string | null
         }
         Insert: {
@@ -1491,7 +1491,7 @@ export type Database = {
           page_id: string
           progress_milestones?: Json | null
           video_progress?: number | null
-          view_history?: Json[] | null
+          view_history?: Json | null
           viewed_at?: string | null
         }
         Update: {
@@ -1505,7 +1505,7 @@ export type Database = {
           page_id?: string
           progress_milestones?: Json | null
           video_progress?: number | null
-          view_history?: Json[] | null
+          view_history?: Json | null
           viewed_at?: string | null
         }
         Relationships: [
@@ -3030,6 +3030,13 @@ export type Database = {
           "": unknown
         }
         Returns: unknown
+      }
+      jsonb_array_append: {
+        Args: {
+          arr: Json
+          elem: Json
+        }
+        Returns: Json
       }
       l2_norm:
         | {

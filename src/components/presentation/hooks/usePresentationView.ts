@@ -65,7 +65,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           video_progress: 0,
           completed: false,
           id: newViewId
-        }
+        },
+        view_history: []
       };
 
       const { error: viewError } = await supabase
@@ -137,6 +138,13 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         id: viewId
       };
 
+      const newHistoryEntry = {
+        timestamp: new Date().toISOString(),
+        progress: progress,
+        event_type: isCompleted ? 'video_completed' : 'video_progress'
+      };
+
+      // Use the RPC function to update the view
       const { error } = await supabase
         .from('presentation_views')
         .update({
@@ -144,7 +152,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           completed: isCompleted,
           ip_address: ipLocationData?.ipAddress || 'unknown',
           location: ipLocationData?.location || 'Unknown Location',
-          metadata: updatedMetadata
+          metadata: updatedMetadata,
+          view_history: newHistoryEntry
         })
         .eq('id', viewId);
 
