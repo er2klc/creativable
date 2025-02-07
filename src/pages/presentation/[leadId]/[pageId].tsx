@@ -46,7 +46,6 @@ export default function PresentationPage() {
     }
 
     try {
-      // Verbesserte Datenabrufung mit Benutzer- und Lead-Informationen
       const { data: pageData, error: pageError } = await supabase
         .from('presentation_pages')
         .select(`
@@ -61,12 +60,9 @@ export default function PresentationPage() {
             name,
             social_media_profile_image_url
           ),
-          user:user_id (
-            id,
-            profiles (
-              display_name,
-              avatar_url
-            )
+          creator:user_id (
+            display_name,
+            avatar_url
           )
         `)
         .eq('slug', pageId)
@@ -107,8 +103,8 @@ export default function PresentationPage() {
         },
         user: {
           profiles: {
-            display_name: pageData.user?.profiles?.[0]?.display_name || '',
-            avatar_url: pageData.user?.profiles?.[0]?.avatar_url || ''
+            display_name: pageData.creator?.display_name || '',
+            avatar_url: pageData.creator?.avatar_url || ''
           }
         }
       };
