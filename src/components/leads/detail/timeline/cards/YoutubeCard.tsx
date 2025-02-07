@@ -45,15 +45,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                      metadata?.event_type === 'video_closed' || 
                      metadata?.event_type === 'video_completed';
 
-  console.log("DEBUG YoutubeCard:", {
-    latestProgress,
-    metadata: metadata,
-    isViewCard,
-    hasMilestones: metadata?.progress_milestones?.length,
-    hasViewHistory: metadata?.view_history?.length,
-    timestamp: new Date().toISOString()
-  });
-
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -165,17 +156,15 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
             <div className="space-y-4 mt-4">
               {sessionMilestones.map((session, index) => (
                 <div key={index} className="space-y-1">
-                  <div className="text-sm text-gray-600">
-                    {formatDateTime(session.timestamp, settings?.language)}
+                  <div className="flex justify-between items-center text-sm text-gray-600">
+                    <span>{formatDateTime(session.timestamp, settings?.language)}</span>
+                    <span className="text-xs text-gray-600">{Math.round(session.progress)}%</span>
                   </div>
                   <div className="relative h-2 bg-gray-200 rounded">
                     <div 
                       className="absolute left-0 top-0 h-full bg-green-500 rounded"
                       style={{ width: `${session.progress}%` }}
                     />
-                    <div className="absolute -right-6 top-1/2 -translate-y-1/2 text-xs text-gray-600">
-                      {Math.round(session.progress)}%
-                    </div>
                   </div>
                 </div>
               ))}
