@@ -20,6 +20,11 @@ interface YoutubeCardProps {
     title?: string;
     url?: string;
     id?: string;
+    view_history?: Array<{
+      timestamp: string;
+      progress: number;
+      event_type: string;
+    }>;
   };
   timestamp?: string;
 }
@@ -164,4 +169,3 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
-
