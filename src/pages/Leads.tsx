@@ -34,7 +34,7 @@ const Leads = () => {
 
   return (
     <div className="flex flex-col h-screen">
-      <div className="fixed top-[48px] left-0 right-0 z-50 bg-background">
+      <div className={`fixed ${isMobile ? 'top-[48px]' : 'top-0 md:left-[72px] group-hover:left-[240px]'} right-0 z-50 bg-background transition-[left] duration-300`}>
         <LeadsHeader
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -46,7 +46,7 @@ const Leads = () => {
         />
       </div>
 
-      <div className="flex-1 mt-[132px] md:mt-[84px] overflow-hidden">
+      <div className={`flex-1 ${isMobile ? 'mt-[132px]' : 'mt-[84px]'} overflow-hidden`}>
         {(!isMobile && viewMode === "kanban") ? (
           <LeadKanbanView
             leads={leads}
@@ -67,4 +67,3 @@ const Leads = () => {
 };
 
 export default Leads;
-

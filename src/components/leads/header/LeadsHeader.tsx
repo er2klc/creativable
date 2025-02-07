@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { LeadSearch } from "../LeadSearch";
 import { LayoutGrid, List, ChevronDown, Instagram, Linkedin, Users } from "lucide-react";
@@ -42,13 +41,11 @@ export const LeadsHeader = ({
       <div className="w-full px-4 py-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
           <div className="flex items-center justify-between md:justify-start gap-4 flex-shrink-0">
-            {/* Page Title */}
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5" />
               <h1 className="text-xl font-semibold">Kontakte</h1>
             </div>
 
-            {/* Add Contact and Dropdown Buttons */}
             <div className="flex items-center gap-0">
               <Button
                 variant="default"
@@ -82,12 +79,10 @@ export const LeadsHeader = ({
             </div>
           </div>
 
-          {/* Search Field */}
           <div className="flex-1 min-w-0 max-w-xl">
             <LeadSearch value={searchQuery} onChange={setSearchQuery} />
           </div>
 
-          {/* Pipeline Selection and User Avatar */}
           <div className="flex items-center justify-between md:justify-end gap-4">
             <LeadFilters
               selectedPipelineId={selectedPipelineId}
@@ -95,7 +90,6 @@ export const LeadsHeader = ({
               onEditModeChange={setIsEditMode}
             />
 
-            {/* View Mode Buttons */}
             {!isMobile && (
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Button
@@ -117,7 +111,6 @@ export const LeadsHeader = ({
               </div>
             )}
 
-            {/* User Avatar - Hidden on Mobile */}
             {!isMobile && (
               <Avatar className="h-9 w-9">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
@@ -150,4 +143,3 @@ export const LeadsHeader = ({
     </div>
   );
 };
-
