@@ -1476,6 +1476,7 @@ export type Database = {
           metadata: Json | null
           page_id: string
           video_progress: number | null
+          view_history: Json[] | null
           viewed_at: string | null
         }
         Insert: {
@@ -1488,6 +1489,7 @@ export type Database = {
           metadata?: Json | null
           page_id: string
           video_progress?: number | null
+          view_history?: Json[] | null
           viewed_at?: string | null
         }
         Update: {
@@ -1500,6 +1502,7 @@ export type Database = {
           metadata?: Json | null
           page_id?: string
           video_progress?: number | null
+          view_history?: Json[] | null
           viewed_at?: string | null
         }
         Relationships: [

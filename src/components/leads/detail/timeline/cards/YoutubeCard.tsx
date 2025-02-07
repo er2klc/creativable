@@ -19,6 +19,11 @@ interface YoutubeCardProps {
     title?: string;
     url?: string;
     id?: string;
+    view_history?: Array<{
+      timestamp: string;
+      progress: number;
+      event_type: string;
+    }>;
   };
   timestamp?: string;
 }
@@ -31,8 +36,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                      metadata?.event_type === 'video_progress' ||
                      metadata?.event_type === 'video_closed' || 
                      metadata?.event_type === 'video_completed';
-
-  console.log("YoutubeCard rendering with metadata:", metadata); // Debug log
 
   const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
     try {
@@ -56,11 +59,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     return `${metadata.ip || 'Unknown IP'} | ${metadata.location || 'Unknown Location'}`;
   };
 
-  // Debug logs
-  console.log("Video progress:", progress);
-  console.log("Event type:", metadata?.event_type);
-  console.log("Full metadata:", metadata);
-
   return (
     <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500 relative")}>
       {isViewCard && (
@@ -83,6 +81,21 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           {isViewCard && (
             <div className="text-sm text-gray-600">
               {settings?.language === "en" ? "Progress" : "Fortschritt"}: {Math.round(progress)}%
+            </div>
+          )}
+          {metadata.view_history && metadata.view_history.length > 0 && (
+            <div className="mt-2 space-y-1">
+              <div className="font-medium text-sm text-gray-700">
+                {settings?.language === "en" ? "View History" : "Verlauf"}:
+              </div>
+              {metadata.view_history.map((view, index) => (
+                <div key={index} className="text-xs text-gray-600">
+                  {formatDateTime(view.timestamp, settings?.language)} - {Math.round(view.progress)}%
+                  {view.event_type === 'video_completed' && (
+                    <span className="text-green-600 ml-1">✓</span>
+                  )}
+                </div>
+              ))}
             </div>
           )}
           {timestamp && (
