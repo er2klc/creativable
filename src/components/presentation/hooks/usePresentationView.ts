@@ -7,12 +7,17 @@ import { toast } from 'sonner';
 export const usePresentationView = (pageId: string | undefined, leadId: string | undefined) => {
   const [viewId, setViewId] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [isCreatingView, setIsCreatingView] = useState(false);
   const ipLocationData = useIPLocation();
   const MAX_RETRIES = 3;
 
   const createView = async (pageData: any) => {
-    if (!pageData) {
-      console.error('Missing pageData for createView');
+    if (!pageData || !leadId || isCreatingView) {
+      console.log('Skipping view creation - missing data or already creating:', {
+        hasPageData: !!pageData,
+        hasLeadId: !!leadId,
+        isCreatingView
+      });
       return;
     }
 
@@ -23,12 +28,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       return;
     }
 
-    if (!leadId) {
-      console.error('Missing leadId for createView');
-      return;
-    }
-
     try {
+      setIsCreatingView(true);
       console.log('Creating presentation view with data:', {
         pageId: pageData.id,
         leadId,
@@ -69,6 +70,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     } catch (error) {
       console.error('Error creating presentation view:', error);
       toast.error('Failed to create presentation view');
+    } finally {
+      setIsCreatingView(false);
     }
   };
 
@@ -127,6 +130,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
   // Reset retry count when pageId changes
   useEffect(() => {
     setRetryCount(0);
+    setIsCreatingView(false);
   }, [pageId]);
 
   return {
