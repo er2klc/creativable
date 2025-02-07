@@ -4,40 +4,17 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { CheckCircle2, X, Copy } from "lucide-react";
+import { Copy } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-
-interface YoutubeCardProps {
-  content: string;
-  metadata: {
-    type: string;
-    video_progress?: number;
-    ip?: string;
-    location?: string;
-    event_type?: string;
-    presentationUrl?: string;
-    title?: string;
-    url?: string;
-    id?: string;
-    progress_milestones?: Array<{
-      progress: number;
-      timestamp: string;
-      completed: boolean;
-    }>;
-    view_history?: Array<{
-      timestamp: string;
-      progress: number;
-      event_type: string;
-    }>;
-  };
-  timestamp?: string;
-}
+import { VideoThumbnail } from "./youtube/VideoThumbnail";
+import { SessionProgress } from "./youtube/SessionProgress";
+import { ViewInfo } from "./youtube/ViewInfo";
+import { YoutubeCardProps } from "./youtube/types";
 
 export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) => {
   const { settings } = useSettings();
   const videoId = metadata?.url?.split('v=')[1] || '';
-  
   const latestProgress = metadata?.video_progress || 0;
 
   const isViewCard = metadata?.event_type === 'video_opened' || 
@@ -62,12 +39,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     }
   };
 
-  const getLocationInfo = () => {
-    if (!metadata.ip && !metadata.location) return '';
-    return `${metadata.ip || 'Unknown IP'} | ${metadata.location || 'Unknown Location'}`;
-  };
-
-  // Group milestones by viewing session and get max progress for each
   const getSessionMilestones = () => {
     if (!metadata.view_history) return [];
     
@@ -78,14 +49,12 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       lastTimestamp: new Date().getTime()
     };
 
-    // Sort view history by timestamp
     const history = [...metadata.view_history].sort(
       (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
 
     history.forEach(entry => {
       const timestamp = new Date(entry.timestamp).getTime();
-      // If more than 30 minutes have passed, consider it a new session
       if (timestamp - currentSession.lastTimestamp > 30 * 60 * 1000) {
         if (currentSession.timestamp) {
           sessions.push({
@@ -99,13 +68,11 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           lastTimestamp: timestamp
         };
       } else {
-        // Update progress if it's higher
         currentSession.progress = Math.max(currentSession.progress, entry.progress);
         currentSession.lastTimestamp = timestamp;
       }
     });
 
-    // Add the last session
     if (currentSession.timestamp) {
       sessions.push({
         timestamp: currentSession.timestamp,
@@ -142,33 +109,18 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               {settings?.language === "en" ? "Presentation opened" : "Präsentation wurde aufgerufen"}
             </div>
           )}
-          {isViewCard && getLocationInfo() && (
-            <div className="text-gray-500 text-sm">
-              View ID: {metadata.id || 'No ID'}
-            </div>
-          )}
-          {isViewCard && getLocationInfo() && (
-            <div className="text-gray-500 text-sm flex items-center gap-2">
-              {getLocationInfo()}
-            </div>
+          {isViewCard && (
+            <ViewInfo 
+              id={metadata.id}
+              ip={metadata.ip}
+              location={metadata.location}
+            />
           )}
           {isViewCard && sessionMilestones.length > 0 && (
-            <div className="space-y-4 mt-4">
-              {sessionMilestones.map((session, index) => (
-                <div key={index} className="space-y-1">
-                  <div className="flex justify-between items-center text-sm text-gray-600">
-                    <span>{formatDateTime(session.timestamp, settings?.language)}</span>
-                    <span className="text-xs text-gray-600">{Math.round(session.progress)}%</span>
-                  </div>
-                  <div className="relative h-2 bg-gray-200 rounded">
-                    <div 
-                      className="absolute left-0 top-0 h-full bg-green-500 rounded"
-                      style={{ width: `${session.progress}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <SessionProgress 
+              sessions={sessionMilestones}
+              language={settings?.language}
+            />
           )}
           {!isViewCard && metadata.presentationUrl && (
             <div className="flex items-center gap-2 mt-2">
@@ -191,27 +143,13 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
         </div>
         <div className="flex flex-col items-end">
           {videoId && (
-            <div className="w-48 h-27 rounded overflow-hidden relative">
-              <img 
-                src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
-                alt="Video thumbnail"
-                className="w-full h-full object-cover"
-              />
-              {latestProgress >= 95 && (
-                <div className="absolute top-2 right-2">
-                  <CheckCircle2 className="h-6 w-6 text-green-500" />
-                </div>
-              )}
-              {latestProgress === 0 && (
-                <div className="absolute top-2 right-2">
-                  <X className="h-6 w-6 text-red-500" />
-                </div>
-              )}
-            </div>
+            <VideoThumbnail 
+              videoId={videoId}
+              latestProgress={latestProgress}
+            />
           )}
         </div>
       </div>
     </Card>
   );
 };
-
