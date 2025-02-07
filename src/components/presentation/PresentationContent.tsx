@@ -8,9 +8,10 @@ import { PresentationPageData } from "./types";
 interface PresentationContentProps {
   pageData: PresentationPageData;
   onProgress: (progress: number) => void;
+  initialProgress?: number;
 }
 
-export const PresentationContent = ({ pageData, onProgress }: PresentationContentProps) => {
+export const PresentationContent = ({ pageData, onProgress, initialProgress = 0 }: PresentationContentProps) => {
   // Ensure fallback values
   const userDisplayName = pageData?.user?.profiles?.display_name || "Unbekannter Benutzer";
   const userAvatar =
@@ -62,6 +63,7 @@ export const PresentationContent = ({ pageData, onProgress }: PresentationConten
             videoUrl={pageData.video_url}
             onProgress={onProgress}
             autoplay={false}
+            initialProgress={initialProgress}
           />
         </div>
       </div>
