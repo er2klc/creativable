@@ -65,7 +65,9 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   };
 
   console.log('YoutubeCard metadata:', {
-    id: metadata.id,
+    metadata: metadata,
+    rawId: metadata.id,
+    rawMetadata: JSON.stringify(metadata, null, 2),
     ip: metadata.ip,
     progress: latestProgress,
     viewHistory: metadata.view_history
@@ -88,7 +90,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
             {settings?.language === "en" ? "Presentation viewed" : "Präsentation wurde angesehen"}
           </div>
           <div className="text-gray-500 text-sm flex items-center gap-2">
-            {getLocationInfo()} | View ID: {metadata.id}
+            {getLocationInfo()} | View ID: {metadata.id || 'No ID'}
           </div>
           {isViewCard && (
             <div className="text-sm text-gray-600">
@@ -151,4 +153,3 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
-
