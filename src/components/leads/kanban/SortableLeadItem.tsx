@@ -1,3 +1,4 @@
+
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Tables } from "@/integrations/supabase/types";
@@ -135,7 +136,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       ref={setNodeRef}
       style={style}
       className={cn(
-        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative border-l-2 w-full h-[100px]",
+        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative border-l-2 w-full h-[100px] flex-shrink-0",
         getBackgroundStyle(),
         getPlatformBorderColor(lead.platform),
         isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing",
@@ -148,7 +149,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     >
       {/* Platform Icon in top right corner */}
       <div className={cn(
-        "absolute -right-2 -top-2 rounded-full w-7 h-7 border-2 border-white shadow-lg flex items-center justify-center",
+        "absolute -right-2 -top-2 rounded-full w-7 h-7 border-2 border-white shadow-lg flex items-center justify-center z-10",
         getPlatformColor(lead.platform)
       )}>
         {getPlatformIcon(lead.platform)}
