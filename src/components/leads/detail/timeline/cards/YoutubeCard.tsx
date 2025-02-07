@@ -63,7 +63,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       {isViewCard && (
         <Progress 
           value={latestProgress} 
-          className="absolute top-0 left-0 right-0 h-2" 
+          className="absolute top-0 left-0 right-0 h-1" 
         />
       )}
       <div className="flex items-start justify-between mt-2">
@@ -79,12 +79,17 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           </div>
           {isViewCard && (
             <div className="text-gray-600">
-              {settings?.language === "en" ? "Presentation viewed" : "Präsentation wurde angesehen"}
+              {settings?.language === "en" ? "Presentation opened" : "Präsentation wurde aufgerufen"}
+            </div>
+          )}
+          {isViewCard && getLocationInfo() && (
+            <div className="text-gray-500 text-sm">
+              View ID: {metadata.id || 'No ID'}
             </div>
           )}
           {isViewCard && getLocationInfo() && (
             <div className="text-gray-500 text-sm flex items-center gap-2">
-              {getLocationInfo()} | View ID: {metadata.id || 'No ID'}
+              {getLocationInfo()}
             </div>
           )}
           {isViewCard && (
@@ -137,4 +142,3 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
-
