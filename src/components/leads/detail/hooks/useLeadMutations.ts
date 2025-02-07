@@ -60,7 +60,15 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         throw new Error('Lead not found');
       }
 
-      // Immediately remove from cache before actual deletion
+      // Immediately remove from caches before actual deletion
+      queryClient.setQueryData(
+        ["leads"],
+        (oldData: Tables<"leads">[] | undefined) => {
+          if (!oldData) return [];
+          return oldData.filter(l => l.id !== leadId);
+        }
+      );
+
       queryClient.setQueryData(
         ["leads", lead.pipeline_id],
         (oldData: Tables<"leads">[] | undefined) => {
@@ -113,9 +121,9 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
       return { pipelineId: lead.pipeline_id };
     },
     onSuccess: (data) => {
-      // Invalidate relevant queries after successful deletion
+      // Remove from all relevant caches
+      queryClient.removeQueries({ queryKey: ["lead", leadId] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
-      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
       if (data?.pipelineId) {
         queryClient.invalidateQueries({ queryKey: ["leads", data.pipelineId] });
       }
