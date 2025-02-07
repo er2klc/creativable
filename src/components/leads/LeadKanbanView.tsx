@@ -46,6 +46,7 @@ export const LeadKanbanView = ({
           table: 'leads',
         },
         (payload) => {
+          console.log('Lead deleted:', payload.old.id);
           // Immediately update the cache to remove the deleted lead
           queryClient.setQueryData(
             ["leads", selectedPipelineId],
@@ -54,9 +55,6 @@ export const LeadKanbanView = ({
               return oldData.filter(lead => lead.id !== payload.old.id);
             }
           );
-          
-          // Also invalidate the query to ensure data consistency
-          queryClient.invalidateQueries({ queryKey: ["leads", selectedPipelineId] });
         }
       )
       .on(
@@ -215,3 +213,4 @@ export const LeadKanbanView = ({
     </DndContext>
   );
 };
+
