@@ -63,7 +63,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
             metadata: initialMetadata
           }
         ])
-        .select()
+        .select('*, metadata')
         .single();
 
       if (viewError) {
@@ -75,7 +75,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       console.log('View created successfully:', viewData);
       setViewId(viewData.id);
 
-      // Update metadata to include the ID
+      // Update metadata with the ID from the newly created view
       const updatedMetadata = {
         ...initialMetadata,
         id: viewData.id
@@ -115,7 +115,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       // Get current view data first to ensure we have the latest metadata
       const { data: currentView } = await supabase
         .from('presentation_views')
-        .select('*')
+        .select('*, metadata')
         .eq('id', viewId)
         .single();
 
@@ -124,9 +124,11 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         return;
       }
 
-      // Create updated metadata maintaining the existing id and other metadata fields
+      console.log('Current view data:', currentView);
+
+      // Create updated metadata maintaining existing metadata fields and ID
       const metadata = {
-        ...currentView.metadata, // Preserve all existing metadata fields
+        ...currentView.metadata,
         type: 'youtube',
         event_type: isCompleted ? 'video_completed' : 'video_progress',
         title: pageData.title,
@@ -136,10 +138,10 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         presentationUrl: pageData.presentationUrl,
         video_progress: progress,
         completed: isCompleted,
-        id: viewId // Ensure ID is always present
+        id: currentView.id // Ensure ID is explicitly set from the database record
       };
 
-      console.log('Progress update metadata:', metadata);
+      console.log('Updating with metadata:', metadata);
 
       const { error } = await supabase
         .from('presentation_views')
