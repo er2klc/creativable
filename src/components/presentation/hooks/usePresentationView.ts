@@ -46,6 +46,12 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
 
       console.log('Creating new view...');
       const newViewId = crypto.randomUUID();
+      const initialHistoryEntry = {
+        timestamp: new Date().toISOString(),
+        progress: 0,
+        event_type: 'video_opened'
+      };
+
       const viewData = {
         id: newViewId,
         page_id: pageData.id,
@@ -66,11 +72,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           completed: false,
           id: newViewId
         },
-        view_history: [{
-          timestamp: new Date().toISOString(),
-          progress: 0,
-          event_type: 'video_opened'
-        }]
+        view_history: [initialHistoryEntry]
       };
 
       const { error: viewError } = await supabase
@@ -148,10 +150,10 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         event_type: isCompleted ? 'video_completed' : 'video_progress'
       };
 
-      // Call the RPC function to append to the view_history array
-      const { error: rpcError } = await supabase
+      // First update the view history using the RPC function
+      const { data: updatedHistory, error: rpcError } = await supabase
         .rpc('jsonb_array_append', {
-          arr: currentView.view_history || '[]',
+          arr: currentView.view_history,
           elem: newHistoryEntry
         });
 
@@ -160,7 +162,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         return;
       }
 
-      // Now update the view with the new metadata and other fields
+      // Then update the rest of the view data
       const { error } = await supabase
         .from('presentation_views')
         .update({
@@ -168,7 +170,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           completed: isCompleted,
           ip_address: ipLocationData?.ipAddress || 'unknown',
           location: ipLocationData?.location || 'Unknown Location',
-          metadata: updatedMetadata
+          metadata: updatedMetadata,
+          view_history: updatedHistory
         })
         .eq('id', viewId);
 
@@ -191,4 +194,3 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     isCreatingView
   };
 };
-
