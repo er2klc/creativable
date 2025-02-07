@@ -1,3 +1,4 @@
+
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Tables } from "@/integrations/supabase/types";
@@ -69,7 +70,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     }),
     zIndex: isDragging ? 1000 : 1,
     position: isDragging ? 'absolute' : 'relative',
-    width: '100%',
+    width: isDragging ? 'var(--original-width)' : '100%',
     transition: 'transform 0.1s ease, box-shadow 0.1s ease',
     cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
   } : undefined;
@@ -108,7 +109,6 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     return "bg-white";
   };
 
-  // Get initials from name
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -118,7 +118,6 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       .slice(0, 2);
   };
 
-  // Get platform border color
   const getPlatformBorderColor = (platform: string) => {
     switch (platform?.toLowerCase()) {
       case "instagram":
@@ -149,6 +148,10 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       {...(disabled ? {} : { ...attributes, ...listeners })}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
+      onLoad={(e) => {
+        const el = e.currentTarget;
+        el.style.setProperty('--original-width', `${el.offsetWidth}px`);
+      }}
     >
       {/* Platform Icon in top right corner */}
       <div className={cn(
@@ -196,4 +199,4 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       </div>
     </div>
   );
-}
+};
