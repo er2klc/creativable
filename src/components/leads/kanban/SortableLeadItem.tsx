@@ -33,6 +33,8 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     position: isDragging ? 'fixed' : 'relative',
     width: isDragging ? 'var(--dragging-width, 300px)' : '100%',
     height: '100px',
+    maxHeight: '100px',
+    minHeight: '100px',
     transition: 'box-shadow 0.1s ease',
     cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
   } : undefined;
@@ -72,7 +74,6 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (disabled) return;
     
-    // Store the initial width of the card before dragging
     const rect = e.currentTarget.getBoundingClientRect();
     document.documentElement.style.setProperty('--dragging-width', `${rect.width}px`);
     
@@ -136,7 +137,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       ref={setNodeRef}
       style={style}
       className={cn(
-        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative border-l-2 w-full h-[100px] flex-shrink-0",
+        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative border-l-2 w-full h-[100px] flex-shrink-0 overflow-hidden",
         getBackgroundStyle(),
         getPlatformBorderColor(lead.platform),
         isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing",
