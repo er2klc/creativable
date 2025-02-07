@@ -102,6 +102,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     const isCompleted = progress >= 95;
     
     try {
+      console.log('Updating progress with viewId:', viewId); // Debug log
+      
       const metadata = {
         type: 'youtube',
         event_type: isCompleted ? 'video_completed' : 'video_progress',
@@ -109,8 +111,10 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         url: pageData.video_url,
         ip: ipLocationData?.ipAddress || 'unknown',
         location: ipLocationData?.location || 'Unknown Location',
-        id: viewId // Include the viewId in metadata for all updates
+        id: viewId
       };
+
+      console.log('Progress update metadata:', metadata); // Debug log
 
       const { error } = await supabase
         .from('presentation_views')
@@ -124,9 +128,11 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         .eq('id', viewId);
 
       if (error) {
+        console.error('Error updating progress:', error); // Debug log
         toast.error('Failed to update view progress');
       }
     } catch (error) {
+      console.error('Caught error in updateProgress:', error); // Debug log
       toast.error('Failed to update progress');
     }
   };

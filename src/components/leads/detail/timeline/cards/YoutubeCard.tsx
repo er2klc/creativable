@@ -86,7 +86,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                 {Math.round(progress)}%
               </span>
               <span className="text-xs text-gray-400">
-                ID: {metadata.id || 'N/A'}
+                View ID: {metadata.id || 'N/A'}
               </span>
             </div>
           </div>
@@ -134,4 +134,3 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
-
