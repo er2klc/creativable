@@ -40,7 +40,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const isViewCard = metadata?.event_type === 'video_opened' || 
                      metadata?.event_type === 'video_progress' ||
                      metadata?.event_type === 'video_closed' || 
-                     metadata?.event_type === 'video_completed';
+                     metadata?.event_type === 'video_completed' ||
+                     metadata?.event_type === 'milestone_reached';
 
   const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
     try {
@@ -63,15 +64,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     if (!metadata.ip && !metadata.location) return 'Unknown';
     return `${metadata.ip || 'Unknown IP'} | ${metadata.location || 'Unknown Location'}`;
   };
-
-  console.log('YoutubeCard metadata:', {
-    metadata: metadata,
-    rawId: metadata.id,
-    rawMetadata: JSON.stringify(metadata, null, 2),
-    ip: metadata.ip,
-    progress: latestProgress,
-    viewHistory: metadata.view_history
-  });
 
   return (
     <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500 relative")}>
@@ -103,10 +95,13 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                 {settings?.language === "en" ? "View History" : "Verlauf"}:
               </div>
               {metadata.view_history.map((view, index) => (
-                <div key={index} className="text-xs text-gray-600">
+                <div key={index} className="text-xs text-gray-600 flex items-center gap-1">
                   {formatDateTime(view.timestamp, settings?.language)} - {Math.round(view.progress)}%
                   {view.event_type === 'video_completed' && (
-                    <span className="text-green-600 ml-1">✓</span>
+                    <span className="text-green-600">✓</span>
+                  )}
+                  {view.event_type === 'milestone_reached' && (
+                    <span className="text-blue-600">🎯</span>
                   )}
                 </div>
               ))}
@@ -117,16 +112,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               {formatDateTime(timestamp, settings?.language)}
             </div>
           )}
-          <div className="flex gap-4 mt-2">
-            {!isViewCard && metadata.presentationUrl && (
-              <button
-                onClick={() => copyToClipboard(metadata.presentationUrl!, 'presentation')}
-                className="text-sm text-blue-500 hover:underline"
-              >
-                {settings?.language === "en" ? "Copy Presentation URL" : "Präsentations-URL kopieren"}
-              </button>
-            )}
-          </div>
         </div>
         <div className="flex flex-col items-end">
           {videoId && (
