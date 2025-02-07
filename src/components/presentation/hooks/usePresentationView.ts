@@ -144,25 +144,14 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         id: viewId
       };
 
+      // Create new history entry
       const newHistoryEntry = {
         timestamp: new Date().toISOString(),
         progress: progress,
         event_type: isCompleted ? 'video_completed' : 'video_progress'
       };
 
-      // First update the view history using the RPC function
-      const { data: updatedHistory, error: rpcError } = await supabase
-        .rpc('jsonb_array_append', {
-          arr: currentView.view_history,
-          elem: newHistoryEntry
-        });
-
-      if (rpcError) {
-        console.error('Error updating view history:', rpcError);
-        return;
-      }
-
-      // Then update the rest of the view data
+      // Update the view history directly in the update query
       const { error } = await supabase
         .from('presentation_views')
         .update({
@@ -171,7 +160,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           ip_address: ipLocationData?.ipAddress || 'unknown',
           location: ipLocationData?.location || 'Unknown Location',
           metadata: updatedMetadata,
-          view_history: updatedHistory
+          view_history: [...(currentView.view_history || []), newHistoryEntry]
         })
         .eq('id', viewId);
 
