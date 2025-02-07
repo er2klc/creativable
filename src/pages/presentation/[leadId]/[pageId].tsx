@@ -110,22 +110,6 @@ export default function PresentationPage() {
 
       setPageData(formattedPageData);
 
-      // Prüfe ob bereits ein View für diese Session existiert
-      const { data: existingViews } = await supabase
-        .from('presentation_views')
-        .select('id')
-        .eq('page_id', pageData.id)
-        .eq('lead_id', leadId)
-        .eq('completed', false)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (existingViews && existingViews.length > 0) {
-        setViewId(existingViews[0].id);
-        setIsLoading(false);
-        return;
-      }
-
       // Get visitor's IP using a CORS-friendly API
       const ipResponse = await fetch('https://api.db-ip.com/v2/free/self');
       const ipData = await ipResponse.json();

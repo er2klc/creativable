@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { Eye } from "lucide-react";
 
 interface YoutubeCardProps {
   content: string;
@@ -57,10 +56,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500")}>
       <div className="flex items-start justify-between">
         <div className="space-y-1 flex-1">
-          <div className="flex items-center gap-2">
-            <Eye className="h-4 w-4 text-gray-500" />
-            <span className="font-medium">{metadata.title || content}</span>
-          </div>
+          <div className="font-medium">{metadata.title || content}</div>
           <div className="text-gray-600">{getEventMessage()}</div>
           {timestamp && (
             <div className="text-xs text-gray-500">
