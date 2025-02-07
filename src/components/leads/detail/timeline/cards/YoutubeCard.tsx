@@ -32,16 +32,13 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const { settings } = useSettings();
   const videoId = metadata?.url?.split('v=')[1] || '';
   
-  // Get latest progress from view_history if available
-  const latestProgress = metadata?.view_history?.length 
-    ? metadata.view_history[metadata.view_history.length - 1].progress 
-    : (metadata?.video_progress || 0);
+  // Get latest progress from metadata directly
+  const latestProgress = metadata?.video_progress || 0;
 
   const isViewCard = metadata?.event_type === 'video_opened' || 
                      metadata?.event_type === 'video_progress' ||
                      metadata?.event_type === 'video_closed' || 
-                     metadata?.event_type === 'video_completed' ||
-                     metadata?.event_type === 'milestone_reached';
+                     metadata?.event_type === 'video_completed';
 
   const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
     try {
@@ -87,24 +84,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           {isViewCard && (
             <div className="text-sm text-gray-600">
               {settings?.language === "en" ? "Progress" : "Fortschritt"}: {Math.round(latestProgress)}%
-            </div>
-          )}
-          {metadata.view_history && metadata.view_history.length > 0 && (
-            <div className="mt-2 space-y-1">
-              <div className="font-medium text-sm text-gray-700">
-                {settings?.language === "en" ? "View History" : "Verlauf"}:
-              </div>
-              {metadata.view_history.map((view, index) => (
-                <div key={index} className="text-xs text-gray-600 flex items-center gap-1">
-                  {formatDateTime(view.timestamp, settings?.language)} - {Math.round(view.progress)}%
-                  {view.event_type === 'video_completed' && (
-                    <span className="text-green-600">✓</span>
-                  )}
-                  {view.event_type === 'milestone_reached' && (
-                    <span className="text-blue-600">🎯</span>
-                  )}
-                </div>
-              ))}
             </div>
           )}
           {timestamp && (
