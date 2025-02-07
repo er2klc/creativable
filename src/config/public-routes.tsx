@@ -25,7 +25,7 @@ export const publicRoutes = [
     element: <InstagramDataDeletion />,
   },
   {
-    path: "/presentation/:pageId",
+    path: "/p/:pageId",
     element: <PresentationPage />,
   },
 ];

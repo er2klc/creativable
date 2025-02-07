@@ -1,12 +1,13 @@
 
 export const generateUniqueSlug = (baseSlug: string): string => {
-  const timestamp = new Date().getTime();
-  return `${baseSlug}-${timestamp}`;
+  const timestamp = Date.now().toString(36);
+  const randomStr = Math.random().toString(36).substring(2, 5);
+  return `${baseSlug}-${timestamp}${randomStr}`;
 };
 
 export const generatePresentationUrl = (presentationId: string): string => {
   const baseUrl = window.location.origin;
-  return `${baseUrl}/presentation/${presentationId}`;
+  return `${baseUrl}/p/${presentationId}`;
 };
 
 export const copyToClipboard = async (text: string) => {
