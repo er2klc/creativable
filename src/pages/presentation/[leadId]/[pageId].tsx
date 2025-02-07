@@ -129,6 +129,8 @@ export default function PresentationPage() {
             metadata: {
               type: 'youtube',
               event_type: 'video_opened',
+              title: pageData.title,
+              url: pageData.video_url,
               ip: ipData.ipAddress,
               location: location
             }
@@ -152,7 +154,7 @@ export default function PresentationPage() {
   };
 
   const handleProgress = async (progress: number) => {
-    if (!viewId) return;
+    if (!viewId || !pageData) return;
 
     const isCompleted = progress >= 95;
     
@@ -165,6 +167,8 @@ export default function PresentationPage() {
       const metadata = {
         type: 'youtube',
         event_type: isCompleted ? 'video_completed' : 'video_progress',
+        title: pageData.title,
+        url: pageData.video_url,
         ip: ipData.ipAddress,
         location: location
       };
