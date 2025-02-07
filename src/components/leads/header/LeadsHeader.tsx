@@ -10,6 +10,7 @@ import { useState } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LeadsHeaderProps {
   searchQuery: string;
@@ -34,10 +35,11 @@ export const LeadsHeader = ({
   const [showInstagramDialog, setShowInstagramDialog] = useState(false);
   const [showLinkedInDialog, setShowLinkedInDialog] = useState(false);
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   return (
-    <div className="fixed top-0 left-[60px] right-0 z-[10] bg-background border-b md:left-[72px] group-hover:left-[240px] transition-[left] duration-300 ease-in-out">
-      <div className="max-w-[100vw] px-4 py-4">
+    <div className="fixed top-[48px] left-[60px] right-0 z-[9] bg-background border-b md:left-[72px] md:top-0 group-hover:left-[240px] transition-[left] duration-300 ease-in-out">
+      <div className="w-full px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4 w-full">
           <div className="flex items-center gap-4 flex-shrink-0">
             {/* Page Title */}
@@ -48,7 +50,6 @@ export const LeadsHeader = ({
 
             {/* Add Contact and Dropdown Buttons */}
             <div className="flex items-center gap-0">
-              {/* Kontakt hinzufügen Button */}
               <Button
                 variant="default"
                 className="bg-black text-white hover:bg-black/90 rounded-r-none"
@@ -57,7 +58,6 @@ export const LeadsHeader = ({
                 ✨ Kontakt hinzufügen
               </Button>
 
-              {/* Dropdown Button */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -96,24 +96,26 @@ export const LeadsHeader = ({
             />
 
             {/* View Mode Buttons */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Button
-                variant={viewMode === "kanban" ? "default" : "outline"}
-                size="icon"
-                onClick={() => setViewMode("kanban")}
-                className="h-9 w-9"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "outline"}
-                size="icon"
-                onClick={() => setViewMode("list")}
-                className="h-9 w-9"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
+            {!isMobile && (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button
+                  variant={viewMode === "kanban" ? "default" : "outline"}
+                  size="icon"
+                  onClick={() => setViewMode("kanban")}
+                  className="h-9 w-9"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "default" : "outline"}
+                  size="icon"
+                  onClick={() => setViewMode("list")}
+                  className="h-9 w-9"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
 
             {/* User Avatar */}
             <Avatar className="h-9 w-9">

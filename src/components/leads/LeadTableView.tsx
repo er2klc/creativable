@@ -120,9 +120,11 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
         <Table>
           <TableHeader className="sticky top-0 bg-background z-10">
             <TableRow>
-              <TableCell className="w-[30px] p-2">
-                <span className="sr-only">Favorite</span>
-              </TableCell>
+              {!isMobile && (
+                <TableCell className="w-[30px] p-2">
+                  <span className="sr-only">Favorite</span>
+                </TableCell>
+              )}
               <TableCell className={isMobile ? "p-2" : "w-[15%] min-w-[120px]"}>
                 {settings?.language === "en" ? "Contact" : "Kontakt"}
               </TableCell>
@@ -154,7 +156,7 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
                 className="cursor-pointer hover:bg-muted/50"
                 onClick={() => onLeadClick(lead.id)}
               >
-                <LeadTableCell type="favorite" value={null} />
+                {!isMobile && <LeadTableCell type="favorite" value={null} />}
                 <LeadTableCell type="name" value={lead.name} lead={lead} />
                 {!isMobile && (
                   <>
