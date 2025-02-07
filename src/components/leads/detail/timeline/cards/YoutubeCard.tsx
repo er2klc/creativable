@@ -79,15 +79,15 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     };
 
     // Sort view history by timestamp
-    const history = [...metadata.view_history].sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
+    const history = [...metadata.view_history]
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+      .filter(entry => entry.progress > 5); // Only include entries with progress > 5%
 
     history.forEach(entry => {
       const timestamp = new Date(entry.timestamp).getTime();
       // If more than 30 minutes have passed, consider it a new session
       if (timestamp - currentSession.lastTimestamp > 30 * 60 * 1000) {
-        if (currentSession.timestamp) {
+        if (currentSession.timestamp && currentSession.progress > 5) {
           sessions.push({
             timestamp: currentSession.timestamp,
             progress: currentSession.progress
@@ -105,8 +105,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       }
     });
 
-    // Add the last session
-    if (currentSession.timestamp) {
+    // Add the last session if progress > 5%
+    if (currentSession.timestamp && currentSession.progress > 5) {
       sessions.push({
         timestamp: currentSession.timestamp,
         progress: currentSession.progress
@@ -120,7 +120,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
 
   return (
     <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500 relative")}>
-      {isViewCard && latestProgress > 0 && (
+      {isViewCard && latestProgress > 5 && (
         <Progress 
           value={latestProgress} 
           className="absolute top-0 left-0 right-0 h-1" 
