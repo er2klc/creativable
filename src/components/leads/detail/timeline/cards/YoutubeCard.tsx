@@ -28,7 +28,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const { settings } = useSettings();
   const videoId = metadata?.url?.split('v=')[1] || '';
   
-  // Get latest progress from metadata directly
   const latestProgress = metadata?.video_progress || 0;
 
   const isViewCard = metadata?.event_type === 'video_opened' || 
@@ -57,6 +56,9 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     if (!metadata.ip && !metadata.location) return '';
     return `${metadata.ip || 'Unknown IP'} | ${metadata.location || 'Unknown Location'}`;
   };
+
+  // Create milestone segments
+  const milestoneSegments = Array.from({ length: 20 }, (_, i) => i * 5);
 
   return (
     <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500 relative")}>
@@ -93,11 +95,29 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
             </div>
           )}
           {isViewCard && (
-            <div className="text-sm text-gray-600">
-              {settings?.language === "en" ? "Progress" : "Fortschritt"}: {Math.round(latestProgress)}%
-            </div>
+            <>
+              <div className="text-sm text-gray-600">
+                {settings?.language === "en" ? "Progress" : "Fortschritt"}: {Math.round(latestProgress)}%
+              </div>
+              <div className="flex gap-0.5 mt-2 h-1.5">
+                {milestoneSegments.map((milestone) => (
+                  <div
+                    key={milestone}
+                    className={cn(
+                      "flex-1 relative",
+                      latestProgress >= milestone ? "bg-green-500" : "bg-gray-200"
+                    )}
+                  >
+                    {latestProgress >= milestone && milestone % 20 === 0 && (
+                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                        <CheckCircle2 className="h-3 w-3 text-green-500" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
-          {/* Show presentation URL with copy button for non-view cards */}
           {!isViewCard && metadata.presentationUrl && (
             <div className="flex items-center gap-2 mt-2">
               <Button
