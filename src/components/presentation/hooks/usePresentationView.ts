@@ -37,18 +37,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       setIsCreatingView(true);
       console.log('Creating new view...');
 
-      const initialMetadata = {
-        type: 'youtube',
-        event_type: 'video_opened',
-        title: pageData.title,
-        url: pageData.video_url,
-        ip: ipLocationData?.ipAddress || 'unknown',
-        location: ipLocationData?.location || 'Unknown Location',
-        presentationUrl: pageData.presentationUrl,
-        video_progress: 0,
-        completed: false
-      };
-
+      // First create the view to get the ID
       const { data: viewData, error: viewError } = await supabase
         .from('presentation_views')
         .insert([
@@ -59,7 +48,18 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
             completed: false,
             ip_address: ipLocationData?.ipAddress || 'unknown',
             location: ipLocationData?.location || 'Unknown Location',
-            metadata: initialMetadata
+            metadata: {
+              type: 'youtube',
+              event_type: 'video_opened',
+              title: pageData.title,
+              url: pageData.video_url,
+              ip: ipLocationData?.ipAddress || 'unknown',
+              location: ipLocationData?.location || 'Unknown Location',
+              presentationUrl: pageData.presentationUrl,
+              video_progress: 0,
+              completed: false,
+              id: null // Initially null, will be updated
+            }
           }
         ])
         .select()
@@ -71,18 +71,25 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         return;
       }
 
+      // Set the viewId in state immediately
       setViewId(viewData.id);
       console.log('View created with ID:', viewData.id);
 
-      // Update metadata with ID after brief delay to ensure proper state synchronization
-      await new Promise(resolve => setTimeout(resolve, 100));
-
+      // Then update the metadata with the ID
       const { error: updateError } = await supabase
         .from('presentation_views')
         .update({
           metadata: {
-            ...initialMetadata,
-            id: viewData.id
+            type: 'youtube',
+            event_type: 'video_opened',
+            title: pageData.title,
+            url: pageData.video_url,
+            ip: ipLocationData?.ipAddress || 'unknown',
+            location: ipLocationData?.location || 'Unknown Location',
+            presentationUrl: pageData.presentationUrl,
+            video_progress: 0,
+            completed: false,
+            id: viewData.id // Now we include the ID
           }
         })
         .eq('id', viewData.id);
@@ -122,7 +129,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
 
       const updatedMetadata = {
         ...currentView.metadata,
-        id: viewId,
         type: 'youtube',
         event_type: isCompleted ? 'video_completed' : 'video_progress',
         title: pageData.title,
@@ -131,7 +137,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         location: ipLocationData?.location || 'Unknown Location',
         presentationUrl: pageData.presentationUrl,
         video_progress: progress,
-        completed: isCompleted
+        completed: isCompleted,
+        id: viewId // Ensure ID is preserved in metadata
       };
 
       const { error } = await supabase
