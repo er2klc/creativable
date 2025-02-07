@@ -1,10 +1,10 @@
+
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Tables } from "@/integrations/supabase/types";
 import { useState, useRef, CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import { Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface SortableLeadItemProps {
   lead: Tables<"leads">;
@@ -32,6 +32,8 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     zIndex: isDragging ? 1000 : 1,
     position: isDragging ? 'fixed' : 'relative',
     width: isDragging ? 'var(--dragging-width, 300px)' : '100%',
+    minHeight: '100px',
+    maxHeight: '100px',
     height: '100px',
     transition: 'box-shadow 0.1s ease',
     cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
@@ -136,7 +138,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       ref={setNodeRef}
       style={style}
       className={cn(
-        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative border-l-2 w-full h-[100px]",
+        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative border-l-2 w-full h-[100px] overflow-hidden",
         getBackgroundStyle(),
         getPlatformBorderColor(lead.platform),
         isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing",
