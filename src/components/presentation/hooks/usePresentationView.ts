@@ -13,7 +13,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
   const MAX_RETRIES = 3;
 
   const createView = useCallback(async (pageData: PresentationPageData) => {
-    if (viewId || isCreatingView) {
+    if (isCreatingView) {
       return;
     }
 
@@ -28,8 +28,23 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
 
     try {
       setIsCreatingView(true);
-      console.log('Creating new view...');
+      console.log('Checking for existing view...');
 
+      // First check if there's an existing view for this IP
+      const { data: existingView } = await supabase
+        .from('presentation_views')
+        .select('*')
+        .eq('page_id', pageData.id)
+        .eq('ip_address', ipLocationData?.ipAddress || 'unknown')
+        .maybeSingle();
+
+      if (existingView) {
+        console.log('Found existing view:', existingView);
+        setViewId(existingView.id);
+        return;
+      }
+
+      console.log('Creating new view...');
       const newViewId = crypto.randomUUID();
       const viewData = {
         id: newViewId,
@@ -58,6 +73,20 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         .insert([viewData]);
 
       if (viewError) {
+        if (viewError.code === '23505') { // Unique constraint violation
+          console.log('Concurrent view creation detected, fetching existing view...');
+          const { data: concurrentView } = await supabase
+            .from('presentation_views')
+            .select('*')
+            .eq('page_id', pageData.id)
+            .eq('ip_address', ipLocationData?.ipAddress || 'unknown')
+            .maybeSingle();
+
+          if (concurrentView) {
+            setViewId(concurrentView.id);
+            return;
+          }
+        }
         console.error('Error creating view:', viewError);
         toast.error('Failed to create view record');
         return;
@@ -72,7 +101,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     } finally {
       setIsCreatingView(false);
     }
-  }, [leadId, ipLocationData, retryCount, isCreatingView, viewId]);
+  }, [leadId, ipLocationData, retryCount, isCreatingView]);
 
   const updateProgress = async (progress: number, pageData: PresentationPageData) => {
     if (!viewId) {

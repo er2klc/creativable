@@ -28,6 +28,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const videoId = metadata?.url?.split('v=')[1] || '';
   const progress = metadata?.video_progress || 0;
   const isViewCard = metadata?.event_type === 'video_opened' || 
+                     metadata?.event_type === 'video_progress' ||
                      metadata?.event_type === 'video_closed' || 
                      metadata?.event_type === 'video_completed';
 
@@ -48,6 +49,11 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     }
   };
 
+  const getLocationInfo = () => {
+    if (!metadata.ip && !metadata.location) return 'Unknown';
+    return `${metadata.ip || 'Unknown IP'} | ${metadata.location || 'Unknown Location'}`;
+  };
+
   return (
     <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500 relative")}>
       {isViewCard && (
@@ -62,14 +68,14 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
             {metadata.title || content}
           </div>
           <div className="text-gray-600">
-            {settings?.language === "en" ? "Presentation opened" : "Präsentation wurde geöffnet"}
+            {settings?.language === "en" ? "Presentation viewed" : "Präsentation wurde angesehen"}
           </div>
           <div className="text-gray-500 text-sm flex items-center gap-2">
-            {metadata.ip || 'Unknown'} | {metadata.location || 'Unknown'} | View #{metadata.id}
+            {getLocationInfo()} | View #{metadata.id?.slice(-4)}
           </div>
           {isViewCard && (
             <div className="text-sm text-gray-600">
-              Fortschritt: {Math.round(progress)}%
+              {settings?.language === "en" ? "Progress" : "Fortschritt"}: {Math.round(progress)}%
             </div>
           )}
           {timestamp && (
@@ -113,4 +119,3 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
-
