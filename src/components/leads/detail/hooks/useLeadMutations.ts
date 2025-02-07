@@ -49,6 +49,26 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
 
       console.log('Starting deletion process for lead:', leadId);
 
+      // Get pipeline ID and current lead data before deletion
+      const { data: lead } = await supabase
+        .from('leads')
+        .select('pipeline_id')
+        .eq('id', leadId)
+        .single();
+
+      if (!lead) {
+        throw new Error('Lead not found');
+      }
+
+      // Immediately remove from cache before actual deletion
+      queryClient.setQueryData(
+        ["leads", lead.pipeline_id],
+        (oldData: Tables<"leads">[] | undefined) => {
+          if (!oldData) return [];
+          return oldData.filter(l => l.id !== leadId);
+        }
+      );
+
       const relatedTables = [
         'presentation_pages',
         'presentation_views',
@@ -64,16 +84,7 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         'social_media_posts'
       ] as const;
 
-      // Get pipeline ID before deleting the lead
-      const { data: lead } = await supabase
-        .from('leads')
-        .select('pipeline_id')
-        .eq('id', leadId)
-        .single();
-
-      const pipelineId = lead?.pipeline_id;
-
-      // Delete related records first
+      // Delete related records
       for (const table of relatedTables) {
         console.log(`Deleting related records from ${table}`);
         const { error } = await supabase
@@ -99,19 +110,10 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         throw error;
       }
 
-      return { pipelineId };
+      return { pipelineId: lead.pipeline_id };
     },
     onSuccess: (data) => {
-      // Immediately remove the deleted lead from the cache
-      queryClient.setQueryData(
-        ["leads", data?.pipelineId],
-        (oldData: Tables<"leads">[]) => {
-          if (!oldData) return [];
-          return oldData.filter(lead => lead.id !== leadId);
-        }
-      );
-
-      // Then invalidate all relevant queries
+      // Invalidate relevant queries after successful deletion
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
       if (data?.pipelineId) {
@@ -123,8 +125,10 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
           ? "Contact deleted successfully"
           : "Kontakt erfolgreich gelöscht"
       );
-      onClose();
+      
+      // Navigate first, then close the dialog
       navigate('/contacts', { replace: true });
+      onClose();
     },
     onError: (error) => {
       console.error("Error deleting lead:", error);
