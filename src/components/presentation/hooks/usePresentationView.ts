@@ -35,9 +35,21 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
 
     try {
       setIsCreatingView(true);
-      console.log('Creating new view...'); // Debug log
+      console.log('Creating new view...');
 
-      // Create the view with initial metadata including id
+      // Create metadata object first to ensure consistency
+      const initialMetadata = {
+        type: 'youtube',
+        event_type: 'video_opened',
+        title: pageData.title,
+        url: pageData.video_url,
+        ip: ipLocationData?.ipAddress || 'unknown',
+        location: ipLocationData?.location || 'Unknown Location',
+        presentationUrl: pageData.presentationUrl,
+        video_progress: 0,
+        completed: false
+      };
+
       const { data: viewData, error: viewError } = await supabase
         .from('presentation_views')
         .insert([
@@ -48,17 +60,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
             completed: false,
             ip_address: ipLocationData?.ipAddress || 'unknown',
             location: ipLocationData?.location || 'Unknown Location',
-            metadata: {
-              type: 'youtube',
-              event_type: 'video_opened',
-              title: pageData.title,
-              url: pageData.video_url,
-              ip: ipLocationData?.ipAddress || 'unknown',
-              location: ipLocationData?.location || 'Unknown Location',
-              presentationUrl: pageData.presentationUrl,
-              video_progress: 0,
-              completed: false
-            }
+            metadata: initialMetadata
           }
         ])
         .select()
@@ -73,22 +75,16 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       console.log('View created successfully:', viewData);
       setViewId(viewData.id);
 
-      // Immediately update the metadata to include the view ID
+      // Update metadata to include the ID
+      const updatedMetadata = {
+        ...initialMetadata,
+        id: viewData.id
+      };
+
       const { error: updateError } = await supabase
         .from('presentation_views')
         .update({
-          metadata: {
-            type: 'youtube',
-            event_type: 'video_opened',
-            title: pageData.title,
-            url: pageData.video_url,
-            ip: ipLocationData?.ipAddress || 'unknown',
-            location: ipLocationData?.location || 'Unknown Location',
-            presentationUrl: pageData.presentationUrl,
-            id: viewData.id,
-            video_progress: 0,
-            completed: false
-          }
+          metadata: updatedMetadata
         })
         .eq('id', viewData.id);
 
