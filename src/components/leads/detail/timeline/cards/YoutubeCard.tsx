@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { Eye, CheckCircle2, X, Info } from "lucide-react";
+import { CheckCircle2, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface YoutubeCardProps {
@@ -51,16 +51,16 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const getEventMessage = () => {
     if (metadata.event_type === 'video_opened') {
       return settings?.language === "en" 
-        ? `Video viewed from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
-        : `Video wurde angesehen von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
+        ? `Presentation opened from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
+        : `Präsentation wurde geöffnet von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
     } else if (metadata.event_type === 'video_closed') {
       return settings?.language === "en"
-        ? `Video closed at ${Math.round(metadata.video_progress || 0)}% from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
-        : `Video wurde beendet bei ${Math.round(metadata.video_progress || 0)}% von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
+        ? `Presentation closed at ${Math.round(metadata.video_progress || 0)}% from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
+        : `Präsentation wurde beendet bei ${Math.round(metadata.video_progress || 0)}% von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
     } else if (metadata.event_type === 'video_completed') {
       return settings?.language === "en"
-        ? `Video fully watched from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
-        : `Video wurde vollständig angesehen von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
+        ? `Presentation fully watched from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
+        : `Präsentation wurde vollständig angesehen von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
     }
     return content;
   };
@@ -76,8 +76,12 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       <div className="flex items-start justify-between mt-2">
         <div className="space-y-1 flex-1">
           <div className="flex items-center gap-2">
-            <Eye className="h-4 w-4 text-gray-500" />
             <span className="font-medium">{metadata.title || content}</span>
+            {isViewCard && metadata?.id && (
+              <span className="text-sm text-blue-600 font-medium">
+                (View #{metadata.id})
+              </span>
+            )}
           </div>
           <div className="text-gray-600">{getEventMessage()}</div>
           {timestamp && (
@@ -89,16 +93,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
             <div className="mt-2 w-full">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-500">
-                  {Math.round(progress)}%
+                  Fortschritt: {Math.round(progress)}%
                 </span>
-                {metadata?.id && (
-                  <div className="flex items-center gap-1">
-                    <Info className="h-4 w-4 text-blue-500" />
-                    <span className="text-sm font-medium text-blue-600">
-                      View ID: {metadata.id}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
           )}
