@@ -2901,6 +2901,13 @@ export type Database = {
       }
     }
     Functions: {
+      array_append: {
+        Args: {
+          arr: Json
+          elem: Json
+        }
+        Returns: Json
+      }
       award_team_points: {
         Args: {
           p_team_id: string

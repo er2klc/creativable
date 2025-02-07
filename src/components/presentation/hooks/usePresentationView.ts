@@ -130,6 +130,16 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         return;
       }
 
+      const historyEntry = {
+        timestamp: new Date().toISOString(),
+        progress: progress,
+        event_type: isCompleted ? 'video_completed' : 'video_progress'
+      };
+
+      const currentHistory = Array.isArray(currentView.view_history) 
+        ? currentView.view_history 
+        : [];
+
       const updatedMetadata = {
         ...currentView.metadata,
         type: 'youtube',
@@ -151,7 +161,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           completed: isCompleted,
           ip_address: ipLocationData?.ipAddress || 'unknown',
           location: ipLocationData?.location || 'Unknown Location',
-          metadata: updatedMetadata
+          metadata: updatedMetadata,
+          view_history: [...currentHistory, historyEntry]
         })
         .eq('id', viewId);
 
