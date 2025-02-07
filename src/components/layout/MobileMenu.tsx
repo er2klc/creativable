@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MenuSection } from "./mobile-menu/MenuSection";
-import { MenuHeader } from "./mobile-menu/MenuHeader";
 import { MenuFooter } from "./mobile-menu/MenuFooter";
 import { 
   personalItems, 
@@ -52,7 +52,7 @@ export function MobileMenu() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-white">
+        <Button variant="ghost" size="icon" className="text-white z-50">
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
@@ -61,7 +61,24 @@ export function MobileMenu() {
         className="w-full p-0 border-none bg-[#111111] text-white"
       >
         <div className="flex flex-col h-[95vh] bg-[#111111] overflow-y-auto">
-          <MenuHeader onClose={() => setOpen(false)} />
+          <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+            <div className="flex items-center gap-2">
+              <img 
+                src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
+                alt="Logo" 
+                className="h-8 w-8"
+              />
+              <span className="text-sm text-white font-light">creativable</span>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setOpen(false)}
+              className="text-white hover:bg-sidebar-accent"
+            >
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
           
           <div className="flex-1 overflow-y-auto no-scrollbar">
             <MenuSection title="Persönlich" items={personalItems} onNavigate={handleNavigation} />
