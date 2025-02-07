@@ -1,8 +1,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { useToast } from "@/hooks/use-toast";
+import { deletePhase } from "@/services/phases/phaseService";
 
 export const useDeletePhaseMutation = () => {
   const { settings } = useSettings();
@@ -11,21 +11,7 @@ export const useDeletePhaseMutation = () => {
 
   return useMutation({
     mutationFn: async ({ phaseId, targetPhaseId }: { phaseId: string; targetPhaseId: string }) => {
-      // First update all leads in this phase to the target phase
-      const { error: updateError } = await supabase
-        .from("leads")
-        .update({ phase_id: targetPhaseId })
-        .eq("phase_id", phaseId);
-
-      if (updateError) throw updateError;
-
-      // Then delete the phase
-      const { error } = await supabase
-        .from("pipeline_phases")
-        .delete()
-        .eq("id", phaseId);
-
-      if (error) throw error;
+      await deletePhase(phaseId, targetPhaseId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });

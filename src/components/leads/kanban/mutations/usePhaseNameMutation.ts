@@ -1,8 +1,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { useToast } from "@/hooks/use-toast";
+import { updatePhaseName } from "@/services/phases/phaseService";
 
 export const usePhaseNameMutation = () => {
   const { settings } = useSettings();
@@ -11,12 +11,7 @@ export const usePhaseNameMutation = () => {
 
   return useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const { error } = await supabase
-        .from("pipeline_phases")
-        .update({ name })
-        .eq("id", id);
-
-      if (error) throw error;
+      await updatePhaseName(id, name);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-phases"] });
