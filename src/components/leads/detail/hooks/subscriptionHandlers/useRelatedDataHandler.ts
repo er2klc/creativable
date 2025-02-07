@@ -1,3 +1,4 @@
+
 import { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadWithRelations, SubscriptionPayload } from "../types/leadSubscription";
@@ -10,21 +11,30 @@ export const useRelatedDataHandler = (
     console.log('Notes changed:', payload);
     if (!leadId) return;
 
-    const { data } = await supabase
-      .from("leads")
-      .select("*, messages(*), tasks(*), notes(*), lead_files(*)")
-      .eq("id", leadId)
-      .maybeSingle();
+    // Get the updated note directly instead of refetching all data
+    const { data: updatedNote } = await supabase
+      .from("notes")
+      .select("*")
+      .eq("id", payload.new.id)
+      .single();
 
-    if (data) {
+    if (updatedNote) {
       queryClient.setQueryData<LeadWithRelations>(
         ["lead", leadId],
         (old) => {
           if (!old) return old;
+          const updatedNotes = old.notes?.map(note => 
+            note.id === updatedNote.id ? updatedNote : note
+          ) || [];
+
+          // If it's a new note, add it to the array
+          if (payload.eventType === 'INSERT' && !updatedNotes.find(n => n.id === updatedNote.id)) {
+            updatedNotes.push(updatedNote);
+          }
+
           return {
             ...old,
-            platform: old.platform,
-            notes: data.notes,
+            notes: updatedNotes,
           };
         }
       );
