@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { Copy } from "lucide-react";
+import { Copy, Activity } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { VideoThumbnail } from "./youtube/VideoThumbnail";
@@ -88,10 +88,15 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   return (
     <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500 relative")}>
       {isViewCard && latestProgress > 0 && (
-        <Progress 
-          value={latestProgress} 
-          className="absolute top-0 left-0 right-0 h-1" 
-        />
+        <>
+          <Progress 
+            value={latestProgress} 
+            className="absolute top-0 left-0 right-0 h-1" 
+          />
+          <div className="absolute top-2 right-2">
+            <Activity className="h-4 w-4 text-blue-500 animate-pulse" />
+          </div>
+        </>
       )}
       <div className="flex items-start justify-between mt-2">
         <div className="space-y-1 flex-1">
