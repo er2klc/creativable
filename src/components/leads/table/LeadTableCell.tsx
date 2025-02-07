@@ -1,3 +1,4 @@
+
 import { TableCell } from "@/components/ui/table";
 import { Star, Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Tables } from "@/integrations/supabase/types";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LeadTableCellProps {
   type: "favorite" | "name" | "platform" | "phase" | "lastAction" | "industry";
@@ -47,6 +49,8 @@ const getPlatformColor = (platform: string) => {
 };
 
 export const LeadTableCell = ({ type, value, onClick, lead }: LeadTableCellProps) => {
+  const isMobile = useIsMobile();
+
   const { data: phaseInfo } = useQuery({
     queryKey: ["phase-info", value],
     queryFn: async () => {
@@ -92,10 +96,10 @@ export const LeadTableCell = ({ type, value, onClick, lead }: LeadTableCellProps
       );
     case "name":
       return (
-        <TableCell className="font-medium whitespace-nowrap">
+        <TableCell className={cn("font-medium whitespace-nowrap", isMobile && "py-1")}>
           <div className="flex items-center gap-3">
             <div className="relative">
-              <Avatar className="h-8 w-8">
+              <Avatar className={cn("h-8 w-8", isMobile && "h-6 w-6")}>
                 {lead?.social_media_profile_image_url ? (
                   <AvatarImage 
                     src={lead.social_media_profile_image_url} 
@@ -110,12 +114,20 @@ export const LeadTableCell = ({ type, value, onClick, lead }: LeadTableCellProps
               </Avatar>
               <div className={cn(
                 "absolute -right-1 -top-1 rounded-full w-5 h-5 border-2 border-white shadow-lg flex items-center justify-center",
+                isMobile && "w-4 h-4 -right-0.5 -top-0.5",
                 getPlatformColor(lead?.platform)
               )}>
                 {getPlatformIcon(lead?.platform)}
               </div>
             </div>
-            <span>{value}</span>
+            <div className="flex flex-col gap-0.5">
+              <span className={cn("", isMobile && "text-sm")}>{value}</span>
+              {isMobile && lead && (
+                <span className="text-xs text-muted-foreground">
+                  {lead.platform} • {lead.industry}
+                </span>
+              )}
+            </div>
           </div>
         </TableCell>
       );

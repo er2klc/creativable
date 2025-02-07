@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LeadTableCell } from "./table/LeadTableCell";
 import { LeadTableActions } from "./table/LeadTableActions";
 import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LeadTableViewProps {
   leads: Tables<"leads">[];
@@ -26,6 +27,7 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
   const { settings } = useSettings();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const { data: phases = [] } = useQuery({
     queryKey: ["pipeline-phases", selectedPipelineId],
@@ -121,21 +123,25 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
               <TableCell className="w-[30px] p-2">
                 <span className="sr-only">Favorite</span>
               </TableCell>
-              <TableCell className="w-[15%] min-w-[120px]">
+              <TableCell className={isMobile ? "p-2" : "w-[15%] min-w-[120px]"}>
                 {settings?.language === "en" ? "Contact" : "Kontakt"}
               </TableCell>
-              <TableCell className="w-[15%] min-w-[120px]">
-                {settings?.language === "en" ? "Platform" : "Plattform"}
-              </TableCell>
-              <TableCell className="w-[15%] min-w-[120px]">
-                {settings?.language === "en" ? "Phase" : "Phase"}
-              </TableCell>
-              <TableCell className="w-[20%] min-w-[120px]">
-                {settings?.language === "en" ? "Last Action" : "Letzte Aktion"}
-              </TableCell>
-              <TableCell className="w-[15%] min-w-[120px]">
-                {settings?.language === "en" ? "Industry" : "Branche"}
-              </TableCell>
+              {!isMobile && (
+                <>
+                  <TableCell className="w-[15%] min-w-[120px]">
+                    {settings?.language === "en" ? "Platform" : "Plattform"}
+                  </TableCell>
+                  <TableCell className="w-[15%] min-w-[120px]">
+                    {settings?.language === "en" ? "Phase" : "Phase"}
+                  </TableCell>
+                  <TableCell className="w-[20%] min-w-[120px]">
+                    {settings?.language === "en" ? "Last Action" : "Letzte Aktion"}
+                  </TableCell>
+                  <TableCell className="w-[15%] min-w-[120px]">
+                    {settings?.language === "en" ? "Industry" : "Branche"}
+                  </TableCell>
+                </>
+              )}
               <TableCell className="w-[50px]">
                 <span className="sr-only">Actions</span>
               </TableCell>
@@ -150,10 +156,14 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
               >
                 <LeadTableCell type="favorite" value={null} />
                 <LeadTableCell type="name" value={lead.name} lead={lead} />
-                <LeadTableCell type="platform" value={lead.platform} />
-                <LeadTableCell type="phase" value={lead.phase_id} />
-                <LeadTableCell type="lastAction" value={lead.last_action_date} />
-                <LeadTableCell type="industry" value={lead.industry} />
+                {!isMobile && (
+                  <>
+                    <LeadTableCell type="platform" value={lead.platform} />
+                    <LeadTableCell type="phase" value={lead.phase_id} />
+                    <LeadTableCell type="lastAction" value={lead.last_action_date} />
+                    <LeadTableCell type="industry" value={lead.industry} />
+                  </>
+                )}
                 <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                   <LeadTableActions
                     lead={lead}
