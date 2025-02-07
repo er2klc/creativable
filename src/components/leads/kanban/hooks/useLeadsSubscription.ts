@@ -20,7 +20,7 @@ export const useLeadsSubscription = (selectedPipelineId: string | null) => {
         (payload) => {
           console.log('Lead deleted:', payload.old.id);
           
-          // Remove from all leads cache
+          // First, remove the deleted lead from all caches and queries
           queryClient.setQueryData(
             ["leads"],
             (oldData: Tables<"leads">[] | undefined) => {
@@ -28,7 +28,7 @@ export const useLeadsSubscription = (selectedPipelineId: string | null) => {
               return oldData.filter(lead => lead.id !== payload.old.id);
             }
           );
-          
+
           // Remove from pipeline-specific cache
           queryClient.setQueryData(
             ["leads", selectedPipelineId],
@@ -40,6 +40,12 @@ export const useLeadsSubscription = (selectedPipelineId: string | null) => {
 
           // Remove from lead detail cache
           queryClient.removeQueries({ queryKey: ["lead", payload.old.id] });
+
+          // Force refetch leads
+          queryClient.invalidateQueries({ queryKey: ["leads"] });
+          if (selectedPipelineId) {
+            queryClient.invalidateQueries({ queryKey: ["leads", selectedPipelineId] });
+          }
         }
       )
       .on(

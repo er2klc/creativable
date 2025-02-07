@@ -108,7 +108,7 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
       // First close the dialog to prevent any UI issues
       onClose();
 
-      // Clear all relevant caches
+      // Clear all caches
       queryClient.removeQueries({ queryKey: ["leads"] });
       queryClient.removeQueries({ queryKey: ["lead", leadId] });
       queryClient.removeQueries({ queryKey: ["leads", data?.pipelineId] });
