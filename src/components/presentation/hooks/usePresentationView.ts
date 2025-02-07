@@ -66,7 +66,11 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           completed: false,
           id: newViewId
         },
-        view_history: []
+        view_history: [{
+          timestamp: new Date().toISOString(),
+          progress: 0,
+          event_type: 'video_opened'
+        }]
       };
 
       const { error: viewError } = await supabase
@@ -144,7 +148,19 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         event_type: isCompleted ? 'video_completed' : 'video_progress'
       };
 
-      // Use the RPC function to update the view
+      // Call the RPC function to append to the view_history array
+      const { error: rpcError } = await supabase
+        .rpc('jsonb_array_append', {
+          arr: currentView.view_history || '[]',
+          elem: newHistoryEntry
+        });
+
+      if (rpcError) {
+        console.error('Error updating view history:', rpcError);
+        return;
+      }
+
+      // Now update the view with the new metadata and other fields
       const { error } = await supabase
         .from('presentation_views')
         .update({
@@ -152,8 +168,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           completed: isCompleted,
           ip_address: ipLocationData?.ipAddress || 'unknown',
           location: ipLocationData?.location || 'Unknown Location',
-          metadata: updatedMetadata,
-          view_history: newHistoryEntry
+          metadata: updatedMetadata
         })
         .eq('id', viewId);
 
@@ -176,3 +191,4 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     isCreatingView
   };
 };
+
