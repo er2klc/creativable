@@ -77,9 +77,14 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           )}
           <div className="mt-2 w-full">
             <Progress value={progress} className="h-2 w-full" />
-            <span className="text-xs text-gray-500 mt-1">
-              {Math.round(progress)}%
-            </span>
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-xs text-gray-500">
+                {Math.round(progress)}%
+              </span>
+              <span className="text-xs text-gray-400">
+                ID: {metadata.view_id || 'N/A'}
+              </span>
+            </div>
           </div>
           <div className="flex gap-4 mt-2">
             {metadata.url && (
