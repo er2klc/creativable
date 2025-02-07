@@ -8,9 +8,19 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
   const ipLocationData = useIPLocation();
 
   const createView = async (pageData: any) => {
-    if (!ipLocationData) return;
+    if (!ipLocationData || !leadId || !pageData) {
+      console.error('Missing required data for createView:', { ipLocationData, leadId, pageData });
+      return;
+    }
 
     try {
+      console.log('Creating presentation view with data:', {
+        pageId: pageData.id,
+        leadId,
+        ipAddress: ipLocationData.ipAddress,
+        location: ipLocationData.location
+      });
+
       const { data: viewData, error: viewError } = await supabase
         .from('presentation_views')
         .insert([
@@ -37,19 +47,29 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       if (viewError) {
         console.error('Error creating view record:', viewError);
       } else {
+        console.log('Successfully created view record:', viewData);
         setViewId(viewData.id);
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error creating presentation view:', error);
     }
   };
 
   const updateProgress = async (progress: number, pageData: any) => {
-    if (!viewId || !pageData || !ipLocationData) return;
+    if (!viewId || !pageData || !ipLocationData) {
+      console.error('Missing required data for updateProgress:', { viewId, pageData, ipLocationData });
+      return;
+    }
 
     const isCompleted = progress >= 95;
     
     try {
+      console.log('Updating presentation view progress:', {
+        viewId,
+        progress,
+        isCompleted
+      });
+
       const metadata = {
         type: 'youtube',
         event_type: isCompleted ? 'video_completed' : 'video_progress',
@@ -72,6 +92,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
 
       if (error) {
         console.error('Error updating view progress:', error);
+      } else {
+        console.log('Successfully updated view progress');
       }
     } catch (error) {
       console.error('Error:', error);
