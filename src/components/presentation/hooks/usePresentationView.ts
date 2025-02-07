@@ -1,8 +1,8 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useIPLocation } from './useIPLocation';
 import { toast } from 'sonner';
+import { PresentationPageData } from '../types';
 
 export const usePresentationView = (pageId: string | undefined, leadId: string | undefined) => {
   const [viewId, setViewId] = useState<string | null>(null);
@@ -11,12 +11,12 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
   const ipLocationData = useIPLocation();
   const MAX_RETRIES = 3;
 
-  const createView = useCallback(async (pageData: any) => {
-    if (!pageData || !leadId || !pageId || isCreatingView) {
+  const createView = useCallback(async (pageData: PresentationPageData) => {
+    if (!pageData || !leadId || !pageData.id || isCreatingView) {
       console.log('Skipping view creation - missing data or already creating:', {
         hasPageData: !!pageData,
         hasLeadId: !!leadId,
-        hasPageId: !!pageId,
+        hasPageId: !!pageData?.id,
         isCreatingView
       });
       return;
@@ -32,7 +32,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     try {
       setIsCreatingView(true);
       console.log('Creating presentation view with data:', {
-        pageId,
+        pageId: pageData.id,
         leadId,
         ipAddress: ipLocationData?.ipAddress || 'unknown',
         location: ipLocationData?.location || 'Unknown Location'
@@ -42,7 +42,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         .from('presentation_views')
         .insert([
           {
-            page_id: pageId,
+            page_id: pageData.id,
             lead_id: leadId,
             video_progress: 0,
             completed: false,
@@ -74,7 +74,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     } finally {
       setIsCreatingView(false);
     }
-  }, [leadId, pageId, ipLocationData, retryCount, isCreatingView]);
+  }, [leadId, ipLocationData, retryCount, isCreatingView]);
 
   const updateProgress = async (progress: number, pageData: any) => {
     if (!viewId) {

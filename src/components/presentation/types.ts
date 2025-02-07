@@ -1,4 +1,6 @@
+
 export interface PresentationPageData {
+  id: string;
   title: string;
   video_url: string;
   lead_id: string;

@@ -64,8 +64,10 @@ export const usePresentationData = (pageId: string | undefined) => {
       }
 
       const formattedPageData: PresentationPageData = {
+        id: pageData.id,
         title: pageData.title,
         video_url: pageData.video_url,
+        lead_id: pageData.lead.id,
         lead: {
           name: pageData.lead?.name || '',
           social_media_profile_image_url: pageData.lead?.social_media_profile_image_url || ''
@@ -79,7 +81,7 @@ export const usePresentationData = (pageId: string | undefined) => {
       };
 
       setPageData(formattedPageData);
-      return { ...pageData, ...formattedPageData };
+      return formattedPageData;
     } catch (error) {
       console.error('Error:', error);
       setError("An error occurred");
