@@ -130,12 +130,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         return;
       }
 
-      const newHistoryEntry = {
-        timestamp: new Date().toISOString(),
-        progress: progress,
-        event_type: isCompleted ? 'video_completed' : 'video_progress'
-      };
-
       const updatedMetadata = {
         ...currentView.metadata,
         type: 'youtube',
@@ -157,8 +151,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           completed: isCompleted,
           ip_address: ipLocationData?.ipAddress || 'unknown',
           location: ipLocationData?.location || 'Unknown Location',
-          metadata: updatedMetadata,
-          view_history: [...(currentView.view_history || []), newHistoryEntry]
+          metadata: updatedMetadata
         })
         .eq('id', viewId);
 
@@ -181,4 +174,3 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     isCreatingView
   };
 };
-
