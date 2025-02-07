@@ -4,8 +4,9 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { CheckCircle2, X } from "lucide-react";
+import { CheckCircle2, X, Copy } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 
 interface YoutubeCardProps {
   content: string;
@@ -35,13 +36,13 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                      metadata?.event_type === 'video_closed' || 
                      metadata?.event_type === 'video_completed';
 
-  const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
+  const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       toast.success(
         settings?.language === "en"
-          ? `${type === 'youtube' ? 'YouTube' : 'Presentation'} URL copied to clipboard`
-          : `${type === 'youtube' ? 'YouTube' : 'Präsentations'}-URL in die Zwischenablage kopiert`
+          ? "Presentation URL copied to clipboard"
+          : "Präsentations-URL in die Zwischenablage kopiert"
       );
     } catch (err) {
       toast.error(
@@ -83,10 +84,18 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               {settings?.language === "en" ? "Progress" : "Fortschritt"}: {Math.round(latestProgress)}%
             </div>
           )}
-          {/* Show presentation URL for non-view cards */}
+          {/* Show presentation URL with copy button for non-view cards */}
           {!isViewCard && metadata.presentationUrl && (
-            <div className="text-sm text-gray-600 break-all">
-              {metadata.presentationUrl}
+            <div className="flex items-center gap-2 mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => copyToClipboard(metadata.presentationUrl!)}
+                className="flex items-center gap-2"
+              >
+                <Copy className="h-4 w-4" />
+                {settings?.language === "en" ? "Presentation URL" : "Präsentations-URL"}
+              </Button>
             </div>
           )}
           {timestamp && (
@@ -120,3 +129,4 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
+
