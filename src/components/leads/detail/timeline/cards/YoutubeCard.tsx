@@ -20,6 +20,11 @@ interface YoutubeCardProps {
     title?: string;
     url?: string;
     id?: string;
+    progress_milestones?: Array<{
+      progress: number;
+      timestamp: string;
+      completed: boolean;
+    }>;
   };
   timestamp?: string;
 }
@@ -57,12 +62,58 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     return `${metadata.ip || 'Unknown IP'} | ${metadata.location || 'Unknown Location'}`;
   };
 
-  // Create milestone segments
-  const milestoneSegments = Array.from({ length: 20 }, (_, i) => i * 5);
+  // Group milestones by viewing session and get max progress for each
+  const getSessionMilestones = () => {
+    if (!metadata.progress_milestones) return [];
+    
+    const milestones = metadata.progress_milestones
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    
+    const sessions: Array<{timestamp: string, progress: number}> = [];
+    let currentSession = {
+      timestamp: '',
+      progress: 0,
+      lastTimestamp: new Date().getTime()
+    };
+
+    milestones.forEach(milestone => {
+      const timestamp = new Date(milestone.timestamp).getTime();
+      // If more than 30 minutes have passed, consider it a new session
+      if (timestamp - currentSession.lastTimestamp > 30 * 60 * 1000) {
+        if (currentSession.timestamp) {
+          sessions.push({
+            timestamp: currentSession.timestamp,
+            progress: currentSession.progress
+          });
+        }
+        currentSession = {
+          timestamp: milestone.timestamp,
+          progress: milestone.progress,
+          lastTimestamp: timestamp
+        };
+      } else {
+        // Update progress if it's higher
+        currentSession.progress = Math.max(currentSession.progress, milestone.progress);
+        currentSession.lastTimestamp = timestamp;
+      }
+    });
+
+    // Add the last session
+    if (currentSession.timestamp) {
+      sessions.push({
+        timestamp: currentSession.timestamp,
+        progress: currentSession.progress
+      });
+    }
+
+    return sessions;
+  };
+
+  const sessionMilestones = getSessionMilestones();
 
   return (
     <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500 relative")}>
-      {isViewCard && (
+      {isViewCard && latestProgress > 0 && (
         <Progress 
           value={latestProgress} 
           className="absolute top-0 left-0 right-0 h-1" 
@@ -94,29 +145,25 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               {getLocationInfo()}
             </div>
           )}
-          {isViewCard && (
-            <>
-              <div className="text-sm text-gray-600">
-                {settings?.language === "en" ? "Progress" : "Fortschritt"}: {Math.round(latestProgress)}%
-              </div>
-              <div className="flex gap-0.5 mt-2 h-1.5">
-                {milestoneSegments.map((milestone) => (
-                  <div
-                    key={milestone}
-                    className={cn(
-                      "flex-1 relative",
-                      latestProgress >= milestone ? "bg-green-500" : "bg-gray-200"
-                    )}
-                  >
-                    {latestProgress >= milestone && milestone % 20 === 0 && (
-                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                        <CheckCircle2 className="h-3 w-3 text-green-500" />
-                      </div>
-                    )}
+          {isViewCard && sessionMilestones.length > 0 && (
+            <div className="space-y-4 mt-4">
+              {sessionMilestones.map((session, index) => (
+                <div key={index} className="space-y-1">
+                  <div className="text-sm text-gray-600">
+                    {formatDateTime(session.timestamp, settings?.language)}
                   </div>
-                ))}
-              </div>
-            </>
+                  <div className="relative h-2 bg-gray-200 rounded">
+                    <div 
+                      className="absolute left-0 top-0 h-full bg-green-500 rounded"
+                      style={{ width: `${session.progress}%` }}
+                    />
+                    <div className="absolute -right-6 top-1/2 -translate-y-1/2 text-xs text-gray-600">
+                      {session.progress}%
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
           {!isViewCard && metadata.presentationUrl && (
             <div className="flex items-center gap-2 mt-2">
@@ -162,3 +209,4 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
+
