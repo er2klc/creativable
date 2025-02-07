@@ -40,6 +40,14 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                      metadata?.event_type === 'video_closed' || 
                      metadata?.event_type === 'video_completed';
 
+  console.log("DEBUG YoutubeCard:", {
+    latestProgress,
+    metadata: metadata,
+    isViewCard,
+    hasMilestones: metadata?.progress_milestones?.length,
+    timestamp: new Date().toISOString()
+  });
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
