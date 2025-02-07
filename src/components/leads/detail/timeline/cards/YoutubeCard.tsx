@@ -20,6 +20,11 @@ interface YoutubeCardProps {
     title?: string;
     url?: string;
     id?: string;
+    view_history?: Array<{
+      timestamp: string;
+      progress: number;
+      event_type: string;
+    }>;
   };
   timestamp?: string;
 }
@@ -29,6 +34,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const videoId = metadata?.url?.split('v=')[1] || '';
   
   const latestProgress = metadata?.video_progress || 0;
+  const viewHistory = metadata?.view_history || [];
 
   const isViewCard = metadata?.event_type === 'video_opened' || 
                      metadata?.event_type === 'video_progress' ||
@@ -95,13 +101,20 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           )}
           {isViewCard && (
             <>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 mt-4">
                 {settings?.language === "en" ? "Progress" : "Fortschritt"}: {Math.round(latestProgress)}%
               </div>
+              {viewHistory.map((entry, index) => (
+                entry.progress >= 5 && (
+                  <div key={index} className="text-xs text-gray-500 mb-1">
+                    {formatDateTime(entry.timestamp, settings?.language)} - {Math.round(entry.progress)}%
+                  </div>
+                )
+              ))}
               <div className="text-xs text-gray-500 mb-1">
                 {settings?.language === "en" ? "Started" : "Gestartet"}: {formatDateTime(timestamp, settings?.language)}
               </div>
-              <div className="flex gap-0.5 mt-2 h-1.5">
+              <div className="flex gap-0.5 mt-4 h-1.5">
                 {milestoneSegments.map((milestone) => (
                   <div
                     key={milestone}
@@ -111,7 +124,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                     )}
                   >
                     {latestProgress >= milestone && milestone % 20 === 0 && (
-                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
                         <CheckCircle2 className="h-3 w-3 text-green-500" />
                       </div>
                     )}
