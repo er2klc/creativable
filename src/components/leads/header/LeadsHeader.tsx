@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { LeadSearch } from "../LeadSearch";
 import { LayoutGrid, List, ChevronDown, Instagram, Linkedin, Users } from "lucide-react";
@@ -38,7 +39,7 @@ export const LeadsHeader = ({
 
   return (
     <div className="w-full bg-background border-b">
-      <div className="w-full px-4 py-4">
+      <div className={`w-full px-4 py-4 ${isMobile ? 'min-w-[320px]' : ''}`}>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
           <div className="flex items-center justify-between md:justify-start gap-4 flex-shrink-0">
             <div className="flex items-center gap-2">
