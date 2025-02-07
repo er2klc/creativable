@@ -38,10 +38,10 @@ export const LeadsHeader = ({
   const isMobile = useIsMobile();
 
   return (
-    <div className="fixed top-[48px] left-[60px] right-0 z-[9] bg-background border-b md:left-[72px] md:top-0 group-hover:left-[240px] transition-[left] duration-300 ease-in-out">
+    <div className="fixed top-[48px] left-0 right-0 z-[9] bg-background border-b md:left-[72px] md:top-0 group-hover:left-[240px] transition-[left] duration-300 ease-in-out">
       <div className="w-full px-4 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-4 w-full">
-          <div className="flex items-center gap-4 flex-shrink-0">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+          <div className="flex items-center justify-between md:justify-start gap-4 flex-shrink-0">
             {/* Page Title */}
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5" />
@@ -52,7 +52,7 @@ export const LeadsHeader = ({
             <div className="flex items-center gap-0">
               <Button
                 variant="default"
-                className="bg-black text-white hover:bg-black/90 rounded-r-none"
+                className="bg-black text-white hover:bg-black/90 rounded-r-none text-sm whitespace-nowrap"
                 onClick={() => setShowAddLead(true)}
               >
                 ✨ Kontakt hinzufügen
@@ -83,12 +83,12 @@ export const LeadsHeader = ({
           </div>
 
           {/* Search Field */}
-          <div className="flex-1 min-w-[200px] max-w-xl">
+          <div className="flex-1 min-w-0 max-w-xl">
             <LeadSearch value={searchQuery} onChange={setSearchQuery} />
           </div>
 
           {/* Pipeline Selection and User Avatar */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between md:justify-end gap-4">
             <LeadFilters
               selectedPipelineId={selectedPipelineId}
               setSelectedPipelineId={setSelectedPipelineId}
@@ -148,3 +148,4 @@ export const LeadsHeader = ({
     </div>
   );
 };
+
