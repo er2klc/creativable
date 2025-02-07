@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +19,7 @@ export const useLeadsSubscription = (selectedPipelineId: string | null) => {
         },
         (payload) => {
           console.log('Lead deleted:', payload.old.id);
+          
           // Remove from all leads cache
           queryClient.setQueryData(
             ["leads"],

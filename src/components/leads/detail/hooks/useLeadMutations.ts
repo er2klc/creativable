@@ -60,7 +60,7 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         throw new Error('Lead not found');
       }
 
-      // Immediately remove from caches before actual deletion
+      // Optimistically remove from all caches before actual deletion
       queryClient.setQueryData(
         ["leads"],
         (oldData: Tables<"leads">[] | undefined) => {
@@ -76,6 +76,9 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
           return oldData.filter(l => l.id !== leadId);
         }
       );
+
+      // Remove from lead detail cache
+      queryClient.removeQueries({ queryKey: ["lead", leadId] });
 
       const relatedTables = [
         'presentation_pages',
@@ -121,13 +124,6 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
       return { pipelineId: lead.pipeline_id };
     },
     onSuccess: (data) => {
-      // Remove from all relevant caches
-      queryClient.removeQueries({ queryKey: ["lead", leadId] });
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      if (data?.pipelineId) {
-        queryClient.invalidateQueries({ queryKey: ["leads", data.pipelineId] });
-      }
-
       toast.success(
         settings?.language === "en"
           ? "Contact deleted successfully"
