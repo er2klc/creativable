@@ -91,7 +91,16 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
       }
     },
     onSuccess: () => {
+      // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      
+      // Find and invalidate the specific pipeline query if we can get the pipeline ID
+      const pipelineId = queryClient.getQueryData<Tables<"leads">>(['lead', leadId])?.pipeline_id;
+      if (pipelineId) {
+        queryClient.invalidateQueries({ queryKey: ["leads", pipelineId] });
+      }
+
       toast.success(
         settings?.language === "en"
           ? "Contact deleted successfully"
