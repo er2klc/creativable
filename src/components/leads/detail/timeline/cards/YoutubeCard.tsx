@@ -32,6 +32,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                      metadata?.event_type === 'video_closed' || 
                      metadata?.event_type === 'video_completed';
 
+  console.log("YoutubeCard rendering with metadata:", metadata); // Debug log
+
   const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
     try {
       await navigator.clipboard.writeText(text);
@@ -53,6 +55,11 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     if (!metadata.ip && !metadata.location) return 'Unknown';
     return `${metadata.ip || 'Unknown IP'} | ${metadata.location || 'Unknown Location'}`;
   };
+
+  // Debug logs
+  console.log("Video progress:", progress);
+  console.log("Event type:", metadata?.event_type);
+  console.log("Full metadata:", metadata);
 
   return (
     <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500 relative")}>
