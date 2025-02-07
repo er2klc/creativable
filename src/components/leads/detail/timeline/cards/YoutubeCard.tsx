@@ -104,32 +104,32 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               <div className="text-sm text-gray-600 mt-4">
                 {settings?.language === "en" ? "Progress" : "Fortschritt"}: {Math.round(latestProgress)}%
               </div>
-              {viewHistory.map((entry, index) => (
-                entry.progress >= 5 && (
-                  <div key={index} className="text-xs text-gray-500 mb-1">
-                    {formatDateTime(entry.timestamp, settings?.language)} - {Math.round(entry.progress)}%
+              {viewHistory.filter(entry => entry.progress >= 5).map((entry, index) => (
+                <div key={index} className="mt-4">
+                  <div className="text-xs text-gray-500 mb-2">
+                    {formatDateTime(entry.timestamp, settings?.language)}
                   </div>
-                )
-              ))}
-              <div className="text-xs text-gray-500 mb-1">
-                {settings?.language === "en" ? "Started" : "Gestartet"}: {formatDateTime(timestamp, settings?.language)}
-              </div>
-              <div className="flex gap-0.5 mt-4 h-1.5">
-                {milestoneSegments.map((milestone) => (
-                  <div
-                    key={milestone}
-                    className={cn(
-                      "flex-1 relative",
-                      latestProgress >= milestone ? "bg-green-500" : "bg-gray-200"
-                    )}
-                  >
-                    {latestProgress >= milestone && milestone % 20 === 0 && (
-                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
-                        <CheckCircle2 className="h-3 w-3 text-green-500" />
+                  <div className="flex gap-0.5 h-1.5">
+                    {milestoneSegments.map((milestone) => (
+                      <div
+                        key={milestone}
+                        className={cn(
+                          "flex-1 relative",
+                          entry.progress >= milestone ? "bg-green-500" : "bg-gray-200"
+                        )}
+                      >
+                        {entry.progress >= milestone && milestone % 20 === 0 && (
+                          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
+                            <CheckCircle2 className="h-3 w-3 text-green-500" />
+                          </div>
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
-                ))}
+                </div>
+              ))}
+              <div className="text-xs text-gray-500 mt-4">
+                {settings?.language === "en" ? "Started" : "Gestartet"}: {formatDateTime(timestamp, settings?.language)}
               </div>
             </>
           )}
@@ -144,11 +144,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                 <Copy className="h-4 w-4" />
                 {settings?.language === "en" ? "Presentation URL" : "Präsentations-URL"}
               </Button>
-            </div>
-          )}
-          {timestamp && (
-            <div className="text-xs text-gray-500">
-              {formatDateTime(timestamp, settings?.language)}
             </div>
           )}
         </div>
@@ -177,4 +172,3 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
-
