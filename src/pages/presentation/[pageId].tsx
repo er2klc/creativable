@@ -16,16 +16,18 @@ export default function PresentationPage() {
   useUnloadHandler(viewId);
 
   useEffect(() => {
-    console.log('Loading presentation page data...', { pageId, leadId });
-    loadPresentationPage();
-  }, [loadPresentationPage]);
+    if (pageId) {
+      console.log('Loading presentation page data...', { pageId, leadId });
+      loadPresentationPage();
+    }
+  }, [pageId, loadPresentationPage]);
 
   useEffect(() => {
-    if (pageData) {
+    if (pageData && pageId) {
       console.log('Initializing presentation view with pageData:', pageData);
       createView(pageData);
     }
-  }, [pageData, createView]);
+  }, [pageData, pageId, createView]);
 
   if (isLoading) return <PresentationLoading />;
   if (error || !pageData) return <PresentationError error={error || "Presentation not found"} />;
