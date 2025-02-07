@@ -31,7 +31,7 @@ export default function PresentationPage() {
     }
   }, [pageData, viewId, createView, isCreatingView]);
 
-  if (isLoading) return <PresentationLoading />;
+  if (isLoading || isCreatingView) return <PresentationLoading />;
   if (error || !pageData) return <PresentationError error={error || "Presentation not found"} />;
 
   return (
