@@ -60,26 +60,7 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         throw new Error('Lead not found');
       }
 
-      // Optimistically remove from all caches before actual deletion
-      queryClient.setQueryData(
-        ["leads"],
-        (oldData: Tables<"leads">[] | undefined) => {
-          if (!oldData) return [];
-          return oldData.filter(l => l.id !== leadId);
-        }
-      );
-
-      queryClient.setQueryData(
-        ["leads", lead.pipeline_id],
-        (oldData: Tables<"leads">[] | undefined) => {
-          if (!oldData) return [];
-          return oldData.filter(l => l.id !== leadId);
-        }
-      );
-
-      // Remove from lead detail cache
-      queryClient.removeQueries({ queryKey: ["lead", leadId] });
-
+      // Delete related records first
       const relatedTables = [
         'presentation_pages',
         'presentation_views',
@@ -123,16 +104,30 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
 
       return { pipelineId: lead.pipeline_id };
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      // Immediately remove from all caches
+      queryClient.removeQueries({ queryKey: ["leads"] });
+      queryClient.removeQueries({ queryKey: ["lead", leadId] });
+      
+      // Clear all pipeline-specific caches
+      queryClient.removeQueries({ queryKey: ["leads", data?.pipelineId] });
+
+      // Show success message
       toast.success(
         settings?.language === "en"
           ? "Contact deleted successfully"
           : "Kontakt erfolgreich gelöscht"
       );
       
-      // Zuerst navigieren, dann einen kompletten Seiten-Reload durchführen
-      navigate('/contacts', { replace: true });
+      // Close dialog first
       onClose();
+      
+      // Clear cache and reload before navigation
+      await queryClient.invalidateQueries();
+      queryClient.clear();
+      
+      // Navigate and force reload
+      navigate('/contacts', { replace: true });
       window.location.reload();
     },
     onError: (error) => {
