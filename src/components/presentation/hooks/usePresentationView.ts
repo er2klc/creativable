@@ -119,7 +119,14 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         .eq('id', viewId)
         .single();
 
+      if (!currentView) {
+        console.error('Could not find view record');
+        return;
+      }
+
+      // Create updated metadata maintaining the existing id
       const metadata = {
+        ...currentView.metadata,
         type: 'youtube',
         event_type: isCompleted ? 'video_completed' : 'video_progress',
         title: pageData.title,
@@ -127,9 +134,9 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         ip: ipLocationData?.ipAddress || 'unknown',
         location: ipLocationData?.location || 'Unknown Location',
         presentationUrl: pageData.presentationUrl,
-        id: viewId,
         video_progress: progress,
-        completed: isCompleted
+        completed: isCompleted,
+        id: viewId // Ensure ID is always present
       };
 
       console.log('Progress update metadata:', metadata);
@@ -164,3 +171,4 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     isCreatingView
   };
 };
+
