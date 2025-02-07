@@ -1465,6 +1465,35 @@ export type Database = {
           },
         ]
       }
+      presentation_progress_milestones: {
+        Row: {
+          id: string
+          progress: number
+          timestamp: string | null
+          view_id: string
+        }
+        Insert: {
+          id?: string
+          progress: number
+          timestamp?: string | null
+          view_id: string
+        }
+        Update: {
+          id?: string
+          progress?: number
+          timestamp?: string | null
+          view_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_progress_milestones_view_id_fkey"
+            columns: ["view_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_views"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       presentation_views: {
         Row: {
           completed: boolean | null
