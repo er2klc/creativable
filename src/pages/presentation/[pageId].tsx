@@ -15,6 +15,7 @@ export default function PresentationPage() {
 
   useUnloadHandler(viewId);
 
+  // Load page data once
   useEffect(() => {
     if (pageId) {
       console.log('Loading presentation page data...', { pageId, leadId });
@@ -22,12 +23,13 @@ export default function PresentationPage() {
     }
   }, [pageId, loadPresentationPage]);
 
+  // Create view once when we have page data
   useEffect(() => {
-    if (pageData && pageId) {
+    if (pageData && !viewId) {
       console.log('Initializing presentation view with pageData:', pageData);
       createView(pageData);
     }
-  }, [pageData, pageId, createView]);
+  }, [pageData, viewId, createView]);
 
   if (isLoading) return <PresentationLoading />;
   if (error || !pageData) return <PresentationError error={error || "Presentation not found"} />;

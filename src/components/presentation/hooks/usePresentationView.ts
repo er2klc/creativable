@@ -11,13 +11,26 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
   const ipLocationData = useIPLocation();
   const MAX_RETRIES = 3;
 
+  // Reset state when pageId changes
+  useEffect(() => {
+    setRetryCount(0);
+    setIsCreatingView(false);
+    setViewId(null);
+  }, [pageId]);
+
   const createView = useCallback(async (pageData: PresentationPageData) => {
+    // If we already have a viewId, don't create another one
+    if (viewId) {
+      return;
+    }
+
     if (!pageData || !leadId || !pageData.id || isCreatingView) {
       console.log('Skipping view creation - missing data or already creating:', {
         hasPageData: !!pageData,
         hasLeadId: !!leadId,
         hasPageId: !!pageData?.id,
-        isCreatingView
+        isCreatingView,
+        currentViewId: viewId
       });
       return;
     }
@@ -74,7 +87,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     } finally {
       setIsCreatingView(false);
     }
-  }, [leadId, ipLocationData, retryCount, isCreatingView]);
+  }, [leadId, ipLocationData, retryCount, isCreatingView, viewId]);
 
   const updateProgress = async (progress: number, pageData: any) => {
     if (!viewId) {
@@ -127,12 +140,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       toast.error('Failed to update progress');
     }
   };
-
-  // Reset retry count when pageId changes
-  useEffect(() => {
-    setRetryCount(0);
-    setIsCreatingView(false);
-  }, [pageId]);
 
   return {
     viewId,
