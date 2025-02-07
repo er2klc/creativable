@@ -33,18 +33,20 @@ const Leads = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      <LeadsHeader
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        selectedPipelineId={selectedPipelineId}
-        setSelectedPipelineId={handlePipelineSelect}
-        viewMode={isMobile ? "list" : viewMode}
-        setViewMode={setViewMode}
-        setIsEditMode={setIsEditMode}
-      />
+    <div className="flex flex-col h-screen">
+      <div className="fixed top-[48px] left-0 right-0 z-50 bg-background">
+        <LeadsHeader
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedPipelineId={selectedPipelineId}
+          setSelectedPipelineId={handlePipelineSelect}
+          viewMode={isMobile ? "list" : viewMode}
+          setViewMode={setViewMode}
+          setIsEditMode={setIsEditMode}
+        />
+      </div>
 
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 mt-[132px] md:mt-[84px] overflow-hidden">
         {(!isMobile && viewMode === "kanban") ? (
           <LeadKanbanView
             leads={leads}
@@ -65,3 +67,4 @@ const Leads = () => {
 };
 
 export default Leads;
+
