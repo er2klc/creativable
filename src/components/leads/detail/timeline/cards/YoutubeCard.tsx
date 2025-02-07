@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { Eye, Check } from "lucide-react";
+import { Eye } from "lucide-react";
 
 interface YoutubeCardProps {
   content: string;
@@ -23,49 +23,48 @@ interface YoutubeCardProps {
 
 export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) => {
   const { settings } = useSettings();
+  const videoId = metadata?.url?.split('v=')[1] || '';
+
+  const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(
+        settings?.language === "en"
+          ? `${type === 'youtube' ? 'YouTube' : 'Presentation'} URL copied to clipboard`
+          : `${type === 'youtube' ? 'YouTube' : 'Präsentations'}-URL in die Zwischenablage kopiert`
+      );
+    } catch (err) {
+      toast.error(
+        settings?.language === "en"
+          ? "Failed to copy URL"
+          : "URL konnte nicht kopiert werden"
+      );
+    }
+  };
 
   const getEventMessage = () => {
     if (metadata.event_type === 'video_opened') {
       return settings?.language === "en" 
-        ? `Video opened from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
-        : `Video wurde geöffnet von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
+        ? `Video viewed from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
+        : `Video wurde angesehen von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
     } else if (metadata.event_type === 'video_closed') {
-      const progress = Math.round(metadata.video_progress || 0);
       return settings?.language === "en"
-        ? `Video watched up to ${progress}% from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
-        : `Video wurde angeschaut bis ${progress}% von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
+        ? `Video closed at ${Math.round(metadata.video_progress || 0)}% from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
+        : `Video wurde beendet bei ${Math.round(metadata.video_progress || 0)}% von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
     } else if (metadata.event_type === 'video_completed') {
-      const progress = Math.round(metadata.video_progress || 0);
       return settings?.language === "en"
-        ? `Video watched ${progress}% from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
-        : `Video wurde angesehen ${progress}% von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
+        ? `Video fully watched from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
+        : `Video wurde vollständig angesehen von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
     }
     return content;
   };
 
-  const shouldShowVideoUrl = !metadata.event_type || 
-    (!['video_opened', 'video_closed', 'video_completed'].includes(metadata.event_type));
-
-  const getStatusIcon = () => {
-    if (metadata.event_type === 'video_completed' || 
-       (metadata.video_progress && metadata.video_progress >= 95)) {
-      return <Check className="h-5 w-5 text-green-500" />;
-    }
-    if (metadata.event_type === 'video_closed' && metadata.video_progress) {
-      return <Eye className="h-5 w-5 text-orange-500" />;
-    }
-    return null;
-  };
-
   return (
-    <Card className={cn(
-      "flex-1 p-4 text-sm overflow-hidden bg-white shadow-md",
-      metadata.event_type === 'video_completed' ? "border-green-500" : "border-red-500"
-    )}>
+    <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500")}>
       <div className="flex items-start justify-between">
         <div className="space-y-1 flex-1">
           <div className="flex items-center gap-2">
-            {getStatusIcon()}
+            <Eye className="h-4 w-4 text-gray-500" />
             <span className="font-medium">{metadata.title || content}</span>
           </div>
           <div className="text-gray-600">{getEventMessage()}</div>
@@ -74,21 +73,33 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               {formatDateTime(timestamp, settings?.language)}
             </div>
           )}
-          {shouldShowVideoUrl && metadata.url && (
-            <div className="flex gap-4 mt-2">
+          <div className="flex gap-4 mt-2">
+            {metadata.url && (
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(metadata.url!);
-                  toast.success(
-                    settings?.language === "en" 
-                      ? "YouTube URL copied to clipboard" 
-                      : "YouTube URL in die Zwischenablage kopiert"
-                  );
-                }}
+                onClick={() => copyToClipboard(metadata.url!, 'youtube')}
                 className="text-sm text-blue-500 hover:underline"
               >
                 {settings?.language === "en" ? "Copy YouTube URL" : "YouTube URL kopieren"}
               </button>
+            )}
+            {metadata.presentationUrl && (
+              <button
+                onClick={() => copyToClipboard(metadata.presentationUrl, 'presentation')}
+                className="text-sm text-blue-500 hover:underline"
+              >
+                {settings?.language === "en" ? "Copy Presentation URL" : "Präsentations-URL kopieren"}
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col items-end">
+          {videoId && (
+            <div className="w-48 h-27 rounded overflow-hidden">
+              <img 
+                src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+                alt="Video thumbnail"
+                className="w-full h-full object-cover"
+              />
             </div>
           )}
         </div>
@@ -96,4 +107,3 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
-

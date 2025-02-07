@@ -8,21 +8,14 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
   const ipLocationData = useIPLocation();
 
   const createView = async (pageData: any) => {
-    if (!ipLocationData || !pageId || !leadId) return;
+    if (!ipLocationData) return;
 
     try {
-      console.log('Creating view record with data:', {
-        pageId,
-        leadId,
-        ipAddress: ipLocationData.ipAddress,
-        location: ipLocationData.location
-      });
-
       const { data: viewData, error: viewError } = await supabase
         .from('presentation_views')
         .insert([
           {
-            page_id: pageId,
+            page_id: pageData.id,
             lead_id: leadId,
             video_progress: 0,
             completed: false,
@@ -44,7 +37,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       if (viewError) {
         console.error('Error creating view record:', viewError);
       } else {
-        console.log('Successfully created view record:', viewData);
         setViewId(viewData.id);
       }
     } catch (error) {
@@ -58,14 +50,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     const isCompleted = progress >= 95;
     
     try {
-      console.log('Updating progress:', {
-        viewId,
-        progress,
-        isCompleted,
-        ipAddress: ipLocationData.ipAddress,
-        location: ipLocationData.location
-      });
-
       const metadata = {
         type: 'youtube',
         event_type: isCompleted ? 'video_completed' : 'video_progress',
@@ -88,8 +72,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
 
       if (error) {
         console.error('Error updating view progress:', error);
-      } else {
-        console.log('Successfully updated progress');
       }
     } catch (error) {
       console.error('Error:', error);
