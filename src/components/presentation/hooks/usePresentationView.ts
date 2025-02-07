@@ -124,9 +124,9 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         return;
       }
 
-      // Create updated metadata maintaining the existing id
+      // Create updated metadata maintaining the existing id and other metadata fields
       const metadata = {
-        ...currentView.metadata,
+        ...currentView.metadata, // Preserve all existing metadata fields
         type: 'youtube',
         event_type: isCompleted ? 'video_completed' : 'video_progress',
         title: pageData.title,
