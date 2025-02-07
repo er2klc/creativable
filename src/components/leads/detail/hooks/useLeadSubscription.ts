@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,16 +79,18 @@ export const useLeadSubscription = (leadId: string | null) => {
           filter: `lead_id=eq.${leadId}`
         },
         handleFilesChange
-      )
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
-        
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to changes');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('Failed to subscribe to changes');
-        }
-      });
+      );
+
+    // Subscribe to the channel
+    const subscription = channel.subscribe((status) => {
+      console.log('Subscription status:', status);
+      
+      if (status === 'SUBSCRIBED') {
+        console.log('Successfully subscribed to changes');
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('Failed to subscribe to changes');
+      }
+    });
 
     return () => {
       console.log('Cleaning up subscriptions for leadId:', leadId);
