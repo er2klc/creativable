@@ -1,3 +1,4 @@
+
 export const DEFAULT_PLAYER_VARS = {
   autoplay: 0,
   controls: 1,
