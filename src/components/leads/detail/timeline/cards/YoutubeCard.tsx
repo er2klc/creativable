@@ -4,7 +4,9 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { Eye } from "lucide-react";
+import { Eye, Check, X, Loader } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { useEffect, useState } from "react";
 
 interface YoutubeCardProps {
   content: string;
@@ -24,6 +26,17 @@ interface YoutubeCardProps {
 export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) => {
   const { settings } = useSettings();
   const videoId = metadata?.url?.split('v=')[1] || '';
+  const [showProgress, setShowProgress] = useState(true);
+  const progress = metadata.video_progress || 0;
+
+  // Hide progress bar after 30 seconds of no changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowProgress(false);
+    }, 30000);
+
+    return () => clearTimeout(timer);
+  }, [metadata.video_progress]);
 
   const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
     try {
@@ -91,15 +104,36 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               </button>
             )}
           </div>
+          {showProgress && progress > 0 && progress < 100 && (
+            <div className="mt-2 space-y-1">
+              <div className="flex items-center gap-2">
+                <Loader className="h-3 w-3 animate-spin" />
+                <span className="text-xs text-gray-500">
+                  {Math.round(progress)}%
+                </span>
+              </div>
+              <Progress value={progress} className="h-1" />
+            </div>
+          )}
         </div>
         <div className="flex flex-col items-end">
           {videoId && (
-            <div className="w-48 h-27 rounded overflow-hidden">
+            <div className="w-48 h-27 rounded overflow-hidden relative">
               <img 
                 src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
                 alt="Video thumbnail"
                 className="w-full h-full object-cover"
               />
+              {progress === 0 && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <X className="h-8 w-8 text-white" />
+                </div>
+              )}
+              {progress >= 95 && (
+                <div className="absolute inset-0 bg-green-500/50 flex items-center justify-center">
+                  <Check className="h-8 w-8 text-white" />
+                </div>
+              )}
             </div>
           )}
         </div>
