@@ -69,7 +69,13 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       <div className="flex items-start justify-between mt-2">
         <div className="space-y-1 flex-1">
           <div className="font-medium text-base">
-            {metadata.title || content}
+            {!isViewCard ? (
+              settings?.language === "en" 
+                ? `Presentation URL created for contact "${metadata.title || content}"`
+                : `Präsentation URL wurde für Kontakt "${metadata.title || content}" erstellt`
+            ) : (
+              metadata.title || content
+            )}
           </div>
           <div className="text-gray-600">
             {settings?.language === "en" ? "Presentation viewed" : "Präsentation wurde angesehen"}
