@@ -45,10 +45,7 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'notes',
           filter: `lead_id=eq.${leadId}`
         },
-        (payload) => {
-          console.log('Notes changed:', payload);
-          handleNotesChange(payload);
-        }
+        handleNotesChange
       )
       // Tasks changes
       .on(
