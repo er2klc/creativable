@@ -87,12 +87,12 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               <span className="text-xs text-gray-500">
                 {Math.round(progress)}%
               </span>
-              {metadata?.id && (
-                <span className="text-xs text-gray-500 font-medium">
-                  View ID: {metadata.id}
-                </span>
-              )}
             </div>
+            {metadata?.id && (
+              <div className="mt-1 text-sm font-medium text-blue-600">
+                ID: {metadata.id}
+              </div>
+            )}
           </div>
           <div className="flex gap-4 mt-2">
             {metadata.presentationUrl && (
@@ -130,4 +130,3 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
-
