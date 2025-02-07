@@ -10,21 +10,16 @@ import { useUnloadHandler } from '@/components/presentation/hooks/useUnloadHandl
 
 export default function PresentationPage() {
   const { leadId, pageId } = useParams();
-  const { pageData, isLoading, error, loadPresentationPage } = usePresentationData(leadId, pageId);
+  const { pageData, isLoading, error } = usePresentationData(leadId, pageId);
   const { viewId, createView, updateProgress } = usePresentationView(pageId, leadId);
 
   useUnloadHandler(viewId);
 
   useEffect(() => {
-    const initializePage = async () => {
-      const fullPageData = await loadPresentationPage();
-      if (fullPageData) {
-        createView(fullPageData);
-      }
-    };
-
-    initializePage();
-  }, [leadId, pageId]);
+    if (pageData) {
+      createView(pageData);
+    }
+  }, [pageData, createView]);
 
   if (isLoading) return <PresentationLoading />;
   if (error || !pageData) return <PresentationError error={error || "Presentation not found"} />;
