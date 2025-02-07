@@ -109,7 +109,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         url: pageData.video_url,
         ip: ipLocationData?.ipAddress || 'unknown',
         location: ipLocationData?.location || 'Unknown Location',
-        id: viewId // Include the viewId in metadata
+        id: viewId // Include the viewId in metadata for all updates
       };
 
       const { error } = await supabase
