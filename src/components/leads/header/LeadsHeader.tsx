@@ -38,7 +38,7 @@ export const LeadsHeader = ({
   const isMobile = useIsMobile();
 
   return (
-    <div className="fixed top-[48px] left-0 right-0 z-[9] bg-background border-b md:left-[72px] md:top-0 group-hover:left-[240px] transition-[left] duration-300 ease-in-out">
+    <div className="sticky top-[48px] z-[9] bg-background border-b md:left-[72px] md:top-0 group-hover:left-[240px] transition-[left] duration-300 ease-in-out">
       <div className="w-full px-4 py-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
           <div className="flex items-center justify-between md:justify-start gap-4 flex-shrink-0">

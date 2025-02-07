@@ -44,7 +44,7 @@ const Leads = () => {
         setIsEditMode={setIsEditMode}
       />
 
-      <div className="flex-1 overflow-y-auto mt-[132px] md:mt-[84px]">
+      <div className="flex-1 overflow-hidden">
         {(!isMobile && viewMode === "kanban") ? (
           <LeadKanbanView
             leads={leads}
