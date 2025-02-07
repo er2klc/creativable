@@ -1,196 +1,30 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { PresentationLoading } from '@/components/presentation/PresentationLoading';
 import { PresentationError } from '@/components/presentation/PresentationError';
 import { PresentationContent } from '@/components/presentation/PresentationContent';
-import { PresentationPageData } from '@/components/presentation/types';
+import { usePresentationData } from '@/components/presentation/hooks/usePresentationData';
+import { usePresentationView } from '@/components/presentation/hooks/usePresentationView';
+import { useUnloadHandler } from '@/components/presentation/hooks/useUnloadHandler';
 
 export default function PresentationPage() {
   const { leadId, pageId } = useParams();
-  const [pageData, setPageData] = useState<PresentationPageData | null>(null);
-  const [viewId, setViewId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { pageData, isLoading, error, loadPresentationPage } = usePresentationData(leadId, pageId);
+  const { viewId, createView, updateProgress } = usePresentationView(pageId, leadId);
+
+  useUnloadHandler(viewId);
 
   useEffect(() => {
-    loadPresentationPage();
-
-    const handleUnload = () => {
-      if (viewId) {
-        const metadata = {
-          type: 'youtube',
-          event_type: 'video_closed'
-        };
-
-        navigator.sendBeacon(
-          `${window.location.origin}/api/presentation-view/${viewId}`,
-          JSON.stringify({ 
-            completed: false,
-            metadata 
-          })
-        );
+    const initializePage = async () => {
+      const fullPageData = await loadPresentationPage();
+      if (fullPageData) {
+        createView(fullPageData);
       }
     };
-    
-    window.addEventListener('unload', handleUnload);
-    return () => window.removeEventListener('unload', handleUnload);
+
+    initializePage();
   }, [leadId, pageId]);
-
-  const loadPresentationPage = async () => {
-    if (!leadId || !pageId) {
-      setError("Invalid URL");
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const { data: pageData, error: pageError } = await supabase
-        .from('presentation_pages')
-        .select(`
-          id,
-          title,
-          video_url,
-          expires_at,
-          is_url_active,
-          user_id,
-          lead:lead_id (
-            id,
-            name,
-            social_media_profile_image_url
-          ),
-          creator:user_id (
-            display_name,
-            avatar_url
-          )
-        `)
-        .eq('slug', pageId)
-        .maybeSingle();
-
-      if (pageError) {
-        console.error('Error loading presentation page:', pageError);
-        setError("Presentation not found");
-        setIsLoading(false);
-        return;
-      }
-
-      if (!pageData) {
-        setError("Presentation not found");
-        setIsLoading(false);
-        return;
-      }
-
-      if (pageData.expires_at && new Date(pageData.expires_at) < new Date()) {
-        setError("This presentation has expired");
-        setIsLoading(false);
-        return;
-      }
-
-      if (!pageData.is_url_active) {
-        setError("This presentation is no longer available");
-        setIsLoading(false);
-        return;
-      }
-
-      const formattedPageData: PresentationPageData = {
-        title: pageData.title,
-        video_url: pageData.video_url,
-        lead: {
-          name: pageData.lead?.name || '',
-          social_media_profile_image_url: pageData.lead?.social_media_profile_image_url || ''
-        },
-        user: {
-          profiles: {
-            display_name: pageData.creator?.display_name || '',
-            avatar_url: pageData.creator?.avatar_url || ''
-          }
-        }
-      };
-
-      setPageData(formattedPageData);
-
-      // Get visitor's IP using a CORS-friendly API
-      const ipResponse = await fetch('https://api.db-ip.com/v2/free/self');
-      const ipData = await ipResponse.json();
-      const location = `${ipData.city || ''}, ${ipData.countryName || ''}`;
-
-      // Create view record with IP and location
-      const { data: viewData, error: viewError } = await supabase
-        .from('presentation_views')
-        .insert([
-          {
-            page_id: pageData.id,
-            lead_id: leadId,
-            video_progress: 0,
-            completed: false,
-            ip_address: ipData.ipAddress,
-            location: location,
-            metadata: {
-              type: 'youtube',
-              event_type: 'video_opened',
-              title: pageData.title,
-              url: pageData.video_url,
-              ip: ipData.ipAddress,
-              location: location
-            }
-          }
-        ])
-        .select()
-        .single();
-
-      if (viewError) {
-        console.error('Error creating view record:', viewError);
-      } else {
-        setViewId(viewData.id);
-      }
-
-    } catch (error) {
-      console.error('Error:', error);
-      setError("An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleProgress = async (progress: number) => {
-    if (!viewId || !pageData) return;
-
-    const isCompleted = progress >= 95;
-    
-    try {
-      // Get current IP and location
-      const ipResponse = await fetch('https://api.db-ip.com/v2/free/self');
-      const ipData = await ipResponse.json();
-      const location = `${ipData.city || ''}, ${ipData.countryName || ''}`;
-
-      const metadata = {
-        type: 'youtube',
-        event_type: isCompleted ? 'video_completed' : 'video_progress',
-        title: pageData.title,
-        url: pageData.video_url,
-        ip: ipData.ipAddress,
-        location: location
-      };
-
-      const { error } = await supabase
-        .from('presentation_views')
-        .update({
-          video_progress: progress,
-          completed: isCompleted,
-          ip_address: ipData.ipAddress,
-          location: location,
-          metadata
-        })
-        .eq('id', viewId);
-
-      if (error) {
-        console.error('Error updating view progress:', error);
-      }
-    } catch (error) {
-      console.error('Error fetching IP data:', error);
-    }
-  };
 
   if (isLoading) return <PresentationLoading />;
   if (error || !pageData) return <PresentationError error={error || "Presentation not found"} />;
@@ -198,7 +32,10 @@ export default function PresentationPage() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-[#0A0A0A]">
       <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30" />
-      <PresentationContent pageData={pageData} onProgress={handleProgress} />
+      <PresentationContent 
+        pageData={pageData} 
+        onProgress={(progress) => updateProgress(progress, pageData)} 
+      />
     </div>
   );
 }
