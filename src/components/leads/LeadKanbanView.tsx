@@ -35,9 +35,9 @@ export const LeadKanbanView = ({
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Subscribe to lead deletions
+    // Subscribe to lead changes (deletions and insertions)
     const channel = supabase
-      .channel('lead-deletions')
+      .channel('lead-changes')
       .on(
         'postgres_changes',
         {
@@ -52,6 +52,31 @@ export const LeadKanbanView = ({
             (oldData: Tables<"leads">[] | undefined) => {
               if (!oldData) return [];
               return oldData.filter(lead => lead.id !== payload.old.id);
+            }
+          );
+          
+          // Also invalidate the query to ensure data consistency
+          queryClient.invalidateQueries({ queryKey: ["leads", selectedPipelineId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'leads',
+        },
+        (payload) => {
+          // Add the new lead to the cache
+          queryClient.setQueryData(
+            ["leads", selectedPipelineId],
+            (oldData: Tables<"leads">[] | undefined) => {
+              if (!oldData) return [payload.new as Tables<"leads">];
+              // Only add if it belongs to the current pipeline
+              if (payload.new.pipeline_id === selectedPipelineId) {
+                return [...oldData, payload.new as Tables<"leads">];
+              }
+              return oldData;
             }
           );
           
