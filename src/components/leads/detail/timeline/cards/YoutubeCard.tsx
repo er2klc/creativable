@@ -1,7 +1,7 @@
 
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { formatDateTime } from "./utils/dateUtils";
+import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { Copy, Activity } from "lucide-react";
@@ -21,17 +21,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                      metadata?.event_type === 'video_progress' ||
                      metadata?.event_type === 'video_closed' || 
                      metadata?.event_type === 'video_completed';
-
-  // Check if the progress is still "live" by looking at the last timestamp in view_history
-  const isLive = () => {
-    if (!metadata.view_history || !metadata.view_history.length) return false;
-    
-    const lastEntry = metadata.view_history[metadata.view_history.length - 1];
-    const lastTimestamp = new Date(lastEntry.timestamp).getTime();
-    const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000; // 30 minutes in milliseconds
-    
-    return lastTimestamp > thirtyMinutesAgo;
-  };
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -106,7 +95,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           />
           <div className="absolute top-2 right-2 flex items-center gap-2">
             <span className="text-xs text-blue-500">{Math.round(latestProgress)}%</span>
-            {isLive() && <Activity className="h-4 w-4 text-blue-500 animate-pulse" />}
+            <Activity className="h-4 w-4 text-blue-500 animate-pulse" />
           </div>
         </>
       )}
