@@ -1,3 +1,6 @@
+
+import { nanoid } from 'nanoid';
+
 export const getVideoId = (url: string) => {
   const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
   const match = url.match(regExp);
@@ -5,12 +8,17 @@ export const getVideoId = (url: string) => {
 };
 
 export const generateSlug = (baseTitle: string, videoId: string) => {
-  const timestamp = new Date().getTime();
+  // Generate a short 6-character unique ID
+  const shortId = nanoid(6);
+  
+  // Take first 20 characters of sanitized title if available
   const sanitizedTitle = baseTitle
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-  return `${sanitizedTitle}-${videoId}-${timestamp}`;
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 20);
+
+  return `${sanitizedTitle}-${shortId}`;
 };
 
 export const calculateExpiryDate = (expiresIn: string) => {

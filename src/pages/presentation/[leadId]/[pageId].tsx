@@ -10,10 +10,15 @@ import { useUnloadHandler } from '@/components/presentation/hooks/useUnloadHandl
 
 export default function PresentationPage() {
   const { leadId, pageId } = useParams();
-  const { pageData, isLoading, error } = usePresentationData(leadId, pageId);
+  const { pageData, isLoading, error, loadPresentationPage } = usePresentationData(leadId, pageId);
   const { viewId, createView, updateProgress } = usePresentationView(pageId, leadId);
 
   useUnloadHandler(viewId);
+
+  useEffect(() => {
+    console.log('Loading presentation page data...');
+    loadPresentationPage();
+  }, [loadPresentationPage]);
 
   useEffect(() => {
     if (pageData) {
