@@ -63,13 +63,17 @@ export const useYouTubePlayer = ({
     progressIntervalRef.current = window.setInterval(() => {
       if (!playerRef.current) return;
 
-      const currentTime = playerRef.current.getCurrentTime();
-      const duration = playerRef.current.getDuration();
-      
-      if (duration > 0) {
-        const progress = (currentTime / duration) * 100;
-        console.log('Video progress:', progress);
-        onProgress?.(progress);
+      try {
+        const currentTime = playerRef.current.getCurrentTime();
+        const duration = playerRef.current.getDuration();
+        
+        if (duration > 0) {
+          const progress = (currentTime / duration) * 100;
+          console.log('Video progress:', progress);
+          onProgress?.(progress);
+        }
+      } catch (error) {
+        console.error('Error tracking progress:', error);
       }
     }, 1000);
   }, [onProgress]);
@@ -84,6 +88,8 @@ export const useYouTubePlayer = ({
       : videoUrl.split('/').pop();
 
     if (!videoId) return;
+
+    console.log('Initializing player with videoId:', videoId);
 
     const playerId = `youtube-player-${videoId}`;
     const playerContainer = document.createElement('div');
@@ -108,7 +114,11 @@ export const useYouTubePlayer = ({
       }
     }
 
-    console.log('Creating YouTube player with controls:', DEFAULT_PLAYER_VARS);
+    console.log('Creating YouTube player with config:', {
+      ...DEFAULT_PLAYER_VARS,
+      start: Math.floor(savedProgressRef.current),
+      autoplay: autoplay ? 1 : 0
+    });
     
     playerRef.current = new (window as any).YT.Player(playerId, {
       videoId,
@@ -135,10 +145,15 @@ export const useYouTubePlayer = ({
             startProgressTracking();
           } else if (event.data === (window as any).YT.PlayerState.PAUSED) {
             console.log('Video paused');
-            if (progressIntervalRef.current) {
-              window.clearInterval(progressIntervalRef.current);
+          } else if (event.data === (window as any).YT.PlayerState.ENDED) {
+            console.log('Video ended');
+            if (onProgress) {
+              onProgress(100);
             }
           }
+        },
+        onError: (event: any) => {
+          console.error('YouTube player error:', event);
         }
       }
     });
