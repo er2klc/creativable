@@ -1,16 +1,16 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useIPLocation } from './useIPLocation';
 
 export const usePresentationView = (pageId: string | undefined, leadId: string | undefined) => {
   const [viewId, setViewId] = useState<string | null>(null);
+  const ipLocationData = useIPLocation();
 
   const createView = async (pageData: any) => {
-    try {
-      const ipResponse = await fetch('https://api.db-ip.com/v2/free/self');
-      const ipData = await ipResponse.json();
-      const location = `${ipData.city || ''}, ${ipData.countryName || ''}`;
+    if (!ipLocationData) return;
 
+    try {
       const { data: viewData, error: viewError } = await supabase
         .from('presentation_views')
         .insert([
@@ -19,15 +19,15 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
             lead_id: leadId,
             video_progress: 0,
             completed: false,
-            ip_address: ipData.ipAddress,
-            location: location,
+            ip_address: ipLocationData.ipAddress,
+            location: ipLocationData.location,
             metadata: {
               type: 'youtube',
               event_type: 'video_opened',
               title: pageData.title,
               url: pageData.video_url,
-              ip: ipData.ipAddress,
-              location: location
+              ip: ipLocationData.ipAddress,
+              location: ipLocationData.location
             }
           }
         ])
@@ -45,22 +45,18 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
   };
 
   const updateProgress = async (progress: number, pageData: any) => {
-    if (!viewId || !pageData) return;
+    if (!viewId || !pageData || !ipLocationData) return;
 
     const isCompleted = progress >= 95;
     
     try {
-      const ipResponse = await fetch('https://api.db-ip.com/v2/free/self');
-      const ipData = await ipResponse.json();
-      const location = `${ipData.city || ''}, ${ipData.countryName || ''}`;
-
       const metadata = {
         type: 'youtube',
         event_type: isCompleted ? 'video_completed' : 'video_progress',
         title: pageData.title,
         url: pageData.video_url,
-        ip: ipData.ipAddress,
-        location: location
+        ip: ipLocationData.ipAddress,
+        location: ipLocationData.location
       };
 
       const { error } = await supabase
@@ -68,8 +64,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         .update({
           video_progress: progress,
           completed: isCompleted,
-          ip_address: ipData.ipAddress,
-          location: location,
+          ip_address: ipLocationData.ipAddress,
+          location: ipLocationData.location,
           metadata
         })
         .eq('id', viewId);
@@ -78,7 +74,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         console.error('Error updating view progress:', error);
       }
     } catch (error) {
-      console.error('Error fetching IP data:', error);
+      console.error('Error:', error);
     }
   };
 
@@ -88,3 +84,4 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     updateProgress
   };
 };
+
