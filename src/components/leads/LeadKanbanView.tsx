@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { useSettings } from "@/hooks/use-settings";
@@ -9,6 +10,7 @@ import { usePhaseMutations } from "./kanban/usePhaseMutations";
 import { useNavigate } from "react-router-dom";
 import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
 import { AddPhaseButton } from "./kanban/AddPhaseButton";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface LeadKanbanViewProps {
@@ -30,8 +32,50 @@ export const LeadKanbanView = ({
   const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
   const { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePhaseOrder } = usePhaseMutations();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useKanbanSubscription();
+
+  const handleLeadClick = (id: string) => {
+    navigate(`/contacts/${id}`);
+  };
+
+  // Subscribe to lead deletions
+  const subscribeToLeadDeletions = async () => {
+    const channel = supabase
+      .channel('lead-deletions')
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'leads',
+        },
+        (payload) => {
+          // Update the cache to remove the deleted lead
+          queryClient.setQueryData(
+            ["leads", selectedPipelineId],
+            (oldData: Tables<"leads">[]) => {
+              if (!oldData) return [];
+              return oldData.filter(lead => lead.id !== payload.old.id);
+            }
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  // Set up the subscription when the component mounts
+  useState(() => {
+    const unsubscribe = subscribeToLeadDeletions();
+    return () => {
+      unsubscribe.then(cleanup => cleanup());
+    };
+  }, [selectedPipelineId]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -58,25 +102,6 @@ export const LeadKanbanView = ({
       } catch (error) {
         console.error("Error updating lead phase:", error);
       }
-    }
-  };
-
-  const handleLeadClick = (id: string) => {
-    navigate(`/contacts/${id}`);
-  };
-
-  const handleDeletePhase = async () => {
-    if (!phaseToDelete || !targetPhase) return;
-
-    try {
-      await deletePhase.mutateAsync({ 
-        phaseId: phaseToDelete.id, 
-        targetPhaseId: targetPhase 
-      });
-      setPhaseToDelete(null);
-      setTargetPhase("");
-    } catch (error) {
-      console.error("Error deleting phase:", error);
     }
   };
 
@@ -157,3 +182,4 @@ export const LeadKanbanView = ({
     </DndContext>
   );
 };
+

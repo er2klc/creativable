@@ -1,3 +1,4 @@
+
 import {
   Table,
   TableBody,
@@ -13,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LeadTableCell } from "./table/LeadTableCell";
 import { LeadTableActions } from "./table/LeadTableActions";
-import { getLeadsWithRelations } from "@/utils/query-helpers";
+import { useState } from "react";
 
 interface LeadTableViewProps {
   leads: Tables<"leads">[];
@@ -40,6 +41,43 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
     },
     enabled: !!selectedPipelineId,
   });
+
+  // Subscribe to lead deletions
+  const subscribeToLeadDeletions = async () => {
+    const channel = supabase
+      .channel('lead-deletions')
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'leads',
+        },
+        (payload) => {
+          // Update the cache to remove the deleted lead
+          queryClient.setQueryData(
+            ["leads", selectedPipelineId],
+            (oldData: Tables<"leads">[]) => {
+              if (!oldData) return [];
+              return oldData.filter(lead => lead.id !== payload.old.id);
+            }
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  // Set up the subscription when the component mounts
+  useState(() => {
+    const unsubscribe = subscribeToLeadDeletions();
+    return () => {
+      unsubscribe.then(cleanup => cleanup());
+    };
+  }, [selectedPipelineId]);
 
   const handlePhaseChange = async (leadId: string, phaseId: string) => {
     try {
