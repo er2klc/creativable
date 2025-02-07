@@ -21,7 +21,6 @@ const Leads = () => {
     setSelectedPipelineId,
   } = usePipelineManagement(null);
 
-  // Fetch leads only after we have a pipeline ID
   const { data: leads = [] } = useLeadsQuery(selectedPipelineId);
 
   const handleLeadClick = (id: string) => {
@@ -66,4 +65,3 @@ const Leads = () => {
 };
 
 export default Leads;
-

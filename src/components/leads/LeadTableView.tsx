@@ -115,7 +115,7 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
   };
 
   return (
-    <div className="w-full h-full overflow-y-auto">
+    <div className="w-full h-full">
       <div className="min-w-full">
         <Table>
           <TableHeader className="sticky top-0 bg-background z-10">

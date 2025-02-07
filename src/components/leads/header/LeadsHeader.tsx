@@ -117,13 +117,15 @@ export const LeadsHeader = ({
               </div>
             )}
 
-            {/* User Avatar */}
-            <Avatar className="h-9 w-9">
-              <AvatarImage src={user?.user_metadata?.avatar_url} />
-              <AvatarFallback>
-                {user?.email?.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            {/* User Avatar - Hidden on Mobile */}
+            {!isMobile && (
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={user?.user_metadata?.avatar_url} />
+                <AvatarFallback>
+                  {user?.email?.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            )}
           </div>
         </div>
       </div>
@@ -148,4 +150,3 @@ export const LeadsHeader = ({
     </div>
   );
 };
-
