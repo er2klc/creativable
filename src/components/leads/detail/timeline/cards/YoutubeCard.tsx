@@ -95,13 +95,13 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           )}
           {isViewCard && (
             <>
-              <div className="text-sm text-gray-600 mt-2">
-                {settings?.language === "en" ? "Started" : "Gestartet"}: {formatDateTime(timestamp, settings?.language)}
-              </div>
               <div className="text-sm text-gray-600">
                 {settings?.language === "en" ? "Progress" : "Fortschritt"}: {Math.round(latestProgress)}%
               </div>
-              <div className="flex gap-0.5 mt-4 h-1.5">
+              <div className="text-xs text-gray-500 mb-1">
+                {settings?.language === "en" ? "Started" : "Gestartet"}: {formatDateTime(timestamp, settings?.language)}
+              </div>
+              <div className="flex gap-0.5 mt-2 h-1.5">
                 {milestoneSegments.map((milestone) => (
                   <div
                     key={milestone}
@@ -133,7 +133,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               </Button>
             </div>
           )}
-          {timestamp && !isViewCard && (
+          {timestamp && (
             <div className="text-xs text-gray-500">
               {formatDateTime(timestamp, settings?.language)}
             </div>
@@ -164,3 +164,4 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
+
