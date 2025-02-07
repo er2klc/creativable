@@ -88,21 +88,13 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                 {Math.round(progress)}%
               </span>
               {metadata?.id && (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 font-medium">
                   View ID: {metadata.id}
                 </span>
               )}
             </div>
           </div>
           <div className="flex gap-4 mt-2">
-            {metadata.url && (
-              <button
-                onClick={() => copyToClipboard(metadata.url!, 'youtube')}
-                className="text-sm text-blue-500 hover:underline"
-              >
-                {settings?.language === "en" ? "Copy YouTube URL" : "YouTube URL kopieren"}
-              </button>
-            )}
             {metadata.presentationUrl && (
               <button
                 onClick={() => copyToClipboard(metadata.presentationUrl, 'presentation')}
@@ -138,3 +130,4 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
+
