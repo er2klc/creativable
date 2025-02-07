@@ -17,6 +17,7 @@ export default function PresentationPage() {
 
   useEffect(() => {
     if (pageData) {
+      console.log('Initializing presentation view with pageData:', pageData);
       createView(pageData);
     }
   }, [pageData, createView]);
@@ -29,7 +30,10 @@ export default function PresentationPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-yellow-500/10 to-blue-500/20 opacity-30" />
       <PresentationContent 
         pageData={pageData} 
-        onProgress={(progress) => updateProgress(progress, pageData)} 
+        onProgress={(progress) => {
+          console.log('Progress update:', progress);
+          updateProgress(progress, pageData);
+        }} 
       />
     </div>
   );
