@@ -64,6 +64,13 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     return `${metadata.ip || 'Unknown IP'} | ${metadata.location || 'Unknown Location'}`;
   };
 
+  console.log('YoutubeCard metadata:', {
+    id: metadata.id,
+    ip: metadata.ip,
+    progress: latestProgress,
+    viewHistory: metadata.view_history
+  });
+
   return (
     <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500 relative")}>
       {isViewCard && (
@@ -81,7 +88,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
             {settings?.language === "en" ? "Presentation viewed" : "Präsentation wurde angesehen"}
           </div>
           <div className="text-gray-500 text-sm flex items-center gap-2">
-            {getLocationInfo()} | View #{metadata.id?.slice(-4)}
+            {getLocationInfo()} | View ID: {metadata.id}
           </div>
           {isViewCard && (
             <div className="text-sm text-gray-600">
@@ -144,3 +151,4 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
+
