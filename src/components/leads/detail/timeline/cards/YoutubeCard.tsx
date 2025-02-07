@@ -48,23 +48,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     }
   };
 
-  const getEventMessage = () => {
-    if (metadata.event_type === 'video_opened') {
-      return settings?.language === "en" 
-        ? `Presentation opened from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
-        : `Präsentation wurde geöffnet von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
-    } else if (metadata.event_type === 'video_closed') {
-      return settings?.language === "en"
-        ? `Presentation closed at ${Math.round(metadata.video_progress || 0)}% from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
-        : `Präsentation wurde beendet bei ${Math.round(metadata.video_progress || 0)}% von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
-    } else if (metadata.event_type === 'video_completed') {
-      return settings?.language === "en"
-        ? `Presentation fully watched from ${metadata.ip || 'Unknown'} (${metadata.location || 'Unknown'})`
-        : `Präsentation wurde vollständig angesehen von ${metadata.ip || 'Unbekannt'} (${metadata.location || 'Unbekannt'})`;
-    }
-    return content;
-  };
-
   return (
     <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500 relative")}>
       {isViewCard && (
@@ -75,27 +58,26 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       )}
       <div className="flex items-start justify-between mt-2">
         <div className="space-y-1 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="font-medium">{metadata.title || content}</span>
-            {isViewCard && metadata?.id && (
-              <span className="text-sm text-blue-600 font-medium">
-                (View #{metadata.id})
-              </span>
+          <div className="font-medium text-base">
+            {metadata.title || content}
+          </div>
+          <div className="text-gray-600">
+            {settings?.language === "en" ? "Presentation opened" : "Präsentation wurde geöffnet"}
+          </div>
+          <div className="text-gray-500 text-sm flex items-center gap-2">
+            {metadata.ip || 'Unknown'} | {metadata.location || 'Unknown'} 
+            {metadata?.id && (
+              <span>| View #{metadata.id}</span>
             )}
           </div>
-          <div className="text-gray-600">{getEventMessage()}</div>
+          {isViewCard && (
+            <div className="text-sm text-gray-600">
+              Fortschritt: {Math.round(progress)}%
+            </div>
+          )}
           {timestamp && (
             <div className="text-xs text-gray-500">
               {formatDateTime(timestamp, settings?.language)}
-            </div>
-          )}
-          {isViewCard && (
-            <div className="mt-2 w-full">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">
-                  Fortschritt: {Math.round(progress)}%
-                </span>
-              </div>
             </div>
           )}
           <div className="flex gap-4 mt-2">
@@ -134,3 +116,4 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
+
