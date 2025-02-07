@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useIPLocation } from './useIPLocation';
@@ -19,18 +20,16 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
   }, [pageId]);
 
   const createView = useCallback(async (pageData: PresentationPageData) => {
-    // If we already have a viewId, don't create another one
-    if (viewId) {
+    // If we already have a viewId or are creating, don't proceed
+    if (viewId || isCreatingView) {
       return;
     }
 
-    if (!pageData || !leadId || !pageData.id || isCreatingView) {
-      console.log('Skipping view creation - missing data or already creating:', {
+    if (!pageData || !leadId || !pageData.id) {
+      console.log('Skipping view creation - missing required data:', {
         hasPageData: !!pageData,
         hasLeadId: !!leadId,
-        hasPageId: !!pageData?.id,
-        isCreatingView,
-        currentViewId: viewId
+        hasPageId: !!pageData?.id
       });
       return;
     }
@@ -89,14 +88,9 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     }
   }, [leadId, ipLocationData, retryCount, isCreatingView, viewId]);
 
-  const updateProgress = async (progress: number, pageData: any) => {
+  const updateProgress = async (progress: number, pageData: PresentationPageData) => {
     if (!viewId) {
-      console.error('Missing viewId for updateProgress');
-      return;
-    }
-
-    if (!pageData) {
-      console.error('Missing pageData for updateProgress');
+      console.log('Skipping progress update - no viewId available');
       return;
     }
 
@@ -144,6 +138,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
   return {
     viewId,
     createView,
-    updateProgress
+    updateProgress,
+    isCreatingView
   };
 };

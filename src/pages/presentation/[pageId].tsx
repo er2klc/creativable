@@ -11,25 +11,25 @@ import { useUnloadHandler } from '@/components/presentation/hooks/useUnloadHandl
 export default function PresentationPage() {
   const { pageId, leadId } = useParams();
   const { pageData, isLoading, error, loadPresentationPage } = usePresentationData(pageId);
-  const { viewId, createView, updateProgress } = usePresentationView(pageId, leadId);
+  const { viewId, createView, updateProgress, isCreatingView } = usePresentationView(pageId, leadId);
 
   useUnloadHandler(viewId);
 
   // Load page data once
   useEffect(() => {
-    if (pageId) {
+    if (pageId && !isLoading && !pageData) {
       console.log('Loading presentation page data...', { pageId, leadId });
       loadPresentationPage();
     }
-  }, [pageId, loadPresentationPage]);
+  }, [pageId, leadId, loadPresentationPage, isLoading, pageData]);
 
   // Create view once when we have page data
   useEffect(() => {
-    if (pageData && !viewId) {
+    if (pageData && !viewId && !isCreatingView) {
       console.log('Initializing presentation view with pageData:', pageData);
       createView(pageData);
     }
-  }, [pageData, viewId, createView]);
+  }, [pageData, viewId, createView, isCreatingView]);
 
   if (isLoading) return <PresentationLoading />;
   if (error || !pageData) return <PresentationError error={error || "Presentation not found"} />;
@@ -40,8 +40,10 @@ export default function PresentationPage() {
       <PresentationContent 
         pageData={pageData} 
         onProgress={(progress) => {
-          console.log('Progress update:', progress);
-          updateProgress(progress, pageData);
+          if (viewId) {
+            console.log('Progress update:', progress);
+            updateProgress(progress, pageData);
+          }
         }} 
       />
     </div>
