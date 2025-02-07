@@ -9,14 +9,14 @@ import { usePresentationView } from '@/components/presentation/hooks/usePresenta
 import { useUnloadHandler } from '@/components/presentation/hooks/useUnloadHandler';
 
 export default function PresentationPage() {
-  const { pageId } = useParams();
+  const { pageId, leadId } = useParams();
   const { pageData, isLoading, error, loadPresentationPage } = usePresentationData(pageId);
-  const { viewId, createView, updateProgress } = usePresentationView(pageId, pageData?.lead?.id);
+  const { viewId, createView, updateProgress } = usePresentationView(pageId, leadId);
 
   useUnloadHandler(viewId);
 
   useEffect(() => {
-    console.log('Loading presentation page data...');
+    console.log('Loading presentation page data...', { pageId, leadId });
     loadPresentationPage();
   }, [loadPresentationPage]);
 
