@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,26 +46,31 @@ export default function PresentationPage() {
     }
 
     try {
-      // Präsentationsseite abrufen
+      // Verbesserte Datenabrufung mit Benutzer- und Lead-Informationen
       const { data: pageData, error: pageError } = await supabase
-  .from('presentation_pages')
-  .select(`
-    id,
-    title,
-    video_url,
-    expires_at,
-    is_url_active,
-    lead:lead_id (
-      name,
-      social_media_profile_image_url
-    ),
-    profiles:user_id (
-      display_name,
-      avatar_url
-    )
-  `)
-  .eq('slug', pageId)
-  .maybeSingle();
+        .from('presentation_pages')
+        .select(`
+          id,
+          title,
+          video_url,
+          expires_at,
+          is_url_active,
+          user_id,
+          lead:lead_id (
+            id,
+            name,
+            social_media_profile_image_url
+          ),
+          user:user_id (
+            id,
+            profiles (
+              display_name,
+              avatar_url
+            )
+          )
+        `)
+        .eq('slug', pageId)
+        .maybeSingle();
 
       if (pageError) {
         console.error('Error loading presentation page:', pageError);
@@ -79,46 +85,60 @@ export default function PresentationPage() {
         return;
       }
 
-      // Ablaufdatum prüfen
       if (pageData.expires_at && new Date(pageData.expires_at) < new Date()) {
         setError("This presentation has expired");
         setIsLoading(false);
         return;
       }
 
-      // Falls URL deaktiviert ist
       if (!pageData.is_url_active) {
         setError("This presentation is no longer available");
         setIsLoading(false);
         return;
       }
 
-      // Daten in den State setzen
-      setPageData(pageData);
+      // Format the data for the PresentationContent component
+      const formattedPageData: PresentationPageData = {
+        title: pageData.title,
+        video_url: pageData.video_url,
+        lead: {
+          name: pageData.lead?.name || '',
+          social_media_profile_image_url: pageData.lead?.social_media_profile_image_url || ''
+        },
+        user: {
+          profiles: {
+            display_name: pageData.user?.profiles?.[0]?.display_name || '',
+            avatar_url: pageData.user?.profiles?.[0]?.avatar_url || ''
+          }
+        }
+      };
 
-      // Tracking-View speichern
+      setPageData(formattedPageData);
+
+      // Create view record
       const { data: viewData, error: viewError } = await supabase
-  .from('presentation_views')
-  .insert([
-    {
-      page_id: pageData.id,
-      lead_id: leadId,
-      video_progress: 0,
-      completed: false,
-      metadata: JSON.stringify({
-        type: 'youtube',
-        event_type: 'video_opened'
-      })
-    }
-  ])
-  .select()
-  .single();
+        .from('presentation_views')
+        .insert([
+          {
+            page_id: pageData.id,
+            lead_id: leadId,
+            video_progress: 0,
+            completed: false,
+            metadata: {
+              type: 'youtube',
+              event_type: 'video_opened'
+            }
+          }
+        ])
+        .select()
+        .single();
 
       if (viewError) {
         console.error('Error creating view record:', viewError);
       } else {
         setViewId(viewData.id);
       }
+
     } catch (error) {
       console.error('Error:', error);
       setError("An error occurred");
