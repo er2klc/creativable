@@ -26,29 +26,17 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     }
 
     if (!pageData || !leadId || !pageData.id) {
-      console.log('Skipping view creation - missing required data:', {
-        hasPageData: !!pageData,
-        hasLeadId: !!leadId,
-        hasPageId: !!pageData?.id
-      });
       return;
     }
 
     // Wait for IP data with retry mechanism
     if (!ipLocationData && retryCount < MAX_RETRIES) {
-      console.log('Waiting for IP data, retry:', retryCount + 1);
       setTimeout(() => setRetryCount(prev => prev + 1), 1000);
       return;
     }
 
     try {
       setIsCreatingView(true);
-      console.log('Creating presentation view with data:', {
-        pageId: pageData.id,
-        leadId,
-        ipAddress: ipLocationData?.ipAddress || 'unknown',
-        location: ipLocationData?.location || 'Unknown Location'
-      });
 
       const { data: viewData, error: viewError } = await supabase
         .from('presentation_views')
@@ -74,14 +62,11 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         .single();
 
       if (viewError) {
-        console.error('Error creating view record:', viewError);
         toast.error('Failed to create view record');
       } else {
-        console.log('Successfully created view record:', viewData);
         setViewId(viewData.id);
       }
     } catch (error) {
-      console.error('Error creating presentation view:', error);
       toast.error('Failed to create presentation view');
     } finally {
       setIsCreatingView(false);
@@ -90,19 +75,12 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
 
   const updateProgress = async (progress: number, pageData: PresentationPageData) => {
     if (!viewId) {
-      console.log('Skipping progress update - no viewId available');
       return;
     }
 
     const isCompleted = progress >= 95;
     
     try {
-      console.log('Updating presentation view progress:', {
-        viewId,
-        progress,
-        isCompleted
-      });
-
       const metadata = {
         type: 'youtube',
         event_type: isCompleted ? 'video_completed' : 'video_progress',
@@ -124,13 +102,9 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         .eq('id', viewId);
 
       if (error) {
-        console.error('Error updating view progress:', error);
         toast.error('Failed to update view progress');
-      } else {
-        console.log('Successfully updated view progress');
       }
     } catch (error) {
-      console.error('Error:', error);
       toast.error('Failed to update progress');
     }
   };
@@ -142,3 +116,4 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     isCreatingView
   };
 };
+
