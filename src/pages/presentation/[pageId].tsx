@@ -9,9 +9,9 @@ import { usePresentationView } from '@/components/presentation/hooks/usePresenta
 import { useUnloadHandler } from '@/components/presentation/hooks/useUnloadHandler';
 
 export default function PresentationPage() {
-  const { leadId, pageId } = useParams();
-  const { pageData, isLoading, error, loadPresentationPage } = usePresentationData(leadId, pageId);
-  const { viewId, createView, updateProgress } = usePresentationView(pageId, leadId);
+  const { pageId } = useParams();
+  const { pageData, isLoading, error, loadPresentationPage } = usePresentationData(pageId);
+  const { viewId, createView, updateProgress } = usePresentationView(pageId, pageData?.lead?.id);
 
   useUnloadHandler(viewId);
 

@@ -1,6 +1,7 @@
+
 import { lazy } from "react";
 
-const PresentationPage = lazy(() => import("@/pages/presentation/[leadId]/[pageId]"));
+const PresentationPage = lazy(() => import("@/pages/presentation/[pageId]"));
 const Auth = lazy(() => import("@/pages/Auth"));
 const Register = lazy(() => import("@/pages/Register"));
 const PrivacyPolicy = lazy(() => import("@/pages/legal/PrivacyPolicy"));
@@ -24,7 +25,7 @@ export const publicRoutes = [
     element: <InstagramDataDeletion />,
   },
   {
-    path: "/presentation/:leadId/:pageId",
+    path: "/presentation/:pageId",
     element: <PresentationPage />,
   },
 ];

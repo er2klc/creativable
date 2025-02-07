@@ -3,13 +3,13 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PresentationPageData } from '../types';
 
-export const usePresentationData = (leadId: string | undefined, pageId: string | undefined) => {
+export const usePresentationData = (pageId: string | undefined) => {
   const [pageData, setPageData] = useState<PresentationPageData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadPresentationPage = async () => {
-    if (!leadId || !pageId) {
+    if (!pageId) {
       setError("Invalid URL");
       setIsLoading(false);
       return;
