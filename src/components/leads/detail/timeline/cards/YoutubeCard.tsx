@@ -19,11 +19,6 @@ interface YoutubeCardProps {
     title?: string;
     url?: string;
     id?: string;
-    view_history?: Array<{
-      timestamp: string;
-      progress: number;
-      event_type: string;
-    }>;
   };
   timestamp?: string;
 }
@@ -58,7 +53,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   };
 
   const getLocationInfo = () => {
-    if (!metadata.ip && !metadata.location) return 'Unknown';
+    if (!metadata.ip && !metadata.location) return '';
     return `${metadata.ip || 'Unknown IP'} | ${metadata.location || 'Unknown Location'}`;
   };
 
@@ -78,12 +73,20 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           <div className="text-gray-600">
             {settings?.language === "en" ? "Presentation viewed" : "Präsentation wurde angesehen"}
           </div>
-          <div className="text-gray-500 text-sm flex items-center gap-2">
-            {getLocationInfo()} | View ID: {metadata.id || 'No ID'}
-          </div>
+          {isViewCard && getLocationInfo() && (
+            <div className="text-gray-500 text-sm flex items-center gap-2">
+              {getLocationInfo()} | View ID: {metadata.id || 'No ID'}
+            </div>
+          )}
           {isViewCard && (
             <div className="text-sm text-gray-600">
               {settings?.language === "en" ? "Progress" : "Fortschritt"}: {Math.round(latestProgress)}%
+            </div>
+          )}
+          {/* Show presentation URL for non-view cards */}
+          {!isViewCard && metadata.presentationUrl && (
+            <div className="text-sm text-gray-600 break-all">
+              {metadata.presentationUrl}
             </div>
           )}
           {timestamp && (
