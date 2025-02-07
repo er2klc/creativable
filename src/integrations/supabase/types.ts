@@ -1470,7 +1470,9 @@ export type Database = {
           completed: boolean | null
           created_at: string | null
           id: string
+          ip_address: string | null
           lead_id: string
+          location: string | null
           metadata: Json | null
           page_id: string
           video_progress: number | null
@@ -1480,7 +1482,9 @@ export type Database = {
           completed?: boolean | null
           created_at?: string | null
           id?: string
+          ip_address?: string | null
           lead_id: string
+          location?: string | null
           metadata?: Json | null
           page_id: string
           video_progress?: number | null
@@ -1490,7 +1494,9 @@ export type Database = {
           completed?: boolean | null
           created_at?: string | null
           id?: string
+          ip_address?: string | null
           lead_id?: string
+          location?: string | null
           metadata?: Json | null
           page_id?: string
           video_progress?: number | null

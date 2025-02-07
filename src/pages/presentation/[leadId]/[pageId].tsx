@@ -111,7 +111,15 @@ export default function PresentationPage() {
 
       setPageData(formattedPageData);
 
-      // Create view record
+      // Get visitor's IP and location using a free API service
+      const ipResponse = await fetch('https://api.ipify.org?format=json');
+      const { ip } = await ipResponse.json();
+      
+      const locationResponse = await fetch(`https://ipapi.co/${ip}/json/`);
+      const locationData = await locationResponse.json();
+      const location = `${locationData.city || ''}, ${locationData.country_name || ''}`;
+
+      // Create view record with IP and location
       const { data: viewData, error: viewError } = await supabase
         .from('presentation_views')
         .insert([
@@ -120,9 +128,13 @@ export default function PresentationPage() {
             lead_id: leadId,
             video_progress: 0,
             completed: false,
+            ip_address: ip,
+            location: location,
             metadata: {
               type: 'youtube',
-              event_type: 'video_opened'
+              event_type: 'video_opened',
+              ip: ip,
+              location: location
             }
           }
         ])
@@ -147,9 +159,20 @@ export default function PresentationPage() {
     if (!viewId) return;
 
     const isCompleted = progress >= 95;
+    
+    // Get current IP and location for the update
+    const ipResponse = await fetch('https://api.ipify.org?format=json');
+    const { ip } = await ipResponse.json();
+    
+    const locationResponse = await fetch(`https://ipapi.co/${ip}/json/`);
+    const locationData = await locationResponse.json();
+    const location = `${locationData.city || ''}, ${locationData.country_name || ''}`;
+
     const metadata = {
       type: 'youtube',
-      event_type: isCompleted ? 'video_completed' : 'video_progress'
+      event_type: isCompleted ? 'video_completed' : 'video_progress',
+      ip: ip,
+      location: location
     };
 
     const { error } = await supabase
@@ -157,6 +180,8 @@ export default function PresentationPage() {
       .update({
         video_progress: progress,
         completed: isCompleted,
+        ip_address: ip,
+        location: location,
         metadata
       })
       .eq('id', viewId);
