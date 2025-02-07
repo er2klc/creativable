@@ -64,6 +64,15 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         'social_media_posts'
       ] as const;
 
+      // Get pipeline ID before deleting the lead
+      const { data: lead } = await supabase
+        .from('leads')
+        .select('pipeline_id')
+        .eq('id', leadId)
+        .single();
+
+      const pipelineId = lead?.pipeline_id;
+
       // Delete related records first
       for (const table of relatedTables) {
         console.log(`Deleting related records from ${table}`);
@@ -77,15 +86,6 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
           throw error;
         }
       }
-
-      // Get pipeline ID before deleting the lead
-      const { data: lead } = await supabase
-        .from('leads')
-        .select('pipeline_id')
-        .eq('id', leadId)
-        .single();
-
-      const pipelineId = lead?.pipeline_id;
 
       // Finally delete the lead
       console.log('Deleting lead record');
