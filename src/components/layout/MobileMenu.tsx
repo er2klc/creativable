@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, CreditCard, Receipt, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +17,12 @@ import {
 } from "./mobile-menu/menuItems";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
@@ -26,6 +32,11 @@ export function MobileMenu() {
 
   const getInitials = (email: string) => {
     return email?.charAt(0).toUpperCase() || "U";
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
   };
 
   // Subscribe to real-time updates for unread messages count
@@ -64,10 +75,32 @@ export function MobileMenu() {
             <Menu className="h-6 w-6" />
           </Button>
         </SheetTrigger>
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={user?.user_metadata?.avatar_url} />
-          <AvatarFallback>{getInitials(user?.email || "")}</AvatarFallback>
-        </Avatar>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Avatar className="h-8 w-8 cursor-pointer">
+              <AvatarImage src={user?.user_metadata?.avatar_url} />
+              <AvatarFallback>{getInitials(user?.email || "")}</AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={() => navigate("/settings")}>
+              <User className="mr-2 h-4 w-4" />
+              <span>Profil</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <CreditCard className="mr-2 h-4 w-4" />
+              <span>Plan</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Receipt className="mr-2 h-4 w-4" />
+              <span>Rechnung</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Abmelden</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <SheetContent 
         side="top" 
