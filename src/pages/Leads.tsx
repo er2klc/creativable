@@ -7,9 +7,11 @@ import { useLeadsQuery } from "@/hooks/use-leads-query";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "@/hooks/use-settings";
 import { usePipelineManagement } from "@/components/leads/pipeline/hooks/usePipelineManagement";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Leads = () => {
-  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
+  const isMobile = useIsMobile();
+  const [viewMode, setViewMode] = useState<"kanban" | "list">(isMobile ? "list" : "kanban");
   const [searchQuery, setSearchQuery] = useState("");
   const [isEditMode, setIsEditMode] = useState(false);
   const navigate = useNavigate();
@@ -38,13 +40,13 @@ const Leads = () => {
         setSearchQuery={setSearchQuery}
         selectedPipelineId={selectedPipelineId}
         setSelectedPipelineId={handlePipelineSelect}
-        viewMode={viewMode}
+        viewMode={isMobile ? "list" : viewMode}
         setViewMode={setViewMode}
         setIsEditMode={setIsEditMode}
       />
 
       <div className="flex-1 overflow-hidden mt-[84px]">
-        {viewMode === "kanban" ? (
+        {(!isMobile && viewMode === "kanban") ? (
           <LeadKanbanView
             leads={leads}
             selectedPipelineId={selectedPipelineId}
@@ -64,3 +66,4 @@ const Leads = () => {
 };
 
 export default Leads;
+
