@@ -20,7 +20,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
   }, [pageId]);
 
   const createView = useCallback(async (pageData: PresentationPageData) => {
-    // If we already have a viewId or are creating, don't proceed
     if (viewId || isCreatingView) {
       return;
     }
@@ -29,7 +28,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       return;
     }
 
-    // Wait for IP data with retry mechanism
     if (!ipLocationData && retryCount < MAX_RETRIES) {
       setTimeout(() => setRetryCount(prev => prev + 1), 1000);
       return;
@@ -37,6 +35,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
 
     try {
       setIsCreatingView(true);
+      console.log('Creating new view...'); // Debug log
 
       const { data: viewData, error: viewError } = await supabase
         .from('presentation_views')
@@ -63,31 +62,36 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         .single();
 
       if (viewError) {
+        console.error('Error creating view:', viewError); // Debug log
         toast.error('Failed to create view record');
       } else {
+        console.log('View created successfully:', viewData); // Debug log
         setViewId(viewData.id);
+        
         // Update metadata with the actual ID
         const { error: updateError } = await supabase
           .from('presentation_views')
           .update({
             metadata: {
-              ...viewData.metadata,
-              id: viewData.id,
               type: 'youtube',
               event_type: 'video_opened',
               title: pageData.title,
               url: pageData.video_url,
               ip: ipLocationData?.ipAddress || 'unknown',
-              location: ipLocationData?.location || 'Unknown Location'
+              location: ipLocationData?.location || 'Unknown Location',
+              id: viewData.id
             }
           })
           .eq('id', viewData.id);
 
         if (updateError) {
           console.error('Failed to update view metadata with ID:', updateError);
+        } else {
+          console.log('Metadata updated with ID:', viewData.id); // Debug log
         }
       }
     } catch (error) {
+      console.error('Error in createView:', error); // Debug log
       toast.error('Failed to create presentation view');
     } finally {
       setIsCreatingView(false);
@@ -96,13 +100,14 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
 
   const updateProgress = async (progress: number, pageData: PresentationPageData) => {
     if (!viewId) {
+      console.log('No viewId available for progress update'); // Debug log
       return;
     }
 
     const isCompleted = progress >= 95;
     
     try {
-      console.log('Updating progress with viewId:', viewId); // Debug log
+      console.log('Updating progress with viewId:', viewId);
       
       const metadata = {
         type: 'youtube',
@@ -114,7 +119,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         id: viewId
       };
 
-      console.log('Progress update metadata:', metadata); // Debug log
+      console.log('Progress update metadata:', metadata);
 
       const { error } = await supabase
         .from('presentation_views')
@@ -128,11 +133,13 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         .eq('id', viewId);
 
       if (error) {
-        console.error('Error updating progress:', error); // Debug log
+        console.error('Error updating progress:', error);
         toast.error('Failed to update view progress');
+      } else {
+        console.log('Progress updated successfully'); // Debug log
       }
     } catch (error) {
-      console.error('Caught error in updateProgress:', error); // Debug log
+      console.error('Caught error in updateProgress:', error);
       toast.error('Failed to update progress');
     }
   };

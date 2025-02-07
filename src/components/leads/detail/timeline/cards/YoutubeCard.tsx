@@ -18,7 +18,7 @@ interface YoutubeCardProps {
     presentationUrl?: string;
     title?: string;
     url?: string;
-    id?: string; // The actual presentation_views ID
+    id?: string;
   };
   timestamp?: string;
 }
@@ -27,6 +27,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const { settings } = useSettings();
   const videoId = metadata?.url?.split('v=')[1] || '';
   const progress = metadata?.video_progress || 0;
+
+  console.log('YoutubeCard metadata:', metadata); // Debug log hinzugefügt
 
   const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
     try {
@@ -86,7 +88,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                 {Math.round(progress)}%
               </span>
               <span className="text-xs text-gray-400">
-                View ID: {metadata.id || 'N/A'}
+                View ID: {metadata?.id || 'N/A'}
               </span>
             </div>
           </div>
