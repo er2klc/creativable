@@ -70,7 +70,8 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     }),
     zIndex: isDragging ? 1000 : 1,
     position: isDragging ? 'absolute' : 'relative',
-    width: isDragging ? '100%' : '100%',
+    width: '100%',
+    maxWidth: '100%',
     transition: 'transform 0.1s ease, box-shadow 0.1s ease',
     cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
   } : undefined;
