@@ -105,6 +105,21 @@ export const LeadKanbanView = ({
     }
   };
 
+  const handleDeletePhase = async () => {
+    if (!phaseToDelete || !targetPhase) return;
+
+    try {
+      await deletePhase.mutateAsync({ 
+        phaseId: phaseToDelete.id, 
+        targetPhaseId: targetPhase 
+      });
+      setPhaseToDelete(null);
+      setTargetPhase("");
+    } catch (error) {
+      console.error("Error deleting phase:", error);
+    }
+  };
+
   const handleMovePhase = async (phaseId: string, direction: 'left' | 'right') => {
     const currentIndex = phases.findIndex(p => p.id === phaseId);
     if (currentIndex === -1) return;
@@ -182,4 +197,3 @@ export const LeadKanbanView = ({
     </DndContext>
   );
 };
-
