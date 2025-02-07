@@ -1,10 +1,10 @@
-
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Tables } from "@/integrations/supabase/types";
 import { useState, useRef, CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import { Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface SortableLeadItemProps {
   lead: Tables<"leads">;
@@ -26,18 +26,6 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     data: lead,
     disabled,
   });
-
-  const style: CSSProperties | undefined = transform ? {
-    transform: CSS.Transform.toString(transform),
-    zIndex: isDragging ? 1000 : 1,
-    position: isDragging ? 'fixed' : 'relative',
-    width: isDragging ? 'var(--dragging-width, 300px)' : '100%',
-    height: '100px',
-    maxHeight: '100px',
-    minHeight: '100px',
-    transition: 'box-shadow 0.1s ease',
-    cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
-  } : undefined;
 
   const getPlatformIcon = (platform: string) => {
     switch (platform?.toLowerCase()) {
@@ -71,11 +59,23 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     }
   };
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  const style: CSSProperties | undefined = transform ? {
+    transform: CSS.Transform.toString({
+      ...transform,
+      x: transform.x,
+      y: transform.y,
+      scaleX: 1.02,
+      scaleY: 1.02,
+    }),
+    zIndex: isDragging ? 1000 : 1,
+    position: isDragging ? 'absolute' : 'relative',
+    width: '100%',
+    transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+    cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
+  } : undefined;
+
+  const handleMouseDown = () => {
     if (disabled) return;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    document.documentElement.style.setProperty('--dragging-width', `${rect.width}px`);
     
     dragTimeoutRef.current = window.setTimeout(() => {
       setIsDragging(true);
@@ -108,6 +108,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     return "bg-white";
   };
 
+  // Get initials from name
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -117,6 +118,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       .slice(0, 2);
   };
 
+  // Get platform border color
   const getPlatformBorderColor = (platform: string) => {
     switch (platform?.toLowerCase()) {
       case "instagram":
@@ -137,7 +139,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       ref={setNodeRef}
       style={style}
       className={cn(
-        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative border-l-2 w-full h-[100px] flex-shrink-0 overflow-hidden",
+        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative border-l-2",
         getBackgroundStyle(),
         getPlatformBorderColor(lead.platform),
         isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing",
@@ -150,7 +152,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     >
       {/* Platform Icon in top right corner */}
       <div className={cn(
-        "absolute -right-2 -top-2 rounded-full w-7 h-7 border-2 border-white shadow-lg flex items-center justify-center z-10",
+        "absolute -right-2 -top-2 rounded-full w-7 h-7 border-2 border-white shadow-lg flex items-center justify-center",
         getPlatformColor(lead.platform)
       )}>
         {getPlatformIcon(lead.platform)}
