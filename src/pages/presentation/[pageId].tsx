@@ -18,7 +18,6 @@ export default function PresentationPage() {
   // Load page data when pageId changes
   useEffect(() => {
     if (pageId) {
-      console.log('Loading presentation page data...', { pageId, leadId });
       loadPresentationPage();
     }
   }, [pageId, leadId, loadPresentationPage]);
