@@ -93,7 +93,6 @@ export default function PresentationPage() {
         return;
       }
 
-      // Format the data for the PresentationContent component
       const formattedPageData: PresentationPageData = {
         title: pageData.title,
         video_url: pageData.video_url,
@@ -111,13 +110,10 @@ export default function PresentationPage() {
 
       setPageData(formattedPageData);
 
-      // Get visitor's IP and location using a free API service
-      const ipResponse = await fetch('https://api.ipify.org?format=json');
-      const { ip } = await ipResponse.json();
-      
-      const locationResponse = await fetch(`https://ipapi.co/${ip}/json/`);
-      const locationData = await locationResponse.json();
-      const location = `${locationData.city || ''}, ${locationData.country_name || ''}`;
+      // Get visitor's IP using a CORS-friendly API
+      const ipResponse = await fetch('https://api.db-ip.com/v2/free/self');
+      const ipData = await ipResponse.json();
+      const location = `${ipData.city || ''}, ${ipData.countryName || ''}`;
 
       // Create view record with IP and location
       const { data: viewData, error: viewError } = await supabase
@@ -128,12 +124,12 @@ export default function PresentationPage() {
             lead_id: leadId,
             video_progress: 0,
             completed: false,
-            ip_address: ip,
+            ip_address: ipData.ipAddress,
             location: location,
             metadata: {
               type: 'youtube',
               event_type: 'video_opened',
-              ip: ip,
+              ip: ipData.ipAddress,
               location: location
             }
           }
@@ -160,34 +156,35 @@ export default function PresentationPage() {
 
     const isCompleted = progress >= 95;
     
-    // Get current IP and location for the update
-    const ipResponse = await fetch('https://api.ipify.org?format=json');
-    const { ip } = await ipResponse.json();
-    
-    const locationResponse = await fetch(`https://ipapi.co/${ip}/json/`);
-    const locationData = await locationResponse.json();
-    const location = `${locationData.city || ''}, ${locationData.country_name || ''}`;
+    try {
+      // Get current IP and location
+      const ipResponse = await fetch('https://api.db-ip.com/v2/free/self');
+      const ipData = await ipResponse.json();
+      const location = `${ipData.city || ''}, ${ipData.countryName || ''}`;
 
-    const metadata = {
-      type: 'youtube',
-      event_type: isCompleted ? 'video_completed' : 'video_progress',
-      ip: ip,
-      location: location
-    };
+      const metadata = {
+        type: 'youtube',
+        event_type: isCompleted ? 'video_completed' : 'video_progress',
+        ip: ipData.ipAddress,
+        location: location
+      };
 
-    const { error } = await supabase
-      .from('presentation_views')
-      .update({
-        video_progress: progress,
-        completed: isCompleted,
-        ip_address: ip,
-        location: location,
-        metadata
-      })
-      .eq('id', viewId);
+      const { error } = await supabase
+        .from('presentation_views')
+        .update({
+          video_progress: progress,
+          completed: isCompleted,
+          ip_address: ipData.ipAddress,
+          location: location,
+          metadata
+        })
+        .eq('id', viewId);
 
-    if (error) {
-      console.error('Error updating view progress:', error);
+      if (error) {
+        console.error('Error updating view progress:', error);
+      }
+    } catch (error) {
+      console.error('Error fetching IP data:', error);
     }
   };
 
