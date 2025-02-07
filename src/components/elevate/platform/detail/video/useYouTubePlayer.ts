@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { DEFAULT_PLAYER_VARS } from './VideoPlayerConfig';
 
@@ -14,7 +15,7 @@ export const useYouTubePlayer = ({
   onProgress, 
   savedProgress = 0,
   onDuration,
-  autoplay = true
+  autoplay = false
 }: UseYouTubePlayerProps) => {
   const [isAPILoaded, setIsAPILoaded] = useState(false);
   const playerRef = useRef<any>(null);
@@ -62,12 +63,17 @@ export const useYouTubePlayer = ({
     progressIntervalRef.current = window.setInterval(() => {
       if (!playerRef.current) return;
 
-      const currentTime = playerRef.current.getCurrentTime();
-      const duration = playerRef.current.getDuration();
-      
-      if (duration > 0) {
-        const progress = (currentTime / duration) * 100;
-        onProgress?.(progress);
+      try {
+        const currentTime = playerRef.current.getCurrentTime();
+        const duration = playerRef.current.getDuration();
+        
+        if (duration > 0) {
+          const progress = (currentTime / duration) * 100;
+          console.log('Video progress:', progress);
+          onProgress?.(progress);
+        }
+      } catch (error) {
+        console.error('Error tracking progress:', error);
       }
     }, 1000);
   }, [onProgress]);
@@ -82,6 +88,8 @@ export const useYouTubePlayer = ({
       : videoUrl.split('/').pop();
 
     if (!videoId) return;
+
+    console.log('Initializing player with videoId:', videoId);
 
     const playerId = `youtube-player-${videoId}`;
     const playerContainer = document.createElement('div');
@@ -106,6 +114,12 @@ export const useYouTubePlayer = ({
       }
     }
 
+    console.log('Creating YouTube player with config:', {
+      ...DEFAULT_PLAYER_VARS,
+      start: Math.floor(savedProgressRef.current),
+      autoplay: autoplay ? 1 : 0
+    });
+    
     playerRef.current = new (window as any).YT.Player(playerId, {
       videoId,
       playerVars: {
@@ -115,6 +129,7 @@ export const useYouTubePlayer = ({
       },
       events: {
         onReady: (event: any) => {
+          console.log('YouTube player ready');
           const duration = event.target.getDuration();
           if (onDuration && duration > 0) {
             onDuration(duration);
@@ -126,12 +141,19 @@ export const useYouTubePlayer = ({
         },
         onStateChange: (event: any) => {
           if (event.data === (window as any).YT.PlayerState.PLAYING) {
+            console.log('Video started playing');
             startProgressTracking();
           } else if (event.data === (window as any).YT.PlayerState.PAUSED) {
-            if (progressIntervalRef.current) {
-              window.clearInterval(progressIntervalRef.current);
+            console.log('Video paused');
+          } else if (event.data === (window as any).YT.PlayerState.ENDED) {
+            console.log('Video ended');
+            if (onProgress) {
+              onProgress(100);
             }
           }
+        },
+        onError: (event: any) => {
+          console.error('YouTube player error:', event);
         }
       }
     });

@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import { useYouTubePlayer } from './useYouTubePlayer';
 import { CONTAINER_STYLES } from './VideoPlayerConfig';
@@ -28,6 +29,7 @@ export const VideoPlayer = ({
 
   useEffect(() => {
     if (isAPILoaded && containerRef.current) {
+      console.log('Initializing YouTube player with controls enabled');
       initializePlayer(containerRef.current);
     }
   }, [isAPILoaded, videoUrl, initializePlayer]);

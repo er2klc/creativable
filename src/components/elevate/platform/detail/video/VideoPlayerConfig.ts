@@ -1,3 +1,4 @@
+
 export const DEFAULT_PLAYER_VARS = {
   autoplay: 0,
   controls: 1,
@@ -7,7 +8,8 @@ export const DEFAULT_PLAYER_VARS = {
   showinfo: 0,
   fs: 1,
   iv_load_policy: 3,
-  disablekb: 0
+  disablekb: 0,
+  playsinline: 1
 };
 
 export const CONTAINER_STYLES = {
