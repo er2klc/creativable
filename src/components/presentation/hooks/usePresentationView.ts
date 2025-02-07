@@ -54,7 +54,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
               url: pageData.video_url,
               ip: ipLocationData?.ipAddress || 'unknown',
               location: ipLocationData?.location || 'Unknown Location',
-              id: null // Will be updated after insert
+              presentationUrl: pageData.presentationUrl
             }
           }
         ])
@@ -64,31 +64,33 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       if (viewError) {
         console.error('Error creating view:', viewError); // Debug log
         toast.error('Failed to create view record');
-      } else {
-        console.log('View created successfully:', viewData); // Debug log
-        setViewId(viewData.id);
-        
-        // Update metadata with the actual ID
-        const { error: updateError } = await supabase
-          .from('presentation_views')
-          .update({
-            metadata: {
-              type: 'youtube',
-              event_type: 'video_opened',
-              title: pageData.title,
-              url: pageData.video_url,
-              ip: ipLocationData?.ipAddress || 'unknown',
-              location: ipLocationData?.location || 'Unknown Location',
-              id: viewData.id
-            }
-          })
-          .eq('id', viewData.id);
+        return;
+      }
 
-        if (updateError) {
-          console.error('Failed to update view metadata with ID:', updateError);
-        } else {
-          console.log('Metadata updated with ID:', viewData.id); // Debug log
-        }
+      console.log('View created successfully:', viewData); // Debug log
+      setViewId(viewData.id);
+        
+      // Update metadata with the actual view ID
+      const { error: updateError } = await supabase
+        .from('presentation_views')
+        .update({
+          metadata: {
+            type: 'youtube',
+            event_type: 'video_opened',
+            title: pageData.title,
+            url: pageData.video_url,
+            ip: ipLocationData?.ipAddress || 'unknown',
+            location: ipLocationData?.location || 'Unknown Location',
+            presentationUrl: pageData.presentationUrl,
+            id: viewData.id // Add view ID to metadata
+          }
+        })
+        .eq('id', viewData.id);
+
+      if (updateError) {
+        console.error('Failed to update view metadata with ID:', updateError);
+      } else {
+        console.log('Metadata updated with ID:', viewData.id); // Debug log
       }
     } catch (error) {
       console.error('Error in createView:', error); // Debug log
@@ -109,6 +111,13 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     try {
       console.log('Updating progress with viewId:', viewId);
       
+      // Get current view data first to ensure we have the latest metadata
+      const { data: currentView } = await supabase
+        .from('presentation_views')
+        .select('*')
+        .eq('id', viewId)
+        .single();
+
       const metadata = {
         type: 'youtube',
         event_type: isCompleted ? 'video_completed' : 'video_progress',
@@ -116,7 +125,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         url: pageData.video_url,
         ip: ipLocationData?.ipAddress || 'unknown',
         location: ipLocationData?.location || 'Unknown Location',
-        id: viewId
+        presentationUrl: pageData.presentationUrl,
+        id: viewId // Keep the view ID in metadata
       };
 
       console.log('Progress update metadata:', metadata);
