@@ -32,12 +32,6 @@ export const MainContent = ({ children, className }: MainContentProps) => {
           />
           <span className="text-sm text-white font-light">creativable</span>
         </div>
-        {!isMobile && (
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={user?.user_metadata?.avatar_url} />
-            <AvatarFallback>{getInitials(user?.email || "")}</AvatarFallback>
-          </Avatar>
-        )}
         <MobileMenu />
       </div>
       <div className={cn(
