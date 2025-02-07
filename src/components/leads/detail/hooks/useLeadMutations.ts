@@ -49,7 +49,7 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
 
       console.log('Starting deletion process for lead:', leadId);
 
-      // Get pipeline ID and current lead data before deletion
+      // Get pipeline ID before deletion
       const { data: lead } = await supabase
         .from('leads')
         .select('pipeline_id')
@@ -76,7 +76,7 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         'social_media_posts'
       ] as const;
 
-      // Delete related records
+      // Delete all related records
       for (const table of relatedTables) {
         console.log(`Deleting related records from ${table}`);
         const { error } = await supabase
@@ -104,26 +104,21 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
 
       return { pipelineId: lead.pipeline_id };
     },
-    onSuccess: async (data) => {
-      // First close the dialog to prevent any UI issues
+    onSuccess: () => {
+      // First close the dialog
       onClose();
-
-      // Clear all caches
-      queryClient.removeQueries({ queryKey: ["leads"] });
-      queryClient.removeQueries({ queryKey: ["lead", leadId] });
-      queryClient.removeQueries({ queryKey: ["leads", data?.pipelineId] });
       
-      // Force a complete cache clear
+      // Force a complete cache clear and reload
       queryClient.clear();
-
-      // Show success toast
+      
+      // Show success message
       toast.success(
         settings?.language === "en"
           ? "Contact deleted successfully"
           : "Kontakt erfolgreich gelöscht"
       );
 
-      // Navigate and force hard reload
+      // Force a complete page reload to refresh all data
       window.location.href = '/contacts';
     },
     onError: (error) => {

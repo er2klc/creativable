@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,31 +19,14 @@ export const useLeadsSubscription = (selectedPipelineId: string | null) => {
         (payload) => {
           console.log('Lead deleted:', payload.old.id);
           
-          // First, remove the deleted lead from all caches and queries
-          queryClient.setQueryData(
-            ["leads"],
-            (oldData: Tables<"leads">[] | undefined) => {
-              if (!oldData) return [];
-              return oldData.filter(lead => lead.id !== payload.old.id);
-            }
-          );
-
-          // Remove from pipeline-specific cache
-          queryClient.setQueryData(
-            ["leads", selectedPipelineId],
-            (oldData: Tables<"leads">[] | undefined) => {
-              if (!oldData) return [];
-              return oldData.filter(lead => lead.id !== payload.old.id);
-            }
-          );
-
-          // Remove from lead detail cache
+          // Force invalidate all queries to ensure fresh data
+          queryClient.invalidateQueries();
+          
+          // Also remove specific caches
+          queryClient.removeQueries({ queryKey: ["leads"] });
           queryClient.removeQueries({ queryKey: ["lead", payload.old.id] });
-
-          // Force refetch leads
-          queryClient.invalidateQueries({ queryKey: ["leads"] });
           if (selectedPipelineId) {
-            queryClient.invalidateQueries({ queryKey: ["leads", selectedPipelineId] });
+            queryClient.removeQueries({ queryKey: ["leads", selectedPipelineId] });
           }
         }
       )
