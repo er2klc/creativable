@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -14,11 +15,18 @@ import {
   legalItems, 
   adminItems 
 } from "./mobile-menu/menuItems";
+import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  const getInitials = (email: string) => {
+    return email?.charAt(0).toUpperCase() || "U";
+  };
 
   // Subscribe to real-time updates for unread messages count
   useEffect(() => {
@@ -50,11 +58,17 @@ export function MobileMenu() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-white z-50">
-          <Menu className="h-6 w-6" />
-        </Button>
-      </SheetTrigger>
+      <div className="flex items-center gap-2">
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="text-white">
+            <Menu className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={user?.user_metadata?.avatar_url} />
+          <AvatarFallback>{getInitials(user?.email || "")}</AvatarFallback>
+        </Avatar>
+      </div>
       <SheetContent 
         side="top" 
         className="w-full p-0 border-none bg-[#111111] text-white"
