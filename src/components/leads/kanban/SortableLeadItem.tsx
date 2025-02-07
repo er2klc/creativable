@@ -70,7 +70,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     }),
     zIndex: isDragging ? 1000 : 1,
     position: isDragging ? 'absolute' : 'relative',
-    width: isDragging ? 'var(--original-width)' : '100%',
+    width: isDragging ? '100%' : '100%',
     transition: 'transform 0.1s ease, box-shadow 0.1s ease',
     cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
   } : undefined;
@@ -148,10 +148,6 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       {...(disabled ? {} : { ...attributes, ...listeners })}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
-      onLoad={(e) => {
-        const el = e.currentTarget;
-        el.style.setProperty('--original-width', `${el.offsetWidth}px`);
-      }}
     >
       {/* Platform Icon in top right corner */}
       <div className={cn(
@@ -200,3 +196,4 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     </div>
   );
 };
+
