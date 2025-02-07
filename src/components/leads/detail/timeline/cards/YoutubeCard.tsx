@@ -31,7 +31,12 @@ interface YoutubeCardProps {
 export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) => {
   const { settings } = useSettings();
   const videoId = metadata?.url?.split('v=')[1] || '';
-  const progress = metadata?.video_progress || 0;
+  
+  // Get latest progress from view_history if available
+  const latestProgress = metadata?.view_history?.length 
+    ? metadata.view_history[metadata.view_history.length - 1].progress 
+    : (metadata?.video_progress || 0);
+
   const isViewCard = metadata?.event_type === 'video_opened' || 
                      metadata?.event_type === 'video_progress' ||
                      metadata?.event_type === 'video_closed' || 
@@ -63,7 +68,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500 relative")}>
       {isViewCard && (
         <Progress 
-          value={progress} 
+          value={latestProgress} 
           className="absolute top-0 left-0 right-0 h-2" 
         />
       )}
@@ -80,7 +85,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           </div>
           {isViewCard && (
             <div className="text-sm text-gray-600">
-              {settings?.language === "en" ? "Progress" : "Fortschritt"}: {Math.round(progress)}%
+              {settings?.language === "en" ? "Progress" : "Fortschritt"}: {Math.round(latestProgress)}%
             </div>
           )}
           {metadata.view_history && metadata.view_history.length > 0 && (
@@ -122,12 +127,12 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                 alt="Video thumbnail"
                 className="w-full h-full object-cover"
               />
-              {progress >= 95 && (
+              {latestProgress >= 95 && (
                 <div className="absolute top-2 right-2">
                   <CheckCircle2 className="h-6 w-6 text-green-500" />
                 </div>
               )}
-              {progress === 0 && (
+              {latestProgress === 0 && (
                 <div className="absolute top-2 right-2">
                   <X className="h-6 w-6 text-red-500" />
                 </div>
