@@ -78,6 +78,15 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         }
       }
 
+      // Get pipeline ID before deleting the lead
+      const { data: lead } = await supabase
+        .from('leads')
+        .select('pipeline_id')
+        .eq('id', leadId)
+        .single();
+
+      const pipelineId = lead?.pipeline_id;
+
       // Finally delete the lead
       console.log('Deleting lead record');
       const { error } = await supabase
@@ -89,16 +98,24 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         console.error("Error deleting lead:", error);
         throw error;
       }
+
+      return { pipelineId };
     },
-    onSuccess: () => {
-      // Invalidate all relevant queries
+    onSuccess: (data) => {
+      // Immediately remove the deleted lead from the cache
+      queryClient.setQueryData(
+        ["leads", data?.pipelineId],
+        (oldData: Tables<"leads">[]) => {
+          if (!oldData) return [];
+          return oldData.filter(lead => lead.id !== leadId);
+        }
+      );
+
+      // Then invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      
-      // Find and invalidate the specific pipeline query if we can get the pipeline ID
-      const pipelineId = queryClient.getQueryData<Tables<"leads">>(['lead', leadId])?.pipeline_id;
-      if (pipelineId) {
-        queryClient.invalidateQueries({ queryKey: ["leads", pipelineId] });
+      if (data?.pipelineId) {
+        queryClient.invalidateQueries({ queryKey: ["leads", data.pipelineId] });
       }
 
       toast.success(
