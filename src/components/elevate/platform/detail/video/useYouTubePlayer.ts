@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { DEFAULT_PLAYER_VARS } from './VideoPlayerConfig';
 
@@ -14,7 +15,7 @@ export const useYouTubePlayer = ({
   onProgress, 
   savedProgress = 0,
   onDuration,
-  autoplay = true
+  autoplay = false
 }: UseYouTubePlayerProps) => {
   const [isAPILoaded, setIsAPILoaded] = useState(false);
   const playerRef = useRef<any>(null);
@@ -67,6 +68,7 @@ export const useYouTubePlayer = ({
       
       if (duration > 0) {
         const progress = (currentTime / duration) * 100;
+        console.log('Video progress:', progress);
         onProgress?.(progress);
       }
     }, 1000);
@@ -106,6 +108,8 @@ export const useYouTubePlayer = ({
       }
     }
 
+    console.log('Creating YouTube player with controls:', DEFAULT_PLAYER_VARS);
+    
     playerRef.current = new (window as any).YT.Player(playerId, {
       videoId,
       playerVars: {
@@ -115,6 +119,7 @@ export const useYouTubePlayer = ({
       },
       events: {
         onReady: (event: any) => {
+          console.log('YouTube player ready');
           const duration = event.target.getDuration();
           if (onDuration && duration > 0) {
             onDuration(duration);
@@ -126,8 +131,10 @@ export const useYouTubePlayer = ({
         },
         onStateChange: (event: any) => {
           if (event.data === (window as any).YT.PlayerState.PLAYING) {
+            console.log('Video started playing');
             startProgressTracking();
           } else if (event.data === (window as any).YT.PlayerState.PAUSED) {
+            console.log('Video paused');
             if (progressIntervalRef.current) {
               window.clearInterval(progressIntervalRef.current);
             }
