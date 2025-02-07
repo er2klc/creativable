@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
@@ -33,7 +34,7 @@ export const usePhaseMutations = () => {
 
       // If the phase hasn't changed, don't do anything
       if (currentLead?.phase_id === phaseId) {
-        return;
+        return null;
       }
 
       // Update the lead's phase
@@ -64,15 +65,20 @@ export const usePhaseMutations = () => {
         });
 
       if (noteError) throw noteError;
+
+      return { success: true };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      toast({
-        title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
-        description: settings?.language === "en"
-          ? "The phase has been successfully updated"
-          : "Die Phase wurde erfolgreich aktualisiert",
-      });
+    onSuccess: (data) => {
+      // Only show toast if there was actually a phase change
+      if (data?.success) {
+        queryClient.invalidateQueries({ queryKey: ["leads"] });
+        toast({
+          title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
+          description: settings?.language === "en"
+            ? "The phase has been successfully updated"
+            : "Die Phase wurde erfolgreich aktualisiert",
+        });
+      }
     },
     onError: (error) => {
       console.error("Error updating phase:", error);
