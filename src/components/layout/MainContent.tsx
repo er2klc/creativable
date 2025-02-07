@@ -2,6 +2,9 @@
 import { cn } from "@/lib/utils";
 import { MobileMenu } from "./MobileMenu";
 import { useLocation } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/use-auth";
 
 interface MainContentProps {
   children: React.ReactNode;
@@ -11,6 +14,12 @@ interface MainContentProps {
 export const MainContent = ({ children, className }: MainContentProps) => {
   const location = useLocation();
   const isLeadsPage = location.pathname === "/leads";
+  const isMobile = useIsMobile();
+  const { user } = useAuth();
+
+  const getInitials = (email: string) => {
+    return email?.charAt(0).toUpperCase() || "U";
+  };
 
   return (
     <main className={cn("flex-1 relative", className)}>
@@ -23,6 +32,12 @@ export const MainContent = ({ children, className }: MainContentProps) => {
           />
           <span className="text-sm text-white font-light">creativable</span>
         </div>
+        {!isMobile && (
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={user?.user_metadata?.avatar_url} />
+            <AvatarFallback>{getInitials(user?.email || "")}</AvatarFallback>
+          </Avatar>
+        )}
         <MobileMenu />
       </div>
       <div className={cn(

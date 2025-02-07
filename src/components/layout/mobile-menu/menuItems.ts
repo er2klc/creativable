@@ -1,3 +1,4 @@
+
 import { 
   LayoutGrid, 
   Users, 
@@ -12,7 +13,8 @@ import {
   Database,
   Wrench,
   Waves,
-  Link2
+  Link2,
+  Infinity
 } from "lucide-react";
 
 export const personalItems = [
@@ -26,7 +28,7 @@ export const personalItems = [
 ];
 
 export const teamItems = [
-  { name: "Unity", path: "/unity", icon: Users },
+  { name: "Unity", path: "/unity", icon: Infinity },
   { name: "Elevate", path: "/elevate", icon: Users },
 ];
 
