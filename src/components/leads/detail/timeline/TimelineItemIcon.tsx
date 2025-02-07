@@ -1,3 +1,4 @@
+
 import { 
   MessageSquare, 
   CheckSquare, 
@@ -20,7 +21,9 @@ import {
   Heart,
   Clock,
   ThumbsDown,
-  Youtube
+  Youtube,
+  Video,
+  Eye
 } from "lucide-react";
 import { TimelineItemType } from "./TimelineUtils";
 
@@ -34,6 +37,7 @@ interface TimelineItemIconProps {
     newStatus?: string;
     meetingType?: string;
     fileType?: string;
+    event_type?: string;
   };
 }
 
@@ -44,9 +48,17 @@ export const TimelineItemIcon = ({
   metadata 
 }: TimelineItemIconProps) => {
   const getIconComponent = () => {
-    // Handle YouTube type first
+    // Handle YouTube events first
     if (metadata?.type === 'youtube') {
-      return Youtube;
+      // Use different icons based on event_type
+      switch(metadata.event_type) {
+        case 'video_opened':
+        case 'video_closed':
+        case 'video_completed':
+          return Eye;
+        default:
+          return Video;
+      }
     }
 
     // Handle file type logic
@@ -102,9 +114,14 @@ export const TimelineItemIcon = ({
   };
 
   const getIconColor = () => {
-    // Handle YouTube type first
+    // Handle YouTube type first with different colors based on event_type
     if (metadata?.type === 'youtube') {
-      return 'bg-[#ea384c]';
+      if (metadata.event_type === 'video_opened' || 
+          metadata.event_type === 'video_closed' || 
+          metadata.event_type === 'video_completed') {
+        return 'bg-orange-500'; // More prominent color for view events
+      }
+      return 'bg-red-500'; // YouTube brand color for video additions
     }
 
     if (type === 'status_change') {
@@ -140,10 +157,14 @@ export const TimelineItemIcon = ({
   };
 
   const Icon = getIconComponent();
+  const iconSize = metadata?.type === 'youtube' && 
+    (metadata.event_type === 'video_opened' || 
+     metadata.event_type === 'video_closed' || 
+     metadata.event_type === 'video_completed') ? 'h-5 w-5' : 'h-4 w-4';
 
   return (
     <div className={`z-10 flex items-center justify-center w-8 h-8 rounded-full ${getIconColor()}`}>
-      <Icon className="h-4 w-4 text-white" />
+      <Icon className={`${iconSize} text-white`} />
     </div>
   );
 };
