@@ -25,6 +25,11 @@ interface YoutubeCardProps {
       timestamp: string;
       completed: boolean;
     }>;
+    view_history?: Array<{
+      timestamp: string;
+      progress: number;
+      event_type: string;
+    }>;
   };
   timestamp?: string;
 }
@@ -45,6 +50,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     metadata: metadata,
     isViewCard,
     hasMilestones: metadata?.progress_milestones?.length,
+    hasViewHistory: metadata?.view_history?.length,
     timestamp: new Date().toISOString()
   });
 
@@ -72,10 +78,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
 
   // Group milestones by viewing session and get max progress for each
   const getSessionMilestones = () => {
-    if (!metadata.progress_milestones) return [];
-    
-    const milestones = metadata.progress_milestones
-      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    if (!metadata.view_history) return [];
     
     const sessions: Array<{timestamp: string, progress: number}> = [];
     let currentSession = {
@@ -84,8 +87,13 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       lastTimestamp: new Date().getTime()
     };
 
-    milestones.forEach(milestone => {
-      const timestamp = new Date(milestone.timestamp).getTime();
+    // Sort view history by timestamp
+    const history = [...metadata.view_history].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
+    history.forEach(entry => {
+      const timestamp = new Date(entry.timestamp).getTime();
       // If more than 30 minutes have passed, consider it a new session
       if (timestamp - currentSession.lastTimestamp > 30 * 60 * 1000) {
         if (currentSession.timestamp) {
@@ -95,13 +103,13 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           });
         }
         currentSession = {
-          timestamp: milestone.timestamp,
-          progress: milestone.progress,
+          timestamp: entry.timestamp,
+          progress: entry.progress,
           lastTimestamp: timestamp
         };
       } else {
         // Update progress if it's higher
-        currentSession.progress = Math.max(currentSession.progress, milestone.progress);
+        currentSession.progress = Math.max(currentSession.progress, entry.progress);
         currentSession.lastTimestamp = timestamp;
       }
     });
@@ -166,7 +174,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                       style={{ width: `${session.progress}%` }}
                     />
                     <div className="absolute -right-6 top-1/2 -translate-y-1/2 text-xs text-gray-600">
-                      {session.progress}%
+                      {Math.round(session.progress)}%
                     </div>
                   </div>
                 </div>
