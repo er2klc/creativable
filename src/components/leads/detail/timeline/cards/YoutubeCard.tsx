@@ -28,8 +28,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const videoId = metadata?.url?.split('v=')[1] || '';
   const progress = metadata?.video_progress || 0;
 
-  console.log('YoutubeCard metadata:', metadata); // Debug log hinzugefügt
-
   const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
     try {
       await navigator.clipboard.writeText(text);
@@ -87,8 +85,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               <span className="text-xs text-gray-500">
                 {Math.round(progress)}%
               </span>
-              <span className="text-xs text-gray-400">
-                View ID: {metadata?.id || 'N/A'}
+              <span className="text-xs text-gray-500">
+                View ID: {metadata.id}
               </span>
             </div>
           </div>
