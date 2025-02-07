@@ -3,11 +3,10 @@ import { useDroppable } from "@dnd-kit/core";
 import { Tables } from "@/integrations/supabase/types";
 import { SortableLeadItem } from "./SortableLeadItem";
 import { Card, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Instagram, Linkedin, Facebook, Video, Users, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { AddLeadButton } from "./AddLeadButton";
+import { PhaseHeader } from "./phase-header/PhaseHeader";
+import { PlatformStats } from "./phase-stats/PlatformStats";
 
 interface PhaseColumnProps {
   phase: Tables<"pipeline_phases">;
@@ -42,50 +41,9 @@ export const PhaseColumn = ({
   const [editingName, setEditingName] = useState(phase.name);
   const [isHovered, setIsHovered] = useState(false);
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditingName(e.target.value);
-    onUpdatePhaseName(e.target.value);
-  };
-
-  // Group leads by platform and count them
-  const platformCounts = leads.reduce((acc, lead) => {
-    const platform = lead.platform.toLowerCase();
-    acc[platform] = (acc[platform] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const getPlatformIcon = (platform: string) => {
-    switch (platform) {
-      case "instagram":
-        return <Instagram className="h-4 w-4" />;
-      case "linkedin":
-        return <Linkedin className="h-4 w-4" />;
-      case "facebook":
-        return <Facebook className="h-4 w-4" />;
-      case "tiktok":
-        return <Video className="h-4 w-4" />;
-      case "offline":
-        return <Users className="h-4 w-4" />;
-      default:
-        return null;
-    }
-  };
-
-  const getPlatformColor = (platform: string) => {
-    switch (platform) {
-      case "instagram":
-        return "text-pink-500";
-      case "linkedin":
-        return "text-blue-600";
-      case "facebook":
-        return "text-blue-500";
-      case "tiktok":
-        return "text-gray-900";
-      case "offline":
-        return "text-gray-500";
-      default:
-        return "text-gray-500";
-    }
+  const handleNameChange = (newName: string) => {
+    setEditingName(newName);
+    onUpdatePhaseName(newName);
   };
 
   return (
@@ -98,67 +56,21 @@ export const PhaseColumn = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       <CardHeader className="p-2 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-[5] border-b shadow-sm">
-        <div className="flex items-center justify-between gap-2">
-          {isEditMode ? (
-            <>
-              <div className="flex items-center gap-2 flex-1">
-                {!isFirst && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onMovePhase?.('left')}
-                    className="h-8 w-8 hover:bg-primary/10"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                )}
-                <Input
-                  value={editingName}
-                  onChange={handleNameChange}
-                  className="h-8"
-                />
-                {!isLast && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onMovePhase?.('right')}
-                    className="h-8 w-8 hover:bg-primary/10"
-                  >
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onDeletePhase}
-                className="h-8 w-8 text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </>
-          ) : (
-            <div className="w-full">
-              <h3 className="font-medium text-sm tracking-tight mb-2">{phase.name}</h3>
-              {Object.entries(platformCounts).length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(platformCounts).map(([platform, count]) => (
-                    <div 
-                      key={platform}
-                      className="flex items-center gap-1 text-xs"
-                    >
-                      <span className={getPlatformColor(platform)}>
-                        {getPlatformIcon(platform)}
-                      </span>
-                      <span className="font-medium">{count}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <PhaseHeader
+          name={phase.name}
+          isEditMode={isEditMode}
+          editingName={editingName}
+          isFirst={isFirst}
+          isLast={isLast}
+          onUpdatePhaseName={handleNameChange}
+          onDeletePhase={onDeletePhase}
+          onMovePhase={onMovePhase}
+        />
+        {!isEditMode && leads.length > 0 && (
+          <PlatformStats leads={leads} />
+        )}
       </CardHeader>
+
       <div className="flex-1 overflow-y-auto no-scrollbar max-h-[calc(100vh-12rem)]">
         <div className="space-y-2 p-4">
           {leads.map((lead) => (
@@ -177,4 +89,3 @@ export const PhaseColumn = ({
     </Card>
   );
 };
-
