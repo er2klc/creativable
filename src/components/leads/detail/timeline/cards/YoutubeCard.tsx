@@ -63,9 +63,12 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   };
 
   return (
-    <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500")}>
-      <Progress value={progress} className="h-2 w-full -mt-4 -ml-4 mb-4" style={{ width: 'calc(100% + 2rem)' }} />
-      <div className="flex items-start justify-between">
+    <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500 relative")}>
+      <Progress 
+        value={progress} 
+        className="absolute top-0 left-0 right-0 h-2" 
+      />
+      <div className="flex items-start justify-between mt-2">
         <div className="space-y-1 flex-1">
           <div className="flex items-center gap-2">
             <Eye className="h-4 w-4 text-gray-500" />
@@ -131,3 +134,4 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
+

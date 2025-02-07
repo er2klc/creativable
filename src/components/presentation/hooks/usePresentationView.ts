@@ -55,7 +55,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
               url: pageData.video_url,
               ip: ipLocationData?.ipAddress || 'unknown',
               location: ipLocationData?.location || 'Unknown Location',
-              id: null // This will be updated with the actual ID after insert
+              id: null // Will be updated after insert
             }
           }
         ])
@@ -102,7 +102,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         title: pageData.title,
         url: pageData.video_url,
         ip: ipLocationData?.ipAddress || 'unknown',
-        location: ipLocationData?.location || 'Unknown Location'
+        location: ipLocationData?.location || 'Unknown Location',
+        id: viewId // Include the viewId in metadata
       };
 
       const { error } = await supabase
