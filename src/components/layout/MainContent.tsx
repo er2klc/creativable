@@ -23,7 +23,7 @@ export const MainContent = ({ children, className }: MainContentProps) => {
 
   return (
     <main className={cn("flex-1 relative", className)}>
-      <div className="sticky top-0 z-40 flex items-center justify-between bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/90 px-2 py-2 border-b border-sidebar-border md:hidden">
+      <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/90 px-2 py-2 border-b border-sidebar-border md:hidden">
         <div className="flex items-center gap-2">
           <img 
             src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
@@ -35,15 +35,15 @@ export const MainContent = ({ children, className }: MainContentProps) => {
         <MobileMenu />
       </div>
       <div className={cn(
-        "container mx-auto py-4",
-        isLeadsPage ? "" : "py-4"
+        "container mx-auto py-4 max-w-full px-4",
+        isLeadsPage ? "pt-16 md:pt-4" : "pt-16 md:py-4"
       )}>
         {isLeadsPage && (
           <div className="flex items-center py-4">
             <h1 className="text-2xl font-semibold">Leads</h1>
           </div>
         )}
-        <div className="relative">
+        <div className="relative w-full overflow-x-hidden">
           {children}
           {isLeadsPage && (
             <div className="absolute -top-4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent shadow-sm" />
