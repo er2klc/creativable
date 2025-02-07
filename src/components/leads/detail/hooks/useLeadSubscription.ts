@@ -79,6 +79,21 @@ export const useLeadSubscription = (leadId: string | null) => {
           filter: `lead_id=eq.${leadId}`
         },
         handleFilesChange
+      )
+      // Presentation view changes
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'presentation_views',
+          filter: `lead_id=eq.${leadId}`
+        },
+        async (payload) => {
+          console.log('Presentation view changed:', payload);
+          // Invalidate the lead query to update UI
+          queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+        }
       );
 
     // Subscribe to the channel
