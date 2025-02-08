@@ -1,5 +1,5 @@
 
-import { CheckCircle2, X } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 interface VideoThumbnailProps {
   videoId: string;
@@ -17,13 +17,8 @@ export const VideoThumbnail = ({ videoId, latestProgress }: VideoThumbnailProps)
         className="w-full h-full object-cover"
       />
       {latestProgress >= 95 && (
-        <div className="absolute top-2 right-2">
-          <CheckCircle2 className="h-6 w-6 text-green-500" />
-        </div>
-      )}
-      {latestProgress === 0 && (
-        <div className="absolute top-2 right-2">
-          <X className="h-6 w-6 text-red-500" />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+          <CheckCircle2 className="h-16 w-16 text-green-500" />
         </div>
       )}
       {latestProgress > 0 && latestProgress < 95 && (
