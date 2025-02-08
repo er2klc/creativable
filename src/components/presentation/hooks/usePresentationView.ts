@@ -103,12 +103,14 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       return;
     }
 
-    const isCompleted = progress >= 95;
+    // Round the progress to the nearest integer
+    const roundedProgress = Math.round(progress);
+    const isCompleted = roundedProgress >= 95;
 
     try {
       const historyEntry = {
         timestamp: new Date().toISOString(),
-        progress: progress,
+        progress: roundedProgress,
         event_type: isCompleted ? 'video_completed' : 'video_progress'
       };
 
@@ -128,7 +130,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       const updatedHistory = [...(currentView?.view_history || []), historyEntry];
 
       const updates = {
-        video_progress: progress,
+        video_progress: roundedProgress,
         completed: isCompleted,
         ip_address: ipLocationData?.ipAddress || 'unknown',
         location: ipLocationData?.location || 'Unknown Location',
@@ -141,7 +143,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           ip: ipLocationData?.ipAddress || 'unknown',
           location: ipLocationData?.location || 'Unknown Location',
           presentationUrl: pageData.presentationUrl,
-          video_progress: progress,
+          video_progress: roundedProgress,
           completed: isCompleted,
           id: viewId
         },
