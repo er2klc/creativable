@@ -45,8 +45,12 @@ export default function PresentationPage() {
         pageData={pageData} 
         onProgress={(progress) => {
           if (viewId) {
-            console.log('Progress update:', progress);
-            updateProgress(progress, pageData);
+            const roundedProgress = Math.floor(progress);
+            console.log('Progress update:', roundedProgress);
+            // Only update if it's a whole number
+            if (Number.isInteger(progress)) {
+              updateProgress(roundedProgress, pageData);
+            }
           }
         }} 
       />

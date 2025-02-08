@@ -103,8 +103,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       return;
     }
 
-    // Round the progress to the nearest integer
-    const roundedProgress = Math.round(progress);
+    // Progress should already be a whole number, but let's ensure it
+    const roundedProgress = Math.floor(progress);
     const isCompleted = roundedProgress >= 95;
 
     try {
