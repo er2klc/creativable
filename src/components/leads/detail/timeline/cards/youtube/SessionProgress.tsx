@@ -2,14 +2,40 @@
 import { formatDateTime } from "../../utils/dateUtils";
 import { Session } from "./types";
 import { Progress } from "@/components/ui/progress";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SessionProgressProps {
   sessions: Session[];
   language?: string;
+  viewId?: string;
 }
 
-export const SessionProgress = ({ sessions, language }: SessionProgressProps) => {
-  if (!sessions || sessions.length === 0) {
+export const SessionProgress = ({ viewId, language }: SessionProgressProps) => {
+  const [viewSessions, setViewSessions] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchSessions = async () => {
+      if (!viewId) return;
+
+      const { data, error } = await supabase
+        .from('presentation_view_sessions')
+        .select('*')
+        .eq('view_id', viewId)
+        .order('start_time', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching sessions:', error);
+        return;
+      }
+
+      setViewSessions(data || []);
+    };
+
+    fetchSessions();
+  }, [viewId]);
+
+  if (!viewSessions || viewSessions.length === 0) {
     return null;
   }
 
@@ -26,24 +52,23 @@ export const SessionProgress = ({ sessions, language }: SessionProgressProps) =>
       timeZone: 'Europe/Berlin'
     };
     
-    return new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'de-DE', options).format(date) + 
-           ' (+2 Std.)';
+    return new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'de-DE', options).format(date);
   };
 
   return (
     <div className="space-y-4 mt-4">
-      {sessions.map((session, index) => (
+      {viewSessions.map((session, index) => (
         <div key={index} className="space-y-2 bg-gray-50 p-3 rounded-lg">
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-600 font-medium">
-              {formatDate(session.timestamp)}
+              {formatDate(session.start_time)}
             </span>
             <span className="text-xs font-medium text-green-600">
-              {Math.round(session.progress)}%
+              {Math.round(session.max_progress)}%
             </span>
           </div>
           <Progress 
-            value={session.progress} 
+            value={session.max_progress} 
             className="h-2.5 bg-gray-200" 
             indicatorClassName="bg-green-500 transition-all duration-300"
           />
@@ -52,3 +77,4 @@ export const SessionProgress = ({ sessions, language }: SessionProgressProps) =>
     </div>
   );
 };
+

@@ -19,15 +19,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const isExpired = metadata?.expires_at && new Date(metadata.expires_at) < new Date();
   const isVideoActive = metadata?.event_type !== 'video_closed';
 
-  console.log("DEBUG YoutubeCard:", { 
-    metadata, 
-    isExpired, 
-    expiresAt: metadata?.expires_at,
-    currentDate: new Date().toISOString(),
-    isVideoActive,
-    eventType: metadata?.event_type
-  });
-
   const isViewCard = metadata?.event_type === 'video_opened' || 
                      metadata?.event_type === 'video_progress' ||
                      metadata?.event_type === 'video_closed' || 
@@ -49,52 +40,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       );
     }
   };
-
-  const getSessionMilestones = () => {
-    if (!metadata.view_history) return [];
-    
-    const sessions: Array<{timestamp: string, progress: number}> = [];
-    let currentSession = {
-      timestamp: '',
-      progress: 0,
-      lastTimestamp: new Date().getTime()
-    };
-
-    const history = [...metadata.view_history].sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
-
-    history.forEach(entry => {
-      const timestamp = new Date(entry.timestamp).getTime();
-      if (timestamp - currentSession.lastTimestamp > 30 * 60 * 1000) {
-        if (currentSession.timestamp) {
-          sessions.push({
-            timestamp: currentSession.timestamp,
-            progress: currentSession.progress
-          });
-        }
-        currentSession = {
-          timestamp: entry.timestamp,
-          progress: entry.progress,
-          lastTimestamp: timestamp
-        };
-      } else {
-        currentSession.progress = Math.max(currentSession.progress, entry.progress);
-        currentSession.lastTimestamp = timestamp;
-      }
-    });
-
-    if (currentSession.timestamp) {
-      sessions.push({
-        timestamp: currentSession.timestamp,
-        progress: currentSession.progress
-      });
-    }
-
-    return sessions;
-  };
-
-  const sessionMilestones = getSessionMilestones();
 
   return (
     <Card className={cn(
@@ -137,9 +82,9 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               location={metadata.location}
             />
           )}
-          {isViewCard && sessionMilestones.length > 0 && (
+          {isViewCard && (
             <SessionProgress 
-              sessions={sessionMilestones}
+              viewId={metadata.view_id}
               language={settings?.language}
             />
           )}

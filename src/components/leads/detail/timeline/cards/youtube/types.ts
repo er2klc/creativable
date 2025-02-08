@@ -2,6 +2,15 @@
 export interface Session {
   timestamp: string;
   progress: number;
+  start_time?: string;
+  end_time?: string;
+  max_progress?: number;
+}
+
+export interface YoutubeCardProps {
+  content: string;
+  metadata: YoutubeCardMetadata;
+  timestamp?: string;
 }
 
 export interface YoutubeCardMetadata {
@@ -14,11 +23,8 @@ export interface YoutubeCardMetadata {
   title?: string;
   url?: string;
   id?: string;
-  progress_milestones?: Array<{
-    progress: number;
-    timestamp: string;
-    completed: boolean;
-  }>;
+  view_id?: string;
+  completed?: boolean;
   view_history?: Array<{
     timestamp: string;
     progress: number;
@@ -26,8 +32,3 @@ export interface YoutubeCardMetadata {
   }>;
 }
 
-export interface YoutubeCardProps {
-  content: string;
-  metadata: YoutubeCardMetadata;
-  timestamp?: string;
-}
