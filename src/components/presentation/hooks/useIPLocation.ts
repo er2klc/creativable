@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 
-interface IPLocationData {
+export interface IPLocationData {
   ipAddress: string;
   location: string;
   city: string;
