@@ -8,6 +8,12 @@ interface SessionProgressProps {
 }
 
 export const SessionProgress = ({ sessions, language }: SessionProgressProps) => {
+  console.log("DEBUG SessionProgress:", { sessions, language });
+  
+  if (!sessions || sessions.length === 0) {
+    return null;
+  }
+
   return (
     <div className="space-y-4 mt-4">
       {sessions.map((session, index) => (

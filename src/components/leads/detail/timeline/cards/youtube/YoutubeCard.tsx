@@ -23,7 +23,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     currentDate: new Date().toISOString(),
     isVideoActive,
     eventType: metadata?.event_type,
-    viewHistory: metadata?.view_history
+    viewHistory: metadata?.view_history,
+    latestProgress
   });
 
   const isViewCard = metadata?.event_type === 'video_opened' || 
@@ -50,7 +51,10 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
 
   // Wandle view_history in Sessions um
   const getSessionMilestones = () => {
-    if (!metadata.view_history) return [];
+    if (!metadata?.view_history || !Array.isArray(metadata.view_history)) {
+      console.log("No view history available");
+      return [];
+    }
     
     const sessions: Array<{timestamp: string, progress: number}> = [];
     let currentSession = {
@@ -58,6 +62,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       progress: 0,
       lastTimestamp: new Date().getTime()
     };
+
+    console.log("Processing view history:", metadata.view_history);
 
     const history = [...metadata.view_history].sort(
       (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
@@ -93,6 +99,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       });
     }
 
+    console.log("Generated sessions:", sessions);
     return sessions;
   };
 
@@ -194,4 +201,3 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </div>
   );
 };
-
