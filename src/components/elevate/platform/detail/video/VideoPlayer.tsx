@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import { useYouTubePlayer } from './useYouTubePlayer';
 import { CONTAINER_STYLES } from './VideoPlayerConfig';
@@ -13,11 +14,12 @@ interface VideoPlayerProps {
 export const VideoPlayer = ({ 
   videoUrl, 
   onProgress, 
-  savedProgress,
+  savedProgress = 0,
   onDuration,
   autoplay = false
 }: VideoPlayerProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout>();
   const { isAPILoaded, initializePlayer } = useYouTubePlayer({
     videoUrl,
     onProgress,
@@ -28,8 +30,15 @@ export const VideoPlayer = ({
 
   useEffect(() => {
     if (isAPILoaded && containerRef.current) {
+      console.log("Initializing YouTube player...");
       initializePlayer(containerRef.current);
     }
+    
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
   }, [isAPILoaded, videoUrl, initializePlayer]);
 
   if (!videoUrl) return null;

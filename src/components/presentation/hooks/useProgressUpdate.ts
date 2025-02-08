@@ -7,7 +7,8 @@ import { PresentationPageData } from '../types';
 export const useProgressUpdate = (viewId: string | null) => {
   const progressQueueRef = useRef<{ progress: number; timestamp: string }[]>([]);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const UPDATE_INTERVAL = 2000; // 2 seconds for more frequent updates
+  const lastProgressRef = useRef<number>(0);
+  const UPDATE_INTERVAL = 2000; // 2 seconds
 
   const scheduleProgressUpdate = useCallback(() => {
     if (updateTimeoutRef.current) {
@@ -18,6 +19,14 @@ export const useProgressUpdate = (viewId: string | null) => {
       if (progressQueueRef.current.length === 0) return;
 
       const latestProgress = progressQueueRef.current[progressQueueRef.current.length - 1].progress;
+      
+      // Only update if progress has changed significantly (more than 0.5%)
+      if (Math.abs(latestProgress - lastProgressRef.current) < 0.5) {
+        progressQueueRef.current = [];
+        return;
+      }
+      
+      lastProgressRef.current = latestProgress;
       const progressHistory = [...progressQueueRef.current];
       progressQueueRef.current = []; // Clear the queue
 
