@@ -1571,6 +1571,7 @@ export type Database = {
           last_progress_update: string | null
           lead_id: string
           location: string | null
+          location_metadata: Json | null
           metadata: Json | null
           page_id: string
           progress_milestones: Json | null
@@ -1586,6 +1587,7 @@ export type Database = {
           last_progress_update?: string | null
           lead_id: string
           location?: string | null
+          location_metadata?: Json | null
           metadata?: Json | null
           page_id: string
           progress_milestones?: Json | null
@@ -1601,6 +1603,7 @@ export type Database = {
           last_progress_update?: string | null
           lead_id?: string
           location?: string | null
+          location_metadata?: Json | null
           metadata?: Json | null
           page_id?: string
           progress_milestones?: Json | null
