@@ -103,14 +103,12 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       return;
     }
 
-    // Progress should already be a whole number, but let's ensure it
-    const roundedProgress = Math.floor(progress);
-    const isCompleted = roundedProgress >= 95;
+    const isCompleted = progress >= 95;
 
     try {
       const historyEntry = {
         timestamp: new Date().toISOString(),
-        progress: roundedProgress,
+        progress: progress,
         event_type: isCompleted ? 'video_completed' : 'video_progress'
       };
 
@@ -130,7 +128,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       const updatedHistory = [...(currentView?.view_history || []), historyEntry];
 
       const updates = {
-        video_progress: roundedProgress,
+        video_progress: progress,
         completed: isCompleted,
         ip_address: ipLocationData?.ipAddress || 'unknown',
         location: ipLocationData?.location || 'Unknown Location',
@@ -143,7 +141,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           ip: ipLocationData?.ipAddress || 'unknown',
           location: ipLocationData?.location || 'Unknown Location',
           presentationUrl: pageData.presentationUrl,
-          video_progress: roundedProgress,
+          video_progress: progress,
           completed: isCompleted,
           id: viewId
         },
