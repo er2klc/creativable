@@ -42,7 +42,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       setIsCreatingView(true);
       console.log('Checking for existing view...');
 
-      // First check if there's an existing view for this IP
       const { data: existingView, error: fetchError } = await supabase
         .from('presentation_views')
         .select('*')
@@ -69,6 +68,15 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         event_type: 'video_opened'
       };
 
+      // Create a detailed location object
+      const locationMetadata = {
+        city: ipLocationData?.city || '',
+        region: ipLocationData?.region || '',
+        country: ipLocationData?.country || '',
+        countryCode: ipLocationData?.countryCode || '',
+        timezone: ipLocationData?.timezone || ''
+      };
+
       const viewData = {
         id: newViewId,
         page_id: pageData.id,
@@ -77,15 +85,17 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         completed: false,
         ip_address: ipLocationData?.ipAddress || 'unknown',
         location: ipLocationData?.location || 'Unknown Location',
+        location_metadata: locationMetadata,
         metadata: {
           type: 'youtube',
           event_type: 'video_opened',
           title: pageData.title,
           url: pageData.video_url,
-          id: newViewId, // Set both id and view_id to be the same
+          id: newViewId,
           view_id: newViewId,
           ip: ipLocationData?.ipAddress || 'unknown',
           location: ipLocationData?.location || 'Unknown Location',
+          location_metadata: locationMetadata,
           presentationUrl: pageData.presentationUrl,
           video_progress: 0,
           completed: false

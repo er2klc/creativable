@@ -4,6 +4,11 @@ import { useState, useEffect } from 'react';
 interface IPLocationData {
   ipAddress: string;
   location: string;
+  city: string;
+  region: string;
+  country: string;
+  countryCode: string;
+  timezone: string;
 }
 
 export const useIPLocation = () => {
@@ -13,7 +18,6 @@ export const useIPLocation = () => {
 
   const fetchIPLocation = async () => {
     try {
-      // Using ipapi.co as a more reliable service
       const ipResponse = await fetch('https://ipapi.co/json/');
       const ipData = await ipResponse.json();
       
@@ -21,21 +25,42 @@ export const useIPLocation = () => {
         throw new Error('IP API returned an error');
       }
 
+      // Format location string with all available information
+      const locationParts = [];
+      if (ipData.city) locationParts.push(ipData.city);
+      if (ipData.region) locationParts.push(ipData.region);
+      if (ipData.country_name) locationParts.push(ipData.country_name);
+
+      const locationString = locationParts.length > 0 
+        ? locationParts.join(', ')
+        : 'Unknown Location';
+
       setIPLocationData({
-        ipAddress: ipData.ip,
-        location: `${ipData.city || ''}, ${ipData.country_name || ''}`
+        ipAddress: ipData.ip || 'unknown',
+        location: locationString,
+        city: ipData.city || '',
+        region: ipData.region || '',
+        country: ipData.country_name || '',
+        countryCode: ipData.country_code || '',
+        timezone: ipData.timezone || ''
       });
+
+      console.log('IP Location Data:', ipData);
+
     } catch (error) {
       console.error('Error fetching IP location:', error);
       
-      // Fallback data if we can't get the real IP
       if (retryCount >= MAX_RETRIES) {
         setIPLocationData({
           ipAddress: 'unknown',
-          location: 'Unknown Location'
+          location: 'Unknown Location',
+          city: '',
+          region: '',
+          country: '',
+          countryCode: '',
+          timezone: ''
         });
       } else {
-        // Retry after a short delay
         setTimeout(() => {
           setRetryCount(prev => prev + 1);
         }, 1000);
