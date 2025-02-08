@@ -9,21 +9,21 @@ import { useEffect } from "react";
 
 export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) => {
   const { settings } = useSettings();
-  const latestProgress = metadata?.video_progress || 0;
+  const latestProgress = metadata?.video_progress ? Number(metadata.video_progress) : 0;
   const isExpired = metadata?.expires_at && new Date(metadata.expires_at) < new Date();
   const isVideoActive = metadata?.event_type !== 'video_closed';
   const viewId = metadata?.view_id || metadata?.id;
   const videoId = metadata?.url?.split('v=')[1] || '';
 
-  console.log("DEBUG YoutubeCard Detail:", { 
+  console.log("YoutubeCard render:", { 
     metadata, 
+    latestProgress,
     isExpired, 
     expiresAt: metadata?.expires_at,
     currentDate: new Date().toISOString(),
     isVideoActive,
     eventType: metadata?.event_type,
     viewHistory: metadata?.view_history,
-    latestProgress,
     hasViewHistory: Boolean(metadata?.view_history),
     viewId,
     videoId
@@ -61,7 +61,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const sessions = useSessionMilestones(metadata?.view_history);
 
   // Check if this is a view card by looking for view_id or id in metadata
-  const isViewCard = Boolean(metadata?.view_id || metadata?.id);
+  const isViewCard = Boolean(viewId);
 
   return (
     <div className={`

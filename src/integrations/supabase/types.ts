@@ -1498,6 +1498,30 @@ export type Database = {
           },
         ]
       }
+      presentation_progress_logs: {
+        Row: {
+          id: string
+          progress: number
+          raw_metadata: Json | null
+          received_at: string | null
+          view_id: string
+        }
+        Insert: {
+          id?: string
+          progress: number
+          raw_metadata?: Json | null
+          received_at?: string | null
+          view_id: string
+        }
+        Update: {
+          id?: string
+          progress?: number
+          raw_metadata?: Json | null
+          received_at?: string | null
+          view_id?: string
+        }
+        Relationships: []
+      }
       presentation_progress_milestones: {
         Row: {
           id: string
