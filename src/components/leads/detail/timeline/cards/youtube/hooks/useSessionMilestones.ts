@@ -34,6 +34,7 @@ export const useSessionMilestones = (viewHistory?: ViewHistoryEntry[]) => {
       history.forEach(entry => {
         const timestamp = new Date(entry.timestamp).getTime();
         
+        // Create new session if more than 30 minutes have passed
         if (timestamp - currentSession.lastTimestamp > 30 * 60 * 1000) {
           if (currentSession.timestamp) {
             tempSessions.push({
@@ -47,11 +48,13 @@ export const useSessionMilestones = (viewHistory?: ViewHistoryEntry[]) => {
             lastTimestamp: timestamp
           };
         } else {
+          // Update current session with max progress
           currentSession.progress = Math.max(currentSession.progress, entry.progress);
           currentSession.lastTimestamp = timestamp;
         }
       });
 
+      // Add the last session
       if (currentSession.timestamp) {
         tempSessions.push({
           timestamp: currentSession.timestamp,
@@ -68,4 +71,3 @@ export const useSessionMilestones = (viewHistory?: ViewHistoryEntry[]) => {
 
   return sessions;
 };
-

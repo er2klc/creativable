@@ -39,4 +39,3 @@ export const SessionProgress = ({ sessions, language }: SessionProgressProps) =>
     </div>
   );
 };
-

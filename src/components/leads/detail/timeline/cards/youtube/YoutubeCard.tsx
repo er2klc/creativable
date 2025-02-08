@@ -10,7 +10,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const latestProgress = metadata?.video_progress || 0;
   const isExpired = metadata?.expires_at && new Date(metadata.expires_at) < new Date();
   const isVideoActive = metadata?.event_type !== 'video_closed';
-  const viewId = metadata?.view_id || metadata?.id; // Handle both ID fields for backward compatibility
+  const viewId = metadata?.view_id || metadata?.id;
   const videoId = metadata?.url?.split('v=')[1] || '';
 
   console.log("DEBUG YoutubeCard Detail:", { 
