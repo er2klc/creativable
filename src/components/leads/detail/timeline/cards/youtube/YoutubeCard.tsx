@@ -1,9 +1,11 @@
 
 import { useSettings } from "@/hooks/use-settings";
+import { toast } from "sonner";
 import { ProgressIndicator } from "./components/ProgressIndicator";
 import { YoutubeContent } from "./components/YoutubeContent";
 import { useSessionMilestones } from "./hooks/useSessionMilestones";
 import { YoutubeCardProps } from "./types";
+import { useEffect } from "react";
 
 export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) => {
   const { settings } = useSettings();
@@ -27,6 +29,35 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     videoId
   });
 
+  useEffect(() => {
+    // Show notification when video is opened
+    if (metadata?.event_type === 'video_opened') {
+      toast.info(
+        settings?.language === "en" 
+          ? "Presentation started" 
+          : "Präsentation wurde gestartet"
+      );
+    }
+    
+    // Show notification when video is completed
+    if (metadata?.event_type === 'video_completed') {
+      toast.success(
+        settings?.language === "en"
+          ? `Presentation completed (${Math.round(latestProgress)}%)`
+          : `Präsentation abgeschlossen (${Math.round(latestProgress)}%)`
+      );
+    }
+    
+    // Show notification when video is closed without completion
+    if (metadata?.event_type === 'video_closed' && latestProgress < 95) {
+      toast.info(
+        settings?.language === "en"
+          ? `Presentation closed (Progress: ${Math.round(latestProgress)}%)`
+          : `Präsentation geschlossen (Fortschritt: ${Math.round(latestProgress)}%)`
+      );
+    }
+  }, [metadata?.event_type, latestProgress, settings?.language]);
+
   const isViewCard = metadata?.event_type === 'video_opened' || 
                      metadata?.event_type === 'video_progress' ||
                      metadata?.event_type === 'video_closed' || 
@@ -40,7 +71,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       ${isViewCard ? "border-2 border-orange-500" : isExpired ? "border-2 border-red-500" : "border border-gray-200"} 
       rounded-lg p-4 w-full
     `}>
-      {isViewCard && (
+      {isViewCard && latestProgress > 0 && (
         <ProgressIndicator 
           progress={latestProgress} 
           isActive={isVideoActive} 

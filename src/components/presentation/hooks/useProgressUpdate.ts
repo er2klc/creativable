@@ -7,7 +7,7 @@ import { PresentationPageData } from '../types';
 export const useProgressUpdate = (viewId: string | null) => {
   const progressQueueRef = useRef<{ progress: number; timestamp: string }[]>([]);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const UPDATE_INTERVAL = 5000; // 5 seconds
+  const UPDATE_INTERVAL = 2000; // 2 seconds for more frequent updates
 
   const scheduleProgressUpdate = useCallback(() => {
     if (updateTimeoutRef.current) {
