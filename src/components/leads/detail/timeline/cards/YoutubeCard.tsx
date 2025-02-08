@@ -18,6 +18,13 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const latestProgress = metadata?.video_progress || 0;
   const isExpired = metadata?.expires_at && new Date(metadata.expires_at) < new Date();
 
+  console.log("DEBUG YoutubeCard:", { 
+    metadata, 
+    isExpired, 
+    expiresAt: metadata?.expires_at,
+    currentDate: new Date().toISOString() 
+  });
+
   const isViewCard = metadata?.event_type === 'video_opened' || 
                      metadata?.event_type === 'video_progress' ||
                      metadata?.event_type === 'video_closed' || 
@@ -87,7 +94,10 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const sessionMilestones = getSessionMilestones();
 
   return (
-    <Card className={cn("flex-1 p-4 text-sm overflow-hidden bg-white shadow-md border-red-500 relative")}>
+    <Card className={cn(
+      "flex-1 p-4 text-sm overflow-hidden bg-white shadow-md relative",
+      isExpired ? "border-red-500" : "border-gray-200"
+    )}>
       {isViewCard && latestProgress > 0 && (
         <>
           <Progress 
@@ -135,7 +145,10 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                 variant="outline"
                 size="sm"
                 onClick={() => copyToClipboard(metadata.presentationUrl!)}
-                className="flex items-center gap-2 w-fit"
+                className={cn(
+                  "flex items-center gap-2 w-fit",
+                  isExpired && "border-red-500 hover:border-red-600"
+                )}
                 disabled={isExpired}
               >
                 <Copy className="h-4 w-4" />
