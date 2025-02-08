@@ -55,6 +55,7 @@ export const TimelineItemIcon = ({
         case 'video_opened':
         case 'video_closed':
         case 'video_completed':
+        case 'video_progress':
           return Eye;
         default:
           return Video;
@@ -118,7 +119,8 @@ export const TimelineItemIcon = ({
     if (metadata?.type === 'youtube') {
       if (metadata.event_type === 'video_opened' || 
           metadata.event_type === 'video_closed' || 
-          metadata.event_type === 'video_completed') {
+          metadata.event_type === 'video_completed' ||
+          metadata.event_type === 'video_progress') {
         return 'bg-orange-500'; // More prominent color for view events
       }
       return 'bg-red-500'; // YouTube brand color for video additions
@@ -160,7 +162,8 @@ export const TimelineItemIcon = ({
   const iconSize = metadata?.type === 'youtube' && 
     (metadata.event_type === 'video_opened' || 
      metadata.event_type === 'video_closed' || 
-     metadata.event_type === 'video_completed') ? 'h-5 w-5' : 'h-4 w-4';
+     metadata.event_type === 'video_completed' ||
+     metadata.event_type === 'video_progress') ? 'h-5 w-5' : 'h-4 w-4';
 
   return (
     <div className={`z-10 flex items-center justify-center w-8 h-8 rounded-full ${getIconColor()}`}>
@@ -168,3 +171,4 @@ export const TimelineItemIcon = ({
     </div>
   );
 };
+
