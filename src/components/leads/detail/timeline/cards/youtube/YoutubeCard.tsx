@@ -58,11 +58,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     }
   }, [metadata?.event_type, latestProgress, settings?.language]);
 
-  const isViewCard = metadata?.event_type === 'video_opened' || 
-                     metadata?.event_type === 'video_progress' ||
-                     metadata?.event_type === 'video_closed' || 
-                     metadata?.event_type === 'video_completed';
-
   const sessions = useSessionMilestones(metadata?.view_history);
 
   return (

@@ -10,7 +10,11 @@ interface ProgressIndicatorProps {
 export const ProgressIndicator = ({ progress, isActive }: ProgressIndicatorProps) => {
   const roundedProgress = Math.round(progress);
   
-  console.log("ProgressIndicator render:", { progress, isActive, roundedProgress });
+  console.log("ProgressIndicator render:", { 
+    rawProgress: progress,
+    roundedProgress, 
+    isActive 
+  });
   
   return (
     <>

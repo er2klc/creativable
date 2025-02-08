@@ -20,6 +20,13 @@ export const useProgressUpdate = (viewId: string | null) => {
 
       const latestProgress = progressQueueRef.current[progressQueueRef.current.length - 1].progress;
       
+      console.log("Processing progress update:", {
+        viewId,
+        latestProgress,
+        lastProgress: lastProgressRef.current,
+        queueLength: progressQueueRef.current.length
+      });
+      
       // Only update if progress has changed significantly (more than 0.5%)
       if (Math.abs(latestProgress - lastProgressRef.current) < 0.5) {
         progressQueueRef.current = [];
@@ -31,36 +38,46 @@ export const useProgressUpdate = (viewId: string | null) => {
       progressQueueRef.current = []; // Clear the queue
 
       try {
-        console.log("Updating progress:", { viewId, latestProgress, progressHistory });
-
-        const { data: currentView } = await supabase
+        const { data: currentView, error: viewError } = await supabase
           .from('presentation_views')
           .select('*')
           .eq('id', viewId)
           .single();
+
+        if (viewError) {
+          throw viewError;
+        }
 
         if (!currentView) {
           console.error('Could not find view record');
           return;
         }
 
-        const isCompleted = latestProgress >= 95;
+        const roundedProgress = Math.round(latestProgress);
+        const isCompleted = roundedProgress >= 95;
         const currentHistory = Array.isArray(currentView.view_history) 
           ? currentView.view_history 
           : [];
+
+        console.log("Updating view progress:", {
+          viewId,
+          roundedProgress,
+          isCompleted,
+          currentHistoryLength: currentHistory.length
+        });
 
         const updatedMetadata = {
           ...currentView.metadata,
           type: 'youtube',
           event_type: isCompleted ? 'video_completed' : 'video_progress',
-          video_progress: latestProgress,
+          video_progress: roundedProgress,
           completed: isCompleted
         };
 
-        const { error } = await supabase
+        const { error: updateError } = await supabase
           .from('presentation_views')
           .update({
-            video_progress: latestProgress,
+            video_progress: roundedProgress,
             completed: isCompleted,
             metadata: updatedMetadata,
             view_history: [...currentHistory, ...progressHistory],
@@ -68,11 +85,18 @@ export const useProgressUpdate = (viewId: string | null) => {
           })
           .eq('id', viewId);
 
-        if (error) {
-          console.error('Error updating progress:', error);
+        if (updateError) {
+          console.error('Error updating progress:', updateError);
           toast.error('Failed to update view progress');
         } else {
-          console.log('Progress batch updated successfully:', { latestProgress, viewId });
+          console.log('Progress updated successfully:', { roundedProgress, viewId });
+          
+          // Show notifications for key progress points
+          if (isCompleted && !currentView.completed) {
+            toast.success('Video completed! 🎉');
+          } else if (roundedProgress === 25 || roundedProgress === 50 || roundedProgress === 75) {
+            toast.info(`${roundedProgress}% watched`);
+          }
         }
       } catch (error) {
         console.error('Error in batch progress update:', error);
