@@ -24,7 +24,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
 
     try {
       setIsCreatingView(true);
-      console.log('Checking for existing view...');
 
       // First check if there's an existing view for this IP
       const { data: existingView, error: fetchError } = await supabase
@@ -46,7 +45,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         return;
       }
 
-      console.log('Creating new view...');
       const newViewId = crypto.randomUUID();
       const initialHistoryEntry = {
         timestamp: new Date().toISOString(),
@@ -89,7 +87,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       }
 
       setViewId(newViewId);
-      console.log('View created with ID:', newViewId);
 
     } catch (error) {
       console.error('Error in createView:', error);
@@ -101,12 +98,10 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
 
   const updateProgress = async (progress: number, pageData: PresentationPageData) => {
     if (!viewId) {
-      console.log('No viewId available for progress update');
       return;
     }
 
     const isCompleted = progress >= 95;
-    console.log('Progress update:', progress);
 
     try {
       // First, get the current view data
@@ -159,8 +154,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       if (updateError) {
         console.error('Error updating progress:', updateError);
         toast.error('Failed to update view progress');
-      } else {
-        console.log('Progress updated successfully:', { progress, viewId });
       }
     } catch (error) {
       console.error('Error in updateProgress:', error);
