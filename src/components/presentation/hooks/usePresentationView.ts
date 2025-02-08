@@ -45,7 +45,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       }
 
       console.log('Creating new view...');
-      const newViewId = crypto.randomUUID();
+      const viewId = crypto.randomUUID();
       const initialHistoryEntry = {
         timestamp: new Date().toISOString(),
         progress: 0,
@@ -53,7 +53,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       };
 
       const viewData = {
-        id: newViewId,
+        id: viewId,
         page_id: pageData.id,
         lead_id: leadId,
         video_progress: 0,
@@ -69,8 +69,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           location: ipLocationData?.location || 'Unknown Location',
           presentationUrl: pageData.presentationUrl,
           video_progress: 0,
-          completed: false,
-          id: newViewId
+          completed: false
         },
         view_history: [initialHistoryEntry]
       };
@@ -99,8 +98,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         return;
       }
 
-      setViewId(newViewId);
-      console.log('View created with ID:', newViewId);
+      setViewId(viewId);
+      console.log('View created with ID:', viewId);
 
     } catch (error) {
       console.error('Error in createView:', error);
@@ -150,8 +149,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         location: ipLocationData?.location || 'Unknown Location',
         presentationUrl: pageData.presentationUrl,
         video_progress: progress,
-        completed: isCompleted,
-        id: viewId
+        completed: isCompleted
       };
 
       const { error } = await supabase
