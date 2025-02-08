@@ -1634,6 +1634,7 @@ export type Database = {
           metadata: Json | null
           page_id: string
           progress_milestones: Json | null
+          updated_at: string | null
           video_progress: number | null
           view_history: Json | null
           viewed_at: string | null
@@ -1650,6 +1651,7 @@ export type Database = {
           metadata?: Json | null
           page_id: string
           progress_milestones?: Json | null
+          updated_at?: string | null
           video_progress?: number | null
           view_history?: Json | null
           viewed_at?: string | null
@@ -1666,6 +1668,7 @@ export type Database = {
           metadata?: Json | null
           page_id?: string
           progress_milestones?: Json | null
+          updated_at?: string | null
           video_progress?: number | null
           view_history?: Json | null
           viewed_at?: string | null
