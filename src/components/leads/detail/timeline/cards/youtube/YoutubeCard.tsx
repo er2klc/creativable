@@ -72,7 +72,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     history.forEach(entry => {
       const timestamp = new Date(entry.timestamp).getTime();
       
-      // Neue Session wenn mehr als 30 Minuten seit letztem Update
+      // Start new session if more than 30 minutes since last update
       if (timestamp - currentSession.lastTimestamp > 30 * 60 * 1000) {
         if (currentSession.timestamp) {
           sessions.push({
@@ -91,7 +91,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       }
     });
 
-    // Letzte Session hinzufügen
+    // Add final session
     if (currentSession.timestamp) {
       sessions.push({
         timestamp: currentSession.timestamp,
