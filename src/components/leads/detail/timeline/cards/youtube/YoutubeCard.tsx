@@ -60,6 +60,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
 
   const sessions = useSessionMilestones(metadata?.view_history);
 
+  // Check if this is a view card by looking for view_id or id in metadata
   const isViewCard = Boolean(metadata?.view_id || metadata?.id);
 
   return (
@@ -68,7 +69,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       ${isViewCard ? "border-2 border-orange-500" : isExpired ? "border-2 border-red-500" : "border border-gray-200"} 
       rounded-lg p-4 w-full
     `}>
-      {isViewCard && latestProgress > 0 && (
+      {isViewCard && (
         <ProgressIndicator 
           progress={latestProgress} 
           isActive={isVideoActive} 
