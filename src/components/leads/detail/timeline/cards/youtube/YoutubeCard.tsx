@@ -72,7 +72,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     history.forEach(entry => {
       const timestamp = new Date(entry.timestamp).getTime();
       
-      // Start new session if more than 30 minutes since last update
       if (timestamp - currentSession.lastTimestamp > 30 * 60 * 1000) {
         if (currentSession.timestamp) {
           sessions.push({
@@ -91,7 +90,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       }
     });
 
-    // Add final session
     if (currentSession.timestamp) {
       sessions.push({
         timestamp: currentSession.timestamp,
@@ -111,14 +109,14 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       ${isExpired ? "border-red-500" : "border-gray-200"} 
       rounded-lg p-4 w-full
     `}>
-      {latestProgress > 0 && (
+      {isViewCard && metadata?.video_progress !== undefined && (
         <>
           <Progress 
-            value={latestProgress} 
+            value={metadata.video_progress} 
             className="absolute top-0 left-0 right-0 h-1" 
           />
           <div className="absolute top-2 right-2 flex items-center gap-2">
-            <span className="text-xs text-blue-500">{Math.round(latestProgress)}%</span>
+            <span className="text-xs text-blue-500">{Math.round(metadata.video_progress)}%</span>
             <Activity className="h-4 w-4 text-blue-500 animate-pulse" />
           </div>
         </>
@@ -201,4 +199,3 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </div>
   );
 };
-
