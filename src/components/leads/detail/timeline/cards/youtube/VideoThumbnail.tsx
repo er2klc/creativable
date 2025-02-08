@@ -22,7 +22,7 @@ export const VideoThumbnail = ({ videoId, latestProgress }: VideoThumbnailProps)
         </div>
       )}
       {latestProgress > 0 && latestProgress < 95 && (
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200">
+        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-200">
           <div 
             className="h-full bg-blue-500 transition-all duration-300"
             style={{ width: `${latestProgress}%` }}

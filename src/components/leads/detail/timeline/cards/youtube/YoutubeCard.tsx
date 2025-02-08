@@ -36,11 +36,11 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
 
   return (
     <div className={`
-      relative group bg-white border 
-      ${isExpired ? "border-red-500" : "border-gray-200"} 
+      relative group bg-white 
+      ${isViewCard ? "border-2 border-orange-500" : isExpired ? "border-2 border-red-500" : "border border-gray-200"} 
       rounded-lg p-4 w-full
     `}>
-      {isViewCard && latestProgress > 0 && (
+      {isViewCard && (
         <ProgressIndicator 
           progress={latestProgress} 
           isActive={isVideoActive} 

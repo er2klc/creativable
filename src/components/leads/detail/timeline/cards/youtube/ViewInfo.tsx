@@ -12,27 +12,18 @@ export const ViewInfo = ({ id, ip, location, progress }: ViewInfoProps) => {
   const locationInfo = `${ip || 'Unknown IP'} | ${location || 'Unknown Location'}`;
   
   return (
-    <>
+    <div className="space-y-2">
       <div className="text-gray-500 text-sm">
         View ID: {id || 'No ID'}
       </div>
       <div className="text-gray-500 text-sm flex items-center gap-2">
         {locationInfo}
       </div>
-      {typeof progress === 'number' && progress > 0 && (
-        <div className="mt-2">
-          <div className="text-sm text-gray-600 mb-1">
-            Fortschritt: {Math.round(progress)}%
-          </div>
-          <div className="h-2 bg-gray-200 rounded">
-            <div 
-              className="h-full bg-blue-500 rounded transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+      {typeof progress === 'number' && (
+        <div className="text-sm font-medium text-blue-600">
+          Fortschritt: {Math.round(progress)}%
         </div>
       )}
-    </>
+    </div>
   );
 };
-

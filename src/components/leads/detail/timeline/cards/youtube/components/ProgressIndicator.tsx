@@ -8,13 +8,11 @@ interface ProgressIndicatorProps {
 }
 
 export const ProgressIndicator = ({ progress, isActive }: ProgressIndicatorProps) => {
-  if (progress === 0) return null;
-
   return (
     <>
       <Progress 
         value={progress} 
-        className="absolute top-0 left-0 right-0 h-1 bg-gray-200" 
+        className="absolute top-0 left-0 right-0 h-1.5 bg-gray-200 rounded-t-lg" 
       />
       {isActive && (
         <div className="absolute top-2 right-2 flex items-center gap-2">
