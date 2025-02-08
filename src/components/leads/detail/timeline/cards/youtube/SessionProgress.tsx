@@ -19,7 +19,7 @@ export const SessionProgress = ({ sessions, language }: SessionProgressProps) =>
           <div className="relative h-2 bg-gray-200 rounded">
             <div 
               className="absolute left-0 top-[15%] h-[70%] bg-green-500 rounded"
-              style={{ width: `${session.progress}%` }}
+              style={{ width: `${Math.min(session.progress * 0.7, 70)}%` }}
             />
           </div>
         </div>
