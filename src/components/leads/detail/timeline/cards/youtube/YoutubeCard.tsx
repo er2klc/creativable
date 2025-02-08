@@ -32,7 +32,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                      metadata?.event_type === 'video_closed' || 
                      metadata?.event_type === 'video_completed';
 
-  const sessionMilestones = useSessionMilestones(metadata?.view_history);
+  const sessions = useSessionMilestones(metadata?.view_history);
 
   return (
     <div className={`
@@ -50,7 +50,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
         content={content}
         metadata={metadata}
         timestamp={timestamp}
-        sessions={sessionMilestones}
+        sessions={sessions}
         isViewCard={isViewCard}
         isExpired={isExpired}
         videoId={videoId}
