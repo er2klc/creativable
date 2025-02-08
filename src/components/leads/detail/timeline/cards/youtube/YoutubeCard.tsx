@@ -25,7 +25,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     eventType: metadata?.event_type,
     viewHistory: metadata?.view_history,
     latestProgress,
-    hasViewHistory: Boolean(metadata?.view_history)
+    hasViewHistory: Boolean(metadata?.view_history),
+    viewId: metadata?.view_id
   });
 
   const isViewCard = metadata?.event_type === 'video_opened' || 
@@ -109,14 +110,14 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       ${isExpired ? "border-red-500" : "border-gray-200"} 
       rounded-lg p-4 w-full
     `}>
-      {isViewCard && metadata?.video_progress !== undefined && (
+      {isViewCard && latestProgress > 0 && isVideoActive && (
         <>
           <Progress 
-            value={metadata.video_progress} 
+            value={latestProgress} 
             className="absolute top-0 left-0 right-0 h-1" 
           />
           <div className="absolute top-2 right-2 flex items-center gap-2">
-            <span className="text-xs text-blue-500">{Math.round(metadata.video_progress)}%</span>
+            <span className="text-xs text-blue-500">{Math.round(latestProgress)}%</span>
             <Activity className="h-4 w-4 text-blue-500 animate-pulse" />
           </div>
         </>
@@ -139,7 +140,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           )}
           {isViewCard && (
             <ViewInfo 
-              id={metadata.id}
+              id={metadata.view_id}
               ip={metadata.ip}
               location={metadata.location}
             />
