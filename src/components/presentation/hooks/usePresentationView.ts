@@ -1,9 +1,11 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useIPLocation } from './useIPLocation';
 import { useProgressUpdate } from './useProgressUpdate';
 import { toast } from 'sonner';
 import { PresentationPageData } from '../types';
+import { createViewMetadata } from '../utils/metadataUtils';
 
 export const usePresentationView = (pageId: string | undefined, leadId: string | undefined) => {
   const [viewId, setViewId] = useState<string | null>(null);
@@ -57,14 +59,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         event_type: 'video_opened'
       };
 
-      // Create a detailed location object
-      const locationMetadata = {
-        city: ipLocationData?.city || '',
-        region: ipLocationData?.region || '',
-        country: ipLocationData?.country || '',
-        countryCode: ipLocationData?.countryCode || '',
-        timezone: ipLocationData?.timezone || ''
-      };
+      // Use the utility function to create metadata
+      const metadata = createViewMetadata(pageData, newViewId, ipLocationData);
 
       const viewData = {
         id: newViewId,
@@ -74,21 +70,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         completed: false,
         ip_address: ipLocationData?.ipAddress || 'unknown',
         location: ipLocationData?.location || 'Unknown Location',
-        location_metadata: locationMetadata,
-        metadata: {
-          type: 'youtube',
-          event_type: 'video_opened',
-          title: pageData.title,
-          url: pageData.video_url,
-          id: newViewId,
-          view_id: newViewId,
-          ip: ipLocationData?.ipAddress || 'unknown',
-          location: ipLocationData?.location || 'Unknown Location',
-          location_metadata: locationMetadata,
-          presentationUrl: pageData.presentationUrl,
-          video_progress: 0,
-          completed: false
-        },
+        location_metadata: metadata.location_metadata,
+        metadata,
         view_history: [initialHistoryEntry]
       };
 
