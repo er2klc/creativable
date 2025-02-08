@@ -40,7 +40,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       }
 
       if (existingView) {
-        console.log('Found existing view:', existingView);
         setViewId(existingView.id);
         return;
       }

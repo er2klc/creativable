@@ -1498,6 +1498,41 @@ export type Database = {
           },
         ]
       }
+      presentation_view_sessions: {
+        Row: {
+          created_at: string | null
+          end_time: string
+          id: string
+          max_progress: number | null
+          start_time: string
+          view_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_time: string
+          id?: string
+          max_progress?: number | null
+          start_time: string
+          view_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          max_progress?: number | null
+          start_time?: string
+          view_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_view_sessions_view_id_fkey"
+            columns: ["view_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_views"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       presentation_views: {
         Row: {
           completed: boolean | null
