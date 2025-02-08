@@ -16,6 +16,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const { settings } = useSettings();
   const videoId = metadata?.url?.split('v=')[1] || '';
   const latestProgress = metadata?.video_progress || 0;
+  const isExpired = metadata?.expires_at && new Date(metadata.expires_at) < new Date();
 
   const isViewCard = metadata?.event_type === 'video_opened' || 
                      metadata?.event_type === 'video_progress' ||
@@ -129,16 +130,24 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
             />
           )}
           {!isViewCard && metadata.presentationUrl && (
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex flex-col gap-2 mt-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => copyToClipboard(metadata.presentationUrl!)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-fit"
+                disabled={isExpired}
               >
                 <Copy className="h-4 w-4" />
                 {settings?.language === "en" ? "Presentation URL" : "Präsentations-URL"}
               </Button>
+              {isExpired && (
+                <span className="text-xs text-red-500">
+                  {settings?.language === "en" 
+                    ? `Expired on ${formatDateTime(metadata.expires_at, 'en')}` 
+                    : `Abgelaufen am ${formatDateTime(metadata.expires_at)}`}
+                </span>
+              )}
             </div>
           )}
           {timestamp && (
@@ -159,3 +168,4 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
+
