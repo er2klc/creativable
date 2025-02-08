@@ -24,7 +24,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     isVideoActive,
     eventType: metadata?.event_type,
     viewHistory: metadata?.view_history,
-    latestProgress
+    latestProgress,
+    hasViewHistory: Boolean(metadata?.view_history)
   });
 
   const isViewCard = metadata?.event_type === 'video_opened' || 
@@ -49,7 +50,6 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     }
   };
 
-  // Wandle view_history in Sessions um
   const getSessionMilestones = () => {
     if (!metadata?.view_history || !Array.isArray(metadata.view_history)) {
       console.log("No view history available");
