@@ -2,12 +2,13 @@
 import { useEffect, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell } from "lucide-react";
+import { Bell, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 interface Notification {
   id: string;
@@ -17,6 +18,8 @@ interface Notification {
   read: boolean;
   type: string;
   metadata: any;
+  link_url?: string;
+  target_page?: string;
 }
 
 interface NotificationSidebarProps {
@@ -25,6 +28,7 @@ interface NotificationSidebarProps {
 }
 
 export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarProps) => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -53,11 +57,14 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
           table: 'notifications'
         },
         (payload) => {
+          console.log('Received notification update:', payload);
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          
           if (payload.eventType === 'INSERT') {
-            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            const newNotification = payload.new as Notification;
             toast({
-              title: "Neue Benachrichtigung",
-              description: payload.new.title,
+              title: newNotification.title,
+              description: newNotification.content,
             });
           }
         }
@@ -69,18 +76,42 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
     };
   }, [queryClient, toast]);
 
-  const markAsRead = async (id: string) => {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ read: true })
-      .eq('id', id);
+  const markAsRead = async (notification: Notification) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notification.id);
 
-    if (error) {
-      console.error('Error marking notification as read:', error);
-      return;
+      if (error) {
+        console.error('Error marking notification as read:', error);
+        return;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+
+      // Navigate if there's a link URL
+      if (notification.link_url) {
+        navigate(notification.link_url);
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error('Error in markAsRead:', error);
+      toast.error('Fehler beim Markieren der Benachrichtigung als gelesen');
     }
+  };
 
-    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'presentation_view':
+        return '👀';
+      case 'presentation_halfway':
+        return '▶️';
+      case 'presentation_completed':
+        return '✅';
+      default:
+        return '📢';
+    }
   };
 
   return (
@@ -97,13 +128,14 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
             {notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 rounded-lg border transition-colors ${
+                onClick={() => markAsRead(notification)}
+                className={`p-4 rounded-lg border transition-colors cursor-pointer hover:bg-gray-50 ${
                   notification.read ? 'bg-gray-50' : 'bg-white'
                 }`}
-                onClick={() => markAsRead(notification.id)}
               >
                 <div className="flex justify-between items-start mb-1">
-                  <h3 className={`font-medium ${!notification.read && 'text-blue-600'}`}>
+                  <h3 className={`font-medium flex items-center gap-2 ${!notification.read && 'text-blue-600'}`}>
+                    <span>{getNotificationIcon(notification.type)}</span>
                     {notification.title}
                   </h3>
                   <span className="text-xs text-gray-500">
@@ -114,6 +146,12 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
                   </span>
                 </div>
                 <p className="text-sm text-gray-600">{notification.content}</p>
+                {notification.link_url && (
+                  <div className="mt-2 flex items-center text-xs text-blue-600">
+                    <ExternalLink className="h-3 w-3 mr-1" />
+                    Klicken zum Öffnen
+                  </div>
+                )}
               </div>
             ))}
             {notifications.length === 0 && (
