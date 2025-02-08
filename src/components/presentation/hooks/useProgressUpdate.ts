@@ -24,7 +24,8 @@ export const useProgressUpdate = (viewId: string | null) => {
         viewId,
         latestProgress,
         lastProgress: lastProgressRef.current,
-        queueLength: progressQueueRef.current.length
+        queueLength: progressQueueRef.current.length,
+        currentTime: new Date().toISOString()
       });
       
       // Only update if progress has changed significantly (more than 0.5%)
@@ -63,7 +64,8 @@ export const useProgressUpdate = (viewId: string | null) => {
           viewId,
           roundedProgress,
           isCompleted,
-          currentHistoryLength: currentHistory.length
+          currentHistoryLength: currentHistory.length,
+          currentTime: new Date().toISOString()
         });
 
         const updatedMetadata = {
@@ -71,7 +73,9 @@ export const useProgressUpdate = (viewId: string | null) => {
           type: 'youtube',
           event_type: isCompleted ? 'video_completed' : 'video_progress',
           video_progress: roundedProgress,
-          completed: isCompleted
+          completed: isCompleted,
+          view_id: viewId,
+          id: viewId
         };
 
         const { error: updateError } = await supabase
@@ -88,15 +92,6 @@ export const useProgressUpdate = (viewId: string | null) => {
         if (updateError) {
           console.error('Error updating progress:', updateError);
           toast.error('Failed to update view progress');
-        } else {
-          console.log('Progress updated successfully:', { roundedProgress, viewId });
-          
-          // Show notifications for key progress points
-          if (isCompleted && !currentView.completed) {
-            toast.success('Video completed! 🎉');
-          } else if (roundedProgress === 25 || roundedProgress === 50 || roundedProgress === 75) {
-            toast.info(`${roundedProgress}% watched`);
-          }
         }
       } catch (error) {
         console.error('Error in batch progress update:', error);
@@ -111,7 +106,11 @@ export const useProgressUpdate = (viewId: string | null) => {
       return;
     }
 
-    console.log("Adding progress update to queue:", { progress, viewId });
+    console.log("Adding progress update to queue:", { 
+      progress, 
+      viewId,
+      timestamp: new Date().toISOString()
+    });
 
     // Add progress update to queue
     progressQueueRef.current.push({

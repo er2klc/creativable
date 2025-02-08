@@ -60,6 +60,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
 
   const sessions = useSessionMilestones(metadata?.view_history);
 
+  const isViewCard = Boolean(metadata?.view_id || metadata?.id);
+
   return (
     <div className={`
       relative group bg-white 
