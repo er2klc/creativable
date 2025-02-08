@@ -11,6 +11,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const isExpired = metadata?.expires_at && new Date(metadata.expires_at) < new Date();
   const isVideoActive = metadata?.event_type !== 'video_closed';
   const viewId = metadata?.view_id || metadata?.id; // Handle both ID fields for backward compatibility
+  const videoId = metadata?.url?.split('v=')[1] || '';
 
   console.log("DEBUG YoutubeCard Detail:", { 
     metadata, 
@@ -22,7 +23,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     viewHistory: metadata?.view_history,
     latestProgress,
     hasViewHistory: Boolean(metadata?.view_history),
-    viewId
+    viewId,
+    videoId
   });
 
   const isViewCard = metadata?.event_type === 'video_opened' || 
@@ -51,6 +53,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
         sessions={sessionMilestones}
         isViewCard={isViewCard}
         isExpired={isExpired}
+        videoId={videoId}
+        latestProgress={latestProgress}
       />
     </div>
   );

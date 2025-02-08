@@ -23,6 +23,8 @@ interface YoutubeContentProps {
   sessions: Session[];
   isViewCard: boolean;
   isExpired: boolean;
+  videoId: string;
+  latestProgress: number;
 }
 
 export const YoutubeContent = ({ 
@@ -31,10 +33,11 @@ export const YoutubeContent = ({
   timestamp, 
   sessions, 
   isViewCard,
-  isExpired
+  isExpired,
+  videoId,
+  latestProgress
 }: YoutubeContentProps) => {
   const { settings } = useSettings();
-  const videoId = metadata?.url?.split('v=')[1] || '';
 
   return (
     <div className="flex items-start justify-between mt-2">
@@ -85,7 +88,7 @@ export const YoutubeContent = ({
         {videoId && (
           <VideoThumbnail 
             videoId={videoId}
-            latestProgress={0}
+            latestProgress={latestProgress}
           />
         )}
       </div>
