@@ -3031,6 +3031,21 @@ export type Database = {
             }
             Returns: unknown
           }
+      create_youtube_metadata: {
+        Args: {
+          title: string
+          url: string
+          view_id: string
+          event_type?: string
+          ip?: string
+          location?: string
+          video_progress?: number
+          completed?: boolean
+          view_history?: Json
+          presentation_url?: string
+        }
+        Returns: Json
+      }
       generate_elevate_invite_code: {
         Args: Record<PropertyKey, never>
         Returns: string
