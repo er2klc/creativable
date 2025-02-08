@@ -15,9 +15,11 @@ interface YoutubeContentProps {
     presentationUrl?: string;
     url?: string;
     view_id?: string;
+    id?: string;
     ip?: string;
     location?: string;
     expires_at?: string;
+    video_progress?: number;
   };
   timestamp?: string;
   sessions: Session[];
@@ -58,9 +60,10 @@ export const YoutubeContent = ({
         )}
         {isViewCard && (
           <ViewInfo 
-            id={metadata.view_id}
+            id={metadata.id || metadata.view_id}
             ip={metadata.ip}
             location={metadata.location}
+            progress={metadata.video_progress}
           />
         )}
         {isViewCard && sessions.length > 0 && (

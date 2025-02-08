@@ -40,7 +40,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       ${isExpired ? "border-red-500" : "border-gray-200"} 
       rounded-lg p-4 w-full
     `}>
-      {isViewCard && (
+      {isViewCard && latestProgress > 0 && (
         <ProgressIndicator 
           progress={latestProgress} 
           isActive={isVideoActive} 
