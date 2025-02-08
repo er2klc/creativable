@@ -29,7 +29,6 @@ interface NotificationSidebarProps {
 
 export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarProps) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: notifications = [] } = useQuery({
@@ -62,8 +61,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
           
           if (payload.eventType === 'INSERT') {
             const newNotification = payload.new as Notification;
-            toast({
-              title: newNotification.title,
+            toast(newNotification.title, {
               description: newNotification.content,
             });
           }
@@ -74,7 +72,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, toast]);
+  }, [queryClient]);
 
   const markAsRead = async (notification: Notification) => {
     try {
