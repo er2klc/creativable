@@ -16,7 +16,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   const isExpired = metadata?.expires_at && new Date(metadata.expires_at) < new Date();
   const isVideoActive = metadata?.event_type !== 'video_closed';
 
-  console.log("DEBUG YoutubeCard:", { 
+  console.log("DEBUG YoutubeCard Detail:", { 
     metadata, 
     isExpired, 
     expiresAt: metadata?.expires_at,
