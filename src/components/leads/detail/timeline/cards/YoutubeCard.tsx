@@ -25,7 +25,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     expiresAt: metadata?.expires_at,
     currentDate: new Date().toISOString(),
     isVideoActive,
-    eventType: metadata?.event_type
+    eventType: metadata?.event_type,
+    latestProgress
   });
 
   const isViewCard = metadata?.event_type === 'video_opened' || 
@@ -105,7 +106,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
         <>
           <Progress 
             value={latestProgress} 
-            className="absolute top-0 left-0 right-0 h-1" 
+            className="absolute top-0 left-0 right-0 h-1 bg-gray-200" 
           />
           <div className="absolute top-2 right-2 flex items-center gap-2">
             <span className="text-xs text-blue-500">{Math.round(latestProgress)}%</span>
@@ -134,6 +135,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               id={metadata.id}
               ip={metadata.ip}
               location={metadata.location}
+              progress={latestProgress}
             />
           )}
           {isViewCard && sessionMilestones.length > 0 && (
@@ -189,3 +191,4 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
+
