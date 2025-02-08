@@ -1,18 +1,15 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useIPLocation } from './useIPLocation';
-import { useProgressUpdate } from './useProgressUpdate';
 import { toast } from 'sonner';
 import { PresentationPageData } from '../types';
-import { createViewMetadata } from '../utils/metadataUtils';
 
 export const usePresentationView = (pageId: string | undefined, leadId: string | undefined) => {
   const [viewId, setViewId] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isCreatingView, setIsCreatingView] = useState(false);
   const ipLocationData = useIPLocation();
-  const { updateProgress } = useProgressUpdate(viewId);
   const MAX_RETRIES = 3;
 
   const createView = useCallback(async (pageData: PresentationPageData) => {
@@ -33,17 +30,13 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       setIsCreatingView(true);
       console.log('Checking for existing view...');
 
-      const { data: existingView, error: fetchError } = await supabase
+      // First check if there's an existing view for this IP
+      const { data: existingView } = await supabase
         .from('presentation_views')
         .select('*')
         .eq('page_id', pageData.id)
         .eq('ip_address', ipLocationData?.ipAddress || 'unknown')
         .maybeSingle();
-
-      if (fetchError) {
-        console.error('Error fetching existing view:', fetchError);
-        return;
-      }
 
       if (existingView) {
         console.log('Found existing view:', existingView);
@@ -59,9 +52,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         event_type: 'video_opened'
       };
 
-      // Use the utility function to create metadata
-      const metadata = createViewMetadata(pageData, newViewId, ipLocationData);
-
       const viewData = {
         id: newViewId,
         page_id: pageData.id,
@@ -70,8 +60,18 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         completed: false,
         ip_address: ipLocationData?.ipAddress || 'unknown',
         location: ipLocationData?.location || 'Unknown Location',
-        location_metadata: metadata.location_metadata,
-        metadata,
+        metadata: {
+          type: 'youtube',
+          event_type: 'video_opened',
+          title: pageData.title,
+          url: pageData.video_url,
+          ip: ipLocationData?.ipAddress || 'unknown',
+          location: ipLocationData?.location || 'Unknown Location',
+          presentationUrl: pageData.presentationUrl,
+          video_progress: 0,
+          completed: false,
+          id: newViewId
+        },
         view_history: [initialHistoryEntry]
       };
 
@@ -80,6 +80,20 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         .insert([viewData]);
 
       if (viewError) {
+        if (viewError.code === '23505') { // Unique constraint violation
+          console.log('Concurrent view creation detected, fetching existing view...');
+          const { data: concurrentView } = await supabase
+            .from('presentation_views')
+            .select('*')
+            .eq('page_id', pageData.id)
+            .eq('ip_address', ipLocationData?.ipAddress || 'unknown')
+            .maybeSingle();
+
+          if (concurrentView) {
+            setViewId(concurrentView.id);
+            return;
+          }
+        }
         console.error('Error creating view:', viewError);
         toast.error('Failed to create view record');
         return;
@@ -96,12 +110,73 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     }
   }, [leadId, ipLocationData, retryCount, isCreatingView]);
 
-  // Cleanup function for the update timeout
-  useEffect(() => {
-    return () => {
-      // Cleanup handled in useProgressUpdate
-    };
-  }, []);
+  const updateProgress = async (progress: number, pageData: PresentationPageData) => {
+    if (!viewId) {
+      console.log('No viewId available for progress update');
+      return;
+    }
+
+    const isCompleted = progress >= 95;
+
+    try {
+      const { data: currentView } = await supabase
+        .from('presentation_views')
+        .select('*')
+        .eq('id', viewId)
+        .single();
+
+      if (!currentView) {
+        console.error('Could not find view record');
+        return;
+      }
+
+      const historyEntry = {
+        timestamp: new Date().toISOString(),
+        progress: progress,
+        event_type: isCompleted ? 'video_completed' : 'video_progress'
+      };
+
+      const currentHistory = Array.isArray(currentView.view_history) 
+        ? currentView.view_history 
+        : [];
+
+      const updatedMetadata = {
+        ...currentView.metadata,
+        type: 'youtube',
+        event_type: isCompleted ? 'video_completed' : 'video_progress',
+        title: pageData.title,
+        url: pageData.video_url,
+        ip: ipLocationData?.ipAddress || 'unknown',
+        location: ipLocationData?.location || 'Unknown Location',
+        presentationUrl: pageData.presentationUrl,
+        video_progress: progress,
+        completed: isCompleted,
+        id: viewId
+      };
+
+      const { error } = await supabase
+        .from('presentation_views')
+        .update({
+          video_progress: progress,
+          completed: isCompleted,
+          ip_address: ipLocationData?.ipAddress || 'unknown',
+          location: ipLocationData?.location || 'Unknown Location',
+          metadata: updatedMetadata,
+          view_history: [...currentHistory, historyEntry]
+        })
+        .eq('id', viewId);
+
+      if (error) {
+        console.error('Error updating progress:', error);
+        toast.error('Failed to update view progress');
+      } else {
+        console.log('Progress updated successfully:', { progress, viewId });
+      }
+    } catch (error) {
+      console.error('Error in updateProgress:', error);
+      toast.error('Failed to update progress');
+    }
+  };
 
   return {
     viewId,

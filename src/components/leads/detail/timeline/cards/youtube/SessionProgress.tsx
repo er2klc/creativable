@@ -8,18 +8,6 @@ interface SessionProgressProps {
 }
 
 export const SessionProgress = ({ sessions, language }: SessionProgressProps) => {
-  console.log("DEBUG SessionProgress:", { 
-    sessions, 
-    language,
-    sessionCount: sessions?.length || 0,
-    timestamp: new Date().toISOString()
-  });
-  
-  if (!sessions || sessions.length === 0) {
-    console.log("No sessions available to display");
-    return null;
-  }
-
   return (
     <div className="space-y-4 mt-4">
       {sessions.map((session, index) => (
@@ -30,7 +18,7 @@ export const SessionProgress = ({ sessions, language }: SessionProgressProps) =>
           </div>
           <div className="relative h-2 bg-gray-200 rounded">
             <div 
-              className="absolute left-0 top-0 h-full bg-blue-500 rounded transition-all duration-300"
+              className="absolute left-0 top-0 h-full bg-green-500 rounded"
               style={{ width: `${session.progress}%` }}
             />
           </div>

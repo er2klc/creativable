@@ -8,9 +8,10 @@ import { PresentationPageData } from "./types";
 interface PresentationContentProps {
   pageData: PresentationPageData;
   onProgress: (progress: number) => void;
+  initialProgress?: number;
 }
 
-export const PresentationContent = ({ pageData, onProgress }: PresentationContentProps) => {
+export const PresentationContent = ({ pageData, onProgress, initialProgress = 0 }: PresentationContentProps) => {
   // Ensure fallback values
   const userDisplayName = pageData?.user?.profiles?.display_name || "Unbekannter Benutzer";
   const userAvatar =
@@ -19,13 +20,12 @@ export const PresentationContent = ({ pageData, onProgress }: PresentationConten
   const leadAvatar =
     pageData?.lead?.social_media_profile_image_url || "/images/placeholder-lead-avatar.png";
 
-  console.log("PresentationContent render:", { pageData, onProgress });
-
   return (
     <Card className="relative w-full max-w-[900px] mx-auto bg-[#1A1F2C]/60 border-white/10 shadow-lg backdrop-blur-sm p-6">
       <div className="flex flex-col items-center space-y-6">
         {/* User and Lead Information */}
         <div className="flex items-center justify-between w-full">
+          {/* User Avatar and Name */}
           <div className="flex items-center space-x-3">
             <Avatar className="h-12 w-12">
               <AvatarImage src={userAvatar} alt={userDisplayName} />
@@ -34,10 +34,12 @@ export const PresentationContent = ({ pageData, onProgress }: PresentationConten
             <span className="text-white font-medium">{userDisplayName}</span>
           </div>
           
+          {/* Arrow */}
           <div className="flex items-center space-x-3 text-white/50">
             <ArrowRight className="h-5 w-5" />
           </div>
           
+          {/* Lead Avatar and Name */}
           <div className="flex items-center space-x-3">
             <Avatar className="h-12 w-12">
               <AvatarImage src={leadAvatar} alt={leadName} />
@@ -47,6 +49,7 @@ export const PresentationContent = ({ pageData, onProgress }: PresentationConten
           </div>
         </div>
         
+        {/* Title */}
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold text-white">
             {pageData?.title || "Keine Präsentation verfügbar"}
@@ -54,15 +57,13 @@ export const PresentationContent = ({ pageData, onProgress }: PresentationConten
           <div className="h-[1px] w-32 mx-auto bg-gradient-to-r from-transparent via-white/50 to-transparent" />
         </div>
         
+        {/* Video Player */}
         <div className="w-full aspect-video rounded-lg overflow-hidden bg-black">
           <VideoPlayer
             videoUrl={pageData.video_url}
-            onProgress={(progress) => {
-              console.log("Video progress update:", progress);
-              onProgress(progress);
-            }}
+            onProgress={onProgress}
             autoplay={false}
-            savedProgress={0}
+            initialProgress={initialProgress}
           />
         </div>
       </div>

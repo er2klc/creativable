@@ -1498,30 +1498,6 @@ export type Database = {
           },
         ]
       }
-      presentation_progress_logs: {
-        Row: {
-          id: string
-          progress: number
-          raw_metadata: Json | null
-          received_at: string | null
-          view_id: string
-        }
-        Insert: {
-          id?: string
-          progress: number
-          raw_metadata?: Json | null
-          received_at?: string | null
-          view_id: string
-        }
-        Update: {
-          id?: string
-          progress?: number
-          raw_metadata?: Json | null
-          received_at?: string | null
-          view_id?: string
-        }
-        Relationships: []
-      }
       presentation_progress_milestones: {
         Row: {
           id: string
@@ -1551,51 +1527,14 @@ export type Database = {
           },
         ]
       }
-      presentation_view_sessions: {
-        Row: {
-          created_at: string | null
-          end_time: string
-          id: string
-          max_progress: number
-          start_time: string
-          view_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          end_time: string
-          id?: string
-          max_progress?: number
-          start_time: string
-          view_id: string
-        }
-        Update: {
-          created_at?: string | null
-          end_time?: string
-          id?: string
-          max_progress?: number
-          start_time?: string
-          view_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "presentation_view_sessions_view_id_fkey"
-            columns: ["view_id"]
-            isOneToOne: false
-            referencedRelation: "presentation_views"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       presentation_views: {
         Row: {
           completed: boolean | null
           created_at: string | null
           id: string
           ip_address: string | null
-          last_progress_update: string | null
           lead_id: string
           location: string | null
-          location_metadata: Json | null
           metadata: Json | null
           page_id: string
           progress_milestones: Json | null
@@ -1608,10 +1547,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           ip_address?: string | null
-          last_progress_update?: string | null
           lead_id: string
           location?: string | null
-          location_metadata?: Json | null
           metadata?: Json | null
           page_id: string
           progress_milestones?: Json | null
@@ -1624,10 +1561,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           ip_address?: string | null
-          last_progress_update?: string | null
           lead_id?: string
           location?: string | null
-          location_metadata?: Json | null
           metadata?: Json | null
           page_id?: string
           progress_milestones?: Json | null
@@ -3058,21 +2993,6 @@ export type Database = {
             }
             Returns: unknown
           }
-      create_youtube_metadata: {
-        Args: {
-          title: string
-          url: string
-          view_id: string
-          event_type?: string
-          ip?: string
-          location?: string
-          video_progress?: number
-          completed?: boolean
-          view_history?: Json
-          presentation_url?: string
-        }
-        Returns: Json
-      }
       generate_elevate_invite_code: {
         Args: Record<PropertyKey, never>
         Returns: string
