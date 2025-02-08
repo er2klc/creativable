@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { Copy, Activity, Eye } from "lucide-react";
+import { Copy, Activity } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { VideoThumbnail } from "./youtube/VideoThumbnail";
@@ -50,7 +50,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
         <>
           <Progress 
             value={latestProgress} 
-            className="absolute top-0 left-0 right-0 h-1" 
+            className="absolute top-0 left-0 right-0 h-[2px]" 
           />
           <div className="absolute top-2 right-2 flex items-center gap-2">
             <span className="text-xs text-orange-500">{Math.round(latestProgress)}%</span>
@@ -70,8 +70,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
             )}
           </div>
           {isViewCard && (
-            <div className="text-gray-600 flex items-center gap-2">
-              <Eye className="h-4 w-4 text-orange-500" />
+            <div className="text-gray-600">
               {settings?.language === "en" ? "Presentation opened" : "Präsentation wurde aufgerufen"}
             </div>
           )}
