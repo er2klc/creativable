@@ -13,11 +13,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
   const MAX_RETRIES = 3;
 
   const createView = useCallback(async (pageData: PresentationPageData) => {
-    if (isCreatingView) {
-      return;
-    }
-
-    if (!pageData || !leadId || !pageData.id) {
+    if (isCreatingView || !pageData || !leadId || !pageData.id) {
       return;
     }
 
@@ -110,56 +106,39 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     }
 
     const isCompleted = progress >= 95;
+    console.log('Progress update:', progress);
 
     try {
-      // First fetch the current view to get existing data
-      const { data: currentView, error: fetchError } = await supabase
-        .from('presentation_views')
-        .select('*')
-        .eq('id', viewId)
-        .single();
-
-      if (fetchError) {
-        console.error('Error fetching view record:', fetchError);
-        toast.error('Failed to update view progress');
-        return;
-      }
-
       const historyEntry = {
         timestamp: new Date().toISOString(),
         progress: progress,
         event_type: isCompleted ? 'video_completed' : 'video_progress'
       };
 
-      const currentHistory = Array.isArray(currentView.view_history) 
-        ? currentView.view_history 
-        : [];
-
-      const updatedMetadata = {
-        ...currentView.metadata,
-        type: 'youtube',
-        event_type: isCompleted ? 'video_completed' : 'video_progress',
-        title: pageData.title,
-        url: pageData.video_url,
-        ip: ipLocationData?.ipAddress || 'unknown',
-        location: ipLocationData?.location || 'Unknown Location',
-        presentationUrl: pageData.presentationUrl,
+      const updates = {
         video_progress: progress,
         completed: isCompleted,
-        id: viewId
+        ip_address: ipLocationData?.ipAddress || 'unknown',
+        location: ipLocationData?.location || 'Unknown Location',
+        metadata: {
+          type: 'youtube',
+          event_type: isCompleted ? 'video_completed' : 'video_progress',
+          title: pageData.title,
+          url: pageData.video_url,
+          ip: ipLocationData?.ipAddress || 'unknown',
+          location: ipLocationData?.location || 'Unknown Location',
+          presentationUrl: pageData.presentationUrl,
+          video_progress: progress,
+          completed: isCompleted,
+          id: viewId
+        },
+        view_history: supabase.sql`array_append(view_history, ${historyEntry}::jsonb)`,
+        viewed_at: new Date().toISOString()
       };
 
       const { error: updateError } = await supabase
         .from('presentation_views')
-        .update({
-          video_progress: progress,
-          completed: isCompleted,
-          ip_address: ipLocationData?.ipAddress || 'unknown',
-          location: ipLocationData?.location || 'Unknown Location',
-          metadata: updatedMetadata,
-          view_history: [...currentHistory, historyEntry],
-          viewed_at: new Date().toISOString()
-        })
+        .update(updates)
         .eq('id', viewId);
 
       if (updateError) {

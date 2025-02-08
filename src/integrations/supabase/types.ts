@@ -1498,129 +1498,6 @@ export type Database = {
           },
         ]
       }
-      presentation_progress_logs: {
-        Row: {
-          id: string
-          progress: number
-          raw_metadata: Json | null
-          received_at: string | null
-          view_id: string
-        }
-        Insert: {
-          id?: string
-          progress: number
-          raw_metadata?: Json | null
-          received_at?: string | null
-          view_id: string
-        }
-        Update: {
-          id?: string
-          progress?: number
-          raw_metadata?: Json | null
-          received_at?: string | null
-          view_id?: string
-        }
-        Relationships: []
-      }
-      presentation_progress_milestones: {
-        Row: {
-          id: string
-          progress: number
-          timestamp: string | null
-          view_id: string
-        }
-        Insert: {
-          id?: string
-          progress: number
-          timestamp?: string | null
-          view_id: string
-        }
-        Update: {
-          id?: string
-          progress?: number
-          timestamp?: string | null
-          view_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "presentation_progress_milestones_view_id_fkey"
-            columns: ["view_id"]
-            isOneToOne: false
-            referencedRelation: "presentation_views"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      presentation_sessions: {
-        Row: {
-          created_at: string | null
-          ended_at: string | null
-          id: string
-          max_progress: number | null
-          started_at: string | null
-          view_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          ended_at?: string | null
-          id?: string
-          max_progress?: number | null
-          started_at?: string | null
-          view_id: string
-        }
-        Update: {
-          created_at?: string | null
-          ended_at?: string | null
-          id?: string
-          max_progress?: number | null
-          started_at?: string | null
-          view_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "presentation_sessions_view_id_fkey"
-            columns: ["view_id"]
-            isOneToOne: false
-            referencedRelation: "presentation_views"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      presentation_view_sessions: {
-        Row: {
-          created_at: string | null
-          end_time: string
-          id: string
-          max_progress: number
-          start_time: string
-          view_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          end_time: string
-          id?: string
-          max_progress?: number
-          start_time: string
-          view_id: string
-        }
-        Update: {
-          created_at?: string | null
-          end_time?: string
-          id?: string
-          max_progress?: number
-          start_time?: string
-          view_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "presentation_view_sessions_view_id_fkey"
-            columns: ["view_id"]
-            isOneToOne: false
-            referencedRelation: "presentation_views"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       presentation_views: {
         Row: {
           completed: boolean | null
@@ -1633,7 +1510,6 @@ export type Database = {
           location_metadata: Json | null
           metadata: Json | null
           page_id: string
-          progress_milestones: Json | null
           updated_at: string | null
           video_progress: number | null
           view_history: Json | null
@@ -1650,7 +1526,6 @@ export type Database = {
           location_metadata?: Json | null
           metadata?: Json | null
           page_id: string
-          progress_milestones?: Json | null
           updated_at?: string | null
           video_progress?: number | null
           view_history?: Json | null
@@ -1667,7 +1542,6 @@ export type Database = {
           location_metadata?: Json | null
           metadata?: Json | null
           page_id?: string
-          progress_milestones?: Json | null
           updated_at?: string | null
           video_progress?: number | null
           view_history?: Json | null
