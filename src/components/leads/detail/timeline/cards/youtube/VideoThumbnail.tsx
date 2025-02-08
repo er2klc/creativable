@@ -1,5 +1,5 @@
 
-import { CheckCircle2, X } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 interface VideoThumbnailProps {
   videoId: string;
@@ -19,11 +19,7 @@ export const VideoThumbnail = ({ videoId, latestProgress }: VideoThumbnailProps)
           <CheckCircle2 className="h-6 w-6 text-green-500" />
         </div>
       )}
-      {latestProgress === 0 && (
-        <div className="absolute top-2 right-2">
-          <X className="h-6 w-6 text-red-500" />
-        </div>
-      )}
     </div>
   );
 };
+
