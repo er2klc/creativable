@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { DEFAULT_PLAYER_VARS } from './VideoPlayerConfig';
 
@@ -67,9 +68,9 @@ export const useYouTubePlayer = ({
       
       if (duration > 0) {
         const progress = (currentTime / duration) * 100;
-        onProgress?.(progress);
+        onProgress?.(Math.round(progress));
       }
-    }, 1000);
+    }, 5000); // Changed from 1000 to 5000 for 5-second intervals
   }, [onProgress]);
 
   const initializePlayer = useCallback((containerElement: HTMLElement) => {
