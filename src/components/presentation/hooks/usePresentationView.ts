@@ -62,7 +62,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       }
 
       console.log('Creating new view...');
-      const viewId = crypto.randomUUID();
+      const newViewId = crypto.randomUUID();
       const initialHistoryEntry = {
         timestamp: new Date().toISOString(),
         progress: 0,
@@ -70,7 +70,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       };
 
       const viewData = {
-        id: viewId,
+        id: newViewId,
         page_id: pageData.id,
         lead_id: leadId,
         video_progress: 0,
@@ -82,6 +82,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           event_type: 'video_opened',
           title: pageData.title,
           url: pageData.video_url,
+          id: newViewId, // Set both id and view_id to be the same
+          view_id: newViewId,
           ip: ipLocationData?.ipAddress || 'unknown',
           location: ipLocationData?.location || 'Unknown Location',
           presentationUrl: pageData.presentationUrl,
@@ -101,8 +103,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         return;
       }
 
-      setViewId(viewId);
-      console.log('View created with ID:', viewId);
+      setViewId(newViewId);
+      console.log('View created with ID:', newViewId);
 
     } catch (error) {
       console.error('Error in createView:', error);
