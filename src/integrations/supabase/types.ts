@@ -1207,6 +1207,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          link_url: string | null
           metadata: Json | null
           read: boolean | null
           title: string
@@ -1217,6 +1218,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          link_url?: string | null
           metadata?: Json | null
           read?: boolean | null
           title: string
@@ -1227,6 +1229,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          link_url?: string | null
           metadata?: Json | null
           read?: boolean | null
           title?: string
