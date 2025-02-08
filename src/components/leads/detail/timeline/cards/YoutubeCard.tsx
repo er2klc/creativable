@@ -140,13 +140,18 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               >
                 <Copy className="h-4 w-4" />
                 {settings?.language === "en" ? "Presentation URL" : "Präsentations-URL"}
+                {isExpired && (
+                  <span className="text-red-500 ml-2">
+                    {settings?.language === "en" ? "(Expired)" : "(Abgelaufen)"}
+                  </span>
+                )}
               </Button>
               {isExpired && (
-                <span className="text-xs text-red-500">
+                <div className="text-xs text-red-500 font-medium">
                   {settings?.language === "en" 
                     ? `Expired on ${formatDateTime(metadata.expires_at, 'en')}` 
-                    : `Abgelaufen am ${formatDateTime(metadata.expires_at)}`}
-                </span>
+                    : `Abgelaufen am ${formatDateTime(metadata.expires_at, 'de')}`}
+                </div>
               )}
             </div>
           )}
