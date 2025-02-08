@@ -1207,9 +1207,9 @@ export type Database = {
           content: string
           created_at: string
           id: string
-          link_url: string | null
           metadata: Json | null
           read: boolean | null
+          target_page: string | null
           title: string
           type: string
           user_id: string
@@ -1218,9 +1218,9 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
-          link_url?: string | null
           metadata?: Json | null
           read?: boolean | null
+          target_page?: string | null
           title: string
           type: string
           user_id: string
@@ -1229,9 +1229,9 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
-          link_url?: string | null
           metadata?: Json | null
           read?: boolean | null
+          target_page?: string | null
           title?: string
           type?: string
           user_id?: string
