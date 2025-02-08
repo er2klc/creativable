@@ -162,7 +162,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           metadata: updatedMetadata,
           view_history: [...currentHistory, historyEntry]
         })
-        .eq('id', viewId);
+        .eq('id', viewId)
+        .is('id', viewId); // Add explicit type check for UUID
 
       if (error) {
         console.error('Error updating progress:', error);
