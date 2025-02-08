@@ -1,6 +1,7 @@
 
 import { formatDateTime } from "../../utils/dateUtils";
 import { Session } from "./types";
+import { Progress } from "@/components/ui/progress";
 
 interface SessionProgressProps {
   sessions: Session[];
@@ -12,24 +13,40 @@ export const SessionProgress = ({ sessions, language }: SessionProgressProps) =>
     return null;
   }
 
+  const formatDate = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Europe/Berlin'
+    };
+    
+    return new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'de-DE', options).format(date) + 
+           ' (+2 Std.)';
+  };
+
   return (
     <div className="space-y-4 mt-4">
       {sessions.map((session, index) => (
         <div key={index} className="space-y-2 bg-gray-50 p-3 rounded-lg">
           <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-600">
-              {formatDateTime(session.timestamp, language)}
+            <span className="text-gray-600 font-medium">
+              {formatDate(session.timestamp)}
             </span>
-            <span className="text-xs font-medium text-gray-600">
+            <span className="text-xs font-medium text-green-600">
               {Math.round(session.progress)}%
             </span>
           </div>
-          <div className="relative h-2.5 bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              className="absolute left-0 top-0 h-full bg-green-500 rounded-full transition-all duration-300"
-              style={{ width: `${session.progress}%` }}
-            />
-          </div>
+          <Progress 
+            value={session.progress} 
+            className="h-2.5 bg-gray-200" 
+            indicatorClassName="bg-green-500 transition-all duration-300"
+          />
         </div>
       ))}
     </div>

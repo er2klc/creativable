@@ -1505,6 +1505,7 @@ export type Database = {
           id: string
           max_progress: number | null
           start_time: string
+          timezone: string | null
           view_id: string
         }
         Insert: {
@@ -1513,6 +1514,7 @@ export type Database = {
           id?: string
           max_progress?: number | null
           start_time: string
+          timezone?: string | null
           view_id: string
         }
         Update: {
@@ -1521,6 +1523,7 @@ export type Database = {
           id?: string
           max_progress?: number | null
           start_time?: string
+          timezone?: string | null
           view_id?: string
         }
         Relationships: [

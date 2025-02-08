@@ -25,7 +25,6 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     try {
       setIsCreatingView(true);
 
-      // First check if there's an existing view for this IP
       const { data: existingView, error: fetchError } = await supabase
         .from('presentation_views')
         .select('*')
@@ -59,6 +58,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         completed: false,
         ip_address: ipLocationData?.ipAddress || 'unknown',
         location: ipLocationData?.location || 'Unknown Location',
+        location_metadata: ipLocationData || {},
         metadata: {
           type: 'youtube',
           event_type: 'video_opened',
@@ -103,32 +103,18 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     const isCompleted = progress >= 95;
 
     try {
-      // First, get the current view data
-      const { data: currentView, error: fetchError } = await supabase
-        .from('presentation_views')
-        .select('view_history')
-        .eq('id', viewId)
-        .single();
-
-      if (fetchError) {
-        console.error('Error fetching current view:', fetchError);
-        return;
-      }
-
       const historyEntry = {
         timestamp: new Date().toISOString(),
         progress: progress,
         event_type: isCompleted ? 'video_completed' : 'video_progress'
       };
 
-      // Combine existing history with new entry
-      const updatedHistory = [...(currentView.view_history || []), historyEntry];
-
       const updates = {
         video_progress: progress,
         completed: isCompleted,
         ip_address: ipLocationData?.ipAddress || 'unknown',
         location: ipLocationData?.location || 'Unknown Location',
+        location_metadata: ipLocationData || {},
         metadata: {
           type: 'youtube',
           event_type: isCompleted ? 'video_completed' : 'video_progress',
@@ -141,8 +127,9 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           completed: isCompleted,
           id: viewId
         },
-        view_history: updatedHistory,
-        viewed_at: new Date().toISOString()
+        view_history: supabase.sql`array_append(view_history, ${historyEntry})`,
+        viewed_at: new Date().toISOString(),
+        last_progress_update: new Date().toISOString()
       };
 
       const { error: updateError } = await supabase
