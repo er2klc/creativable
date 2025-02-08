@@ -75,6 +75,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         viewed_at: new Date().toISOString()
       };
 
+      console.log('Creating new view with data:', viewData);
+
       const { error: insertError } = await supabase
         .from('presentation_views')
         .insert([viewData]);
@@ -97,6 +99,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
 
   const updateProgress = async (progress: number, pageData: PresentationPageData) => {
     if (!viewId) {
+      console.log('No viewId available for progress update');
       return;
     }
 
@@ -146,6 +149,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         viewed_at: new Date().toISOString(),
         last_progress_update: new Date().toISOString()
       };
+
+      console.log('Updating view with data:', { viewId, updates });
 
       const { error: updateError } = await supabase
         .from('presentation_views')
