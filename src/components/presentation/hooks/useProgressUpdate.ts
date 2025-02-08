@@ -1,5 +1,5 @@
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PresentationPageData } from '../types';
@@ -22,6 +22,8 @@ export const useProgressUpdate = (viewId: string | null) => {
       progressQueueRef.current = []; // Clear the queue
 
       try {
+        console.log("Updating progress:", { viewId, latestProgress, progressHistory });
+
         const { data: currentView } = await supabase
           .from('presentation_views')
           .select('*')
@@ -52,7 +54,8 @@ export const useProgressUpdate = (viewId: string | null) => {
             video_progress: latestProgress,
             completed: isCompleted,
             metadata: updatedMetadata,
-            view_history: [...currentHistory, ...progressHistory]
+            view_history: [...currentHistory, ...progressHistory],
+            last_progress_update: new Date().toISOString()
           })
           .eq('id', viewId);
 
@@ -75,6 +78,8 @@ export const useProgressUpdate = (viewId: string | null) => {
       return;
     }
 
+    console.log("Adding progress update to queue:", { progress, viewId });
+
     // Add progress update to queue
     progressQueueRef.current.push({
       timestamp: new Date().toISOString(),
@@ -84,6 +89,15 @@ export const useProgressUpdate = (viewId: string | null) => {
     // Schedule the next batch update
     scheduleProgressUpdate();
   }, [viewId, scheduleProgressUpdate]);
+
+  // Cleanup function
+  useEffect(() => {
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return { updateProgress };
 };
