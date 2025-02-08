@@ -31,12 +31,18 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       console.log('Checking for existing view...');
 
       // First check if there's an existing view for this IP
-      const { data: existingView } = await supabase
+      const { data: existingView, error: fetchError } = await supabase
         .from('presentation_views')
         .select('*')
         .eq('page_id', pageData.id)
         .eq('ip_address', ipLocationData?.ipAddress || 'unknown')
         .maybeSingle();
+
+      if (fetchError) {
+        console.error('Error fetching existing view:', fetchError);
+        toast.error('Failed to check existing view');
+        return;
+      }
 
       if (existingView) {
         console.log('Found existing view:', existingView);
@@ -72,29 +78,16 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           completed: false,
           id: newViewId
         },
-        view_history: [initialHistoryEntry]
+        view_history: [initialHistoryEntry],
+        viewed_at: new Date().toISOString()
       };
 
-      const { error: viewError } = await supabase
+      const { error: insertError } = await supabase
         .from('presentation_views')
         .insert([viewData]);
 
-      if (viewError) {
-        if (viewError.code === '23505') { // Unique constraint violation
-          console.log('Concurrent view creation detected, fetching existing view...');
-          const { data: concurrentView } = await supabase
-            .from('presentation_views')
-            .select('*')
-            .eq('page_id', pageData.id)
-            .eq('ip_address', ipLocationData?.ipAddress || 'unknown')
-            .maybeSingle();
-
-          if (concurrentView) {
-            setViewId(concurrentView.id);
-            return;
-          }
-        }
-        console.error('Error creating view:', viewError);
+      if (insertError) {
+        console.error('Error creating view:', insertError);
         toast.error('Failed to create view record');
         return;
       }
@@ -119,14 +112,16 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
     const isCompleted = progress >= 95;
 
     try {
-      const { data: currentView } = await supabase
+      // First fetch the current view to get existing data
+      const { data: currentView, error: fetchError } = await supabase
         .from('presentation_views')
         .select('*')
         .eq('id', viewId)
         .single();
 
-      if (!currentView) {
-        console.error('Could not find view record');
+      if (fetchError) {
+        console.error('Error fetching view record:', fetchError);
+        toast.error('Failed to update view progress');
         return;
       }
 
@@ -154,7 +149,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         id: viewId
       };
 
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('presentation_views')
         .update({
           video_progress: progress,
@@ -167,8 +162,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         })
         .eq('id', viewId);
 
-      if (error) {
-        console.error('Error updating progress:', error);
+      if (updateError) {
+        console.error('Error updating progress:', updateError);
         toast.error('Failed to update view progress');
       } else {
         console.log('Progress updated successfully:', { progress, viewId });
