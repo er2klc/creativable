@@ -109,6 +109,21 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         event_type: isCompleted ? 'video_completed' : 'video_progress'
       };
 
+      // First get the current view history
+      const { data: currentView, error: fetchError } = await supabase
+        .from('presentation_views')
+        .select('view_history')
+        .eq('id', viewId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching current view:', fetchError);
+        return;
+      }
+
+      // Append the new history entry to the existing array
+      const updatedHistory = [...(currentView?.view_history || []), historyEntry];
+
       const updates = {
         video_progress: progress,
         completed: isCompleted,
@@ -127,7 +142,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           completed: isCompleted,
           id: viewId
         },
-        view_history: supabase.sql`array_append(view_history, ${historyEntry})`,
+        view_history: updatedHistory,
         viewed_at: new Date().toISOString(),
         last_progress_update: new Date().toISOString()
       };
