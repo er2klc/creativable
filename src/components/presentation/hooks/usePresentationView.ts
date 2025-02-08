@@ -162,7 +162,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           ip_address: ipLocationData?.ipAddress || 'unknown',
           location: ipLocationData?.location || 'Unknown Location',
           metadata: updatedMetadata,
-          view_history: [...currentHistory, historyEntry]
+          view_history: [...currentHistory, historyEntry],
+          viewed_at: new Date().toISOString()
         })
         .eq('id', viewId);
 
