@@ -114,7 +114,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
         <>
           <Progress 
             value={latestProgress} 
-            className="absolute top-0 left-0 right-0 h-1" 
+            className="absolute top-0 left-0 right-0 h-1 bg-blue-500" 
           />
           <div className="absolute top-2 right-2 flex items-center gap-2">
             <span className="text-xs text-blue-500">{Math.round(latestProgress)}%</span>
@@ -200,3 +200,4 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </div>
   );
 };
+

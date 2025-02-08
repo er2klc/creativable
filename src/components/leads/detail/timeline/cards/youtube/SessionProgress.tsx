@@ -30,7 +30,7 @@ export const SessionProgress = ({ sessions, language }: SessionProgressProps) =>
           </div>
           <div className="relative h-2 bg-gray-200 rounded">
             <div 
-              className="absolute left-0 top-0 h-full bg-green-500 rounded transition-all duration-300"
+              className="absolute left-0 top-0 h-full bg-blue-500 rounded transition-all duration-300"
               style={{ width: `${session.progress}%` }}
             />
           </div>
@@ -39,3 +39,4 @@ export const SessionProgress = ({ sessions, language }: SessionProgressProps) =>
     </div>
   );
 };
+
