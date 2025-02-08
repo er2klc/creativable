@@ -22,7 +22,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     expiresAt: metadata?.expires_at,
     currentDate: new Date().toISOString(),
     isVideoActive,
-    eventType: metadata?.event_type
+    eventType: metadata?.event_type,
+    viewHistory: metadata?.view_history
   });
 
   const isViewCard = metadata?.event_type === 'video_opened' || 
@@ -46,6 +47,56 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       );
     }
   };
+
+  // Wandle view_history in Sessions um
+  const getSessionMilestones = () => {
+    if (!metadata.view_history) return [];
+    
+    const sessions: Array<{timestamp: string, progress: number}> = [];
+    let currentSession = {
+      timestamp: '',
+      progress: 0,
+      lastTimestamp: new Date().getTime()
+    };
+
+    const history = [...metadata.view_history].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
+    history.forEach(entry => {
+      const timestamp = new Date(entry.timestamp).getTime();
+      
+      // Neue Session wenn mehr als 30 Minuten seit letztem Update
+      if (timestamp - currentSession.lastTimestamp > 30 * 60 * 1000) {
+        if (currentSession.timestamp) {
+          sessions.push({
+            timestamp: currentSession.timestamp,
+            progress: currentSession.progress
+          });
+        }
+        currentSession = {
+          timestamp: entry.timestamp,
+          progress: entry.progress,
+          lastTimestamp: timestamp
+        };
+      } else {
+        currentSession.progress = Math.max(currentSession.progress, entry.progress);
+        currentSession.lastTimestamp = timestamp;
+      }
+    });
+
+    // Letzte Session hinzufügen
+    if (currentSession.timestamp) {
+      sessions.push({
+        timestamp: currentSession.timestamp,
+        progress: currentSession.progress
+      });
+    }
+
+    return sessions;
+  };
+
+  const sessionMilestones = getSessionMilestones();
 
   return (
     <div className={`
@@ -88,9 +139,9 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               location={metadata.location}
             />
           )}
-          {isViewCard && metadata.view_history && metadata.view_history.length > 0 && (
+          {isViewCard && sessionMilestones.length > 0 && (
             <SessionProgress 
-              sessions={metadata.view_history}
+              sessions={sessionMilestones}
               language={settings?.language}
             />
           )}
@@ -143,3 +194,4 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </div>
   );
 };
+
