@@ -36,6 +36,12 @@ export const TeamSnaps = ({
     console.log("handleSnapClick called with:", { snapId, teamSlug });
     
     if (snapId === "posts") {
+      // Ensure teamSlug is a string
+      if (typeof teamSlug !== 'string') {
+        console.error('teamSlug is not a string:', teamSlug);
+        return;
+      }
+      
       const postsUrl = `/unity/team/${teamSlug}/posts`;
       console.log("Navigating to posts:", postsUrl);
       navigate(postsUrl);
