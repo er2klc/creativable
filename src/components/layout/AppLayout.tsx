@@ -17,6 +17,7 @@ import { NotificationSidebar } from "../notifications/NotificationSidebar";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -58,34 +59,31 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
       </div>
       <div className="flex-1 md:pl-[60px]">
         {!isMobile && (
-          <div className="fixed right-4 top-4 z-50">
+          <div className="fixed right-4 top-4 z-50 flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              onClick={() => setShowNotifications(true)}
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                >
+                  {unreadCount}
+                </Badge>
+              )}
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <div className="relative">
-                  <Avatar className="h-8 w-8 cursor-pointer">
-                    <AvatarImage src={user?.user_metadata?.avatar_url} />
-                    <AvatarFallback>{getInitials(user?.email || "")}</AvatarFallback>
-                  </Avatar>
-                  {unreadCount > 0 && (
-                    <Badge 
-                      variant="destructive" 
-                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                    >
-                      {unreadCount}
-                    </Badge>
-                  )}
-                </div>
+                <Avatar className="h-8 w-8 cursor-pointer">
+                  <AvatarImage src={user?.user_metadata?.avatar_url} />
+                  <AvatarFallback>{getInitials(user?.email || "")}</AvatarFallback>
+                </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => setShowNotifications(true)}>
-                  <Bell className="mr-2 h-4 w-4" />
-                  <span>Benachrichtigungen</span>
-                  {unreadCount > 0 && (
-                    <Badge variant="destructive" className="ml-auto">
-                      {unreadCount}
-                    </Badge>
-                  )}
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/settings")}>
                   <User className="mr-2 h-4 w-4" />
                   <span>Profil</span>
@@ -115,3 +113,4 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     </div>
   );
 };
+
