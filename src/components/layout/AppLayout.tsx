@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, User, CreditCard, Receipt, LogOut } from "lucide-react";
+import { User, CreditCard, Receipt, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -58,52 +58,6 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
         <DashboardSidebar />
       </div>
       <div className="flex-1 md:pl-[60px]">
-        {!isMobile && (
-          <div className="fixed right-4 top-4 z-50 flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative"
-              onClick={() => setShowNotifications(true)}
-            >
-              <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                >
-                  {unreadCount}
-                </Badge>
-              )}
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Avatar className="h-8 w-8 cursor-pointer">
-                  <AvatarImage src={user?.user_metadata?.avatar_url} />
-                  <AvatarFallback>{getInitials(user?.email || "")}</AvatarFallback>
-                </Avatar>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => navigate("/settings")}>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profil</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  <span>Plan</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Receipt className="mr-2 h-4 w-4" />
-                  <span>Rechnung</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Abmelden</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
         <NotificationSidebar 
           open={showNotifications} 
           onOpenChange={setShowNotifications} 
