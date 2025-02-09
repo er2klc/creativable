@@ -3169,6 +3169,21 @@ export type Database = {
         }
         Relationships: []
       }
+      team_post_comments_count: {
+        Row: {
+          count: number | null
+          post_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "team_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       array_append: {
