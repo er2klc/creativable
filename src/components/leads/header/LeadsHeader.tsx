@@ -60,7 +60,7 @@ export const LeadsHeader = ({
   return (
     <div className="w-full bg-background border-b">
       <div className={`w-full px-4 py-4 ${isMobile ? 'ml-0' : ''}`}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+        <div className="h-16 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
           <div className="flex items-center justify-between md:justify-start gap-4 flex-shrink-0">
             <LeadHeaderTitle />
             <AddLeadButtons
