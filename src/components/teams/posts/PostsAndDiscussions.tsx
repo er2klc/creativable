@@ -4,6 +4,7 @@ import { CategoryList } from "./CategoryList";
 import { PostList } from "./PostList";
 import { CategoryOverview } from "./CategoryOverview";
 import { CreatePostDialog } from "./CreatePostDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PostsAndDiscussionsProps {
   categories: any[];
@@ -12,11 +13,13 @@ interface PostsAndDiscussionsProps {
 }
 
 export function PostsAndDiscussions({ categories, teamId, activeCategory }: PostsAndDiscussionsProps) {
+  const isMobile = useIsMobile();
+
   if (activeCategory) {
     return (
-      <div className="grid grid-cols-12 gap-6">
+      <div className={isMobile ? "space-y-4" : "grid grid-cols-12 gap-6"}>
         {/* Categories Sidebar */}
-        <div className="col-span-3">
+        <div className={isMobile ? "w-full" : "col-span-3"}>
           <Card>
             <CardContent className="p-4">
               <CategoryList teamId={teamId} activeCategory={activeCategory} />
@@ -25,7 +28,7 @@ export function PostsAndDiscussions({ categories, teamId, activeCategory }: Post
         </div>
 
         {/* Posts Area */}
-        <div className="col-span-9">
+        <div className={isMobile ? "w-full" : "col-span-9"}>
           <div className="mb-4 flex justify-end">
             <CreatePostDialog teamId={teamId} categoryId={activeCategory} />
           </div>

@@ -7,6 +7,7 @@ import { MessageSquare, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CategoryOverviewProps {
   teamId: string;
@@ -14,6 +15,7 @@ interface CategoryOverviewProps {
 
 export function CategoryOverview({ teamId }: CategoryOverviewProps) {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["team-categories-with-posts", teamId],
@@ -75,55 +77,53 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {categories.map((category) => (
-        <Card key={category.id} className="group hover:shadow-md transition-shadow">
+        <Card 
+          key={category.id} 
+          className="group hover:shadow-md transition-shadow cursor-pointer"
+          onClick={() => navigate(`category/${category.slug}`)}
+        >
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>{category.name}</CardTitle>
+              <CardTitle className="text-lg">{category.name}</CardTitle>
               {category.description && (
                 <p className="text-sm text-muted-foreground mt-1">
                   {category.description}
                 </p>
               )}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(`category/${category.slug}`)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <ChevronRight className={`h-4 w-4 text-muted-foreground ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} />
           </CardHeader>
           <CardContent>
             {category.team_posts?.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {category.team_posts.map((post: any) => (
                   <div
                     key={post.id}
-                    className="flex items-start justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
-                    onClick={() => navigate(`category/${category.slug}`)}
+                    className="p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                   >
-                    <div>
-                      <h4 className="font-medium">{post.title}</h4>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {formatDistanceToNow(new Date(post.created_at), {
-                          addSuffix: true,
-                          locale: de,
-                        })}{" "}
-                        von {post.creator_name || "Unbekannt"}
+                    <h4 className="font-medium line-clamp-1">{post.title}</h4>
+                    <div className="flex items-center justify-between mt-2 text-sm text-muted-foreground">
+                      <div className="flex-1 min-w-0">
+                        <span className="block truncate">
+                          {formatDistanceToNow(new Date(post.created_at), {
+                            addSuffix: true,
+                            locale: de,
+                          })}{" "}
+                          von {post.creator_name || "Unbekannt"}
+                        </span>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <MessageSquare className="h-4 w-4" />
-                      <span className="text-sm">{post.team_post_comments?.[0]?.count || 0}</span>
+                      <div className="flex items-center gap-1 ml-2">
+                        <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                        <span>{post.team_post_comments?.[0]?.count || 0}</span>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-4">
+              <p className="text-center text-muted-foreground py-3">
                 Noch keine Beiträge in dieser Kategorie
               </p>
             )}
