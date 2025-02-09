@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SearchBar } from "./SearchBar";
 import { supabase } from "@/integrations/supabase/client";
 import { HeaderActions } from "@/components/layout/HeaderActions";
+import { Home } from "lucide-react";
 
 interface DashboardHeaderProps {
   userEmail: string | undefined;
@@ -33,7 +34,8 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
       <div className="w-full bg-background">
         <div className="h-16 px-4 flex items-center">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
-            <div className="z-50">
+            <div className="flex items-center gap-2">
+              <Home className="h-5 w-5" />
               <h1 className="text-lg md:text-xl font-semibold text-foreground">
                 Willkommen zurück, {displayName}! 👋
               </h1>
@@ -48,4 +50,3 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
     </div>
   );
 };
-

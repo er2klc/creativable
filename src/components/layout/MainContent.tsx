@@ -18,15 +18,7 @@ export const MainContent = ({ children, className }: MainContentProps) => {
   return (
     <main className={cn("flex-1 relative", className)}>
       <div className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/90 px-4 py-2 border-b border-sidebar-border md:hidden h-16">
-          <div className="flex items-center gap-2">
-          <img 
-            src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
-            alt="Logo" 
-            className="h-8 w-8"
-          />
-          <span className="text-sm text-white font-light">creativable</span>
-        </div>
-       <MobileMenu />
+        <MobileMenu />
       </div>
       <div className={cn(
         "container mx-auto py-4 max-w-full px-4",
@@ -37,4 +29,3 @@ export const MainContent = ({ children, className }: MainContentProps) => {
     </main>
   );
 };
-

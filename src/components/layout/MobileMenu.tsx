@@ -85,56 +85,65 @@ export function MobileMenu() {
 
   return (
     <>
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="text-white p-0 h-8 w-8">
-            <Menu className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent 
-          side="top" 
-          className="w-full p-0 border-none bg-[#111111] text-white z-[200]"
-        >
-          <div className="flex flex-col h-[95vh] bg-[#111111] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
-              <div className="flex items-center gap-4">
-                <img 
-                  src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
-                  alt="Logo" 
-                  className="h-8 w-8"
-                />
-                <span className="text-sm text-white font-light">creativable</span>
+      <div className="flex items-center gap-4">
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-white p-0 h-8 w-8">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent 
+            side="top" 
+            className="w-full p-0 border-none bg-[#111111] text-white z-[200]"
+          >
+            <div className="flex flex-col h-[95vh] bg-[#111111] overflow-y-auto">
+              <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+                <div className="flex items-center gap-4">
+                  <img 
+                    src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
+                    alt="Logo" 
+                    className="h-8 w-8"
+                  />
+                  <span className="text-sm text-white font-light">creativable</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setOpen(false)}
+                  className="text-white hover:bg-sidebar-accent"
+                >
+                  <X className="h-6 w-6" />
+                </Button>
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setOpen(false)}
-                className="text-white hover:bg-sidebar-accent"
-              >
-                <X className="h-6 w-6" />
-              </Button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto no-scrollbar">
-              <MenuSection title="Persönlich" items={personalItems} onNavigate={handleNavigation} />
               
-              <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
-              <MenuSection title="Teams & Gruppen" items={teamItems} onNavigate={handleNavigation} />
-              
-              <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
-              <MenuSection title="Analyse & Tools" items={analysisItems} onNavigate={handleNavigation} />
-              
-              <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
-              <MenuSection title="Rechtliches" items={legalItems} onNavigate={handleNavigation} />
-              
-              <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
-              <MenuSection title="Super Admin" items={adminItems} onNavigate={handleNavigation} />
-            </div>
+              <div className="flex-1 overflow-y-auto no-scrollbar">
+                <MenuSection title="Persönlich" items={personalItems} onNavigate={handleNavigation} />
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
+                <MenuSection title="Teams & Gruppen" items={teamItems} onNavigate={handleNavigation} />
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
+                <MenuSection title="Analyse & Tools" items={analysisItems} onNavigate={handleNavigation} />
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
+                <MenuSection title="Rechtliches" items={legalItems} onNavigate={handleNavigation} />
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
+                <MenuSection title="Super Admin" items={adminItems} onNavigate={handleNavigation} />
+              </div>
 
-            <MenuFooter />
-          </div>
-        </SheetContent>
-      </Sheet>
+              <MenuFooter />
+            </div>
+          </SheetContent>
+        </Sheet>
+        <div 
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 cursor-pointer"
+        >
+          <img 
+            src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
+            alt="Logo" 
+            className="h-8 w-8"
+          />
+          <span className="text-sm text-white font-light">creativable</span>
+        </div>
+      </div>
 
       <div className="flex items-center gap-2">
         <Button
