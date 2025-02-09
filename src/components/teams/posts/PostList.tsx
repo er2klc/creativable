@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTeamPosts } from "./hooks/useTeamPosts";
 import { PostItem } from "./components/PostItem";
-import { CreatePostDialog } from "./CreatePostDialog";
 
 interface PostListProps {
   teamId: string;
