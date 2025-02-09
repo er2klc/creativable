@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -96,7 +97,7 @@ export function MobileMenu() {
         </div>
         <SheetContent 
           side="top" 
-          className="w-full p-0 border-none bg-[#111111] text-white"
+          className="w-full p-0 border-none bg-[#111111] text-white z-[200]"
         >
           <div className="flex flex-col h-[95vh] bg-[#111111] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
@@ -163,7 +164,7 @@ export function MobileMenu() {
               <AvatarFallback>{getInitials(user?.email || "")}</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-56 z-[200]">
             <DropdownMenuItem onClick={() => navigate("/settings")}>
               <User className="mr-2 h-4 w-4" />
               <span>Profil</span>
