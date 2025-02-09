@@ -87,7 +87,7 @@ export function MobileMenu() {
     <>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="text-white p-0 h-8 w-8 -ml-6">
+          <Button variant="ghost" size="icon" className="text-white p-0 h-8 w-8">
             <Menu className="h-6 w-6" />
           </Button>
         </SheetTrigger>
