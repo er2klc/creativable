@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +8,7 @@ import { useLeadSubscription } from "./detail/hooks/useLeadSubscription";
 import { LeadWithRelations } from "@/types/leads";
 import { LeadDetailContent } from "./detail/components/LeadDetailContent";
 import { useLeadMutations } from "./detail/hooks/useLeadMutations";
+import { toast } from "sonner";
 
 interface LeadDetailViewProps {
   leadId: string | null;
@@ -21,7 +23,7 @@ const isValidUUID = (uuid: string) => {
 export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
   
-  const { data: lead, isLoading } = useQuery({
+  const { data: lead, isLoading, error } = useQuery({
     queryKey: ["lead", leadId],
     queryFn: async () => {
       if (!leadId || !isValidUUID(leadId)) {
@@ -30,7 +32,14 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
       const { data, error } = await supabase
         .from("leads")
-        .select("*, messages(*), tasks(*), notes(*), lead_files(*)")
+        .select(`
+          *,
+          messages (*),
+          tasks (*),
+          notes (*),
+          lead_files (*),
+          linkedin_posts (*)
+        `)
         .eq("id", leadId)
         .maybeSingle();
 
@@ -40,10 +49,16 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       }
 
       if (!data) {
-        throw new Error("Lead not found");
+        toast.error(
+          settings?.language === "en" 
+            ? "Contact not found" 
+            : "Kontakt nicht gefunden"
+        );
+        onClose();
+        return null;
       }
 
-      return data as unknown as LeadWithRelations;
+      return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
     retry: 3,
@@ -52,6 +67,16 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
   const { updateLeadMutation, deleteLeadMutation } = useLeadMutations(leadId, onClose);
   useLeadSubscription(leadId);
+
+  if (error) {
+    toast.error(
+      settings?.language === "en"
+        ? "Error loading contact"
+        : "Fehler beim Laden des Kontakts"
+    );
+    onClose();
+    return null;
+  }
 
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
@@ -71,6 +96,10 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
             lead={lead}
             onUpdateLead={updateLeadMutation.mutate}
             isLoading={isLoading}
+            onDeleteClick={() => deleteLeadMutation.mutate()}
+            onDeletePhaseChange={(noteId) => {
+              console.log("Delete phase change:", noteId);
+            }}
           />
         )}
       </DialogContent>
