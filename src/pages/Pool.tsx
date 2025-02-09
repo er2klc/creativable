@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Diamond, Trophy, Gem, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PartnerOnboardingPipeline } from "@/components/partners/onboarding/PartnerOnboardingPipeline";
+import { PoolHeader } from "@/components/pool/PoolHeader";
 
 export default function Pool() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -82,7 +84,8 @@ export default function Pool() {
 
   return (
     <div className="container mx-auto py-6">
-      <div className="mb-8">
+      <PoolHeader />
+      <div className="pt-[132px] md:pt-[84px] mb-8">
         <div className="flex flex-wrap gap-2 justify-center">
           {statusOptions.map((option) => {
             const Icon = option.icon;
