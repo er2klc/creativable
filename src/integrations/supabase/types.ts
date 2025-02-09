@@ -2333,6 +2333,50 @@ export type Database = {
           },
         ]
       }
+      team_member_badges: {
+        Row: {
+          awarded_at: string | null
+          awarded_by: string
+          badge_level: number | null
+          badge_type: string
+          id: string
+          metadata: Json | null
+          points_bonus: number | null
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string | null
+          awarded_by: string
+          badge_level?: number | null
+          badge_type: string
+          id?: string
+          metadata?: Json | null
+          points_bonus?: number | null
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string | null
+          awarded_by?: string
+          badge_level?: number | null
+          badge_type?: string
+          id?: string
+          metadata?: Json | null
+          points_bonus?: number | null
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_member_badges_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_member_points: {
         Row: {
           created_at: string | null
@@ -2531,6 +2575,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "team_post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "team_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_post_mentions: {
+        Row: {
+          comment_id: string | null
+          created_at: string | null
+          created_by: string
+          id: string
+          mentioned_user_id: string
+          post_id: string | null
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string | null
+          created_by: string
+          id?: string
+          mentioned_user_id: string
+          post_id?: string | null
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          mentioned_user_id?: string
+          post_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_post_mentions_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "team_post_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_post_mentions_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "team_posts"
