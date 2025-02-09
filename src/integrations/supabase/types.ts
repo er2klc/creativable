@@ -2574,6 +2574,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_team_post_comments_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "team_post_comments_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
@@ -2608,6 +2615,13 @@ export type Database = {
           post_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_team_post_mentions_mentioned_user_id"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "team_post_mentions_comment_id_fkey"
             columns: ["comment_id"]
@@ -2647,6 +2661,13 @@ export type Database = {
           reaction_type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_team_post_reactions_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fk_team_post_reactions_posts"
             columns: ["post_id"]
@@ -2701,6 +2722,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_team_posts_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "team_posts_category_id_fkey"
             columns: ["category_id"]

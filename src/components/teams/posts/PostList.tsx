@@ -27,7 +27,9 @@ export const PostList = ({ teamId, categoryId }: PostListProps) => {
         .from('team_posts')
         .select(`
           *,
-          team_categories (name),
+          team_categories (
+            name
+          ),
           profiles:created_by (
             id,
             display_name,
@@ -38,7 +40,7 @@ export const PostList = ({ teamId, categoryId }: PostListProps) => {
             content,
             created_at,
             created_by,
-            profiles:created_by (
+            profiles!team_post_comments_created_by_fkey (
               id,
               display_name,
               avatar_url
@@ -52,7 +54,7 @@ export const PostList = ({ teamId, categoryId }: PostListProps) => {
           team_post_mentions (
             id,
             mentioned_user_id,
-            profiles:mentioned_user_id (
+            profiles!team_post_mentions_mentioned_user_id_fkey (
               id,
               display_name
             )
@@ -220,3 +222,4 @@ export const PostList = ({ teamId, categoryId }: PostListProps) => {
     </div>
   );
 };
+
