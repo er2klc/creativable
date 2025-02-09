@@ -28,7 +28,7 @@ export const PostActions = ({
         .select('id')
         .eq('post_id', postId)
         .eq('created_by', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+        .maybeSingle();
 
       if (existingReaction) {
         await supabase
