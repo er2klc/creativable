@@ -6,18 +6,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { Tables } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
-import { Diamond, Trophy, Gem, Star } from "lucide-react";
+import { Diamond, Trophy, Gem, Star, LayoutList, KanbanSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PartnerOnboardingPipeline } from "@/components/partners/onboarding/PartnerOnboardingPipeline";
 import { PoolHeader } from "@/components/pool/PoolHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { LeadTableView } from "@/components/leads/LeadTableView";
 
 export default function Pool() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const { status = 'partner' } = useParams<{ status?: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>(isMobile ? 'list' : 'kanban');
 
   const { data: leads = [] } = useQuery({
     queryKey: ["pool-leads"],
@@ -44,6 +46,11 @@ export default function Pool() {
     },
     enabled: true,
   });
+
+  // Update viewMode when isMobile changes
+  useEffect(() => {
+    setViewMode(isMobile ? 'list' : 'kanban');
+  }, [isMobile]);
 
   const statusOptions = [
     { 
@@ -83,6 +90,8 @@ export default function Pool() {
       count: leads.filter(lead => lead.status === 'no_interest').length
     }
   ];
+
+  const filteredLeads = leads.filter(lead => lead.status === status);
 
   return (
     <div className="px-4 md:px-8 max-w-full overflow-x-hidden">
@@ -155,29 +164,68 @@ export default function Pool() {
             })}
           </div>
         )}
+
+        {!isMobile && (
+          <div className="flex justify-end mt-4 gap-2">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="w-[100px]"
+            >
+              <LayoutList className="h-4 w-4 mr-2" />
+              Liste
+            </Button>
+            <Button
+              variant={viewMode === 'kanban' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('kanban')}
+              className="w-[100px]"
+            >
+              <KanbanSquare className="h-4 w-4 mr-2" />
+              Kanban
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-hidden w-full">
         {status === 'partner' && (
-          <PartnerOnboardingPipeline />
+          <>
+            {viewMode === 'kanban' ? (
+              <PartnerOnboardingPipeline />
+            ) : (
+              <LeadTableView 
+                leads={filteredLeads}
+                onLeadClick={setSelectedLeadId}
+                selectedPipelineId={null}
+              />
+            )}
+          </>
         )}
 
         {status === 'customer' && (
-          <div className="text-center p-4">
-            Kunden Kanban View kommt hier...
-          </div>
+          <LeadTableView 
+            leads={filteredLeads}
+            onLeadClick={setSelectedLeadId}
+            selectedPipelineId={null}
+          />
         )}
 
         {status === 'not_for_now' && (
-          <div className="text-center p-4">
-            Not For Now Liste kommt hier...
-          </div>
+          <LeadTableView 
+            leads={filteredLeads}
+            onLeadClick={setSelectedLeadId}
+            selectedPipelineId={null}
+          />
         )}
 
         {status === 'no_interest' && (
-          <div className="text-center p-4">
-            Kein Interesse Liste kommt hier...
-          </div>
+          <LeadTableView 
+            leads={filteredLeads}
+            onLeadClick={setSelectedLeadId}
+            selectedPipelineId={null}
+          />
         )}
       </div>
 
