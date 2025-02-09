@@ -23,11 +23,17 @@ const isValidUUID = (uuid: string) => {
 export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
   
-  const { data: lead, isLoading, error } = useQuery({
+  const { data: lead, isLoading } = useQuery({
     queryKey: ["lead", leadId],
     queryFn: async () => {
       if (!leadId || !isValidUUID(leadId)) {
-        throw new Error("Invalid lead ID");
+        toast.error(
+          settings?.language === "en" 
+            ? "Invalid contact ID" 
+            : "Ungültige Kontakt-ID"
+        );
+        onClose();
+        return null;
       }
 
       const { data, error } = await supabase
@@ -45,7 +51,13 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
 
       if (error) {
         console.error("Error fetching lead:", error);
-        throw error;
+        toast.error(
+          settings?.language === "en"
+            ? "Error loading contact"
+            : "Fehler beim Laden des Kontakts"
+        );
+        onClose();
+        return null;
       }
 
       if (!data) {
@@ -61,20 +73,14 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
+    retry: false, // Don't retry if the lead doesn't exist
   });
 
   const { updateLeadMutation, deleteLeadMutation } = useLeadMutations(leadId, onClose);
   useLeadSubscription(leadId);
 
-  if (error) {
-    toast.error(
-      settings?.language === "en"
-        ? "Error loading contact"
-        : "Fehler beim Laden des Kontakts"
-    );
-    onClose();
+  // If lead is null, we've already shown an error toast and called onClose
+  if (!lead && !isLoading) {
     return null;
   }
 
