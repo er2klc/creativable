@@ -11,6 +11,7 @@ import { PoolHeader } from "@/components/pool/PoolHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LeadTableView } from "@/components/leads/LeadTableView";
+import { toast } from "sonner";
 
 export default function Pool() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -19,28 +20,40 @@ export default function Pool() {
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>(isMobile ? 'list' : 'kanban');
 
-  const { data: leads = [] } = useQuery({
+  const { data: leads = [], error } = useQuery({
     queryKey: ["pool-leads"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast.error("No user found");
+          return [];
+        }
 
-      const { data: settings } = await supabase
-        .from('settings')
-        .select('network_marketing_id')
-        .eq('user_id', user.id)
-        .single();
+        const { data: settings } = await supabase
+          .from('settings')
+          .select('network_marketing_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-      const { data, error } = await supabase
-        .from("leads")
-        .select("*")
-        .eq("user_id", user.id)
-        .or(`user_id.eq.${user.id},network_marketing_id.eq.${settings?.network_marketing_id}`)
-        .order("created_at", { ascending: false });
+        const { data, error } = await supabase
+          .from("leads")
+          .select("*")
+          .or(`user_id.eq.${user.id},network_marketing_id.eq.${settings?.network_marketing_id}`)
+          .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      
-      return data as Tables<"leads">[];
+        if (error) {
+          console.error("Error fetching leads:", error);
+          toast.error("Error loading leads");
+          return [];
+        }
+
+        return data as Tables<"leads">[];
+      } catch (error) {
+        console.error("Error in queryFn:", error);
+        toast.error("Error loading leads");
+        return [];
+      }
     },
     enabled: true,
   });
