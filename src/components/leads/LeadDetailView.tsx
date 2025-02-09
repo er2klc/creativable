@@ -73,20 +73,19 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
       return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
-    retry: false, // Don't retry if the lead doesn't exist
+    retry: false,
   });
 
   const { updateLeadMutation, deleteLeadMutation } = useLeadMutations(leadId, onClose);
   useLeadSubscription(leadId);
 
-  // If lead is null, we've already shown an error toast and called onClose
   if (!lead && !isLoading) {
     return null;
   }
 
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-4xl h-[90vh] bg-white border rounded-lg shadow-lg overflow-hidden">
+      <DialogContent className="max-w-4xl h-[90vh] p-0 bg-white border rounded-lg shadow-lg overflow-hidden">
         <DialogHeader className="p-0">
           {lead && (
             <LeadDetailHeader
