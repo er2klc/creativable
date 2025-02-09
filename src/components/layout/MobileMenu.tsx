@@ -56,7 +56,6 @@ export function MobileMenu() {
     navigate("/auth");
   };
 
-  // Subscribe to real-time updates for unread messages count
   useEffect(() => {
     const channel = supabase
       .channel('menu-updates')
@@ -68,7 +67,6 @@ export function MobileMenu() {
           table: 'messages'
         },
         () => {
-          // Invalidate the unread messages query to trigger a refetch
           queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
         }
       )
@@ -87,13 +85,11 @@ export function MobileMenu() {
   return (
     <>
       <Sheet open={open} onOpenChange={setOpen}>
-        <div>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-white">
-              <Menu className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
-        </div>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="text-white p-0 h-8 w-8">
+            <Menu className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
         <SheetContent 
           side="top" 
           className="w-full p-0 border-none bg-[#111111] text-white z-[200]"
