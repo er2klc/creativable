@@ -2707,7 +2707,7 @@ export type Database = {
       }
       team_posts: {
         Row: {
-          category_id: string
+          category_id: string | null
           content: string
           created_at: string | null
           created_by: string
@@ -2719,7 +2719,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          category_id: string
+          category_id?: string | null
           content: string
           created_at?: string | null
           created_by: string
@@ -2731,7 +2731,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          category_id?: string
+          category_id?: string | null
           content?: string
           created_at?: string | null
           created_by?: string
