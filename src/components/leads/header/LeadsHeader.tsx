@@ -141,8 +141,8 @@ export const LeadsHeader = ({
             )}
 
             {!isMobile && (
-              <div className="flex items-center gap-4">
-                <div className="h-8 w-px bg-gray-200" /> {/* Längere vertikale Linie */}
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-px bg-gray-500" /> {/* Längere vertikale Linie */}
                 <Button
                   variant="ghost"
                   size="icon"
