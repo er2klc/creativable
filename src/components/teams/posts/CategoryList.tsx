@@ -7,11 +7,28 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { MessageCircle, Megaphone, Calendar, Trophy, Video, Users, Star, Heart, HelpCircle, Rocket, FileText, Lightbulb, Target } from "lucide-react";
 
 interface CategoryListProps {
   teamId: string;
   activeCategory?: string;
 }
+
+const iconMap: { [key: string]: any } = {
+  'MessageCircle': MessageCircle,
+  'Megaphone': Megaphone,
+  'Calendar': Calendar,
+  'Trophy': Trophy,
+  'Video': Video,
+  'Users': Users,
+  'Star': Star,
+  'Heart': Heart,
+  'HelpCircle': HelpCircle,
+  'Rocket': Rocket,
+  'FileText': FileText,
+  'LightBulb': Lightbulb,
+  'Target': Target
+};
 
 export function CategoryList({ teamId, activeCategory }: CategoryListProps) {
   const user = useUser();
@@ -52,10 +69,7 @@ export function CategoryList({ teamId, activeCategory }: CategoryListProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Kategorien</h3>
-        <div className="flex gap-2">
-          {isAdmin && <CreateCategoryDialog teamId={teamId} />}
-          <CreatePostDialog teamId={teamId} categoryId={activeCategory} />
-        </div>
+        {isAdmin && <CreateCategoryDialog teamId={teamId} />}
       </div>
       
       <ScrollArea className="h-[calc(100vh-300px)]">
@@ -67,21 +81,26 @@ export function CategoryList({ teamId, activeCategory }: CategoryListProps) {
               !activeCategory && "bg-accent"
             )}
           >
+            <MessageCircle className="h-4 w-4 mr-2" />
             Alle Beiträge
           </button>
           
-          {categories?.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => navigate(`category/${category.slug}`)}
-              className={cn(
-                "w-full flex items-center px-4 py-2 hover:bg-accent rounded-md transition-colors",
-                activeCategory === category.id && "bg-accent"
-              )}
-            >
-              {category.name}
-            </button>
-          ))}
+          {categories?.map((category) => {
+            const IconComponent = iconMap[category.icon] || MessageCircle;
+            return (
+              <button
+                key={category.id}
+                onClick={() => navigate(`category/${category.slug}`)}
+                className={cn(
+                  "w-full flex items-center px-4 py-2 hover:bg-accent rounded-md transition-colors",
+                  activeCategory === category.id && "bg-accent"
+                )}
+              >
+                <IconComponent className="h-4 w-4 mr-2" />
+                {category.name}
+              </button>
+            );
+          })}
         </div>
       </ScrollArea>
     </div>
