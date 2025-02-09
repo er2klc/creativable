@@ -6,6 +6,8 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
   return useQuery({
     queryKey: ['team-posts', teamId, categoryId],
     queryFn: async () => {
+      console.log("Fetching posts for teamId:", teamId); // Debug log
+      
       let query = supabase
         .from('team_posts')
         .select(`
@@ -53,7 +55,12 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching posts:", error); // Debug log
+        throw error;
+      }
+      
+      console.log("Successfully fetched posts:", data); // Debug log
       return data;
     },
   });

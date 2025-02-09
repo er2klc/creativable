@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PostList } from "../../posts/PostList";
 import { CreatePostDialog } from "../../posts/CreatePostDialog";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface PostSnapsListProps {
   teamId: string;
@@ -10,7 +11,9 @@ interface PostSnapsListProps {
 }
 
 export const PostSnapsList = ({ teamId, isAdmin }: PostSnapsListProps) => {
-  const { data: categories } = useQuery({
+  console.log("PostSnapsList rendered with teamId:", teamId); // Debug log
+
+  const { data: categories, isLoading } = useQuery({
     queryKey: ['team-categories', teamId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -20,9 +23,35 @@ export const PostSnapsList = ({ teamId, isAdmin }: PostSnapsListProps) => {
         .order('order_index');
 
       if (error) throw error;
+      console.log("Fetched categories:", data); // Debug log
       return data;
     },
   });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-muted rounded w-1/4"></div>
+            <div className="h-4 bg-muted rounded w-3/4"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!categories?.length) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-muted-foreground">
+            Keine Kategorien gefunden
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">

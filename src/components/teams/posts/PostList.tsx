@@ -11,7 +11,10 @@ interface PostListProps {
 
 export const PostList = ({ teamId, categoryId }: PostListProps) => {
   const [expandedPost, setExpandedPost] = useState<string | null>(null);
+  console.log("PostList rendered with teamId:", teamId); // Debug log
+  
   const { data: posts, isLoading } = useTeamPosts(teamId, categoryId);
+  console.log("Fetched posts:", posts); // Debug log
 
   if (isLoading) {
     return (
@@ -47,4 +50,4 @@ export const PostList = ({ teamId, categoryId }: PostListProps) => {
       )}
     </div>
   );
-}
+};
