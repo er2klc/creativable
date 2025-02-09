@@ -143,6 +143,7 @@ export const LeadsHeader = ({
 
             {!isMobile && (
               <div className="flex items-center gap-4">
+                <div className="h-8 w-px bg-gray-200" /> {/* Neue längere vertikale Linie */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -159,7 +160,7 @@ export const LeadsHeader = ({
                     </Badge>
                   )}
                 </Button>
-                <div className="h-6 w-px bg-gray-200" /> {/* Vertical divider */}
+                <div className="h-6 w-px bg-gray-200" /> {/* Vertikale Linie zwischen Bell und Avatar */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Avatar className="h-8 w-8 cursor-pointer">
