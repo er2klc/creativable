@@ -82,10 +82,10 @@ export default function Pool() {
   ];
 
   return (
-    <div className="container mx-auto">
+    <div className="px-4 md:px-8 max-w-full overflow-x-hidden">
       <PoolHeader />
       <div className="pt-20 md:pt-[84px] mb-8">
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           {statusOptions.map((option) => {
             const Icon = option.icon;
             const isActive = status === option.id;
@@ -96,7 +96,7 @@ export default function Pool() {
                 key={option.id}
                 variant={isActive ? "default" : "ghost"}
                 className={cn(
-                  "relative min-w-[200px] h-[80px] transition-all duration-300",
+                  "relative h-[80px] w-full transition-all duration-300",
                   "bg-gradient-to-r shadow-sm border border-dashed border-gray-300",
                   isActive ? `${option.gradient} text-white border-none` : "bg-background hover:scale-102",
                   !isActive && "hover:bg-gradient-to-r",
@@ -127,27 +127,29 @@ export default function Pool() {
         </div>
       </div>
 
-      {status === 'partner' && (
-        <PartnerOnboardingPipeline />
-      )}
+      <div className="overflow-x-hidden w-full">
+        {status === 'partner' && (
+          <PartnerOnboardingPipeline />
+        )}
 
-      {status === 'customer' && (
-        <div className="text-center p-4">
-          Kunden Kanban View kommt hier...
-        </div>
-      )}
+        {status === 'customer' && (
+          <div className="text-center p-4">
+            Kunden Kanban View kommt hier...
+          </div>
+        )}
 
-      {status === 'not_for_now' && (
-        <div className="text-center p-4">
-          Not For Now Liste kommt hier...
-        </div>
-      )}
+        {status === 'not_for_now' && (
+          <div className="text-center p-4">
+            Not For Now Liste kommt hier...
+          </div>
+        )}
 
-      {status === 'no_interest' && (
-        <div className="text-center p-4">
-          Kein Interesse Liste kommt hier...
-        </div>
-      )}
+        {status === 'no_interest' && (
+          <div className="text-center p-4">
+            Kein Interesse Liste kommt hier...
+          </div>
+        )}
+      </div>
 
       {selectedLeadId && (
         <LeadDetailView
