@@ -2221,30 +2221,39 @@ export type Database = {
       }
       team_categories: {
         Row: {
+          color: string | null
           created_at: string | null
           created_by: string
           description: string | null
+          icon: string | null
           id: string
+          is_private: boolean | null
           name: string
           order_index: number
           slug: string
           team_id: string
         }
         Insert: {
+          color?: string | null
           created_at?: string | null
           created_by: string
           description?: string | null
+          icon?: string | null
           id?: string
+          is_private?: boolean | null
           name: string
           order_index?: number
           slug: string
           team_id: string
         }
         Update: {
+          color?: string | null
           created_at?: string | null
           created_by?: string
           description?: string | null
+          icon?: string | null
           id?: string
+          is_private?: boolean | null
           name?: string
           order_index?: number
           slug?: string
