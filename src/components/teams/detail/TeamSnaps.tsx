@@ -34,8 +34,13 @@ export const TeamSnaps = ({
 
   const handleSnapClick = (snapId: string) => {
     if (snapId === "posts") {
+      console.log("Navigating to posts:", `/unity/team/${teamSlug}/posts`);
       navigate(`/unity/team/${teamSlug}/posts`);
-    } else if (snapId === "calendar") {
+      onSnapClick(snapId);
+      return;
+    } 
+    
+    if (snapId === "calendar") {
       onCalendarClick();
     } else {
       navigate(`/unity/team/${teamSlug}/${snapId}`);
@@ -151,4 +156,3 @@ export const TeamSnaps = ({
     </div>
   );
 };
-
