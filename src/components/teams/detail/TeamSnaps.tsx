@@ -33,7 +33,11 @@ export const TeamSnaps = ({
   const { hiddenSnaps, hideSnapMutation, unhideSnapMutation } = useSnapManagement(teamId);
 
   const handleSnapClick = (snapId: string) => {
-    navigate(`/unity/team/${teamSlug}/${snapId}`);
+    if (snapId === "posts") {
+      navigate(`/unity/team/${teamSlug}/posts`);
+    } else {
+      navigate(`/unity/team/${teamSlug}/${snapId}`);
+    }
     onSnapClick(snapId);
   };
 
@@ -145,3 +149,4 @@ export const TeamSnaps = ({
     </div>
   );
 };
+
