@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -86,7 +87,7 @@ export function MobileMenu() {
     <>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="text-white p-0 h-8 w-8">
+          <Button variant="ghost" size="icon" className="text-white p-0 h-8 w-8 -ml-2">
             <Menu className="h-6 w-6" />
           </Button>
         </SheetTrigger>
