@@ -22,7 +22,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
               display_name,
               avatar_url
             ),
-            team_post_comments:team_post_comments_count!inner (
+            team_post_comments (
               count
             )
           `)
@@ -50,7 +50,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
         
         const transformedData = data.map(post => ({
           ...post,
-          team_post_comments: post.team_post_comments[0]?.count || 0
+          team_post_comments: post.team_post_comments?.length || 0
         }));
         
         console.log("Transformed posts data:", transformedData);
@@ -61,7 +61,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
         throw error;
       }
     },
-    refetchOnWindowFocus: true, // Ensure we get fresh data when the window regains focus
-    refetchOnMount: true, // Ensure we get fresh data when the component mounts
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 };
