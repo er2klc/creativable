@@ -3,6 +3,7 @@ import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, Users, Settings, Tro
 import { SnapList } from "./snap-lists/SnapList";
 import { AdminSnapList } from "./snap-lists/AdminSnapList";
 import { HiddenSnapsList } from "./snap-lists/HiddenSnapsList";
+import { PostSnapsList } from "./snap-lists/PostSnapsList";
 import { useSnapManagement } from "./hooks/useSnapManagement";
 import { Snap } from "./types";
 
@@ -41,7 +42,7 @@ export const TeamSnaps = ({
     {
       id: "posts",
       icon: <MessageSquare className="h-8 w-8" />,
-      label: "Pulse",
+      label: "Community",
       description: "Für den Herzschlag der Community",
       gradient: "from-blue-500 to-blue-600",
       onClick: () => onSnapClick("posts"),
@@ -103,6 +104,10 @@ export const TeamSnaps = ({
   const visibleRegularSnaps = regularSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
   const visibleAdminSnaps = adminSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
   const hiddenSnapsList = allSnaps.filter(snap => hiddenSnaps.includes(snap.id));
+
+  if (activeSnapView === "posts") {
+    return <PostSnapsList teamId={teamId} isAdmin={isAdmin} />;
+  }
 
   return (
     <div className="space-y-8">
