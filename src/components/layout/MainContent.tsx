@@ -17,7 +17,7 @@ export const MainContent = ({ children, className }: MainContentProps) => {
 
   return (
     <main className={cn("flex-1 relative", className)}>
-      <div className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/90 px-2 py-2 border-b border-sidebar-border md:hidden">
+      <div className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/90 px-4 py-2 border-b border-sidebar-border md:hidden h-16">
          <MobileMenu />
           <div className="flex items-center gap-2">
           <img 
@@ -30,11 +30,10 @@ export const MainContent = ({ children, className }: MainContentProps) => {
       </div>
       <div className={cn(
         "container mx-auto py-4 max-w-full px-4",
-        (isLeadsPage || isDashboardPage) ? "pt-24 md:pt-20" : "pt-16 md:py-4"
+        "pt-20 md:pt-[84px]"
       )}>
         {children}
       </div>
     </main>
   );
 };
-
