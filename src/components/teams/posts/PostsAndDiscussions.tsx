@@ -29,7 +29,7 @@ export function PostsAndDiscussions({ categories, teamId, activeCategory }: Post
 
         {/* Posts Area */}
         <div className={isMobile ? "w-full" : "col-span-9"}>
-          <div className="mb-4 flex justify-end">
+          <div className="mb-4">
             <CreatePostDialog teamId={teamId} categoryId={activeCategory} />
           </div>
           <PostList teamId={teamId} categoryId={activeCategory} />

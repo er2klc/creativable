@@ -2,7 +2,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { MessageSquare, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
@@ -18,7 +17,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
   const isMobile = useIsMobile();
   
   const { data: categories = [], isLoading } = useQuery({
-    queryKey: ["team-categories-with-posts", teamId],
+    queryKey: ["team-categories", teamId],
     queryFn: async () => {
       const { data: categoriesData, error: categoriesError } = await supabase
         .from("team_categories")
@@ -59,7 +58,7 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
             ...category,
             team_posts: postsWithCreatorInfo
               .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-              .slice(0, 3) // Only take the latest 3 posts
+              .slice(0, 3) // Nur die letzten 3 Beiträge
           };
         })
       );
