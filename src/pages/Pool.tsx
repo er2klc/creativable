@@ -85,7 +85,7 @@ export default function Pool() {
   return (
     <div className="container mx-auto py-6">
       <PoolHeader />
-      <div className="pt-[132px] md:pt-[84px] mb-8">
+      <div className="pt-20 md:pt-[84px] mb-8">
         <div className="flex flex-wrap gap-2 justify-center">
           {statusOptions.map((option) => {
             const Icon = option.icon;
