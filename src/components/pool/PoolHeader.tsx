@@ -3,7 +3,7 @@ import { SearchBar } from "../dashboard/SearchBar";
 import { supabase } from "@/integrations/supabase/client";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useQuery } from "@tanstack/react-query";
-import { Pool } from "lucide-react";
+import { Waves } from "lucide-react";
 
 export const PoolHeader = () => {
   const { data: profile } = useQuery({
@@ -31,7 +31,7 @@ export const PoolHeader = () => {
         <div className="h-16 px-4 flex items-center">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full mt-8 md:mt-0">
             <div className="flex items-center gap-2">
-              <Pool className="h-5 w-5" />
+              <Waves className="h-5 w-5" />
               <h1 className="text-lg md:text-xl font-semibold text-foreground">
                 Pool
               </h1>
@@ -46,3 +46,4 @@ export const PoolHeader = () => {
     </div>
   );
 };
+
