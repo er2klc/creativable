@@ -56,7 +56,7 @@ export const MainContent = ({ children, className }: MainContentProps) => {
   return (
     <main className={cn("flex-1 relative", className)}>
       {isMobile ? (
-        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/90 px-2 py-2 border-b border-sidebar-border">
+        <div className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/90 px-2 py-2 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
             <img 
               src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
@@ -68,7 +68,7 @@ export const MainContent = ({ children, className }: MainContentProps) => {
           <MobileMenu />
         </div>
       ) : (
-        <div className="fixed top-0 right-0 z-50 flex items-center gap-2 p-4 md:left-[72px] transition-[left] duration-300">
+        <div className="fixed top-0 right-0 z-[100] flex items-center gap-2 p-4 md:left-[72px] transition-[left] duration-300 bg-background/95 backdrop-blur">
           <Button
             variant="ghost"
             size="icon"
@@ -118,7 +118,7 @@ export const MainContent = ({ children, className }: MainContentProps) => {
         isLeadsPage ? "pt-16 md:pt-4" : "pt-16 md:py-4"
       )}>
         {isLeadsPage && (
-          <div className="flex items-center py-4">
+          <div className="flex items-center py-4 relative z-10">
             <h1 className="text-2xl font-semibold">Leads</h1>
           </div>
         )}
@@ -132,3 +132,4 @@ export const MainContent = ({ children, className }: MainContentProps) => {
     </main>
   );
 };
+
