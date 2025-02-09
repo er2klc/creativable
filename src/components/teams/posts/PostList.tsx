@@ -28,34 +28,28 @@ export const PostList = ({ teamId, categoryId }: PostListProps) => {
     );
   }
 
-  if (!posts?.length) {
-    return (
-      <div className="space-y-4">
-        <div className="flex justify-end">
-          {categoryId && <CreatePostDialog teamId={teamId} categoryId={categoryId} />}
-        </div>
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <CreatePostDialog teamId={teamId} categoryId={categoryId} />
+      </div>
+      
+      {!posts?.length ? (
         <Card>
           <CardContent className="p-6 text-center text-muted-foreground">
             Keine Beiträge gefunden
           </CardContent>
         </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        {categoryId && <CreatePostDialog teamId={teamId} categoryId={categoryId} />}
-      </div>
-      {posts.map((post) => (
-        <PostItem
-          key={post.id}
-          post={post}
-          isExpanded={expandedPost === post.id}
-          onToggleComments={() => setExpandedPost(expandedPost === post.id ? null : post.id)}
-        />
-      ))}
+      ) : (
+        posts.map((post) => (
+          <PostItem
+            key={post.id}
+            post={post}
+            isExpanded={expandedPost === post.id}
+            onToggleComments={() => setExpandedPost(expandedPost === post.id ? null : post.id)}
+          />
+        ))
+      )}
     </div>
   );
 };

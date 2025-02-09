@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -28,15 +28,17 @@ import { useQueryClient } from "@tanstack/react-query";
 interface FormValues {
   title: string;
   content: string;
+  files?: FileList;
 }
 
 interface CreatePostDialogProps {
   teamId: string;
-  categoryId: string;
+  categoryId?: string;
 }
 
 export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) => {
   const [open, setOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const queryClient = useQueryClient();
   const form = useForm<FormValues>();
 
@@ -73,12 +75,46 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
     return member?.profiles?.id;
   };
 
+  const handleFileUpload = async (files: FileList | null): Promise<string[]> => {
+    if (!files || files.length === 0) return [];
+    
+    const fileUrls: string[] = [];
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${teamId}/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('team-files')
+        .upload(filePath, file);
+        
+      if (uploadError) {
+        toast.error(`Fehler beim Hochladen von ${file.name}`);
+        continue;
+      }
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('team-files')
+        .getPublicUrl(filePath);
+        
+      fileUrls.push(publicUrl);
+    }
+    
+    return fileUrls;
+  };
+
   const onSubmit = async (values: FormValues) => {
+    setIsUploading(true);
     try {
       const mentions = extractMentions(values.content);
       const mentionedUserIds = mentions
         .map(name => findUserIdByName(name))
         .filter((id): id is string => id !== undefined);
+
+      // Handle file uploads if present
+      const fileUrls = values.files ? await handleFileUpload(values.files) : [];
 
       // Insert the post
       const { data: post, error: postError } = await supabase
@@ -89,6 +125,7 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
           title: values.title,
           content: values.content,
           created_by: (await supabase.auth.getUser()).data.user?.id,
+          file_urls: fileUrls.length > 0 ? fileUrls : null,
         })
         .select('id')
         .single();
@@ -116,6 +153,8 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
     } catch (error: any) {
       console.error('Error creating post:', error);
       toast.error("Fehler beim Erstellen des Beitrags");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -136,6 +175,7 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
             <FormField
               control={form.control}
               name="title"
+              rules={{ required: "Titel ist erforderlich" }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Titel</FormLabel>
@@ -149,6 +189,7 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
             <FormField
               control={form.control}
               name="content"
+              rules={{ required: "Inhalt ist erforderlich" }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Inhalt</FormLabel>
@@ -163,8 +204,36 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="files"
+              render={({ field: { onChange, value, ...field } }) => (
+                <FormItem>
+                  <FormLabel>Dateien anhängen</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="file"
+                      multiple
+                      onChange={(e) => onChange(e.target.files)}
+                      {...field}
+                      className="cursor-pointer"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="flex justify-end">
-              <Button type="submit">Erstellen</Button>
+              <Button type="submit" disabled={isUploading}>
+                {isUploading ? (
+                  <>
+                    <Upload className="h-4 w-4 mr-2 animate-spin" />
+                    Wird hochgeladen...
+                  </>
+                ) : (
+                  'Erstellen'
+                )}
+              </Button>
             </div>
           </form>
         </Form>
