@@ -29,7 +29,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
               avatar_url
             )
           ),
-          team_post_reactions (
+          team_post_reactions!team_post_reactions_post_id_fkey (
             id,
             reaction_type,
             created_by
