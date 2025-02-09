@@ -33,9 +33,12 @@ export const TeamSnaps = ({
   const { hiddenSnaps, hideSnapMutation, unhideSnapMutation } = useSnapManagement(teamId);
 
   const handleSnapClick = (snapId: string) => {
+    console.log("handleSnapClick called with:", { snapId, teamSlug });
+    
     if (snapId === "posts") {
-      console.log("Navigating to posts:", `/unity/team/${teamSlug}/posts`);
-      navigate(`/unity/team/${teamSlug}/posts`);
+      const postsUrl = `/unity/team/${teamSlug}/posts`;
+      console.log("Navigating to posts:", postsUrl);
+      navigate(postsUrl);
       onSnapClick(snapId);
       return;
     } 
