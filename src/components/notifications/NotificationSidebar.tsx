@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -119,7 +118,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+      <SheetContent side="right" className="w-[400px] sm:w-[540px] mt-[48px] z-[100]">
         <div className="flex items-center justify-between mb-6">
           <SheetHeader className="flex-1">
             <SheetTitle className="flex items-center gap-2">
@@ -178,4 +177,3 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
     </Sheet>
   );
 };
-
