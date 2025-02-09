@@ -1,6 +1,5 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { SearchBar } from "./SearchBar";
 import { supabase } from "@/integrations/supabase/client";
 import { HeaderActions } from "@/components/layout/HeaderActions";
@@ -10,8 +9,6 @@ interface DashboardHeaderProps {
 }
 
 export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
-  const [dailyQuote, setDailyQuote] = useState<string>("");
-
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
@@ -32,28 +29,21 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
   const displayName = profile?.display_name || userEmail?.split('@')[0] || "Benutzer";
 
   return (
-    <div className="flex flex-col gap-4 mb-4 md:mb-8">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-            Willkommen zurück, {displayName}! 👋
-          </h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-1">
-            Hier ist Ihr aktueller Überblick
-          </p>
+    <div className="w-full bg-background border-b">
+      <div className="w-full px-4 py-4">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+              Willkommen zurück, {displayName}! 👋
+            </h1>
+          </div>
+          <div className="w-full md:w-[400px]">
+            <SearchBar />
+          </div>
+          <HeaderActions profile={profile} userEmail={userEmail} />
         </div>
-        <div className="w-full md:w-[400px]">
-          <SearchBar />
-        </div>
-        <HeaderActions profile={profile} userEmail={userEmail} />
       </div>
-      {dailyQuote && (
-        <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-4 rounded-lg border border-primary/10">
-          <p className="text-base md:text-lg text-primary italic text-center">
-            "{dailyQuote}"
-          </p>
-        </div>
-      )}
     </div>
   );
 };
+
