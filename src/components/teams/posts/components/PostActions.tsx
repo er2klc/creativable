@@ -2,6 +2,7 @@
 import { Heart, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface PostActionsProps {
   postId: string;
@@ -18,6 +19,8 @@ export const PostActions = ({
   isExpanded, 
   onToggleComments 
 }: PostActionsProps) => {
+  const queryClient = useQueryClient();
+
   const handleReaction = async () => {
     try {
       const { data: existingReaction } = await supabase
@@ -43,6 +46,9 @@ export const PostActions = ({
           });
         toast.success("Reaktion hinzugefügt");
       }
+      
+      // Invalidate queries to refresh the posts
+      queryClient.invalidateQueries({ queryKey: ['team-posts'] });
     } catch (error) {
       console.error('Error handling reaction:', error);
       toast.error("Fehler beim Verarbeiten der Reaktion");

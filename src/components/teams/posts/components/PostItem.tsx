@@ -44,10 +44,26 @@ export const PostItem = ({ post, isExpanded, onToggleComments }: PostItemProps) 
                   </span>
                 </div>
               </div>
+              {post.pinned && (
+                <Badge variant="default" className="bg-primary/10 text-primary hover:bg-primary/20">
+                  Angepinnt
+                </Badge>
+              )}
             </div>
             <div className="mt-4">
               <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
               <p className="whitespace-pre-wrap text-muted-foreground">{post.content}</p>
+              {post.team_post_mentions?.length > 0 && (
+                <div className="mt-2 text-sm text-muted-foreground">
+                  <span>Erwähnt: </span>
+                  {post.team_post_mentions.map((mention, index) => (
+                    <span key={mention.id}>
+                      @{mention.mentioned_user?.display_name}
+                      {index < post.team_post_mentions.length - 1 ? ', ' : ''}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <PostActions
               postId={post.id}
