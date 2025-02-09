@@ -105,8 +105,8 @@ export default function Pool() {
                     )}
                   >
                     <Icon className="h-5 w-5" />
-                    <span className="font-medium">{option.label}</span>
-                    <span className="text-sm">
+                    <span className="font-medium text-sm">{option.label}</span>
+                    <span className="text-xs">
                       {option.count} {option.count === 1 ? 'Kontakt' : 'Kontakte'}
                     </span>
                   </TabsTrigger>
