@@ -75,6 +75,23 @@ export default function Pool() {
 
   const filteredLeads = leads.filter(lead => lead.status === status);
 
+  // Filter partner leads by phase
+  const getPartnerLeadsByPhase = (phase: string) => {
+    return filteredLeads.filter(lead => {
+      const progress = lead.onboarding_progress as any;
+      switch(phase) {
+        case 'start':
+          return !progress?.training_provided;
+        case 'goals':
+          return progress?.training_provided && !progress?.team_invited;
+        case 'presentation':
+          return progress?.team_invited;
+        default:
+          return true;
+      }
+    });
+  };
+
   return (
     <div className="px-4 md:px-8 max-w-full overflow-x-hidden">
       <PoolHeader viewMode={viewMode} setViewMode={setViewMode} />
@@ -86,8 +103,8 @@ export default function Pool() {
                 key={option.id}
                 value={option.id}
                 className={cn(
-                  "data-[state=active]:bg-primary",
-                  "border border-input hover:bg-accent",
+                  "data-[state=active]:bg-accent data-[state=active]:text-accent-foreground",
+                  "border border-input hover:bg-accent/50",
                   "h-8 px-3 text-sm"
                 )}
               >
@@ -104,32 +121,37 @@ export default function Pool() {
             {viewMode === 'kanban' ? (
               <PartnerOnboardingPipeline />
             ) : (
-              <LeadTableView 
-                leads={filteredLeads}
-                onLeadClick={setSelectedLeadId}
-                selectedPipelineId={null}
-              />
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Start & Setup</h3>
+                  <LeadTableView 
+                    leads={getPartnerLeadsByPhase('start')}
+                    onLeadClick={setSelectedLeadId}
+                    selectedPipelineId={null}
+                  />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Ziele & Kontakte</h3>
+                  <LeadTableView 
+                    leads={getPartnerLeadsByPhase('goals')}
+                    onLeadClick={setSelectedLeadId}
+                    selectedPipelineId={null}
+                  />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Präsentation & Abschluss</h3>
+                  <LeadTableView 
+                    leads={getPartnerLeadsByPhase('presentation')}
+                    onLeadClick={setSelectedLeadId}
+                    selectedPipelineId={null}
+                  />
+                </div>
+              </div>
             )}
           </>
         )}
 
-        {status === 'customer' && (
-          <LeadTableView 
-            leads={filteredLeads}
-            onLeadClick={setSelectedLeadId}
-            selectedPipelineId={null}
-          />
-        )}
-
-        {status === 'not_for_now' && (
-          <LeadTableView 
-            leads={filteredLeads}
-            onLeadClick={setSelectedLeadId}
-            selectedPipelineId={null}
-          />
-        )}
-
-        {status === 'no_interest' && (
+        {(status === 'customer' || status === 'not_for_now' || status === 'no_interest') && (
           <LeadTableView 
             leads={filteredLeads}
             onLeadClick={setSelectedLeadId}
