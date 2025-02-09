@@ -13,7 +13,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/50">
-      <div className="fixed top-0 left-0 right-0 z-[40] flex items-center justify-between bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/90 px-4 py-2 border-b border-sidebar-border md:hidden">
+      <div className="fixed top-0 left-0 right-0 z-[40] flex items-center justify-between bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/90 px-4 py-2 border-b border-sidebar-border md:hidden h-16">
         <div className="flex items-center gap-4">
           <MobileMenu />
           <div 
@@ -40,3 +40,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
