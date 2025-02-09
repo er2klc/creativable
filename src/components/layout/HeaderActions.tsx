@@ -50,7 +50,7 @@ export const HeaderActions = ({ profile, userEmail }: HeaderActionsProps) => {
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="hidden md:flex items-center gap-2">
         <div className="h-8 w-px bg-gray-500" />
         <Button
           variant="ghost"
@@ -104,3 +104,4 @@ export const HeaderActions = ({ profile, userEmail }: HeaderActionsProps) => {
     </>
   );
 };
+
