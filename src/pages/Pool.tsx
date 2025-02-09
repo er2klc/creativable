@@ -10,11 +10,14 @@ import { Diamond, Trophy, Gem, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PartnerOnboardingPipeline } from "@/components/partners/onboarding/PartnerOnboardingPipeline";
 import { PoolHeader } from "@/components/pool/PoolHeader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Pool() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const { status = 'partner' } = useParams<{ status?: string }>();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const { data: leads = [] } = useQuery({
     queryKey: ["pool-leads"],
@@ -85,46 +88,73 @@ export default function Pool() {
     <div className="px-4 md:px-8 max-w-full overflow-x-hidden">
       <PoolHeader />
       <div className="pt-20 md:pt-[84px] mb-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-          {statusOptions.map((option) => {
-            const Icon = option.icon;
-            const isActive = status === option.id;
-            const displayCount = option.count;
-            
-            return (
-              <Button
-                key={option.id}
-                variant={isActive ? "default" : "ghost"}
-                className={cn(
-                  "relative h-[80px] w-full transition-all duration-300",
-                  "bg-gradient-to-r shadow-sm border border-dashed border-gray-300",
-                  isActive ? `${option.gradient} text-white border-none` : "bg-background hover:scale-102",
-                  !isActive && "hover:bg-gradient-to-r",
-                  !isActive && option.hoverGradient,
-                  "hover:text-white"
-                )}
-                onClick={() => navigate(`/pool/${option.id}`)}
-              >
-                <div className="absolute inset-0 bg-black/5 rounded-md" />
-                <div className="relative flex flex-col items-center justify-center gap-1">
-                  <div className="flex items-center gap-2 text-lg font-semibold">
-                    <Icon className={cn(
-                      "h-5 w-5 transition-all duration-300",
-                      isActive ? "scale-110" : "scale-100"
-                    )} />
-                    {option.label}
+        {isMobile ? (
+          <Tabs defaultValue={status} className="w-full" onValueChange={(value) => navigate(`/pool/${value}`)}>
+            <TabsList className="grid grid-cols-2 h-auto gap-2 bg-transparent">
+              {statusOptions.map((option) => {
+                const Icon = option.icon;
+                return (
+                  <TabsTrigger 
+                    key={option.id}
+                    value={option.id}
+                    className={cn(
+                      "flex flex-col items-center gap-1 p-3 h-auto data-[state=active]:bg-gradient-to-r",
+                      "border border-dashed border-gray-300",
+                      status === option.id && option.gradient,
+                      status === option.id ? "text-white" : "text-gray-600"
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="font-medium">{option.label}</span>
+                    <span className="text-sm">
+                      {option.count} {option.count === 1 ? 'Kontakt' : 'Kontakte'}
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </Tabs>
+        ) : (
+          <div className="grid grid-cols-4 gap-2">
+            {statusOptions.map((option) => {
+              const Icon = option.icon;
+              const isActive = status === option.id;
+              
+              return (
+                <Button
+                  key={option.id}
+                  variant={isActive ? "default" : "ghost"}
+                  className={cn(
+                    "relative h-[80px] w-full transition-all duration-300",
+                    "bg-gradient-to-r shadow-sm border border-dashed border-gray-300",
+                    isActive ? `${option.gradient} text-white border-none` : "bg-background hover:scale-102",
+                    !isActive && "hover:bg-gradient-to-r",
+                    !isActive && option.hoverGradient,
+                    "hover:text-white"
+                  )}
+                  onClick={() => navigate(`/pool/${option.id}`)}
+                >
+                  <div className="absolute inset-0 bg-black/5 rounded-md" />
+                  <div className="relative flex flex-col items-center justify-center gap-1">
+                    <div className="flex items-center gap-2 text-lg font-semibold">
+                      <Icon className={cn(
+                        "h-5 w-5 transition-all duration-300",
+                        isActive ? "scale-110" : "scale-100"
+                      )} />
+                      {option.label}
+                    </div>
+                    <div className="text-sm font-medium">
+                      {option.count} {option.count === 1 ? 'Kontakt' : 'Kontakte'}
+                    </div>
                   </div>
-                  <div className="text-sm font-medium">
-                    {displayCount} {displayCount === 1 ? 'Kontakt' : 'Kontakte'}
-                  </div>
-                </div>
-                {isActive && (
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full shadow-lg" />
-                )}
-              </Button>
-            );
-          })}
-        </div>
+                  {isActive && (
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full shadow-lg" />
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-hidden w-full">
