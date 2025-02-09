@@ -11,7 +11,12 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
       let query = supabase
         .from('team_posts')
         .select(`
-          *,
+          id,
+          title,
+          content,
+          created_at,
+          pinned,
+          file_urls,
           team_categories (
             name
           ),
@@ -21,15 +26,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
             avatar_url
           ),
           team_post_comments (
-            id,
-            content,
-            created_at,
-            created_by,
-            author:profiles!team_post_comments_created_by_fkey (
-              id,
-              display_name,
-              avatar_url
-            )
+            id
           ),
           team_post_reactions!team_post_reactions_post_id_fkey (
             id,
@@ -38,7 +35,6 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
           ),
           team_post_mentions (
             id,
-            mentioned_user_id,
             mentioned_user:profiles!team_post_mentions_mentioned_user_id_fkey (
               id,
               display_name
@@ -60,8 +56,14 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
         throw error;
       }
       
-      console.log("Successfully fetched posts:", data); // Debug log
-      return data;
+      // Transform the data to include comment count instead of full comments
+      const transformedData = data.map(post => ({
+        ...post,
+        team_post_comments: post.team_post_comments.length
+      }));
+      
+      console.log("Successfully fetched posts:", transformedData); // Debug log
+      return transformedData;
     },
   });
 };

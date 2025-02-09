@@ -9,7 +9,29 @@ import { PostActions } from "./PostActions";
 import { CommentsList } from "./CommentsList";
 
 interface PostItemProps {
-  post: TeamPost;
+  post: TeamPost & {
+    team_post_comments: number; // Now expecting a number instead of an array
+    author?: {
+      id: string;
+      display_name?: string | null;
+      avatar_url?: string | null;
+    };
+    team_categories?: {
+      name: string;
+    } | null;
+    team_post_reactions?: {
+      id: string;
+      reaction_type: string;
+      created_by: string;
+    }[];
+    team_post_mentions?: {
+      id: string;
+      mentioned_user?: {
+        id: string;
+        display_name?: string | null;
+      };
+    }[];
+  };
   isExpanded: boolean;
   onToggleComments: () => void;
 }
@@ -68,11 +90,11 @@ export const PostItem = ({ post, isExpanded, onToggleComments }: PostItemProps) 
             <PostActions
               postId={post.id}
               reactionsCount={post.team_post_reactions?.length || 0}
-              commentsCount={post.team_post_comments?.length || 0}
+              commentsCount={post.team_post_comments}
               isExpanded={isExpanded}
               onToggleComments={onToggleComments}
             />
-            <CommentsList post={post} isExpanded={isExpanded} />
+            {isExpanded && <CommentsList post={post} />}
           </div>
         </div>
       </CardContent>
