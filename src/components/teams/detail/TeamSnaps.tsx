@@ -1,3 +1,4 @@
+
 import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, Users, Settings, Trophy, BarChart3 } from "lucide-react";
 import { SnapList } from "./snap-lists/SnapList";
 import { AdminSnapList } from "./snap-lists/AdminSnapList";
@@ -9,6 +10,7 @@ interface TeamSnapsProps {
   isAdmin: boolean;
   isManaging: boolean;
   teamId: string;
+  teamSlug: string;
   onCalendarClick: () => void;
   onSnapClick: (snapId: string) => void;
   onBack: () => void;
@@ -18,7 +20,8 @@ interface TeamSnapsProps {
 export const TeamSnaps = ({ 
   isAdmin, 
   isManaging, 
-  teamId, 
+  teamId,
+  teamSlug,
   onCalendarClick,
   onSnapClick,
   onBack,

@@ -4,6 +4,7 @@ import Elevate from "@/pages/Elevate";
 import TeamDetail from "@/pages/TeamDetail";
 import PlatformDetail from "@/pages/PlatformDetail";
 import LeaderBoard from "@/pages/LeaderBoard";
+import TeamPulse from "@/pages/TeamPulse";
 
 export const platformRoutes = [
   {
@@ -15,6 +16,11 @@ export const platformRoutes = [
     path: "/unity/team/:teamSlug",
     element: <TeamDetail />,
     label: "Team Detail",
+  },
+  {
+    path: "/unity/team/:teamSlug/pulse",
+    element: <TeamPulse />,
+    label: "Team Pulse",
   },
   {
     path: "/elevate",
