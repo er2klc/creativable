@@ -69,9 +69,10 @@ export const PostItem = ({ post, isExpanded, onToggleComments }: PostItemProps) 
             
             <div className="space-y-3">
               <h3 className="text-xl font-semibold">{post.title}</h3>
-              <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                {post.content}
-              </p>
+              <div 
+                className="text-muted-foreground whitespace-pre-wrap leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: post.content }}
+              />
               
               {post.file_urls && post.file_urls.length > 0 && (
                 <div className="mt-4 space-y-2">
@@ -111,7 +112,7 @@ export const PostItem = ({ post, isExpanded, onToggleComments }: PostItemProps) 
             {isExpanded && (
               <div className="mt-6">
                 <Separator className="mb-6" />
-                <CommentsList post={post} />
+                <CommentsList post={post} isExpanded={isExpanded} />
               </div>
             )}
           </div>

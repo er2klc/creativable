@@ -37,9 +37,10 @@ export const CommentsList = ({ post, isExpanded }: CommentsListProps) => {
                   })}
                 </span>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {comment.content}
-              </p>
+              <div 
+                className="mt-1 text-sm text-muted-foreground"
+                dangerouslySetInnerHTML={{ __html: comment.content }}
+              />
             </div>
           </div>
         ))}

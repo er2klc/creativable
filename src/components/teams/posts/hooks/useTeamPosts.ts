@@ -23,7 +23,14 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
               avatar_url
             ),
             team_post_comments (
-              count
+              id,
+              content,
+              created_at,
+              author:profiles!team_post_comments_created_by_fkey (
+                id,
+                display_name,
+                avatar_url
+              )
             )
           `)
           .eq('team_id', teamId)

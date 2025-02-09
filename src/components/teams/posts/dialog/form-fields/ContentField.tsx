@@ -1,6 +1,6 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { UseFormReturn } from "react-hook-form";
 
 interface ContentFieldProps {
@@ -17,10 +17,10 @@ export const ContentField = ({ form }: ContentFieldProps) => {
         <FormItem>
           <FormLabel>Inhalt</FormLabel>
           <FormControl>
-            <Textarea
+            <RichTextEditor
+              content={field.value}
+              onChange={field.onChange}
               placeholder="Beschreibe deinen Beitrag... (@mention für Erwähnungen)"
-              className="min-h-[200px]"
-              {...field}
             />
           </FormControl>
           <FormMessage />
