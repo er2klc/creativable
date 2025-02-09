@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { Tables } from "@/integrations/supabase/types";
@@ -18,9 +18,10 @@ export default function Pool() {
   const { status = 'partner' } = useParams<{ status?: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>(isMobile ? 'list' : 'kanban');
 
-  const { data: leads = [], error } = useQuery({
+  const { data: leads = [], error, refetch } = useQuery({
     queryKey: ["pool-leads"],
     queryFn: async () => {
       try {
@@ -62,6 +63,30 @@ export default function Pool() {
   useEffect(() => {
     setViewMode(isMobile ? 'list' : 'kanban');
   }, [isMobile]);
+
+  // Effect to refetch leads when a lead is deleted
+  useEffect(() => {
+    const channel = supabase
+      .channel('lead-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'leads',
+        },
+        () => {
+          console.log('Lead deleted, refreshing data...');
+          queryClient.invalidateQueries({ queryKey: ["pool-leads"] });
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, refetch]);
 
   const statusOptions = [
     { 
