@@ -5,6 +5,7 @@ import { AdminSnapList } from "./snap-lists/AdminSnapList";
 import { HiddenSnapsList } from "./snap-lists/HiddenSnapsList";
 import { PostSnapsList } from "./snap-lists/PostSnapsList";
 import { useSnapManagement } from "./hooks/useSnapManagement";
+import { useNavigate } from "react-router-dom";
 import { Snap } from "./types";
 
 interface TeamSnapsProps {
@@ -28,7 +29,13 @@ export const TeamSnaps = ({
   onBack,
   activeSnapView 
 }: TeamSnapsProps) => {
+  const navigate = useNavigate();
   const { hiddenSnaps, hideSnapMutation, unhideSnapMutation } = useSnapManagement(teamId);
+
+  const handleSnapClick = (snapId: string) => {
+    navigate(`/unity/team/${teamSlug}/${snapId}`);
+    onSnapClick(snapId);
+  };
 
   const regularSnaps: Snap[] = [
     {
@@ -45,7 +52,7 @@ export const TeamSnaps = ({
       label: "Community",
       description: "Für den Herzschlag der Community",
       gradient: "from-blue-500 to-blue-600",
-      onClick: () => onSnapClick("posts"),
+      onClick: () => handleSnapClick("posts"),
     },
     {
       id: "news",
@@ -53,7 +60,7 @@ export const TeamSnaps = ({
       label: "News & Updates",
       description: "Bleiben Sie über wichtige Updates informiert",
       gradient: "from-purple-500 to-purple-600",
-      onClick: () => onSnapClick("news"),
+      onClick: () => handleSnapClick("news"),
     },
     {
       id: "files",
@@ -61,7 +68,7 @@ export const TeamSnaps = ({
       label: "Dateien",
       description: "Verwalten Sie gemeinsame Dokumente",
       gradient: "from-yellow-500 to-yellow-600",
-      onClick: () => onSnapClick("files"),
+      onClick: () => handleSnapClick("files"),
     },
     {
       id: "leaderboard",
@@ -69,7 +76,7 @@ export const TeamSnaps = ({
       label: "Leaderboard",
       description: "Team Rangliste & Aktivitäten",
       gradient: "from-red-500 to-red-600",
-      onClick: () => onSnapClick("leaderboard"),
+      onClick: () => handleSnapClick("leaderboard"),
     },
   ];
 
@@ -80,7 +87,7 @@ export const TeamSnaps = ({
       label: "Mitglieder",
       description: "Verwalte Team-Mitglieder",
       gradient: "from-orange-500 to-orange-600",
-      onClick: () => onSnapClick("members"),
+      onClick: () => handleSnapClick("members"),
     },
     {
       id: "settings",
@@ -88,7 +95,7 @@ export const TeamSnaps = ({
       label: "Einstellungen",
       description: "Team-Einstellungen verwalten",
       gradient: "from-pink-500 to-pink-600",
-      onClick: () => onSnapClick("settings"),
+      onClick: () => handleSnapClick("settings"),
     },
     {
       id: "analytics",
@@ -96,7 +103,7 @@ export const TeamSnaps = ({
       label: "Analyse",
       description: "Team Statistiken & Analysen",
       gradient: "from-indigo-500 to-indigo-600",
-      onClick: () => onSnapClick("analytics"),
+      onClick: () => handleSnapClick("analytics"),
     },
   ] : [];
 

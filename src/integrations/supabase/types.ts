@@ -2723,6 +2723,7 @@ export type Database = {
           file_urls: string[] | null
           id: string
           pinned: boolean | null
+          slug: string
           team_id: string
           title: string
           updated_at: string | null
@@ -2735,6 +2736,7 @@ export type Database = {
           file_urls?: string[] | null
           id?: string
           pinned?: boolean | null
+          slug: string
           team_id: string
           title: string
           updated_at?: string | null
@@ -2747,6 +2749,7 @@ export type Database = {
           file_urls?: string[] | null
           id?: string
           pinned?: boolean | null
+          slug?: string
           team_id?: string
           title?: string
           updated_at?: string | null

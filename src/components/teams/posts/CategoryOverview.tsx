@@ -6,12 +6,15 @@ import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 interface CategoryOverviewProps {
   teamId: string;
+  teamSlug: string;
 }
 
-export function CategoryOverview({ teamId }: CategoryOverviewProps) {
+export function CategoryOverview({ teamId, teamSlug }: CategoryOverviewProps) {
+  const navigate = useNavigate();
   const { data: posts, isLoading } = useQuery({
     queryKey: ["team-posts-overview", teamId],
     queryFn: async () => {
@@ -67,7 +70,11 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
   return (
     <div className="space-y-4">
       {posts.map((post) => (
-        <Card key={post.id} className="p-6 hover:shadow-md transition-shadow">
+        <Card 
+          key={post.id} 
+          className="p-6 hover:shadow-md transition-shadow cursor-pointer"
+          onClick={() => navigate(`/unity/team/${teamSlug}/posts/${post.slug}`)}
+        >
           <div className="space-y-4">
             <div className="flex items-baseline justify-between gap-2">
               <h3 className="text-lg font-semibold line-clamp-1">
@@ -83,7 +90,14 @@ export function CategoryOverview({ teamId }: CategoryOverviewProps) {
             
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                <Badge variant="outline">
+                <Badge 
+                  variant="outline"
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories.slug}`);
+                  }}
+                >
                   {post.team_categories.name}
                 </Badge>
                 <span className="text-sm text-muted-foreground">

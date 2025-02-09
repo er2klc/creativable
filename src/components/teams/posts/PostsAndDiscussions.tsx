@@ -1,5 +1,5 @@
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { PostList } from "./PostList";
 import { CategoryOverview } from "./CategoryOverview";
 import { CreatePostDialog } from "./CreatePostDialog";
@@ -8,15 +8,23 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface PostsAndDiscussionsProps {
   categories: any[];
   teamId: string;
+  teamSlug: string;
   activeCategory?: string;
 }
 
-export function PostsAndDiscussions({ categories, teamId, activeCategory }: PostsAndDiscussionsProps) {
+export function PostsAndDiscussions({ 
+  categories, 
+  teamId, 
+  teamSlug,
+  activeCategory 
+}: PostsAndDiscussionsProps) {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const { data: allCategories } = useQuery({
     queryKey: ['team-categories', teamId],
@@ -32,17 +40,25 @@ export function PostsAndDiscussions({ categories, teamId, activeCategory }: Post
     },
   });
 
+  const handleCategoryClick = (categorySlug?: string) => {
+    if (categorySlug) {
+      navigate(`/unity/team/${teamSlug}/posts/category/${categorySlug}`);
+    } else {
+      navigate(`/unity/team/${teamSlug}/posts`);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Category Tabs */}
-      <div className="flex flex-wrap gap-2 pb-2 overflow-x-auto no-scrollbar">
+      <div className="flex flex-nowrap gap-2 pb-2 overflow-x-auto no-scrollbar">
         <Badge
           variant={!activeCategory ? "default" : "outline"}
           className={cn(
-            "cursor-pointer px-4 py-2 text-sm hover:bg-primary/90",
+            "cursor-pointer px-4 py-2 text-sm hover:bg-primary/90 whitespace-nowrap",
             !activeCategory && "bg-primary"
           )}
-          onClick={() => window.location.href = `/unity/team/${teamId}`}
+          onClick={() => handleCategoryClick()}
         >
           Alle Beiträge
         </Badge>
@@ -51,10 +67,10 @@ export function PostsAndDiscussions({ categories, teamId, activeCategory }: Post
             key={category.id}
             variant={activeCategory === category.id ? "default" : "outline"}
             className={cn(
-              "cursor-pointer px-4 py-2 text-sm hover:bg-primary/90",
+              "cursor-pointer px-4 py-2 text-sm hover:bg-primary/90 whitespace-nowrap",
               activeCategory === category.id && "bg-primary"
             )}
-            onClick={() => window.location.href = `/unity/team/${teamId}/category/${category.slug}`}
+            onClick={() => handleCategoryClick(category.slug)}
           >
             {category.name}
           </Badge>
@@ -71,9 +87,9 @@ export function PostsAndDiscussions({ categories, teamId, activeCategory }: Post
             <PostList teamId={teamId} categoryId={activeCategory} />
           </>
         ) : (
-          <CategoryOverview teamId={teamId} />
+          <CategoryOverview teamId={teamId} teamSlug={teamSlug} />
         )}
       </div>
     </div>
   );
-}
+};
