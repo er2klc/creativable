@@ -35,6 +35,8 @@ export const TeamSnaps = ({
   const handleSnapClick = (snapId: string) => {
     if (snapId === "posts") {
       navigate(`/unity/team/${teamSlug}/posts`);
+    } else if (snapId === "calendar") {
+      onCalendarClick();
     } else {
       navigate(`/unity/team/${teamSlug}/${snapId}`);
     }
@@ -48,7 +50,7 @@ export const TeamSnaps = ({
       label: "Team-Kalender",
       description: "Plane und verwalte Team-Termine",
       gradient: "from-green-500 to-green-600",
-      onClick: onCalendarClick,
+      onClick: () => handleSnapClick("calendar"),
     },
     {
       id: "posts",
