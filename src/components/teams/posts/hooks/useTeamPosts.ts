@@ -1,22 +1,18 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const useTeamPosts = (teamId: string, categoryId?: string) => {
   return useQuery({
     queryKey: ['team-posts', teamId, categoryId],
     queryFn: async () => {
-      console.log("Fetching posts for teamId:", teamId); // Debug log
+      console.log("Fetching posts for teamId:", teamId, "categoryId:", categoryId);
       
       let query = supabase
         .from('team_posts')
         .select(`
-          id,
-          title,
-          content,
-          created_at,
-          pinned,
-          file_urls,
+          *,
           team_categories (
             name
           ),
@@ -31,8 +27,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
         `)
         .eq('team_id', teamId)
         .order('pinned', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(20); // Add pagination limit
+        .order('created_at', { ascending: false });
 
       if (categoryId) {
         query = query.eq('category_id', categoryId);
@@ -41,19 +36,17 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
       const { data, error } = await query;
 
       if (error) {
-        console.error("Error fetching posts:", error); // Debug log
+        console.error("Error fetching posts:", error);
+        toast.error("Fehler beim Laden der Beiträge");
         throw error;
       }
       
-      // Transform the data to include comment count
       const transformedData = data.map(post => ({
         ...post,
-        team_post_comments: post.team_post_comments[0]?.count || 0,
-        team_post_reactions: [],
-        team_post_mentions: []
+        team_post_comments: post.team_post_comments[0]?.count || 0
       }));
       
-      console.log("Successfully fetched posts:", transformedData); // Debug log
+      console.log("Successfully fetched posts:", transformedData);
       return transformedData;
     },
   });

@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTeamPosts } from "./hooks/useTeamPosts";
 import { PostItem } from "./components/PostItem";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
 interface PostListProps {
   teamId: string;
@@ -11,31 +13,35 @@ interface PostListProps {
 
 export const PostList = ({ teamId, categoryId }: PostListProps) => {
   const [expandedPost, setExpandedPost] = useState<string | null>(null);
-  console.log("PostList rendered with teamId:", teamId); // Debug log
-  
-  const { data: posts, isLoading } = useTeamPosts(teamId, categoryId);
-  console.log("Fetched posts:", posts); // Debug log
+  const { data: posts, isLoading, error } = useTeamPosts(teamId, categoryId);
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-muted rounded w-1/4"></div>
-            <div className="h-4 bg-muted rounded w-3/4"></div>
-            <div className="h-4 bg-muted rounded w-1/2"></div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertDescription>
+          Fehler beim Laden der Beiträge. Bitte versuchen Sie es später erneut.
+        </AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {!posts?.length ? (
         <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
-            Keine Beiträge gefunden
+          <CardContent className="p-6">
+            <div className="text-center text-muted-foreground">
+              <p className="text-lg font-medium">Keine Beiträge gefunden</p>
+              <p className="text-sm mt-1">Erstellen Sie den ersten Beitrag in dieser Kategorie!</p>
+            </div>
           </CardContent>
         </Card>
       ) : (
