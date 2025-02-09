@@ -93,10 +93,10 @@ export function MobileMenu() {
             </Button>
           </SheetTrigger>
           <SheetContent 
-            side="top" 
-            className="w-full p-0 border-none bg-[#111111] text-white z-[200]"
+            side="left" 
+            className="w-[280px] p-0 border-none bg-[#111111] text-white z-[200]"
           >
-            <div className="flex flex-col h-[95vh] bg-[#111111] overflow-y-auto">
+            <div className="flex flex-col h-[100vh] bg-[#111111] overflow-y-auto">
               <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
                 <div className="flex items-center gap-4">
                   <img 
