@@ -30,7 +30,7 @@ export const MainContent = ({ children, className }: MainContentProps) => {
       </div>
       <div className={cn(
         "container mx-auto py-4 max-w-full px-4",
-        isDashboardPage ? "pt-28 md:pt-[84px]" : "pt-20 md:pt-[84px]"
+        isDashboardPage ? "pt-32 md:pt-[84px]" : "pt-20 md:pt-[84px]"
       )}>
         {children}
       </div>
