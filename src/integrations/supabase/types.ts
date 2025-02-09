@@ -2538,6 +2538,45 @@ export type Database = {
           },
         ]
       }
+      team_post_reactions: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: string
+          post_id: string
+          reaction_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: string
+          post_id: string
+          reaction_type: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          post_id?: string
+          reaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_team_post_reactions_posts"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "team_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "team_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_posts: {
         Row: {
           category_id: string
