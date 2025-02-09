@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTeamPosts } from "./hooks/useTeamPosts";
 import { PostItem } from "./components/PostItem";
-import { CreatePostDialog } from "./CreatePostDialog";
 
 interface PostListProps {
   teamId: string;
@@ -29,11 +28,7 @@ export const PostList = ({ teamId, categoryId }: PostListProps) => {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <CreatePostDialog teamId={teamId} categoryId={categoryId} />
-      </div>
-      
+    <div className="space-y-4">      
       {!posts?.length ? (
         <Card>
           <CardContent className="p-6 text-center text-muted-foreground">
@@ -52,4 +47,4 @@ export const PostList = ({ teamId, categoryId }: PostListProps) => {
       )}
     </div>
   );
-};
+}
