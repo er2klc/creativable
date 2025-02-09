@@ -33,7 +33,7 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
       <div className="w-full bg-background">
         <div className="h-16 px-4 flex items-center">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
-            <div>
+            <div className="z-50">
               <h1 className="text-lg md:text-xl font-semibold text-foreground">
                 Willkommen zurück, {displayName}! 👋
               </h1>
