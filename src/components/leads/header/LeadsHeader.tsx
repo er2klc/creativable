@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { LeadSearch } from "../LeadSearch";
 import { LayoutGrid, List, ChevronDown, Instagram, Linkedin, Users, Bell } from "lucide-react";
@@ -143,7 +142,7 @@ export const LeadsHeader = ({
 
             {!isMobile && (
               <div className="flex items-center gap-4">
-                <div className="h-8 w-px bg-gray-200" /> {/* Neue längere vertikale Linie */}
+                <div className="h-8 w-px bg-gray-200" /> {/* Längere vertikale Linie */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -205,4 +204,3 @@ export const LeadsHeader = ({
     </div>
   );
 };
-
